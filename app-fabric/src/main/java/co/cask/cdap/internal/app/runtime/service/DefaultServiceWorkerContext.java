@@ -91,7 +91,7 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new ServiceWorkerDataSetContext(context));
+      runnable.run(new ServiceWorkerDatasetContext(context));
       context.finish();
     } catch (TransactionFailureException e) {
       abortTransaction(e, "Failed to commit. Aborting transaction.", context);
@@ -111,10 +111,10 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
     }
   }
 
-  private class ServiceWorkerDataSetContext implements DataSetContext {
+  private class ServiceWorkerDatasetContext implements DataSetContext {
     private final TransactionContext context;
 
-    private ServiceWorkerDataSetContext(TransactionContext context) {
+    private ServiceWorkerDatasetContext(TransactionContext context) {
       this.context = context;
     }
 
@@ -134,6 +134,9 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
       try {
         Dataset dataset = datasetFramework.getDataset(name, arguments,
                                                       programClassLoader);
+        if (dataset == null) {
+          throw new DataSetInstantiationException(String.format("Dataset %s does not exist.", name));
+        }
         context.addTransactionAware((TransactionAware) dataset);
         return (T) dataset;
       } catch (DatasetManagementException e) {

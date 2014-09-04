@@ -289,13 +289,20 @@ public class TestFrameworkTest extends TestBase {
     ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
     ProcedureClient procedureClient = procedureManager.getClient();
 
-    String result = procedureClient.query("ping", ImmutableMap.<String, String>of());
+    String result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
+                                                                  AppWithServices.DATASET_TEST_KEY));
     String decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
 
-    procedureManager.stop();
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
+
+    result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
+                                                           AppWithServices.DATASET_TEST_KEY_STOP));
+    decodedResult = new Gson().fromJson(result, String.class);
+    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
+
+    procedureManager.stop();
     LOG.info("DatasetUpdateService Stopped");
   }
 

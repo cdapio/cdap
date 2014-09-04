@@ -46,6 +46,9 @@ public class AppWithServices extends AbstractApplication {
   public static final String DATASET_WORKER_SERVICE_NAME = "DatasetUpdateService";
   public static final String DATASET_TEST_KEY = "testKey";
   public static final String DATASET_TEST_VALUE = "testValue";
+  public static final String DATASET_TEST_KEY_STOP = "testKeyStop";
+  public static final String DATASET_TEST_VALUE_STOP = "testValueStop";
+  public static final String PROCEDURE_DATASET_KEY = "key";
 
   private static final String DATASET_NAME = "AppWithServicesDataset";
 
@@ -66,10 +69,10 @@ public class AppWithServices extends AbstractApplication {
     private KeyValueTable table;
 
     @Handle("ping")
-    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
-      responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toString(table.read(DATASET_TEST_KEY)));
+    public void ping(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+      String key = request.getArgument(PROCEDURE_DATASET_KEY);
+      responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toString(table.read(key)));
     }
-
   }
 
   @Path("/")
@@ -97,10 +100,18 @@ public class AppWithServices extends AbstractApplication {
     }
 
     private static final class DatasetUpdateWorker extends AbstractServiceWorker {
+      private volatile boolean workerStopped = false;
 
       @Override
       public void stop() {
-        // no-op
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DataSetContext context) throws Exception {
+            KeyValueTable table = context.getDataSet(DATASET_NAME);
+            table.write(DATASET_TEST_KEY_STOP, DATASET_TEST_VALUE_STOP);
+          }
+        });
+        workerStopped = true;
       }
 
       @Override
@@ -110,13 +121,16 @@ public class AppWithServices extends AbstractApplication {
 
       @Override
       public void run() {
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DataSetContext context) throws Exception {
-            KeyValueTable table = context.getDataSet(DATASET_NAME);
-            table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
-          }
-        });
+        // Run this loop till stop is called.
+        while (!workerStopped) {
+          getContext().execute(new TxRunnable() {
+            @Override
+            public void run(DataSetContext context) throws Exception {
+              KeyValueTable table = context.getDataSet(DATASET_NAME);
+              table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
+            }
+          });
+        }
       }
     }
   }
