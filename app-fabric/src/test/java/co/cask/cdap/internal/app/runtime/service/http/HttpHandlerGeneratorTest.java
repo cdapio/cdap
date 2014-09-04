@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
+import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
@@ -26,6 +27,7 @@ import co.cask.http.NettyHttpService;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -56,6 +58,11 @@ public class HttpHandlerGeneratorTest {
   @Path("/v2")
   public static final class MyHttpHandler extends BaseHttpHandler {
 
+    @Override
+    public void initialize(HttpServiceContext context) throws Exception {
+      super.initialize(context);
+    }
+
     @Path("/echo/{name}")
     @POST
     public void echo(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("name") String name) {
@@ -64,7 +71,7 @@ public class HttpHandlerGeneratorTest {
   }
 
   // Omit class-level PATH annotation, to verify that prefix is still prepended to handled path.
-  public static final class HandlerWithoutAnnotation extends AbstractHttpServiceHandler {
+  public static final class NoAnnotationHandler extends AbstractHttpServiceHandler {
 
     @Path("/ping")
     @GET
@@ -77,34 +84,27 @@ public class HttpHandlerGeneratorTest {
   @Test
   public void testHttpHandlerGenerator() throws Exception {
     HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
-    HttpHandler httpHandler = factory.createHttpHandler(new MyHttpHandler(), new HttpServiceContext() {
-      @Override
-      public HttpServiceSpecification getSpecification() {
-        return null;
-      }
 
+    HttpHandler httpHandler = factory.createHttpHandler(
+      TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {
       @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
+      protected MyHttpHandler createHandler() {
+        return new MyHttpHandler();
       }
     });
 
-    HttpHandler httpHandlerWithoutAnnotation = factory.createHttpHandler(new HandlerWithoutAnnotation(),
-                                                                         new HttpServiceContext() {
+    HttpHandler httpHandlerWithoutAnnotation = factory.createHttpHandler(
+      TypeToken.of(NoAnnotationHandler.class), new AbstractDelegatorContext<NoAnnotationHandler>() {
       @Override
-      public HttpServiceSpecification getSpecification() {
-        return null;
-      }
-
-      @Override
-      public Map<String, String> getRuntimeArguments() {
-        return null;
+      protected NoAnnotationHandler createHandler() {
+        return new NoAnnotationHandler();
       }
     });
 
     NettyHttpService service = NettyHttpService.builder()
-      .addHttpHandlers(ImmutableList.of(httpHandler, httpHandlerWithoutAnnotation)).build();
-    
+      .addHttpHandlers(ImmutableList.of(httpHandler, httpHandlerWithoutAnnotation))
+      .build();
+
     service.startAndWait();
     try {
       InetSocketAddress bindAddress = service.getBindAddress();
@@ -137,5 +137,37 @@ public class HttpHandlerGeneratorTest {
     } finally {
       service.stopAndWait();
     }
+  }
+
+  private static abstract class AbstractDelegatorContext<T extends HttpServiceHandler> implements DelegatorContext<T> {
+
+    private final ThreadLocal<T> threadLocal = new ThreadLocal<T>() {
+      @Override
+      protected T initialValue() {
+        return createHandler();
+      }
+    };
+
+    @Override
+    public final T getHandler() {
+      return threadLocal.get();
+    }
+
+    @Override
+    public final HttpServiceContext getServiceContext() {
+      return new HttpServiceContext() {
+        @Override
+        public HttpServiceSpecification getSpecification() {
+          return null;
+        }
+
+        @Override
+        public Map<String, String> getRuntimeArguments() {
+          return null;
+        }
+      };
+    }
+
+    protected abstract T createHandler();
   }
 }

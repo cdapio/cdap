@@ -240,7 +240,7 @@ public class TestFrameworkTest extends TestBase {
 
   @Category(SlowTests.class)
   @Test
-  public void testAppwithServices() throws Exception {
+  public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
