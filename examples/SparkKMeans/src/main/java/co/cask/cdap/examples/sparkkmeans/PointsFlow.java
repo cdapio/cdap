@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.examples.sparkpagerank;
+package co.cask.cdap.examples.sparkkmeans;
 
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -21,17 +21,17 @@ import co.cask.cdap.api.flow.FlowSpecification;
 /**
  * This is a simple Flow that consumes url pair events from a Stream and stores them in a dataset.
  */
-public class PageRankFlow implements Flow {
+public class PointsFlow implements Flow {
 
   @Override
   public FlowSpecification configure() {
     return FlowSpecification.Builder.with()
-      .setName("PageRankFlow")
-      .setDescription("Reads url pair and stores in dataset")
+      .setName("PointsFlow")
+      .setDescription("Reads points information and stores in dataset")
       .withFlowlets()
-        .add("reader", new NeighborURLsReader())
+        .add("reader", new PointsReader())
       .connect()
-        .fromStream("neighborUrlStream").to("reader")
+        .fromStream("pointsStream").to("reader")
       .build();
   }
 }
