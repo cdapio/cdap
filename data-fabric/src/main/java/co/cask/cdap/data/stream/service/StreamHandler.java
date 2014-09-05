@@ -244,7 +244,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   *  Adapter class for {@link co.cask.cdap.data2.transaction.stream.StreamConfig}
+   *  Adapter class for {@link co.cask.cdap.proto.StreamProperties}
    */
   private static final class StreamPropertiesAdapter implements JsonSerializer<StreamProperties> {
     @Override
