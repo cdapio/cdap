@@ -26,6 +26,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
@@ -128,10 +129,10 @@ public class StreamHandlerTest extends GatewayTestBase {
                                     HOSTNAME, port), HttpMethod.PUT);
 
     urlConn.setDoOutput(true);
-    String urlParameters = "{\"ttl\"=\"2\"}";
-
+    JsonObject json = new JsonObject();
+    json.addProperty("ttl", "2");
     OutputStreamWriter out = new OutputStreamWriter(urlConn.getOutputStream());
-    out.write(urlParameters);
+    out.write(json.toString());
     out.flush();
     out.close();
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
