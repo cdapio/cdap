@@ -615,6 +615,120 @@ declaration and (2) an injection:
          ...
        }
 
+.. _spark:
+
+Processing Data: Spark
+==========================
+**Spark** is used for in-memory cluster computing. It allows users to load large sets of data in memory and query it
+repeatedly. This makes it suitable for iterative and interactive jobs. Like MapReduce, Spark can also access **Datasets** as both input and output. Spark jobs in CDAP can written either in Java or Scala.
+
+To process data using Spark, specify ``addSpark()`` in your Application specification::
+
+	public void configure() {
+	  ...
+    	addSpark(new WordCountJob());
+
+You must implement the ``Spark`` interface, which requires the
+implementation of three methods:
+
+- ``configure()``
+- ``beforeSubmit()``
+- ``onFinish()``
+
+::
+
+  public class WordCountJob implements Spark {
+    @Override
+    public SparkSpecification configure() {
+      return SparkSpecification.Builder.with()
+        .setName("WordCountJob")
+        .setDescription("Calculates word frequency")
+        .setMainClassName("com.example.WordCounter")
+        .build();
+    }
+
+The configure method is similar to the one found in Flow and
+MapReduce. It defines the name and description of the Spark job. It also specifies the class containing main method in a Spark job.
+
+The ``beforeSubmit()`` method is invoked at runtime, before the
+Spark job is executed. Because many Spark jobs do not
+need this method, the ``AbstractSpark`` class provides a default
+implementation that does nothing::
+
+  @Override
+  public void beforeSubmit(SparkContext context) throws Exception {
+    // Do nothing by default
+  }
+
+The ``onFinish()`` method is invoked after the Spark job has
+finished. You could perform cleanup or send a notification of job
+completion, if that was required. Like ``beforeSubmit()`` many  Spark jobs do not
+need this method, the ``AbstractSpark`` class also provides a default
+implementation for this method that does nothing::
+
+  @Override
+  public void onFinish(boolean succeeded, SparkContext context) throws Exception {
+    // Do nothing by default
+  }
+
+CDAP SparkContext
+-------------------
+CDAP provides its own ``SparkContext`` which can be obtained through ``SparkContextFactory``. To create a CDAP ``SparkContext`` pass the appropriate SparkContext to ``create()`` depending upon the language (Java or Scala) in which the job is written.
+
+- Java::
+
+	public class JavaSparkJob {
+		private static SparkContextFactory factory;
+		public static void main(String[] args) {
+			SparkConf sparkConf = new SparkConf().setAppName("CDAP Spark Application");
+			SparkContext sparkContext = factory.create(new JavaSparkContext(sparkConf));
+			...
+		}
+	}
+
+- Scala::
+
+	class ScalaSparkJob {
+		var factory: SparkContextFactory = null;
+		def main(args: Array[String]) {
+			val sparkConf = new SparkConf().setAppName("CDAP Spark Application");
+			val sparkContext = factory.create(new SparkContext(sparkConf));
+			...
+		}
+	}
+
+Spark and Datasets
+----------------------
+Spark jobs in CDAP can directly access **Dataset** similar to the way a MapReduce or
+Procedure can. These jobs can create Spark's Resilient Distributed Dataset (RDD) by reading a Datasets and also write RDD to a Dataset.
+
+- Creating a RDD from Dataset
+
+  - Java:
+
+  ::
+
+     JavaPairRDD<byte[], Purchase> purchaseRDD = sparkContext.readFromDataset("purchases", byte[].class, Purchase.class);
+
+  - Scala:
+
+  ::
+
+     val purchaseRDD: RDD[(Array[Byte], Purchase)] = sparkContext.readFromDataset("purchases", classOf[Array[Byte]], classOf[Purchase]);
+
+- Writing a RDD to Dataset
+
+  - Java:
+
+  ::
+
+    sparkContext.writeToDataset(purchaseRDD, "purchases", byte[].class, Purchase.class);
+
+  - Scala:
+
+  ::
+
+    sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
 
 .. _Workflows:
 
