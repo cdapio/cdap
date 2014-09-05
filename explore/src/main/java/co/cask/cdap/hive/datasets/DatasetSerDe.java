@@ -148,9 +148,7 @@ public class DatasetSerDe implements SerDe {
       }
     }
 
-    // This is probably not very efficient, records are serialized to Json, put in a Text, and deserialized in
-    // the DatasetOutputFormat from Text, then from Json, into a Record object.
-    // Maybe we could do the same using avro?
+    // TODO Improve serialization logic - REACTOR-927
     return new Text(GSON.toJson(structMap));
   }
 
