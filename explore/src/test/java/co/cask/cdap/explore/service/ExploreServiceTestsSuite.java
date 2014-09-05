@@ -30,6 +30,7 @@ import org.junit.runners.Suite;
   ExploreExtensiveSchemaTableTest.class,
   ExploreMetadataTest.class,
   HiveExploreServiceTest.class,
+  WritableDatasetTest.class,
   HiveExploreServiceStopTest.class
 })
 public class ExploreServiceTestsSuite {

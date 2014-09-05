@@ -114,7 +114,7 @@ public class KeyValueTableDefinition
     @Override
     public void write(KeyValue keyValue) throws IOException {
       try {
-        put(keyValue.getKey() + 1, keyValue.getValue());
+        put(keyValue.getKey(), keyValue.getValue());
       } catch (Exception e) {
         throw new IOException(e);
       }

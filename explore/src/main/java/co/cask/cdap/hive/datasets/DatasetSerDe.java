@@ -20,31 +20,69 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.hive.context.NullJobConfException;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
+import org.apache.hadoop.hive.serde2.io.ByteWritable;
+import org.apache.hadoop.hive.serde2.io.DateWritable;
+import org.apache.hadoop.hive.serde2.io.HiveBaseCharWritable;
+import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
+import org.apache.hadoop.hive.serde2.io.TimestampWritable;
+import org.apache.hadoop.hive.serde2.lazy.LazyArray;
+import org.apache.hadoop.hive.serde2.lazy.LazyMap;
+import org.apache.hadoop.hive.serde2.lazy.LazyNonPrimitive;
+import org.apache.hadoop.hive.serde2.lazy.LazyPrimitive;
+import org.apache.hadoop.hive.serde2.lazy.LazyStruct;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.MapTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.ObjectWritable;
+import org.apache.hadoop.io.ShortWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
  * SerDe to serialize Dataset Objects.
  */
 public class DatasetSerDe implements SerDe {
+  private static final Gson GSON = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(DatasetSerDe.class);
 
+  private ArrayList<String> columnNames;
   private Type recordType;
 
   @Override
   public void initialize(Configuration entries, Properties properties) throws SerDeException {
+    // The column names are saved as the given inspector to #serialize doesn't preserves them
+    // - maybe because it's an external table
+    columnNames = new ArrayList<String>(Arrays.asList(StringUtils.split(properties.getProperty("columns"), ",")));
+
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
     try {
       if (entries != null) {
@@ -71,7 +109,7 @@ public class DatasetSerDe implements SerDe {
 
   @Override
   public Class<? extends Writable> getSerializedClass() {
-    return ObjectWritable.class;
+    return Text.class;
   }
 
   @Override
@@ -82,12 +120,38 @@ public class DatasetSerDe implements SerDe {
     // The object and the objectInspector represent one row of a query result to write into a dataset.
     // Therefore, it is not guaranteed that the object exactly matches the schema of the dataset
     // we want to write into.
+
     if (!(objectInspector instanceof StructObjectInspector)) {
       throw new SerDeException("Trying to serialize with unknown object inspector type " +
                                  objectInspector.getClass().getName() + ". Expected StructObjectInspector.");
     }
-    StructObjectInspector soi = (StructObjectInspector) objectInspector;
-    return new ObjectWritable(soi.getStructFieldsDataAsList(o));
+
+    //overwrite field names (as they get lost by Hive)
+    StructTypeInfo structTypeInfo = (StructTypeInfo) TypeInfoUtils.getTypeInfoFromObjectInspector(objectInspector);
+    structTypeInfo.setAllStructFieldNames(columnNames);
+
+    List<TypeInfo> info = structTypeInfo.getAllStructFieldTypeInfos();
+    List<String> names = structTypeInfo.getAllStructFieldNames();
+
+    Map<String, Object> structMap = Maps.newConcurrentMap();
+    List<Object> struct = ((StructObjectInspector) objectInspector).getStructFieldsDataAsList(o);
+
+    for (int structIndex = 0; structIndex < info.size(); structIndex++) {
+      Object obj = struct.get(structIndex);
+      if (obj instanceof LazyNonPrimitive || obj instanceof LazyPrimitive) {
+        // In case the SerDe that deserialized the object is the one of a native table
+        structMap.put(names.get(structIndex),
+                      fromLazyObject(info.get(structIndex), struct.get(structIndex)));
+      } else {
+        // In case the deserializer is the DatasetSerDe
+        structMap.put(names.get(structIndex), struct.get(structIndex));
+      }
+    }
+
+    // This is probably not very efficient, records are serialized to Json, put in a Text, and deserialized in
+    // the DatasetOutputFormat from Text, then from Json, into a Record object.
+    // Maybe we could do the same using avro?
+    return new Text(GSON.toJson(structMap));
   }
 
   @Override
@@ -106,5 +170,96 @@ public class DatasetSerDe implements SerDe {
   public ObjectInspector getObjectInspector() throws SerDeException {
     Preconditions.checkNotNull(recordType, "Record type should not be null.");
     return ObjectInspectorFactory.getReflectionObjectInspector(recordType);
+  }
+
+  private Object fromLazyObject(TypeInfo type, Object data) {
+    if (data == null) {
+      return null;
+    }
+
+    switch (type.getCategory()) {
+      case PRIMITIVE:
+        Writable writable = ((LazyPrimitive) data).getWritableObject();
+        if (writable instanceof IntWritable) {
+          return ((IntWritable) writable).get();
+        } else if (writable instanceof LongWritable) {
+          return ((LongWritable) writable).get();
+        } else if (writable instanceof ShortWritable) {
+          return ((ShortWritable) writable).get();
+        } else if (writable instanceof BooleanWritable) {
+          return ((BooleanWritable) writable).get();
+        } else if (writable instanceof DoubleWritable) {
+          return ((DoubleWritable) writable).get();
+        } else if (writable instanceof FloatWritable) {
+          return ((FloatWritable) writable).get();
+        } else if (writable instanceof Text) {
+          return writable.toString();
+        } else if (writable instanceof BytesWritable) {
+          return ((BytesWritable) writable).getBytes();
+        } else if (writable instanceof ByteWritable) {
+          return ((ByteWritable) writable).get();
+        } else if (writable instanceof DateWritable) {
+          return ((DateWritable) writable).get();
+        } else if (writable instanceof org.apache.hadoop.hive.serde2.io.ShortWritable) {
+          return ((org.apache.hadoop.hive.serde2.io.ShortWritable) writable).get();
+        } else if (writable instanceof HiveBaseCharWritable) {
+          return ((HiveBaseCharWritable) writable).getTextValue().toString();
+        } else if (writable instanceof TimestampWritable) {
+          return ((TimestampWritable) writable).getTimestamp();
+        } else if (writable instanceof org.apache.hadoop.hive.serde2.io.DoubleWritable) {
+          return ((org.apache.hadoop.hive.serde2.io.DoubleWritable) writable).get();
+        } else if (writable instanceof HiveDecimalWritable) {
+          return ((HiveDecimalWritable) writable).getHiveDecimal();
+        } else if (writable instanceof NullWritable) {
+          return null;
+        }
+        return writable.toString();
+
+      case LIST:
+        ListTypeInfo listType = (ListTypeInfo) type;
+        TypeInfo listElementType = listType.getListElementTypeInfo();
+
+        List<Object> list = ((LazyArray) data).getList();
+        if (list.isEmpty()) {
+          return ImmutableList.of();
+        }
+
+        Object[] arrayContent = new Object[list.size()];
+        for (int i = 0; i < arrayContent.length; i++) {
+          arrayContent[i] = fromLazyObject(listElementType, list.get(i));
+        }
+        return arrayContent;
+
+      case MAP:
+        MapTypeInfo mapType = (MapTypeInfo) type;
+
+        Map<Object, Object> mapContent = Maps.newConcurrentMap();
+        Map<Object, Object> map = ((LazyMap) data).getMap();
+
+        for (Map.Entry<Object, Object> entry : map.entrySet()) {
+          mapContent.put(fromLazyObject(mapType.getMapKeyTypeInfo(), entry.getKey()),
+                         fromLazyObject(mapType.getMapValueTypeInfo(), entry.getValue()));
+        }
+        return mapContent;
+
+      case STRUCT:
+        StructTypeInfo structType = (StructTypeInfo) type;
+        List<TypeInfo> info = structType.getAllStructFieldTypeInfos();
+        List<String> names = structType.getAllStructFieldNames();
+
+        Map<String, Object> structMap = Maps.newConcurrentMap();
+        List<Object> struct = ((LazyStruct) data).getFieldsAsList();
+
+        for (int structIndex = 0; structIndex < info.size(); structIndex++) {
+          structMap.put(names.get(structIndex),
+                        fromLazyObject(info.get(structIndex), struct.get(structIndex)));
+        }
+        return structMap;
+      case UNION:
+        throw new UnsupportedOperationException("union not yet supported");
+
+      default:
+        return data.toString();
+    }
   }
 }
