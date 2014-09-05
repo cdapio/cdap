@@ -19,7 +19,6 @@ package co.cask.cdap;
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureContext;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
@@ -28,10 +27,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -81,18 +77,6 @@ public class HttpServiceApp extends AbstractApplication {
 
     private static final Logger LOG = LoggerFactory.getLogger(NoOpProcedure.class);
 
-    private ServiceDiscovered serviceDiscovered;
-
-    /**
-     *
-     * @param context
-     */
-    @Override
-    public void initialize(ProcedureContext context) {
-      //Discover the UserInterestsLookup service via discovery service
-      serviceDiscovered = context.discover("HttpServiceApp", "HttpService", "HttpService");
-    }
-
     /**
      *
      * @param request
@@ -101,12 +85,9 @@ public class HttpServiceApp extends AbstractApplication {
      */
     @Handle("noop")
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws Exception {
-      Discoverable discoverable = Iterables.getFirst(serviceDiscovered, null);
-      if (discoverable != null) {
-        String hostName = discoverable.getSocketAddress().getHostName();
-        int port = discoverable.getSocketAddress().getPort();
-        LOG.debug("host: {}, port: {}", hostName, String.valueOf(port));
-        String response = doGet(hostName, port);
+      URL serviceURL = getContext().getServiceURL("HttpServiceApp", "HttpService");
+      if (serviceURL != null) {
+        String response = doGet(serviceURL);
         LOG.debug(response);
         responder.sendJson(ProcedureResponse.Code.SUCCESS, response);
       } else {
@@ -116,14 +97,13 @@ public class HttpServiceApp extends AbstractApplication {
 
     /**
      *
-     * @param hostName
-     * @param port
+     * @param baseURL
      * @return
      * @throws Exception
      */
-    public static String doGet(String hostName, int port) throws Exception {
+    public static String doGet(URL baseURL) throws Exception {
       try {
-        URL url = new URL(String.format("http://%s:%d/v1/handle", hostName, port));
+        URL url = new URL(baseURL, "v1/handle");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
           try {

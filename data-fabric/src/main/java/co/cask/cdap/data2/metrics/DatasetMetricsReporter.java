@@ -14,18 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.data2.metrics;
 
-import co.cask.cdap.api.RuntimeContext;
+import com.google.common.util.concurrent.Service;
 
 /**
- * Context for custom Service workers.
+ * Reports dataset stats
  */
-public interface ServiceWorkerContext extends RuntimeContext {
+public interface DatasetMetricsReporter extends Service {
 
-  /**
-   * Execute a set of operations on datasets via a {@link TxRunnable} that are committed as a single transaction.
-   * @param runnable
-   */
-  void execute(TxRunnable runnable);
 }
