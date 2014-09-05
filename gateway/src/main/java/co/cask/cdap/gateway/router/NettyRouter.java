@@ -131,8 +131,8 @@ public class NettyRouter extends AbstractIdleService {
     this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
     if (isSSLEnabled()) {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
-                                Integer.parseInt(cConf.get(Constants.Router.GATEWAY_SS_PORT,
-                                                           Constants.Router.DEFAULT_GATEWAY_SSL_PORT)));
+                                Integer.parseInt(cConf.get(Constants.Router.ROUTER_SSL_PORT,
+                                                           Constants.Router.DEFAULT_ROUTER_SSL_PORT)));
       this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
                                 Integer.parseInt(cConf.get(Constants.Router.WEBAPP_SSL_PORT,
                                                            Constants.Router.DEFAULT_WEBAPP_SSL_PORT)));
@@ -150,8 +150,8 @@ public class NettyRouter extends AbstractIdleService {
         cConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
-                        Integer.parseInt(cConf.get(Constants.Router.GATEWAY_PORT,
-                                                   Constants.Router.DEFAULT_GATEWAY_PORT)));
+                        Integer.parseInt(cConf.get(Constants.Router.ROUTER_PORT,
+                                                   Constants.Router.DEFAULT_ROUTER_PORT)));
       this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
                         Integer.parseInt(cConf.get(Constants.Router.WEBAPP_PORT,
                                                    Constants.Router.DEFAULT_WEBAPP_PORT)));

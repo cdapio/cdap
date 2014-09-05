@@ -300,9 +300,9 @@ public final class Constants {
    */
   public static final class Router {
     public static final String ADDRESS = "router.bind.address";
-    public static final String GATEWAY_PORT = "router.gateway.port";
+    public static final String ROUTER_PORT = "router.gateway.port";
     public static final String WEBAPP_PORT = "router.webapp.port";
-    public static final String GATEWAY_SS_PORT = "router.ssl.gateway.port";
+    public static final String ROUTER_SSL_PORT = "router.ssl.gateway.port";
     public static final String WEBAPP_SSL_PORT = "router.ssl.webapp.port";
     public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
@@ -313,9 +313,9 @@ public final class Constants {
     /**
      * Defaults.
      */
-    public static final String DEFAULT_GATEWAY_PORT = "10000";
+    public static final String DEFAULT_ROUTER_PORT = "10000";
     public static final String DEFAULT_WEBAPP_PORT = "20000";
-    public static final String DEFAULT_GATEWAY_SSL_PORT = "9443";
+    public static final String DEFAULT_ROUTER_SSL_PORT = "9443";
     public static final String DEFAULT_WEBAPP_SSL_PORT = "20443";
 
     public static final int DEFAULT_BACKLOG = 20000;

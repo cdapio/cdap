@@ -123,7 +123,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
-      cConf.setInt(Constants.Router.GATEWAY_PORT, 0);
+      cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
 
       cConf.set(Constants.Security.Router.SSL_KEYPASSWORD, "secret");

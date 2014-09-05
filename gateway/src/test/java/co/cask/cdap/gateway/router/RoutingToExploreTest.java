@@ -70,7 +70,7 @@ public class RoutingToExploreTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Router.ADDRESS, "localhost");
     port = Networks.getRandomPort();
-    cConf.setInt(Constants.Router.GATEWAY_PORT, port);
+    cConf.setInt(Constants.Router.ROUTER_PORT, port);
     nettyRouter = new NettyRouter(cConf, InetAddresses.forString("127.0.0.1"),
         new RouterServiceLookup(discoveryServiceClient,
             new RouterPathLookup(new NoAuthenticator())),

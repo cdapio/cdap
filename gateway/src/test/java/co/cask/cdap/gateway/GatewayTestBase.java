@@ -118,7 +118,7 @@ public abstract class GatewayTestBase {
     conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
     conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
     conf.set(Constants.Router.ADDRESS, hostname);
-    conf.setInt(Constants.Router.GATEWAY_PORT, 0);
+    conf.setInt(Constants.Router.ROUTER_PORT, 0);
     conf.setInt(Constants.Router.WEBAPP_PORT, 0);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = startGateway(conf);

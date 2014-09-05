@@ -216,7 +216,7 @@ public class NettyRouterPipelineTests {
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
-      cConf.setInt(Constants.Router.GATEWAY_PORT, 0);
+      cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
