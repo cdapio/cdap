@@ -48,6 +48,7 @@
     <module>TrafficAnalytics</module>
     <module>WordCount</module>
     <module>SparkPageRank</module>
+    <module>SparkKMeans</module>
   </modules>
 
   <repositories>
