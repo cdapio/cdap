@@ -37,21 +37,22 @@ import java.util.concurrent.TimeUnit;
 /**
  * Collects LevelDB-based dataset's metrics from levelDB.
  */
-// todo: consider extracting base class from HBaseDatasetStatsReporter and LevelDBDatasetStatsReporter
-public class LevelDBDatasetStatsReporter extends AbstractScheduledService {
+// todo: consider extracting base class from HBaseDatasetMetricsReporter and LevelDBDatasetMetricsReporter
+public class LevelDBDatasetMetricsReporter extends AbstractScheduledService implements DatasetMetricsReporter {
   private static final int BYTES_IN_MB = 1024 * 1024;
 
-  private volatile ScheduledExecutorService executor;
   private final int reportIntervalInSec;
 
   private final MetricsCollectionService metricsService;
   private final LevelDBOrderedTableService ldbService;
   private final DatasetNamespace userDsNamespace;
 
+  private ScheduledExecutorService executor;
+
   @Inject
-  public LevelDBDatasetStatsReporter(MetricsCollectionService metricsService,
-                                     LevelDBOrderedTableService ldbService,
-                                     CConfiguration conf) {
+  public LevelDBDatasetMetricsReporter(MetricsCollectionService metricsService,
+                                       LevelDBOrderedTableService ldbService,
+                                       CConfiguration conf) {
     this.metricsService = metricsService;
     this.ldbService = ldbService;
     this.reportIntervalInSec = conf.getInt(Constants.Metrics.Dataset.LEVELDB_STATS_REPORT_INTERVAL);
@@ -78,7 +79,7 @@ public class LevelDBDatasetStatsReporter extends AbstractScheduledService {
   @Override
   protected final ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("LevelDBDatasetStatsReporter-scheduler"));
+      Threads.createDaemonThreadFactory("LevelDBDatasetMetricsReporter-scheduler"));
     return executor;
   }
 

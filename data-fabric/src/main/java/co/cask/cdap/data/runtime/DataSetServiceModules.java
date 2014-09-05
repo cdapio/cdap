@@ -38,8 +38,8 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModul
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
-import co.cask.cdap.data2.metrics.HBaseDatasetStatsReporter;
-import co.cask.cdap.data2.metrics.LevelDBDatasetStatsReporter;
+import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
+import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.Maps;
@@ -135,7 +135,7 @@ public class DataSetServiceModules {
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
         Multibinder.newSetBinder(binder(), Service.class, Names.named("metricReporters"))
-          .addBinding().to(LevelDBDatasetStatsReporter.class);
+          .addBinding().to(LevelDBDatasetMetricsReporter.class);
 
         bind(DatasetService.class);
         expose(DatasetService.class);
@@ -178,7 +178,7 @@ public class DataSetServiceModules {
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
         Multibinder.newSetBinder(binder(), Service.class, Names.named("metricReporters"))
-          .addBinding().to(HBaseDatasetStatsReporter.class);
+          .addBinding().to(HBaseDatasetMetricsReporter.class);
 
         bind(DatasetService.class);
         expose(DatasetService.class);

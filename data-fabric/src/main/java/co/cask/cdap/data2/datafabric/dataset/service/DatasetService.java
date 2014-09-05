@@ -24,6 +24,7 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -31,10 +32,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -60,7 +59,7 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final DiscoveryService discoveryService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetOpExecutor opExecutorClient;
-  private final Set<Service> metricReporters;
+  private final Set<DatasetMetricsReporter> metricReporters;
   private Cancellable cancelDiscovery;
 
   private final DatasetTypeManager typeManager;
@@ -81,7 +80,7 @@ public class DatasetService extends AbstractExecutionThreadService {
                         DatasetOpExecutor opExecutorClient,
                         MDSDatasetsRegistry mdsDatasets,
                         DatasetExploreFacade datasetExploreFacade,
-                        @Named("metricReporters") Set<Service> metricReporters) throws Exception {
+                        Set<DatasetMetricsReporter> metricReporters) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
@@ -136,8 +135,8 @@ public class DatasetService extends AbstractExecutionThreadService {
         }
       }, MoreExecutors.sameThreadExecutor());
 
-    for (Service service : metricReporters) {
-      service.start();
+    for (DatasetMetricsReporter metricsReporter : metricReporters) {
+      metricsReporter.start();
     }
   }
 
@@ -209,8 +208,8 @@ public class DatasetService extends AbstractExecutionThreadService {
   protected void shutDown() throws Exception {
     LOG.info("Stopping DatasetService...");
 
-    for (Service service : metricReporters) {
-      service.stop();
+    for (DatasetMetricsReporter metricsReporter : metricReporters) {
+      metricsReporter.stop();
     }
 
     if (opExecutorServiceWatch != null) {

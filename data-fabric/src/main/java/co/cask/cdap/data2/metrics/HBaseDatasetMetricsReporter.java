@@ -40,9 +40,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Collects HBase-based dataset's metrics from HBase.
  */
-// todo: consider extracting base class from HBaseDatasetStatsReporter and LevelDBDatasetStatsReporter
-public class HBaseDatasetStatsReporter extends AbstractScheduledService {
-  private volatile ScheduledExecutorService executor;
+// todo: consider extracting base class from HBaseDatasetMetricsReporter and LevelDBDatasetMetricsReporter
+public class HBaseDatasetMetricsReporter extends AbstractScheduledService implements DatasetMetricsReporter {
   private final int reportIntervalInSec;
 
   private final MetricsCollectionService metricsService;
@@ -50,11 +49,12 @@ public class HBaseDatasetStatsReporter extends AbstractScheduledService {
   private final HBaseTableUtil hBaseTableUtil;
   private final DatasetNamespace userDsNamespace;
 
+  private ScheduledExecutorService executor;
   private HBaseAdmin hAdmin;
 
   @Inject
-  public HBaseDatasetStatsReporter(MetricsCollectionService metricsService, HBaseTableUtil hBaseTableUtil,
-                                   Configuration hConf, CConfiguration conf) {
+  public HBaseDatasetMetricsReporter(MetricsCollectionService metricsService, HBaseTableUtil hBaseTableUtil,
+                                     Configuration hConf, CConfiguration conf) {
     this.metricsService = metricsService;
     this.hBaseTableUtil = hBaseTableUtil;
     this.hConf = hConf;
@@ -90,7 +90,7 @@ public class HBaseDatasetStatsReporter extends AbstractScheduledService {
   @Override
   protected final ScheduledExecutorService executor() {
     executor = Executors.newSingleThreadScheduledExecutor(
-      Threads.createDaemonThreadFactory("HBaseDatasetStatsReporter-scheduler"));
+      Threads.createDaemonThreadFactory("HBaseDatasetMetricsReporter-scheduler"));
     return executor;
   }
 
