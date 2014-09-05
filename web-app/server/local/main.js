@@ -15,9 +15,6 @@ var util = require('util'),
 var WebAppServer = require('../common/server'),
     configParser = require('../common/configParser');
 
-// Default port for the Dashboard.
-var DEFAULT_BIND_PORT = 9999;
-
 /**
  * Set environment.
  */
@@ -30,7 +27,7 @@ var logLevel = 'INFO';
 var devServer;
 
 var DevServer = function() {
-  DevServer.super_.call(this, __dirname, logLevel);
+  DevServer.super_.call(this, __dirname, logLevel, 'Development UI');
   this.extractConfig()
       .then(function () {
         this.setUpServer();
@@ -41,6 +38,11 @@ util.inherits(DevServer, WebAppServer);
 
 DevServer.prototype.extractConfig = configParser.extractConfig;
 
+DevServer.prototype.setUpServer = function setUpServer() {
+  this.setAttrs();
+  this.Api.configure(this.config, this.apiKey || null);
+  this.launchServer();
+}
 DevServer.prototype.setAttrs = function() {
   if (this.config['dashboard.https.enabled'] === "true") {
     this.lib = https;
@@ -55,11 +57,6 @@ DevServer.prototype.setAttrs = function() {
   this.configureExpress();
 }
 
-DevServer.prototype.setUpServer = function setUpServer() {
-  this.setAttrs();
-  this.Api.configure(this.config, this.apiKey || null);
-  this.launchServer();
-}
 
 DevServer.prototype.launchServer = function() {
    var key,
@@ -73,7 +70,7 @@ DevServer.prototype.launchServer = function() {
 DevServer.prototype.configureSSL = function () {
   var options = {};
   if (this.config['dashboard.https.enabled'] === "true") {
-    key = this.config['dashboard.ssl.key'];
+    key = this.config['dashboard.ssl.key'],
     cert = this.config['dashboard.ssl.cert'];
     options = {
       key: fs.readFileSync(key),
@@ -88,10 +85,6 @@ DevServer.prototype.configureSSL = function () {
 
 DevServer.prototype.startServer = function () {
   this.bindRoutes();
-
-  if (this.config['dashboard.https.enabled'] === "true") {
-    this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
-  }
 
   this.server.listen(this.config['dashboard.bind.port']);
 

@@ -25,9 +25,9 @@ var Api = require('../common/api'),
  * @param {string} logLevel log level {TRACE|INFO|ERROR}
  * @param {boolean} https whether to use https for requests.
  */
-var WebAppServer = function(dirPath, logLevel, httpsEnabled) {
+var WebAppServer = function(dirPath, logLevel, httpsEnabled, loggerType) {
   this.dirPath = dirPath;
-  this.logger = this.getLogger();
+  this.logger = this.getLogger('console', loggerType);
   this.isDefaultConfig = false;
   this.LOG_LEVEL = logLevel;
 };
