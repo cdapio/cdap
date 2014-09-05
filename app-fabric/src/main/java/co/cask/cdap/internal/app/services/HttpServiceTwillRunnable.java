@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.services;
 
+import com.continuuity.tephra.TransactionSystemClient;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -57,6 +58,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -95,8 +98,8 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private NettyHttpService service;
 
   // The following two fields are for tracking GC'ed suppliers of handler and be able to call destroy on them.
-  private Map<Reference<? extends Supplier<HttpServiceHandler>>, HttpServiceHandler> handlerReferences;
-  private ReferenceQueue<Supplier<HttpServiceHandler>> handlerReferenceQueue;
+  private Map<Reference<? extends Supplier<HandlerContextPair>>, HandlerContextPair> handlerReferences;
+  private ReferenceQueue<Supplier<HandlerContextPair>> handlerReferenceQueue;
 
   private Program program;
   private RunId runId;
@@ -107,6 +110,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private CConfiguration cConfiguration;
   private ProgramServiceDiscovery programServiceDiscovery;
   private DiscoveryServiceClient discoveryServiceClient;
+  private TransactionSystemClient transactionSystemClient;
 
   /**
    * Instantiates this class with a name which will be used when this service is announced
@@ -133,7 +137,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
                                   MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                   CConfiguration cConfiguration, String metricsContext,
                                   ProgramServiceDiscovery programServiceDiscovery,
-                                  DiscoveryServiceClient discoveryServiceClient) {
+                                  DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
     this.programClassLoader = programClassLoader;
     this.program = program;
     this.runId = runId;
@@ -143,6 +147,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     this.metricsContext = metricsContext;
     this.programServiceDiscovery = programServiceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.transactionSystemClient = txClient;
   }
 
   /**
@@ -175,8 +180,13 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
 
       // Go through all non-cleanup'ed handler and call destroy() upon them
       // At this point, there should be no call to any handler method, hence it's safe to call from this thread
-      for (HttpServiceHandler handler : handlerReferences.values()) {
-        destroyHandler(handler);
+      for (HandlerContextPair handlerContextPair : handlerReferences.values()) {
+        try {
+          handlerContextPair.close();
+        } catch (IOException e) {
+          LOG.error("Exception raised when closing the HttpServiceHandler of class {} and it's context.",
+                    handlerContextPair.getClass(), e);
+        }
       }
     }
   }
@@ -226,7 +236,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     super.initialize(context);
 
     handlerReferences = Maps.newConcurrentMap();
-    handlerReferenceQueue = new ReferenceQueue<Supplier<HttpServiceHandler>>();
+    handlerReferenceQueue = new ReferenceQueue<Supplier<HandlerContextPair>>();
 
     Map<String, String> runnableArgs = Maps.newHashMap(context.getSpecification().getConfigs());
     appName = runnableArgs.get(CONF_APP);
@@ -244,17 +254,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         Class<?> handlerClass = programClassLoader.loadClass(handlerNames.get(i));
         @SuppressWarnings("unchecked")
         TypeToken<HttpServiceHandler> type = TypeToken.of((Class<HttpServiceHandler>) handlerClass);
-
-      DefaultHttpServiceContext httpServiceContext = new DefaultHttpServiceContext(specs.get(i),
-                                                                                   context.getApplicationArguments(),
-                                                                                   program, runId,
-                                                                                   datasets, metricsContext,
-                                                                                   metricsCollectionService,
-                                                                                   datasetFramework,
-                                                                                   cConfiguration,
-                                                                                   programServiceDiscovery,
-                                                                                   discoveryServiceClient);
-        delegatorContexts.add(new HandlerDelegatorContext(type, instantiatorFactory, httpServiceContext));
+        delegatorContexts.add(new HandlerDelegatorContext(type, instantiatorFactory, specs.get(i), context));
       } catch (Exception e) {
         LOG.error("Could not initialize HTTP Service");
         Throwables.propagate(e);
@@ -284,11 +284,16 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     return new TimerTask() {
       @Override
       public void run() {
-        Reference<? extends Supplier<HttpServiceHandler>> ref = handlerReferenceQueue.poll();
+        Reference<? extends Supplier<HandlerContextPair>> ref = handlerReferenceQueue.poll();
         while (ref != null) {
-          HttpServiceHandler handler = handlerReferences.remove(ref);
+          HandlerContextPair handler = handlerReferences.remove(ref);
           if (handler != null) {
-            destroyHandler(handler);
+            try {
+              handler.close();
+            } catch (IOException e) {
+              LOG.error("Exception raised when closing the HttpServiceHandler of class {} and it's context.",
+                        handler.getClass(), e);
+            }
           }
           ref = handlerReferenceQueue.poll();
         }
@@ -339,32 +344,90 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
       .build();
   }
 
+  private final class HandlerContextPair implements Closeable {
+    private final HttpServiceHandler handler;
+    private final DefaultHttpServiceContext context;
+
+    private HandlerContextPair(HttpServiceHandler handler, DefaultHttpServiceContext context) {
+      this.handler = handler;
+      this.context = context;
+    }
+
+
+    private DefaultHttpServiceContext getContext() {
+      return context;
+    }
+
+    private HttpServiceHandler getHandler() {
+      return handler;
+    }
+
+    @Override
+    public void close() throws IOException {
+      destroyHandler(handler);
+      context.close();
+    }
+  }
+
   private final class HandlerDelegatorContext implements DelegatorContext<HttpServiceHandler> {
 
     private final InstantiatorFactory instantiatorFactory;
-    private final ThreadLocal<Supplier<HttpServiceHandler>> handlerThreadLocal;
-    private final HttpServiceContext serviceContext;
+    private final ThreadLocal<Supplier<HandlerContextPair>> handlerThreadLocal;
     private final TypeToken<HttpServiceHandler> handlerType;
+    private final HttpServiceSpecification spec;
+    private final TwillContext context;
 
     private HandlerDelegatorContext(TypeToken<HttpServiceHandler> handlerType,
-                                    InstantiatorFactory instantiatorFactory, HttpServiceContext serviceContext) {
+                                    InstantiatorFactory instantiatorFactory, HttpServiceSpecification spec,
+                                    TwillContext context) {
       this.handlerType = handlerType;
       this.instantiatorFactory = instantiatorFactory;
-      this.serviceContext = serviceContext;
-      this.handlerThreadLocal = new ThreadLocal<Supplier<HttpServiceHandler>>();
+      this.handlerThreadLocal = new ThreadLocal<Supplier<HandlerContextPair>>();
+      this.spec = spec;
+      this.context = context;
     }
 
     @Override
     public HttpServiceHandler getHandler() {
-      Supplier<HttpServiceHandler> supplier = handlerThreadLocal.get();
+      Supplier<HandlerContextPair> supplier = handlerThreadLocal.get();
       if (supplier != null) {
-        return supplier.get();
+        return supplier.get().getHandler();
       }
+      return createHandlerContextPair().getHandler();
+    }
+
+    @Override
+    public DefaultHttpServiceContext getServiceContext() {
+      Supplier<HandlerContextPair> supplier = handlerThreadLocal.get();
+      if (supplier != null) {
+        return supplier.get().getContext();
+      }
+      return createHandlerContextPair().getContext();
+    }
+
+    /**
+     * If either a {@link HttpServiceHandler} or a {@link DefaultHttpServiceContext} is requested and they aren't
+     * set in the ThreadLocal, then create both and set to the ThreadLocal.
+     * @return the HandlerContextPair created.
+     */
+    private HandlerContextPair createHandlerContextPair() {
+      DefaultHttpServiceContext httpServiceContext = new DefaultHttpServiceContext(spec,
+                                                                                   context.getApplicationArguments(),
+                                                                                   program, runId,
+                                                                                   datasets, metricsContext,
+                                                                                   metricsCollectionService,
+                                                                                   datasetFramework,
+                                                                                   cConfiguration,
+                                                                                   programServiceDiscovery,
+                                                                                   discoveryServiceClient,
+                                                                                   transactionSystemClient);
+
       HttpServiceHandler handler = instantiatorFactory.get(handlerType).create();
       Reflections.visit(handler, handlerType, new MetricsFieldSetter(metrics),
-                                              new DataSetFieldSetter(serviceContext));
-      initHandler(handler, serviceContext);
-      supplier = Suppliers.ofInstance(handler);
+                        new DataSetFieldSetter(httpServiceContext));
+      initHandler(handler, httpServiceContext);
+      HandlerContextPair handlerContextPair = new HandlerContextPair(handler, httpServiceContext);
+      Supplier<HandlerContextPair> supplier = Suppliers.ofInstance(handlerContextPair);
 
       // We use GC of the supplier as a signal for us to know that a thread is gone
       // The supplier is set into the thread local, which will get GC'ed when the thread is gone.
@@ -372,15 +435,10 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
       // (in the handlerReferences map), it won't block GC of the supplier instance.
       // We can use the weak reference, which retrieved through polling the ReferenceQueue,
       // to get back the handler and call destroy() on it.
-      handlerReferences.put(new WeakReference<Supplier<HttpServiceHandler>>(supplier, handlerReferenceQueue), handler);
-
+      handlerReferences.put(new WeakReference<Supplier<HandlerContextPair>>(supplier, handlerReferenceQueue),
+                            handlerContextPair);
       handlerThreadLocal.set(supplier);
-      return handler;
-    }
-
-    @Override
-    public HttpServiceContext getServiceContext() {
-      return serviceContext;
+      return handlerContextPair;
     }
 
     TypeToken<HttpServiceHandler> getHandlerType() {

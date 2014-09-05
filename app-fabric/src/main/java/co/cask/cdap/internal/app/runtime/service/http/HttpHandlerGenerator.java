@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionFailureException;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -29,20 +32,18 @@ import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.AnnotationNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
@@ -105,10 +106,11 @@ final class HttpHandlerGenerator {
     }
 
     generateConstructor(delegateType, classWriter);
+    generateLogger(classType, classWriter);
 
     ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
     // DEBUG block. Uncomment for debug
-//    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
     return classDefinition;
   }
@@ -204,6 +206,22 @@ final class HttpHandlerGenerator {
     mg.loadArg(0);
     mg.invokeConstructor(Type.getType(AbstractHttpHandlerDelegator.class),
                          Methods.getMethod(void.class, "<init>", DelegatorContext.class));
+    mg.returnValue();
+    mg.endMethod();
+  }
+
+
+  /**
+   * Generates a static Logger field for logging and a static initialization block to initialize the logger.
+   */
+  private void generateLogger(Type classType, ClassWriter classWriter) {
+    classWriter.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL, "LOG",
+                           Type.getType(Logger.class).getDescriptor(), null, null);
+    Method init = Methods.getMethod(void.class, "<clinit>");
+    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_STATIC, init, null, null, classWriter);
+    mg.visitLdcInsn(classType);
+    mg.invokeStatic(Type.getType(LoggerFactory.class), Methods.getMethod(Logger.class, "getLogger", Class.class));
+    mg.putStatic(classType, "LOG", Type.getType(Logger.class));
     mg.returnValue();
     mg.endMethod();
   }
@@ -418,6 +436,42 @@ final class HttpHandlerGenerator {
      * </pre>
      */
     private void generateDelegateMethodBody(GeneratorAdapter mg, Method method) {
+      Type txContextType = Type.getType(TransactionContext.class);
+      Type txFailureExceptionType = Type.getType(TransactionFailureException.class);
+      Type loggerType = Type.getType(Logger.class);
+      Type throwableType = Type.getType(Throwable.class);
+
+      Label txTryBegin = mg.newLabel();
+      Label txTryEnd = mg.newLabel();
+      Label txCatch = mg.newLabel();
+      Label txFinish = mg.newLabel();
+
+      Label handlerTryBegin = mg.newLabel();
+      Label handlerTryEnd = mg.newLabel();
+      Label handlerCatch = mg.newLabel();
+      Label handlerFinish = mg.newLabel();
+
+      mg.visitTryCatchBlock(txTryBegin, txTryEnd, txCatch, txFailureExceptionType.getInternalName());
+      mg.visitTryCatchBlock(handlerTryBegin, handlerTryEnd, handlerCatch, throwableType.getInternalName());
+
+      // TransactionContext txContext = getTransactionContext();
+      int txContext = mg.newLocal(txContextType);
+      mg.loadThis();
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(TransactionContext.class, "getTransactionContext"));
+      mg.storeLocal(txContext, txContextType);
+
+      // try {  // Outer try for transaction failure
+      mg.mark(txTryBegin);
+
+      // txContext.start();
+      mg.loadLocal(txContext, txContextType);
+      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "start"));
+
+      // try { // Inner try for user handler failure
+      mg.mark(handlerTryBegin);
+
+      // this.getHandler(wrapRequest(request), wrapResponder(responder), ...);
       mg.loadThis();
       mg.invokeVirtual(classType,
                        Methods.getMethod(HttpServiceHandler.class, "getHandler"));
@@ -438,6 +492,35 @@ final class HttpHandlerGenerator {
       }
 
       mg.invokeVirtual(Type.getType(delegateType.getRawType()), method);
+
+      mg.loadLocal(txContext, txContextType);
+      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
+
+      // } // end of inner try
+      mg.mark(handlerTryEnd);
+      mg.goTo(handlerFinish);
+
+      // } catch (Throwable t) {  // inner try-catch
+      mg.mark(handlerCatch);
+      int throwable = mg.newLocal(throwableType);
+      mg.storeLocal(throwable);
+      // TODO: LOG the exception
+
+      mg.mark(handlerFinish);
+      mg.goTo(txTryEnd);
+
+      // } // end of outer try
+      mg.mark(txTryEnd);
+      mg.goTo(txFinish);
+
+      // } catch (TransactionFailureException e) {
+      mg.mark(txCatch);
+      int txFailureException = mg.newLocal(txFailureExceptionType);
+      mg.storeLocal(txFailureException, txFailureExceptionType);
+      // TODO: LOG the exception
+
+      mg.mark(txFinish);
+
       mg.returnValue();
       mg.endMethod();
     }
