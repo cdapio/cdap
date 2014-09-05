@@ -31,8 +31,9 @@ import java.util.List;
 public interface RecordScannable<RECORD> extends Closeable {
 
   /**
-   * This method is needed because Java does not remember the RECORD type parameter at runtime.
-   * @return the schema type, that is RECORD.
+   * The type of records that the dataset exposes as a schema. The schema will be derived from the type
+   * using reflection.
+   * @return the schema type.
    */
   Type getRecordType();
 

@@ -14,18 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.service.http.HttpServiceContext;
+import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 /**
- * Context for custom Service workers.
+ * Context object for carrying context information used by generated handler delegator classes.
+ *
+ * @param <T> Type of the user {@link HttpServiceHandler}
  */
-public interface ServiceWorkerContext extends RuntimeContext {
+public interface DelegatorContext<T extends HttpServiceHandler> {
 
   /**
-   * Execute a set of operations on datasets via a {@link TxRunnable} that are committed as a single transaction.
-   * @param runnable
+   * Returns an instance of the user service handler.
    */
-  void execute(TxRunnable runnable);
+  T getHandler();
+
+  /**
+   * Returns an instance of the service context.
+   */
+  HttpServiceContext getServiceContext();
 }

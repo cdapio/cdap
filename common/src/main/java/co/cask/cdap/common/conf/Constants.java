@@ -349,6 +349,8 @@ public final class Constants {
     public static final class Dataset {
       /** Defines reporting interval for HBase stats, in seconds */
       public static final String HBASE_STATS_REPORT_INTERVAL = "metrics.dataset.hbase.stats.report.interval";
+      /** Defines reporting interval for LevelDB stats, in seconds */
+      public static final String LEVELDB_STATS_REPORT_INTERVAL = "metrics.dataset.leveldb.stats.report.interval";
     }
   }
 
