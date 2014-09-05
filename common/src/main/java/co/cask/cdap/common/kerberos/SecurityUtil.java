@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,6 +53,7 @@ public final class SecurityUtil {
     }
 
     Preconditions.checkArgument(keyTabFile != null, "Kerberos keytab file is required");
+    //noinspection ConstantConditions
     Preconditions.checkArgument(keyTabFile.exists(),
                                 "Kerberos keytab file does not exist: " + keyTabFile.getAbsolutePath());
     Preconditions.checkArgument(keyTabFile.isFile(),
