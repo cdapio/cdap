@@ -153,7 +153,7 @@ public class GrantAccessToken {
     json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
                      ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE_BODY);
     json.addProperty(ExternalAuthenticationServer.ResponseFields.EXPIRES_IN,
-                     TimeUnit.MILLISECONDS.convert(tokenValidity, TimeUnit.SECONDS));
+                     TimeUnit.SECONDS.convert(tokenValidity, TimeUnit.MILLISECONDS));
 
     response.getOutputStream().print(json.toString());
     response.setStatus(HttpServletResponse.SC_OK);

@@ -27,10 +27,12 @@ import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClients;
+import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,6 +66,11 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
   private final long maxTokenExpiration;
 
   public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper) {
+    this(conf, codec, zookeeper,
+         ZKACLs.fromSaslPrincipalsAllowAll(conf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL)));
+  }
+
+  public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper, List<ACL> acls) {
     super(conf);
     this.parentZNode = conf.get(Constants.Security.DIST_KEY_PARENT_ZNODE);
     this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION);
@@ -71,9 +78,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       conf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION),
       conf.getLong(Constants.Security.TOKEN_EXPIRATION));
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
-    this.keyCache = new SharedResourceCache<KeyIdentifier>(
-      zookeeper, codec, "/keys", ZKACLs.fromSaslPrincipalsAllowAll(
-      conf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL)));
+    this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys", acls);
   }
 
   @Override

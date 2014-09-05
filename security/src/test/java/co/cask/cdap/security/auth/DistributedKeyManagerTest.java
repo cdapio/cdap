@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.zookeeper.ZooDefs;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -144,7 +145,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
 
   private static class WaitableDistributedKeyManager extends DistributedKeyManager {
     public WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zk) {
-      super(conf, codec, zk);
+      super(conf, codec, zk, Lists.newArrayList(ZooDefs.Ids.OPEN_ACL_UNSAFE));
     }
 
     public void waitForLeader(long duration, TimeUnit unit) throws InterruptedException, TimeoutException {
