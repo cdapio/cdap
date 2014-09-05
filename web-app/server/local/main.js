@@ -7,6 +7,8 @@ var util = require("util"),
   xml2js = require('xml2js'),
   sys = require('sys'),
   argv = require('optimist').argv,
+  http = require('http'),
+  https = require('https'),
   nock = require('nock');
 
 var WebAppServer = require('../common/server');
@@ -26,16 +28,18 @@ var logLevel = 'INFO';
 
 var DevServer = function() {
   var self = this;
+  DevServer.super_.call(self, __dirname, logLevel, "Developement UI");
   this.getConfig(function(version) {
     if (self.config['dashboard.https.enabled'] === "true") {
-      DevServer.super_.call(self, __dirname, logLevel, true);
+      this.lib = https;
+      this.httpsEnabled = true;
     } else {
-      DevServer.super_.call(self, __dirname, logLevel, false);
+      this.lib = http;
+      this.httpsEnabled = false;
     }
 
     self.cookieName = 'continuuity-local-edition';
     self.secret = 'local-edition-secret';
-    self.logger = self.getLogger();
     self.setCookieSession(self.cookieName, self.secret);
     self.configureExpress();
   });
@@ -80,9 +84,13 @@ DevServer.prototype.start = function() {
 
   this.getConfig(function(version) {
     if (this.config['dashboard.https.enabled'] === "true") {
+      this.lib = https;
+      this.httpsEnabled = true;
       this.server = this.getHttpsServerInstance(this.app, this.config['dashboard.ssl.key'],
                                                 this.config['dashboard.ssl.cert']);
     } else {
+      this.lib = http;
+      this.httpsEnabled = false;
       this.server = this.getServerInstance(this.app);
     }
 
@@ -123,8 +131,7 @@ devServer.start();
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  //devServer.logger.info('Uncaught Exception', err);
-  console.log(err);
+  console.error('Uncaught Exception', err);  
 });
 
 /**
