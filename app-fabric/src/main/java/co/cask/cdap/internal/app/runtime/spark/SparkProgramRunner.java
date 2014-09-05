@@ -384,7 +384,8 @@ public class SparkProgramRunner implements ProgramRunner {
     Id.Program programId = context.getProgram().getId();
 
     Location updatedJar = locationFactory.create(String.format("%s.%s.%s.%s.%s.jar",
-                                                               ProgramType.SPARK.name().toLowerCase(), programId.getAccountId(),
+                                                               ProgramType.SPARK.name().toLowerCase(),
+                                                               programId.getAccountId(),
                                                                programId.getApplicationId(), programId.getId(),
                                                                context.getRunId().getId()));
 
