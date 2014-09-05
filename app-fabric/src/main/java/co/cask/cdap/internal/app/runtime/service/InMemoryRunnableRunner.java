@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -138,8 +138,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
           return dsService.register(new Discoverable() {
             @Override
             public String getName() {
-              return String.format("service.%s.%s.%s.%s", program.getAccountId(),
-                                   program.getApplicationId(), program.getName(), discoverable.getName());
+              return String.format("service.%s.%s.%s", program.getAccountId(),
+                                   program.getApplicationId(), program.getName());
             }
 
             @Override

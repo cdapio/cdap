@@ -20,7 +20,10 @@ define([], function () {
 
 			this.set('elements.App', Em.ArrayProxy.create({content: []}));
 			this.clearTriggers(true);
-
+            setTimeout(function() {
+                $('#nav-overview').addClass('active');
+            }, C.EMBEDDABLE_DELAY);
+            
 			this.set('model', Em.Object.create({
 				addMetricName: function (metric) {
 					this.get('metricNames')[metric] = 1;
@@ -91,6 +94,7 @@ define([], function () {
 		unload: function () {
 
 			clearInterval(this.interval);
+            $('#nav-overview').removeClass('active');
 			this.set('elements', Em.Object.create());
 			this.set('counts', Em.Object.create());
 

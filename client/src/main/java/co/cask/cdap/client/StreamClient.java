@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.StreamRecord;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -58,6 +59,22 @@ public class StreamClient {
   public StreamClient(ClientConfig config) {
     this.config = config;
     this.restClient = RESTClient.create(config);
+  }
+
+  /**
+   * Gets the configuration of a stream.
+   *
+   * @param streamId ID of the stream
+   * @throws IOException if a network error occurred
+   * @throws StreamNotFoundException if the stream was not found
+   */
+  public StreamProperties getConfig(String streamId) throws IOException, StreamNotFoundException {
+    URL url = config.resolveURL(String.format("streams/%s/info", streamId));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new StreamNotFoundException(streamId);
+    }
+    return ObjectResponse.fromJsonBody(response, StreamProperties.class).getResponseObject();
   }
 
   /**

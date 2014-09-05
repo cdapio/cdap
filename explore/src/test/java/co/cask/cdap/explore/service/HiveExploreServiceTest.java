@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -344,7 +344,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                            new TableInfo.ColumnInfo("value", "struct<ints:array<int>,name:string>",
                                                                     null)),
                           tableInfo.getLocation(), DatasetInputFormat.class.getName(),
-                          "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat", false, -1,
+                          "org.apache.hadoop.hive.ql.io.HivePassThroughOutputFormat", false, -1,
                           DatasetSerDe.class.getName(),
                           ImmutableMap.of("serialization.format", "1", "explore.dataset.name", "my_table"),
                           true
@@ -362,7 +362,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                            new TableInfo.ColumnInfo("value", "struct<ints:array<int>,name:string>",
                                                                     null)),
                           tableInfo.getLocation(), DatasetInputFormat.class.getName(),
-                          "org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat", false, -1,
+                          "org.apache.hadoop.hive.ql.io.HivePassThroughOutputFormat", false, -1,
                           DatasetSerDe.class.getName(),
                           ImmutableMap.of("serialization.format", "1", "explore.dataset.name", "my_table"),
                           true

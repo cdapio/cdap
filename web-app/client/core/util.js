@@ -965,6 +965,71 @@ define([], function () {
     },
 
     /**
+     * Returns true if the inputString represents a integer (mathematical definition) value.
+     * Decimal is allowed, for instance '1.0' or '2.0' both return true.
+     * '2.1' would return false, because it does not represent an integer value.
+     *
+     **/
+    isInteger: function (inputString) {
+      if (parseFloat(inputString) % 1 !== 0) {
+        return false;
+      }
+      return (/^[0-9\.]+$/i.test(inputString));
+    },
+
+    /**
+     * Handles keypresses when changing the number of instances requested for programs.
+     * @param {btn} the jquery object, representing the button to disable, enable depending on input.
+     * @param {inp} the input from the user, requesting a new number of instances.
+     * @param {prevVal} the currently number of instances requested.
+     * @return boolean, indicating whether or not to propogate the key-press further.
+     *
+     **/
+    handleInstancesKeyPress: function (btn, inp, prevVal) {
+      if (parseInt(inp, 10) != prevVal && C.Util.isInteger(inp)){
+          btn.attr("disabled", false);
+      } else {
+          btn.attr("disabled", true);
+      }
+      return true;
+    },
+
+    /**
+     * Because the number of a runnable's instances is changed from multiple controllers, the logic to check validity
+     * is delegated to this function, to avoid duplicate code within each of those controllers.
+     * @param {numRequestedString} the number of instances which a user is now requesting for the runnable.
+     * @param {curRequested} the number of instances already requested for the runnable.
+     * @param {min} the minimum number of instances the runnable allows.
+     * @param {max} the max number of instances the runnable allows.
+     * @return false if the number requested is valid, an error message (string) otherwise.
+     */
+    isInvalidNumInstances: function (numRequestedString, min, max) {
+      //  default values of [1,100] for [min,max].
+      if (typeof(min)==='undefined') min = 1;
+      if (typeof(max)==='undefined') max = 100;
+      var numRequested = parseFloat(numRequestedString);
+
+      if (min == max) {
+        return 'You can not change the number of instances for this runnable. Its minimum and maximum instances '
+                + 'allowed are both set to ' + min;
+      }
+      // Restrict input to numbers
+      if( !this.isInteger(numRequestedString) || isNaN(numRequested)) {
+        return 'Please select a valid integer (between 1 and 100).';
+      }
+      if (numRequested < 1 || numRequested > 100) {
+        return 'Please select an instance count (between 1 and 100)';
+      }
+      if (numRequested < min) {
+        return 'The minimum number of instances this runnable allows is ' + min;
+      }
+      if (numRequested > max) {
+        return 'The maximum number of instances this runnable allows is ' + max;
+      }
+      return false;
+    },
+
+    /**
      * Gets the function name by calling toString.
      */
     getFnName: function(fn) {

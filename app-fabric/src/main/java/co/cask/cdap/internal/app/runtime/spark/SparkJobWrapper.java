@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,7 +69,9 @@ public class SparkJobWrapper {
   public SparkJobWrapper(String[] args) {
     arguments = validateArgs(args);
     try {
-      userJobClass = Class.forName(arguments[0]);
+      // get the Spark job main class with the custom classloader created by spark which has the program and
+      // dependency jar.
+      userJobClass = Class.forName(arguments[0], true, Thread.currentThread().getContextClassLoader());
     } catch (ClassNotFoundException cnfe) {
       LOG.warn("Unable to find the user job class: {}", arguments[0], cnfe);
       throw Throwables.propagate(cnfe);

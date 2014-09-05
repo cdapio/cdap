@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,8 @@ import co.cask.cdap.logging.save.LogSaverTableUtil;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -46,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -127,7 +130,8 @@ public class LogCleanupTest {
                                         createFile(location));
     }
 
-    Assert.assertEquals(toDelete.size() + notDelete.size(), fileMetaDataManager.listFiles(dummyContext).size());
+    Assert.assertEquals(locationListsToString(toDelete, notDelete),
+      toDelete.size() + notDelete.size(), fileMetaDataManager.listFiles(dummyContext).size());
 
     LogCleanup logCleanup = new LogCleanup(fileMetaDataManager, baseDir, RETENTION_DURATION_MS);
     logCleanup.run();
@@ -240,6 +244,7 @@ public class LogCleanupTest {
 
   private Location createFile(Location path) throws Exception {
     Location parent = Locations.getParent(path);
+    Assert.assertNotNull(parent);
     parent.mkdirs();
 
     path.createNew();
@@ -251,4 +256,17 @@ public class LogCleanupTest {
     path.mkdirs();
     return path;
   }
+
+  private String locationListsToString(List<Location> list1, List<Location> list2) {
+    return ImmutableList.of(Lists.transform(list1, LOCATION_URI_FUNCTION),
+                            Lists.transform(list2, LOCATION_URI_FUNCTION)).toString();
+  }
+
+  private static final Function<Location, URI> LOCATION_URI_FUNCTION =
+    new Function<Location, URI>() {
+      @Override
+      public URI apply(Location input) {
+        return input.toURI();
+      }
+    };
 }

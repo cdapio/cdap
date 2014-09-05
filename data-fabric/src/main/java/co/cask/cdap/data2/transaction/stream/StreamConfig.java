@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
-import co.cask.cdap.proto.StreamProperties;
 import com.google.common.base.Objects;
 import org.apache.twill.filesystem.Location;
 

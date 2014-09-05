@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,8 +36,7 @@ public interface ServiceManager {
    * Used to discover services inside a given application and twill-service.
    * @param applicationId Application Name.
    * @param serviceId Service Name.
-   * @param serviceName Announced Name.
    * @return ServiceDiscovered
    */
-  ServiceDiscovered discover(String applicationId, String serviceId, String serviceName);
+  ServiceDiscovered discover(String applicationId, String serviceId);
 }

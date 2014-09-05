@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,7 @@ final class SparkSpecificationCodec extends AbstractSpecificationCodec<SparkSpec
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
+    jsonObj.add("mainClassName", new JsonPrimitive(src.getMainClassName()));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
 
     return jsonObj;
@@ -53,8 +54,9 @@ final class SparkSpecificationCodec extends AbstractSpecificationCodec<SparkSpec
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
+    String mainClassName = jsonObj.get("mainClassName").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
-    return new DefaultSparkSpecification(className, name, description, properties);
+    return new DefaultSparkSpecification(className, name, description, mainClassName, properties);
   }
 }

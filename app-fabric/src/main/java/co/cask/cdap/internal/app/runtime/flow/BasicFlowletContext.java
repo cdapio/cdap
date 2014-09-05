@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,10 +22,10 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.metrics.FlowletMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
@@ -33,8 +33,8 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.ServiceDiscovered;
 
-import java.io.Closeable;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Internal implementation of {@link FlowletContext}.
@@ -53,13 +53,18 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private final Arguments runtimeArguments;
   private final ProgramServiceDiscovery serviceDiscovery;
 
-  private final MetricsCollector systemMetricsCollector;
-
-  BasicFlowletContext(Program program, String flowletId, int instanceId, RunId runId, int instanceCount,
-                      Map<String, Closeable> datasets, Arguments runtimeArguments,
-                      FlowletSpecification flowletSpec, MetricsCollectionService metricsCollectionService,
-                      ProgramServiceDiscovery serviceDiscovery) {
-    super(program, runId, datasets, metricsCollectionService);
+  BasicFlowletContext(Program program, String flowletId,
+                      int instanceId, RunId runId,
+                      int instanceCount, Set<String> datasets,
+                      Arguments runtimeArguments, FlowletSpecification flowletSpec,
+                      MetricsCollectionService metricsCollectionService,
+                      ProgramServiceDiscovery serviceDiscovery,
+                      DatasetFramework dsFramework,
+                      CConfiguration conf) {
+    super(program, runId, datasets,
+          getMetricContext(program, flowletId, instanceId),
+          metricsCollectionService,
+          dsFramework, conf);
     this.accountId = program.getAccountId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
@@ -69,8 +74,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.runtimeArguments = runtimeArguments;
     this.flowletSpec = flowletSpec;
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
-    this.systemMetricsCollector = getMetricsCollector(MetricsScope.REACTOR,
-                                                      metricsCollectionService, getMetricContext());
     this.serviceDiscovery = serviceDiscovery;
   }
 
@@ -112,10 +115,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 
-  public MetricsCollector getSystemMetrics() {
-    return systemMetricsCollector;
-  }
-
   public void setInstanceCount(int count) {
     instanceCount = count;
   }
@@ -146,11 +145,12 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     return groupId;
   }
 
-  public String getMetricContext() {
+  private static String getMetricContext(Program program, String flowletId, int instanceId) {
     return String.format("%s.f.%s.%s.%d",
-                         getApplicationId(),
-                         getFlowId(),
-                         getFlowletId(),
-                         getInstanceId());
+                         program.getApplicationId(),
+                         // flow name
+                         program.getName(),
+                         flowletId,
+                         instanceId);
   }
 }

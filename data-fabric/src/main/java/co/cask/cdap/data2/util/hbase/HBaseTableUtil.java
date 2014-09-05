@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -398,6 +398,49 @@ public abstract class HBaseTableUtil {
   public abstract Class<? extends Coprocessor> getQueueRegionObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getIncrementHandlerClassForVersion();
+
+  /**
+   * Collects HBase table stats
+   * @param admin instance of {@link HBaseAdmin} to communicate with HBase
+   * @return map of table name -> table stats
+   * @throws IOException
+   */
+  public abstract Map<String, TableStats> getTableStats(HBaseAdmin admin) throws IOException;
+
+  /**
+   * Carries information about table stats
+   */
+  public static final class TableStats {
+    private int storeFileSizeMB = 0;
+    private int memStoreSizeMB = 0;
+
+    public TableStats(int storeFileSizeMB, int memStoreSizeMB) {
+      this.storeFileSizeMB = storeFileSizeMB;
+      this.memStoreSizeMB = memStoreSizeMB;
+    }
+
+    public int getStoreFileSizeMB() {
+      return storeFileSizeMB;
+    }
+
+    public int getMemStoreSizeMB() {
+      return memStoreSizeMB;
+    }
+
+    void incStoreFileSizeMB(int deltaMB) {
+      this.storeFileSizeMB += deltaMB;
+    }
+
+    void incMemStoreSizeMB(int deltaMB) {
+      this.memStoreSizeMB += deltaMB;
+    }
+
+    public int getTotalSizeMB() {
+      // both memstore and size on fs contribute to size of the dataset, otherwise user will be confused with zeroes
+      // in dataset size even after something was written...
+      return storeFileSizeMB + memStoreSizeMB;
+    }
+  }
 
   /**
    * Carries information about coprocessor information.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,12 +43,16 @@ abstract class AbstractSparkContext implements SparkContext {
   private final long logicalStartTime;
   private final SparkSpecification spec;
   private final Arguments runtimeArguments;
+  final BasicSparkContext basicSparkContext;
 
   public AbstractSparkContext(long logicalStartTime, SparkSpecification spec, Arguments runtimeArguments) {
     this.logicalStartTime = logicalStartTime;
     this.spec = spec;
     this.runtimeArguments = runtimeArguments;
-    this.hConf = loadHConf();
+    hConf = loadHConf();
+    // Create an instance of BasicSparkContext from the Hadoop Configuration file which was just loaded
+    SparkContextProvider sparkContextProvider = new SparkContextProvider(hConf);
+    basicSparkContext = sparkContextProvider.get();
   }
 
   Configuration getHConf() {
@@ -65,12 +69,13 @@ abstract class AbstractSparkContext implements SparkContext {
   private Configuration loadHConf() {
     Configuration hConf = new Configuration();
     hConf.clear();
-    //TODO: The filename should be static final in the SparkRunner. Change this static string to that.
-    URL url = getClass().getResource("/hConf.xml");
+
+    URL url = Thread.currentThread().getContextClassLoader().getResource(SparkProgramRunner.SPARK_HCONF_FILENAME);
     if (url == null) {
-      LOG.error("Unable to find Hadoop Configuration file in the submitted jar.");
+      LOG.error("Unable to find Hadoop Configuration file {} in the submitted jar.",
+                SparkProgramRunner.SPARK_HCONF_FILENAME);
       throw new RuntimeException("Hadoop Configuration file not found in the supplied jar. Please include Hadoop " +
-                                   "Configuration file with name \"hConf.xml\"");
+                                   "Configuration file with name " + SparkProgramRunner.SPARK_HCONF_FILENAME);
     }
     hConf.addResource(url);
     return hConf;

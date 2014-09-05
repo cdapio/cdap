@@ -1,16 +1,16 @@
 Cask Data Application Platform Software Development Kit - ${project.version}
 ================================================================================
 
-The Cask Data Application Platform (Cask DAP or CDAP) Development Kit includes a Local
-DAP: a fully functioning single-node edition of the Cask DAP runtime. You can use this
-edition to write, debug and test your Big Data applications, before deploying them to a
-remote staging or production DAP.
+The Cask Data Application Platform (CDAP) Development Kit includes a Standalone
+CDAP: a fully-functioning, standalone edition of the CDAP runtime. You can use this
+edition to write, debug and test your Big Data applications before deploying them to a
+remote staging or production CDAP.
 
 
 Installation
 ============
 
-To install and use Cask DAP and the included examples there are a few simple
+To install and use CDAP and the included examples there are a few simple
 prerequisites:
 
   1. JDK 6 or JDK 7 (required to run CDAP, note: $JAVA_HOME should be set)
@@ -23,8 +23,8 @@ Once you have installed the prerequisites, unzip the SDK to a suitable directory
   %> unzip /tmp/cdap-sdk-${project.version}.zip
 
 
-Starting Cask DAP
-=================
+Starting CDAP
+=============
 
 You are now ready to start CDAP. Do so by running the 'cdap' 
 script in the $CDAP/bin folder:
@@ -38,15 +38,15 @@ or on Windows:
   > bin\cdap.bat start
   
 
-Using the Cask DAP
-==================
+Using CDAP
+==========
 
 Open a browser window to http://localhost:9999 to view the CDAP Console and take our
 Quick Start tour. More information about the tour can be found online:
  
   http://cask.co/developers/quickstart
 
-Documentation for Cask DAP can be found at our developer's website:
+Documentation for CDAP can be found at our developer's website:
 
   http://cask.co/developers/
 
@@ -58,7 +58,7 @@ Contacts for support, sales and general information can be found on our website 
 Licensing
 =========
   
-© Copyright 2014 Cask, Inc.
+© Copyright 2014 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

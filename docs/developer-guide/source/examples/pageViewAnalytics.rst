@@ -1,4 +1,4 @@
-.. :Author: Cask, Inc.
+.. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform Advanced Apache Log Event Logger
 
 ============================
@@ -166,7 +166,7 @@ to the Stream named *logEventStream* in the ``PageViewAnalyticsApp``::
 
 	$ ./bin/inject-data.sh [--host <hostname>]
 
-:Note:	[--host <hostname>] is not available for a *Local DAP*.
+:Note:	[--host <hostname>] is not available for a *Standalone CDAP*.
 
 On Windows::
 
@@ -224,7 +224,7 @@ Either:
 - On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; or
 - Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--host <hostname>] is not available for a *Local DAP*.
+  :Note:	[--host <hostname>] is not available for a *Standalone CDAP*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 

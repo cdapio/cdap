@@ -39,7 +39,18 @@ define([], function () {
 			this.clearTriggers(true);
 			var self = this;
 			this.set('entityType', type);
-
+            if(type.toLowerCase() == 'stream') {
+                $('#nav-collect').addClass('active');
+            }
+            if(type.toLowerCase() == 'flow') {
+                $('#nav-process').addClass('active');
+            }
+            if(type.toLowerCase() == 'dataset') {
+                $('#nav-store').addClass('active');
+            }
+            if(type.toLowerCase() == 'procedure') {
+                $('#nav-queries').addClass('active');
+            }
 			this.entityTypes.add(type);
 
 			this.HTTP.rest(this.__plurals[type], function (objects) {
@@ -113,7 +124,7 @@ define([], function () {
 		unload: function () {
 
 			clearInterval(this.interval);
-
+            $('#nav .nav-link').removeClass('active');
 			this.set('elements', Em.Object.create());
 
 		}

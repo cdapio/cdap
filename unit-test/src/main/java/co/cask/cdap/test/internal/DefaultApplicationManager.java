@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -102,7 +102,9 @@ public class DefaultApplicationManager implements ApplicationManager {
       ProgramClassLoader classLoader = ClassLoaders.newProgramClassLoader
         (tempDir, ApiResourceListHolder.getResourceList(), this.getClass().getClassLoader());
       this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
-                                                         new DataSetClassLoader(classLoader));
+                                                         new DataSetClassLoader(classLoader),
+                                                         // todo: collect metrics for datasets outside programs too
+                                                         null, null);
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
@@ -334,8 +336,8 @@ public class DefaultApplicationManager implements ApplicationManager {
         }
 
         @Override
-        public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-          String discoveryName = String.format("service.%s.%s.%s.%s", accountId, applicationId, serviceId, serviceName);
+        public ServiceDiscovered discover(String applicationId, String serviceId) {
+          String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceId);
           return discoveryServiceClient.discover(discoveryName);
         }
       };

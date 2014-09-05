@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,6 +35,7 @@ import java.util.Map;
  *     new SparkSpecification.Builder.with()
  *       .setName("AggregateMetricsByTag")
  *       .setDescription("Aggregates metrics values by tag")
+ *       .setMainClass("com.example.SomeJob")
  *       .build();
  * }
  * </pre>
@@ -43,11 +44,17 @@ import java.util.Map;
 public interface SparkSpecification extends ProgramSpecification, PropertyProvider {
 
   /**
+   * @return the Spark job main class name
+   */
+  String getMainClassName();
+
+  /**
    * Builder for building {@link SparkSpecification}.
    */
   static final class Builder {
     private String name;
     private String description;
+    private String mainClassName;
     private Map<String, String> arguments;
 
     /**
@@ -102,6 +109,18 @@ public interface SparkSpecification extends ProgramSpecification, PropertyProvid
     public final class AfterDescription {
 
       /**
+       * Sets the Spark job main class name in specification. The main method of this class will be called to run the
+       * Spark job
+       *
+       * @param mclassName the fully qualified name of class containing the main method
+       * @return An instance of {@link AfterDescription}.
+       */
+      public AfterDescription setMainClassName(String mclassName) {
+        mainClassName = mclassName;
+        return this;
+      }
+
+      /**
        * Adds a map of arguments that would be available to the spark job
        * through the {@link SparkContext} at runtime.
        *
@@ -117,7 +136,7 @@ public interface SparkSpecification extends ProgramSpecification, PropertyProvid
        * @return build a {@link SparkSpecification}
        */
       public SparkSpecification build() {
-        return new DefaultSparkSpecification(name, description, arguments);
+        return new DefaultSparkSpecification(name, description, mainClassName, arguments);
       }
     }
 

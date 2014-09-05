@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,8 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   /**
    * Get the name of the worker. Defaults to the class name.
-   * @return name of the worker.
+   *
+   * @return the name of this worker
    */
   protected String getName() {
     return getClass().getSimpleName();
@@ -41,7 +42,8 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   /**
    * Get the description of the worker. Defaults to an empty string.
-   * @return
+   *
+   * @return the description of this worker, or an empty string if none
    */
   protected String getDescription() {
     return "";
@@ -49,7 +51,8 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   /**
    * Get the runtime arguments for the worker. Defaults to an empty map.
-   * @return
+   *
+   * @return the runtime arguments of this worker, or an empty map if none
    */
   protected Map<String, String> getRuntimeArguments() {
     return ImmutableMap.of();

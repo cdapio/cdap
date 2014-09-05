@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -143,19 +143,22 @@ public interface ApplicationConfigurer {
 
   /**
    * Adds a list of {@link HttpServiceHandler} as a Custom Service to the Application.
-   * @param handlers
+   *
+   * @param handlers The handlers to include in the Application
    */
-  void addService(String name, Iterable<HttpServiceHandler> handlers);
+  void addService(String name, Iterable<? extends HttpServiceHandler> handlers);
 
   /**
    * Adds a {@link HttpServiceHandler} as a Custom Service to the Application.
-   * @param handler
+   *
+   * @param handler The handler to include in the Application
    */
   void addService(String name, HttpServiceHandler handler);
 
   /**
    * Adds a custom {@link Service} to the Application.
-   * @param service
+   *
+   * @param service The service to include in the Application
    */
   void addService(Service service);
 }

@@ -1,11 +1,11 @@
-.. :author: Cask, Inc.
-   :description: HTTP RESTful Interface to the Cask DAP
+.. :author: Cask Data, Inc.
+   :description: HTTP RESTful Interface to the Cask Data Application Platform
 
 .. highlight:: console
 
-=====================
-CDAP HTTP RESTful API
-=====================
+===============================================
+Cask Data Application Platform HTTP RESTful API
+===============================================
 
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
@@ -34,15 +34,15 @@ The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude 
 Conventions
 -----------
 
-In this API, *client* refers to an external application that is calling the Cask DAP using the HTTP interface.
+In this API, *client* refers to an external application that is calling CDAP using the HTTP interface.
 
-In this API, *Application* refers to a user Application that has been deployed into the Cask DAP.
+In this API, *Application* refers to a user Application that has been deployed into CDAP.
 
 All URLs referenced in this API have this base URL::
 
   http://<host>:10000/v2
 
-where ``<host>`` is the URL of the Cask DAP Instance. The base URL is represented as::
+where ``<host>`` is the URL of the CDAP server. The base URL is represented as::
 
   <base-url>
 
@@ -114,7 +114,7 @@ but a request may return any of these.
 
 Working with CDAP Security
 -----------------------------
-When working with a Cask DAP cluster with security enabled (``security.enabled=true`` in
+When working with a CDAP cluster with security enabled (``security.enabled=true`` in
 ``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
 obtain an access token from the authentication server (see the *Client Authentication* section of the
 Developer Guide `CDAP Security <security.html#client-authentication>`__).
@@ -436,7 +436,7 @@ Dataset HTTP API
 Listing all Datasets
 --------------------
 
-You can list all Datasets in the Cask DAP by issuing an HTTP GET request to the URL::
+You can list all Datasets in CDAP by issuing an HTTP GET request to the URL::
 
   GET <base-url>/data/datasets
 
@@ -1177,8 +1177,8 @@ with the arguments as a JSON string in the body::
 
   {"foo":"bar","this":"that"}
 
-The Cask DAP will use these these runtime arguments only for this single invocation of the
-element. To save the runtime arguments so that the Cask DAP will use them every time you start the element,
+CDAP will use these these runtime arguments only for this single invocation of the
+element. To save the runtime arguments so that CDAP will use them every time you start the element,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
   PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
@@ -1217,7 +1217,7 @@ Container Information
 ---------------------
 
 To find out the address of an element's container host and the container’s debug port, you can query
-the Cask DAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
+CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
 
@@ -1542,7 +1542,7 @@ Example
      - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
 
-The *runid* field is a UUID that uniquely identifies a run within the Cask DAP,
+The *runid* field is a UUID that uniquely identifies a run within CDAP,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
 For Services, you can retrieve the history of a Twill Service using::
@@ -1580,7 +1580,7 @@ Logging HTTP API
 Downloading Logs
 ----------------
 You can download the logs that are emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs,
-or *Services* running in the Cask DAP. To do that, send an HTTP GET request::
+or *Services* running in CDAP. To do that, send an HTTP GET request::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
@@ -1626,7 +1626,7 @@ Note how the context of the log line shows the name of the Flowlet (*source*), i
 
 Metrics HTTP API
 ================
-As Applications process data, the Cask DAP collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or CDAP metrics.
+As Applications process data, CDAP collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or CDAP metrics.
 
 .. rst2pdf: CutStart
 
@@ -1723,7 +1723,7 @@ If you want the number of input objects processed across all Flowlets of a Flow,
   GET <base-url>/metrics/cdap/apps/CountRandom/flows/
     CountRandomFlow/process.events?start=now-5s&count=5
 
-Similarly, you can address the context of all flows of an Application, an entire Application, or the entire Cask DAP::
+Similarly, you can address the context of all flows of an Application, an entire Application, or the entire CDAP::
 
   GET <base-url>/metrics/cdap/apps/CountRandom/
     flows/process.events?start=now-5s&count=5
@@ -1775,7 +1775,7 @@ The time range of a metric query can be specified in various ways:
      - The same as before, but with the count given as a number of seconds
 
 Instead of getting the values for each second of a time range, you can also retrieve the
-aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that the Cask DAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
+aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
   GET <base-url>/metrics/cdap/apps/CountRandom/process.events?aggregate=true
 
@@ -1783,7 +1783,7 @@ aggregate of a metric over time. The following request will return the total num
 
 Available Contexts
 ------------------
-The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the Application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available Application contexts of the Cask DAP:
+The context of a metric is typically enclosed into a hierarchy of contexts. For example, the Flowlet context is enclosed in the Flow context, which in turn is enclosed in the Application context. A metric can always be queried (and aggregated) relative to any enclosing context. These are the available Application contexts of CDAP:
 
 .. list-table::
    :header-rows: 1
@@ -1858,7 +1858,7 @@ Flowlet, Procedure, Mapper, or Reducer level:
 
 Available Metrics
 -----------------
-For Cask DAP metrics, the available metrics depend on the context.
+For CDAP metrics, the available metrics depend on the context.
 User-defined metrics will be available at whatever context that they are emitted from.
 
 These metrics are available in the Flowlet context:
@@ -2028,7 +2028,7 @@ The status of these CDAP System Servcies can be checked:
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
 
-Note that the Service status checks are more useful when the Cask DAP is running in a distributed cluster mode.
+Note that the Service status checks are more useful when CDAP is running in a distributed cluster mode.
 
 Example
 .......
@@ -2058,7 +2058,7 @@ HTTP Responses
 
 Scaling System Services
 -----------------------
-In distributed Cask DAP installations, the number of instances for system services 
+In distributed CDAP installations, the number of instances for system services 
 can be queried and changed by using these commands::
 
   GET <base-url>/system/services/<service-name>/instances
@@ -2079,7 +2079,7 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
      
-:Note: In single-node Cask DAP, these commands will return a Status Code ``400 Bad Request``.
+:Note: In standalone CDAP, these commands will return a Status Code ``400 Bad Request``.
 
 Examples
 ........
