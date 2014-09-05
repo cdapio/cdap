@@ -57,10 +57,12 @@ You can get started with CDAP by building directly from the latest source code::
   mvn clean package
 ```
 
-After the build completes, you will have a distribution of the CDAP Single-node SDK under the
+After the build completes, you will have a distribution of the CDAP standalone under the
 `cdap-distribution/target/` directory.  
 
 Take the `cdap-<version>.tar.gz` file and unzip it into a suitable location.
+
+For more build options please refer [here](BUILD.md)
 
 ### Quick Start
 
