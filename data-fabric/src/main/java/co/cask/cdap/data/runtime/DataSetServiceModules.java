@@ -38,12 +38,12 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModul
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
+import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -100,7 +100,7 @@ public class DataSetServiceModules {
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
         handlerBinder.addBinding().to(PingHandler.class);
 
-        Multibinder.newSetBinder(binder(), Service.class, Names.named("metricReporters"));
+        Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
         expose(DatasetOpExecutorService.class);
@@ -134,7 +134,7 @@ public class DataSetServiceModules {
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
-        Multibinder.newSetBinder(binder(), Service.class, Names.named("metricReporters"))
+        Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
           .addBinding().to(LevelDBDatasetMetricsReporter.class);
 
         bind(DatasetService.class);
@@ -177,7 +177,7 @@ public class DataSetServiceModules {
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
 
-        Multibinder.newSetBinder(binder(), Service.class, Names.named("metricReporters"))
+        Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
           .addBinding().to(HBaseDatasetMetricsReporter.class);
 
         bind(DatasetService.class);
