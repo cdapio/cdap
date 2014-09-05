@@ -68,7 +68,7 @@ define([], function () {
       self.HTTP.rest('system/services', function (services) {
         services.map(function(service) {
           var existingService = self.find(service.name);
-          
+
           existingService.set('modelId', service.name);
           existingService.set('description', service.description);
           existingService.set('id', service.name);

@@ -433,7 +433,7 @@ function(Components, Embeddables, HTTP, Util) {
 	        $("#failed-services-container").show();
 	      } else {
 	        $("#failed-services-container").hide();
-	      }      	
+	      }
       }
     });
 };
@@ -468,7 +468,7 @@ function(Components, Embeddables, HTTP, Util) {
 		}
 	};
 
-	Em.run.next(function() {			
+	Em.run.next(function() {
 		$('#warning-close').click(function() {
 			$('#warning').hide();
 		});

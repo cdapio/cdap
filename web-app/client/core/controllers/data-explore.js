@@ -132,7 +132,7 @@ define(['core/lib/lodash'], function (lodash) {
         var objArr = self.get('objArr');
         objArr.forEach(function (entry) {
           if (!$("#" + obj.query_handle + " :visible")) {
-            entry.set('isSelected', false);  
+            entry.set('isSelected', false);
           }
         });
         if (typeof callback === "function") {
