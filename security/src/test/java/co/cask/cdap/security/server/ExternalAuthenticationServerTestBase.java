@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -43,6 +44,7 @@ import com.unboundid.ldap.listener.InMemoryDirectoryServerConfig;
 import com.unboundid.ldap.listener.InMemoryListenerConfig;
 import com.unboundid.ldap.sdk.Entry;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -82,6 +84,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   // Needs to be set by derived classes.
   protected static CConfiguration configuration;
+  protected static SConfiguration sConfiguration;
 
   protected abstract String getProtocol();
   protected abstract HttpClient getHTTPClient() throws Exception;
@@ -101,7 +104,8 @@ public abstract class ExternalAuthenticationServerTestBase {
       }
     );
     Injector injector = Guice.createInjector(new IOModule(), securityModule,
-                                             new ConfigModule(getConfiguration(configuration)),
+                                             new ConfigModule(getConfiguration(configuration),
+                                                              HBaseConfiguration.create(), sConfiguration),
                                              new DiscoveryRuntimeModule().getInMemoryModules());
     server = injector.getInstance(ExternalAuthenticationServer.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);

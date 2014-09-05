@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.Scheme;
@@ -46,12 +47,12 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
     Assert.assertNotNull(certUrl);
 
     CConfiguration cConf = CConfiguration.create();
+    SConfiguration sConf = SConfiguration.create();
     cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "true");
-    cConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD, "secret");
-    cConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, certUrl.getPath());
+    sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, certUrl.getPath());
 
     configuration = cConf;
-
+    sConfiguration = sConf;
     setup();
   }
 

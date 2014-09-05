@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -57,6 +58,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   private final Map<String, Object> handlers;
   private final DiscoveryService discoveryService;
   private final CConfiguration configuration;
+  private final SConfiguration sConfiguration;
   private final AuditLogHandler auditLogHandler;
   private Cancellable serviceCancellable;
   private final GrantAccessToken grantAccessToken;
@@ -84,7 +86,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
   }
 
   @Inject
-  public ExternalAuthenticationServer(CConfiguration configuration, DiscoveryService discoveryService,
+  public ExternalAuthenticationServer(CConfiguration configuration, SConfiguration sConfiguration,
+                                      DiscoveryService discoveryService,
                                       @Named("security.handlers") Map<String, Object> handlers,
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
     this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
@@ -92,6 +95,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
     this.handlers = handlers;
     this.discoveryService = discoveryService;
     this.configuration = configuration;
+    this.sConfiguration = sConfiguration;
     this.grantAccessToken = (GrantAccessToken) handlers.get(HandlerType.GRANT_TOKEN_HANDLER);
     this.authenticationHandler = (AbstractAuthenticationHandler) handlers.get(HandlerType.AUTHENTICATION_HANDLER);
     this.auditLogHandler = auditLogHandler;
@@ -151,10 +155,10 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       if (configuration.getBoolean(Constants.Security.AuthenticationServer.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
-        String keyStorePath = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
-        String keyStorePassword = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
-        String keyStoreType = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE);
-        String keyPassword = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
+        String keyStorePath = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
+        String keyStorePassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
+        String keyStoreType = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE);
+        String keyPassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
 
         Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
         Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");

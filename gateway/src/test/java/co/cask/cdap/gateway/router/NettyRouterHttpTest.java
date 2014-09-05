@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -79,6 +80,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
     @Override
     protected void startUp() {
       CConfiguration cConf = CConfiguration.create();
+      SConfiguration sConfiguration = SConfiguration.create();
       Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
                                                new SecurityModules().getInMemoryModules(),
                                                new DiscoveryRuntimeModule().getInMemoryModules());
@@ -87,7 +89,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
       router =
-        new NettyRouter(cConf, InetAddresses.forString(hostname),
+        new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup(new NoAuthenticator())),
                         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
