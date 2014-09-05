@@ -31,10 +31,7 @@ var devServer;
 
 var DevServer = function() {
   DevServer.super_.call(this, __dirname, logLevel);
-  this.extractBaseConfig()
-      /*.then(function onBaseConfigExtract() {
-        return this.getConfig(__dirname + '/continuuity-local.xml');
-      }.bind(this))*/
+  this.extractConfig()
       .then(function () {
         this.setUpServer();
       }.bind(this));
@@ -42,20 +39,7 @@ var DevServer = function() {
 
 util.inherits(DevServer, WebAppServer);
 
-DevServer.prototype.extractBaseConfig = configParser.extractBaseConfig;
-
-DevServer.prototype.extractConfigFromXml = configParser.extractConfigFromXml;
-
-DevServer.prototype.getConfig = function getConfig(filename) {
-  var deferred = promise.defer(),
-      configObj = {};
-  this.extractConfigFromXml(filename)
-      .then(function onExtractConfigFromXml(configuration) {
-        configObj = lodash.extend(this.baseConfig, configuration);
-        deferred.resolve(configObj);
-      }.bind(this));
-  return deferred.promise;
-}
+DevServer.prototype.extractConfig = configParser.extractConfig;
 
 DevServer.prototype.setAttrs = function() {
   if (this.config['dashboard.https.enabled'] === "true") {
