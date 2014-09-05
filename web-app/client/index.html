@@ -347,12 +347,11 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="DataExploreResults">
+  <hr style="margin-top: 0px"/>
+  <div class="data-explore-results">
 
-  <div>
-     <hr style="margin-top: 0px"/>
 
-
-{{#if objArr}}
+  {{#if objArr}}
     <table class="table" id="query-list-table">
       <thead>
         <th style="width: 12%">Time Started</th>
@@ -393,7 +392,7 @@
         </tr>
       </tbody>
     </table>
-        <div {{bindAttr id="query_handle"}} style="display:none">
+        <div {{bindAttr id="query_handle"}} class="results-table-holder" style="display:none">
           <table class="table query-results-table-entry">
             <thead>
               {{#each schema}}
@@ -438,16 +437,27 @@
         <div id="query-tables">
           <table class="table">
             {{#each datasets}}
-            <tr {{action selectDataset this}} {{ bindAttr class=":cursor-pointer :table-name this.isSelected:selected:notselected" }} >
+            <tr {{action selectDataset this}}
+                {{ bindAttr class=":cursor-pointer :table-name this.isSelected:selected:notselected" }}>
               <td class="app-list-name service-col dataset-name">
-                <!-- <a class="none-text-decoration">{{tablename}}</a> -->
-                {{#if from_dataset}}
-                  <div class="dataset-icon"> </div>
-                {{/if}}
-                <span class="app-list-status data-explore-table-name">{{tablename}}</span>
-                {{#if this.isSelected}}
-                  <div class="arrow-right"></div>
-                {{/if}}
+                <div
+                  class="tablename-holder"
+                  data-toggle="tooltip"
+                  data-placement="right"
+                  title=""
+                  trigger="hover"
+                  {{bindAttr data-original-title=tablename}}>
+                    <!-- <a class="none-text-decoration">{{tablename}}</a> -->
+                    {{#if from_dataset}}
+                      <div class="dataset-icon"> </div>
+                    {{ else }}
+                      <div class="dataset-icon hidden"> </div>
+                    {{/if}}
+                    <span class="app-list-status data-explore-table-name">{{tablename}}</span>
+                    {{#if this.isSelected}}
+                      <div class="arrow-right"></div>
+                    {{/if}}
+                </div>
               </td>
             </tr>
             {{/each}}
@@ -501,6 +511,7 @@
                   <div class="table-header">
                     <span class="table-column-title"> Column Name </span>
                     <span class="table-column-title"> Column Type </span>
+                    <span class="table-column-title three-column"> Comments </span>
                   </div>
                   {{#each selectedDataset.partition}}
                   <div class="table-row">
@@ -574,8 +585,8 @@
           {{view C.Embed.Injector elementId="query-injector-input" valueBinding="controllers.SQLQueryString"}}
           </div>
           <button class="btn btn-blank btn-default" id="execute-explore-query" {{action 'submitSQLQuery' on="click"}}>Execute</button>
+          <div style="clear:both"></div>
         </td>
-
         {{outlet}}
 
       </div>

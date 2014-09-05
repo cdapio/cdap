@@ -32,7 +32,7 @@ define(['core/lib/lodash'], function (lodash) {
       //smallestEver is the smallest timestamp of a query that the controller has seen.
       //smallest is the largest timestamp of a query on the current page.
       self.pageMgr = {
-        limit: 3,
+        limit: 5,
         largestEver: 0,
         smallestEver: Infinity,
         firstPage: function () {
@@ -68,8 +68,8 @@ define(['core/lib/lodash'], function (lodash) {
               var result = lodash.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys", "schema"),
                   schemaArray = [],
                   partitionArray = [];
-              schemaArray = self.extractColumns(result.schema, true);
-              partitionArray = self.extractColumns(result.partitioned_keys, false);
+              schemaArray = self.extractColumns(result.schema);
+              partitionArray = self.extractColumns(result.partitioned_keys);
 
               datasets.pushObject(Ember.Object.create({
                 tablename: result.table_name,
@@ -85,21 +85,17 @@ define(['core/lib/lodash'], function (lodash) {
               if(datasets.length == 1) {
                 self.selectDataset(datasets[0]);
               }
-              $(".loading-icon").addClass("hide");
             });
           });
+          $(".loading-icon").addClass("hide");
         });
     },
 
-    extractColumns: function (table, iscomments) {
+    extractColumns: function (table) {
       var columnsArray = [];
       table.forEach(function(column) {
         var columns = [];
-        if (iscomments) {
-          columns = [column.name, column.type, column.comment || ""];
-        } else {
-          columns = [column.name, column.type];
-        }
+        columns = [column.name, column.type, column.comment || ""];
         columnsArray.push({
           columns: columns
         });
@@ -329,6 +325,13 @@ define(['core/lib/lodash'], function (lodash) {
       var self = this;
       var controller = this.get('controllers');
       var sqlString = controller.get("SQLQueryString") || this.injectorTextArea.get('value');
+      if (sqlString.length === 0) {
+        C.Modal.show('Error', "Please enter a valid sql query");
+        return;
+      }
+      if (sqlString.slice(-1) === ";") {
+        sqlString = sqlString.substring(0, sqlString.length - 1);
+      }
       this.HTTP.post('rest/data/explore/queries', {
         data: {
           "query": sqlString
@@ -377,8 +380,10 @@ define(['core/lib/lodash'], function (lodash) {
     showTableProperties: function () {
       this.set('tablePropertiesArrowRight', !this.get('tablePropertiesArrowRight'));
       this.set('showProperties', !this.get('showProperties'));
+    },
+    onDateExploreTableNameHover: function() {
+      debugger;
     }
-
   });
 
   Controller.reopenClass({

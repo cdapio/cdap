@@ -123,7 +123,8 @@ devServer.start();
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  devServer.logger.info('Uncaught Exception', err);
+  //devServer.logger.info('Uncaught Exception', err);
+  console.log(err);
 });
 
 /**
