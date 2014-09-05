@@ -2,16 +2,18 @@
  * Copyright (c) 2013 Cask Data, Inc.
  */
 
-var util = require("util"),
+var util = require('util'),
   fs = require('fs'),
   http = require('http'),
   https = require('https'),
   promise = require('q'),
   sys = require('sys'),
   argv = require('optimist').argv,
+  lodash = require('lodash'),
   nock = require('nock');
 
-var WebAppServer = require('../common/server');
+var WebAppServer = require('../common/server'),
+    configParser = require('../common/configParser');
 
 // Default port for the Dashboard.
 var DEFAULT_BIND_PORT = 9999;
@@ -29,41 +31,51 @@ var devServer;
 
 var DevServer = function() {
   DevServer.super_.call(this, __dirname, logLevel);
-  this.getConfig(__dirname + '/continuuity-local.xml')
-      .then(this.setUpServer.bind(this));
+  this.extractBaseConfig()
+      /*.then(function onBaseConfigExtract() {
+        return this.getConfig(__dirname + '/continuuity-local.xml');
+      }.bind(this))*/
+      .then(function () {
+        this.setUpServer();
+      }.bind(this));
 };
+
 util.inherits(DevServer, WebAppServer);
 
-DevServer.prototype.setAttrs = function(configuration) {
-  if (this.config['dashboard.https.enabled']) {
+DevServer.prototype.extractBaseConfig = configParser.extractBaseConfig;
+
+DevServer.prototype.extractConfigFromXml = configParser.extractConfigFromXml;
+
+DevServer.prototype.getConfig = function getConfig(filename) {
+  var deferred = promise.defer(),
+      configObj = {};
+  this.extractConfigFromXml(filename)
+      .then(function onExtractConfigFromXml(configuration) {
+        configObj = lodash.extend(this.baseConfig, configuration);
+        deferred.resolve(configObj);
+      }.bind(this));
+  return deferred.promise;
+}
+
+DevServer.prototype.setAttrs = function() {
+  if (this.config['dashboard.https.enabled'] === "true") {
     this.lib = https;
   } else {
     this.lib = http;
   }
-
-  this.config = configuration;
-  this.apiKey = configuration.apiKey;
-  this.version = configuration.version;
-  this.configSet = configuration.configSet;
+  this.apiKey = this.config.apiKey;
+  this.version = this.config.version;
   this.cookieName = 'continuuity-local-edition';
-  this.version = this.version;
   this.secret = 'local-edition-secret';
   this.setCookieSession(this.cookieName, this.secret);
   this.configureExpress();
 }
 
-DevServer.prototype.setUpServer = function setUpServer(configuration) {
-  this.setAttrs(configuration);
+DevServer.prototype.setUpServer = function setUpServer() {
+  this.setAttrs();
   this.Api.configure(this.config, this.apiKey || null);
-  this.start();
-}
-
-/**
- * Starts the server after getting config, sets up socket io, configures route handlers.
- */
-DevServer.prototype.start = function() {
   this.launchServer();
-};
+}
 
 DevServer.prototype.launchServer = function() {
    var key,
@@ -76,7 +88,7 @@ DevServer.prototype.launchServer = function() {
 
 DevServer.prototype.configureSSL = function () {
   var options = {};
-  if (this.config['dashboard.https.enabled']) {
+  if (this.config['dashboard.https.enabled'] === "true") {
     key = this.config['dashboard.ssl.key'];
     cert = this.config['dashboard.ssl.cert'];
     options = {
@@ -93,7 +105,7 @@ DevServer.prototype.configureSSL = function () {
 DevServer.prototype.startServer = function () {
   this.bindRoutes();
 
-  if (this.config['dashboard.https.enabled']) {
+  if (this.config['dashboard.https.enabled'] === "true") {
     this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
   }
 
@@ -102,25 +114,24 @@ DevServer.prototype.startServer = function () {
   this.logger.info('Listening on port', this.config['dashboard.bind.port']);
 
   /**
-  * If mocks are enabled, use mock injector to simulate some responses.
-  */
+   * If mocks are enabled, use mock injector to simulate some responses.
+   */
   var enableMocks = !!(argv.enableMocks === 'true');
   if (enableMocks) {
     this.logger.info('Webapp running with mocks enabled.');
     HttpMockInjector = require('../../test/httpMockInjector');
-    if (!this.config['dashboard.https.enabled']) {
+    if (!this.config['dashboard.https.enabled'] === "true") {
       new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.server.bind.port']);
     } else {
       new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.server.bind.ssl.port']);
     }
   }
-
 }
+
 /**
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  debugger;
   devServer.logger.info('Uncaught Exception', err);
 });
 
