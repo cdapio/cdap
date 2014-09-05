@@ -76,7 +76,7 @@ public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, 
     SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it
-    return new DataSetRecordReader<KEY, VALUE>(splitReader, sparkContext, dataSetName);
+    return new DatasetRecordReader<KEY, VALUE>(splitReader, sparkContext, dataSetName);
   }
 
   private String getInputName(Configuration conf) {
