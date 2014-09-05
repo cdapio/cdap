@@ -16,8 +16,6 @@ var WebAppServer = require('../common/server'),
     configParser = require('../common/configParser');
 
 var CONF_DIRECTORY = '/etc/cdap/conf';
-// Default port for the Dashboard.
-var DEFAULT_BIND_PORT = 9999;
 
 /**
  * Set environment.
@@ -30,62 +28,37 @@ process.env.NODE_ENV = 'production';
 var logLevel = 'INFO';
 
 var EntServer = function() {
-  EntServer.super_.call(this, __dirname, logLevel);
-  this.extractBaseConfig("enterprise")
-      .then(function onBaseConfigExtract() {
-        return this.getConfig(CONF_DIRECTORY + '/cdap-site.xml');
-      }.bind(this))
-      .then(function (configuration) {
-        console.log(configuration);
-        this.config = configuration;
-        this.setUpServer(configuration);
+  EntServer.super_.call(this, __dirname, logLevel, 'Enterprise UI');
+  this.extractConfig()
+      .then(function () {
+        this.setUpServer();
       }.bind(this));
 };
 util.inherits(EntServer, WebAppServer);
 
-EntServer.prototype.extractBaseConfig = configParser.extractBaseConfig;
 
-EntServer.prototype.extractConfigFromXml = configParser.extractConfigFromXml;
-
-EntServer.prototype.getConfig = function getConfig(filename) {
-  var deferred = promise.defer(),
-      configObj = {};
-  this.extractConfigFromXml(filename)
-    .then(function onExtractConfigFromXml(configuration) {
-      configObj = lodash.extend(this.baseConfig, configuration);
-      deferred.resolve(configObj);
-    }.bind(this));
-  return deferred.promise;
-}
+EntServer.prototype.extractConfig = configParser.extractConfig;
 
 EntServer.prototype.setUpServer = function setUpServer(configuration) {
-  this.setAttrs(configuration);
+  this.setAttrs();
   this.Api.configure(this.config, this.apiKey || null);
-  this.start();
+  this.launchServer();
 }
-
-EntServer.prototype.setAttrs = function(configuration) {
+EntServer.prototype.setAttrs = function() {
   if (this.config['dashboard.https.enabled'] === "true") {
     this.lib = https;
   } else {
     this.lib = http;
   }
-  this.apiKey = configuration.apiKey;
-  this.version = configuration.version;
-  this.configSet = configuration.configSet;
+  this.apiKey = this.config.apiKey;
+  this.version = this.config.version;
+  this.configSet = this.config.configSet;
   this.cookieName = 'continuuity-enterprise-edition';
   this.secret = 'enterprise-edition-secret';
-  this.logger = this.getLogger('console', 'Enterprise UI');
   this.setCookieSession(this.cookieName, this.secret);
   this.configureExpress();
 }
 
-/**
- * Starts the server after getting config, sets up socket io, configures route handlers.
- */
-EntServer.prototype.start = function() {
-  this.launchServer();
-};
 
 EntServer.prototype.launchServer = function() {
    var key,
@@ -93,7 +66,7 @@ EntServer.prototype.launchServer = function() {
        options = this.configureSSL() || {};
    this.server = this.getServerInstance(options, this.app);
    //LaunchServer and then StartServer?? Kind of redundant on names. Any alternative is welcome.
-   this.setEnvironment('local', 'Development Kit', this.version, this.startServer.bind(this));
+   this.setEnvironment('enterprise', 'Enterprise Reactor', this.version, this.startServer.bind(this));
 }
 
 EntServer.prototype.configureSSL = function () {
@@ -143,7 +116,6 @@ EntServer.prototype.startServer = function () {
  }
 
  this.logger.info('Listening on port', this.config['dashboard.bind.port']);
- this.logger.info(this.config);
 
 }
 
@@ -155,7 +127,6 @@ process.on('uncaughtException', function (err) {
 });
 
 var entServer = new EntServer();
-
 
 /**
  * Export app.
