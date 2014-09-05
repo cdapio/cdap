@@ -192,7 +192,7 @@ Ember.RouteManager = Ember.StateManager.extend({
 
   /**
    Start this routemanager.
-
+   
    Registers for the hashchange event if available. If not, it creates a
    timer that looks for location changes every 150ms.
    */
@@ -247,7 +247,7 @@ Ember.RouteManager = Ember.StateManager.extend({
       }
     }
   },
-
+  
   /**
    Stop this routemanager
    */
@@ -310,7 +310,7 @@ Ember.RouteManager = Ember.StateManager.extend({
         var cleanState = result.cleanStates.join('.');
         this.goToState(cleanState);
       }
-
+      
       // 2. We transition to the dirty state. This forces dirty
       // states to be transitioned.
       if(result.dirtyStates.length > 0) {
@@ -410,7 +410,7 @@ Ember.RouteManager = Ember.StateManager.extend({
 
    Returns the remaining parts as well as merged params if
    the state accepts.
-
+   
    Will also set the dirty flag if the route is the same but
    the parameters have changed
    */
@@ -429,7 +429,7 @@ Ember.RouteManager = Ember.StateManager.extend({
       } else {
         ember_assert("route must be either a string or regexp", false);
       }
-
+      
       for(var i = 0; i < partDefinitions.length; i++) {
         if(parts.length === 0) {
           return false;
@@ -560,7 +560,7 @@ Ember.RouteManager = Ember.StateManager.extend({
     }
     routes._skipRoute = false;
   },
-
+  
   // This is used to re-enter a dirty root state
   __nullState: Ember.State.create({enabled: false})
 
