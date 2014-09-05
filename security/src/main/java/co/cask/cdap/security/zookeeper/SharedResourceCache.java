@@ -59,8 +59,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   private static final int MAX_RETRIES = 3;
   private static final Logger LOG = LoggerFactory.getLogger(SharedResourceCache.class);
 
-  private final List<ACL> znodeACL = ZooDefs.Ids.OPEN_ACL_UNSAFE;
-  //private final List<ACL> znodeACL = ZooDefs.Ids.CREATOR_ALL_ACL;
+  private final List<ACL> znodeACL;
+
   private final ZKClient zookeeper;
   private final Codec<T> codec;
   private final String parentZnode;
@@ -68,10 +68,11 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   private Map<String, T> resources;
   private ListenerManager listeners;
 
-  public SharedResourceCache(ZKClient zookeeper, Codec<T> codec, String parentZnode) {
+  public SharedResourceCache(ZKClient zookeeper, Codec<T> codec, String parentZnode, List<ACL> znodeACL) {
     this.zookeeper = zookeeper;
     this.codec = codec;
     this.parentZnode = parentZnode;
+    this.znodeACL = znodeACL;
     this.listeners = new ListenerManager();
   }
 

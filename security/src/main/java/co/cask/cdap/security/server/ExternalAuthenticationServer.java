@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -38,6 +39,7 @@ import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -175,6 +177,9 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       } else {
         server.setConnectors(new Connector[]{connector});
       }
+
+      SecurityUtil.enableKerberos(new File(configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)),
+                                  configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
 
       HandlerCollection handlers = new HandlerCollection();
       handlers.addHandler(context);

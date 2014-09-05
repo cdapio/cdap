@@ -23,10 +23,13 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -35,6 +38,9 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Main class to run Router from command line.
@@ -60,6 +66,11 @@ public class RouterMain extends DaemonMain {
     try {
       // Load configuration
       CConfiguration cConf = CConfiguration.create();
+
+      if (cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
+        SecurityUtil.enableKerberos(new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)),
+                                    cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
+      }
 
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
