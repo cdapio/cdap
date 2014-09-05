@@ -2366,7 +2366,7 @@ a strong {
 
 #query-injector-input {
     width: 100%;
-    max-width: 100%;
+    resize: vertical;
     height: 150px;
     background: #575F74;
     color: white;
@@ -3539,9 +3539,9 @@ div.tooltip {
 
 div.tooltip-inner {
     text-align: center;
-    -webkit-border-radius: 0px;
-    -moz-border-radius: 0px;
-    border-radius: 1000px;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
     max-width: 100%;
     background-color: #0000000;
     font-size: 14px;

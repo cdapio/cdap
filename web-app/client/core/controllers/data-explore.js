@@ -60,7 +60,7 @@ define(['core/lib/lodash'], function (lodash) {
         var datasets = self.get('datasets');
         // If jquery's ajax is used properly then the nesting could be avoided.
         // http.js getJSON does not return $.get which internally calls $.ajax
-        $(".loading-icon.hide").removeClass("hide");
+        C.set("showLoadingIcon", true);
         self.HTTP.rest('data/explore/tables', function(response) {
           response.forEach(function (dataset) {
             var name = dataset.table;
@@ -87,7 +87,7 @@ define(['core/lib/lodash'], function (lodash) {
               }
             });
           });
-          $(".loading-icon").addClass("hide");
+          C.set("showLoadingIcon", false);
         });
     },
 
