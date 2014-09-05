@@ -319,8 +319,12 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
       initHandler(handler, serviceContext);
       supplier = Suppliers.ofInstance(handler);
 
-      // Remember the handler using a weak reference key. When the thread local is GC'ed, the supplier is gone
-      // But the reference object is still there and we can use it to get back the handler and call destroy() on it.
+      // We use GC of the supplier as a signal for us to know that a thread is gone
+      // The supplier is set into the thread local, which will get GC'ed when the thread is gone.
+      // Since we use a weak reference key to the supplier that points to the handler
+      // (in the handlerReferences map), it won't block GC of the supplier instance.
+      // We can use the weak reference, which retrieved through polling the ReferenceQueue,
+      // to get back the handler and call destroy() on it.
       handlerReferences.put(new WeakReference<Supplier<HttpServiceHandler>>(supplier, handlerReferenceQueue), handler);
 
       handlerThreadLocal.set(supplier);
