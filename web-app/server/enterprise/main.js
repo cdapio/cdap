@@ -34,11 +34,9 @@ var EntServer = function() {
   EntServer.super_.call(self, __dirname, logLevel, 'Enterprise UI');
   this.getConfig(function(version) {
     if (self.config['dashboard.https.enabled'] === "true") {
-      console.log("HTTPS Enabled");
       this.lib = https;
       this.httpsEnabled = true;
     } else {
-      console.log("HTTPS is not Enabled");
       this.lib = http;
       this.httpsEnabled = false;
     }
