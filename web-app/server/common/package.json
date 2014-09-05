@@ -5,11 +5,12 @@
     "formidable": "1.0.14",
     "log4js": "0.6.5",
     "node-int64": "0.3.0",
-    "thrift": "0.8.0-dev",
     "express": "3.2.4",
     "socket.io": "0.9.14",
     "q": "*",
-    "lodash": "*",
-    "emitter-component": "*"
+    "emitter-component": "*",
+    "request": "*",
+    "thrift": "*",
+    "xml2js": "*"
   }
 }

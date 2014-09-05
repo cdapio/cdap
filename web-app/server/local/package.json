@@ -4,6 +4,7 @@
 	"main": "./main.js",
 	"dependencies": {
     "xml2js": "0.2.7",
-    "q": "*"
+    "q": "*",
+    "lodash": "*"
 	}
 }

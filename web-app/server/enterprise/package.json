@@ -3,7 +3,8 @@
 	"version": "0.0.1",
 	"main": "./main.js",
 	"dependencies": {
-    "xml2js": "0.2.7",
-    "q": "*"
+          "xml2js": "0.2.7",
+          "q": "*",
+	  "lodash": "*"
 	}
 }

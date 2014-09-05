@@ -5,15 +5,16 @@
 
 var util = require('util'),
   fs = require('fs'),
-  xml2js = require('xml2js'),
-  sys = require('sys'),
+  http = require('http'),
+  https = require('https'),
   promise = require('q'),
   cluster = require('cluster'),
+  lodash = require('lodash'),
   os = require('os');
 
-var WebAppServer = require('../common/server');
+var WebAppServer = require('../common/server'),
+    configParser = require('../common/configParser');
 
-// The location of continuuity-site.xml
 var CONF_DIRECTORY = '/etc/cdap/conf';
 // Default port for the Dashboard.
 var DEFAULT_BIND_PORT = 9999;
@@ -29,17 +30,49 @@ process.env.NODE_ENV = 'production';
 var logLevel = 'INFO';
 
 var EntServer = function() {
-  this.getConfig()
-    .then(this.setAttrs.bind(this));
+  EntServer.super_.call(this, __dirname, logLevel);
+  this.extractBaseConfig("enterprise")
+      .then(function onBaseConfigExtract() {
+        return this.getConfig(CONF_DIRECTORY + '/cdap-site.xml');
+      }.bind(this))
+      .then(function (configuration) {
+        console.log(configuration);
+        this.config = configuration;
+        this.setUpServer(configuration);
+      }.bind(this));
 };
 util.inherits(EntServer, WebAppServer);
 
-EntServer.prototype.setAttrs = function(version) {
+EntServer.prototype.extractBaseConfig = configParser.extractBaseConfig;
+
+EntServer.prototype.extractConfigFromXml = configParser.extractConfigFromXml;
+
+EntServer.prototype.getConfig = function getConfig(filename) {
+  var deferred = promise.defer(),
+      configObj = {};
+  this.extractConfigFromXml(filename)
+    .then(function onExtractConfigFromXml(configuration) {
+      configObj = lodash.extend(this.baseConfig, configuration);
+      deferred.resolve(configObj);
+    }.bind(this));
+  return deferred.promise;
+}
+
+EntServer.prototype.setUpServer = function setUpServer(configuration) {
+  this.setAttrs(configuration);
+  this.Api.configure(this.config, this.apiKey || null);
+  this.start();
+}
+
+EntServer.prototype.setAttrs = function(configuration) {
   if (this.config['dashboard.https.enabled'] === "true") {
-   EntServer.super_.call(this, __dirname, logLevel, true);
+    this.lib = https;
   } else {
-   EntServer.super_.call(this, __dirname, logLevel, false);
+    this.lib = http;
   }
+  this.apiKey = configuration.apiKey;
+  this.version = configuration.version;
+  this.configSet = configuration.configSet;
   this.cookieName = 'continuuity-enterprise-edition';
   this.secret = 'enterprise-edition-secret';
   this.logger = this.getLogger('console', 'Enterprise UI');
@@ -48,50 +81,23 @@ EntServer.prototype.setAttrs = function(version) {
 }
 
 /**
- * Sets config data for application server.
- * @param {Function} opt_callback Callback function to start sever start process.
- */
-EntServer.prototype.getConfig = function() {
-  var deferredObj = promise.defer();
-  fs.readFile(CONF_DIRECTORY + '/cdap-site.xml', function(error, result) {
-
-    if (error) {
-      this.logger.error('Could not read configuration file at ' + CONF_DIRECTORY + '/cdap-site.xml');
-      return;
-    }
-
-    var parser = new xml2js.Parser();
-    parser.parseString(result, function(err, result) {
-      result = result.configuration.property;
-      var localhost = this.getLocalHost();
-      for (var item in result) {
-        item = result[item];
-        this.config[item.name] = item.value[0];
-      }
-    }.bind(this));
-    this.Api.configure(this.config, null);
-    this.configSet = true;
-
-    fs.readFile(process.env.COMPONENT_HOME + '/VERSION', "utf-8", function(error, version) {
-      deferredObj.resolve(version);
-    });
-  }.bind(this));
-  return deferredObj.promise;
-};
-
-/**
  * Starts the server after getting config, sets up socket io, configures route handlers.
  */
 EntServer.prototype.start = function() {
-  var key,
-      cert,
-      options = {};
-
-  this.getConfig()
-      .then(this.launchServer.bind(this));
+  this.launchServer();
 };
 
-EntServer.prototype.launchServer = function(version) {
+EntServer.prototype.launchServer = function() {
+   var key,
+       cert,
+       options = this.configureSSL() || {};
+   this.server = this.getServerInstance(options, this.app);
+   //LaunchServer and then StartServer?? Kind of redundant on names. Any alternative is welcome.
+   this.setEnvironment('local', 'Development Kit', this.version, this.startServer.bind(this));
+}
+
+EntServer.prototype.configureSSL = function () {
+  var options = {};
    if (this.config['dashboard.https.enabled'] === "true") {
      key = this.config['dashboard.ssl.key'],
      cert = this.config['dashboard.ssl.cert'];
@@ -103,16 +109,8 @@ EntServer.prototype.launchServer = function(version) {
      };
      this.config['dashboard.bind.port'] = this.config['dashboard.bind.port.ssl'];
    }
-   this.server = this.getServerInstance(options, this.app);
-
-   if (!('dashboard.bind.port' in this.config)) {
-     this.config['dashboard.bind.port'] = this.config['dashboard.bind.port.ssl.nonssl'];
+  return options;
    }
-
-   var clusters = 'webapp.cluster.count' in this.config ? this.config['webapp.cluster.count'] : 2;
-
-   this.setEnvironment('enterprise', 'Enterprise Reactor', version, this.startServer.bind(this));
-}
 
 EntServer.prototype.startServer = function () {
  this.bindRoutes();
@@ -149,15 +147,15 @@ EntServer.prototype.startServer = function () {
 
 }
 
-var entServer = new EntServer();
-entServer.start();
-
 /**
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
   entServer.logger.info('Uncaught Exception', err);
 });
+
+var entServer = new EntServer();
+
 
 /**
  * Export app.

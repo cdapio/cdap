@@ -9,19 +9,13 @@ var express = require('express'),
   Int64 = require('node-int64'),
   fs = require('fs'),
   log4js = require('log4js'),
-  cookie = require('cookie'),
-  utils = require('connect').utils,
-  crypto = require('crypto'),
   path = require('path'),
   promise = require('q'),
-  request = require('request'),
-  emitter = require('emitter-component'),
-  lodash = require('lodash');
+  request = require('request');
 
 
 var Api = require('../common/api'),
-    Env = require('./env'),
-    configParser = require('./configParser');
+    Env = require('./env');
 
 /**
  * Generic web app server. This is a base class used for creating different editions of the server.
@@ -35,23 +29,13 @@ var WebAppServer = function(dirPath, logLevel, httpsEnabled) {
   this.dirPath = dirPath;
   this.logger = this.getLogger();
   this.isDefaultConfig = false;
-  emitter(this);
   this.LOG_LEVEL = logLevel;
-  this.extractBaseConfig()
-    .then(function onBaseConfigExtract() {
-      this.emit('baseConfigExtractSuccess');
-    }.bind(this));
 };
 
 /**
  * Thrift API service.
  */
 WebAppServer.prototype.Api = Api;
-
-WebAppServer.prototype.extractBaseConfig = configParser.extractBaseConfig
-
-WebAppServer.prototype.extractConfigFromXml = configParser.extractConfigFromXml;
-
 /**
  * API version.
  */
@@ -88,23 +72,6 @@ var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
  */
 var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
 
-WebAppServer.prototype.getConfig = function getConfig(filename, deferredObj) {
-  var deferred = deferredObj || promise.defer(),
-      configObj = {};
-  if (!this.isDefaultConfig) {
-    this.on('baseConfigExtractSuccess', function onBaseConfigExtract() {
-      this.getConfig(filename, deferred);
-    }.bind(this));
-  } else {
-    this.extractConfigFromXml(filename)
-      .then(function onExtractConfigFromXml(configuration) {
-        configObj = lodash.extend(this.baseConfig, configuration);
-        deferred.resolve(configObj);
-      }.bind(this));
-  }
-  return deferred.promise;
-}
-
 /**
  * Determines security status. Continues until it is able to determine if security is enabled if
  * reactor is down.
@@ -116,7 +83,7 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
 
   var path = '/' + this.API_VERSION + '/ping';
   var url = ('http://' + this.config['router.server.address'] + ':'
-    + this.config['router.server.port'] + path);
+    + this.config['router.server.bind.port'] + path);
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
     request({
