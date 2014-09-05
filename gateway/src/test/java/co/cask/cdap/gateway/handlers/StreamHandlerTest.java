@@ -127,14 +127,10 @@ public class StreamHandlerTest extends GatewayTestBase {
     //config ttl for the stream
     urlConn = openURL(String.format("http://%s:%d/v2/streams/stream_info/config",
                                     HOSTNAME, port), HttpMethod.PUT);
-
     urlConn.setDoOutput(true);
     JsonObject json = new JsonObject();
     json.addProperty("ttl", "2");
-    OutputStreamWriter out = new OutputStreamWriter(urlConn.getOutputStream());
-    out.write(json.toString());
-    out.flush();
-    out.close();
+    urlConn.getOutputStream().write(json.toString().getBytes(Charsets.UTF_8));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
 
