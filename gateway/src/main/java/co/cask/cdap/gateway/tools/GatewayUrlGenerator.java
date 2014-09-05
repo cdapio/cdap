@@ -33,11 +33,10 @@ public class GatewayUrlGenerator {
 
     if (port <= 0) {
       if (config.getBoolean(Constants.Security.Router.SSL_ENABLED)) {
-        port = Integer.parseInt
-          (config.get(Constants.Router.GATEWAY_LOOKUP_PORT, Constants.Router.DEFAULT_GATEWAY_LOOKUP_PORT));
+        port = Integer.parseInt(config.get(Constants.Router.GATEWAY_PORT, Constants.Router.DEFAULT_GATEWAY_PORT));
       } else {
-        port = Integer.parseInt
-          (config.get(Constants.Router.GATEWAY_SSL_LOOKUP_PORT, Constants.Router.DEFAULT_GATEWAY_SSL_LOOKUP_PORT));
+        port = Integer.parseInt(config.get(Constants.Router.GATEWAY_SS_PORT,
+                                           Constants.Router.DEFAULT_GATEWAY_SSL_PORT));
       }
     }
 

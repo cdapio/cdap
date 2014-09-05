@@ -300,10 +300,10 @@ public final class Constants {
    */
   public static final class Router {
     public static final String ADDRESS = "router.bind.address";
-    public static final String GATEWAY_LOOKUP_PORT = "router.gateway.port";
-    public static final String WEBAPP_LOOKUP_PORT = "router.webapp.port";
-    public static final String GATEWAY_SSL_LOOKUP_PORT = "router.ssl.gateway.port";
-    public static final String WEBAPP_SSL_LOOKUP_PORT = "router.ssl.webapp.port";
+    public static final String GATEWAY_PORT = "router.gateway.port";
+    public static final String WEBAPP_PORT = "router.webapp.port";
+    public static final String GATEWAY_SS_PORT = "router.ssl.gateway.port";
+    public static final String WEBAPP_SSL_PORT = "router.ssl.webapp.port";
     public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
@@ -313,10 +313,10 @@ public final class Constants {
     /**
      * Defaults.
      */
-    public static final String DEFAULT_GATEWAY_LOOKUP_PORT = "10000";
-    public static final String DEFAULT_WEBAPP_LOOKUP_PORT = "20000";
-    public static final String DEFAULT_GATEWAY_SSL_LOOKUP_PORT = "10000";
-    public static final String DEFAULT_WEBAPP_SSL_LOOKUP_PORT = "20000";
+    public static final String DEFAULT_GATEWAY_PORT = "10000";
+    public static final String DEFAULT_WEBAPP_PORT = "20000";
+    public static final String DEFAULT_GATEWAY_SSL_PORT = "9443";
+    public static final String DEFAULT_WEBAPP_SSL_PORT = "20443";
 
     public static final int DEFAULT_BACKLOG = 20000;
     public static final int DEFAULT_SERVER_BOSS_THREADS = 1;
@@ -324,8 +324,8 @@ public final class Constants {
     public static final int DEFAULT_CLIENT_BOSS_THREADS = 1;
     public static final int DEFAULT_CLIENT_WORKER_THREADS = 10;
 
-    public static final String GATEWAY_LOOKUP_KEY = Service.GATEWAY;
-    public static final String WEBAPP_LOOKUP_KEY = "webapp/$HOST";
+    public static final String GATEWAY_DISCOVERY_NAME = Service.GATEWAY;
+    public static final String WEBAPP_DISCOVERY_NAME = "webapp/$HOST";
   }
 
   /**

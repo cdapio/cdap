@@ -92,7 +92,7 @@ public class NettyRouterPipelineTests {
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.APP_FABRIC_HTTP;
-  private static final String GATEWAY_LOOKUP = Constants.Router.GATEWAY_LOOKUP_KEY;
+  private static final String GATEWAY_LOOKUP = Constants.Router.GATEWAY_DISCOVERY_NAME;
   private static final String webappService = "$HOST";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
@@ -216,8 +216,8 @@ public class NettyRouterPipelineTests {
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
-      cConf.setInt(Constants.Router.GATEWAY_LOOKUP_PORT, 0);
-      cConf.setInt(Constants.Router.WEBAPP_LOOKUP_PORT, 0);
+      cConf.setInt(Constants.Router.GATEWAY_PORT, 0);
+      cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,

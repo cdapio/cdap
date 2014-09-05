@@ -637,13 +637,13 @@
 
     <property>
         <name>router.ssl.gateway.port</name>
-        <value>10000</value>
+        <value>9443</value>
         <description>Secure router listening port for gateway</description>
     </property>
 
     <property>
         <name>router.ssl.webapp.port</name>
-        <value>20000</value>
+        <value>20443</value>
         <description>Secure router listening port for webapp</description>
     </property>
 

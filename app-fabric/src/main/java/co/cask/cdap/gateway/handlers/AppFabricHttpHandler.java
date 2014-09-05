@@ -1901,11 +1901,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       // Construct URL for promotion of application to remote cluster
       int gatewayPort;
       if (configuration.getBoolean(Constants.Security.Router.SSL_ENABLED)) {
-        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.GATEWAY_LOOKUP_PORT,
-                                                         Constants.Router.DEFAULT_GATEWAY_LOOKUP_PORT));
+        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.GATEWAY_PORT,
+                                                         Constants.Router.DEFAULT_GATEWAY_PORT));
       } else {
-        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.GATEWAY_SSL_LOOKUP_PORT,
-                                                         Constants.Router.DEFAULT_GATEWAY_SSL_LOOKUP_PORT));
+        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.GATEWAY_SS_PORT,
+                                                         Constants.Router.DEFAULT_GATEWAY_SSL_PORT));
       }
 
       String url = String.format("%s://%s:%s/v2/apps/%s",

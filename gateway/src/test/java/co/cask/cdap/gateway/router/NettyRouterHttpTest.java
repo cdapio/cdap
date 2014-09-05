@@ -80,8 +80,8 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
-      cConf.setInt(Constants.Router.GATEWAY_LOOKUP_PORT, 0);
-      cConf.setInt(Constants.Router.WEBAPP_LOOKUP_PORT, 0);
+      cConf.setInt(Constants.Router.GATEWAY_PORT, 0);
+      cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,

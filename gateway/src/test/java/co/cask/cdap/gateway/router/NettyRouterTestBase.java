@@ -81,8 +81,8 @@ import javax.ws.rs.PathParam;
 public abstract class NettyRouterTestBase {
   protected static final String HOSTNAME = "127.0.0.1";
   protected static final DiscoveryService DISCOVERY_SERVICE = new InMemoryDiscoveryService();
-  protected static final String DEFAULT_SERVICE = Constants.Router.GATEWAY_LOOKUP_KEY;
-  protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_LOOKUP_KEY;
+  protected static final String DEFAULT_SERVICE = Constants.Router.GATEWAY_DISCOVERY_NAME;
+  protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_DISCOVERY_NAME;
   protected static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
   protected static final String WEB_APP_SERVICE_PREFIX = "webapp/";
 
@@ -359,7 +359,7 @@ public abstract class NettyRouterTestBase {
   private void testSync(int numRequests) throws Exception {
     for (int i = 0; i < numRequests; ++i) {
       LOG.trace("Sending request " + i);
-      HttpResponse response = get(resolveURI(Constants.Router.GATEWAY_LOOKUP_KEY,
+      HttpResponse response = get(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME,
                                              String.format("%s/%s-%d", "/v1/ping", "sync", i)));
       Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     }

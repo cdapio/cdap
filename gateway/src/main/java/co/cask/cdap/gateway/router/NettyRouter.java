@@ -23,7 +23,6 @@ import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
 import com.continuuity.security.tools.SSLHandlerFactory;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -131,10 +130,12 @@ public class NettyRouter extends AbstractIdleService {
 
     this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
     if (isSSLEnabled()) {
-      this.serviceToPortMap.put(Constants.Router.GATEWAY_LOOKUP_KEY, Integer.parseInt
-        (cConf.get(Constants.Router.GATEWAY_SSL_LOOKUP_PORT, Constants.Router.DEFAULT_GATEWAY_SSL_LOOKUP_PORT)));
-      this.serviceToPortMap.put(Constants.Router.WEBAPP_LOOKUP_KEY, Integer.parseInt
-        (cConf.get(Constants.Router.WEBAPP_SSL_LOOKUP_PORT, Constants.Router.DEFAULT_WEBAPP_SSL_LOOKUP_PORT)));
+      this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
+                                Integer.parseInt(cConf.get(Constants.Router.GATEWAY_SS_PORT,
+                                                           Constants.Router.DEFAULT_GATEWAY_SSL_PORT)));
+      this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
+                                Integer.parseInt(cConf.get(Constants.Router.WEBAPP_SSL_PORT,
+                                                           Constants.Router.DEFAULT_WEBAPP_SSL_PORT)));
 
       File keystore;
       try {
@@ -148,12 +149,12 @@ public class NettyRouter extends AbstractIdleService {
         cConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
         cConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
-      this.serviceToPortMap.put(Constants.Router.GATEWAY_LOOKUP_KEY,
-                        Integer.parseInt(cConf.get(Constants.Router.GATEWAY_LOOKUP_PORT,
-                                                   Constants.Router.DEFAULT_GATEWAY_LOOKUP_PORT)));
-      this.serviceToPortMap.put(Constants.Router.WEBAPP_LOOKUP_KEY,
-                        Integer.parseInt(cConf.get(Constants.Router.WEBAPP_LOOKUP_PORT,
-                                                   Constants.Router.DEFAULT_WEBAPP_LOOKUP_PORT)));
+      this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
+                        Integer.parseInt(cConf.get(Constants.Router.GATEWAY_PORT,
+                                                   Constants.Router.DEFAULT_GATEWAY_PORT)));
+      this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
+                        Integer.parseInt(cConf.get(Constants.Router.WEBAPP_PORT,
+                                                   Constants.Router.DEFAULT_WEBAPP_PORT)));
       this.sslHandlerFactory = null;
     }
     LOG.info("Service to Port Mapping - {}", this.serviceToPortMap);
