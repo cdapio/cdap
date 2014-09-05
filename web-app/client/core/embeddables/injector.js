@@ -4,34 +4,34 @@
 
 define([], function () {
 
-	var Embeddable = Em.TextArea.extend({
-		valueBinding: 'controller.injectValue',
-		elementId: 'flow-injector-input',
-		didInsertElement: function () {
+    var Embeddable = Em.TextArea.extend({
+        valueBinding: 'controller.injectValue',
+        elementId: 'flow-injector-input',
+        didInsertElement: function () {
 
-			window.tabOverride.set(this.get('element'));
+            window.tabOverride.set(this.get('element'));
 
-			var controller = this.get('controller');
-			controller.injectorTextArea = this;
+            var controller = this.get('controller');
+            controller.injectorTextArea = this;
 
-			$(this.get('element')).keydown(function (e) {
-				if (e.keyCode === 13 && controller.get('injectOnEnter')) {
-					controller.inject();
-					e.preventDefault();
-					return false;
-				}
-			});
+            $(this.get('element')).keydown(function (e) {
+                if (e.keyCode === 13 && controller.get('injectOnEnter')) {
+                    controller.inject();
+                    e.preventDefault();
+                    return false;
+                }
+            });
 
-		}
-	});
+        }
+    });
 
-	Embeddable.reopenClass({
+    Embeddable.reopenClass({
 
-		type: 'Injector',
-		kind: 'Embeddable'
+        type: 'Injector',
+        kind: 'Embeddable'
 
-	});
+    });
 
-	return Embeddable;
+    return Embeddable;
 
 });

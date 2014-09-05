@@ -4,21 +4,21 @@
 
 define(['core/controllers/runnable-log'], function (RunnableLogController) {
 
-	var Controller = RunnableLogController.extend({
+    var Controller = RunnableLogController.extend({
 
-		init: function () {
+        init: function () {
 
-			this.set('expectedPath', 'Flow.Log');
+            this.set('expectedPath', 'Flow.Log');
 
-		}
+        }
 
-	});
+    });
 
-	Controller.reopenClass({
-		type: 'FlowLog',
-		kind: 'Controller'
-	});
+    Controller.reopenClass({
+        type: 'FlowLog',
+        kind: 'Controller'
+    });
 
-	return Controller;
+    return Controller;
 
 });

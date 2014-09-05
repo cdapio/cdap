@@ -4,34 +4,34 @@
 
 define(['core/controllers/userservice'], function (Userservice) {
 
-  var Controller = Userservice.extend({
+    var Controller = Userservice.extend({
 
-    /*
-     * This syntax makes the Userservice controller available to this controller.
-     * This allows us to access the service model that has already been loaded.
-     *
-     */
-    needs: ['Userservice'],
-    init: function () {
-      this.set('expectedPath', 'UserserviceStatus');
-    },
+        /*
+         * This syntax makes the Userservice controller available to this controller.
+         * This allows us to access the service model that has already been loaded.
+         *
+         */
+        needs: ['Userservice'],
+        init: function () {
+            this.set('expectedPath', 'UserserviceStatus');
+        },
 
 
-    load: function () {
-    },
+        load: function () {
+        },
 
-    unload: function () {
-    }
+        unload: function () {
+        }
 
-  });
+    });
 
-  Controller.reopenClass({
+    Controller.reopenClass({
 
-    type: 'UserserviceStatus',
-    kind: 'Controller'
+        type: 'UserserviceStatus',
+        kind: 'Controller'
 
-  });
+    });
 
-  return Controller;
+    return Controller;
 
 });

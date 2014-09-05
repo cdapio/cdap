@@ -5,208 +5,208 @@
 
 define([], function () {
 
-	var Controller = Em.Controller.extend({
+    var Controller = Em.Controller.extend({
 
-		load: function () {
+        load: function () {
 
-			var parent = this.get('needs')[0];
-			var model = this.get('controllers').get(parent).get('model');
-			var list = Em.ArrayProxy.create({ content: [] });
+            var parent = this.get('needs')[0];
+            var model = this.get('controllers').get(parent).get('model');
+            var list = Em.ArrayProxy.create({ content: [] });
 
-			this.set('config', list);
-			this.set('model', model);
+            this.set('config', list);
+            this.set('model', model);
 
-			var self = this;
+            var self = this;
 
-			this.HTTP.get('rest', 'apps', model.get('app'),
-				model.get('plural').toLowerCase(),
-				model.get('name'), 'runtimeargs', function (args) {
-					var config = [];
-					for (var key in args) {
-						config.push({
-							key: key,
-							value: args[key]
-						});
-					}
+            this.HTTP.get('rest', 'apps', model.get('app'),
+                model.get('plural').toLowerCase(),
+                model.get('name'), 'runtimeargs', function (args) {
+                    var config = [];
+                    for (var key in args) {
+                        config.push({
+                            key: key,
+                            value: args[key]
+                        });
+                    }
 
-					self.get('config').pushObjects(config);
+                    self.get('config').pushObjects(config);
 
-			});
+                });
 
-			Em.run.next(function () {
-				$('.config-editor-new .config-editor-key input').select();
-			});
+            Em.run.next(function () {
+                $('.config-editor-new .config-editor-key input').select();
+            });
 
-		},
+        },
 
-		unload: function () {
+        unload: function () {
 
-		},
+        },
 
-		runnable: function () {
+        runnable: function () {
 
-			if (this.get('model.type') === 'Workflow') {
-				return false;
-			}
-			return true;
+            if (this.get('model.type') === 'Workflow') {
+                return false;
+            }
+            return true;
 
-		}.property('model'),
+        }.property('model'),
 
-		add: function () {
+        add: function () {
 
-			var key = $('.config-editor-new .config-editor-key input').val();
-			var value = $('.config-editor-new .config-editor-value input').val();
+            var key = $('.config-editor-new .config-editor-key input').val();
+            var value = $('.config-editor-new .config-editor-value input').val();
 
-			if (key && value) {
+            if (key && value) {
 
-				$('.config-editor-new .config-editor-key input').val('');
-				$('.config-editor-new .config-editor-value input').val('');
+                $('.config-editor-new .config-editor-key input').val('');
+                $('.config-editor-new .config-editor-value input').val('');
 
-				this.addDone(key, value);
+                this.addDone(key, value);
 
-			}
+            }
 
-		},
+        },
 
-		addDone: function (key, value) {
+        addDone: function (key, value) {
 
-			this.get('config').pushObject({
-				key: key,
-				value: value
-			});
+            this.get('config').pushObject({
+                key: key,
+                value: value
+            });
 
-			$('.config-editor-new .config-editor-key input').select();
+            $('.config-editor-new .config-editor-key input').select();
 
-		},
+        },
 
-		remove: function (view) {
+        remove: function (view) {
 
-			var index = view.contentIndex;
-			this.get('config').removeAt(index);
+            var index = view.contentIndex;
+            this.get('config').removeAt(index);
 
-			/*
-			 * Call rerender() ro reset the 'contentIndex' values once removed.
-			 */
-			view.get('parentView').get('parentView').rerender();
+            /*
+             * Call rerender() ro reset the 'contentIndex' values once removed.
+             */
+            view.get('parentView').get('parentView').rerender();
 
-		},
+        },
 
-		currentEdit: null,
+        currentEdit: null,
 
-		edit: function (kind, index) {
+        edit: function (kind, index) {
 
-			if (this.currentEdit) {
-				this.currentEdit.removeClass('editing');
-			}
+            if (this.currentEdit) {
+                this.currentEdit.removeClass('editing');
+            }
 
-			var children = $('.config-editor .config-editor-' + kind);
-			$(children[index]).addClass('editing');
-			$(children[index]).find('input').select();
+            var children = $('.config-editor .config-editor-' + kind);
+            $(children[index]).addClass('editing');
+            $(children[index]).find('input').select();
 
-			this.currentEdit = $(children[index]);
+            this.currentEdit = $(children[index]);
 
-		},
+        },
 
-		editDone: function (kind, index) {
+        editDone: function (kind, index) {
 
-			var children = $('.config-editor .config-editor-' + kind);
-			$(children[index]).removeClass('editing');
-			$(children[index]).find('input').select();
+            var children = $('.config-editor .config-editor-' + kind);
+            $(children[index]).removeClass('editing');
+            $(children[index]).find('input').select();
 
-		},
+        },
 
-		clear: function () {
+        clear: function () {
 
-			this.set('config', []);
+            this.set('config', []);
 
-			$('.config-editor-new .config-editor-key input').select();
+            $('.config-editor-new .config-editor-key input').select();
 
-		},
+        },
 
-		save: function () {
+        save: function () {
 
-			var config = {};
-			var model = this.get('model');
+            var config = {};
+            var model = this.get('model');
 
-			this.get('config').forEach(function (item) {
-				config[item.key] = item.value;
-			});
+            this.get('config').forEach(function (item) {
+                config[item.key] = item.value;
+            });
 
-			config = JSON.stringify(config);
+            config = JSON.stringify(config);
 
-			this.HTTP.put('rest', 'apps', model.get('app'),
-				model.get('plural').toLowerCase(),
-				model.get('name'), 'runtimeargs', {
-					data: config
-				}, function () {
+            this.HTTP.put('rest', 'apps', model.get('app'),
+                model.get('plural').toLowerCase(),
+                model.get('name'), 'runtimeargs', {
+                    data: config
+                }, function () {
 
-					// Noop
+                    // Noop
 
-			});
+                });
 
-			this.close();
+            this.close();
 
-		},
+        },
 
-		runOnce: function () {
+        runOnce: function () {
 
-			var config = {};
-			this.get('config').forEach(function (item) {
-				config[item.key] = item.value;
-			});
+            var config = {};
+            this.get('config').forEach(function (item) {
+                config[item.key] = item.value;
+            });
 
-			var model = this.get('model');
-			model.startWithConfig(this.HTTP, config);
+            var model = this.get('model');
+            model.startWithConfig(this.HTTP, config);
 
-			this.close();
+            this.close();
 
-		},
+        },
 
-		saveAndRun: function () {
+        saveAndRun: function () {
 
-			this.save();
-			this.runOnce();
+            this.save();
+            this.runOnce();
 
-		},
+        },
 
-		saveAndRestart: function () {
+        saveAndRestart: function () {
 
-			this.save();
+            this.save();
 
-			var program = this.get('model'), self = this;
+            var program = this.get('model'), self = this;
 
-			program.stop(this.HTTP, function () {
-				self.runOnce();
-			});
+            program.stop(this.HTTP, function () {
+                self.runOnce();
+            });
 
-		},
+        },
 
-		close: function () {
+        close: function () {
 
-			var parent = this.get('needs')[0];
-			var model = this.get('controllers').get(parent).get('model');
+            var parent = this.get('needs')[0];
+            var model = this.get('controllers').get(parent).get('model');
 
-			/*
-			 * HAX: The URL route needs the ID of a runnable to be app_id:flow_id.
-			 * However, Ember is smart enough to not reload the parent controller.
-			 * Therefore, the "correct" ID is preserved on the parent controller's model.
-			 */
-			if (model.id && model.id.indexOf(':') === -1) {
-				model.id = model.app + ':' + model.id;
-			}
+            /*
+             * HAX: The URL route needs the ID of a runnable to be app_id:flow_id.
+             * However, Ember is smart enough to not reload the parent controller.
+             * Therefore, the "correct" ID is preserved on the parent controller's model.
+             */
+            if (model.id && model.id.indexOf(':') === -1) {
+                model.id = model.app + ':' + model.id;
+            }
 
-			this.transitionToRoute(parent, model);
+            this.transitionToRoute(parent, model);
 
-		}
-	});
+        }
+    });
 
-	Controller.reopenClass({
+    Controller.reopenClass({
 
-		type: 'RunnableConfig',
-		kind: 'Controller'
+        type: 'RunnableConfig',
+        kind: 'Controller'
 
-	});
+    });
 
-	return Controller;
+    return Controller;
 
 });

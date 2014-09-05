@@ -4,50 +4,50 @@
 
 define(['core/models/element'], function (Element) {
 
-	var Model = Element.extend({
-		type: 'Dataset',
-		plural: 'Datasets',
-		href: function () {
-			return '#/datasets/' + this.get('id');
-		}.property('id'),
+    var Model = Element.extend({
+        type: 'Dataset',
+        plural: 'Datasets',
+        href: function () {
+            return '#/datasets/' + this.get('id');
+        }.property('id'),
 
-		init: function() {
+        init: function () {
 
-			this._super();
+            this._super();
 
-			if (!this.get('id')) {
-				this.set('id', this.get('name'));
-			}
+            if (!this.get('id')) {
+                this.set('id', this.get('name'));
+            }
 
-			this.trackMetric('/reactor/datasets/{id}/dataset.store.bytes', 'aggregates', 'storage');
+            this.trackMetric('/reactor/datasets/{id}/dataset.store.bytes', 'aggregates', 'storage');
 
-		},
+        },
 
-		interpolate: function (path) {
+        interpolate: function (path) {
 
-			return path.replace(/\{id\}/, this.get('id'));
+            return path.replace(/\{id\}/, this.get('id'));
 
-		}
+        }
 
-	});
+    });
 
-	Model.reopenClass({
-		type: 'Dataset',
-		kind: 'Model',
-		find: function (dataset_id, http) {
-			var promise = Ember.Deferred.create();
+    Model.reopenClass({
+        type: 'Dataset',
+        kind: 'Model',
+        find: function (dataset_id, http) {
+            var promise = Ember.Deferred.create();
 
-			http.rest('datasets', dataset_id, function (model, error) {
+            http.rest('datasets', dataset_id, function (model, error) {
 
-				model = C.Dataset.create(model);
-				promise.resolve(model);
+                model = C.Dataset.create(model);
+                promise.resolve(model);
 
-			});
+            });
 
-			return promise;
-		}
-	});
+            return promise;
+        }
+    });
 
-	return Model;
+    return Model;
 
 });

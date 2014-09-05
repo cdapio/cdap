@@ -4,234 +4,234 @@
 
 define([], function () {
 
-	var Controller = Ember.Controller.extend({
+    var Controller = Ember.Controller.extend({
 
-		needs: ['Procedure'],
+        needs: ['Procedure'],
 
-		load: function () {
+        load: function () {
 
-			this.clearTriggers(true);
+            this.clearTriggers(true);
 
-			var model = this.get('model');
-			var self = this;
+            var model = this.get('model');
+            var self = this;
 
-			var controller = this.get('controllers.Procedure');
+            var controller = this.get('controllers.Procedure');
 
-			if (controller.get('previousProcedure') !== model.get('id')) {
-				controller.set('requestMethod', '');
-				controller.set('requestParams', '');
-				controller.set('responseBody', '');
-				controller.set('previousProcedure', model.get('id'));
-			}
+            if (controller.get('previousProcedure') !== model.get('id')) {
+                controller.set('requestMethod', '');
+                controller.set('requestParams', '');
+                controller.set('responseBody', '');
+                controller.set('previousProcedure', model.get('id'));
+            }
 
-			/*
-			 * Track container metric.
-			 */
-			model.trackMetric('/reactor/' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
+            /*
+             * Track container metric.
+             */
+            model.trackMetric('/reactor/' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
 
-			this.interval = setInterval(function () {
-				self.updateStats();
-			}, C.POLLING_INTERVAL);
+            this.interval = setInterval(function () {
+                self.updateStats();
+            }, C.POLLING_INTERVAL);
 
-			/*
-			 * Give the chart Embeddables 100ms to configure
-			 * themselves before updating.
-			 */
-			setTimeout(function () {
-				self.updateStats();
-			}, C.EMBEDDABLE_DELAY);
+            /*
+             * Give the chart Embeddables 100ms to configure
+             * themselves before updating.
+             */
+            setTimeout(function () {
+                self.updateStats();
+            }, C.EMBEDDABLE_DELAY);
 
-		},
+        },
 
-		unload: function () {
+        unload: function () {
 
-			clearInterval(this.interval);
+            clearInterval(this.interval);
 
-		},
+        },
 
-		ajaxCompleted: function () {
-			return this.get('timeseriesCompleted') && this.get('aggregatesCompleted');
-		},
+        ajaxCompleted: function () {
+            return this.get('timeseriesCompleted') && this.get('aggregatesCompleted');
+        },
 
-		clearTriggers: function (value) {
-			this.set('timeseriesCompleted', value);
-			this.set('aggregatesCompleted', value);
-		},
+        clearTriggers: function (value) {
+            this.set('timeseriesCompleted', value);
+            this.set('aggregatesCompleted', value);
+        },
 
-		updateStats: function () {
-			if (!this.ajaxCompleted()) {
-				return;
-			}
-			this.get('model').updateState(this.HTTP);
-			this.clearTriggers(false);
-			C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
-			C.Util.updateAggregates([this.get('model')], this.HTTP, this);
+        updateStats: function () {
+            if (!this.ajaxCompleted()) {
+                return;
+            }
+            this.get('model').updateState(this.HTTP);
+            this.clearTriggers(false);
+            C.Util.updateTimeSeries([this.get('model')], this.HTTP, this);
+            C.Util.updateAggregates([this.get('model')], this.HTTP, this);
 
-			C.Util.updateCurrents([this.get('model')], this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
+            C.Util.updateCurrents([this.get('model')], this.HTTP, this, C.RESOURCE_METRICS_BUFFER);
 
-			var appId = this.get('model.app');
-			var procedureName = this.get('model.name');
-			var self = this;
+            var appId = this.get('model.app');
+            var procedureName = this.get('model.name');
+            var self = this;
 
-			this.HTTP.get('rest', 'apps', appId, 'procedures', procedureName, 'instances', function (response) {
+            this.HTTP.get('rest', 'apps', appId, 'procedures', procedureName, 'instances', function (response) {
 
-				self.set('model.instances', response.instances);
+                self.set('model.instances', response.instances);
 
-			});
+            });
 
-		},
+        },
 
-		/**
-		 * Action handlers from the View
-		 */
-		exec: function () {
+        /**
+         * Action handlers from the View
+         */
+        exec: function () {
 
-			var model = this.get('model');
-			var action = model.get('defaultAction');
-			if (action && action.toLowerCase() in model) {
-				model[action.toLowerCase()](this.HTTP);
-			}
+            var model = this.get('model');
+            var action = model.get('defaultAction');
+            if (action && action.toLowerCase() in model) {
+                model[action.toLowerCase()](this.HTTP);
+            }
 
-		},
+        },
 
-    keyPressed: function (evt) {
-      var btn = this.$().next();
-      var inp = this.value;
-      if (inp.length > 0 && parseInt(inp) != this.placeholder){
-          btn.css("opacity",'1')
+        keyPressed: function (evt) {
+            var btn = this.$().next();
+            var inp = this.value;
+            if (inp.length > 0 && parseInt(inp) != this.placeholder) {
+                btn.css("opacity", '1')
 
-      } else {
-          btn.css("opacity",'')
-      }
-      return true;
-    },
+            } else {
+                btn.css("opacity", '')
+            }
+            return true;
+        },
 
-    changeInstances: function () {
-      var inputStr = this.get('instancesInput');
-      var input = parseInt(inputStr);
-      this.set('instancesInput', '');
-      setTimeout(function () {
-        $('#instancesInput').keyup();
-      },500);
+        changeInstances: function () {
+            var inputStr = this.get('instancesInput');
+            var input = parseInt(inputStr);
+            this.set('instancesInput', '');
+            setTimeout(function () {
+                $('#instancesInput').keyup();
+            }, 500);
 
-      if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Enter a valid number of instances.');
-        return;
-      }
+            if (!inputStr || inputStr.length === 0) {
+                C.Modal.show('Change Instances', 'Enter a valid number of instances.');
+                return;
+            }
 
-      if(isNaN(input) || isNaN(inputStr)){
-        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
-        return;
-      }
+            if (isNaN(input) || isNaN(inputStr)) {
+                C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
+                return;
+            }
 
-      if(input < 1 || input > 100) {
-        C.Modal.show('Instances Requested out of bounds', 'Please select an instance count (between 1 and 100)');
-        return;
-      }
+            if (input < 1 || input > 100) {
+                C.Modal.show('Instances Requested out of bounds', 'Please select an instance count (between 1 and 100)');
+                return;
+            }
 
-      this.setInstances(input, "Change Instances to " + input + " for ");
-    },
+            this.setInstances(input, "Change Instances to " + input + " for ");
+        },
 
-		setInstances: function (instances, message) {
+        setInstances: function (instances, message) {
 
-			var self = this;
-			var appId = this.get('model.app');
-			var procedureName = this.get('model.name');
+            var self = this;
+            var appId = this.get('model.app');
+            var procedureName = this.get('model.name');
 
-			C.Modal.show(
-				"Procedure Instances",
-				message + ' "' + procedureName + '" procedure?',
-				function () {
+            C.Modal.show(
+                "Procedure Instances",
+                    message + ' "' + procedureName + '" procedure?',
+                function () {
 //
-					self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
-						data: '{"instances": ' + instances + '}'
-					}, function (response) {
+                    self.HTTP.put('rest', 'apps', appId, 'procedures', procedureName, 'instances', {
+                        data: '{"instances": ' + instances + '}'
+                    }, function (response) {
 
-						self.set('model.instances', instances);
+                        self.set('model.instances', instances);
 
-					});
-				});
+                    });
+                });
 
-		},
+        },
 
-		addOneInstance: function () {
+        addOneInstance: function () {
 
-			var instances = this.get('model.instances');
-			instances ++;
+            var instances = this.get('model.instances');
+            instances++;
 
-			if (instances >= 1 && instances <= 64) {
-				this.setInstances(instances, 'Add an instance to');
-			}
+            if (instances >= 1 && instances <= 64) {
+                this.setInstances(instances, 'Add an instance to');
+            }
 
-		},
+        },
 
-		removeOneInstance: function () {
+        removeOneInstance: function () {
 
-			var instances = this.get('model.instances');
-			instances --;
+            var instances = this.get('model.instances');
+            instances--;
 
-			if (instances >= 1 && instances <= 64) {
-				this.setInstances(instances, 'Remove an instance from');
-			}
+            if (instances >= 1 && instances <= 64) {
+                this.setInstances(instances, 'Remove an instance from');
+            }
 
-		},
+        },
 
-    actualInstances: function () {
-      if (C.get('isLocal')) {
-        return this.get('model.instances');
-      } else {
-        var instances = Math.max(0, (+this.get('model.containersLabel') - 1));
-        return instances + ' instance' + (instances === 1 ? '' : 's');
-      }
-    }.property('model.instances','model.containersLabel'),
+        actualInstances: function () {
+            if (C.get('isLocal')) {
+                return this.get('model.instances');
+            } else {
+                var instances = Math.max(0, (+this.get('model.containersLabel') - 1));
+                return instances + ' instance' + (instances === 1 ? '' : 's');
+            }
+        }.property('model.instances', 'model.containersLabel'),
 
-		config: function () {
+        config: function () {
 
-			var self = this;
-			var model = this.get('model');
+            var self = this;
+            var model = this.get('model');
 
-			this.transitionToRoute('ProcedureStatus.Config');
+            this.transitionToRoute('ProcedureStatus.Config');
 
-		},
+        },
 
-		responseBody: null,
-		responseCode: null,
+        responseBody: null,
+        responseCode: null,
 
-		submit: function (event) {
+        submit: function (event) {
 
-			var self = this;
-			var controller = this.get('controllers.Procedure');
+            var self = this;
+            var controller = this.get('controllers.Procedure');
 
-			var appId = this.get('model').applicationId;
-			var procedureName = this.get('model').serviceName;
-			var methodName = controller.get('requestMethod');
+            var appId = this.get('model').applicationId;
+            var procedureName = this.get('model').serviceName;
+            var methodName = controller.get('requestMethod');
 
-			this.HTTP.post('rest', 'apps', appId, 'procedures', procedureName, 'methods', methodName, {
-					data: controller.get('requestParams')
-				}, function (response) {
+            this.HTTP.post('rest', 'apps', appId, 'procedures', procedureName, 'methods', methodName, {
+                data: controller.get('requestParams')
+            }, function (response) {
 
-				if (response) {
-					if (typeof(response) === 'object') {
-						self.set('responseBody', JSON.stringify(response, undefined, 2) || '[ No content ]');
-					} else {
-						self.set('responseBody', response || '[ No content ]');
-					}
+                if (response) {
+                    if (typeof(response) === 'object') {
+                        self.set('responseBody', JSON.stringify(response, undefined, 2) || '[ No content ]');
+                    } else {
+                        self.set('responseBody', response || '[ No content ]');
+                    }
 
-				} else {
-					self.set('responseBody', '[ No response received ]');
-				}
+                } else {
+                    self.set('responseBody', '[ No response received ]');
+                }
 
-			});
+            });
 
-		}
+        }
 
-	});
+    });
 
-	Controller.reopenClass({
-		type: 'ProcedureStatus',
-		kind: 'Controller'
-	});
+    Controller.reopenClass({
+        type: 'ProcedureStatus',
+        kind: 'Controller'
+    });
 
-	return Controller;
+    return Controller;
 
 });

@@ -4,63 +4,63 @@
 
 define([], function () {
 
-  var Controller = Ember.Controller.extend({
+    var Controller = Ember.Controller.extend({
 
-    runs: Ember.ArrayProxy.create({
-      content: []
-    }),
+        runs: Ember.ArrayProxy.create({
+            content: []
+        }),
 
-    elements: Em.Object.create(),
+        elements: Em.Object.create(),
 
-    load: function () {
-      var model = this.get('model');
-      var self = this;
-      this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
-      for (var i = 0; i < model.actions.length; i++) {
-        model.actions[i].state = 'IDLE';
-        model.actions[i].running = false;
-        model.actions[i].appId = self.get('model').app;
-        model.actions[i].divId = model.actions[i].name.replace(' ', '');
+        load: function () {
+            var model = this.get('model');
+            var self = this;
+            this.set('elements.Actions', Em.ArrayProxy.create({content: []}));
+            for (var i = 0; i < model.actions.length; i++) {
+                model.actions[i].state = 'IDLE';
+                model.actions[i].running = false;
+                model.actions[i].appId = self.get('model').app;
+                model.actions[i].divId = model.actions[i].name.replace(' ', '');
 
-        if (model.actions[i].properties && 'mapReduceName' in model.actions[i].properties) {
-          var transformedModel = C.Mapreduce.transformModel(model.actions[i]);
+                if (model.actions[i].properties && 'mapReduceName' in model.actions[i].properties) {
+                    var transformedModel = C.Mapreduce.transformModel(model.actions[i]);
 
-          this.get('elements.Actions.content').push(C.Mapreduce.create(transformedModel));
-        } else {
-          this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
-        }
-
-      }
-
-      this.HTTP.rest('apps', model.app, 'workflows', model.name, 'history', function (response) {
-          if (response) {
-            var history = response;
-
-            for (var i = 0; i < history.length; i ++) {
-
-              self.runs.pushObject(C.Run.create(history[i]));
+                    this.get('elements.Actions.content').push(C.Mapreduce.create(transformedModel));
+                } else {
+                    this.get('elements.Actions.content').push(Em.Object.create(model.actions[i]));
+                }
 
             }
-          }
 
-      });
+            this.HTTP.rest('apps', model.app, 'workflows', model.name, 'history', function (response) {
+                if (response) {
+                    var history = response;
 
-    },
+                    for (var i = 0; i < history.length; i++) {
 
-    unload: function () {
+                        self.runs.pushObject(C.Run.create(history[i]));
 
-      this.set('elements.Actions.content', []);
+                    }
+                }
 
-      this.get('runs').set('content', []);
+            });
 
-    }
-  });
+        },
 
-  Controller.reopenClass({
-    type: 'WorkflowHistory',
-    kind: 'Controller'
-  });
+        unload: function () {
 
-  return Controller;
+            this.set('elements.Actions.content', []);
+
+            this.get('runs').set('content', []);
+
+        }
+    });
+
+    Controller.reopenClass({
+        type: 'WorkflowHistory',
+        kind: 'Controller'
+    });
+
+    return Controller;
 
 });

@@ -4,46 +4,46 @@
 
 define([], function () {
 
-  var Controller = Ember.Controller.extend({
+    var Controller = Ember.Controller.extend({
 
-    runs: Ember.ArrayProxy.create({
-      content: []
-    }),
+        runs: Ember.ArrayProxy.create({
+            content: []
+        }),
 
-    elements: Em.Object.create(),
+        elements: Em.Object.create(),
 
-    load: function () {
-      var model = this.get('model');
-      var self = this;
+        load: function () {
+            var model = this.get('model');
+            var self = this;
 
-      this.HTTP.rest('apps', model.app, 'procedures', model.name, 'history', function (response) {
+            this.HTTP.rest('apps', model.app, 'procedures', model.name, 'history', function (response) {
 
-          if (response) {
-            var history = response;
+                if (response) {
+                    var history = response;
 
-            for (var i = 0; i < history.length; i ++) {
+                    for (var i = 0; i < history.length; i++) {
 
-              self.runs.pushObject(C.Run.create(history[i]));
+                        self.runs.pushObject(C.Run.create(history[i]));
 
-            }
-          }
+                    }
+                }
 
-      });
+            });
 
-    },
+        },
 
-    unload: function () {
+        unload: function () {
 
-      this.get('runs').set('content', []);
+            this.get('runs').set('content', []);
 
-    }
-  });
+        }
+    });
 
-  Controller.reopenClass({
-    type: 'ProcedureHistory',
-    kind: 'Controller'
-  });
+    Controller.reopenClass({
+        type: 'ProcedureHistory',
+        kind: 'Controller'
+    });
 
-  return Controller;
+    return Controller;
 
 });

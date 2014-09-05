@@ -3,75 +3,75 @@
  */
 
 define([
-	'core/lib/text!core/partials/modal.html'
-	], function (Template) {
+    'core/lib/text!core/partials/modal.html'
+], function (Template) {
 
-		var Embeddable = Em.View.extend({
+    var Embeddable = Em.View.extend({
 
-			template: Em.Handlebars.compile(Template),
-			classNames: ['modal', 'hide', 'fade'],
-			elementId: 'modal-from-dom',
-			
-			didInsertElement: function () {
-				var self = this;
-				
-				// Hide on escape.
-				$(document).keyup(function (e) {
-					if(e.which == 27) {
-						self.hide();
-					}
-				});
-			},
-			
-			show: function (title, body, callback, nocancel) {
-				this.set('title', title);
-				this.set('body', body);
+        template: Em.Handlebars.compile(Template),
+        classNames: ['modal', 'hide', 'fade'],
+        elementId: 'modal-from-dom',
 
-				if (!callback) {
-					nocancel = true;
-				}
+        didInsertElement: function () {
+            var self = this;
 
-				this.set('nocancel', nocancel );
+            // Hide on escape.
+            $(document).keyup(function (e) {
+                if (e.which == 27) {
+                    self.hide();
+                }
+            });
+        },
 
-				var self = this;
+        show: function (title, body, callback, nocancel) {
+            this.set('title', title);
+            this.set('body', body);
 
-				this.set('confirmed', function () {
-					self.hide();
-					if (typeof callback === 'function') {
-						callback();
-					}
-				});
+            if (!callback) {
+                nocancel = true;
+            }
 
-				var el = $(this.get('element'));
-				el.modal({
-					show: true,
-					backdrop: "static"
-				});
+            this.set('nocancel', nocancel);
 
-			},
+            var self = this;
 
-			hide: function (callback) {
+            this.set('confirmed', function () {
+                self.hide();
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            });
 
-				var el = $(this.get('element'));
+            var el = $(this.get('element'));
+            el.modal({
+                show: true,
+                backdrop: "static"
+            });
 
-				if (typeof callback === "function") {
-					el.on('hidden', function () {
-						el.off('hidden');
-						callback();
-					});
-				}
+        },
 
-				el.modal('hide');
+        hide: function (callback) {
 
-			}
+            var el = $(this.get('element'));
 
-		});
+            if (typeof callback === "function") {
+                el.on('hidden', function () {
+                    el.off('hidden');
+                    callback();
+                });
+            }
 
-		Embeddable.reopenClass({
-			type: 'Modal',
-			kind: 'Embeddable'
-		});
+            el.modal('hide');
 
-		return Embeddable;
+        }
 
-	});
+    });
+
+    Embeddable.reopenClass({
+        type: 'Modal',
+        kind: 'Embeddable'
+    });
+
+    return Embeddable;
+
+});
