@@ -48,8 +48,10 @@ public class DatasetSerDe implements SerDe {
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
     try {
       if (entries != null) {
-        entries.set(Constants.Explore.DATASET_NAME, datasetName);
-        recordType = DatasetAccessor.getRecordScannableType(entries);
+        // Here, we can't say whether Hive wants to read the table, or write to it
+        Configuration conf = new Configuration(entries);
+        conf.set(Constants.Explore.DATASET_NAME, datasetName);
+        recordType = DatasetAccessor.getRecordType(conf);
       } else {
         // When initialize is called to write to a table, entries is null
         try {

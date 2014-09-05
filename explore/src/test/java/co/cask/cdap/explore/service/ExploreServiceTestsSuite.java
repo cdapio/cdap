@@ -18,16 +18,11 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-
-import java.util.Set;
 
 @Category(XSlowTests.class)
 @RunWith(Suite.class)

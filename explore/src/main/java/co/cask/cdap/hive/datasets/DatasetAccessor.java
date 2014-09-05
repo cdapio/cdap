@@ -54,7 +54,15 @@ public class DatasetAccessor {
    * @throws IOException in case the conf does not contain a valid RecordScannable.
    */
   public static RecordScannable getRecordScannable(Configuration conf) throws IOException {
-    RecordScannable recordScannable = instantiateScannable(conf);
+    Dataset dataset = instantiate(conf);
+
+    if (!(dataset instanceof RecordScannable)) {
+      throw new IOException(
+        String.format("Dataset %s does not implement RecordScannable, and hence cannot be queried in Hive.",
+                      conf.get(Constants.Explore.DATASET_NAME)));
+    }
+
+    RecordScannable recordScannable = (RecordScannable) dataset;
 
     if (recordScannable instanceof TransactionAware) {
       startTransaction(conf, (TransactionAware) recordScannable);
@@ -71,7 +79,7 @@ public class DatasetAccessor {
    * @throws IOException in case the conf does not contain a valid RecordWritable.
    */
   public static RecordWritable getRecordWritable(Configuration conf) throws IOException {
-    RecordWritable recordWritable = instantiateWritable(conf);
+    RecordWritable recordWritable = instantiateWritable(conf, null);
 
     if (recordWritable instanceof TransactionAware) {
       startTransaction(conf, (TransactionAware) recordWritable);
@@ -85,7 +93,7 @@ public class DatasetAccessor {
    * @throws IOException in case the conf does not contain a valid RecordWritable.
    */
   public static void checkRecordWritable(Configuration conf) throws IOException {
-    RecordWritable recordWritable = instantiateWritable(conf);
+    RecordWritable recordWritable = instantiateWritable(conf, null);
     recordWritable.close();
   }
 
@@ -96,12 +104,19 @@ public class DatasetAccessor {
    * @return Record type of RecordScannable dataset.
    * @throws IOException in case the conf does not contain a valid RecordScannable.
    */
-  public static Type getRecordScannableType(Configuration conf) throws IOException {
-    RecordScannable<?> recordScannable = instantiateScannable(conf);
+  public static Type getRecordType(Configuration conf) throws IOException {
+    Dataset dataset = instantiate(conf);
     try {
-      return recordScannable.getRecordType();
+      if (dataset instanceof RecordWritable) {
+        return ((RecordWritable) dataset).getRecordType();
+      } else if (dataset instanceof RecordScannable) {
+        return ((RecordScannable) dataset).getRecordType();
+      }
+      throw new IOException(
+        String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable.",
+                      conf.get(Constants.Explore.DATASET_NAME)));
     } finally {
-      recordScannable.close();
+      dataset.close();
     }
   }
 
@@ -114,7 +129,7 @@ public class DatasetAccessor {
    * @throws IOException in case the {@code datasetName} does not reference a RecordWritable.
    */
   public static Type getRecordWritableType(String datasetName) throws IOException {
-    RecordWritable<?> recordWritable = instantiateWritable(datasetName);
+    RecordWritable<?> recordWritable = instantiateWritable(null, datasetName);
     try {
       return recordWritable.getRecordType();
     } finally {
@@ -127,19 +142,9 @@ public class DatasetAccessor {
     txAware.startTx(tx);
   }
 
-  private static RecordWritable instantiateWritable(Configuration conf)
-    throws IOException {
-    return instantiateWritable(conf, null);
-  }
-
-  private static RecordWritable instantiateWritable(String datasetName)
-    throws IOException {
-    return instantiateWritable(null, datasetName);
-  }
-
   private static RecordWritable instantiateWritable(@Nullable Configuration conf, String datasetName)
     throws IOException {
-    Dataset dataset = instantiate(conf, datasetName, true);
+    Dataset dataset = instantiate(conf, datasetName);
 
     if (!(dataset instanceof RecordWritable)) {
       throw new IOException(
@@ -149,29 +154,21 @@ public class DatasetAccessor {
     return (RecordWritable) dataset;
   }
 
-  private static RecordScannable instantiateScannable(Configuration conf) throws IOException {
-    Dataset dataset = instantiate(conf, null, false);
+  private static Dataset instantiate(Configuration conf) throws IOException {
+    Dataset dataset = instantiate(conf, null);
 
-    if (!(dataset instanceof RecordScannable)) {
+    if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
       throw new IOException(
-        String.format("Dataset %s does not implement RecordScannable, and hence cannot be queried in Hive.",
+        String.format("Dataset %s does not implement neither RecordScannable nor RecordWritable.",
                       conf.get(Constants.Explore.DATASET_NAME)));
     }
-    return (RecordScannable) dataset;
+    return dataset;
   }
 
-  private static Dataset instantiate(@Nullable Configuration conf, String dsName, boolean isRecordWritable)
+  private static Dataset instantiate(@Nullable Configuration conf, String dsName)
     throws IOException {
     ContextManager.Context context = ContextManager.getContext(conf);
-    String datasetName = dsName;
-
-    if (datasetName == null && isRecordWritable) {
-      datasetName = context.getRecordWritableName();
-    } else if (datasetName != null && isRecordWritable) {
-      context.setRecordWritableName(datasetName);
-    } else if (datasetName == null && !isRecordWritable) {
-      datasetName = conf.get(Constants.Explore.DATASET_NAME);
-    }
+    String datasetName = dsName != null ? dsName : conf.get(Constants.Explore.DATASET_NAME);
 
     if (datasetName == null) {
       throw new IOException("Dataset name property could not be found.");
