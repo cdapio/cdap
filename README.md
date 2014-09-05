@@ -1,5 +1,5 @@
 
-# Cask Data Application Platform
+# Cask Data Application Platform - CDAP
 
 ![CDAP Logo](/docs/developer-guide/source/_images/CDAP.png)
 
@@ -64,7 +64,7 @@ Take the `cdap-<version>.tar.gz` file and unzip it into a suitable location.
 
 For more build options please refer [here](BUILD.md)
 
-### Quick Start
+## Quick Start
 
 Visit our web site for a [Quick Start](http://cask.co/docs/cdap/current/en/quickstart.html)
 that will guide you through installing CDAP, running an example that counts HTTP status codes and then
