@@ -329,8 +329,8 @@ define(['core/lib/lodash'], function (lodash) {
         C.Modal.show('Error', "Please enter a valid sql query");
         return;
       }
-      if (sqlString.slice(-1) === ";") {
-        sqlString = sqlString.substring(0, sqlString.length - 1);
+      if (sqlString.indexOf(";") >= 0) {
+        sqlString = sqlString.slice(0, sqlString.indexOf(";"));
       }
       this.HTTP.post('rest/data/explore/queries', {
         data: {
@@ -380,9 +380,6 @@ define(['core/lib/lodash'], function (lodash) {
     showTableProperties: function () {
       this.set('tablePropertiesArrowRight', !this.get('tablePropertiesArrowRight'));
       this.set('showProperties', !this.get('showProperties'));
-    },
-    onDateExploreTableNameHover: function() {
-      debugger;
     }
   });
 
