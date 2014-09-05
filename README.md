@@ -3,7 +3,7 @@
 
 ![CDAP Logo](/docs/developer-guide/source/_images/CDAP.png)
 
-**A Platform for Data Applications**
+**Introduction**
 
 The Cask Data Application Platform (CDAP) is an application server providing such a
 platform for the development, deployment and management of data applications and the
@@ -39,12 +39,16 @@ Build                                                                    | Statu
 
 ## Getting Started
 
+### Prerequiste
+
 To install and use CDAP and its included examples, there are a few simple prerequisites:
 
   1. JDK 6 or JDK 7 (required to run CDAP; note that $JAVA_HOME should be set)
   2. Node.js 0.8.16+ (required to run the CDAP Console)
   3. Apache Maven 3.0+ (required to build the example applications)
   
+### Build
+
 You can get started with CDAP by building directly from the latest source code::
 
 ```
