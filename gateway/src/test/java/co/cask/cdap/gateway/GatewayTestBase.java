@@ -86,7 +86,6 @@ public abstract class GatewayTestBase {
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
 
   private static Gateway gateway;
-  private static final String WEBAPPSERVICE = "$HOST";
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf;
@@ -119,7 +118,6 @@ public abstract class GatewayTestBase {
     conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
     conf.set(Constants.Router.ADDRESS, hostname);
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
-    conf.setInt(Constants.Router.WEBAPP_PORT, 0);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = startGateway(conf);
   }

@@ -97,6 +97,7 @@ public class NettyRouter extends AbstractIdleService {
   private DiscoveryServiceClient discoveryServiceClient;
 
   private final boolean sslEnabled;
+  private final boolean webAppEnabled;
   private final SSLHandlerFactory sslHandlerFactory;
 
   @Inject
@@ -129,13 +130,16 @@ public class NettyRouter extends AbstractIdleService {
     this.configuration = cConf;
 
     this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
+    this.webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
     if (isSSLEnabled()) {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
                                 Integer.parseInt(cConf.get(Constants.Router.ROUTER_SSL_PORT,
                                                            Constants.Router.DEFAULT_ROUTER_SSL_PORT)));
-      this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
-                                Integer.parseInt(cConf.get(Constants.Router.WEBAPP_SSL_PORT,
-                                                           Constants.Router.DEFAULT_WEBAPP_SSL_PORT)));
+      if (webAppEnabled) {
+        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
+                                  Integer.parseInt(cConf.get(Constants.Router.WEBAPP_SSL_PORT,
+                                                             Constants.Router.DEFAULT_WEBAPP_SSL_PORT)));
+      }
 
       File keystore;
       try {
@@ -152,9 +156,11 @@ public class NettyRouter extends AbstractIdleService {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
                         Integer.parseInt(cConf.get(Constants.Router.ROUTER_PORT,
                                                    Constants.Router.DEFAULT_ROUTER_PORT)));
-      this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
-                        Integer.parseInt(cConf.get(Constants.Router.WEBAPP_PORT,
-                                                   Constants.Router.DEFAULT_WEBAPP_PORT)));
+      if (webAppEnabled) {
+        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
+                                  Integer.parseInt(cConf.get(Constants.Router.WEBAPP_PORT,
+                                                             Constants.Router.DEFAULT_WEBAPP_PORT)));
+      }
       this.sslHandlerFactory = null;
     }
     LOG.info("Service to Port Mapping - {}", this.serviceToPortMap);
