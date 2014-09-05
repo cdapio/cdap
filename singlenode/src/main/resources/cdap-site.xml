@@ -97,4 +97,28 @@
         <value>1</value>
         <description>Number of stream writer instance. In local mode, it's always one</description>
     </property>
+
+    <!--
+        Frontend Configuration
+    -->
+    <property>
+        <name>accounts.server.address</name>
+        <value>accounts.continuuity.com</value>
+    </property>
+
+    <property>
+        <name>accounts.server.port</name>
+        <value>443</value>
+    </property>
+
+    <property>
+        <name>dashboard.ssl.key</name>
+        <value>/Users/ajainarayanan/server.key</value>
+    </property>
+    <property>
+      <name>dashboard.ssl.cert</name>
+      <value>/Users/ajainarayanan/server.crt</value>
+    </property>
+
+
 </configuration>

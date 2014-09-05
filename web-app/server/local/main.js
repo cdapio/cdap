@@ -35,7 +35,7 @@ var DevServer = function() {
 util.inherits(DevServer, WebAppServer);
 
 DevServer.prototype.setAttrs = function(configuration) {
-  if (this.config['dashboard.https.enabled'] === "true") {
+  if (this.config['dashboard.https.enabled']) {
     this.lib = https;
   } else {
     this.lib = http;
@@ -76,7 +76,7 @@ DevServer.prototype.launchServer = function() {
 
 DevServer.prototype.configureSSL = function () {
   var options = {};
-  if (this.config['dashboard.https.enabled'] === "true") {
+  if (this.config['dashboard.https.enabled']) {
     key = this.config['dashboard.ssl.key'];
     cert = this.config['dashboard.ssl.cert'];
     options = {
@@ -93,8 +93,8 @@ DevServer.prototype.configureSSL = function () {
 DevServer.prototype.startServer = function () {
   this.bindRoutes();
 
-  if (!('dashboard.bind.port' in this.config)) {
-    this.config['dashboard.bind.port'] = this.config['dashboard.bind.port.nonssl'];
+  if (this.config['dashboard.https.enabled']) {
+    this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
   }
 
   this.server.listen(this.config['dashboard.bind.port']);
@@ -108,7 +108,11 @@ DevServer.prototype.startServer = function () {
   if (enableMocks) {
     this.logger.info('Webapp running with mocks enabled.');
     HttpMockInjector = require('../../test/httpMockInjector');
-    new HttpMockInjector(nock, this.config['gateway.server.address'], this.config['gateway.server.port']);
+    if (!this.config['dashboard.https.enabled']) {
+      new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.server.bind.port']);
+    } else {
+      new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.server.bind.ssl.port']);
+    }
   }
 
 }

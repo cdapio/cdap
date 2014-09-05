@@ -115,8 +115,8 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
 
   var path = '/' + this.API_VERSION + '/ping';
-  var url = ('http://' + this.config['gateway.server.address'] + ':'
-    + this.config['gateway.server.port'] + path);
+  var url = ('http://' + this.config['router.server.address'] + ':'
+    + this.config['router.server.port'] + path);
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
     request({

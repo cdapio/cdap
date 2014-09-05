@@ -3,47 +3,14 @@
 -->
 <configuration>
 
-	<property>
-		<name>dashboard.bind.port.ssl</name>
-		<value>443</value>
-	</property>
+    router.server.address
+
+    dashboard.bind.port
+    dashboard.ssl.bind.port
+
     <property>
-        <name>dashboard.bind.port.nonssl</name>
-        <value>80</value>
+        <name>gateway.server.port</name>
+        <value>10000</value>
     </property>
-  <property>
-    <name>dashboard.https.enabled</name>
-    <value>false</value>
-  </property>
-
-  <!--TODO: fix these defaults when possible-->
-  <property>
-    <name>dashboard.ssl.key</name>
-    <value>/Users/ajainarayanan/server.key</value>
-  </property>
-  <property>
-    <name>dashboard.ssl.cert</name>
-    <value>/Users/ajainarayanan/server.crt</value>
-  </property>
-
-	<property>
-		<name>accounts.server.address</name>
-		<value>accounts.continuuity.com</value>
-	</property>
-
-	<property>
-		<name>accounts.server.port</name>
-		<value>443</value>
-	</property>
-
-	<property>
-		<name>gateway.server.address</name>
-		<value>localhost</value>
-	</property>
-
-	<property>
-		<name>gateway.server.port</name>
-		<value>10000</value>
-	</property>
 
 </configuration>
