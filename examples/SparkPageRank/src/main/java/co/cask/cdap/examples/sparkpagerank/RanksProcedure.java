@@ -33,6 +33,9 @@ import java.util.Map;
 
 import static co.cask.cdap.examples.sparkpagerank.SparkPageRankApp.UTF8;
 
+/**
+ * Procedure that returns rank of the url.
+ */
 public class RanksProcedure extends AbstractProcedure {
 
   private static final Logger LOG = LoggerFactory.getLogger(RanksProcedure.class);

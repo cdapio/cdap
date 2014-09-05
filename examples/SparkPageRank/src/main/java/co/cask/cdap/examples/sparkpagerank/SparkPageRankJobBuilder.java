@@ -40,7 +40,9 @@ import java.util.regex.Pattern;
 
 import static co.cask.cdap.examples.sparkpagerank.SparkPageRankApp.UTF8;
 
-
+/**
+ * Builder for Spark PageRank job
+ */
 public class SparkPageRankJobBuilder {
   private static SparkContextFactory factory;
 
@@ -66,7 +68,8 @@ public class SparkPageRankJobBuilder {
 
     LOG.info("Grouping data by key");
     // Loads all URLs from input and initialize their neighbors.
-    JavaPairRDD<String, Iterable<String>> links = logData.values().mapToPair(new PairFunction<String, String, String>() {
+    JavaPairRDD<String, Iterable<String>> links =
+      logData.values().mapToPair(new PairFunction<String, String, String>() {
       @Override
       public Tuple2<String, String> call(String s) {
         String[] parts = SPACES.split(s);

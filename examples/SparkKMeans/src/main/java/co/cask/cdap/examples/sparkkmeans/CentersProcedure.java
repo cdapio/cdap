@@ -13,8 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-
 package co.cask.cdap.examples.sparkkmeans;
 
 import co.cask.cdap.api.annotation.Handle;
@@ -31,6 +29,9 @@ import java.util.Arrays;
 
 import static co.cask.cdap.examples.sparkkmeans.SparkKMeansApp.UTF8;
 
+/**
+ * Procedure that returns calculated centers.
+ */
 public class CentersProcedure extends AbstractProcedure {
 
   private static final Logger LOG = LoggerFactory.getLogger(CentersProcedure.class);

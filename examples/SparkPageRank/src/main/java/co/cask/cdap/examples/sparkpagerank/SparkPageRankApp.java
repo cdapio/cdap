@@ -25,6 +25,9 @@ import co.cask.cdap.internal.io.UnsupportedTypeException;
 
 import java.nio.charset.Charset;
 
+/**
+ * Application that calculates page ranks.
+ */
 public class SparkPageRankApp extends AbstractApplication {
 
   public static final Charset UTF8 = Charset.forName("UTF-8");

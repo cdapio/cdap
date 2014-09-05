@@ -43,8 +43,7 @@ public class PointsReader extends AbstractFlowlet {
     pointsStore.write(getIdAsByte(UUID.randomUUID()), body);
   }
 
-  private static byte[] getIdAsByte(UUID uuid)
-  {
+  private static byte[] getIdAsByte(UUID uuid) {
     ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
     bb.putLong(uuid.getMostSignificantBits());
     bb.putLong(uuid.getLeastSignificantBits());
