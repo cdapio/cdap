@@ -17,10 +17,8 @@ package co.cask.cdap.examples.sparkpagerank;
 
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,22 +27,20 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 /**
- * This Flowlet reads events from a Stream and parses them as sentences of the form
- * <pre><name> bought <n> <items> for $<price></pre>. The event is then converted into
- * a Purchase object and emitted. If the event does not have this form, it is dropped.
+ * This Flowlet reads events from a Stream and saves them to a datastore.
  */
-public class NeighborsReader extends AbstractFlowlet {
+public class NeighborURLsReader extends AbstractFlowlet {
 
-  private static final Logger LOG = LoggerFactory.getLogger(NeighborsReader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(NeighborURLsReader.class);
 
   @UseDataSet("neighborURLs")
-  private ObjectStore<String> store;
+  private ObjectStore<String> neighborStore;
 
   @ProcessInput
   public void process(StreamEvent event) {
     String body = new String(event.getBody().array());
-    LOG.info("Neighbor info: {}", body);
-    store.write(getIdAsByte(UUID.randomUUID()), body);
+    LOG.trace("Neighbor info: {}", body);
+    neighborStore.write(getIdAsByte(UUID.randomUUID()), body);
   }
 
   private static byte[] getIdAsByte(UUID uuid)

@@ -1,4 +1,7 @@
-http://example.com/hello http://example.com/buy
-http://example.com/hello http://example.com/buy2
-http://example.com/hello http://example.com/buy3
-http://example.com/hello http://example.com/buy4
+http://example.com/page1 http://example.com/page2
+http://example.com/page1 http://example.com/page3
+http://example.com/page1 http://example.com/page4
+http://example.com/page2 http://example.com/page1
+http://example.com/page2 http://example.com/page3
+http://example.com/page3 http://example.com/page1
+http://example.com/page4 http://example.com/page1

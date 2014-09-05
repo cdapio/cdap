@@ -30,7 +30,7 @@ function get_auth_token() {
 }
 
 function usage() {
-  echo "Tool for sending data to the Purchase application"
+  echo "Tool for sending data to the SparkPageRank application"
   echo "Usage: $script [--host <hostname>]"
   echo ""
   echo "  Options"

@@ -18,13 +18,16 @@ package co.cask.cdap.examples.sparkpagerank;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 
+import java.nio.charset.Charset;
+
 public class SparkPageRankApp extends AbstractApplication {
+
+  public static final Charset UTF8 = Charset.forName("UTF-8");
 
   @Override
   public void configure() {
@@ -32,9 +35,8 @@ public class SparkPageRankApp extends AbstractApplication {
     setDescription("Spark page rank app");
     addStream(new Stream("neighborUrlStream"));
     addFlow(new PageRankFlow());
-    addSpark(new PurchaseSparkJob());
+    addSpark(new SparkPageRankJob());
     addProcedure(new RanksProcedure());
-//    addWorkflow(new PurchaseHistoryWorkflow());
 
     try {
       ObjectStores.createObjectStore(getConfigurer(), "neighborURLs", String.class);
@@ -46,19 +48,18 @@ public class SparkPageRankApp extends AbstractApplication {
       // because String are actual classes.
       throw new RuntimeException(e);
     }
-
   }
 
   /**
    *
    */
-  public static class PurchaseSparkJob extends AbstractSpark {
+  public static class SparkPageRankJob extends AbstractSpark {
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
-        .setName("PageRankSparkJob")
-        .setDescription("Purchase App Spark Job")
-        .setMainClassName("co.cask.cdap.examples.sparkpagerank.PageRankSparkJobBuilder")
+        .setName("SparkPageRankJob")
+        .setDescription("Spark Page Rank Job")
+        .setMainClassName("co.cask.cdap.examples.sparkpagerank.SparkPageRankJobBuilder")
         .build();
     }
   }

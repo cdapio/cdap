@@ -18,14 +18,13 @@ REM ## the License.
 REM ##
 REM #################################################################################
 
-REM Application Manager for managing application lifecycle for Purchase application 
-SET APP_JAR_PREFIX=Purchase
+REM Application Manager for managing application lifecycle for SparkPageRank
+SET APP_JAR_PREFIX=SparkPageRank
 
-SET APP_NAME=PurchaseHistory
-SET FLOW_NAME=PurchaseFlow
-SET PROCEDURE_NAME=PurchaseProcedure
-SET MAP_REDUCE_NAME=PurchaseHistoryWorkflow_PurchaseHistoryBuilder
-SET SERVICE_NAME=CatalogLookupService
+SET APP_NAME=SparkPageRank
+SET FLOW_NAME=PageRankFlow
+SET PROCEDURE_NAME=RanksProcedure
+SET SPARK_NAME=SparkPageRankJob
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
@@ -35,8 +34,9 @@ SET PATH=%APP_HOME%\..\..\libexec\bin
 
 for /r %APP_HOME%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
 
-if %JAR_PATH% == "" (echo "Could not find application jar with name %APP_JAR_PREFIX%" 
+if %JAR_PATH% == "" (echo "Could not find application jar with name %APP_JAR_PREFIX%"
                      GOTO :EOF)
+
 
 REM Process access token
 SET ACCESS_TOKEN=
@@ -53,8 +53,8 @@ GOTO USAGE
 
 :USAGE
 echo Application lifecycle management tool
-echo Usage: %0 {deploy^|start^|run^|stop^|status}
-echo Use run option to run mapreduce jobs
+echo Usage: %0 {deploy^|start^|run^||stop^|status}
+echo Use run option to run spark job
 GOTO :EOF
 
 :DEPLOY
@@ -67,26 +67,23 @@ echo Fail to deploy application
 GOTO :EOF
 
 :RUN
-CALL :POST %APP_NAME% mapreduce %MAP_REDUCE_NAME% start
-GOTO :EOF 
+CALL :POST %APP_NAME% spark %SPARK_NAME% start
+GOTO :EOF
 
 :START
 CALL :POST %APP_NAME% flows %FLOW_NAME% start
 CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% start
-CALL :POST %APP_NAME% services %SERVICE_NAME% start
 GOTO :EOF
 
 :STOP
 CALL :POST %APP_NAME% flows %FLOW_NAME% stop
 CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% stop
-CALL :POST %APP_NAME% services %SERVICE_NAME% stop
 GOTO :EOF
 
 :STATUS
 CALL :GET %APP_NAME% flows %FLOW_NAME% status
 CALL :GET %APP_NAME% procedures %PROCEDURE_NAME% status
-CALL :GET %APP_NAME% services %SERVICE_NAME% status
-CALL :GET %APP_NAME% mapreduce %MAP_REDUCE_NAME% status
+CALL :GET %APP_NAME% spark %SPARK_NAME% status
 GOTO :EOF
 
 :POST

@@ -19,9 +19,7 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 
 /**
- * This is a simple Flow that consumes purchase events from a Stream and stores Purchase objects in datastore.
- * It has only two Flowlets: one consumes events from the Stream and converts them into Purchase objects,
- * the other consumes these objects and stores them in a DataSet.
+ * This is a simple Flow that consumes url pair events from a Stream and stores them in a datastore.
  */
 public class PageRankFlow implements Flow {
 
@@ -31,7 +29,7 @@ public class PageRankFlow implements Flow {
       .setName("PageRankFlow")
       .setDescription("Reads user and purchase information and stores in dataset")
       .withFlowlets()
-        .add("reader", new NeighborsReader())
+        .add("reader", new NeighborURLsReader())
       .connect()
         .fromStream("neighborUrlStream").to("reader")
       .build();

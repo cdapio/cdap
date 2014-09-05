@@ -19,19 +19,25 @@ package co.cask.cdap.examples.sparkpagerank;
 
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
-import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static co.cask.cdap.examples.sparkpagerank.SparkPageRankApp.UTF8;
+
 public class RanksProcedure extends AbstractProcedure {
-  // Annotation indicates that countTable dataset is used in the procedure.
+
+  private static final Logger LOG = LoggerFactory.getLogger(RanksProcedure.class);
+
+  // Annotation indicates that ranks dataset is used in the procedure.
   @UseDataSet("ranks")
   private ObjectStore<Double> ranks;
 
@@ -39,14 +45,14 @@ public class RanksProcedure extends AbstractProcedure {
   public void getRank(ProcedureRequest request, ProcedureResponder responder)
     throws IOException, InterruptedException {
 
-    // Get the end time of the time range from the query parameters. By default, end time is now.
-    String url = request.getArgument("url");
+    // Get the url from the query parameters.
+    byte[] url = request.getArgument("url").getBytes(UTF8);
+    // Get the rank from the ranks data set.
+    Double rank = ranks.read(url);
 
-    Map<String, Double> hourCount = new HashMap<String, Double>();
-
-    hourCount.put(url, ranks.read(url.getBytes()));
+    LOG.trace("Key: {}, Data: {}", Arrays.toString(url), rank);
 
     // Send response with JSON format.
-    responder.sendJson(hourCount);
+    responder.sendJson(String.valueOf(rank));
   }
 }

@@ -22,7 +22,7 @@ script=`basename $0`
 user=$USER
 epoch=`date +%s`
 
-app="PurchaseHistory"
+app="SparkPageRank"
 
 auth_token=
 auth_file="$HOME/.cdap.accesstoken"
@@ -34,11 +34,11 @@ function get_auth_token() {
 }
 
 function usage() {
-  echo "Application lifecycle management tool for the Purchase application."
+  echo "Application lifecycle management tool for the SparkPageRank application."
   echo "Usage: $script --action <deploy|start|run|stop|status> [--host <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --action    Specifies the action to be taken on the application. Use 'run' to run the map/reduce."
+  echo "    --action    Specifies the action to be taken on the application. Use 'run' to run the spark job."
   echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""
@@ -79,7 +79,7 @@ function program_action() {
   fi
 
   types="$type";
-  if [ "$type" != "mapreduce" ]; then
+  if [ "$type" != "mapreduce" ] && [ "$type" != "spark" ]; then
     types="${type}s";
   fi
 
@@ -141,17 +141,15 @@ fi
 get_auth_token
 
 if [ "x$action" == "xdeploy" ]; then
-  jar_path=`ls $dir/../target/Purchase-*.jar`
+  jar_path=`ls $dir/../target/SparkPageRank-*.jar`
   deploy_action $app $jar_path $host
 elif [ "x$action" == "xrun" ]; then
-  program_action $app "PurchaseHistoryWorkflow_PurchaseHistoryBuilder" "mapreduce" "start" $host
-elif [ "x$action" == "xstatus" ]; then
-  program_action $app "PurchaseFlow" "flow" $action $host
-  program_action $app "PurchaseProcedure" "procedure" $action $host
-  program_action $app "CatalogLookupService" "service" $action $host
-  program_action $app "PurchaseHistoryWorkflow_PurchaseHistoryBuilder" "mapreduce" $action $host
+  program_action $app "SparkPageRankJob" "spark" "start" $host
 else
-  program_action $app "PurchaseFlow" "flow" $action $host
-  program_action $app "PurchaseProcedure" "procedure" $action $host
-  program_action $app "CatalogLookupService" "service" $action $host
+  program_action $app "PageRankFlow" "flow" $action $host
+  program_action $app "RanksProcedure" "procedure" $action $host
+#  dont start and stop mapreduce if start/stop is specified
+  if [ "x$action" == "xstatus" ]; then
+    program_action $app "SparkPageRankJob" "spark" $action $host
+  fi
 fi

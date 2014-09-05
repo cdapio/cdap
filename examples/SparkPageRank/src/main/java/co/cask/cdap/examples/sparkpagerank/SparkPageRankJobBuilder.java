@@ -32,16 +32,21 @@ import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
+
+import static co.cask.cdap.examples.sparkpagerank.SparkPageRankApp.UTF8;
 
 
-public class PageRankSparkJobBuilder {
+public class SparkPageRankJobBuilder {
   private static SparkContextFactory factory;
-  private static final Logger LOG = LoggerFactory.getLogger(PageRankSparkJobBuilder.class);
 
+  private static final Logger LOG = LoggerFactory.getLogger(SparkPageRankJobBuilder.class);
+
+  private static final int ITERATIONS_COUNT = 10;
   private static final Pattern SPACES = Pattern.compile("\\s+");
 
   private static class Sum implements Function2<Double, Double, Double> {
@@ -57,9 +62,9 @@ public class PageRankSparkJobBuilder {
     SparkContext sc = factory.create(new JavaSparkContext(conf));
 
     LOG.info("Processing neighborURLs data");
-
     JavaPairRDD<byte[], String> logData = sc.readFromDataset("neighborURLs", byte[].class, String.class);
 
+    LOG.info("Grouping data by key");
     // Loads all URLs from input and initialize their neighbors.
     JavaPairRDD<String, Iterable<String>> links = logData.values().mapToPair(new PairFunction<String, String, String>() {
       @Override
@@ -69,7 +74,6 @@ public class PageRankSparkJobBuilder {
       }
     }).distinct().groupByKey().cache();
 
-
     // Loads all URLs with other URL(s) link to from input file and initialize ranks of them to one.
     JavaPairRDD<String, Double> ranks = links.mapValues(new Function<Iterable<String>, Double>() {
       @Override
@@ -78,14 +82,14 @@ public class PageRankSparkJobBuilder {
       }
     });
     // Calculates and updates URL ranks continuously using PageRank algorithm.
-    //TODO: add Number of iterations instead of 1
-    for (int current = 0; current < 1; current++) {
+    for (int current = 0; current < ITERATIONS_COUNT; current++) {
+      LOG.debug("Processing data with PageRank algorithm. Iteration {}", current);
       // Calculates URL contributions to the rank of other URLs.
       JavaPairRDD<String, Double> contribs = links.join(ranks).values()
         .flatMapToPair(new PairFlatMapFunction<Tuple2<Iterable<String>, Double>, String, Double>() {
           @Override
           public Iterable<Tuple2<String, Double>> call(Tuple2<Iterable<String>, Double> s) {
-            System.out.println("processing " + s._1() + " with "+ s._2());
+            LOG.trace("Processing {} with rank {}", s._1(), s._2());
             int urlCount = Iterables.size(s._1());
             List<Tuple2<String, Double>> results = new ArrayList<Tuple2<String, Double>>();
             for (String n : s._1()) {
@@ -103,31 +107,18 @@ public class PageRankSparkJobBuilder {
       });
     }
 
-    System.out.println("Writing ranks data");
     LOG.info("Writing ranks data");
-
 
     JavaPairRDD<byte[], Double> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>, byte[], Double>() {
       @Override
       public Tuple2<byte[], Double> call(Tuple2<String, Double> tuple) throws Exception {
-        System.out.println("Host: " + tuple._1() + " rank " + tuple._2());
-        return new Tuple2<byte[], Double>(tuple._1().getBytes(), tuple._2());
+        LOG.trace("Url {} has rank {}", Arrays.toString(tuple._1().getBytes(UTF8)), tuple._2());
+        return new Tuple2<byte[], Double>(tuple._1().getBytes(UTF8), tuple._2());
       }
     });
 
-    LOG.info("Writing ranks data");
-
     sc.writeToDataset(ranksRaw, "ranks", byte[].class, Double.class);
 
-    JavaPairRDD<byte[], Double> abc = sc.readFromDataset("ranks", byte[].class, Double.class);
-    Map<byte[], Double> newData = abc.collectAsMap();
-
-    for (Entry<byte[], Double> entry : newData.entrySet()) {
-      System.out.println("Key: " + new String(entry.getKey()) + " Data: " + entry.getValue());
-    }
-
-
-    System.out.println("Done!");
     LOG.info("Done!");
   }
 }
