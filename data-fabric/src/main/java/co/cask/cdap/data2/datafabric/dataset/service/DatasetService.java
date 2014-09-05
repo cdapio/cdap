@@ -24,6 +24,7 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -43,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -57,6 +59,7 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final DiscoveryService discoveryService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetOpExecutor opExecutorClient;
+  private final Set<DatasetMetricsReporter> metricReporters;
   private Cancellable cancelDiscovery;
 
   private final DatasetTypeManager typeManager;
@@ -76,7 +79,8 @@ public class DatasetService extends AbstractExecutionThreadService {
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
                         MDSDatasetsRegistry mdsDatasets,
-                        DatasetExploreFacade datasetExploreFacade) throws Exception {
+                        DatasetExploreFacade datasetExploreFacade,
+                        Set<DatasetMetricsReporter> metricReporters) throws Exception {
 
     NettyHttpService.Builder builder = NettyHttpService.builder();
 
@@ -105,6 +109,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.opExecutorClient = opExecutorClient;
     this.mdsDatasets = mdsDatasets;
+    this.metricReporters = metricReporters;
   }
 
   @Override
@@ -129,6 +134,10 @@ public class DatasetService extends AbstractExecutionThreadService {
           }
         }
       }, MoreExecutors.sameThreadExecutor());
+
+    for (DatasetMetricsReporter metricsReporter : metricReporters) {
+      metricsReporter.start();
+    }
   }
 
   @Override
@@ -198,6 +207,10 @@ public class DatasetService extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping DatasetService...");
+
+    for (DatasetMetricsReporter metricsReporter : metricReporters) {
+      metricsReporter.stop();
+    }
 
     if (opExecutorServiceWatch != null) {
       opExecutorServiceWatch.cancel();
