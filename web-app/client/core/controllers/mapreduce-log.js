@@ -4,21 +4,21 @@
 
 define(['core/controllers/runnable-log'], function (RunnableLogController) {
 
-    var Controller = RunnableLogController.extend({
+	var Controller = RunnableLogController.extend({
 
-        init: function () {
+		init: function () {
 
-            this.set('expectedPath', 'Mapreduce.Log');
+			this.set('expectedPath', 'Mapreduce.Log');
 
-        }
+		}
 
-    });
+	});
 
-    Controller.reopenClass({
-        type: 'MapreduceLog',
-        kind: 'Controller'
-    });
+	Controller.reopenClass({
+		type: 'MapreduceLog',
+		kind: 'Controller'
+	});
 
-    return Controller;
+	return Controller;
 
 });

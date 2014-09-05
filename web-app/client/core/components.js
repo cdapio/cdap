@@ -3,11 +3,11 @@
  */
 
 define(['core/models/index', 'core/controllers/index', 'core/embeddables/index'],
-    function (Models, Controllers, Embeddables) {
+	function (Models, Controllers, Embeddables) {
 
-        Em.debug('Loading Components');
+		Em.debug('Loading Components');
 
-        return Models.concat(Controllers).concat(Embeddables);
+		return Models.concat(Controllers).concat(Embeddables);
 
-    }
+	}
 );

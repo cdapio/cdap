@@ -4,22 +4,22 @@
 
 define(['core/controllers/runnable-log'], function (RunnableLogController) {
 
-    var Controller = RunnableLogController.extend({
+  var Controller = RunnableLogController.extend({
 
-        needs: ['Userservice'],
-        init: function () {
-            this.set('expectedPath', 'Userservice.Log');
-        },
+    needs: ['Userservice'],
+    init: function () {
+      this.set('expectedPath', 'Userservice.Log');
+    },
 
-    });
+  });
 
-    Controller.reopenClass({
+  Controller.reopenClass({
 
-        type: 'UserserviceLog',
-        kind: 'Controller'
+    type: 'UserserviceLog',
+    kind: 'Controller'
 
-    });
+  });
 
-    return Controller;
+  return Controller;
 
 });

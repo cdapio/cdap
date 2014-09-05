@@ -4,26 +4,26 @@
 
 define(['core/controllers/runnable-config'], function (RunnableConfigController) {
 
-    var Controller = RunnableConfigController.extend({
+	var Controller = RunnableConfigController.extend({
 
-        /*
-         * This syntax makes the MapreduceStatus controller available to this controller.
-         * This allows us to access the Mapreduce model that has already been loaded.
-         *
-         * RunnableConfigController uses this value to do its work. Take a look there.
-         *
-         */
-        needs: ['MapreduceStatus']
+		/*
+		 * This syntax makes the MapreduceStatus controller available to this controller.
+		 * This allows us to access the Mapreduce model that has already been loaded.
+		 *
+		 * RunnableConfigController uses this value to do its work. Take a look there.
+		 *
+		 */
+		needs: ['MapreduceStatus']
 
-    });
+	});
 
-    Controller.reopenClass({
+	Controller.reopenClass({
 
-        type: 'MapreduceStatusConfig',
-        kind: 'Controller'
+		type: 'MapreduceStatusConfig',
+		kind: 'Controller'
 
-    });
+	});
 
-    return Controller;
+	return Controller;
 
 });

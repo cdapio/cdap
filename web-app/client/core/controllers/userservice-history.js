@@ -4,51 +4,51 @@
 
 define([], function () {
 
-    var Controller = Ember.Controller.extend({
+  var Controller = Ember.Controller.extend({
 
-        needs: ['Userservice'],
-        runs: Ember.ArrayProxy.create({
-            content: []
-        }),
+    needs: ['Userservice'],
+    runs: Ember.ArrayProxy.create({
+      content: []
+    }),
 
-        elements: Em.Object.create(),
+    elements: Em.Object.create(),
 
-        load: function () {
-            var model = this.get('model');
-            var self = this;
+    load: function () {
+      var model = this.get('model');
+      var self = this;
 
-            if (!model) {
-                return;
+      if(!model) {
+        return;
+      }
+
+      this.HTTP.rest('apps', model.app, 'services', model.name, 'history', function (response) {
+
+          if (response) {
+            var history = response;
+
+            for (var i = 0; i < history.length; i ++) {
+
+              self.runs.pushObject(C.Run.create(history[i]));
+
             }
+          }
 
-            this.HTTP.rest('apps', model.app, 'services', model.name, 'history', function (response) {
+      });
 
-                if (response) {
-                    var history = response;
+    },
 
-                    for (var i = 0; i < history.length; i++) {
+    unload: function () {
 
-                        self.runs.pushObject(C.Run.create(history[i]));
+      this.get('runs').set('content', []);
 
-                    }
-                }
+    }
+  });
 
-            });
+  Controller.reopenClass({
+    type: 'UserserviceHistory',
+    kind: 'Controller'
+  });
 
-        },
-
-        unload: function () {
-
-            this.get('runs').set('content', []);
-
-        }
-    });
-
-    Controller.reopenClass({
-        type: 'UserserviceHistory',
-        kind: 'Controller'
-    });
-
-    return Controller;
+  return Controller;
 
 });
