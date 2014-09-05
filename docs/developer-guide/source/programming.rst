@@ -619,8 +619,7 @@ declaration and (2) an injection:
 
 Processing Data: Spark
 ==========================
-**Spark** is used for in-memory cluster computing. It allows users to load large sets of data in memory and query it
-repeatedly. This makes it suitable for iterative and interactive jobs. Like MapReduce, Spark can also access **Datasets** as both input and output. Spark jobs in CDAP can written either in Java or Scala.
+**Spark** is used for in-memory cluster computing. It lets you load large sets of data into memory and query them repeatedly. This makes it suitable for both iterative and interactive jobs. Similar to MapReduce, Spark can access **Datasets** as both input and output. Spark jobs in CDAP can be written in either Java or Scala.
 
 To process data using Spark, specify ``addSpark()`` in your Application specification::
 
@@ -647,8 +646,8 @@ implementation of three methods:
         .build();
     }
 
-The configure method is similar to the one found in Flow and
-MapReduce. It defines the name and description of the Spark job. It also specifies the class containing main method in a Spark job.
+The configure method is similar to the one found in Flows and
+MapReduce jobs. It defines the name, description, and the class containing the main method of a Spark job.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
 Spark job is executed. Because many Spark jobs do not
@@ -662,7 +661,7 @@ implementation that does nothing::
 
 The ``onFinish()`` method is invoked after the Spark job has
 finished. You could perform cleanup or send a notification of job
-completion, if that was required. Like ``beforeSubmit()`` many  Spark jobs do not
+completion, if that was required. Like ``beforeSubmit()``, as many Spark jobs do not
 need this method, the ``AbstractSpark`` class also provides a default
 implementation for this method that does nothing::
 
@@ -673,7 +672,9 @@ implementation for this method that does nothing::
 
 CDAP SparkContext
 -------------------
-CDAP provides its own ``SparkContext`` which can be obtained through ``SparkContextFactory``. To create a CDAP ``SparkContext`` pass the appropriate SparkContext to ``create()`` depending upon the language (Java or Scala) in which the job is written.
+CDAP provides its own ``SparkContext`` which can be obtained through the ``SparkContextFactory``.
+
+To create a CDAP ``SparkContext``, pass to ``create()`` the appropriate SparkContext, depending upon the language (Java or Scala) in which the job is written.
 
 - Java::
 
@@ -702,21 +703,25 @@ Spark and Datasets
 Spark jobs in CDAP can directly access **Dataset** similar to the way a MapReduce or
 Procedure can. These jobs can create Spark's Resilient Distributed Dataset (RDD) by reading a Datasets and also write RDD to a Dataset.
 
-- Creating a RDD from Dataset
+- Creating an RDD from Dataset
 
   - Java:
 
   ::
 
-     JavaPairRDD<byte[], Purchase> purchaseRDD = sparkContext.readFromDataset("purchases", byte[].class, Purchase.class);
+     JavaPairRDD<byte[], Purchase> purchaseRDD = sparkContext.readFromDataset("purchases", 
+                                                                               byte[].class, 
+                                                                               Purchase.class);
 
   - Scala:
 
   ::
 
-     val purchaseRDD: RDD[(Array[Byte], Purchase)] = sparkContext.readFromDataset("purchases", classOf[Array[Byte]], classOf[Purchase]);
+     val purchaseRDD: RDD[(Array[Byte], Purchase)] = sparkContext.readFromDataset("purchases", 
+                                                                                   classOf[Array[Byte]], 
+                                                                                   classOf[Purchase]);
 
-- Writing a RDD to Dataset
+- Writing an RDD to Dataset
 
   - Java:
 

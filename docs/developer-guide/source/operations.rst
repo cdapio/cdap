@@ -404,6 +404,15 @@ For a MapReduce, the Mapping and Reducing activity is shown, along with status a
 .. image:: _images/console/console_26_mapreduce.png
    :width: 600px
 
+Spark
+-----
+For a Spark, there are status and management controls for starting, stopping and configuration. Buttons for logs and
+history, similar to those for
+`MapReduce <#mapreduce>`__, are also available:
+
+
+.. add the screenshot here once the UI is done
+
 Workflow
 --------
 For a Workflow, the time until the next scheduled run is shown, along with status and management controls for starting, stopping and configuration.
