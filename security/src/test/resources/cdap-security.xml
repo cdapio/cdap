@@ -19,16 +19,16 @@
     <property>
       <name>security.auth.server.ssl.keystore.password</name>
       <value>secret</value>
-      <description>Specifies the ssl keystore path</description>
+      <description>Specifies the ssl keystore password</description>
     </property>
     <property>
       <name>security.auth.server.ssl.keystore.keypassword</name>
       <value>secret</value>
-      <description>Specifies the ssl keystore path</description>
+      <description>Specifies the ssl keystore keypassword</description>
     </property>
     <property>
       <name>security.auth.server.ssl.keystore.type</name>
       <value>JKS</value>
-      <description>Specifies the ssl keystore path</description>
+      <description>Specifies the ssl keystore type</description>
     </property>
 </configuration>

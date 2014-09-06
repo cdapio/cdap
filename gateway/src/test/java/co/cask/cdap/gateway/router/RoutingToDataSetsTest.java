@@ -73,8 +73,10 @@ public class RoutingToDataSetsTest {
     SConfiguration sConf = SConfiguration.create();
     cConf.set(Constants.Router.ADDRESS, "localhost");
     port = Networks.getRandomPort();
-    cConf.set(Constants.Router.FORWARD, port + ":" + Constants.Service.GATEWAY);
+
+    cConf.setInt(Constants.Router.ROUTER_PORT, port);
     nettyRouter = new NettyRouter(cConf, sConf, InetAddresses.forString("127.0.0.1"),
+
                                   new RouterServiceLookup(discoveryServiceClient,
                                                           new RouterPathLookup(new NoAuthenticator())),
                                   new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
