@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.api.annotation.EnableTransaction;
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -52,6 +53,9 @@ public class AppWithServices extends AbstractApplication {
 
   private static final String DATASET_NAME = "AppWithServicesDataset";
 
+  public static final String TRANSACTIONS_SERVICE_NAME = "TransactionsTestService";
+  private static final String TRANSACTIONS_DATASET_NAME = "TransactionsDatasetName";
+
     @Override
     public void configure() {
       setName("AppWithServices");
@@ -59,7 +63,9 @@ public class AppWithServices extends AbstractApplication {
       addProcedure(new NoOpProcedure());
       addService(SERVICE_NAME, new ServerService());
       addService(new DatasetUpdateService());
+      addService(new TransactionsTestService());
       createDataset(DATASET_NAME, KeyValueTable.class);
+      createDataset(TRANSACTIONS_DATASET_NAME, KeyValueTable.class);
    }
 
 
@@ -72,6 +78,43 @@ public class AppWithServices extends AbstractApplication {
     public void ping(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       String key = request.getArgument(PROCEDURE_DATASET_KEY);
       responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toString(table.read(key)));
+    }
+  }
+
+  public static class TransactionsTestService extends AbstractService {
+
+    @Override
+    protected void configure() {
+      setName(TRANSACTIONS_SERVICE_NAME);
+      addHandler(new TransactionsHandler());
+      useDataset(TRANSACTIONS_DATASET_NAME);
+    }
+
+    public static final class TransactionsHandler extends AbstractHttpServiceHandler {
+
+      @UseDataSet(TRANSACTIONS_DATASET_NAME)
+      KeyValueTable table;
+
+      @Path("/write")
+      @GET
+      @EnableTransaction
+      public void handler(HttpServiceRequest request, HttpServiceResponder responder) throws InterruptedException {
+        table.write("testKey", "testValue");
+        Thread.sleep(10000);
+        responder.sendStatus(200);
+      }
+
+      @Path("/read")
+      @GET
+      @EnableTransaction
+      public void readHandler(HttpServiceRequest request, HttpServiceResponder responder) {
+        String value = Bytes.toString(table.read("testKey"));
+        if (value == null) {
+          responder.sendStatus(500);
+        } else {
+          responder.sendStatus(200);
+        }
+      }
     }
   }
 
