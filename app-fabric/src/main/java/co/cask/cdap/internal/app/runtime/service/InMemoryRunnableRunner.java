@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
@@ -25,10 +24,12 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.election.InMemoryElectionRegistry;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
@@ -37,6 +38,7 @@ import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.ProgramType;
+import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -69,16 +71,23 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private final DiscoveryService dsService;
   private final InMemoryElectionRegistry electionRegistry;
   private final ConcurrentLinkedQueue<Discoverable> discoverables;
+  private final TransactionSystemClient transactionSystemClient;
+  private final DatasetFramework datasetFramework;
+  private final CConfiguration cConfiguration;
 
   @Inject
-  public InMemoryRunnableRunner(MetricsCollectionService metricsCollectionService,
-                                ProgramServiceDiscovery serviceDiscovery,
-                                DiscoveryService dsService, InMemoryElectionRegistry electionRegistry) {
+  public InMemoryRunnableRunner(CConfiguration cConfiguration, ProgramServiceDiscovery serviceDiscovery,
+                                DiscoveryService dsService, InMemoryElectionRegistry electionRegistry,
+                                MetricsCollectionService metricsCollectionService,
+                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
     this.dsService = dsService;
     this.electionRegistry = electionRegistry;
     this.discoverables = new ConcurrentLinkedQueue<Discoverable>();
+    this.transactionSystemClient = transactionSystemClient;
+    this.datasetFramework = datasetFramework;
+    this.cConfiguration = cConfiguration;
   }
 
   @SuppressWarnings("unchecked")
@@ -166,15 +175,12 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
       TwillRunnable runnable = null;
 
-      if (runnableClass.isAssignableFrom(GuavaServiceTwillRunnable.class)) {
-        // Special case for running Guava services since we need to instantiate the Guava service
-        // using the program classloader.
-        runnable = new GuavaServiceTwillRunnable(program.getClassLoader());
-      } else if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
+      if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running HTTP services
         runnable = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
-        runnable = new ServiceWorkerTwillRunnable(program.getClassLoader());
+        runnable = new ServiceWorkerTwillRunnable(program.getClassLoader(), cConfiguration,
+                                                  datasetFramework, transactionSystemClient);
       } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }

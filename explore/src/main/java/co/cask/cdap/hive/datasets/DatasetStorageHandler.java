@@ -51,6 +51,19 @@ public class DatasetStorageHandler extends DefaultStorageHandler {
 
   @Override
   public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+    configureTableJobProperties(tableDesc, jobProperties);
+  }
+
+  @Override
+  public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+    configureTableJobProperties(tableDesc, jobProperties);
+  }
+
+  @Override
+  public void configureTableJobProperties(TableDesc tableDesc,
+                                          Map<String, String> jobProperties) {
+    // NOTE: the jobProperties map will be put in the jobConf passed to the DatasetOutputFormat/DatasetInputFormat.
+    // Hive ensures that the properties of the right table will be passed at the right time to those classes.
     String datasetName = tableDesc.getProperties().getProperty(Constants.Explore.DATASET_NAME);
     jobProperties.put(Constants.Explore.DATASET_NAME, datasetName);
     LOG.debug("Got dataset {} for external table {}", datasetName, tableDesc.getTableName());

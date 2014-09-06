@@ -31,6 +31,7 @@ import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Map;
@@ -51,7 +52,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   private volatile int instanceCount;
   private final FlowletMetrics flowletMetrics;
   private final Arguments runtimeArguments;
-  private final ProgramServiceDiscovery serviceDiscovery;
 
   BasicFlowletContext(Program program, String flowletId,
                       int instanceId, RunId runId,
@@ -59,12 +59,13 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       Arguments runtimeArguments, FlowletSpecification flowletSpec,
                       MetricsCollectionService metricsCollectionService,
                       ProgramServiceDiscovery serviceDiscovery,
+                      DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework dsFramework,
                       CConfiguration conf) {
     super(program, runId, datasets,
           getMetricContext(program, flowletId, instanceId),
           metricsCollectionService,
-          dsFramework, conf);
+          dsFramework, conf, serviceDiscovery, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
@@ -74,7 +75,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.runtimeArguments = runtimeArguments;
     this.flowletSpec = flowletSpec;
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
-    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Override
@@ -108,11 +108,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
       builder.put(entry);
     }
     return builder.build();
-  }
-
-  @Override
-  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 
   public void setInstanceCount(int count) {
