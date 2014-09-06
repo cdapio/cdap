@@ -24,8 +24,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SConfiguration extends Configuration {
   @SuppressWarnings("unused")
-  private static final Logger LOG =
-    LoggerFactory.getLogger(SConfiguration.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SConfiguration.class);
 
   private SConfiguration() {
     // Shouldn't be used other than in this class.
