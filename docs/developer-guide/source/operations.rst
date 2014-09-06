@@ -172,6 +172,28 @@ Here you can monitor a variety of different System Services of the CDAP. For eac
 is given, if logs are available (and link to them if so), the number of instances requested and
 provisioned.
 
+.. _Collect:
+
+Collect
+-------
+.. image:: _images/console/console_03_collect.png
+   :width: 600px
+
+The **Collect** pane shows all the Streams collecting data and their details: name, storage, number of events and the arrival rate, with a graph showing arrivals based on the sampling rate menu setting.
+
+.. _Stream:
+
+Clicking on a Stream's name will take you to the Stream's pane:
+
+.. image:: _images/console/console_21_stream.png
+   :width: 600px
+
+The Stream pane shows the details of the number of events per second currently in the Stream,
+the storage and a graph of events over the last sampling period, and a list of all the Flows
+that are attached to the Stream, with processing rate and `busyness`_ for each Flow.
+Clicking on a Flow name will take you to that `Flow's pane <#flow>`__.
+
+
 .. _Process:
 
 Process
@@ -255,21 +277,6 @@ are persistent and are not deleted when an Application is deleted.
 
 To delete these, the CDAP needs to be reset using the `Reset button <#reset>`__ located at the bottom of each pane.
 
-
-.. _Stream:
-
-Stream
-------
-
-Clicking on a Stream's name will take you to the Stream's pane:
-
-.. image:: _images/console/console_21_stream.png
-   :width: 600px
-
-The Stream pane shows the details of the number of events per second currently in the Stream,
-the storage and a graph of events over the last sampling period, and a list of all the Flows
-that are attached to the Stream, with processing rate and `busyness`_ for each Flow.
-Clicking on a Flow name will take you to that `Flow's pane <#flow>`__.
 
 .. _flow:
 
