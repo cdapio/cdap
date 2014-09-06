@@ -93,10 +93,12 @@ define(['core/models/program'], function (Program) {
 	            ++counterObj[container.name];
 	          }
 	        });
-
-	        self.flowlets.forEach(function(flowlet){
-	         flowlet.set('containersLabel', counterObj[flowlet.name]);
-	        });
+	        
+	        if (self.hasOwnProperty('flowlets')) {
+						self.flowlets.forEach(function(flowlet){
+		         flowlet.containersLabel = counterObj[flowlet.name];
+		        });	        		
+	        }
 
 	        if (typeof done === 'function') {
 	          done(response.status);
