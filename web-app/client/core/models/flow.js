@@ -69,6 +69,42 @@ define(['core/models/program'], function (Program) {
 
 		},
 
+		updateState: function (http, done) {
+		  var self = this;
+
+ 		  //Update the flow's currentState. Program.updateState does this.
+		  this._super(http, done);
+		  if (!C.isLocal) {
+			  http.rest(this.get('context'), 'live-info', function (response) {
+
+	        var containers = response.containers;
+	        if(containers === undefined){
+	          return;
+	        }
+
+	        //counterObj is a hash from flowletName -> running count of instances
+	        counterObj = {};
+
+	        containers.forEach(function (container) {
+	          if(container.type === "flowlet") {
+	            if(counterObj[container.name] === undefined){
+	              counterObj[container.name] = 0;
+	            }
+	            ++counterObj[container.name];
+	          }
+	        });
+
+	        self.flowlets.forEach(function(flowlet){
+	         flowlet.set('containersLabel', counterObj[flowlet.name]);
+	        });
+
+	        if (typeof done === 'function') {
+	          done(response.status);
+	        }
+	      });	
+		  }
+		},
+
 		getMeta: function () {
 			var arr = [];
 			for (var m in this.meta) {
