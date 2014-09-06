@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import com.continuuity.tephra.TransactionContext;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -57,11 +58,19 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
     return context.getServiceContext();
   }
 
+  protected final TransactionContext getTransactionContext() {
+    return ((DefaultHttpServiceContext) context.getServiceContext()).getTransactionContext();
+  }
+
   protected final HttpServiceRequest wrapRequest(HttpRequest request) {
     return new DefaultHttpServiceRequest(request);
   }
 
   protected final HttpServiceResponder wrapResponder(HttpResponder responder) {
     return new DefaultHttpServiceResponder(responder);
+  }
+
+  protected final void printString() {
+    System.out.println("?????");
   }
 }

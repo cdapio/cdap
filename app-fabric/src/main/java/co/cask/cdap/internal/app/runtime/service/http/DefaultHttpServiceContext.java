@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionSystemClient;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.metrics.Metrics;
@@ -42,6 +44,7 @@ public class DefaultHttpServiceContext extends AbstractContext implements HttpSe
 
   private final HttpServiceSpecification spec;
   private final Map<String, String> runtimeArgs;
+  private final TransactionContext txContext;
 
   /**
    * Instantiates the context with a spec and a map for the runtime arguments
@@ -53,11 +56,12 @@ public class DefaultHttpServiceContext extends AbstractContext implements HttpSe
                                    Program program, RunId runId, Set<String> datasets, String metricsContext,
                                    MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
                                    CConfiguration conf, ProgramServiceDiscovery programServiceDiscovery,
-                                   DiscoveryServiceClient discoveryServiceClient) {
+                                   DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
     super(program, runId, datasets, metricsContext, metricsCollectionService, dsFramework, conf,
           programServiceDiscovery, discoveryServiceClient);
     this.spec = spec;
     this.runtimeArgs = runtimeArgs;
+    this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
   }
 
   /**
@@ -67,11 +71,12 @@ public class DefaultHttpServiceContext extends AbstractContext implements HttpSe
                                    Set<String> datasets, String metricsContext,
                                    MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
                                    CConfiguration conf, ProgramServiceDiscovery programServiceDiscovery,
-                                   DiscoveryServiceClient discoveryServiceClient) {
+                                   DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
     super(program, runId, datasets, metricsContext, metricsCollectionService, dsFramework, conf,
           programServiceDiscovery, discoveryServiceClient);
     this.spec = spec;
     this.runtimeArgs = RuntimeArguments.fromPosixArray(runtimeArgs);
+    this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
   }
 
   /**
@@ -93,5 +98,9 @@ public class DefaultHttpServiceContext extends AbstractContext implements HttpSe
   @Override
   public Metrics getMetrics() {
     return null;
+  }
+
+  public TransactionContext getTransactionContext() {
+    return txContext;
   }
 }

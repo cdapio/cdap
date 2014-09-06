@@ -18,7 +18,8 @@ package co.cask.cdap.internal.app.runtime.service.http;
 
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionFailureException;
-import co.cask.cdap.api.service.http.HttpServiceContext;
+import co.cask.cdap.api.annotation.DisableTransaction;
+import co.cask.cdap.api.annotation.EnableTransaction;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -43,7 +44,6 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
@@ -294,6 +294,8 @@ final class HttpHandlerGenerator {
     private final Type classType;
     private final ClassWriter classWriter;
 
+    private boolean transactionsEnabled;
+
     /**
      * Constructs a {@link HandlerMethodVisitor}.
      *
@@ -328,6 +330,9 @@ final class HttpHandlerGenerator {
       if (visible) {
         AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
         annotations.add(annotationNode);
+        if (desc.equals(Type.getType(EnableTransaction.class).getDescriptor())) {
+          transactionsEnabled = true;
+        }
         return annotationNode;
       }
       return super.visitAnnotation(desc, visible);
@@ -390,7 +395,11 @@ final class HttpHandlerGenerator {
         annotation.accept(mg.visitParameterAnnotation(entry.getKey(), annotation.desc, true));
       }
 
-      generateDelegateMethodBody(mg, new Method(name, desc));
+      if (transactionsEnabled) {
+        generateTransactionalDelegateBody(mg, new Method(name, desc));
+      } else {
+        generateNonTransactionalDelegateBody(mg, new Method(name, desc));
+      }
 
       super.visitEnd();
     }
@@ -425,17 +434,8 @@ final class HttpHandlerGenerator {
       return writer.toString();
     }
 
-    /**
-     * Generates the handler method body. It has the form:
-     *
-     * <pre>{@code
-     *   public void handle(HttpRequest request, HttpResponder responder, ...) {
-     *     delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
-     *   }
-     * }
-     * </pre>
-     */
-    private void generateDelegateMethodBody(GeneratorAdapter mg, Method method) {
+
+    private void generateTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
       Type txContextType = Type.getType(TransactionContext.class);
       Type txFailureExceptionType = Type.getType(TransactionFailureException.class);
       Type loggerType = Type.getType(Logger.class);
@@ -504,7 +504,22 @@ final class HttpHandlerGenerator {
       mg.mark(handlerCatch);
       int throwable = mg.newLocal(throwableType);
       mg.storeLocal(throwable);
-      // TODO: LOG the exception
+
+      // LOG.error("User handler exception", e);
+      mg.getStatic(classType, "LOG", loggerType);
+      mg.visitLdcInsn("User handler exception: ");
+      mg.loadLocal(throwable);
+      mg.invokeVirtual(loggerType, Methods.getMethod(void.class, "error", String.class, Throwable.class));
+
+      // transactionContext.abort(new TransactionFailureException("User handler exception: ", e));
+      mg.loadLocal(txContext, txContextType);
+      mg.newInstance(txFailureExceptionType);
+      mg.dup();
+      mg.visitLdcInsn("User handler exception: ");
+      mg.loadLocal(throwable);
+      mg.invokeConstructor(txFailureExceptionType,
+                           Methods.getMethod(void.class, "<init>", String.class, Throwable.class));
+      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "abort", TransactionFailureException.class));
 
       mg.mark(handlerFinish);
       mg.goTo(txTryEnd);
@@ -517,10 +532,51 @@ final class HttpHandlerGenerator {
       mg.mark(txCatch);
       int txFailureException = mg.newLocal(txFailureExceptionType);
       mg.storeLocal(txFailureException, txFailureExceptionType);
-      // TODO: LOG the exception
+
+      // LOG.error("Transaction failure: ", e);
+      mg.getStatic(classType, "LOG", loggerType);
+      mg.visitLdcInsn("Transaction Failure: ");
+      mg.loadLocal(txFailureException);
+      mg.invokeVirtual(loggerType, Methods.getMethod(void.class, "error", String.class,
+                                                                          TransactionFailureException.class));
 
       mg.mark(txFinish);
 
+      mg.returnValue();
+      mg.endMethod();
+    }
+
+    /**
+     * Generates the handler method body. It has the form:
+     *
+     * <pre>{@code
+     *   public void handle(HttpRequest request, HttpResponder responder, ...) {
+     *     delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
+     *   }
+     * }
+     * </pre>
+     */
+    private void generateNonTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
+      mg.loadThis();
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceHandler.class, "getHandler"));
+      mg.checkCast(Type.getType(delegateType.getRawType()));
+
+      mg.loadThis();
+      mg.loadArg(0);
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
+
+      mg.loadThis();
+      mg.loadArg(1);
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
+
+      for (int i = 2; i < method.getArgumentTypes().length; i++) {
+        mg.loadArg(i);
+      }
+
+      mg.invokeVirtual(Type.getType(delegateType.getRawType()), method);
       mg.returnValue();
       mg.endMethod();
     }
