@@ -63,7 +63,7 @@ import javax.ws.rs.PathParam;
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(StreamConfig.class, new StreamConfigAdapter())
+    .registerTypeAdapter(StreamProperties.class, new StreamPropertiesAdapter())
     .create();
 
   private final CConfiguration cConf;
@@ -244,14 +244,13 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   }
 
   /**
-   *  Adapter class for {@link co.cask.cdap.data2.transaction.stream.StreamConfig}
+   *  Adapter class for {@link co.cask.cdap.proto.StreamProperties}
    */
-  private static final class StreamConfigAdapter implements JsonSerializer<StreamConfig> {
+  private static final class StreamPropertiesAdapter implements JsonSerializer<StreamProperties> {
     @Override
-    public JsonElement serialize(StreamConfig src, Type typeOfSrc, JsonSerializationContext context) {
+    public JsonElement serialize(StreamProperties src, Type typeOfSrc, JsonSerializationContext context) {
       JsonObject json = new JsonObject();
-      json.addProperty("partitionDuration", src.getPartitionDuration());
-      json.addProperty("indexInterval", src.getIndexInterval());
+      json.addProperty("name", src.getName());
       json.addProperty("ttl", TimeUnit.MILLISECONDS.toSeconds(src.getTTL()));
       return json;
     }
