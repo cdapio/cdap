@@ -313,7 +313,7 @@ public class TestFrameworkTest extends TestBase {
   }
 
   @Test
-  public void testTransactionalHandlers() throws Exception {
+  public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService(AppWithServices.TRANSACTIONS_SERVICE_NAME);
@@ -336,6 +336,7 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertNotNull(discoverable);
     Assert.assertTrue(discoverables.isEmpty());
 
+    // Make a request to write in a separate thread and wait for it to return.
     ExecutorService executorService = Executors.newSingleThreadExecutor();
     Future<Integer> requestFuture = executorService.submit(new Callable<Integer>() {
       @Override
@@ -355,6 +356,8 @@ public class TestFrameworkTest extends TestBase {
       }
     });
 
+    // The dataset should not be written by the time this request is made, since the transaction to write
+    // has not been committed yet.
     URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/read",
                                     discoverable.getSocketAddress().getHostName(),
                                     discoverable.getSocketAddress().getPort(),
@@ -363,6 +366,7 @@ public class TestFrameworkTest extends TestBase {
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(500, response.getResponseCode());
 
+    // Wait for the transaction to commit.
     requestFuture.get();
 
     url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/read",
@@ -372,7 +376,6 @@ public class TestFrameworkTest extends TestBase {
     request = HttpRequest.get(url).build();
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
-
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);

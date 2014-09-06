@@ -110,7 +110,7 @@ final class HttpHandlerGenerator {
 
     ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
     // DEBUG block. Uncomment for debug
-    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+//    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
     return classDefinition;
   }
@@ -434,7 +434,11 @@ final class HttpHandlerGenerator {
       return writer.toString();
     }
 
-
+    /**
+     * Wrap the user written Handler method in a transaction.
+     * The transaction begins before the request is delegated, and ends after the response.
+     * On errors the transaction is aborted and rolledback.
+     */
     private void generateTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
       Type txContextType = Type.getType(TransactionContext.class);
       Type txFailureExceptionType = Type.getType(TransactionFailureException.class);

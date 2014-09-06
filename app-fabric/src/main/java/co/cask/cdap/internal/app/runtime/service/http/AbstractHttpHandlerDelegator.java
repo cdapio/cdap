@@ -69,8 +69,4 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   protected final HttpServiceResponder wrapResponder(HttpResponder responder) {
     return new DefaultHttpServiceResponder(responder);
   }
-
-  protected final void printString() {
-    System.out.println("?????");
-  }
 }

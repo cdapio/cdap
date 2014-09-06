@@ -436,7 +436,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
       // We can use the weak reference, which retrieved through polling the ReferenceQueue,
       // to get back the handler and call destroy() on it.
       handlerReferences.put(new WeakReference<Supplier<HandlerContextPair>>(supplier, handlerReferenceQueue),
-                            handlerContextPair);
+                                                                            handlerContextPair);
       handlerThreadLocal.set(supplier);
       return handlerContextPair;
     }

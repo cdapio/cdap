@@ -63,7 +63,7 @@ public class AppWithServices extends AbstractApplication {
       addProcedure(new NoOpProcedure());
       addService(SERVICE_NAME, new ServerService());
       addService(new DatasetUpdateService());
-      addService(new TransactionsTestService());
+      addService(new TransactionalHandlerService());
       createDataset(DATASET_NAME, KeyValueTable.class);
       createDataset(TRANSACTIONS_DATASET_NAME, KeyValueTable.class);
    }
@@ -81,7 +81,7 @@ public class AppWithServices extends AbstractApplication {
     }
   }
 
-  public static class TransactionsTestService extends AbstractService {
+  public static class TransactionalHandlerService extends AbstractService {
 
     @Override
     protected void configure() {
@@ -99,7 +99,7 @@ public class AppWithServices extends AbstractApplication {
       @GET
       @EnableTransaction
       public void handler(HttpServiceRequest request, HttpServiceResponder responder) throws InterruptedException {
-        table.write("testKey", "testValue");
+        table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
         Thread.sleep(10000);
         responder.sendStatus(200);
       }
@@ -108,7 +108,7 @@ public class AppWithServices extends AbstractApplication {
       @GET
       @EnableTransaction
       public void readHandler(HttpServiceRequest request, HttpServiceResponder responder) {
-        String value = Bytes.toString(table.read("testKey"));
+        String value = Bytes.toString(table.read(DATASET_TEST_KEY));
         if (value == null) {
           responder.sendStatus(500);
         } else {

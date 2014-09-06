@@ -43,6 +43,7 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
 import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
@@ -81,15 +82,18 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.RunIds;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -121,6 +125,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
   private TransactionSystemClient transactionSystemClient;
+  private ProgramServiceDiscovery programServiceDiscovery;
+  private DiscoveryServiceClient discoveryServiceClient;
   private DatasetFramework datasetFramework;
   private TwillRunnable delegate;
   private String runnableName;
@@ -174,6 +180,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
       datasetFramework = injector.getInstance(DatasetFramework.class);
+      programServiceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
+      discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
       try {
         program = injector.getInstance(ProgramFactory.class)
@@ -191,6 +199,11 @@ public class ServiceTwillRunnable implements TwillRunnable {
       String processorName = program.getName();
       runnableName = programOpts.getName();
 
+      Arguments arguments = programOpts.getArguments();
+      RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
+                                        ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
+                                        : RunIds.generate();
+
       ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
       final RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
       String className = runtimeSpec.getRunnableSpecification().getClassName();
@@ -201,8 +214,10 @@ public class ServiceTwillRunnable implements TwillRunnable {
       if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
-        delegate = new HttpServiceTwillRunnable(program.getClassLoader(), null, null, null, null, null, null,
-                                                null, null, null);
+        delegate = new HttpServiceTwillRunnable(program.getClassLoader(), program, runId, metricsCollectionService,
+                                                datasetFramework, cConf, "",
+                                                programServiceDiscovery, discoveryServiceClient,
+                                                transactionSystemClient);
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         delegate = new ServiceWorkerTwillRunnable(program.getClassLoader(), cConf,
                                                   datasetFramework, transactionSystemClient);
