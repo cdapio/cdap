@@ -318,11 +318,11 @@
       </div>
     </div>
 
+    {{#if model.workersList}}
     <div id="panels">
       <h2>Service Workers</h2>
       <br />
       <div class="panel">
-        {{#if model.workersList}}
           <table class="table">
             <thead>
               <tr>
@@ -359,17 +359,9 @@
               {{/each}}
             </tbody>
           </table>
-        {{ else }}
-          <div class="object-list-empty">
-            <div class="object-list-empty-content">
-              <div>No Service Workers</div>
-              <span>Please add a service worker to your service before using this feature.</span>
-            </div>
-          </div>
-        {{/if}}
-
       </div>
     </div>
+    {{/if}}
 
   {{outlet config}}
 
