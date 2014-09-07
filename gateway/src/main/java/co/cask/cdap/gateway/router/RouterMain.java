@@ -27,7 +27,6 @@ import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.security.guice.SecurityModules;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
@@ -37,8 +36,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
 
 /**
  * Main class to run Router from command line.
@@ -66,12 +63,8 @@ public class RouterMain extends DaemonMain {
       CConfiguration cConf = CConfiguration.create();
 
       if (cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
-        Preconditions.checkNotNull(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH),
-                                   "Kerberos keytab is not configured");
-        Preconditions.checkNotNull(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL),
-                                   "Kerberos prinicpal is not configured");
-        SecurityUtil.enableKerberos(new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)),
-                                    cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
+        // Enable Kerberos login
+        SecurityUtil.enableKerberosLogin(cConf);
       }
 
       // Initialize ZK client

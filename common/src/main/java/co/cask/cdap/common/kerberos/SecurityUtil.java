@@ -44,12 +44,11 @@ public final class SecurityUtil {
   private SecurityUtil() { }
 
   /**
-   * Enables Kerberos authentication.
+   * Enables Kerberos authentication based on configuration.
    *
-   * @param keyTabFile Kerberos keytab file
-   * @param principal Kerberos principal corresponding to the keytab file
+   * @param cConf configuration object.
    */
-  public static void enableKerberos(File keyTabFile, String principal) throws IOException {
+  public static void enableKerberosLogin(CConfiguration cConf) throws IOException {
     if (System.getProperty(Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG) != null) {
       LOG.warn("Environment variable '{}' was already set to {}. Not generating JAAS configuration.",
                Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG,
@@ -57,8 +56,16 @@ public final class SecurityUtil {
       return;
     }
 
-    Preconditions.checkArgument(keyTabFile != null, "Kerberos keytab file is required");
-    //noinspection ConstantConditions
+    if (!isKerberosEnabled(cConf)) {
+      LOG.info("Kerberos login is not enabled. To enable Kerberos login configure {} and {}",
+               Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+      return;
+    }
+
+    String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    principal = SecurityUtil.expandPrincipal(principal);
+
+    File keyTabFile = new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
     Preconditions.checkArgument(keyTabFile.exists(),
                                 "Kerberos keytab file does not exist: " + keyTabFile.getAbsolutePath());
     Preconditions.checkArgument(keyTabFile.isFile(),
@@ -66,8 +73,7 @@ public final class SecurityUtil {
     Preconditions.checkArgument(keyTabFile.canRead(),
                                 "Kerberos keytab file cannot be read: " + keyTabFile.getAbsolutePath());
 
-    principal = SecurityUtil.expandPrincipal(principal);
-    LOG.info("Using Kerberos principal {}", principal);
+    LOG.info("Using Kerberos principal {} and keytab {}", principal, keyTabFile.getAbsolutePath());
 
     System.setProperty(Constants.External.Zookeeper.ENV_AUTH_PROVIDER_1,
                        "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
@@ -98,6 +104,7 @@ public final class SecurityUtil {
 
   /**
    * Expands _HOST in principal name with local hostname.
+   *
    * @param principal Kerberos principal name
    * @return expanded principal name
    */

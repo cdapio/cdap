@@ -39,7 +39,6 @@ import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -178,12 +177,8 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         server.setConnectors(new Connector[]{connector});
       }
 
-      Preconditions.checkNotNull(configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH),
-                                 "Kerberos keytab is not configured");
-      Preconditions.checkNotNull(configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL),
-                                 "Kerberos prinicpal is not configured");
-      SecurityUtil.enableKerberos(new File(configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH)),
-                                  configuration.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL));
+      // Enable Kerberos login
+      SecurityUtil.enableKerberosLogin(configuration);
 
       HandlerCollection handlers = new HandlerCollection();
       handlers.addHandler(context);
