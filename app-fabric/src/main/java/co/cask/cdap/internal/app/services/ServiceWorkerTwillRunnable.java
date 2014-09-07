@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
@@ -33,9 +34,11 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import org.apache.twill.api.Command;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,10 +52,13 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
   private static final Logger LOG = LoggerFactory.getLogger(ServiceWorkerTwillRunnable.class);
   private static final Gson GSON = new Gson();
   private ServiceWorker worker;
+  private Program program;
+  private RunId runId;
   private ClassLoader programClassLoader;
   private TransactionSystemClient transactionSystemClient;
   private DatasetFramework datasetFramework;
   private CConfiguration cConfiguration;
+  private DiscoveryServiceClient discoveryServiceClient;
   private Set<String> datasets;
   private Metrics metrics;
 
@@ -69,13 +75,18 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
    * Create a {@link TwillRunnable} for a {@link ServiceWorker} from a classloader.
    * @param classLoader to create runnable with.
    */
-  public ServiceWorkerTwillRunnable(ClassLoader classLoader, CConfiguration cConfiguration,
+  public ServiceWorkerTwillRunnable(Program program, RunId runId, ClassLoader classLoader,
+                                    CConfiguration cConfiguration,
                                     DatasetFramework datasetFramework,
-                                    TransactionSystemClient transactionSystemClient) {
+                                    TransactionSystemClient transactionSystemClient,
+                                    DiscoveryServiceClient discoveryServiceClient) {
+    this.program = program;
+    this.runId = runId;
     this.programClassLoader = classLoader;
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = datasetFramework;
     this.cConfiguration = cConfiguration;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
@@ -113,9 +124,10 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
         type = TypeToken.of(programClassLoader.loadClass(delegateClassName));
         ((GuavaServiceWorker) worker).setDelegate((Service) factory.get(type).create());
       }
-      worker.initialize(new DefaultServiceWorkerContext(programClassLoader, cConfiguration,
+      worker.initialize(new DefaultServiceWorkerContext(program, runId, programClassLoader, cConfiguration,
                                                         context.getSpecification().getConfigs(), datasets,
-                                                        datasetFramework, transactionSystemClient));
+                                                        datasetFramework, transactionSystemClient,
+                                                        discoveryServiceClient));
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);
       Throwables.propagate(e);

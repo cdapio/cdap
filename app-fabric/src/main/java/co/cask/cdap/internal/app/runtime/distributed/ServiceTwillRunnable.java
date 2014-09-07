@@ -81,15 +81,18 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.Command;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Services;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.RunIds;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -122,6 +125,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private LogAppenderInitializer logAppenderInitializer;
   private TransactionSystemClient transactionSystemClient;
   private DatasetFramework datasetFramework;
+  private DiscoveryServiceClient discoveryServiceClient;
   private TwillRunnable delegate;
   private String runnableName;
 
@@ -174,7 +178,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
       datasetFramework = injector.getInstance(DatasetFramework.class);
-
+      discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       try {
         program = injector.getInstance(ProgramFactory.class)
           .create(cmdLine.getOptionValue(RunnableOptions.JAR));
@@ -199,13 +203,19 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
+      Arguments arguments = programOpts.getArguments();
+      RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
+        ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
+        : RunIds.generate();
+
+
       if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
-        delegate = new ServiceWorkerTwillRunnable(program.getClassLoader(), cConf,
-                                                  datasetFramework, transactionSystemClient);
+        delegate = new ServiceWorkerTwillRunnable(program, runId, program.getClassLoader(), cConf,
+                                                  datasetFramework, transactionSystemClient, discoveryServiceClient);
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       }

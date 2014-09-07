@@ -20,14 +20,17 @@ import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.TxRunnable;
+import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.internal.app.runtime.AbstractContext;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionFailureException;
@@ -36,26 +39,29 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Default implementation of {@link ServiceWorkerContext}.
  */
-public class DefaultServiceWorkerContext implements ServiceWorkerContext {
+public class DefaultServiceWorkerContext extends AbstractContext implements ServiceWorkerContext {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceWorkerContext.class);
+  private final Program program;
+  private final RunId runId;
   private final Map<String, String> runtimeArgs;
   private final Set<String> datasets;
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
   private final ClassLoader programClassLoader;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   /**
    * Create a ServiceWorkerContext with runtime arguments and access to Datasets.
@@ -65,16 +71,22 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
    * @param datasetFramework used to get datasets.
    * @param transactionSystemClient used to transactionalize operations.
    */
-  public DefaultServiceWorkerContext(ClassLoader programClassLoader, CConfiguration cConfiguration,
+  public DefaultServiceWorkerContext(Program program, RunId runId, ClassLoader programClassLoader,
+                                     CConfiguration cConfiguration,
                                      Map<String, String> runtimeArgs, Set<String> datasets,
                                      DatasetFramework datasetFramework,
-                                     TransactionSystemClient transactionSystemClient) {
+                                     TransactionSystemClient transactionSystemClient,
+                                     DiscoveryServiceClient discoveryServiceClient) {
+    super(program, runId, datasets, null, null, datasetFramework, cConfiguration, null, discoveryServiceClient);
+    this.program = program;
+    this.runId = runId;
     this.programClassLoader = programClassLoader;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
     this.datasets = ImmutableSet.copyOf(datasets);
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConfiguration, Namespace.USER));
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
@@ -83,17 +95,7 @@ public class DefaultServiceWorkerContext implements ServiceWorkerContext {
   }
 
   @Override
-  public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-    throw new UnsupportedOperationException("Service discovery not yet supported.");
-  }
-
-  @Override
-  public URL getServiceURL(String applicationId, String serviceId) {
-    throw new UnsupportedOperationException("Service discovery not yet supported.");
-  }
-
-  @Override
-  public URL getServiceURL(String serviceId) {
+  public Metrics getMetrics() {
     throw new UnsupportedOperationException("Service discovery not yet supported.");
   }
 
