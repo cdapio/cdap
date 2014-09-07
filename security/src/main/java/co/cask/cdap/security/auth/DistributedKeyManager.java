@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.kerberos.SecurityUtil;
-import co.cask.cdap.common.zookeeper.ZKACLs;
 import co.cask.cdap.security.zookeeper.ResourceListener;
 import co.cask.cdap.security.zookeeper.SharedResourceCache;
 import com.google.common.base.Throwables;
@@ -68,11 +67,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
   private final long maxTokenExpiration;
 
   public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper) {
-    this(conf, codec, zookeeper,
-         ZKACLs.fromSaslPrincipalsAllowAll(
-           SecurityUtil.stripPrincipal(conf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL))
-         )
-    );
+    this(conf, codec, zookeeper, getACLs(conf));
   }
 
   public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper, List<ACL> acls) {
@@ -85,11 +80,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
 
     if (acls.isEmpty()) {
-      if (conf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL) == null) {
-        LOG.warn("Not adding ACLs on keys in Zookeeper as Kerberos principal is not configured");
-      } else {
-        LOG.warn("Zookeeper ACL list is empty for keys!");
-      }
+      LOG.warn("Zookeeper ACL list is empty for keys!");
       acls = ZooDefs.Ids.OPEN_ACL_UNSAFE;
     }
     LOG.info("Zookeeper ACLs {} for keys", acls);
@@ -206,5 +197,19 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
      * TODO: we may want to shutdown the server here, though for followers, staying up and processing requests
      * that we can may be more important.
      */
+  }
+
+  /**
+   * Applies Zookeeper ACLs if Kerberos is enabled.
+   * @param cConf configuration object
+   * @return Zookeeper ACLs
+   */
+  static List<ACL> getACLs(CConfiguration cConf) {
+    if (SecurityUtil.isKerberosEnabled(cConf)) {
+      return ZooDefs.Ids.CREATOR_ALL_ACL;
+    }
+
+    LOG.warn("Not adding ACLs on keys in Zookeeper as Kerberos is not enabled");
+    return ZooDefs.Ids.OPEN_ACL_UNSAFE;
   }
 }

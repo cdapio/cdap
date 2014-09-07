@@ -36,7 +36,6 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +81,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       LOG.info("Initializing SharedResourceCache.  Checking for parent znode {}", parentZnode);
       if (zookeeper.exists(parentZnode).get() == null) {
         // may be created in parallel by another instance
-        ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, true, znodeACL),
+        // Also the child nodes are secure even without adding any ACLs to parent node.
+        ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT),
                                  KeeperException.NodeExistsException.class, null).get();
       }
     } catch (ExecutionException ee) {

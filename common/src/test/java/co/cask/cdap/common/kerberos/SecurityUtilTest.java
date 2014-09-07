@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.kerberos;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,11 +39,20 @@ public class SecurityUtilTest {
   }
 
   @Test
-  public void testStripPrincipal() throws Exception {
-    Assert.assertNull(SecurityUtil.stripPrincipal(null));
-    Assert.assertEquals("abc", SecurityUtil.stripPrincipal("abc/host@REALM.COM"));
-    Assert.assertEquals("abc", SecurityUtil.stripPrincipal("abc"));
-    Assert.assertEquals("abc", SecurityUtil.stripPrincipal("abc@REALM.COM"));
-    Assert.assertEquals("abc", SecurityUtil.stripPrincipal("abc/host"));
+  public void isKerberosEnabled() throws Exception {
+    CConfiguration kerbConf = CConfiguration.create();
+    kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "prinicpal@REALM.NET");
+    kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, "/path/to/keytab");
+    Assert.assertEquals(true, SecurityUtil.isKerberosEnabled(kerbConf));
+
+    CConfiguration noPrincipalConf = CConfiguration.create();
+    noPrincipalConf.unset(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    noPrincipalConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, "/path/to/keytab");
+    Assert.assertEquals(false, SecurityUtil.isKerberosEnabled(noPrincipalConf));
+
+    CConfiguration noKeyTabConf = CConfiguration.create();
+    noKeyTabConf.unset(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+    noKeyTabConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "prinicpal@REALM.NET");
+    Assert.assertEquals(false, SecurityUtil.isKerberosEnabled(noKeyTabConf));
   }
 }
