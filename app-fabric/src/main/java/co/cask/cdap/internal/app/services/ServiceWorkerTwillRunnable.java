@@ -23,8 +23,10 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.service.DefaultServiceWorkerContext;
 import co.cask.cdap.internal.lang.Reflections;
 import com.continuuity.tephra.TransactionSystemClient;
@@ -56,8 +58,10 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
   private RunId runId;
   private ClassLoader programClassLoader;
   private TransactionSystemClient transactionSystemClient;
+  private MetricsCollectionService metricsCollectionService;
   private DatasetFramework datasetFramework;
   private CConfiguration cConfiguration;
+  private ProgramServiceDiscovery serviceDiscovery;
   private DiscoveryServiceClient discoveryServiceClient;
   private Set<String> datasets;
   private Metrics metrics;
@@ -77,15 +81,19 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
    */
   public ServiceWorkerTwillRunnable(Program program, RunId runId, ClassLoader classLoader,
                                     CConfiguration cConfiguration,
+                                    MetricsCollectionService metricsCollectionService,
                                     DatasetFramework datasetFramework,
                                     TransactionSystemClient transactionSystemClient,
+                                    ProgramServiceDiscovery serviceDiscovery,
                                     DiscoveryServiceClient discoveryServiceClient) {
     this.program = program;
     this.runId = runId;
     this.programClassLoader = classLoader;
     this.transactionSystemClient = transactionSystemClient;
+    this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.cConfiguration = cConfiguration;
+    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
@@ -126,7 +134,8 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
       }
       worker.initialize(new DefaultServiceWorkerContext(program, runId, programClassLoader, cConfiguration,
                                                         context.getSpecification().getConfigs(), datasets,
-                                                        datasetFramework, transactionSystemClient,
+                                                        metricsCollectionService, datasetFramework,
+                                                        transactionSystemClient, serviceDiscovery,
                                                         discoveryServiceClient));
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);

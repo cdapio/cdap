@@ -183,7 +183,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
         runnable = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         runnable = new ServiceWorkerTwillRunnable(program, runId, program.getClassLoader(), cConfiguration,
-                                                  datasetFramework, transactionSystemClient, discoveryServiceClient);
+                                                  metricsCollectionService, datasetFramework,
+                                                  transactionSystemClient, serviceDiscovery, discoveryServiceClient);
       } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }

@@ -43,6 +43,7 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
 import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
@@ -125,6 +126,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private LogAppenderInitializer logAppenderInitializer;
   private TransactionSystemClient transactionSystemClient;
   private DatasetFramework datasetFramework;
+  private ProgramServiceDiscovery serviceDiscovery;
   private DiscoveryServiceClient discoveryServiceClient;
   private TwillRunnable delegate;
   private String runnableName;
@@ -178,7 +180,9 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
       datasetFramework = injector.getInstance(DatasetFramework.class);
+      serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
       discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+
       try {
         program = injector.getInstance(ProgramFactory.class)
           .create(cmdLine.getOptionValue(RunnableOptions.JAR));
@@ -215,7 +219,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
         delegate = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         delegate = new ServiceWorkerTwillRunnable(program, runId, program.getClassLoader(), cConf,
-                                                  datasetFramework, transactionSystemClient, discoveryServiceClient);
+                                                  metricsCollectionService, datasetFramework,
+                                                  transactionSystemClient, serviceDiscovery, discoveryServiceClient);
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       }

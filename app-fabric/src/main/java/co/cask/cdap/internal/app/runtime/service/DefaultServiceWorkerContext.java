@@ -25,12 +25,16 @@ import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
+import co.cask.cdap.proto.ProgramType;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionFailureException;
@@ -54,14 +58,11 @@ import java.util.Set;
  */
 public class DefaultServiceWorkerContext extends AbstractContext implements ServiceWorkerContext {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceWorkerContext.class);
-  private final Program program;
-  private final RunId runId;
   private final Map<String, String> runtimeArgs;
   private final Set<String> datasets;
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
   private final ClassLoader programClassLoader;
-  private final DiscoveryServiceClient discoveryServiceClient;
 
   /**
    * Create a ServiceWorkerContext with runtime arguments and access to Datasets.
@@ -74,19 +75,19 @@ public class DefaultServiceWorkerContext extends AbstractContext implements Serv
   public DefaultServiceWorkerContext(Program program, RunId runId, ClassLoader programClassLoader,
                                      CConfiguration cConfiguration,
                                      Map<String, String> runtimeArgs, Set<String> datasets,
+                                     MetricsCollectionService metricsCollectionService,
                                      DatasetFramework datasetFramework,
                                      TransactionSystemClient transactionSystemClient,
+                                     ProgramServiceDiscovery serviceDiscovery,
                                      DiscoveryServiceClient discoveryServiceClient) {
-    super(program, runId, datasets, null, null, datasetFramework, cConfiguration, null, discoveryServiceClient);
-    this.program = program;
-    this.runId = runId;
+    super(program, runId, datasets, getMetricContext(program, runId), metricsCollectionService, datasetFramework,
+          cConfiguration, serviceDiscovery, discoveryServiceClient);
     this.programClassLoader = programClassLoader;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
     this.datasets = ImmutableSet.copyOf(datasets);
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConfiguration, Namespace.USER));
-    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
@@ -96,7 +97,12 @@ public class DefaultServiceWorkerContext extends AbstractContext implements Serv
 
   @Override
   public Metrics getMetrics() {
-    throw new UnsupportedOperationException("Service discovery not yet supported.");
+    throw new UnsupportedOperationException("Metrics currently not supported.");
+  }
+
+  private static String getMetricContext(Program program, RunId runId) {
+    return String.format("%s.%s.%s.%s", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SERVICE),
+                         program.getName(), runId.getId());
   }
 
   @Override
