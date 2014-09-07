@@ -25,8 +25,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 
@@ -47,9 +50,10 @@ public final class SecurityUtil {
    */
   public static void enableKerberos(File keyTabFile, String principal) throws IOException {
     if (System.getProperty(Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG) != null) {
-      LOG.warn("Environment variable '{}' was already set to {}. This may cause unexpected behavior.",
+      LOG.warn("Environment variable '{}' was already set to {}. Not generating JAAS configuration.",
                Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG,
                System.getProperty(Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG));
+      return;
     }
 
     Preconditions.checkArgument(keyTabFile != null, "Kerberos keytab file is required");
@@ -60,6 +64,9 @@ public final class SecurityUtil {
                                 "Kerberos keytab file should be a file: " + keyTabFile.getAbsolutePath());
     Preconditions.checkArgument(keyTabFile.canRead(),
                                 "Kerberos keytab file cannot be read: " + keyTabFile.getAbsolutePath());
+
+    principal = SecurityUtil.expandPrincipal(principal);
+    LOG.info("Using Kerberos principal {}", principal);
 
     System.setProperty(Constants.External.Zookeeper.ENV_AUTH_PROVIDER_1,
                        "org.apache.zookeeper.server.auth.SASLAuthenticationProvider");
@@ -86,5 +93,41 @@ public final class SecurityUtil {
 
     // apply the configuration
     Configuration.setConfiguration(configuration);
+  }
+
+  /**
+   * Expands _HOST in principal name with local hostname.
+   * @param principal Kerberos principal name
+   * @return expanded principal name
+   */
+  @Nullable
+  public static String expandPrincipal(@Nullable String principal) throws UnknownHostException {
+    if (principal == null) {
+      return principal;
+    }
+
+    String localHostname = InetAddress.getLocalHost().getCanonicalHostName();
+    return principal.replace("/_HOST@", "/" + localHostname + "@");
+  }
+
+  /**
+   * Strips host and realm from a principal.
+   * @param principal Kerberos principal
+   * @return stripped principal
+   */
+  @Nullable
+  public static String stripPrincipal(@Nullable String principal) {
+    if (principal == null) {
+      return null;
+    }
+
+    int pos = principal.indexOf('/');
+    if (pos == -1) {
+      pos = principal.indexOf('@');
+      if (pos == -1) {
+        return principal;
+      }
+    }
+    return principal.substring(0, pos);
   }
 }

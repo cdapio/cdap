@@ -38,6 +38,10 @@ public final class ZKACLs {
    * @return list of {@link ACL}s
    */
   public static List<ACL> fromSaslPrincipalsAllowAll(String... principals) {
+    if (principals == null) {
+      return ImmutableList.of();
+    }
+
     Set<String> existingPrincipals = Sets.newHashSet();
     ImmutableList.Builder<ACL> result = ImmutableList.builder();
     for (String principal : principals) {
@@ -48,5 +52,4 @@ public final class ZKACLs {
     }
     return result.build();
   }
-
 }

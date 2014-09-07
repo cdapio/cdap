@@ -19,6 +19,7 @@ package co.cask.cdap.security.auth;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Codec;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.zookeeper.ZKACLs;
 import co.cask.cdap.security.zookeeper.ResourceListener;
 import co.cask.cdap.security.zookeeper.SharedResourceCache;
@@ -27,6 +28,7 @@ import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClients;
+import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +69,10 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
 
   public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper) {
     this(conf, codec, zookeeper,
-         ZKACLs.fromSaslPrincipalsAllowAll(conf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL)));
+         ZKACLs.fromSaslPrincipalsAllowAll(
+           SecurityUtil.stripPrincipal(conf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL))
+         )
+    );
   }
 
   public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper, List<ACL> acls) {
@@ -78,6 +83,16 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       conf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION),
       conf.getLong(Constants.Security.TOKEN_EXPIRATION));
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
+
+    if (acls.isEmpty()) {
+      if (conf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL) == null) {
+        LOG.warn("Not adding ACLs on keys in Zookeeper as Kerberos principal is not configured");
+      } else {
+        LOG.warn("Zookeeper ACL list is empty for keys!");
+      }
+      acls = ZooDefs.Ids.OPEN_ACL_UNSAFE;
+    }
+    LOG.info("Zookeeper ACLs {} for keys", acls);
     this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys", acls);
   }
 
