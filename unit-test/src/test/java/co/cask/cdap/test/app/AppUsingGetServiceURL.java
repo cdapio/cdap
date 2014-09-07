@@ -39,7 +39,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
 /**
- * AppWithServices with a DummyService, which other programs will hit via their context's getServiceURL method.
+ * AppWithServices with a CentralService, which other programs will hit via their context's getServiceURL method.
+ * This CentralService returns a constant value {@link ANSWER}, which is checked for in the test cases.
  */
 public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String APP_NAME = "AppUsingGetServiceURL";
@@ -153,7 +154,6 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         }
       }
     }
-
   }
 
 
