@@ -56,8 +56,8 @@ import java.util.Set;
 /**
  * Default implementation of {@link ServiceWorkerContext}.
  */
-public class DefaultServiceWorkerContext extends AbstractContext implements ServiceWorkerContext {
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceWorkerContext.class);
+public class BasicServiceWorkerContext extends AbstractContext implements ServiceWorkerContext {
+  private static final Logger LOG = LoggerFactory.getLogger(BasicServiceWorkerContext.class);
   private final Map<String, String> runtimeArgs;
   private final Set<String> datasets;
   private final TransactionSystemClient transactionSystemClient;
@@ -72,14 +72,14 @@ public class DefaultServiceWorkerContext extends AbstractContext implements Serv
    * @param datasetFramework used to get datasets.
    * @param transactionSystemClient used to transactionalize operations.
    */
-  public DefaultServiceWorkerContext(Program program, RunId runId, ClassLoader programClassLoader,
-                                     CConfiguration cConfiguration,
-                                     Map<String, String> runtimeArgs, Set<String> datasets,
-                                     MetricsCollectionService metricsCollectionService,
-                                     DatasetFramework datasetFramework,
-                                     TransactionSystemClient transactionSystemClient,
-                                     ProgramServiceDiscovery serviceDiscovery,
-                                     DiscoveryServiceClient discoveryServiceClient) {
+  public BasicServiceWorkerContext(Program program, RunId runId, ClassLoader programClassLoader,
+                                   CConfiguration cConfiguration,
+                                   Map<String, String> runtimeArgs, Set<String> datasets,
+                                   MetricsCollectionService metricsCollectionService,
+                                   DatasetFramework datasetFramework,
+                                   TransactionSystemClient transactionSystemClient,
+                                   ProgramServiceDiscovery serviceDiscovery,
+                                   DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, datasets, getMetricContext(program, runId), metricsCollectionService, datasetFramework,
           cConfiguration, serviceDiscovery, discoveryServiceClient);
     this.programClassLoader = programClassLoader;

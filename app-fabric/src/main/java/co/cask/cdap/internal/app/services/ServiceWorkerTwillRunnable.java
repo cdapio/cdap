@@ -27,7 +27,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
-import co.cask.cdap.internal.app.runtime.service.DefaultServiceWorkerContext;
+import co.cask.cdap.internal.app.runtime.service.BasicServiceWorkerContext;
 import co.cask.cdap.internal.lang.Reflections;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
@@ -132,7 +132,7 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
         type = TypeToken.of(programClassLoader.loadClass(delegateClassName));
         ((GuavaServiceWorker) worker).setDelegate((Service) factory.get(type).create());
       }
-      worker.initialize(new DefaultServiceWorkerContext(program, runId, programClassLoader, cConfiguration,
+      worker.initialize(new BasicServiceWorkerContext(program, runId, programClassLoader, cConfiguration,
                                                         context.getSpecification().getConfigs(), datasets,
                                                         metricsCollectionService, datasetFramework,
                                                         transactionSystemClient, serviceDiscovery,
