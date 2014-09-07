@@ -240,6 +240,40 @@ public class TestFrameworkTest extends TestBase {
 
   @Category(SlowTests.class)
   @Test
+  public void testGetServiceURL() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
+    ServiceManager centralServiceManager = applicationManager.startService(AppUsingGetServiceURL.CENTRAL_SERVICE);
+    serviceStatusCheck(centralServiceManager, true);
+
+    // Test procedure's getServiceURL
+    ProcedureManager procedureManager = applicationManager.startProcedure(AppUsingGetServiceURL.PROCEDURE);
+    ProcedureClient procedureClient = procedureManager.getClient();
+    String result = procedureClient.query("ping", Collections.<String, String>emptyMap());
+    String decodedResult = new Gson().fromJson(result, String.class);
+    // Verify that the procedure was able to hit the CentralService and retrieve the answer.
+    Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
+    procedureManager.stop();
+
+
+    // Test serviceWorker's getServiceURL
+    Assert.assertEquals(AppUsingGetServiceURL.countDownLatch.getCount(), 1);
+    ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+    serviceStatusCheck(serviceWithWorker, true);
+    // Allow the service worker 1 second to ping the CentralService, and get the appropriate response.
+    AppUsingGetServiceURL.countDownLatch.await(1, TimeUnit.SECONDS);
+    // Since the worker is passive (we can not ping it), it is designed to countDown the latch when it receives the
+    // expected response.
+    Assert.assertEquals(AppUsingGetServiceURL.countDownLatch.getCount(), 0);
+    serviceWithWorker.stop();
+    serviceStatusCheck(serviceWithWorker, false);
+
+
+    centralServiceManager.stop();
+    serviceStatusCheck(centralServiceManager, false);
+  }
+
+  @Category(SlowTests.class)
+  @Test
   public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
