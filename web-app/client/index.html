@@ -264,12 +264,48 @@
   </script>
 
   <script type="text/x-handlebars" data-template-name="UserserviceStatus">
-{{#if model}}
+  {{#if model}}
     <div id="info">
       <div class="info-box">
         <div class="flow-state">
             <strong>{{model.name}}</strong>
         </div>
+      </div>
+      <div class="info-box">
+      <div class="handlerinstances">
+        <table class="table">
+          <thead>
+          <tr><th colspan=2 style="min-width: 200px; text-align: center;">Handler Instances</th></tr>
+          </thead>
+          <thead>
+          <tr>
+            <th style="min-width: 100px;" class="center-align">Requested</th>
+            <th style="min-width: 100px;" class="center-align">Active</th>
+          </tr>
+          </thead>
+          <tbody>
+
+            <tr>
+              <td style="max-width: 200px;" class="instance-col center-align">
+                <div class="instance-wrapper">
+                  <div>
+                    <form {{action "runnableChangeInstances" model model.handler on="submit"}}>
+                      {{input keyUp=keyPressed placeholder=model.handler.requested maxlength="3" value=model.handler.instancesInput class="services-instances-input" }}
+                    </form>
+                  </div>
+                  <div>
+                    <button class="btn btn-blank btn-set" disabled="true" {{action runnableChangeInstances model model.handler on="click"}}>SET</button>
+                  </div>
+                </div>
+              </td>
+              <td class="instance-provisioned service-col center-align">
+                  <div class="instance-num auto-margin"><span>{{model.handler.provisioned}}</span></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       </div>
       <div class="info-box" style="float: right; border: 0;">
         <div id="action-buttons" class="btn-group pull-right">
@@ -282,54 +318,54 @@
       </div>
     </div>
 
+    {{#if model.workersList}}
     <div id="panels">
-      <h2>Components</h2>
+      <h2>Service Workers</h2>
       <br />
       <div class="panel">
-        <table class="table">
-          <thead>
-            <tr>
-              <th style="padding-left: 14px; min-width: 200px" class="service-col">Name</th>
-              <th style="min-width: 200px;" class="center-align">Instances Requested</th>
-              <th style="min-width: 200px;" class="center-align">Instances Active</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{!--  RUNNABLES ROWS --}}
-            {{#each runnable in model.runnablesList}}
-            <tr>
-              <td class="app-list-name service-col"><a class="none-text-decoration">
-                {{runnable.id}}
-                </a>
-                <br />
-                <span class="app-list-status pull-left">component</span>
-              </td>
-              <td style="max-width: 200px;" class="instance-col">
-                <div class="instance-wrapper">
-                  <div>
-                    <form {{action "runnableChangeInstances" model runnable on="submit"}}>
-                      {{input keyUp=keyPressed placeholder=runnable.requested maxlength="3" value=runnable.instancesInput class="services-instances-input" }}
-                    </form>
-                  </div>
-                  <div>
-                    <button class="btn btn-blank btn-set" disabled="true" {{action runnableChangeInstances model runnable on="click"}}>SET</button>
-                  </div>
-                </div>
-              </td>
-              <td class="instance-provisioned service-col">
-                  <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
-              </td>
-            </tr>
-            {{/each}}
-            {{!--  RUNNABLES ROWS --}}
-          </tbody>
-        </table>
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="padding-left: 14px; min-width: 200px" class="service-col">Name</th>
+                <th style="min-width: 200px;" class="center-align">Instances Requested</th>
+                <th style="min-width: 200px;" class="center-align">Instances Active</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each runnable in model.workersList}}
+                <tr>
+                  <td class="app-list-name service-col"><a class="none-text-decoration">
+                    {{runnable.id}}
+                    </a>
+                    <br />
+                    {{!-- <span class="app-list-status pull-left"></span> --}}
+                  </td>
+                  <td style="max-width: 200px;" class="instance-col center-align">
+                    <div class="instance-wrapper">
+                      <div>
+                        <form {{action "runnableChangeInstances" model runnable on="submit"}}>
+                          {{input keyUp=keyPressed placeholder=runnable.requested maxlength="3" value=runnable.instancesInput class="services-instances-input" }}
+                        </form>
+                      </div>
+                      <div>
+                        <button class="btn btn-blank btn-set" disabled="true" {{action runnableChangeInstances model runnable on="click"}}>SET</button>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="instance-provisioned service-col center-align">
+                      <div class="instance-num auto-margin"><span>{{runnable.provisioned}}</span></div>
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
       </div>
     </div>
+    {{/if}}
 
   {{outlet config}}
 
-{{/if}}
+  {{/if}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="Userservice">
@@ -2095,7 +2131,7 @@
       <table class="table">
       <thead>
         <th style="padding-left: 14px;">Services</th>
-        <th style="width: 262px;">Number of Components</th>
+        <th class="center-align" style="width: 262px;">Number of Workers</th>
       </thead>
       <tbody>
         {{#each elements.Userservice}}
@@ -2103,7 +2139,7 @@
             <td class="app-list-name">
             <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
             </td>
-            <td class="app-list-count">{{numRunnables}}</td>
+            <td class="app-list-count">{{numWorkers}}</td>
           </tr>
         {{/each}}
       </tbody>
