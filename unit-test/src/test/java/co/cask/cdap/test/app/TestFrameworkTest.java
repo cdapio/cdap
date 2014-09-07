@@ -64,6 +64,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -256,14 +257,15 @@ public class TestFrameworkTest extends TestBase {
 
 
     // Test serviceWorker's getServiceURL
-    Assert.assertEquals(AppUsingGetServiceURL.countDownLatch.getCount(), 1);
+    CountDownLatch serviceWorkerLatch = AppUsingGetServiceURL.getCountDownLatch();
+    Assert.assertEquals(serviceWorkerLatch.getCount(), 1);
     ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
     serviceStatusCheck(serviceWithWorker, true);
     // Allow the service worker 1 second to ping the CentralService, and get the appropriate response.
-    AppUsingGetServiceURL.countDownLatch.await(1, TimeUnit.SECONDS);
+    serviceWorkerLatch.await(1, TimeUnit.SECONDS);
     // Since the worker is passive (we can not ping it), it is designed to countDown the latch when it receives the
     // expected response.
-    Assert.assertEquals(AppUsingGetServiceURL.countDownLatch.getCount(), 0);
+    Assert.assertEquals(serviceWorkerLatch.getCount(), 0);
     serviceWithWorker.stop();
     serviceStatusCheck(serviceWithWorker, false);
 

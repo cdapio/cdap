@@ -47,10 +47,14 @@ public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String SERVICE_WITH_WORKER = "ServiceWithWorker";
   public static final String PROCEDURE = "ForwardingProcedure";
   public static final String ANSWER = "MagicalString";
-  public static final CountDownLatch countDownLatch = new CountDownLatch(1);
+  private static final CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    @Override
-    public void configure() {
+  public static CountDownLatch getCountDownLatch() {
+    return countDownLatch;
+  }
+
+  @Override
+  public void configure() {
       setName(APP_NAME);
       addProcedure(new ForwardingProcedure());
       addService(new CentralService());
