@@ -113,11 +113,13 @@
 
     <property>
         <name>dashboard.ssl.key</name>
-        <value>/Users/ajainarayanan/server.key</value>
+        <!--<value>/Users/ajainarayanan/server.key</value> -->
+        <value>/tmp/server.key</value>
     </property>
     <property>
       <name>dashboard.ssl.cert</name>
-      <value>/Users/ajainarayanan/server.crt</value>
+      <!-- <value>/Users/ajainarayanan/server.crt</value>-->
+      <value>/tmp/server.crt</value>
     </property>
 
 

@@ -653,6 +653,16 @@
         <description>Secure router listening port for webapp</description>
     </property>
 
+    <property>
+        <name>router.ssl.enabled</name>
+        <value>false</value>
+    </property>
+
+    <property>
+        <name>router.ssl.keystore.type</name>
+        <value>JKS</value>
+    </property>
+
     <!-- Sets whether Devsuite is in Cloud or not -->
     <property>
         <name>appfabric.environment</name>
@@ -1051,23 +1061,6 @@
     <value>JKS</value>
   </property>
 
-  <!-- Security configuration for the router -->
-
-  <property>
-    <name>router.ssl.enabled</name>
-    <value>false</value>
-  </property>
-
-  <property>
-    <name>router.ssl.bind.port</name>
-    <value>9443</value>
-  </property>
-
-  <property>
-    <name>router.ssl.keystore.type</name>
-    <value>JKS</value>
-  </property>
-
   <!-- Front Configuration-->
   <property>
     <name>dashboard.bind.port</name>
@@ -1080,7 +1073,7 @@
 
   <property>
     <name>dashboard.https.enabled</name>
-    <value>false</value>
+    <value>true</value>
   </property>
 
   <property>
