@@ -76,12 +76,12 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       String response = null;
       URL url = new URL(serviceURL, "ping");
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-      if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
-        try {
+      try {
+        if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
           response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-        } finally {
-          conn.disconnect();
         }
+      } finally {
+          conn.disconnect();
       }
 
       if (response == null) {
@@ -134,19 +134,20 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           return;
         }
 
+        HttpURLConnection conn = null;
         try {
-          HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+          conn = (HttpURLConnection) url.openConnection();
           if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
-            try {
-              response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-            } finally {
-              conn.disconnect();
-            }
+            response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
           }
         } catch (IOException e) {
-          e.printStackTrace();
           return;
+        } finally {
+          if (conn != null) {
+            conn.disconnect();
+          }
         }
+
 
         // The CentralService was pinged and the expected response was retrieved, so notify the test.
         if (ANSWER.equals(response)) {
