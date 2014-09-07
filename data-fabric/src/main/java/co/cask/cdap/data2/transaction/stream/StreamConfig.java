@@ -70,7 +70,7 @@ public final class StreamConfig {
   }
 
   /**
-   * @return The time to live in seconds for events in this stream.
+   * @return The time to live in milliseconds for events in this stream.
    */
   public long getTTL() {
     return ttl;
