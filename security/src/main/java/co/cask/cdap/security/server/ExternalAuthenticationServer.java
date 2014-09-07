@@ -18,7 +18,6 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.SecurityUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -176,9 +175,6 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       } else {
         server.setConnectors(new Connector[]{connector});
       }
-
-      // Enable Kerberos login
-      SecurityUtil.enableKerberosLogin(configuration);
 
       HandlerCollection handlers = new HandlerCollection();
       handlers.addHandler(context);
