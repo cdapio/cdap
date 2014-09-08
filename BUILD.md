@@ -1,8 +1,8 @@
-# Cask Data Application Platform
+# Cask Data Application Platform - CDAP
 
-**Local and Distributed Cask DAPs**
+**Standalone and Distributed CDAP**
 
-## Building Cask DAP Maven
+## Building CDAP Maven
 
 ### Clean all modules
     mvn clean
@@ -29,7 +29,13 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
 
 ### Build Singlenode distribution ZIP
     mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
+    
+### Build the limited set of Javadocs used in distribution ZIP
+    mvn clean package javadoc:javadoc -pl api -am -DskipTests -P release
 
+### Build the complete set of Javadocs, for all modules
+    mvn clean site -DskipTests
+    
 ### Build distributions (rpm, deb, tgz)
     mvn package -DskipTests -P dist,rpm-prepare,rpm,deb-prepare,deb,tgz
 
@@ -51,7 +57,7 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     
 ## License and Trademarks
 
-© Copyright 2014 Cask, Inc.
+© Copyright 2014 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at
@@ -63,4 +69,4 @@ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
 either express or implied. See the License for the specific language governing permissions 
 and limitations under the License.
 
-Cask is a trademark of Cask, Inc. All rights reserved.
+Cask is a trademark of Cask Data, Inc. All rights reserved.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,20 +22,20 @@ import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.app.metrics.ProcedureMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.ProcedureLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
-import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.io.Closeable;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Procedure runtime context
@@ -50,15 +50,16 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   private final ProcedureSpecification procedureSpec;
   private final ProcedureMetrics procedureMetrics;
   private final ProcedureLoggingContext procedureLoggingContext;
-  private final MetricsCollector systemMetrics;
   private final Arguments runtimeArguments;
-  private final ProgramServiceDiscovery serviceDiscovery;
 
   BasicProcedureContext(Program program, RunId runId, int instanceId, int instanceCount,
-                        Map<String, Closeable> datasets, Arguments runtimeArguments,
+                        Set<String> datasets, Arguments runtimeArguments,
                         ProcedureSpecification procedureSpec, MetricsCollectionService collectionService,
-                        ProgramServiceDiscovery serviceDiscovery) {
-    super(program, runId, datasets, collectionService);
+                        ProgramServiceDiscovery serviceDiscovery, DiscoveryServiceClient discoveryServiceClient,
+                        DatasetFramework dsFramework, CConfiguration conf) {
+    super(program, runId, datasets,
+          getMetricsContext(program, instanceId), collectionService,
+          dsFramework, conf, serviceDiscovery, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.procedureId = program.getName();
     this.instanceId = instanceId;
@@ -67,8 +68,6 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     this.procedureMetrics = new ProcedureMetrics(collectionService, getApplicationId(), getProcedureId());
     this.runtimeArguments = runtimeArguments;
     this.procedureLoggingContext = new ProcedureLoggingContext(getAccountId(), getApplicationId(), getProcedureId());
-    this.systemMetrics = getMetricsCollector(MetricsScope.REACTOR, collectionService, getMetricsContext());
-    this.serviceDiscovery = serviceDiscovery;
   }
 
   @Override
@@ -91,10 +90,6 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     return instanceCount;
   }
 
-  public MetricsCollector getSystemMetrics() {
-    return systemMetrics;
-  }
-
   public String getProcedureId() {
     return procedureId;
   }
@@ -107,8 +102,12 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
     return procedureLoggingContext;
   }
 
-  private String getMetricsContext() {
-    return String.format("%s.p.%s.%d", getApplicationId(), getProcedureId(), getInstanceId());
+  private static String getMetricsContext(Program program, int instanceId) {
+    return String.format("%s.p.%s.%d",
+                         program.getApplicationId(),
+                         // procedure id
+                         program.getName(),
+                         instanceId);
   }
 
   public void setInstanceCount(int count) {
@@ -126,10 +125,5 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
       arguments.put(it.next());
     }
     return arguments.build();
-  }
-
-  @Override
-  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    return serviceDiscovery.discover(accountId, appId, serviceId, serviceName);
   }
 }

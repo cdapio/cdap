@@ -54,7 +54,7 @@ public class ServiceClient {
 
   /**
    * Gets information about a service.
-   *
+   * 
    * @param appId ID of the application that the service belongs to
    * @param serviceId ID of the service
    * @return {@link ServiceMeta} representing the service.
@@ -62,42 +62,7 @@ public class ServiceClient {
    */
   public ServiceMeta get(String appId, String serviceId) throws IOException {
     URL url = config.resolveURL(String.format("apps/%s/services/%s", appId, serviceId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET, url);
     return ObjectResponse.fromJsonBody(response, ServiceMeta.class).getResponseObject();
-  }
-
-  public List<Discoverable> discover(String appId, String serviceId, final String discoverableId) throws Exception {
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/discover/%s", appId, serviceId, discoverableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND,
-                                               HttpURLConnection.HTTP_INTERNAL_ERROR,
-                                               HttpURLConnection.HTTP_UNAUTHORIZED);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ServiceNotFoundException("Could not discover " + discoverableId);
-    } else if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-      throw new AuthorizationException("Invalid or missing authorization");
-    } else if (response.getResponseCode() == HttpURLConnection.HTTP_INTERNAL_ERROR) {
-      throw new InternalError("Error attempting to discover " + discoverableId);
-    }
-
-    List<Discoverable> discoverables = new ArrayList<Discoverable>();
-    JsonParser parser = new JsonParser();
-    JsonArray array = (JsonArray) parser.parse(response.getResponseBodyAsString());
-
-    for (JsonElement element: array) {
-      final JsonObject object = element.getAsJsonObject();
-      discoverables.add(new Discoverable() {
-        @Override
-        public String getName() {
-          return discoverableId;
-        }
-
-        @Override
-        public InetSocketAddress getSocketAddress() {
-          return new InetSocketAddress(object.get("host").getAsString(), object.get("port").getAsInt());
-        }
-      });
-    }
-    return discoverables;
   }
 }

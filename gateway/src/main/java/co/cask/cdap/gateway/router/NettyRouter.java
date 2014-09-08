@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,11 +22,11 @@ import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
-import com.google.common.base.Preconditions;
+import com.continuuity.security.tools.SSLHandlerFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -57,10 +57,11 @@ import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -79,7 +80,7 @@ public class NettyRouter extends AbstractIdleService {
   private final int clientBossThreadPoolSize;
   private final int clientWorkerThreadPoolSize;
   private final InetAddress hostname;
-  private final Set<String> forwards; // format port:service
+  private final Map<String, Integer> serviceToPortMap;
 
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
   private final RouterServiceLookup serviceLookup;
@@ -94,6 +95,10 @@ public class NettyRouter extends AbstractIdleService {
   private ClientBootstrap clientBootstrap;
 
   private DiscoveryServiceClient discoveryServiceClient;
+
+  private final boolean sslEnabled;
+  private final boolean webAppEnabled;
+  private final SSLHandlerFactory sslHandlerFactory;
 
   @Inject
   public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
@@ -114,9 +119,7 @@ public class NettyRouter extends AbstractIdleService {
                                                    Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
 
     this.hostname = hostname;
-    this.forwards = Sets.newHashSet(cConf.getStrings(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
-    Preconditions.checkState(!this.forwards.isEmpty(), "Require at least one forward rule for router to start");
-    LOG.info("Forwards - {}", this.forwards);
+    this.serviceToPortMap = Maps.newHashMap();
 
     this.serviceLookup = serviceLookup;
     this.securityEnabled = cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED, false);
@@ -125,6 +128,42 @@ public class NettyRouter extends AbstractIdleService {
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
+
+    this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
+    this.webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
+    if (isSSLEnabled()) {
+      this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
+                                Integer.parseInt(cConf.get(Constants.Router.ROUTER_SSL_PORT,
+                                                           Constants.Router.DEFAULT_ROUTER_SSL_PORT)));
+      if (webAppEnabled) {
+        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
+                                  Integer.parseInt(cConf.get(Constants.Router.WEBAPP_SSL_PORT,
+                                                             Constants.Router.DEFAULT_WEBAPP_SSL_PORT)));
+      }
+
+      File keystore;
+      try {
+        keystore = new File(cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
+      } catch (Throwable e) {
+        throw new RuntimeException("Cannot read keystore file : "
+                                     + cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
+      }
+      this.sslHandlerFactory = new SSLHandlerFactory(
+        keystore, cConf.get(Constants.Security.Router.SSL_KEYSTORE_TYPE),
+        cConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
+        cConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
+    } else {
+      this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
+                        Integer.parseInt(cConf.get(Constants.Router.ROUTER_PORT,
+                                                   Constants.Router.DEFAULT_ROUTER_PORT)));
+      if (webAppEnabled) {
+        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
+                                  Integer.parseInt(cConf.get(Constants.Router.WEBAPP_PORT,
+                                                             Constants.Router.DEFAULT_WEBAPP_PORT)));
+      }
+      this.sslHandlerFactory = null;
+    }
+    LOG.info("Service to Port Mapping - {}", this.serviceToPortMap);
   }
 
   @Override
@@ -191,14 +230,16 @@ public class NettyRouter extends AbstractIdleService {
         @Override
         public ChannelPipeline getPipeline() throws Exception {
           ChannelPipeline pipeline = Channels.pipeline();
+          if (isSSLEnabled()) {
+            // Add SSLHandler is SSL is enabled
+            pipeline.addLast("ssl", sslHandlerFactory.create());
+          }
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
           if (securityEnabled) {
-            pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(realm, tokenValidator,
-                                                                                    configuration,
-                                                                                    accessTokenTransformer,
-                                                                                    discoveryServiceClient));
+            pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(
+              realm, tokenValidator, configuration, accessTokenTransformer, discoveryServiceClient));
           }
           // for now there's only one hardcoded rule, but if there will be more, we may want it generic and configurable
           pipeline.addLast("http-request-handler",
@@ -220,10 +261,9 @@ public class NettyRouter extends AbstractIdleService {
 
     // Start listening on ports.
     ImmutableMap.Builder<Integer, String> serviceMapBuilder = ImmutableMap.builder();
-    for (String forward : forwards) {
-      int ind = forward.indexOf(':');
-      int port = Integer.parseInt(forward.substring(0, ind));
-      String service = forward.substring(ind + 1);
+    for (Map.Entry<String, Integer> forward : serviceToPortMap.entrySet()) {
+      int port = forward.getValue();
+      String service = forward.getKey();
 
       String boundService = serviceLookup.getService(port);
       if (boundService != null) {
@@ -257,18 +297,20 @@ public class NettyRouter extends AbstractIdleService {
         new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
         new ShareableWorkerPool<NioWorker>(new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize))));
 
-    clientBootstrap.setPipelineFactory(
-      new ChannelPipelineFactory() {
-        @Override
-        public ChannelPipeline getPipeline() throws Exception {
-          ChannelPipeline pipeline = Channels.pipeline();
-          pipeline.addLast("tracker", connectionTracker);
-          pipeline.addLast("request-encoder", new HttpRequestEncoder());
-          return pipeline;
-        }
+    clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
+      @Override
+      public ChannelPipeline getPipeline() throws Exception {
+        ChannelPipeline pipeline = Channels.pipeline();
+        pipeline.addLast("tracker", connectionTracker);
+        pipeline.addLast("request-encoder", new HttpRequestEncoder());
+        return pipeline;
       }
-    );
+    });
 
     clientBootstrap.setOption("bufferFactory", new DirectChannelBufferFactory());
+  }
+
+  private boolean isSSLEnabled() {
+    return sslEnabled;
   }
 }

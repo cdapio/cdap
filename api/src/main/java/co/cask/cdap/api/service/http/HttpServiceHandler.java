@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,19 +27,19 @@ package co.cask.cdap.api.service.http;
  *   <pre><code>
  *      public class MyHttpHanlder implements HttpServiceHandler {
  *
- *        @GET
- *        @Path("/ping")
+ *        {@literal @}GET
+ *        {@literal @}Path("/ping")
  *        public void process(HttpServiceRequest request, HttpServiceResponder responder) {
  *          responder.sendString("Hello World");
  *        }
  *
- *        @Override
+ *        {@literal @}Override
  *        public void configure(HttpServiceConfigurer configurer) { }
  *
- *        @Override
+ *        {@literal @}Override
  *        public void initialize(HttpServiceContext context) throws Exception { }
  *
- *        @Override
+ *        {@literal @}Override
  *        public void destroy() { }
  *      }
  *   </code></pre>

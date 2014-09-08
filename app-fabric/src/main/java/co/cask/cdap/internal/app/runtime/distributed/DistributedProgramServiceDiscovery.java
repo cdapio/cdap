@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,6 +57,7 @@ public class DistributedProgramServiceDiscovery implements ProgramServiceDiscove
 
   @Override
   public ServiceDiscovered discover(String accountId, String appId, String serviceId, String serviceName) {
-    return discoveredCache.getUnchecked(Id.Program.from(accountId, appId, serviceId)).discover(serviceName);
+    return discoveredCache.getUnchecked(Id.Program.from(accountId, appId, serviceId))
+      .discover(String.format("service.%s.%s.%s", accountId, appId, serviceId));
   }
 }

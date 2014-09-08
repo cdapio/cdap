@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.GuavaServiceTwillRunnable;
+import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
@@ -39,7 +39,6 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.internal.app.services.HttpServiceTwillApplication;
 import co.cask.cdap.internal.app.services.ServiceTwillApplication;
 import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
@@ -48,13 +47,14 @@ import co.cask.cdap.internal.service.DefaultServiceSpecification;
 import co.cask.cdap.internal.spark.DefaultSparkSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,6 +72,8 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
   private final Map<String, ServiceSpecification> services = Maps.newHashMap();
+  private final List<co.cask.cdap.api.service.Service> servicesToCreate = Lists.newArrayList();
+
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
     this.name = app.getClass().getSimpleName();
@@ -200,20 +202,18 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     addService(new SingleRunnableApplication(runnable, specification));
   }
 
-  /**
-   * Adds {@link Service} as a Custom Service {@link TwillApplication}
-   * to the Application.
-   * @param name Name of runnable.
-   * @param service Guava service to be added.
-   * @param specification ResourceSpecification for Twill container.
-   */
-  private void addService(String name, Service service, ResourceSpecification specification) {
-    addService(new GuavaServiceTwillRunnable(name, service), specification);
-  }
-
   @Override
-  public void addService(String name, Iterable<HttpServiceHandler> handlers) {
-    addService(new HttpServiceTwillApplication(name, handlers));
+  public void addService(final String serviceName, final Iterable<? extends HttpServiceHandler> handlers) {
+    AbstractService serviceFromHandler = new AbstractService() {
+      @Override
+      protected void configure() {
+        setName(serviceName);
+        for (HttpServiceHandler handler : handlers) {
+          addHandler(handler);
+        }
+      }
+    };
+    servicesToCreate.add(serviceFromHandler);
   }
 
   @Override
@@ -222,10 +222,16 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   }
 
   public void addService(co.cask.cdap.api.service.Service service) {
-    addService(new ServiceTwillApplication(service));
+    // We need to know the name of the application when we create the service's TwillApplication, so we defer the
+    // creation of the service's TwillApplication until createApplicationSpec is called, where we know for sure that the
+    // application's name will not change after that point.
+    servicesToCreate.add(service);
   }
 
   public ApplicationSpecification createApplicationSpec() {
+    for (co.cask.cdap.api.service.Service service : servicesToCreate) {
+      addService(new ServiceTwillApplication(service, name));
+    }
     return new DefaultApplicationSpecification(name, description, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, procedures, mapReduces, sparks, workflows, services);

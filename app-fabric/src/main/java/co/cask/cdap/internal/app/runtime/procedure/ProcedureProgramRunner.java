@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,11 +23,13 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -35,13 +37,14 @@ import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -53,7 +56,6 @@ import org.jboss.netty.handler.execution.OrderedMemoryAwareThreadPoolExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
@@ -79,6 +81,9 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
+  private final DatasetFramework dsFramework;
+  private final CConfiguration conf;
 
   private ProcedureHandlerMethodFactory handlerMethodFactory;
 
@@ -91,12 +96,17 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   public ProcedureProgramRunner(DataFabricFacadeFactory dataFabricFacadeFactory, ServiceAnnouncer serviceAnnouncer,
                                 @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                 MetricsCollectionService metricsCollectionService,
-                                ProgramServiceDiscovery serviceDiscovery) {
+                                ProgramServiceDiscovery serviceDiscovery,
+                                DiscoveryServiceClient discoveryServiceClient,
+                                DatasetFramework dsFramework, CConfiguration conf) {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
+    this.dsFramework = dsFramework;
+    this.conf = conf;
   }
 
   @Inject(optional = true)
@@ -106,10 +116,12 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private BasicProcedureContextFactory createContextFactory(Program program, RunId runId, int instanceId, int count,
                                                             Arguments userArgs, ProcedureSpecification procedureSpec,
-                                                            ProgramServiceDiscovery serviceDiscovery) {
+                                                            ProgramServiceDiscovery serviceDiscovery,
+                                                            DiscoveryServiceClient discoveryServiceClient) {
 
     return new BasicProcedureContextFactory(program, runId, instanceId, count, userArgs,
-                                            procedureSpec, metricsCollectionService, serviceDiscovery);
+                                            procedureSpec, metricsCollectionService, serviceDiscovery,
+                                            discoveryServiceClient, dsFramework, conf);
   }
 
   @Override
@@ -135,14 +147,14 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId, instanceCount,
                                                                          options.getUserArguments(), procedureSpec,
-                                                                         serviceDiscovery);
+                                                                         serviceDiscovery, discoveryServiceClient);
 
       // TODO: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
       // HandlerMethodFactory.
       procedureContext = new BasicProcedureContext(program, runId, instanceId, instanceCount,
-                                                   ImmutableMap.<String, Closeable>of(),
+                                                   ImmutableSet.<String>of(),
                                                    options.getUserArguments(), procedureSpec, metricsCollectionService,
-                                                   serviceDiscovery);
+                                                   serviceDiscovery, discoveryServiceClient, dsFramework, conf);
 
       handlerMethodFactory = new ProcedureHandlerMethodFactory(program, dataFabricFacadeFactory, contextFactory);
       handlerMethodFactory.startAndWait();
@@ -150,7 +162,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
       channelGroup = new DefaultChannelGroup();
       executionHandler = createExecutionHandler();
       bootstrap = createBootstrap(program, executionHandler, handlerMethodFactory,
-                                  procedureContext.getSystemMetrics(), channelGroup);
+                                  procedureContext.getProgramMetrics(), channelGroup);
 
       // TODO: Might need better way to get the host name
       Channel serverChannel = bootstrap.bind(new InetSocketAddress(hostname, 0));

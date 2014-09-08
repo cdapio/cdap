@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import com.google.inject.name.Named;
 
 /**
@@ -27,10 +28,10 @@ public interface DataFabricFacadeFactory {
   /**
    * Creates a {@link DataFabricFacade} for the given program, with transaction supports.
    */
-  DataFabricFacade create(Program program);
+  DataFabricFacade create(Program program, DataSetInstantiator instantiator);
 
   /**
    * Creates a {@link DataFabricFacade} for the given program, without transaction supports.
    */
-  @Named("transaction.off") DataFabricFacade createNoTransaction(Program program);
+  @Named("transaction.off") DataFabricFacade createNoTransaction(Program program, DataSetInstantiator instantiator);
 }

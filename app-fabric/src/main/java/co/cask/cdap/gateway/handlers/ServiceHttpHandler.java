@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -145,29 +145,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return a list of discoverables for this service.
-   */
-  @Path("/apps/{app-id}/services/{service-id}/discover/{discoverable-id}")
-  @GET
-  public void getDiscoverables(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") String appId,
-                         @PathParam("service-id") String serviceId,
-                         @PathParam("discoverable-id") String discoverableId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ServiceDiscovered discoverables = programServiceDiscovery.discover(accountId, appId, serviceId, discoverableId);
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(discoverables,
-                                                              new TypeToken<ServiceDiscovered>() { }.getType()));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
    * Return the number of instances for the given runnable of a service.
    */
   @GET
@@ -178,6 +155,11 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("runnable-name") String runnableName) {
     try {
       String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, appId, serviceId);
+      if (!store.programExists(programId, ProgramType.SERVICE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
       RuntimeSpecification specification = getRuntimeSpecification(accountId, appId, serviceId, runnableName);
       if (specification == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -208,6 +190,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, serviceId);
+      if (!store.programExists(programId, ProgramType.SERVICE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
 
       int instances = getInstances(request);
       if (instances < 1) {
@@ -216,21 +202,20 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       int oldInstances = store.getServiceRunnableInstances(programId, runnableName);
-
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
-                                                                      programId.getApplicationId(),
-                                                                      programId.getId(),
-                                                                      ProgramType.SERVICE);
-      if (runtimeInfo != null) {
+      if (oldInstances != instances) {
         store.setServiceRunnableInstances(programId, runnableName, instances);
-        runtimeInfo.getController().command(ProgramOptionConstants.RUNNABLE_INSTANCES,
-                                            ImmutableMap.of("runnable", runnableName,
-                                                            "newInstances", String.valueOf(instances),
-                                                            "oldInstances", String.valueOf(oldInstances))).get();
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                        programId.getApplicationId(),
+                                                                        programId.getId(),
+                                                                        ProgramType.SERVICE);
+        if (runtimeInfo != null) {
+          runtimeInfo.getController().command(ProgramOptionConstants.RUNNABLE_INSTANCES,
+                                              ImmutableMap.of("runnable", runnableName,
+                                                              "newInstances", String.valueOf(instances),
+                                                              "oldInstances", String.valueOf(oldInstances))).get();
+        }
       }
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable throwable) {

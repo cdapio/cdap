@@ -2,9 +2,16 @@
  * Dataexplore Controller
  */
 
-define([], function () {
+define(['core/lib/lodash'], function (lodash) {
   var url = 'data/explore/queries';
 	var Controller = Em.Controller.extend({
+
+    showSchema: true,
+    showPartitions: false,
+    showProperties: false,
+    partitionArrowRight: false,
+    schemaArrowRight: true,
+    tablePropertiesArrowRight: false,
 
     bindTooltips: function () {
       setTimeout(function () {
@@ -25,7 +32,7 @@ define([], function () {
       //smallestEver is the smallest timestamp of a query that the controller has seen.
       //smallest is the largest timestamp of a query on the current page.
       self.pageMgr = {
-        limit: 3,
+        limit: 5,
         largestEver: 0,
         smallestEver: Infinity,
         firstPage: function () {
@@ -53,30 +60,47 @@ define([], function () {
         var datasets = self.get('datasets');
         // If jquery's ajax is used properly then the nesting could be avoided.
         // http.js getJSON does not return $.get which internally calls $.ajax
-        $(".loading-icon.hide").removeClass("hide");
+        C.set("showLoadingIcon", true);
         self.HTTP.rest('data/explore/tables', function(response) {
           response.forEach(function (dataset) {
             var name = dataset.table;
-            self.HTTP.rest('data/explore/tables/' + name + '/schema', function (response, status) {
-              var results = [];
-              for(var key in response) {
-                if(response.hasOwnProperty(key)){
-                  results.push({
-                    columns:[key, response[key]]
-                  });
-                }
-              }
+            self.HTTP.rest('data/explore/tables/' + name + '/info', function (response, status) {
+              var result = lodash.pick(response, "table_name", "db_name", "owner", "creation_time", "from_dataset", "partitioned_keys", "schema"),
+                  schemaArray = [],
+                  partitionArray = [];
+              schemaArray = self.extractColumns(result.schema);
+              partitionArray = self.extractColumns(result.partitioned_keys);
+
               datasets.pushObject(Ember.Object.create({
-                name:name,
-                results:results
+                tablename: result.table_name,
+                dbname: result.db_name,
+                owner: result.owner,
+                creationtime: (new Date(result.creation_time)).toString("MMM-dd-yyyy HH:mm"), // Should be a better way to simplify it.
+                schema: schemaArray,
+                partition: partitionArray,
+                partitionTableEmpty: (partitionArray.length === 0),
+                schemaTableEmpty: (schemaArray.length === 0),
+                from_dataset: response["from_dataset"]
               }));
               if(datasets.length == 1) {
                 self.selectDataset(datasets[0]);
               }
-              $(".loading-icon").addClass("hide");
             });
           });
+          C.set("showLoadingIcon", false);
         });
+    },
+
+    extractColumns: function (table) {
+      var columnsArray = [];
+      table.forEach(function(column) {
+        var columns = [];
+        columns = [column.name, column.type, column.comment || ""];
+        columnsArray.push({
+          columns: columns
+        });
+      });
+      return columnsArray;
     },
 
     tableClicked: function (obj) {
@@ -137,7 +161,7 @@ define([], function () {
 
     selectDataset: function (dataset) {
       this.set('selectedDataset', dataset);
-      this.injectorTextArea.set('value', 'SELECT * FROM ' + dataset.name + ' LIMIT 5');
+      this.injectorTextArea.set('value', 'SELECT * FROM ' + dataset.tablename + ' LIMIT 5');
       var datasets = this.get('datasets');
       datasets.forEach(function (entry) {
         entry.set('isSelected', false);
@@ -301,6 +325,13 @@ define([], function () {
       var self = this;
       var controller = this.get('controllers');
       var sqlString = controller.get("SQLQueryString") || this.injectorTextArea.get('value');
+      if (sqlString.length === 0) {
+        C.Modal.show('Error', "Please enter a valid sql query");
+        return;
+      }
+      if (sqlString.indexOf(";") >= 0) {
+        sqlString = sqlString.slice(0, sqlString.indexOf(";"));
+      }
       this.HTTP.post('rest/data/explore/queries', {
         data: {
           "query": sqlString
@@ -336,6 +367,20 @@ define([], function () {
       return false;
     },
 
+    showPartitionKeys: function () {
+      this.set('showPartitions', !this.get('showPartitions'));
+      this.set('partitionArrowRight', !this.get('partitionArrowRight'));
+    },
+
+    showTableSchema: function () {
+      this.set('showSchema', !this.get('showSchema'));
+      this.set('schemaArrowRight', !this.get('schemaArrowRight'));
+    },
+
+    showTableProperties: function () {
+      this.set('tablePropertiesArrowRight', !this.get('tablePropertiesArrowRight'));
+      this.set('showProperties', !this.get('showProperties'));
+    }
   });
 
   Controller.reopenClass({

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.internal.asm.ByteCodeClassLoader;
@@ -31,8 +30,6 @@ import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
-
 /**
  * A factory for creating {@link co.cask.http.HttpHandler} from user provided instance of
  * {@link HttpServiceHandler}.
@@ -41,14 +38,19 @@ public final class HttpHandlerFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpHandlerFactory.class);
 
-  private final LoadingCache<TypeToken<?>, Class<?>> handlerClasses;
+  private final LoadingCache<TypeToken<? extends HttpServiceHandler>, Class<?>> handlerClasses;
 
-  public HttpHandlerFactory() {
-    handlerClasses = CacheBuilder.newBuilder().build(new CacheLoader<TypeToken<?>, Class<?>>() {
+  /**
+   * Creates an instance that could generate {@link HttpHandler} that always binds to service Path that starts with
+   * the given prefix.
+   */
+  public HttpHandlerFactory(final String pathPrefix) {
+    handlerClasses = CacheBuilder.newBuilder().build(
+      new CacheLoader<TypeToken<? extends HttpServiceHandler>, Class<?>>() {
       @Override
-      public Class<?> load(TypeToken<?> key) throws Exception {
+      public Class<?> load(TypeToken<? extends HttpServiceHandler> key) throws Exception {
         // Generate the new class if it hasn't before and load it through a ByteCodeClassLoader.
-        ClassDefinition classDefinition = new HttpHandlerGenerator().generate(key);
+        ClassDefinition classDefinition = new HttpHandlerGenerator().generate(key, pathPrefix);
 
         ClassLoader typeClassLoader = ClassLoaders.getClassLoader(key);
         ByteCodeClassLoader classLoader = new ByteCodeClassLoader(typeClassLoader);
@@ -62,8 +64,9 @@ public final class HttpHandlerFactory {
    * Creates an implementation of {@link HttpHandler} that delegates all public {@link javax.ws.rs.Path @Path} methods
    * to the user delegate.
    */
-  public HttpHandler createHttpHandler(HttpServiceHandler delegate, HttpServiceContext context) {
-    Class<?> cls = handlerClasses.getUnchecked(TypeToken.of(delegate.getClass()));
+  public <T extends HttpServiceHandler> HttpHandler createHttpHandler(TypeToken<T> delegateType,
+                                                                      DelegatorContext<T> context) {
+    Class<?> cls = handlerClasses.getUnchecked(delegateType);
     Preconditions.checkState(HttpHandler.class.isAssignableFrom(cls),
                              "Fatal error: %s is not instance of %s", cls, HttpHandler.class);
 
@@ -71,9 +74,7 @@ public final class HttpHandlerFactory {
     Class<? extends HttpHandler> handlerClass = (Class<? extends HttpHandler>) cls;
 
     try {
-      Constructor<? extends HttpHandler> constructor = handlerClass.getConstructor(delegate.getClass(),
-                                                                                   HttpServiceContext.class);
-      return constructor.newInstance(delegate, context);
+      return handlerClass.getConstructor(DelegatorContext.class).newInstance(context);
     } catch (Exception e) {
       LOG.error("Failed to instantiate generated HttpHandler {}", handlerClass, e);
       throw Throwables.propagate(e);

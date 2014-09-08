@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,9 @@
  */
 
 /**
- * This package contains internal classes for supporting CDAP API.
- * This is not supposed to be used by users of the CDAP API, as it may change in a later release without warning.
+ * This package contains internal classes for supporting the CDAP API.
+ * <p>
+ * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
+ * </p>
  */
 package co.cask.cdap.internal.flowlet;

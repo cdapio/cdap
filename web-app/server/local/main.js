@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Continuuity, Inc.
+ * Copyright (c) 2013 Cask Data, Inc.
  */
 
 var util = require("util"),
@@ -7,6 +7,8 @@ var util = require("util"),
   xml2js = require('xml2js'),
   sys = require('sys'),
   argv = require('optimist').argv,
+  http = require('http'),
+  https = require('https'),
   nock = require('nock');
 
 var WebAppServer = require('../common/server');
@@ -25,14 +27,22 @@ process.env.NODE_ENV = 'development';
 var logLevel = 'INFO';
 
 var DevServer = function() {
-  DevServer.super_.call(this, __dirname, logLevel);
+  var self = this;
+  DevServer.super_.call(self, __dirname, logLevel, "Developement UI");
+  this.getConfig(function(version) {
+    if (self.config['dashboard.https.enabled'] === "true") {
+      this.lib = https;
+      this.httpsEnabled = true;
+    } else {
+      this.lib = http;
+      this.httpsEnabled = false;
+    }
 
-  this.cookieName = 'continuuity-local-edition';
-  this.secret = 'local-edition-secret';
-  this.logger = this.getLogger();
-  this.setCookieSession(this.cookieName, this.secret);
-  this.configureExpress();
-
+    self.cookieName = 'continuuity-local-edition';
+    self.secret = 'local-edition-secret';
+    self.setCookieSession(self.cookieName, self.secret);
+    self.configureExpress();
+  });
 };
 util.inherits(DevServer, WebAppServer);
 
@@ -73,8 +83,16 @@ DevServer.prototype.getConfig = function(opt_callback) {
 DevServer.prototype.start = function() {
 
   this.getConfig(function(version) {
-
-    this.server = this.getServerInstance(this.app);
+    if (this.config['dashboard.https.enabled'] === "true") {
+      this.lib = https;
+      this.httpsEnabled = true;
+      this.server = this.getHttpsServerInstance(this.app, this.config['dashboard.ssl.key'],
+                                                this.config['dashboard.ssl.cert']);
+    } else {
+      this.lib = http;
+      this.httpsEnabled = false;
+      this.server = this.getServerInstance(this.app);
+    }
 
     this.setEnvironment('local', 'Development Kit', version, function () {
 
@@ -113,7 +131,7 @@ devServer.start();
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  devServer.logger.info('Uncaught Exception', err);
+  console.error('Uncaught Exception', err);  
 });
 
 /**

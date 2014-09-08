@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,34 +23,38 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Throwables;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 /**
+ * An abstract base class for all {@link HttpHandler} generated through the {@link HttpHandlerGenerator}.
  *
+ * @param <T> Type of the user {@link HttpServiceHandler}.
  */
-public abstract class AbstractHttpHandlerDelegator implements HttpHandler {
+public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler> implements HttpHandler,
+                                                                                            DelegatorContext<T> {
 
-  private final HttpServiceHandler delegate;
-  private final HttpServiceContext context;
+  private final DelegatorContext<T> context;
 
-  protected AbstractHttpHandlerDelegator(HttpServiceHandler delegate, HttpServiceContext context) {
-    this.delegate = delegate;
+  protected AbstractHttpHandlerDelegator(DelegatorContext<T> context) {
     this.context = context;
   }
 
   @Override
   public void init(HandlerContext context) {
-    try {
-      delegate.initialize(this.context);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   @Override
   public void destroy(HandlerContext context) {
-    delegate.destroy();
+  }
+
+  @Override
+  public final T getHandler() {
+    return context.getHandler();
+  }
+
+  @Override
+  public HttpServiceContext getServiceContext() {
+    return context.getServiceContext();
   }
 
   protected final HttpServiceRequest wrapRequest(HttpRequest request) {

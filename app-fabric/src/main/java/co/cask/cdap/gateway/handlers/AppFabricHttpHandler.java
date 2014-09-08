@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,10 +86,7 @@ import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -908,7 +905,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("procedure-id") final String procedureId) {
     try {
       String accountId = getAuthenticatedAccountId(request);
-      int count = getProgramInstances(Id.Program.from(accountId, appId, procedureId));
+      Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+
+      if (!store.programExists(programId, ProgramType.PROCEDURE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
+
+      int count = getProgramInstances(programId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -930,6 +934,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, procedureId);
+
+      if (!store.programExists(programId, ProgramType.PROCEDURE)) {
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
+        return;
+      }
+
       int instances = getInstances(request);
       if (instances < 1) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
@@ -1889,14 +1899,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       // Construct URL for promotion of application to remote cluster
-
-      Map<String, String> split = Splitter.on(',').withKeyValueSeparator(":").split(
-        configuration.get(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
-
-      BiMap<String, String> portForwards = HashBiMap.create(split);
+      int gatewayPort;
+      if (configuration.getBoolean(Constants.Security.Router.SSL_ENABLED)) {
+        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.ROUTER_SSL_PORT,
+                                                         Constants.Router.DEFAULT_ROUTER_SSL_PORT));
+      } else {
+        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.ROUTER_PORT,
+                                                         Constants.Router.DEFAULT_ROUTER_PORT));
+      }
 
       String url = String.format("%s://%s:%s/v2/apps/%s",
-                                 schema, hostname, portForwards.inverse().get(Constants.Service.GATEWAY), appId);
+                                 schema, hostname, gatewayPort, appId);
 
       SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
         .setUrl(url)

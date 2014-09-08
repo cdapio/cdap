@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.lang.jar.JarFinder;
@@ -75,7 +76,6 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -92,6 +92,7 @@ public class NettyRouterPipelineTests {
   private static final String hostname = "127.0.0.1";
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.APP_FABRIC_HTTP;
+  private static final String GATEWAY_LOOKUP = Constants.Router.GATEWAY_DISCOVERY_NAME;
   private static final String webappService = "$HOST";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
@@ -104,9 +105,7 @@ public class NettyRouterPipelineTests {
     }
   };
 
-  public static final RouterResource ROUTER = new RouterResource(hostname, discoveryService,
-                                                                 ImmutableSet.of("0:" + gatewayService,
-                                                                                 "0:" + webappService));
+  public static final RouterResource ROUTER = new RouterResource(hostname, discoveryService);
 
   public static final ServerResource GATEWAY_SERVER = new ServerResource(hostname, discoveryService,
                                                                          gatewayServiceSupplier);
@@ -138,7 +137,7 @@ public class NettyRouterPipelineTests {
 
     byte [] requestBody = generatePostData();
     final Request request = new RequestBuilder("POST")
-      .setUrl(String.format("http://%s:%d%s", hostname, ROUTER.getServiceMap().get(gatewayService), "/v1/upload"))
+      .setUrl(String.format("http://%s:%d%s", hostname, ROUTER.getServiceMap().get(GATEWAY_LOOKUP), "/v1/upload"))
       .setContentLength(requestBody.length)
       .setBody(new ByteEntityWriter(requestBody))
       .build();
@@ -173,7 +172,7 @@ public class NettyRouterPipelineTests {
 
     String path = String.format("http://%s:%d/v1/deploy",
                                 hostname,
-                                ROUTER.getServiceMap().get(gatewayService));
+                                ROUTER.getServiceMap().get(GATEWAY_LOOKUP));
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, AllProgramsApp.class.getName());
@@ -199,26 +198,26 @@ public class NettyRouterPipelineTests {
   private static class RouterResource extends ExternalResource {
     private final String hostname;
     private final DiscoveryService discoveryService;
-    private final Set<String> forwards;
     private final Map<String, Integer> serviceMap = Maps.newHashMap();
 
     private NettyRouter router;
 
-    private RouterResource(String hostname, DiscoveryService discoveryService, Set<String> forwards) {
+    private RouterResource(String hostname, DiscoveryService discoveryService) {
       this.hostname = hostname;
       this.discoveryService = discoveryService;
-      this.forwards = forwards;
     }
 
     @Override
     protected void before() throws Throwable {
       CConfiguration cConf = CConfiguration.create();
-      Injector injector = Guice.createInjector(new IOModule(), new SecurityModules().getInMemoryModules(),
+      Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
+                                               new SecurityModules().getInMemoryModules(),
                                                new DiscoveryRuntimeModule().getInMemoryModules());
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
-      cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
+      cConf.setInt(Constants.Router.ROUTER_PORT, 0);
+      cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,

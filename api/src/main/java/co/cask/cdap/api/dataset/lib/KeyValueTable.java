@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
+import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
@@ -28,16 +29,17 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.reflect.TypeToken;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A key/value map implementation on top of {@link Table} supporting read and write operations.
+ * A key/value map implementation on top of {@link Table} supporting read, write and delete operations.
  */
 public class KeyValueTable extends AbstractDataset implements
   BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>,
-    RecordScannable<KeyValue<byte[], byte[]>> {
+  RecordScannable<KeyValue<byte[], byte[]>>, RecordWritable<KeyValue<byte[], byte[]>> {
 
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
@@ -51,6 +53,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Read the value for a given key.
+   *
    * @param key the key to read for
    * @return the value for that key, or null if no value was found
    */
@@ -61,6 +64,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Read the value for a given key.
+   *
    * @param key the key to read for
    * @return the value for that key, or null if no value was found
    */
@@ -71,6 +75,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Increment the value for a given key and return the resulting value.
+   *
    * @param key the key to increment
    * @return the incremented value of that key
    */
@@ -109,17 +114,19 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
-   * Increment the value tof a key. The key must either not exist yet, or its
-   * current value must be 8 bytes long to be interpretable as a long.
+   * Increment the value of a key by amount; the key must either not exist yet, or the
+   * current value at the key must be 8 bytes long to be interpretable as a long.
+   *
    * @param key the key
-   * @param value the new value
+   * @param amount the amount to increment by
    */
-  public void increment(byte[] key, long value) {
-    this.table.increment(key, KEY_COLUMN, value);
+  public void increment(byte[] key, long amount) {
+    this.table.increment(key, KEY_COLUMN, amount);
   }
 
   /**
    * Delete a key.
+   *
    * @param key the key to delete
    */
   public void delete(byte[] key) {
@@ -128,7 +135,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
    * Compares-and-swaps (atomically) the value of the specified row and column
-   * by looking for the specified expected value and if found, replacing with
+   * by looking for the specified expected value and, if found, replacing with
    * the specified new value.
    *
    * @param key key to modify
@@ -155,6 +162,15 @@ public class KeyValueTable extends AbstractDataset implements
     return Scannables.splitRecordScanner(createSplitReader(split), new KeyValueRecordMaker());
   }
 
+  /**
+  * Returns splits for a range of keys in the table.
+  * 
+  * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
+  *                  If less than or equal to zero, any number of splits can be returned.
+  * @param start if non-null, the returned splits will only cover keys that are greater or equal
+  * @param stop if non-null, the returned splits will only cover keys that are less
+  * @return list of {@link Split}
+  */
   public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
     return table.getSplits(numSplits, start, stop);
   }
@@ -162,6 +178,11 @@ public class KeyValueTable extends AbstractDataset implements
   @Override
   public SplitReader<byte[], byte[]> createSplitReader(Split split) {
     return new KeyValueScanner(table.createSplitReader(split));
+  }
+
+  @Override
+  public void write(KeyValue<byte[], byte[]> keyValue) throws IOException {
+    write(keyValue.getKey(), keyValue.getValue());
   }
 
   /**

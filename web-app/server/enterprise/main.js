@@ -1,6 +1,6 @@
 
 /**
- * Copyright (c) 2013 Continuuity, Inc.
+ * Copyright (c) 2013 Cask Data, Inc.
  */
 
 var util = require('util'),
@@ -8,6 +8,8 @@ var util = require('util'),
   xml2js = require('xml2js'),
   sys = require('sys'),
   cluster = require('cluster'),
+  http = require('http'),
+  https = require('https'),
   os = require('os');
 
 var WebAppServer = require('../common/server');
@@ -28,14 +30,22 @@ process.env.NODE_ENV = 'production';
 var logLevel = 'INFO';
 
 var EntServer = function() {
-  EntServer.super_.call(this, __dirname, logLevel);
+  var self = this;
+  EntServer.super_.call(self, __dirname, logLevel, 'Enterprise UI');
+  this.getConfig(function(version) {
+    if (self.config['dashboard.https.enabled'] === "true") {
+      this.lib = https;
+      this.httpsEnabled = true;
+    } else {
+      this.lib = http;
+      this.httpsEnabled = false;
+    }
 
-  this.cookieName = 'continuuity-enterprise-edition';
-  this.secret = 'enterprise-edition-secret';
-  this.logger = this.getLogger('console', 'Enterprise UI');
-  this.setCookieSession(this.cookieName, this.secret);
-  this.configureExpress();
-
+    self.cookieName = 'continuuity-enterprise-edition';
+    self.secret = 'enterprise-edition-secret';
+    self.setCookieSession(self.cookieName, self.secret);
+    self.configureExpress();
+  });
 };
 util.inherits(EntServer, WebAppServer);
 
@@ -81,8 +91,16 @@ EntServer.prototype.start = function() {
   var self = this;
 
   self.getConfig(function(version) {
-
-    self.server = self.getServerInstance(self.app);
+    if (self.config['dashboard.https.enabled'] === "true") {
+      self.lib = https;
+      self.httpsEnabled = true;
+      self.server = self.getHttpsServerInstance(self.app, self.config['dashboard.ssl.key'],
+                                                self.config['dashboard.ssl.cert']);
+    } else {
+      self.lib = http;
+      self.httpsEnabled = false;
+      self.server = self.getServerInstance(self.app);
+    }
 
     if (!('dashboard.bind.port' in self.config)) {
       self.config['dashboard.bind.port'] = DEFAULT_BIND_PORT;

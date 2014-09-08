@@ -2,7 +2,7 @@
 # and pass to rst2pdf by including it in the .rst file as a comment
 
 [general]
-# author="Cask, Inc."
+# author="Cask Data, Inc."
 
 # A comma-separated list of custom stylesheets. Example:
 # stylesheets="fruity.json,a4paper.json,verasans.json"

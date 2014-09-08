@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,8 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
@@ -36,8 +34,6 @@ import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionExecutorFactory;
 import com.continuuity.tephra.TransactionSystemClient;
-import com.google.common.base.Throwables;
-import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 
@@ -54,15 +50,13 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   private final Id.Program programId;
 
   public AbstractDataFabricFacade(TransactionSystemClient txSystemClient, TransactionExecutorFactory txExecutorFactory,
-                                  DatasetFramework datasetFramework,
                                   QueueClientFactory queueClientFactory, StreamConsumerFactory streamConsumerFactory,
-                                  LocationFactory locationFactory, Program program,
-                                  CConfiguration configuration) {
+                                  Program program, DataSetInstantiator dataSetContext) {
     this.txSystemClient = txSystemClient;
     this.queueClientFactory = queueClientFactory;
     this.streamConsumerFactory = streamConsumerFactory;
     this.txExecutorFactory = txExecutorFactory;
-    this.dataSetContext = createDataSetContext(program, datasetFramework, configuration);
+    this.dataSetContext = dataSetContext;
     this.programId = program.getId();
   }
 
@@ -119,16 +113,5 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
         dataSetContext.removeTransactionAware(consumer);
       }
     };
-  }
-
-  private DataSetInstantiator createDataSetContext(Program program,
-                                                   DatasetFramework datasetFramework,
-                                                   CConfiguration configuration) {
-    try {
-      return new DataSetInstantiator(datasetFramework, configuration,
-                                                                        program.getClassLoader());
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
   }
 }

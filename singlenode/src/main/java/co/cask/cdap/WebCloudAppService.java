@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package co.cask.cdap;
 
+import co.cask.cdap.common.conf.ConfigurationJsonTool;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ import java.util.concurrent.Executor;
  */
 public class WebCloudAppService extends AbstractExecutionThreadService {
   static final String WEB_APP = "web-app/server/local/main.js"; // Right path passed on command line.
+  static final String JSON_PATH = "web-app/cdap-config.json";
 
   private static final Logger LOG = LoggerFactory.getLogger(WebCloudAppService.class);
   private static final String NODE_JS_EXECUTABLE = "node";
@@ -39,10 +41,6 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
   private final String webAppPath;
   private Process process;
   private BufferedReader bufferedReader;
-
-  public WebCloudAppService() {
-    this(WEB_APP);
-  }
 
   public WebCloudAppService(String webAppPath) {
     this.webAppPath = webAppPath;
@@ -53,6 +51,7 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
+    ConfigurationJsonTool.exportToJson(JSON_PATH);
     ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
     builder.redirectErrorStream(true);
     LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");

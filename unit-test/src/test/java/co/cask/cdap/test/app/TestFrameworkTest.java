@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,8 +44,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -58,7 +56,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.net.URL;
 import java.sql.Connection;
@@ -126,17 +123,15 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertNotNull(scheduleId);
     Assert.assertFalse(scheduleId.isEmpty());
 
-    TimeUnit.SECONDS.sleep(5);
-
-    List<RunRecord> history = wfmanager.getHistory();
-    int workflowRuns = history.size();
-    Assert.assertTrue(workflowRuns >= 1);
+    List<RunRecord> history;
+    int workflowRuns = 0;
+    workFlowHistoryCheck(5, wfmanager, 0);
 
     String status = wfmanager.getSchedule(scheduleId).status();
     Assert.assertEquals("SCHEDULED", status);
 
     wfmanager.getSchedule(scheduleId).suspend();
-    Assert.assertEquals("SUSPENDED", wfmanager.getSchedule(scheduleId).status());
+    workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
 
     TimeUnit.SECONDS.sleep(3);
     history = wfmanager.getHistory();
@@ -148,11 +143,11 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
     wfmanager.getSchedule(scheduleId).resume();
-    TimeUnit.SECONDS.sleep(3);
-    int workflowRunsAfterResume = wfmanager.getHistory().size();
 
-    //Verify there is atleast one run after the pause
-    Assert.assertTrue(workflowRunsAfterResume > workflowRunsAfterSuspend + 1);
+    //Check that after resume it goes to "SCHEDULED" state
+    workFlowStatusCheck(5, scheduleId, wfmanager, "SCHEDULED");
+
+    workFlowHistoryCheck(5, wfmanager, workflowRunsAfterSuspend);
 
     //check scheduled state
     Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleId).status());
@@ -162,12 +157,43 @@ public class TestFrameworkTest extends TestBase {
 
     //suspend the schedule
     wfmanager.getSchedule(scheduleId).suspend();
-    Assert.assertEquals("SUSPENDED", wfmanager.getSchedule(scheduleId).status());
 
-    TimeUnit.SECONDS.sleep(2);
+    //Check that after suspend it goes to "SUSPENDED" state
+    workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
+
+    TimeUnit.SECONDS.sleep(10);
     applicationManager.stopAll();
-
   }
+
+  private void workFlowHistoryCheck(int retries, WorkflowManager wfmanager, int expected) throws InterruptedException {
+    int trial = 0;
+    List<RunRecord> history;
+    int workflowRuns = 0;
+    while (trial++ < retries) {
+      history = wfmanager.getHistory();
+      workflowRuns = history.size();
+      if (workflowRuns > expected) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(workflowRuns > expected);
+  }
+
+  private void workFlowStatusCheck(int retries, String scheduleId, WorkflowManager wfmanager,
+                                   String expected) throws InterruptedException {
+    int trial = 0;
+    String status = null;
+    while (trial++ < retries) {
+      status = wfmanager.getSchedule(scheduleId).status();
+      if (status.equals(expected)) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertEquals(status, expected);
+  }
+
 
   @Category(XSlowTests.class)
   @Test(timeout = 240000)
@@ -214,7 +240,7 @@ public class TestFrameworkTest extends TestBase {
 
   @Category(SlowTests.class)
   @Test
-  public void testAppwithServices() throws Exception {
+  public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
     ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
@@ -223,8 +249,8 @@ public class TestFrameworkTest extends TestBase {
     LOG.info("Service Started");
 
     // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices", AppWithServices.SERVICE_NAME,
-                                                                         AppWithServices.SERVICE_NAME);
+    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices",
+                                                                        AppWithServices.SERVICE_NAME);
     final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
     serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
       @Override
@@ -238,9 +264,9 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertNotNull(discoverable);
     Assert.assertTrue(discoverables.isEmpty());
 
-
-    URL url = new URL(String.format("http://%s:%d/ping2", discoverable.getSocketAddress().getHostName(),
-                                                          discoverable.getSocketAddress().getPort()));
+    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/ping2",
+                                    discoverable.getSocketAddress().getHostName(),
+                                    discoverable.getSocketAddress().getPort(), AppWithServices.SERVICE_NAME));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(response.getResponseCode(), 200);
@@ -251,10 +277,33 @@ public class TestFrameworkTest extends TestBase {
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
+
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the REACTOR scope test in
     // TestMetricsCollectionService
 
+    LOG.info("DatasetUpdateService Started");
+    serviceManager = applicationManager.startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
+    serviceStatusCheck(serviceManager, true);
+
+    ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
+    ProcedureClient procedureClient = procedureManager.getClient();
+
+    String result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
+                                                                  AppWithServices.DATASET_TEST_KEY));
+    String decodedResult = new Gson().fromJson(result, String.class);
+    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
+
+    serviceManager.stop();
+    serviceStatusCheck(serviceManager, false);
+
+    result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
+                                                           AppWithServices.DATASET_TEST_KEY_STOP));
+    decodedResult = new Gson().fromJson(result, String.class);
+    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
+
+    procedureManager.stop();
+    LOG.info("DatasetUpdateService Stopped");
   }
 
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {

@@ -46,26 +46,32 @@ define([], function () {
 		getJSON: function (path, callback, cacheData) {
       var self = this;
 
-			$.getJSON(path, function (result, textStatus, jqXhr) {
+	  $.ajax({
+		dataType: "json",
+		url: path,
+	    // allow self-signed SSL certificates on router
+        rejectUnauthorized: false,
+        requestCert: true,
+        agent: false,
+        success: function (result, textStatus, jqXhr) {
 
-				if (cacheData) {
-					C.SSAdapter.save(path, result);
-				}
-				callback(result, jqXhr.status);
-
-			}).fail(function (xhr, status, error) {
-				var error = xhr.responseText || '';
-				if (self.isWarn(path)) {
-					if (error) {
-	          C.Util.showWarning(error);
-					} else {
-	          C.Util.showWarning('Encountered a connection problem.');
-					}	
-				}
-				callback(error, xhr.status);
-
-			});
-		},
+          if (cacheData) {
+            C.SSAdapter.save(path, result);
+          }
+          callback(result, jqXhr.status);
+        }
+      }).fail(function (xhr, status, error) {
+        var error = xhr.responseText || '';
+        if (self.isWarn(path)) {
+          if (error) {
+            C.Util.showWarning(error);
+          } else {
+            C.Util.showWarning('Encountered a connection problem.');
+          }
+        }
+        callback(error, xhr.status);
+       });
+      },
 
 		rest: function () {
       var self = this;
@@ -85,7 +91,11 @@ define([], function () {
 			var options = {
 				url: path,
 				type: 'POST',
-				timeout: AJAX_TIMEOUT
+				timeout: AJAX_TIMEOUT,
+        // allow self-signed SSL certificates on router
+        rejectUnauthorized: false,
+        requestCert: true,
+        agent: false
 			};
 
 			if (!$.isEmptyObject(object)) {

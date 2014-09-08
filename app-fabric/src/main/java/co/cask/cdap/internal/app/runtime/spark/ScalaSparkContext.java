@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.spark.SparkContextFactory;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.SparkContext;
 import org.apache.spark.rdd.NewHadoopRDD;
@@ -31,17 +29,19 @@ import scala.Tuple2;
 import scala.reflect.ClassTag;
 import scala.reflect.ClassTag$;
 
+import java.net.URL;
+
+
 /**
  * A concrete implementation of {@link AbstractSparkContext} which is used if the user's spark job is written in Scala.
  */
 class ScalaSparkContext extends AbstractSparkContext {
 
-  private final SparkContext apacheContext;
+  private final SparkContext originalSparkContext;
 
-  public ScalaSparkContext(SparkContext apacheContext, long logicalStartTime, SparkSpecification spec,
-                           Arguments runtimeArguments) {
-    super(logicalStartTime, spec, runtimeArguments);
-    this.apacheContext = apacheContext;
+  public ScalaSparkContext() {
+    super();
+    this.originalSparkContext = new SparkContext(getSparkConf());
   }
 
   /**
@@ -52,12 +52,12 @@ class ScalaSparkContext extends AbstractSparkContext {
    * @param vClass      the value class
    * @param <T>         type of the RDD
    * @return the {@link NewHadoopRDD} created from the dataset to be read
+   * @throws {@link IllegalArgumentException} if the dataset to be read does not implements {@link BatchReadable}
    */
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
-    Configuration hConf = new Configuration(getHConf());
-    hConf.set(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET, datasetName);
-    return (T) apacheContext.newAPIHadoopFile(datasetName, DataSetInputFormat.class, kClass, vClass, hConf);
+    Configuration hConf = setInputDataset(datasetName);
+    return (T) originalSparkContext.newAPIHadoopFile(datasetName, SparkDatasetInputFormat.class, kClass, vClass, hConf);
   }
 
   /**
@@ -75,12 +75,11 @@ class ScalaSparkContext extends AbstractSparkContext {
   }
 
   private <T, K, V> void writeToDatasetHelper(T rdd, String datasetName, Class<K> kClass, Class<V> vClass) {
+    Configuration hConf = setOutputDataset(datasetName);
     ClassTag<K> kClassTag = ClassTag$.MODULE$.apply(kClass);
     ClassTag<V> vClassTag = ClassTag$.MODULE$.apply(vClass);
     PairRDDFunctions pairRDD = new PairRDDFunctions<K, V>((RDD<Tuple2<K, V>>) rdd, kClassTag, vClassTag, null);
-    Configuration hConf = new Configuration(getHConf());
-    hConf.set(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
-    pairRDD.saveAsNewAPIHadoopFile(datasetName, kClass, vClass, DataSetOutputFormat.class, hConf);
+    pairRDD.saveAsNewAPIHadoopFile(datasetName, kClass, vClass, SparkDatasetOutputFormat.class, hConf);
   }
 
   /**
@@ -90,7 +89,17 @@ class ScalaSparkContext extends AbstractSparkContext {
    * @return the {@link SparkContext}
    */
   @Override
-  public <T> T getApacheSparkContext() {
-    return (T) apacheContext;
+  public <T> T getOriginalSparkContext() {
+    return (T) originalSparkContext;
+  }
+
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    throw new UnsupportedOperationException("Does not support service discovery");
+  }
+
+  @Override
+  public URL getServiceURL(String serviceId) {
+    throw new UnsupportedOperationException("Does not support service discovery");
   }
 }

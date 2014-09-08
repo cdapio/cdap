@@ -4,8 +4,6 @@
 
 define(['core/controllers/services'], function (servicesController) {
 
-  var ERROR_TXT = 'Requested Instance count out of bounds.';
-  
   var Controller = servicesController.extend({
     needs: ['Userservice'],
 
@@ -34,15 +32,9 @@ define(['core/controllers/services'], function (servicesController) {
     },
 
     keyPressed: function (evt) {
-      var btn = this.$().parent().parent().next();
+      var btn = this.$().parent().parent().next().children();
       var inp = this.value;
-      if (inp.length > 0 && parseInt(inp) != this.placeholder){
-          btn.children().css("opacity",'1')
-
-      } else {
-          btn.children().css("opacity",'')
-      }
-      return true;
+      return C.Util.handleInstancesKeyPress(btn, inp, this.placeholder);
     },
 
     runnableChangeInstances: function (service, runnable) {
@@ -54,41 +46,23 @@ define(['core/controllers/services'], function (servicesController) {
         $('.services-instances-input').keyup();
       },500);
 
-      if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Enter a valid number of instances.');
+      if (runnable && runnable.requested === input) {
+        return; //no-op
+      }
+      var isInvalid = C.Util.isInvalidNumInstances(inputStr);
+      if(isInvalid){
+        C.Modal.show('Error', isInvalid);
         return;
       }
 
-      if(isNaN(input) || isNaN(inputStr)){
-        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
-        return;
-      }
-
-      if(service.status !== "RUNNING"){
-        //This is because the server would return a 404, if modifying instances while service is off.
-        C.Modal.show('Service Stopped', "You can not change the component's instances while its service is stopped.")
-        return;
-      }
-
-      this.runnableVerifyInstanceBounds(service, runnable.id, input, "Request " + input);
+      this.setInstances(service, runnable.id, input);
     },
 
-    runnableIncreaseInstance: function (service, runnableID, instanceCount) {
-      this.runnableVerifyInstanceBounds(service, runnableID, ++instanceCount, "Increase");
-    },
-    runnableDecreaseInstance: function (service, runnableID, instanceCount) {
-      this.runnableVerifyInstanceBounds(service, runnableID, --instanceCount, "Decrease");
-    },
-
-    runnableVerifyInstanceBounds: function (service, runnableID, numRequested, direction) {
+    setInstances: function (service, runnableID, numRequested) {
       var self = this;
-      if (numRequested <= 0) {
-        C.Modal.show("Instances Error", ERROR_TXT);
-        return;
-      }
       C.Modal.show(
-        direction + " instances",
-        direction + " instances for runnable: " + runnableID + "?",
+        "Request " + numRequested + " instances",
+        "Request " + numRequested + " instances for runnable: " + runnableID + "?",
         function () {
           var url = 'rest/apps/' + service.app + '/services/' + service.name 
               + '/runnables/' + runnableID + '/instances';

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ public class MetaDataInfo {
     FETCH_DIRECTION(null),
     SERVER_NAME(null),
     SEARCH_PATTERN_ESCAPE(null),
-    DBMS_NAME(new MetaDataInfo("Cask CDAP")),
+    DBMS_NAME(new MetaDataInfo("CDAP")),
     DBMS_VER(new MetaDataInfo("2.4.0")),  // TODO make it dynamic [REACTOR-319]
     ACCESSIBLE_TABLES(null),
     ACCESSIBLE_PROCEDURES(null),

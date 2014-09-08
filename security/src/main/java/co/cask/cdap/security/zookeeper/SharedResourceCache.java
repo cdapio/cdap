@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,6 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,8 +58,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   private static final int MAX_RETRIES = 3;
   private static final Logger LOG = LoggerFactory.getLogger(SharedResourceCache.class);
 
-  private final List<ACL> znodeACL = ZooDefs.Ids.OPEN_ACL_UNSAFE;
-  //private final List<ACL> znodeACL = ZooDefs.Ids.CREATOR_ALL_ACL;
+  private final List<ACL> znodeACL;
+
   private final ZKClient zookeeper;
   private final Codec<T> codec;
   private final String parentZnode;
@@ -68,10 +67,11 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
   private Map<String, T> resources;
   private ListenerManager listeners;
 
-  public SharedResourceCache(ZKClient zookeeper, Codec<T> codec, String parentZnode) {
+  public SharedResourceCache(ZKClient zookeeper, Codec<T> codec, String parentZnode, List<ACL> znodeACL) {
     this.zookeeper = zookeeper;
     this.codec = codec;
     this.parentZnode = parentZnode;
+    this.znodeACL = znodeACL;
     this.listeners = new ListenerManager();
   }
 
@@ -81,7 +81,8 @@ public class SharedResourceCache<T> extends AbstractLoadingCache<String, T> {
       LOG.info("Initializing SharedResourceCache.  Checking for parent znode {}", parentZnode);
       if (zookeeper.exists(parentZnode).get() == null) {
         // may be created in parallel by another instance
-        ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT, true, znodeACL),
+        // Also the child nodes are secure even without adding any ACLs to parent node.
+        ZKOperations.ignoreError(zookeeper.create(parentZnode, null, CreateMode.PERSISTENT),
                                  KeeperException.NodeExistsException.class, null).get();
       }
     } catch (ExecutionException ee) {

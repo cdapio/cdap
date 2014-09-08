@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,7 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.runtime.AbstractDataFabricFacade;
@@ -37,7 +36,6 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * A private module for creating bindings for DataFabricFacadeFactory
@@ -87,14 +85,11 @@ public final class DataFabricFacadeModule extends PrivateModule {
     @Inject
     public TransactionDataFabricFacade(TransactionSystemClient txSystemClient,
                                        TransactionExecutorFactory txExecutorFactory,
-                                       DatasetFramework datasetFramework,
                                        QueueClientFactory queueClientFactory,
                                        StreamConsumerFactory streamConsumerFactory,
-                                       LocationFactory locationFactory,
-                                       CConfiguration configuration,
-                                       @Assisted Program program) {
-      super(txSystemClient, txExecutorFactory, datasetFramework,
-            queueClientFactory, streamConsumerFactory, locationFactory, program, configuration);
+                                       @Assisted Program program,
+                                       @Assisted DataSetInstantiator instantiator) {
+      super(txSystemClient, txExecutorFactory, queueClientFactory, streamConsumerFactory, program, instantiator);
     }
   }
 
@@ -106,14 +101,11 @@ public final class DataFabricFacadeModule extends PrivateModule {
     @Inject
     public DetachedDataFabricFacade(@Named("transaction.off") TransactionSystemClient txSystemClient,
                                     @Named("transaction.off") TransactionExecutorFactory txExecutorFactory,
-                                    DatasetFramework datasetFramework,
                                     QueueClientFactory queueClientFactory,
                                     StreamConsumerFactory streamConsumerFactory,
-                                    LocationFactory locationFactory,
-                                    CConfiguration configuration,
-                                    @Assisted Program program) {
-      super(txSystemClient, txExecutorFactory, datasetFramework,
-            queueClientFactory, streamConsumerFactory, locationFactory, program, configuration);
+                                    @Assisted Program program,
+                                    @Assisted DataSetInstantiator instantiator) {
+      super(txSystemClient, txExecutorFactory, queueClientFactory, streamConsumerFactory, program, instantiator);
     }
   }
 }

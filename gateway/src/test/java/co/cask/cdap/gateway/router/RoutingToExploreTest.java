@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,7 +70,7 @@ public class RoutingToExploreTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Router.ADDRESS, "localhost");
     port = Networks.getRandomPort();
-    cConf.set(Constants.Router.FORWARD, port + ":" + Constants.Service.GATEWAY);
+    cConf.setInt(Constants.Router.ROUTER_PORT, port);
     nettyRouter = new NettyRouter(cConf, InetAddresses.forString("127.0.0.1"),
         new RouterServiceLookup(discoveryServiceClient,
             new RouterPathLookup(new NoAuthenticator())),
