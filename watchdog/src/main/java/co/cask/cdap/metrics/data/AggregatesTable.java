@@ -107,7 +107,7 @@ public final class AggregatesTable {
 
         // For each tag, increments corresponding values
         for (TagMetric tag : record.getTags()) {
-          increments.put(Bytes.toBytes(tag.getTag()), (long) tag.getValue());
+          increments.put(Bytes.toBytes(tag.getTag()), tag.getValue());
         }
         aggregatesTable.increment(rowKey, increments);
       }

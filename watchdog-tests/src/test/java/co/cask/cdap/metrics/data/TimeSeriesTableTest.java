@@ -174,6 +174,27 @@ public class TimeSeriesTableTest {
   }
 
   @Test
+  public void testIntOverflow() throws OperationException {
+    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("intOverflow", 1);
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // checking that we can store more than just int
+    long value = Integer.MAX_VALUE * 2L;
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                            ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                            time, value)));
+
+    // verify that some metrics are there for both contexts
+    MetricsScanQuery query = new MetricsScanQueryBuilder()
+      .setContext("context").setMetric("bigmetric").build(time,  time + 1000);
+
+    Assert.assertTrue(timeSeriesTable.scan(query).hasNext());
+    MetricsScanResult result = timeSeriesTable.scan(query).next();
+    Assert.assertEquals(value, result.iterator().next().getValue());
+  }
+
+  @Test
   public void testDelete() throws OperationException {
 
     TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testDelete", 1);
@@ -441,7 +462,7 @@ public class TimeSeriesTableTest {
           new TagMetric("tag1", 1), new TagMetric("tag2", 2), new TagMetric("tag3", 3)), 1234567890, 6)
       ));
 
-      Map<String, Integer> tagValues = Maps.newHashMap();
+      Map<String, Long> tagValues = Maps.newHashMap();
       MetricsScanQuery query = new MetricsScanQueryBuilder()
         .setContext("app.f.flow.flowlet")
         .setMetric("store.bytes")
@@ -460,9 +481,9 @@ public class TimeSeriesTableTest {
       }
 
       Assert.assertEquals(3, tagValues.size());
-      Assert.assertEquals(1, (int) tagValues.get("tag1"));
-      Assert.assertEquals(2, (int) tagValues.get("tag2"));
-      Assert.assertEquals(3, (int) tagValues.get("tag3"));
+      Assert.assertEquals(1, (long) tagValues.get("tag1"));
+      Assert.assertEquals(2, (long) tagValues.get("tag2"));
+      Assert.assertEquals(3, (long) tagValues.get("tag3"));
     } finally {
       timeSeriesTable.clear();
     }

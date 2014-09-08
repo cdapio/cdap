@@ -57,14 +57,15 @@ public class AggregatedMetricsCollectionServiceTest {
     service.startAndWait();
     try {
       // Publish couple metrics, they should be aggregated.
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 1);
+      // note: verifying that int overflow is fine as it should be stored as long
+      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", Integer.MAX_VALUE);
       service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 2);
       service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 3);
       service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 4);
 
       MetricsRecord record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
-      Assert.assertEquals(10, record.getValue());
+      Assert.assertEquals(((long) Integer.MAX_VALUE) + 9L, record.getValue());
 
       // No publishing for 0 value metrics
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
@@ -82,11 +83,11 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertEquals(7, record.getValue());
 
       // Verify tags are aggregated individually.
-      Map<String, Integer> tagMetrics = Maps.newHashMap();
+      Map<String, Long> tagMetrics = Maps.newHashMap();
       for (TagMetric tagMetric : record.getTags()) {
         tagMetrics.put(tagMetric.getTag(), tagMetric.getValue());
       }
-      Assert.assertEquals(ImmutableMap.of("tag1", 3, "tag2", 7, "tag3", 4), tagMetrics);
+      Assert.assertEquals(ImmutableMap.of("tag1", 3L, "tag2", 7L, "tag3", 4L), tagMetrics);
 
     } finally {
       service.stopAndWait();
