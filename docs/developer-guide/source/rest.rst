@@ -8,6 +8,17 @@
 Cask Data Application Platform HTTP RESTful API
 ===============================================
 
+.. rst2pdf: .. class:: center
+
+.. rst2pdf:    **Copyright © 2014 Cask Data, Inc. All Rights Reserved.**
+
+.. rst2pdf:    .. raw:: pdf
+   
+.. rst2pdf:       Spacer 0,200
+
+.. rst2pdf:    .. image:: _static/cask_logo_horizontal.pdf
+.. rst2pdf:       :width: 4in
+
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
 .. rst2pdf: stylesheets _templates/pdf-stylesheet
