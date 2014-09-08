@@ -17,6 +17,7 @@
 package co.cask.cdap.shell.completer.element;
 
 import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.shell.completer.StringsCompleter;
 import com.google.common.base.Function;
@@ -50,6 +51,8 @@ public class StreamIdCompleter extends StringsCompleter {
             })
           );
         } catch (IOException e) {
+          return Lists.newArrayList();
+        } catch (UnAuthorizedAccessTokenException e) {
           return Lists.newArrayList();
         }
       }

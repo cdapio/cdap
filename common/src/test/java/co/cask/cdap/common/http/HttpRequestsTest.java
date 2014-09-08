@@ -101,7 +101,6 @@ public class HttpRequestsTest {
     testPut("/api/testPut409", ImmutableMap.of("sdf", "123zz"), "somebody", only(409), any(), only("somebody123zz409"));
 
     testDelete("/api/testDelete", only(200), any(), any());
-//    testDelete("/api/testWrongMethod", only(405), any(), any());
   }
 
   private void testPost(String path, Map<String, String> headers, String body, Matcher<Object> expectedResponseCode,

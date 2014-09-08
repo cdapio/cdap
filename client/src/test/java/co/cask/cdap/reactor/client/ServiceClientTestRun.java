@@ -19,7 +19,6 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceMeta;
 import co.cask.cdap.reactor.client.app.FakeApp;
@@ -43,10 +42,10 @@ public class ServiceClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
-    appClient = new ApplicationClient(config);
-    serviceClient = new ServiceClient(config);
-    programClient = new ProgramClient(config);
+    super.setUp();
+    appClient = new ApplicationClient(clientConfig);
+    serviceClient = new ServiceClient(clientConfig);
+    programClient = new ProgramClient(clientConfig);
   }
 
   @Test
