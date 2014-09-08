@@ -32,6 +32,8 @@ define([], function () {
 
 	var Util = Em.Object.extend({
 
+	  BYTES_IN_MBYTE: 1024 * 1024,
+
     warningContainer: $('#warning'),
     warningSpan: $('#warning .warning-text'),
 
@@ -491,21 +493,21 @@ define([], function () {
 						for (i = 0; i < result.length; i ++) {
 							path = result[i].path.split('?')[0];
 							label = map[path].get('currents')[C.Util.enc(path)].value;
-							var transform = map[path].get('currents')[C.Util.enc(path)].options.transform;
 							if (label) {
-                                var values = result[i].result.data;
-                                // find last one that is not zero
-                                // todo: this is a hack until we don't support gauge on the back-end
-                                var last = 0;
-                                for (var j = values.length - 1; j >= 0; j--) {
-                                    if (values[j].value != 0) {
-                                        last = values[j].value;
-                                        break;
-                                    }
-                                }
-                                resultValue = last;
-								if (transform) {
-									resultValue = transform(resultValue);
+                var values = result[i].result.data;
+                // find last one that is not zero
+                // todo: this is a hack until we don't support gauge on the back-end
+                var last = 0;
+                for (var j = values.length - 1; j >= 0; j--) {
+                    if (values[j].value != 0) {
+                        last = values[j].value;
+                        break;
+                    }
+                }
+                resultValue = last;
+								var options = map[path].get('currents')[C.Util.enc(path)].options;
+								if (options && options.transform) {
+									resultValue = options.transform(resultValue);
 								}
 								map[path].setMetric(label, resultValue);
 							}
