@@ -406,9 +406,9 @@ For a MapReduce, the Mapping and Reducing activity is shown, along with status a
 
 Spark
 -----
-For a Spark, there are status and management controls for starting, stopping and configuration. Buttons for logs and
-history, similar to those for
-`MapReduce <#mapreduce>`__, are also available:
+For a Spark job, there are status and management controls for starting, stopping, and configuration.
+Buttons for displaying logs and history, similar to those for
+`MapReduce <#mapreduce>`__, are available:
 
 
 .. add the screenshot here once the UI is done

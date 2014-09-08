@@ -617,9 +617,11 @@ declaration and (2) an injection:
 
 .. _spark:
 
-Processing Data: Spark
-==========================
-**Spark** is used for in-memory cluster computing. It lets you load large sets of data into memory and query them repeatedly. This makes it suitable for both iterative and interactive jobs. Similar to MapReduce, Spark can access **Datasets** as both input and output. Spark jobs in CDAP can be written in either Java or Scala.
+Processing Data: Spark (Standalone CDAP Only)
+=============================================
+**Spark** is used for in-memory cluster computing. It lets you load large sets of data into memory and query them repeatedly. This makes it suitable for both iterative and interactive jobs. Similar to MapReduce, Spark can access **Datasets** as both input and output. Spark jobs in CDAP can be written in either Java or Scala. 
+
+In the current release, Spark is supported only in the Standalone CDAP.
 
 To process data using Spark, specify ``addSpark()`` in your Application specification::
 
