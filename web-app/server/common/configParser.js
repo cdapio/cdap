@@ -6,7 +6,6 @@ var promise = require('q'),
     spawn = require('child_process').spawn,
     xml2js = require('xml2js'),
     StringDecoder = require('string_decoder').StringDecoder,
-    util = require('./util'),
     configObj = {};
 
 function extractConfig(mode) {
