@@ -86,7 +86,6 @@ import java.util.jar.Manifest;
 public class SparkProgramRunner implements ProgramRunner {
 
   public static final String SPARK_HCONF_FILENAME = "spark_hconf.xml";
-
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
 
   private final DatasetFramework datasetFramework;
@@ -171,7 +170,9 @@ public class SparkProgramRunner implements ProgramRunner {
       public void stopping() {
         LOG.info("Stopping Spark Job: {}", context);
         try {
-          SparkJobWrapper.stopJob();
+          if (SparkProgramWrapper.isSparkProgramRunning()) {
+            SparkProgramWrapper.stopSparkProgram();
+          }
         } catch (Exception e) {
           LOG.error("Failed to stop Spark job {}", spec.getName(), e);
           throw Throwables.propagate(e);
@@ -224,20 +225,20 @@ public class SparkProgramRunner implements ProgramRunner {
           ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
           Thread.currentThread().setContextClassLoader(conf.getClassLoader());
           try {
-            // submits job and returns immediately
+            SparkProgramWrapper.setSparkProgramRunning(true);
             SparkSubmit.main(sparkSubmitArgs);
-
+          } catch (Exception e) {
+            LOG.error("Received Exception after submitting Spark Job", e);
           } finally {
+            // job completed so update running status and get the success status
+            success = SparkProgramWrapper.isSparkProgramSuccessful();
+            SparkProgramWrapper.setSparkProgramRunning(false);
             Thread.currentThread().setContextClassLoader(oldClassLoader);
           }
         } catch (Exception e) {
-          LOG.warn("Received Exception after submitting Spark Job", e);
           throw Throwables.propagate(e);
         } finally {
-          //TODO: This should not have true. We have to find a way to know the Spark job success or failure and pass
-          // that. Working on it now. REACTOR-936
-          // stopping controller when Spark job is finished
-          stopController(true, context, job, tx);
+          stopController(success, context, job, tx);
           try {
             dependencyJar.delete();
           } catch (IOException e) {
@@ -254,18 +255,18 @@ public class SparkProgramRunner implements ProgramRunner {
   }
 
   /**
-   * Prepares arguments which {@link SparkJobWrapper} is submitted to {@link SparkSubmit} to run.
+   * Prepares arguments which {@link SparkProgramWrapper} is submitted to {@link SparkSubmit} to run.
    *
    * @param sparkSpec     {@link SparkSpecification} of this job
    * @param conf          {@link Configuration} of the job whose {@link MRConfig#FRAMEWORK_NAME} specifies the mode in
    *                      which spark runs
    * @param jobJarCopy    {@link Location} copy of user program
    * @param dependencyJar {@link Location} jar containing the dependencies of this job
-   * @return String[] of arguments with which {@link SparkJobWrapper} will be submitted
+   * @return String[] of arguments with which {@link SparkProgramWrapper} will be submitted
    */
   private String[] prepareSparkSubmitArgs(SparkSpecification sparkSpec, Configuration conf, Location jobJarCopy,
                                           Location dependencyJar) {
-    return new String[]{"--class", SparkJobWrapper.class.getCanonicalName(), "--master",
+    return new String[]{"--class", SparkProgramWrapper.class.getCanonicalName(), "--master",
       conf.get(MRConfig.FRAMEWORK_NAME), jobJarCopy.toURI().getPath(), "--jars", dependencyJar.toURI().getPath(),
       sparkSpec.getMainClassName()};
   }
@@ -302,7 +303,7 @@ public class SparkProgramRunner implements ProgramRunner {
     classes.add(Spark.class);
     classes.add(SparkDatasetInputFormat.class);
     classes.add(SparkDatasetOutputFormat.class);
-    classes.add(SparkJobWrapper.class);
+    classes.add(SparkProgramWrapper.class);
     classes.add(JavaSparkContext.class);
     classes.add(ScalaSparkContext.class);
 
