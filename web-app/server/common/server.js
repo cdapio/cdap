@@ -81,9 +81,13 @@ var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
 
-  var path = '/' + this.API_VERSION + '/ping';
-  var url = ('http://' + this.config['router.server.address'] + ':'
-    + this.config['router.server.bind.port'] + path);
+  var path = '/' + this.API_VERSION + '/ping',
+      url;
+  if (this.config['dashboard.https.enabled'] === "true") {
+    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.bind.port'] + path;
+  } else {
+    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
+  }
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
     request({
@@ -279,7 +283,7 @@ WebAppServer.prototype.bindRoutes = function() {
     self.logger.trace('User Metrics', path);
 
     var options = {
-      host: self.config['gateway.server.address'],
+      host: self.config['router.server.address'],
       port: self.config['gateway.server.port'],
       method: 'GET',
       path: '/' + self.API_VERSION + '/metrics/available' + path,
@@ -335,7 +339,7 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.del('/rest/*', this.checkAuth, function (req, res) {
 
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.config['router.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
     request({
@@ -366,7 +370,7 @@ WebAppServer.prototype.bindRoutes = function() {
    * REST PUT handler.
    */
   this.app.put('/rest/*', this.checkAuth, function (req, res) {
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.config['router.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'PUT',
@@ -403,7 +407,7 @@ WebAppServer.prototype.bindRoutes = function() {
    * Promote handler.
    */
   this.app.post('/rest/apps/:appId/promote', this.checkAuth, function (req, res) {
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.config['router.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
@@ -444,7 +448,7 @@ WebAppServer.prototype.bindRoutes = function() {
    * REST POST handler.
    */
   this.app.post('/rest/*', this.checkAuth, function (req, res) {
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.config['router.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
@@ -482,7 +486,7 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.get('/rest/*', this.checkAuth, function (req, res) {
 
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.config['router.server.address'] + ':' + self.config['gateway.server.port'];
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
     var opts = {
@@ -533,7 +537,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var content = JSON.stringify(pathList);
 
     var options = {
-      host: self.config['gateway.server.address'],
+      host: self.config['router.server.address'],
       port: self.config['gateway.server.port'],
       path: '/' + self.API_VERSION + '/metrics',
       method: 'POST',
@@ -584,7 +588,7 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', this.checkAuth, function (req, res) {
-    var url = 'http://' + self.config['gateway.server.address'] + ':' +
+    var url = 'http://' + self.config['router.server.address'] + ':' +
       self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
     var opts = {
@@ -604,7 +608,7 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.get('/upload/status', function (req, res) {
 
     var options = {
-      host: self.config['gateway.server.address'],
+      host: self.config['router.server.address'],
       port: self.config['gateway.server.port'],
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
@@ -640,7 +644,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
   this.app.post('/unrecoverable/reset', this.checkAuth, function (req, res) {
 
-    var host = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var host = self.config['router.server.address'] + ':' + self.config['gateway.server.port'];
 
     var opts = {
       method: 'POST',
@@ -718,7 +722,7 @@ WebAppServer.prototype.bindRoutes = function() {
     }
 
     var options = {
-      host: self.config['gateway.server.address'],
+      host: self.config['router.server.address'],
       port: self.config['gateway.server.port'],
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
