@@ -20,7 +20,7 @@ define(['core/models/element'], function (Element) {
 			}
 
 			this.trackMetric('/reactor/datasets/{id}/dataset.size.mb', 'currents', 'storage', false,
-			                 {'buffer': 70, transform: function(x) { return x * 1000000; } });
+			                 {'buffer': 70, transform: function(x) { return x * C.Util.BYTES_IN_MBYTE; } });
 
 		},
 

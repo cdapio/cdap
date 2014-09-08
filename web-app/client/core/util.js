@@ -32,6 +32,8 @@ define([], function () {
 
 	var Util = Em.Object.extend({
 
+	  BYTES_IN_MBYTE: 1024 * 1024,
+
     warningContainer: $('#warning'),
     warningSpan: $('#warning .warning-text'),
 
@@ -490,11 +492,11 @@ define([], function () {
 						for (i = 0; i < result.length; i ++) {
 							path = result[i].path.split('?')[0];
 							label = map[path].get('currents')[C.Util.enc(path)].value;
-							var transform = map[path].get('currents')[C.Util.enc(path)].options.transform;
 							if (label) {
 								resultValue = result[i].result.data[0].value;
-								if (transform) {
-									resultValue = transform(resultValue);
+								var options = map[path].get('currents')[C.Util.enc(path)].options;
+								if (options && options.transform) {
+									resultValue = options.transform(resultValue);
 								}
 								map[path].setMetric(label, resultValue);
 							}
