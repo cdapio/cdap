@@ -78,7 +78,7 @@ DevServer.prototype.configureSSL = function () {
       requestCert: false,
       rejectUnauthorized: false
     };
-    this.config['dashboard.bind.port'] = this.config['dashboard.bind.port.ssl'];
+    this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
   }
   return options;
 }
@@ -98,9 +98,9 @@ DevServer.prototype.startServer = function () {
     this.logger.info('Webapp running with mocks enabled.');
     HttpMockInjector = require('../../test/httpMockInjector');
     if (!this.config['dashboard.https.enabled'] === "true") {
-      new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.server.bind.port']);
+      new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.bind.port']);
     } else {
-      new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.server.bind.ssl.port']);
+      new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.ssl.bind.port']);
     }
   }
 }
@@ -109,7 +109,8 @@ DevServer.prototype.startServer = function () {
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  devServer.logger.info('Uncaught Exception', err);
+  //log.logger.info('Uncaught Exception', err);
+  console.log(err);
 });
 
 devServer = new DevServer();
