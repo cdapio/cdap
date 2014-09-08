@@ -261,8 +261,9 @@ define([], function () {
                 HTTP.post('rest', 'apps', appId, entityType, model.get('name'), action,
                     function (response) {
 
+                        remaining -= 1;
                         model.set('currentState', endState);
-                        if (!--remaining && typeof done === 'function') {
+                        if (!remaining && typeof done === 'function') {
                             done();
                         }
 
