@@ -16,15 +16,10 @@
 
 package co.cask.cdap.common.conf;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Used to create Configuration Object for security related properties
  */
 public class SConfiguration extends Configuration {
-  @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(SConfiguration.class);
 
   private SConfiguration() {
     // Shouldn't be used other than in this class.
@@ -42,5 +37,4 @@ public class SConfiguration extends Configuration {
     conf.addResource("cdap-security.xml");
     return conf;
   }
-
 }
