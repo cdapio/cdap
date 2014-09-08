@@ -282,11 +282,21 @@ public final class TimeSeriesTable {
     }
   }
 
-  private void addValue(byte[] rowKey, byte[] column, Table<byte[], byte[], byte[]> table, int value) {
+  private void addValue(byte[] rowKey, byte[] column, Table<byte[], byte[], byte[]> table, long value) {
     byte[] oldValue = table.get(rowKey, column);
-    int newValue = value;
+    long newValue = value;
     if (oldValue != null) {
-      newValue = Bytes.toInt(oldValue) + value;
+      if (Bytes.SIZEOF_LONG == oldValue.length) {
+        newValue = Bytes.toLong(oldValue) + value;
+      } else if (Bytes.SIZEOF_INT == oldValue.length) {
+        // In 2.4 and older versions we stored it as int
+        newValue = Bytes.toInt(oldValue) + value;
+      } else {
+        // should NEVER happen, unless the table is screwed up manually
+        throw new IllegalStateException(
+          String.format("Could not parse metric @row %s @column %s value %s as int or long",
+                        Bytes.toStringBinary(rowKey), Bytes.toStringBinary(column), Bytes.toStringBinary(oldValue)));
+      }
     }
     table.put(rowKey, column, Bytes.toBytes(newValue));
   }
