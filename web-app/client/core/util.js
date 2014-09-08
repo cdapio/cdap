@@ -469,9 +469,9 @@ define([], function () {
 				for (var k = 0; k < metrics.length; k ++) {
 						var metric = models[j].get('currents').get(metrics[k]);
 						if (metric.options) {
-              buffer = metric.options.buffer || buffer;
-              transform = metric.options.transform;
-            }
+							buffer = metric.options.buffer || buffer;
+							transform = metric.options.transform;
+						}
 						queries.push(metric.path + '?start=now-' + (buffer || 5) + 's&count=1&interpolate=step');
 						map[metric.path] = models[j];
 
@@ -493,9 +493,9 @@ define([], function () {
 							var transform = map[path].get('currents')[C.Util.enc(path)].options.transform;
 							if (label) {
                 resultValue = result[i].result.data[0].value;
-                if (transform) {
-                  resultValue = transform(resultValue);
-                }
+								if (transform) {
+									resultValue = transform(resultValue);
+								}
 								map[path].setMetric(label, resultValue);
 							}
 						}
