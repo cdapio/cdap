@@ -142,9 +142,9 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
   var path = '/' + this.API_VERSION + '/ping',
       url;
   if (this.config['dashboard.https.enabled'] === "true") {
-    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.bind.port'] + path;
+    url = 'https://' + this.config['router.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
   } else {
-    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
+    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.bind.port'] + path;
   }
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
