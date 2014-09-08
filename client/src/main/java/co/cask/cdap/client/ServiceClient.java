@@ -62,7 +62,7 @@ public class ServiceClient {
    */
   public ServiceMeta get(String appId, String serviceId) throws IOException {
     URL url = config.resolveURL(String.format("apps/%s/services/%s", appId, serviceId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, ServiceMeta.class).getResponseObject();
   }
 }
