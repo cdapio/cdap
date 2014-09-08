@@ -472,7 +472,8 @@ define([], function () {
 							buffer = metric.options.buffer || buffer;
 							transform = metric.options.transform;
 						}
-						queries.push(metric.path + '?start=now-' + (buffer || 5) + 's&count=1&interpolate=step');
+                        buffer = buffer || 5;
+						queries.push(metric.path + '?start=now-' + buffer + 's&count=' + buffer);
 						map[metric.path] = models[j];
 
 				}
@@ -492,7 +493,17 @@ define([], function () {
 							label = map[path].get('currents')[C.Util.enc(path)].value;
 							var transform = map[path].get('currents')[C.Util.enc(path)].options.transform;
 							if (label) {
-								resultValue = result[i].result.data[0].value;
+                                var values = result[i].result.data;
+                                // find last one that is not zero
+                                // todo: this is a hack until we don't support gauge on the back-end
+                                var last = 0;
+                                for (var j = values.length - 1; j >= 0; j--) {
+                                    if (values[j].value != 0) {
+                                        last = values[j].value;
+                                        break;
+                                    }
+                                }
+                                resultValue = last;
 								if (transform) {
 									resultValue = transform(resultValue);
 								}
