@@ -7,10 +7,10 @@
     "node-int64": "0.3.0",
     "express": "3.2.4",
     "socket.io": "0.9.14",
-    "q": "*",
-    "emitter-component": "*",
     "request": "*",
     "thrift": "*",
-    "xml2js": "*"
+    "xml2js": "*",
+    "q": "*",
+    "lodash": "*"
   }
 }
