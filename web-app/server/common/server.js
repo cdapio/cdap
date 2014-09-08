@@ -118,13 +118,17 @@ WebAppServer.prototype.configureSSL = function () {
   if (this.config['dashboard.https.enabled'] === "true") {
     key = this.config['dashboard.ssl.key'],
     cert = this.config['dashboard.ssl.cert'];
-    options = {
-      key: fs.readFileSync(key),
-      cert: fs.readFileSync(cert),
-      requestCert: false,
-      rejectUnauthorized: false
-    };
-    this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
+    try {
+      options = {
+        key: fs.readFileSync(key),
+        cert: fs.readFileSync(cert),
+        requestCert: false,
+        rejectUnauthorized: false
+      };
+      this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
+    } catch (e) {
+      this.logger.info("Error Reading ssl key/certificate: ", e);
+    }
   }
   return options;
 }
