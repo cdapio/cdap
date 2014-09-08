@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Introduction to Programming Applications for the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ================================================
 Cask Data Application Platform Programming Guide

@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Ad-hoc Querying of Cask Data Application Platform Datasets using SQL 
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==========================
 Querying Datasets with SQL

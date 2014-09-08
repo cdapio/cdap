@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Advanced Cask Data Application Platform Features
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ======================
 Advanced CDAP Features

@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Introduction to the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==================================================
 Introduction to the Cask Data Application Platform
