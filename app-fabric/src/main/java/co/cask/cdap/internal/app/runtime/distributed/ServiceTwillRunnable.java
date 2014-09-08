@@ -227,7 +227,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
-                                                                          program.getName(), runnableName)),
+                                                                          program.getName(), runnableName,
+                                                                          context.getInstanceId())),
                         new PropertyFieldSetter(runtimeSpec.getRunnableSpecification().getConfigs()));
 
       final String[] argArray = RuntimeArguments.toPosixArray(programOpts.getUserArguments());

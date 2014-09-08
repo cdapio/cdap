@@ -200,7 +200,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Reflections.visit(runnable, runnableType,
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
-                                                                          serviceSpec.getName(), runnableName)),
+                                                                          serviceSpec.getName(), runnableName,
+                                                                          twillContext.getInstanceId())),
                         new PropertyFieldSetter(runnableSpec.getRunnableSpecification().getConfigs()));
 
       ProgramController controller = new InMemoryRunnableProgramController(program.getName(), runnableName,

@@ -105,7 +105,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private Program program;
   private RunId runId;
   private Set<String> datasets;
-  private String metricsContext;
+  private String baseMetricsContext;
   private MetricsCollectionService metricsCollectionService;
   private DatasetFramework datasetFramework;
   private CConfiguration cConfiguration;
@@ -142,9 +142,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     this.program = program;
     this.runId = runId;
     this.cConfiguration = cConfiguration;
-    this.metricsContext = String.format("%s.%s.%s.%s",
-                                        program.getApplicationId(), TypeId.getMetricContextId(program.getType()),
-                                        program.getName(), runnableName);
+    this.baseMetricsContext = String.format("%s.%s.%s.%s",
+                                            program.getApplicationId(), TypeId.getMetricContextId(program.getType()),
+                                            program.getName(), runnableName);
     this.metricsCollectionService = metricsCollectionService;
     this.programServiceDiscovery = programServiceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -413,6 +413,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
         return supplier.get();
       }
 
+      String metricsContext = String.format("%s.%d", baseMetricsContext, context.getInstanceId());
       BasicHttpServiceContext httpServiceContext = new BasicHttpServiceContext(spec,
                                                                                context.getApplicationArguments(),
                                                                                program, runId,
