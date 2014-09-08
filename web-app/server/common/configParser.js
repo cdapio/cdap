@@ -14,13 +14,13 @@ function extractConfig(mode) {
       decoder = new StringDecoder('utf8'),
       configReader;
   if (mode === "enterprise") {
-    configReader = spawn("../../bin/config-tool", ['--output ../../cdap-config.json']);
+    configReader = spawn(__dirname + "/../bin/config-tool" ,["--output", "/tmp/cdap-config.json"]);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('end', function onXmlReadEnd(data) {
-      this.config = require("../../cdap-config.json");
+      this.config = require("/tmp/cdap-config.json");
       this.configSet = true;
       deferred.resolve();
-    });
+    }.bind(this));
   } else {
     this.config = require("../../cdap-config.json");
     this.configSet = true;
@@ -31,7 +31,7 @@ function extractConfig(mode) {
   return deferred.promise;
 }
 
-function xmlReadFail() {
+function configReadFail() {
   var decoder = new (require('string_decoder').StringDecoder)('utf-8');
   var textChunk = decoder.write(arguments[0]);
   if (textChunk) {
