@@ -17,7 +17,6 @@
 package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.MonitorClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
@@ -25,8 +24,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -36,13 +33,12 @@ import java.util.List;
 @Category(XSlowTests.class)
 public class MonitorClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MonitorClientTestRun.class);
-
   private MonitorClient monitorClient;
 
   @Before
   public void setUp() throws Throwable {
-    monitorClient = new MonitorClient(new ClientConfig("localhost"));
+    super.setUp();
+    monitorClient = new MonitorClient(clientConfig);
   }
 
   @Test

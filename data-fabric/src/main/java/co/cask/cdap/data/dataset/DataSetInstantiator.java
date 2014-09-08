@@ -193,30 +193,30 @@ public class DataSetInstantiator implements DataSetContext {
     @Override
     public void recordRead(int opsCount, int dataSize) {
       if (programContextMetrics != null) {
-        programContextMetrics.gauge("store.reads", 1, datasetName);
-        programContextMetrics.gauge("store.ops", 1, datasetName);
+        programContextMetrics.increment("store.reads", 1, datasetName);
+        programContextMetrics.increment("store.ops", 1, datasetName);
       }
       // these metrics are outside the context of any application and will stay unless explicitly
       // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
       if (dataSetMetrics != null) {
-        dataSetMetrics.gauge("dataset.store.reads", 1, datasetName);
-        dataSetMetrics.gauge("dataset.store.ops", 1, datasetName);
+        dataSetMetrics.increment("dataset.store.reads", 1, datasetName);
+        dataSetMetrics.increment("dataset.store.ops", 1, datasetName);
       }
     }
 
     @Override
     public void recordWrite(int opsCount, int dataSize) {
       if (programContextMetrics != null) {
-        programContextMetrics.gauge("store.writes", 1, datasetName);
-        programContextMetrics.gauge("store.bytes", dataSize, datasetName);
-        programContextMetrics.gauge("store.ops", 1, datasetName);
+        programContextMetrics.increment("store.writes", 1, datasetName);
+        programContextMetrics.increment("store.bytes", dataSize, datasetName);
+        programContextMetrics.increment("store.ops", 1, datasetName);
       }
       // these metrics are outside the context of any application and will stay unless explicitly
       // deleted.  Useful for dataset metrics that must survive the deletion of application metrics.
       if (dataSetMetrics != null) {
-        dataSetMetrics.gauge("dataset.store.writes", 1, datasetName);
-        dataSetMetrics.gauge("dataset.store.bytes", dataSize, datasetName);
-        dataSetMetrics.gauge("dataset.store.ops", 1, datasetName);
+        dataSetMetrics.increment("dataset.store.writes", 1, datasetName);
+        dataSetMetrics.increment("dataset.store.bytes", dataSize, datasetName);
+        dataSetMetrics.increment("dataset.store.ops", 1, datasetName);
       }
     }
   }

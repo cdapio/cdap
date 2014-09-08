@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.BeforeClass;
@@ -33,7 +34,7 @@ public class ExternalAuthenticationServerTest extends ExternalAuthenticationServ
     cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "false");
 
     configuration = cConf;
-
+    sConfiguration = SConfiguration.create();
     setup();
   }
 

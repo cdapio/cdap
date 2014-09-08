@@ -1051,8 +1051,7 @@
     <value>JKS</value>
   </property>
 
-  <!-- Security configuration for the router -->
-
+  <!-- Front Configuration-->
   <property>
     <name>router.ssl.enabled</name>
     <value>false</value>
@@ -1064,8 +1063,13 @@
   </property>
 
   <property>
-    <name>router.ssl.keystore.type</name>
-    <value>JKS</value>
+    <name>dashboard.https.enabled</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>router.server.address</name>
+    <value>localhost</value>
   </property>
 
 </configuration>

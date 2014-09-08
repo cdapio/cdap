@@ -61,10 +61,10 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
     boolean hasNext = splitReader.nextKeyValue();
     if (hasNext) {
       // splitreader doesn't increment these metrics, need to do it ourselves.
-      context.getSystemMapperMetrics().gauge("store.reads", 1, dataSetName);
-      context.getSystemMapperMetrics().gauge("store.ops", 1, dataSetName);
-      dataSetMetrics.gauge("dataset.store.reads", 1, dataSetName);
-      dataSetMetrics.gauge("dataset.store.ops", 1, dataSetName);
+      context.getSystemMapperMetrics().increment("store.reads", 1, dataSetName);
+      context.getSystemMapperMetrics().increment("store.ops", 1, dataSetName);
+      dataSetMetrics.increment("dataset.store.reads", 1, dataSetName);
+      dataSetMetrics.increment("dataset.store.ops", 1, dataSetName);
     }
     return hasNext;
   }
