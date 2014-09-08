@@ -19,6 +19,7 @@ package co.cask.cdap.security.auth;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Codec;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.security.zookeeper.ResourceListener;
 import co.cask.cdap.security.zookeeper.SharedResourceCache;
 import com.google.common.base.Throwables;
@@ -26,10 +27,13 @@ import org.apache.twill.api.ElectionHandler;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClients;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -51,16 +55,22 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
    */
   private static final long KEY_UPDATE_FREQUENCY = 60 * 1000;
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManager.class);
-  private SharedResourceCache<KeyIdentifier> keyCache;
+
+  private final SharedResourceCache<KeyIdentifier> keyCache;
+  private final String parentZNode;
+
   private Timer timer;
   private long lastKeyUpdate;
   protected final AtomicBoolean leader = new AtomicBoolean();
   private LeaderElection leaderElection;
-  private String parentZNode;
   private ZKClient zookeeper;
   private final long maxTokenExpiration;
 
   public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper) {
+    this(conf, codec, zookeeper, getACLs(conf));
+  }
+
+  public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper, List<ACL> acls) {
     super(conf);
     this.parentZNode = conf.get(Constants.Security.DIST_KEY_PARENT_ZNODE);
     this.keyExpirationPeriod = conf.getLong(Constants.Security.TOKEN_DIGEST_KEY_EXPIRATION);
@@ -68,7 +78,13 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       conf.getLong(Constants.Security.EXTENDED_TOKEN_EXPIRATION),
       conf.getLong(Constants.Security.TOKEN_EXPIRATION));
     this.zookeeper = ZKClients.namespace(zookeeper, parentZNode);
-    this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys");
+
+    if (acls.isEmpty()) {
+      LOG.warn("Zookeeper ACL list is empty for keys!");
+      acls = ZooDefs.Ids.OPEN_ACL_UNSAFE;
+    }
+    LOG.info("Zookeeper ACLs {} for keys", acls);
+    this.keyCache = new SharedResourceCache<KeyIdentifier>(zookeeper, codec, "/keys", acls);
   }
 
   @Override
@@ -181,5 +197,19 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
      * TODO: we may want to shutdown the server here, though for followers, staying up and processing requests
      * that we can may be more important.
      */
+  }
+
+  /**
+   * Applies Zookeeper ACLs if Kerberos is enabled.
+   * @param cConf configuration object
+   * @return Zookeeper ACLs
+   */
+  static List<ACL> getACLs(CConfiguration cConf) {
+    if (SecurityUtil.isKerberosEnabled(cConf)) {
+      return ZooDefs.Ids.CREATOR_ALL_ACL;
+    }
+
+    LOG.warn("Not adding ACLs on keys in Zookeeper as Kerberos is not enabled");
+    return ZooDefs.Ids.OPEN_ACL_UNSAFE;
   }
 }

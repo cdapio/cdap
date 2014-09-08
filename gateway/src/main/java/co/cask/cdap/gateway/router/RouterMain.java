@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -60,6 +61,11 @@ public class RouterMain extends DaemonMain {
     try {
       // Load configuration
       CConfiguration cConf = CConfiguration.create();
+
+      if (cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
+        // Enable Kerberos login
+        SecurityUtil.enableKerberosLogin(cConf);
+      }
 
       // Initialize ZK client
       String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
