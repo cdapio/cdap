@@ -36,6 +36,7 @@ public class SecurityUtilTest {
     Assert.assertEquals("user/abc.com@REALM.NET", SecurityUtil.expandPrincipal("user/abc.com@REALM.NET"));
     Assert.assertEquals("_HOST/abc.com@REALM.NET", SecurityUtil.expandPrincipal("_HOST/abc.com@REALM.NET"));
     Assert.assertEquals("_HOST/" + localHostname + "@REALM.NET", SecurityUtil.expandPrincipal("_HOST/_HOST@REALM.NET"));
+    Assert.assertEquals("user/_host@REALM.NET", SecurityUtil.expandPrincipal("user/_host@REALM.NET"));
   }
 
   @Test

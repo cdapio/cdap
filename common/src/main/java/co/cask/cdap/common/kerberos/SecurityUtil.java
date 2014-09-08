@@ -107,6 +107,7 @@ public final class SecurityUtil {
    *
    * @param principal Kerberos principal name
    * @return expanded principal name
+   * @throws UnknownHostException if the local hostname could not be resolved into an address.
    */
   @Nullable
   public static String expandPrincipal(@Nullable String principal) throws UnknownHostException {
