@@ -34,7 +34,7 @@ define(['core/models/program'], function (Program) {
 
     updateRunnable: function (runnable, http) {
       var self = this;
-      var url = 'apps/' + self.app + '/services/' + self.name 
+      var url = 'apps/' + self.app + '/services/' + self.name
           + '/runnables/' + runnable.id + '/instances';
       http.rest(url, function (runnablesResponse) {
         runnable.set('requested', runnablesResponse.requested);

@@ -1,5 +1,5 @@
 /*
- * Mapreduce History Controller
+ * Spark History Controller
  */
 
 define([], function () {
@@ -16,16 +16,17 @@ define([], function () {
             var model = this.get('model');
             var self = this;
 
-            this.HTTP.rest('apps', model.app, 'mapreduce', model.name, 'history', function (response) {
+            this.HTTP.rest('apps', model.app, 'spark', model.name, 'history', function (response) {
 
                 if (response) {
                     var history = response;
 
-                    for (var i = 0; i < history.length; i++) {
+                    for(var i = 0; i < history.length; i++) {
 
                         self.runs.pushObject(C.Run.create(history[i]));
 
                     }
+
                 }
 
             });
@@ -40,7 +41,7 @@ define([], function () {
     });
 
     Controller.reopenClass({
-        type: 'MapreduceHistory',
+        type: 'SparkHistory',
         kind: 'Controller'
     });
 

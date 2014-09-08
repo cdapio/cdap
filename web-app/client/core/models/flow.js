@@ -86,6 +86,7 @@ define(['core/models/program'], function (Program) {
 		type: 'Flow',
 		kind: 'Model',
 		find: function(model_id, http) {
+
 			var self = this;
 			var promise = Ember.Deferred.create();
 
