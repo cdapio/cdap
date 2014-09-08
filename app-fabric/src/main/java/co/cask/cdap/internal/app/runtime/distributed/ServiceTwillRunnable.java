@@ -361,6 +361,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
         protected void configure() {
           // For program loading
           install(createProgramFactoryModule());
+
+          bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class).in(Scopes.SINGLETON);
         }
       }
     );
