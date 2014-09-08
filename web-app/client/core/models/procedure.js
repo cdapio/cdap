@@ -53,11 +53,12 @@ define(['core/models/program'], function (Program) {
         http.rest(this.get('context'), 'live-info', function (response) {
 
           var containers = response.containers;
-          if(containers === undefined){
+          if(containers === undefined) {
+            self.set('containersLabel', 0);
             return;
           }
 
-          self.set('instances', containers.length);
+          self.set('containersLabel', containers.length);
 
           if (typeof done === 'function') {
             done(response.status);
