@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
@@ -26,7 +27,6 @@ import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Instances;
-import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -64,13 +64,15 @@ public class ProgramClient {
    * @param programName name of the program
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void start(String appId, ProgramType programType, String programName)
-    throws IOException, ProgramNotFoundException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/start",
                                               appId, programType.getCategoryName(), programName));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
@@ -84,13 +86,15 @@ public class ProgramClient {
    * @param programName name of the program
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void stop(String appId, ProgramType programType, String programName)
-    throws IOException, ProgramNotFoundException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/stop",
                                               appId, programType.getCategoryName(), programName));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
@@ -105,14 +109,16 @@ public class ProgramClient {
    * @return the status of the program (e.g. STOPPED, STARTING, RUNNING)
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public String getStatus(String appId, ProgramType programType, String programName)
-    throws IOException, ProgramNotFoundException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/status",
                                               appId, programType.getCategoryName(), programName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
 
@@ -129,13 +135,15 @@ public class ProgramClient {
    * @return {@ProgramLiveInfo} of the program
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public DistributedProgramLiveInfo getLiveInfo(String appId, ProgramType programType, String programName)
-    throws IOException, ProgramNotFoundException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/live-info",
                                               appId, programType.getCategoryName(), programName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
@@ -152,12 +160,14 @@ public class ProgramClient {
    * @return number of instances that the flowlet is currently running on
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, flow, or flowlet could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public int getFlowletInstances(String appId, String flowId, String flowletId)
-    throws IOException, NotFoundException {
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/flows/%s/flowlets/%s/instances", appId, flowId, flowletId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or flow or flowlet", appId + "/" + flowId + "/" + flowletId);
     }
@@ -174,14 +184,15 @@ public class ProgramClient {
    * @param instances number of instances for the flowlet to run on
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, flow, or flowlet could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void setFlowletInstances(String appId, String flowId, String flowletId, int instances)
-    throws IOException, NotFoundException {
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/flows/%s/flowlets/%s/instances", appId, flowId, flowletId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or flow or flowlet", appId + "/" + flowId + "/" + flowletId);
     }
@@ -195,11 +206,14 @@ public class ProgramClient {
    * @return number of instances that the procedure is currently running on
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or procedure could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public int getProcedureInstances(String appId, String procedureId) throws IOException, NotFoundException {
+  public int getProcedureInstances(String appId, String procedureId) throws IOException, NotFoundException,
+    UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/procedures/%s/instances", appId, procedureId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or procedure", appId + "/" + procedureId);
     }
@@ -215,14 +229,15 @@ public class ProgramClient {
    * @param instances number of instances for the procedure to run on
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or procedure could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void setProcedureInstances(String appId, String procedureId, int instances)
-    throws IOException, NotFoundException {
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/procedures/%s/instances", appId, procedureId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or procedure", appId + "/" + procedureId);
     }
@@ -237,17 +252,19 @@ public class ProgramClient {
    * @return number of instances that the service runnable is running on
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, service, or runnable could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public int getServiceRunnableInstances(String appId, String serviceId, String runnableId)
-    throws IOException, NotFoundException {
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/instances",
                                               appId, serviceId, runnableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }
-    
+
     return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
   }
 
@@ -260,15 +277,16 @@ public class ProgramClient {
    * @param instances number of instances for the service runnable to run on
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, service, or runnable could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void setServiceRunnableInstances(String appId, String serviceId, String runnableId, int instances)
-    throws IOException, NotFoundException {
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/instances",
                                               appId, serviceId, runnableId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
 
-    HttpResponse response = restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }
@@ -283,13 +301,15 @@ public class ProgramClient {
    * @return the run history of the service runnable
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, service, or runnable could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<RunRecord> getServiceRunnableHistory(String appId, String serviceId, String runnableId)
-    throws IOException, NotFoundException {
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/history",
                                               appId, serviceId, runnableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }
@@ -306,13 +326,15 @@ public class ProgramClient {
    * @return the run history of the program
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or program could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<RunRecord> getProgramHistory(String appId, ProgramType programType, String programId)
-    throws IOException, NotFoundException {
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/history",
                                               appId, programType.getCategoryName(), programId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or " + programType.getCategoryName(), appId + "/" + programId);
     }
@@ -331,13 +353,14 @@ public class ProgramClient {
    * @return the logs of the program
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or program could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public String getProgramLogs(String appId, ProgramType programType, String programId,
-                        long start, long stop) throws IOException, NotFoundException {
+  public String getProgramLogs(String appId, ProgramType programType, String programId, long start, long stop)
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/logs?start=%d&stop=%d",
                                               appId, programType.getCategoryName(), programId, start, stop));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programId);
     }
@@ -356,13 +379,15 @@ public class ProgramClient {
    * @return the logs of the program
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application, service, or runnable could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public String getServiceRunnableLogs(String appId, String serviceId, String runnableId,
-                                long start, long stop) throws IOException, NotFoundException {
+  public String getServiceRunnableLogs(String appId, String serviceId, String runnableId, long start, long stop)
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/logs?start=%d&stop=%d",
                                               appId, serviceId, runnableId, start, stop));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
     }

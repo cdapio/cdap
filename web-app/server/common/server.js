@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Cask Data, Inc.
+ * Copyright (c) 2013 Continuuity, Inc.
  * Base server used for developer and enterprise editions. This provides common functionality to
  * set up a node js server and define routes. All custom functionality to an edition
  * must be placed under the server file inside the edition folder.

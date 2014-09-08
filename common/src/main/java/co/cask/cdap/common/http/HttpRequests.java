@@ -18,7 +18,6 @@ package co.cask.cdap.common.http;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
-import com.google.gson.Gson;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,8 +31,6 @@ import java.util.Map;
  * Executes {@link HttpRequest}s and returns an {@link HttpResponse}.
  */
 public final class HttpRequests {
-
-  private static final Gson GSON = new Gson();
 
   private HttpRequests() { }
 

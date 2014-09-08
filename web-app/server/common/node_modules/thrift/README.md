@@ -1,15 +1,25 @@
-# node-thrift
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
 
-Thrift protocol implementation for nodejs. As of version 0.0.1, the basic
-protocol has been implemented. A Thrift compiler that will generate the .js
-files from a Thrift specification is being implemented as well, see the
-Thrift Compiler section below.
 
-NOTE: By default, node-thrift uses TFramedTransport. Using a popular
-example, this is enabled by default in Cassandra 0.7 (but configuration must be
-changed in Cassandra 0.6.x and earlier). See the
-[examples](https://github.com/wadey/node-thrift/tree/master/examples) folder
-to see how to enable TBufferedTransport (added in 0.7.0).
+NOTE: you must use the framed thrift transport, TFramedTransport in most
+implementations, on the server side. Using a popular example, this is enabled
+by default in Cassandra 0.7 (but configuration must be changed in Cassandra
+0.6.x and earlier).
 
 ## Install
 
@@ -17,8 +27,7 @@ to see how to enable TBufferedTransport (added in 0.7.0).
 
 ## Thrift Compiler
 
-A Thrift compiler is included in the 0.6.0 release of Thrift. You can
-compile nodejs sources by running the following:
+You can compile nodejs sources by running the following:
 
     thrift --gen js:node thrift_file
 
@@ -57,4 +66,4 @@ Since JavaScript represents all numbers as doubles, int64 values cannot be accur
 
 ## Custom client and server example
 
-An example based on the one shown on the Thrift front page is included in the [examples](https://github.com/wadey/node-thrift/tree/master/examples) folder.
+An example based on the one shown on the Thrift front page is included in the examples/ folder.

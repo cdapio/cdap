@@ -23,8 +23,8 @@ else
  DEFAULT_JVM_OPTS="-Xmx1024m"
 fi
 
-# Add default JVM options here. You can also use JAVA_OPTS and CDAP_REACTOR_OPTS to pass JVM options to this script.
-CDAP_REACTOR_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
+# Add default JVM options here. You can also use JAVA_OPTS and CDAP_OPTS to pass JVM options to this script.
+CDAP_OPTS="-XX:+UseConcMarkSweepGC -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
 
 # Specifies Web App Path
 WEB_APP_PATH=${WEB_APP_PATH:-"web-app/local/server/main.js"}
@@ -102,14 +102,14 @@ if [ $JAVA_VERSION -ne 6 ] && [ $JAVA_VERSION -ne 7 ]; then
 Please install Java 6 or 7 - other versions of Java are not yet supported."
 fi
 
-# Check node installation
+# Check Node.js installation
 NODE_INSTALL_STATUS=$(program_is_installed node)
 if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
   die "Node.js is not installed
 Please install Node.js - the minimum version supported v0.8.16."
 fi
 
-# Check node version
+# Check Node.js version
 NODE_VERSION=`node -v 2>&1`
 NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F '.' ' { print $2 } '`
 NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F '.' ' { print $3 } '`
@@ -122,7 +122,7 @@ The minimum version supported is v0.8.16."
 fi
 
 
-# Split up the JVM_OPTS And CDAP_REACTOR_OPTS values into an array, following the shell quoting and substitution rules
+# Split up the JVM_OPTS And CDAP_OPTS values into an array, following the shell quoting and substitution rules
 function splitJvmOpts() {
     JVM_OPTS=("$@")
 }
@@ -143,7 +143,7 @@ check_before_start() {
 
   # Checks if nodejs is available before it starts Cask Local DAP.
   command -v node >/dev/null 2>&1 || \
-    { echo >&2 "Cask DAP requires nodeJS but it's either not installed or not in path.  Aborting."; exit 1; }
+    { echo >&2 "CDAP requires Node.js but it's either not installed or not in path. Exiting."; exit 1; }
 
   if [ -f $pid ]; then
     if kill -0 `cat $pid` > /dev/null 2>&1; then
@@ -164,15 +164,15 @@ check_for_updates() {
   l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`
   if [ $l -eq 3 ]
   then
-    new=`curl 'http://www.cdap.com/version' 2>/dev/null`
+    new=`curl 'http://cask.co/cdap/version' 2>/dev/null`
     if [[ "x${new}" != "x" ]]; then
      current=`cat ${APP_HOME}/VERSION`
      compare_versions $new $current
      case $? in
        0);;
        1) echo ""
-          echo "UPDATE: There is a newer version of CDAP Developer Suite available."
-          echo "        Download it from your account: https://accounts.cask.co."
+          echo "UPDATE: There is a newer version of the CDAP SDK available."
+          echo "        Download it from http://cask.co/cdap/download"
           echo "";;
        2);;
      esac
@@ -232,7 +232,7 @@ rotate_log () {
 reenable_nux () {
  rm -f $NUX_FILE
 }
-# Checks if this is first time user is using the Cask Local DAP
+# Checks if this is first time user is using the Standalone CDAP
 nux_enabled() {
  if [ -f $NUX_FILE ];
  then
@@ -255,7 +255,7 @@ start() {
     debug=$1; shift
     port=$1; shift
 
-    eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CDAP_REACTOR_OPTS
+    eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $CDAP_OPTS
     check_before_start
     mkdir -p $APP_HOME/logs
     rotate_log $APP_HOME/logs/cdap.log
@@ -267,7 +267,7 @@ start() {
     echo $! > $pid
 
     check_for_updates
-    echo -n "Starting Cask DAP ..."
+    echo -n "Starting CDAP ..."
 
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
@@ -303,7 +303,7 @@ start() {
 }
 
 stop() {
-    echo -n "Stopping Cask DAP ..."
+    echo -n "Stopping CDAP ..."
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
@@ -320,7 +320,7 @@ stop() {
       fi
       rm -f $pid
       echo ""
-      echo "Cask DAP stopped successfully"
+      echo "CDAP stopped successfully"
     fi
     echo
 }
@@ -372,7 +372,7 @@ case "$1" in
       elif [ $port -lt 1024 ] || [ $port -gt 65535 ]; then
         die "port number must be between 1024 and 65535.";
       fi
-      CDAP_REACTOR_OPTS="${CDAP_REACTOR_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
+      CDAP_OPTS="${CDAP_OPTS} -agentlib:jdwp=transport=dt_socket,address=localhost:$port,server=y,suspend=n"
     fi
     $command $debug $port
   ;;
@@ -389,7 +389,7 @@ case "$1" in
     echo "Usage: $0 {start|stop|restart|status}"
     echo "Additional options with start, restart:"
     echo "--enable-nux  to reenable new user experience flow"
-    echo "--enable-debug [ <port> ] to connect to a debug port for Local DAP (default port is 5005)"
+    echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
     exit 1
   ;;
 

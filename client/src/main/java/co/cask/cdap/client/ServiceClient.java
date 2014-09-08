@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpResponse;
@@ -59,10 +60,11 @@ public class ServiceClient {
    * @param serviceId ID of the service
    * @return {@link ServiceMeta} representing the service.
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public ServiceMeta get(String appId, String serviceId) throws IOException {
+  public ServiceMeta get(String appId, String serviceId) throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("apps/%s/services/%s", appId, serviceId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, ServiceMeta.class).getResponseObject();
   }
 }
