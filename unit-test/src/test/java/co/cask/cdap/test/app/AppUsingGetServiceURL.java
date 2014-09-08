@@ -34,6 +34,8 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -44,7 +46,7 @@ import javax.ws.rs.Path;
 
 /**
  * AppWithServices with a CentralService, which other programs will hit via their context's getServiceURL method.
- * This CentralService returns a constant value {@link ANSWER}, which is checked for in the test cases.
+ * This CentralService returns a constant string value {@link ANSWER}, which is checked for in the test cases.
  */
 public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String APP_NAME = "AppUsingGetServiceURL";
@@ -85,16 +87,14 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       try {
         if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
           response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+        } else {
+          responder.error(ProcedureResponse.Code.FAILURE, "Failed to retrieve a response from the service");
         }
       } finally {
           conn.disconnect();
       }
 
-      if (response == null) {
-        responder.error(ProcedureResponse.Code.FAILURE, "Failed to retrieve a response from the service");
-      } else {
-        responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), response);
-      }
+      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), response);
     }
 
     @Handle("readDataSet")
@@ -126,6 +126,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     }
 
     private static final class PingingWorker extends AbstractServiceWorker {
+      private static final Logger LOG = LoggerFactory.getLogger(PingingWorker.class);
 
       @Override
       public void stop() {
@@ -152,18 +153,18 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           return;
         }
 
-        HttpURLConnection conn = null;
         try {
-          conn = (HttpURLConnection) url.openConnection();
-          if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
-            response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-          }
-        } catch (IOException e) {
-          return;
-        } finally {
-          if (conn != null) {
+          HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+          try {
+            if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
+              response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+            }
+          } finally {
             conn.disconnect();
           }
+        } catch (IOException e) {
+          LOG.error("Got exception {}", e);
+          return;
         }
 
         // Write the response to dataset, so that we can verify it from a test.
