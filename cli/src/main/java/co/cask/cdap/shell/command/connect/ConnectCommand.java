@@ -78,7 +78,7 @@ public class ConnectCommand extends AbstractCommand {
       cliConfig.getClientConfig().setAuthenticationClient(authenticationClient);
     }
 
-    cliConfig.setConnection(hostname, port, ssl);
+    cliConfig.setHostname(hostname, port, ssl);
     output.printf("Successfully connected CDAP host at %s:%d\n", hostname, port);
   }
 }
