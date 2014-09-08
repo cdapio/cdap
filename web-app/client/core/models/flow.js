@@ -79,26 +79,30 @@ define(['core/models/program'], function (Program) {
 
           //counterObj is a hash from flowletName -> running count of instances
           counterObj = {};
+          var flowlets = self.get('flowlets');
 
-          self.get('flowlets').forEach(function (flowlet) {
-            counterObj[flowlet.name] = 0;
-          });
-
-          var containers = response.containers;
-          if(containers) {
-            containers.forEach(function (container) {
-              if(container.type === "flowlet") {
-                if(counterObj[container.name] === undefined){
-                  counterObj[container.name] = 0;
-                }
-                ++counterObj[container.name];
-              }
+          if (flowlets) {
+            flowlets.forEach(function (flowlet) {
+              counterObj[flowlet.name] = 0;
             });
+
+            var containers = response.containers;
+            if(containers) {
+              containers.forEach(function (container) {
+                if(container.type === "flowlet") {
+                  if(counterObj[container.name] === undefined){
+                    counterObj[container.name] = 0;
+                  }
+                  ++counterObj[container.name];
+                }
+              });
+            }
+
+            flowlets.forEach(function (flowlet) {
+              flowlet.containersLabel = counterObj[flowlet.name];
+            });  
           }
           
-          self.get('flowlets').forEach(function (flowlet) {
-            flowlet.containersLabel = counterObj[flowlet.name];
-          });
 
           if (typeof done === 'function') {
             done(response.status);
