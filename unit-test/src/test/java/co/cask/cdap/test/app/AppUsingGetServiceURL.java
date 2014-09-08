@@ -17,13 +17,18 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.annotation.Handle;
+import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.AbstractServiceWorker;
+import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -34,7 +39,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.concurrent.CountDownLatch;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -48,11 +52,9 @@ public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String SERVICE_WITH_WORKER = "ServiceWithWorker";
   public static final String PROCEDURE = "ForwardingProcedure";
   public static final String ANSWER = "MagicalString";
-  private static final CountDownLatch countDownLatch = new CountDownLatch(1);
-
-  public static CountDownLatch getCountDownLatch() {
-    return countDownLatch;
-  }
+  public static final String DATASET_NAME = "SharedDataSet";
+  public static final String DATASET_WHICH_KEY = "WhichKey";
+  public static final String DATASET_KEY = "Key";
 
   @Override
   public void configure() {
@@ -60,10 +62,14 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       addProcedure(new ForwardingProcedure());
       addService(new CentralService());
       addService(new ServiceWithWorker());
-   }
+      createDataset(DATASET_NAME, KeyValueTable.class);
+  }
 
 
   public static final class ForwardingProcedure extends AbstractProcedure {
+
+    @UseDataSet(DATASET_NAME)
+    private KeyValueTable table;
 
     @Handle("ping")
     public void ping(ProcedureRequest request, ProcedureResponder responder) throws IOException {
@@ -90,6 +96,17 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), response);
       }
     }
+
+    @Handle("readDataSet")
+    public void readDataSet(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+      String key = request.getArgument(DATASET_WHICH_KEY);
+      byte[] value = table.read(key);
+      if (value == null) {
+        responder.error(ProcedureResponse.Code.NOT_FOUND, "Table returned null for value: " + key);
+        return;
+      }
+      responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toString(value));
+    }
   }
 
   /**
@@ -102,6 +119,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       setName(SERVICE_WITH_WORKER);
       addHandler(new NoOpHandler());
       addWorker(new PingingWorker());
+      useDataset(DATASET_NAME);
     }
     public static final class NoOpHandler extends AbstractHttpServiceHandler {
       // handles nothing.
@@ -148,11 +166,15 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           }
         }
 
-
-        // The CentralService was pinged and the expected response was retrieved, so notify the test.
-        if (ANSWER.equals(response)) {
-          countDownLatch.countDown();
-        }
+        // Write the response to dataset, so that we can verify it from a test.
+        final String writeValue = response;
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DataSetContext context) throws Exception {
+            KeyValueTable table = context.getDataSet(DATASET_NAME);
+            table.write(DATASET_KEY, writeValue);
+          }
+        });
       }
     }
   }

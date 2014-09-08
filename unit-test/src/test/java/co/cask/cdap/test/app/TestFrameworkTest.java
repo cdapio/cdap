@@ -64,7 +64,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -253,22 +252,22 @@ public class TestFrameworkTest extends TestBase {
     String decodedResult = new Gson().fromJson(result, String.class);
     // Verify that the procedure was able to hit the CentralService and retrieve the answer.
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
-    procedureManager.stop();
 
 
     // Test serviceWorker's getServiceURL
-    CountDownLatch serviceWorkerLatch = AppUsingGetServiceURL.getCountDownLatch();
-    Assert.assertEquals(serviceWorkerLatch.getCount(), 1);
     ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
     serviceStatusCheck(serviceWithWorker, true);
-    // Allow the service worker 1 second to ping the CentralService, and get the appropriate response.
-    serviceWorkerLatch.await(1, TimeUnit.SECONDS);
-    // Since the worker is passive (we can not ping it), it is designed to countDown the latch when it receives the
-    // expected response.
-    Assert.assertEquals(serviceWorkerLatch.getCount(), 0);
+    // Since the worker is passive (we can not ping it), allow the service worker 2 seconds to ping the CentralService,
+    // get the appropriate response, and write to to a dataset.
+    Thread.sleep(2000);
     serviceWithWorker.stop();
     serviceStatusCheck(serviceWithWorker, false);
 
+    result = procedureClient.query("readDataSet", ImmutableMap.of(AppUsingGetServiceURL.DATASET_WHICH_KEY,
+                                                           AppUsingGetServiceURL.DATASET_KEY));
+    decodedResult = new Gson().fromJson(result, String.class);
+    Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
+    procedureManager.stop();
 
     centralServiceManager.stop();
     serviceStatusCheck(centralServiceManager, false);
