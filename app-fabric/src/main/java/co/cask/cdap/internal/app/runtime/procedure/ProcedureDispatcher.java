@@ -116,7 +116,7 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
    * @param channel Netty channel for output.
    */
   private void errorResponse(HttpResponseStatus status, Channel channel, String content) {
-    metrics.gauge("query.failed", 1);
+    metrics.increment("query.failed", 1);
     HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, status);
     response.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain; charset=utf-8");
     response.setContent(ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(content)));

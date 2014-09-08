@@ -35,7 +35,7 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
 
   @Override
   public void gauge(String metricName, int value, String...tags) {
-    metricsCollector.gauge(metricName, value, tags);
+    metricsCollector.increment(metricName, value, tags);
   }
 
 }
