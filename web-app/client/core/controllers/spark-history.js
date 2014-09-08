@@ -15,6 +15,7 @@ define([], function () {
 
         __updateHistoryTimeout: null,
         __updateHistory: function(appName, jobName) {
+            var self = this;
             this.HTTP.rest('apps', appName, 'spark', jobName, 'history', function (response) {
 
                 if (response) {
@@ -35,11 +36,11 @@ define([], function () {
             var self = this;
 
             var runHistoryUpdate = function() {
-                this.__updateHistoryTimeout = setTimeout(function () {
-                    this.__updateHistory(model.app, model.name);
+                self.__updateHistoryTimeout = setTimeout(function () {
+                    self.__updateHistory(model.app, model.name);
 
                     runHistoryUpdate();
-                }, this.__HISTORY_UPDATE_TIMEOUT);
+                }, self.__HISTORY_UPDATE_TIMEOUT);
             };
 
             runHistoryUpdate();

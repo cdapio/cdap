@@ -2,7 +2,7 @@
  * Spark Model
  */
 
-define(['core/models/program', 'core/controllers/app'], function (Program) {
+define(['core/models/program'], function (Program) {
 
     var EXPECTED_FIELDS = [
         'name',
