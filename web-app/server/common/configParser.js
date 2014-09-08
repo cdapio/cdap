@@ -24,9 +24,7 @@ function extractConfig(mode) {
   } else {
     this.config = require("../../cdap-config.json");
     this.configSet = true;
-    setTimeout(function() {
-      deferred.resolve();
-    }, 10)
+    deferred.resolve();
   }
   return deferred.promise;
 }
