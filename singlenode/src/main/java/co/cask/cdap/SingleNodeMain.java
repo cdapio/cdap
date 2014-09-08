@@ -298,7 +298,6 @@ public class SingleNodeMain {
     }
   }
 
-
   public static SingleNodeMain createSingleNodeMain(boolean inMemory) {
     return createSingleNodeMain(inMemory, WebCloudAppService.WEB_APP);
   }
