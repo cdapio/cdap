@@ -85,7 +85,7 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
     }
 
     @Override
-    public void gauge(String metricName, int value, String... tags) {
+    public void increment(String metricName, int value, String... tags) {
       synchronized (MockMetricsCollectionService.this) {
         Integer v = metrics.get(context, metricName);
         metrics.put(context, metricName, v == null ? value : v + value);

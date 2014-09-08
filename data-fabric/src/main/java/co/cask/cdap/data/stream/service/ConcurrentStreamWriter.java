@@ -309,8 +309,8 @@ public final class ConcurrentStreamWriter implements Closeable {
       }
 
       if (eventsWritten > 0) {
-        metricsCollector.gauge("collect.events", eventsWritten, streamName);
-        metricsCollector.gauge("collect.bytes", bytesWritten, streamName);
+        metricsCollector.increment("collect.events", eventsWritten, streamName);
+        metricsCollector.increment("collect.bytes", bytesWritten, streamName);
       }
 
       return true;

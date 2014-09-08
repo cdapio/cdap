@@ -26,5 +26,5 @@ public interface MetricsCollector {
    * @param value value of the metric.
    * @param tags Tags associated with the metric.
    */
-  void gauge(String metricName, int value, String...tags);
+  void increment(String metricName, int value, String... tags);
 }
