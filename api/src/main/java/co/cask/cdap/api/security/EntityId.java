@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.security;
 
+import com.google.common.base.Objects;
+
 /**
  * Identifies an entity.
  */
@@ -39,5 +41,24 @@ public class EntityId {
 
   public String getQualifiedId() {
     return type.getPluralForm() + ":" + id;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(type, id);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+
+    EntityId other = (EntityId) obj;
+    return Objects.equal(this.type, other.type) && Objects.equal(this.id, other.id);
   }
 }

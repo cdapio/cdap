@@ -28,6 +28,7 @@ import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
+import co.cask.cdap.internal.app.runtime.procedure.ProcedureHandlerMethodFactory;
 import co.cask.cdap.internal.app.runtime.procedure.ProcedureProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramServiceDiscovery;
@@ -112,6 +113,8 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Create webapp http handler factory.
     install(new FactoryModuleBuilder().implement(JarHttpHandler.class, IntactJarHttpHandler.class)
               .build(WebappHttpHandlerFactory.class));
+
+    install(new FactoryModuleBuilder().build(ProcedureHandlerMethodFactory.class));
   }
 
   @Singleton

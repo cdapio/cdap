@@ -21,6 +21,7 @@ import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
+import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
@@ -29,12 +30,15 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.security.authorization.RequiresPermissions;
 import com.continuuity.tephra.TransactionExecutor;
 import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +51,7 @@ import java.util.Set;
 /**
  *
  */
-final class ProcedureHandlerMethod implements HandlerMethod {
+public class ProcedureHandlerMethod implements HandlerMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProcedureHandlerMethod.class);
 
@@ -59,8 +63,10 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   private final Map<String, HandlerMethod> handlers;
   private final BasicProcedureContext context;
 
-  ProcedureHandlerMethod(Program program, DataFabricFacade dataFabricFacade,
-                         BasicProcedureContext context) throws ClassNotFoundException {
+  @Inject
+  public ProcedureHandlerMethod(@Assisted Program program,
+                                @Assisted DataFabricFacade dataFabricFacade,
+                                @Assisted BasicProcedureContext context) throws ClassNotFoundException {
 
     this.dataFabricFacade = dataFabricFacade;
     this.context = context;
@@ -117,6 +123,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   }
 
   @Override
+  @RequiresPermissions({ PermissionType.EXECUTE })
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
     context.getProgramMetrics().gauge("query.requests", 1);
     HandlerMethod handlerMethod = handlers.get(request.getMethod());

@@ -50,7 +50,7 @@ import java.util.Map;
 public class ACLServiceTest {
 
   @Test
-  public void testUserAndGroupACLs() throws IOException {
+  public void testUserAndGroupACLs() throws Exception {
     DiscoveryServiceClient discoveryService = new InMemoryDiscoveryService();
     DatasetDefinitionRegistryFactory datasetDefinitionRegistry = new DatasetDefinitionRegistryFactory() {
       @Override
@@ -68,35 +68,34 @@ public class ACLServiceTest {
     ACLService aclService = new ACLService(datasetFramework, (DiscoveryService) discoveryService, discoveryService);
     aclService.startAndWait();
 
-    ACLClient aclClient = new ACLClient(discoveryService);
-
+    ACLClient aclClient = new RemoteACLClient(discoveryService);
 
     EntityId bobStream = new EntityId(EntityType.STREAM, "bob");
     Principal bobUser = new Principal(PrincipalType.USER, "bob");
     Principal bobGroup = new Principal(PrincipalType.GROUP, "bob");
 
-    List<ACL> bobStreamAcls = aclClient.listAcls(bobStream);
+    List<ACL> bobStreamAcls = aclClient.listACLs(bobStream);
     Assert.assertEquals(0, bobStreamAcls.size());
 
     // test user-based ACLs
 
-    aclClient.setAclForUser(bobStream, bobUser.getId(), ImmutableList.of(PermissionType.READ, PermissionType.WRITE));
+    aclClient.setACLForUser(bobStream, bobUser.getId(), ImmutableList.of(PermissionType.READ, PermissionType.WRITE));
 
-    List<ACL> bobStreamAndUserAcls = aclClient.listAcls(bobStream, bobUser.getId());
+    List<ACL> bobStreamAndUserAcls = aclClient.listACLs(bobStream, bobUser.getId());
     Assert.assertEquals(1, bobStreamAndUserAcls.size());
     Assert.assertTrue(bobStreamAndUserAcls.get(0).getPermissions().contains(PermissionType.READ));
     Assert.assertTrue(bobStreamAndUserAcls.get(0).getPermissions().contains(PermissionType.WRITE));
 
-    bobStreamAcls = aclClient.listAcls(bobStream);
+    bobStreamAcls = aclClient.listACLs(bobStream);
     Assert.assertEquals(1, bobStreamAcls.size());
     Assert.assertTrue(bobStreamAcls.get(0).getPermissions().contains(PermissionType.READ));
     Assert.assertTrue(bobStreamAcls.get(0).getPermissions().contains(PermissionType.WRITE));
 
     // test group-based ACLs
 
-    aclClient.setAclForGroup(bobStream, bobGroup.getId(), ImmutableList.of(PermissionType.READ));
+    aclClient.setACLForGroup(bobStream, bobGroup.getId(), ImmutableList.of(PermissionType.READ));
 
-    bobStreamAcls = aclClient.listAcls(bobStream);
+    bobStreamAcls = aclClient.listACLs(bobStream);
     Assert.assertEquals(2, bobStreamAcls.size());
 
     int bobGroupAclIndex;

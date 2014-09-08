@@ -17,6 +17,10 @@
 package co.cask.cdap.internal.app.runtime.procedure;
 
 import co.cask.cdap.api.procedure.ProcedureRequest;
+import co.cask.cdap.api.security.EntityId;
+import co.cask.cdap.api.security.EntityType;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -135,7 +139,12 @@ final class ProcedureDispatcher extends SimpleChannelHandler {
       return;
     }
 
+    String app = uriMatcher.group(1);
+    String procedure = uriMatcher.group(2);
     String requestMethod = uriMatcher.group(3);
+    // TODO: set this securely
+    SecurityRequestContext.setUserId(httpRequest.getHeader(Constants.Security.Headers.USER_ID));
+    SecurityRequestContext.setEntityId(new EntityId(EntityType.PROCEDURE, app + ":" + procedure));
 
     ProcedureRequest request = createProcedureRequest(httpRequest, channel, requestMethod);
     if (request == null) {

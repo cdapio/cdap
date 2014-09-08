@@ -27,12 +27,14 @@ import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramServiceDi
 import co.cask.cdap.internal.app.runtime.distributed.DistributedServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import co.cask.cdap.internal.app.runtime.procedure.ProcedureHandlerMethodFactory;
 import com.google.common.base.Preconditions;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 
 import java.util.Map;
@@ -61,6 +63,9 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
+
+    install(new FactoryModuleBuilder()
+              .build(ProcedureHandlerMethodFactory.class));
   }
 
   @Singleton

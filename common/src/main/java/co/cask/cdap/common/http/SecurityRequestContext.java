@@ -16,11 +16,14 @@
 
 package co.cask.cdap.common.http;
 
+import co.cask.cdap.api.security.EntityId;
+
 /**
  * RequestContext that maintains a ThreadLocal with references to {@code AccessTokenIdentifier}.
  */
 public class SecurityRequestContext {
   private static final ThreadLocal<String> userId = new InheritableThreadLocal<String>();
+  private static final ThreadLocal<EntityId> entityId = new InheritableThreadLocal<EntityId>();
 
   /**
    * @return the userId set on the current thread
@@ -35,5 +38,20 @@ public class SecurityRequestContext {
    */
   public static void setUserId(String userIdParam) {
     userId.set(userIdParam);
+  }
+
+  /**
+   * @return the entityId set on the current thread
+   */
+  public static EntityId getEntityId() {
+    return entityId.get();
+  }
+
+  /**
+   * Set the entityId on the current thread.
+   * @param entityIdParam entityId to be set
+   */
+  public static void setEntityId(EntityId entityIdParam) {
+    entityId.set(entityIdParam);
   }
 }

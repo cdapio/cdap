@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.security;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
@@ -43,10 +44,28 @@ public class ACL {
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder("ACL{");
-    sb.append("principal=").append(principal);
-    sb.append(", permissions=").append(permissions);
-    sb.append('}');
-    return sb.toString();
+    return Objects.toStringHelper(this)
+      .add("principal", principal)
+      .add("permissions", permissions)
+      .toString();
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(principal, permissions);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+
+    ACL other = (ACL) obj;
+    return Objects.equal(this.principal, other.principal) && Objects.equal(this.permissions, other.permissions);
   }
 }
