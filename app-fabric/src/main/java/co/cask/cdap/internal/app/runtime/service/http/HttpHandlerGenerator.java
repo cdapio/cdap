@@ -16,9 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import com.continuuity.tephra.TransactionContext;
-import com.continuuity.tephra.TransactionFailureException;
-import co.cask.cdap.api.annotation.DisableTransaction;
 import co.cask.cdap.api.annotation.EnableTransaction;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -27,14 +24,22 @@ import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
 import co.cask.http.HttpResponder;
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionFailureException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.signature.SignatureReader;
@@ -476,26 +481,7 @@ final class HttpHandlerGenerator {
       mg.mark(handlerTryBegin);
 
       // this.getHandler(wrapRequest(request), wrapResponder(responder), ...);
-      mg.loadThis();
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(HttpServiceHandler.class, "getHandler"));
-      mg.checkCast(Type.getType(delegateType.getRawType()));
-
-      mg.loadThis();
-      mg.loadArg(0);
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
-
-      mg.loadThis();
-      mg.loadArg(1);
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
-
-      for (int i = 2; i < method.getArgumentTypes().length; i++) {
-        mg.loadArg(i);
-      }
-
-      mg.invokeVirtual(Type.getType(delegateType.getRawType()), method);
+      generateInvokeDelegate(mg, method);
 
       mg.loadLocal(txContext, txContextType);
       mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
@@ -561,6 +547,12 @@ final class HttpHandlerGenerator {
      * </pre>
      */
     private void generateNonTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
+      generateInvokeDelegate(mg, method);
+      mg.returnValue();
+      mg.endMethod();
+    }
+
+    private void generateInvokeDelegate(GeneratorAdapter mg, Method method) {
       mg.loadThis();
       mg.invokeVirtual(classType,
                        Methods.getMethod(HttpServiceHandler.class, "getHandler"));
@@ -581,8 +573,6 @@ final class HttpHandlerGenerator {
       }
 
       mg.invokeVirtual(Type.getType(delegateType.getRawType()), method);
-      mg.returnValue();
-      mg.endMethod();
     }
   }
 }

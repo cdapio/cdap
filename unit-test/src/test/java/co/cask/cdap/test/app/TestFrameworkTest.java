@@ -342,10 +342,13 @@ public class TestFrameworkTest extends TestBase {
       @Override
       public Integer call() throws Exception {
         try {
-          URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/write",
+          URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/write/%s/%s/%d",
                                           discoverable.getSocketAddress().getHostName(),
                                           discoverable.getSocketAddress().getPort(),
-                                          AppWithServices.TRANSACTIONS_SERVICE_NAME));
+                                          AppWithServices.TRANSACTIONS_SERVICE_NAME,
+                                          AppWithServices.DATASET_TEST_KEY,
+                                          AppWithServices.DATASET_TEST_VALUE,
+                                          10000));
           HttpRequest request = HttpRequest.get(url).build();
           HttpResponse response = HttpRequests.execute(request);
           return response.getResponseCode();
@@ -358,25 +361,27 @@ public class TestFrameworkTest extends TestBase {
 
     // The dataset should not be written by the time this request is made, since the transaction to write
     // has not been committed yet.
-    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/read",
+    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/read/%s",
                                     discoverable.getSocketAddress().getHostName(),
                                     discoverable.getSocketAddress().getPort(),
-                                    AppWithServices.TRANSACTIONS_SERVICE_NAME));
+                                    AppWithServices.TRANSACTIONS_SERVICE_NAME,
+                                    AppWithServices.DATASET_TEST_KEY));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(500, response.getResponseCode());
+    Assert.assertEquals(204, response.getResponseCode());
 
     // Wait for the transaction to commit.
-    requestFuture.get();
+    Integer writeStatusCode = requestFuture.get();
+    Assert.assertEquals(200, writeStatusCode.intValue());
 
-    url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/read",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(),
-                                    AppWithServices.TRANSACTIONS_SERVICE_NAME));
+    // Make the same request again. By now the transaction should've completed.
     request = HttpRequest.get(url).build();
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE,
+                        new Gson().fromJson(response.getResponseBodyAsString(), String.class));
 
+    executorService.shutdown();
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
   }

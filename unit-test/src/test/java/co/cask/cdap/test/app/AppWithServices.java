@@ -38,6 +38,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import java.io.IOException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * AppWithServices with a DummyService for unit testing.
@@ -95,24 +96,27 @@ public class AppWithServices extends AbstractApplication {
       @UseDataSet(TRANSACTIONS_DATASET_NAME)
       KeyValueTable table;
 
-      @Path("/write")
+      @Path("/write/{key}/{value}/{sleep}")
       @GET
       @EnableTransaction
-      public void handler(HttpServiceRequest request, HttpServiceResponder responder) throws InterruptedException {
-        table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
-        Thread.sleep(10000);
+      public void handler(HttpServiceRequest request, HttpServiceResponder responder,
+                          @PathParam("key") String key, @PathParam("value") String value, @PathParam("sleep") int sleep)
+        throws InterruptedException {
+        table.write(key, value);
+        Thread.sleep(sleep);
         responder.sendStatus(200);
       }
 
-      @Path("/read")
+      @Path("/read/{key}")
       @GET
       @EnableTransaction
-      public void readHandler(HttpServiceRequest request, HttpServiceResponder responder) {
-        String value = Bytes.toString(table.read(DATASET_TEST_KEY));
+      public void readHandler(HttpServiceRequest request, HttpServiceResponder responder,
+                              @PathParam("key") String key) {
+        String value = Bytes.toString(table.read(key));
         if (value == null) {
-          responder.sendStatus(500);
+          responder.sendStatus(204);
         } else {
-          responder.sendStatus(200);
+          responder.sendJson(200, value);
         }
       }
     }

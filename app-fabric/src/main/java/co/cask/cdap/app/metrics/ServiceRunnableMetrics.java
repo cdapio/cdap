@@ -29,4 +29,10 @@ public class ServiceRunnableMetrics extends AbstractProgramMetrics {
     super(collectionService.getCollector(
       MetricsScope.USER, String.format("%s.s.%s.%s", applicationId, serviceId, runnableId), "0"));
   }
+
+  public ServiceRunnableMetrics(MetricsCollectionService collectionService, String metricsContext) {
+    super(collectionService.getCollector(
+      MetricsScope.USER, metricsContext, "0"
+    ));
+  }
 }

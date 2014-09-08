@@ -16,23 +16,23 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import com.continuuity.tephra.TransactionContext;
-import com.continuuity.tephra.TransactionSystemClient;
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
+import com.continuuity.tephra.TransactionContext;
+import com.continuuity.tephra.TransactionSystemClient;
+import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.io.Closeable;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,43 +40,30 @@ import java.util.Set;
  * Default implementation of HttpServiceContext which simply stores and retrieves the
  * spec provided when this class is instantiated
  */
-public class DefaultHttpServiceContext extends AbstractContext implements HttpServiceContext {
+public class BasicHttpServiceContext extends AbstractContext implements HttpServiceContext {
 
   private final HttpServiceSpecification spec;
   private final Map<String, String> runtimeArgs;
   private final TransactionContext txContext;
+  private final ServiceRunnableMetrics serviceRunnableMetrics;
 
   /**
-   * Instantiates the context with a spec and a map for the runtime arguments
+   * Instantiates the context with a spec and a array of runtime arguments.
    *
-   * @param spec the {@link HttpServiceSpecification} for this context
-   * @param runtimeArgs the runtime arguments as a map of string to string
+   * @param spec the {@link HttpServiceSpecification} for this context.
+   * @param runtimeArgs the runtime arguments as a list of strings.
    */
-  public DefaultHttpServiceContext(HttpServiceSpecification spec, Map<String, String> runtimeArgs,
-                                   Program program, RunId runId, Set<String> datasets, String metricsContext,
-                                   MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
-                                   CConfiguration conf, ProgramServiceDiscovery programServiceDiscovery,
-                                   DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
+  public BasicHttpServiceContext(HttpServiceSpecification spec, String[] runtimeArgs, Program program, RunId runId,
+                                 Set<String> datasets, String metricsContext,
+                                 MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
+                                 CConfiguration conf, ProgramServiceDiscovery programServiceDiscovery,
+                                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
     super(program, runId, datasets, metricsContext, metricsCollectionService, dsFramework, conf,
           programServiceDiscovery, discoveryServiceClient);
     this.spec = spec;
-    this.runtimeArgs = runtimeArgs;
+    this.runtimeArgs = ImmutableMap.copyOf(RuntimeArguments.fromPosixArray(runtimeArgs));
     this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
-  }
-
-  /**
-   * @param spec the {@link HttpServiceSpecification} for this context
-   */
-  public DefaultHttpServiceContext(HttpServiceSpecification spec, String[] runtimeArgs, Program program, RunId runId,
-                                   Set<String> datasets, String metricsContext,
-                                   MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
-                                   CConfiguration conf, ProgramServiceDiscovery programServiceDiscovery,
-                                   DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
-    super(program, runId, datasets, metricsContext, metricsCollectionService, dsFramework, conf,
-          programServiceDiscovery, discoveryServiceClient);
-    this.spec = spec;
-    this.runtimeArgs = RuntimeArguments.fromPosixArray(runtimeArgs);
-    this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
+    this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService, metricsContext);
   }
 
   /**
@@ -97,7 +84,7 @@ public class DefaultHttpServiceContext extends AbstractContext implements HttpSe
 
   @Override
   public Metrics getMetrics() {
-    return null;
+    return serviceRunnableMetrics;
   }
 
   public TransactionContext getTransactionContext() {

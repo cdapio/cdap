@@ -1,5 +1,6 @@
+
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,9 +14,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.api.annotation;
 
-import co.cask.cdap.api.service.http.HttpServiceHandler;
+package co.cask.cdap.api.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -23,10 +23,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates a method in {@link HttpServiceHandler} to enable transaction support.
+ * Annotates a method in to enable transaction support.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD})
+@Target({ElementType.METHOD})
 public @interface EnableTransaction {
 
 }
