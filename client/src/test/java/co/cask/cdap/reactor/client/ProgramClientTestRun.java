@@ -19,14 +19,11 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProcedureClient;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.app.FakeFlow;
 import co.cask.cdap.reactor.client.app.FakeProcedure;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
-import co.cask.cdap.security.authentication.client.AuthenticationClient;
-import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,12 +46,10 @@ public class ProgramClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
-    ClientConfig config = new ClientConfig(HOSTNAME, authenticationClient);
-    appClient = new ApplicationClient(config);
-    procedureClient = new ProcedureClient(config);
-    programClient = new ProgramClient(config);
+    super.setUp();
+    appClient = new ApplicationClient(clientConfig);
+    procedureClient = new ProcedureClient(clientConfig);
+    programClient = new ProgramClient(clientConfig);
   }
 
   @Test

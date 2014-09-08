@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.NotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
@@ -63,9 +64,10 @@ public class ProcedureClient {
    * @throws BadRequestException if the input was bad
    * @throws NotFoundException if the application, procedure, or method could not be found
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public String call(String appId, String procedureId, String methodId, Map<String, String> parameters)
-    throws BadRequestException, NotFoundException, IOException {
+    throws BadRequestException, NotFoundException, IOException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/procedures/%s/methods/%s", appId, procedureId, methodId));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(parameters)).build();
@@ -87,8 +89,9 @@ public class ProcedureClient {
    *
    * @return list of {@link ProgramRecord}s.
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public List<ProgramRecord> list() throws IOException {
+  public List<ProgramRecord> list() throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("procedures");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ProgramRecord>>() { }).getResponseObject();

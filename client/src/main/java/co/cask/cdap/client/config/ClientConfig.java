@@ -30,7 +30,7 @@ import java.net.URL;
  */
 public class ClientConfig {
 
-  private static final boolean DEFAULT_SSL = false;
+  private static final boolean DEFAULT_IS_SSL_ENABLED = false;
   private static final String DEFAULT_VERSION = "v2";
   private static final String HTTP = "http";
   private static final String HTTPS = "https";
@@ -52,7 +52,7 @@ public class ClientConfig {
    */
   public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig,
                       AuthenticationClient authenticationClient) {
-    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_SSL, authenticationClient);
+    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_IS_SSL_ENABLED, authenticationClient);
   }
 
   /**
@@ -60,14 +60,14 @@ public class ClientConfig {
    * @param port Port of the CDAP server (i.e. 10000)
    * @param defaultConfig {@link HttpRequestConfig} to use by default
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
-   * @param ssl true, if SSL is enabled in the gateway server
+   * @param isSslEnabled true, if SSL is enabled in the gateway server
    */
   public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig,
-                      boolean ssl, AuthenticationClient authenticationClient) {
+                      boolean isSslEnabled, AuthenticationClient authenticationClient) {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
     this.port = port;
-    this.protocol = ssl ? HTTPS : HTTP;
+    this.protocol = isSslEnabled ? HTTPS : HTTP;
     this.authenticationClient = authenticationClient;
     this.baseURI = URI.create(String.format("%s://%s:%d", protocol, hostname, port));
   }
@@ -124,9 +124,9 @@ public class ClientConfig {
    * @param hostname Hostname of the CDAP server (i.e. example.com)
    * @param port Port of the CDAP server (i.e. 10000)
    */
-  public void setHostnameAndPort(String hostname, int port, boolean ssl) {
+  public void setHostnameAndPort(String hostname, int port, boolean isSslEnabled) {
     this.port = port;
-    this.protocol = ssl ? HTTPS : HTTP;
+    this.protocol = isSslEnabled ? HTTPS : HTTP;
     this.baseURI = URI.create(String.format("%s://%s:%d", protocol, hostname, port));
   }
 

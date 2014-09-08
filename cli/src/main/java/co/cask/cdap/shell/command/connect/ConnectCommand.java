@@ -39,16 +39,14 @@ public class ConnectCommand extends AbstractCommand {
 
   @Inject
   public ConnectCommand(CLIConfig cliConfig) {
-    super("connect", "<cdap-hostname> [<credential(s)>]", "Connects to a CDAP instance. <credential(s)> " +
+    super("connect", "<cdap-hostname>", "Connects to a CDAP instance. <credential(s)> " +
           "parameter(s) could be used if authentication is enabled in the gateway server.");
     this.cliConfig = cliConfig;
   }
 
   @Override
   public void process(String[] args, PrintStream output) throws Exception {
-    if (args.length < 1) {
-      throw new CommandInputError("Expected arguments: " + argsFormat);
-    }
+    super.process(args, output);
 
     String hostname = args[0];
 

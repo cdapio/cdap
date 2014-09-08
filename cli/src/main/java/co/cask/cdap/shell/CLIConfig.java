@@ -50,9 +50,8 @@ public class CLIConfig {
 
   /**
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
-   * @throws java.net.URISyntaxException
    */
-  public CLIConfig(String hostname) throws Exception {
+  public CLIConfig(String hostname) {
     this.hostname = Objects.firstNonNull(hostname, "localhost");
     this.port = DEFAULT_PORT;
     this.sslPort = DEFAULT_SSL_PORT;

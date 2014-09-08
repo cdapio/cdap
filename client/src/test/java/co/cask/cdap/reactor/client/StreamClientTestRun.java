@@ -18,13 +18,11 @@ package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.StreamNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
-import co.cask.cdap.security.authentication.client.AuthenticationClient;
-import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -50,10 +48,8 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
-    ClientConfig config = new ClientConfig(HOSTNAME, authenticationClient);
-    streamClient = new StreamClient(config);
+    super.setUp();
+    streamClient = new StreamClient(clientConfig);
   }
 
   @Test
@@ -84,7 +80,9 @@ public class StreamClientTestRun extends ClientTestBase {
    * Tests for the get events call
    */
   @Test
-  public void testStreamEvents() throws IOException, BadRequestException, StreamNotFoundException {
+  public void testStreamEvents() throws IOException, BadRequestException, StreamNotFoundException,
+    UnAuthorizedAccessTokenException {
+
     String streamId = "testEvents";
 
     streamClient.create(streamId);

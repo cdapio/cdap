@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.QueryNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
@@ -63,7 +64,7 @@ public class QueryClient {
    * @throws IOException if a network error occurred
    * @throws BadRequestException if the query was malformed
    */
-  public QueryHandle execute(String query) throws IOException, BadRequestException {
+  public QueryHandle execute(String query) throws IOException, BadRequestException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("data/explore/queries");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(ImmutableMap.of("query", query))).build();
 
@@ -84,7 +85,8 @@ public class QueryClient {
    * @throws IOException if a network error occurred
    * @throws QueryNotFoundException if the query with the specified handle was not found
    */
-  public QueryStatus getStatus(QueryHandle queryHandle) throws IOException, QueryNotFoundException {
+  public QueryStatus getStatus(QueryHandle queryHandle) throws IOException, QueryNotFoundException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("data/explore/queries/%s/status", queryHandle.getHandle()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -104,7 +106,7 @@ public class QueryClient {
    * @throws QueryNotFoundException if the query with the specified handle was not found
    */
   public List<ColumnDesc> getSchema(QueryHandle queryHandle)
-    throws IOException, QueryNotFoundException {
+    throws IOException, QueryNotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("data/explore/queries/%s/schema", queryHandle.getHandle()));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -127,7 +129,7 @@ public class QueryClient {
    * @throws QueryNotFoundException if the query with the specified handle was not found
    */
   public List<QueryResult> getResults(QueryHandle queryHandle, int batchSize)
-    throws IOException, QueryNotFoundException {
+    throws IOException, QueryNotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("data/explore/queries/%s/next", queryHandle.getHandle()));
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(ImmutableMap.of("size", batchSize))).build();
@@ -148,7 +150,8 @@ public class QueryClient {
    * @throws QueryNotFoundException if the query with the specified handle was not found
    * @throws BadRequestException if the query could not be deleted at the moment
    */
-  public void delete(QueryHandle queryHandle) throws IOException, QueryNotFoundException, BadRequestException {
+  public void delete(QueryHandle queryHandle) throws IOException, QueryNotFoundException, BadRequestException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("data/explore/queries/%s", queryHandle.getHandle()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,
@@ -168,8 +171,10 @@ public class QueryClient {
    * @throws IOException if a network error occurred
    * @throws QueryNotFoundException if the query with the specified handle was not found
    * @throws BadRequestException if the query was not in a state that could be canceled
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void cancel(QueryHandle queryHandle) throws IOException, QueryNotFoundException, BadRequestException {
+  public void cancel(QueryHandle queryHandle) throws IOException, QueryNotFoundException, BadRequestException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("data/explore/queries/%s/cancel", queryHandle.getHandle()));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND,

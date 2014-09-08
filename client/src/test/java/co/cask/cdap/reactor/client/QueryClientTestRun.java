@@ -18,21 +18,16 @@ package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.QueryClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
-import co.cask.cdap.security.authentication.client.AuthenticationClient;
-import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -47,11 +42,9 @@ public class QueryClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
-    ClientConfig config = new ClientConfig(HOSTNAME, authenticationClient);
-    appClient = new ApplicationClient(config);
-    queryClient = new QueryClient(config);
+    super.setUp();
+    appClient = new ApplicationClient(clientConfig);
+    queryClient = new QueryClient(clientConfig);
   }
 
   // TODO: explore query in singlenode?

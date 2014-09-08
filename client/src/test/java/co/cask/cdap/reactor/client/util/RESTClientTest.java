@@ -18,6 +18,7 @@
 package co.cask.cdap.reactor.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpResponse;
@@ -83,7 +84,7 @@ public class RESTClientTest {
     verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = IOException.class)
+  @Test(expected = UnAuthorizedAccessTokenException.class)
   public void testPostUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testPostAuth").toURL();
     HttpRequest request = HttpRequest.post(url).build();
@@ -98,7 +99,7 @@ public class RESTClientTest {
     verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = IOException.class)
+  @Test(expected = UnAuthorizedAccessTokenException.class)
   public void testPutUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testPutAuth").toURL();
     HttpRequest request = HttpRequest.put(url).build();
@@ -113,7 +114,7 @@ public class RESTClientTest {
     verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = IOException.class)
+  @Test(expected = UnAuthorizedAccessTokenException.class)
   public void testGetUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testGetAuth").toURL();
     HttpRequest request = HttpRequest.get(url).build();
@@ -128,7 +129,7 @@ public class RESTClientTest {
     verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
   }
 
-  @Test(expected = IOException.class)
+  @Test(expected = UnAuthorizedAccessTokenException.class)
   public void testDeleteUnauthorizedWithAccessToken() throws Exception {
     URL url = getBaseURI().resolve("/api/testDeleteAuth").toURL();
     HttpRequest request = HttpRequest.delete(url).build();

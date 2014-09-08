@@ -20,6 +20,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.StreamNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
@@ -71,7 +72,8 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream was not found
    */
-  public StreamProperties getConfig(String streamId) throws IOException, StreamNotFoundException {
+  public StreamProperties getConfig(String streamId) throws IOException, StreamNotFoundException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("streams/%s/info", streamId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -88,7 +90,7 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws BadRequestException if the provided stream ID was invalid
    */
-  public void create(String newStreamId) throws IOException, BadRequestException {
+  public void create(String newStreamId) throws IOException, BadRequestException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("streams/%s", newStreamId));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_BAD_REQUEST);
@@ -105,7 +107,8 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified ID was not found
    */
-  public void sendEvent(String streamId, String event) throws IOException, StreamNotFoundException {
+  public void sendEvent(String streamId, String event) throws IOException, StreamNotFoundException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("streams/%s", streamId));
     HttpRequest request = HttpRequest.post(url).withBody(event).build();
 
@@ -122,7 +125,7 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified name was not found
    */
-  public void truncate(String streamId) throws IOException, StreamNotFoundException {
+  public void truncate(String streamId) throws IOException, StreamNotFoundException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("streams/%s/truncate", streamId));
     HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -139,7 +142,8 @@ public class StreamClient {
    * @throws IOException if a network error occurred
    * @throws StreamNotFoundException if the stream with the specified name was not found
    */
-  public void setTTL(String streamId, long ttlInSeconds) throws IOException, StreamNotFoundException {
+  public void setTTL(String streamId, long ttlInSeconds) throws IOException, StreamNotFoundException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("streams/%s/config", streamId));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(ImmutableMap.of("ttl", ttlInSeconds))).build();
 
@@ -155,7 +159,7 @@ public class StreamClient {
    * @return list of {@link StreamRecord}s
    * @throws IOException if a network error occurred
    */
-  public List<StreamRecord> list() throws IOException {
+  public List<StreamRecord> list() throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("streams");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<StreamRecord>>() { }).getResponseObject();

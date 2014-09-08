@@ -21,6 +21,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.DatasetAlreadyExistsException;
 import co.cask.cdap.client.exception.DatasetNotFoundException;
 import co.cask.cdap.client.exception.DatasetTypeNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
@@ -58,8 +59,9 @@ public class DatasetClient {
    *
    * @return list of {@link DatasetSpecification}.
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public List<DatasetSpecification> list() throws IOException {
+  public List<DatasetSpecification> list() throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("data/datasets");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetSpecification>>() { }).getResponseObject();
@@ -73,9 +75,10 @@ public class DatasetClient {
    * @throws DatasetTypeNotFoundException if the desired dataset type was not found
    * @throws DatasetAlreadyExistsException if a dataset by the same name already exists
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void create(String datasetName, DatasetInstanceConfiguration properties)
-    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException {
+    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
     HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(properties)).build();
@@ -97,9 +100,10 @@ public class DatasetClient {
    * @throws DatasetTypeNotFoundException if the desired dataset type was not found
    * @throws DatasetAlreadyExistsException if a dataset by the same name already exists
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void create(String datasetName, String typeName)
-    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException {
+    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
     create(datasetName, new DatasetInstanceConfiguration(typeName, ImmutableMap.<String, String>of()));
   }
 
@@ -109,8 +113,10 @@ public class DatasetClient {
    * @param datasetName Name of the dataset to delete
    * @throws DatasetNotFoundException if the dataset with the specified name could not be found
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void delete(String datasetName) throws DatasetNotFoundException, IOException {
+  public void delete(String datasetName) throws DatasetNotFoundException, IOException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
@@ -124,8 +130,9 @@ public class DatasetClient {
    *
    * @param datasetName Name of the dataset to truncate
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void truncate(String datasetName) throws IOException {
+  public void truncate(String datasetName) throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("data/datasets/%s/admin/truncate", datasetName));
     restClient.execute(HttpMethod.POST, url, config.getAccessToken());
   }

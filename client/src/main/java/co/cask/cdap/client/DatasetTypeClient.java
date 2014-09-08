@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpResponse;
@@ -48,8 +49,9 @@ public class DatasetTypeClient {
    *
    * @return list of {@link DatasetTypeMeta}s.
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public List<DatasetTypeMeta> list() throws IOException {
+  public List<DatasetTypeMeta> list() throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("data/types");
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<DatasetTypeMeta>>() { }).getResponseObject();
@@ -61,8 +63,9 @@ public class DatasetTypeClient {
    * @param typeName name of the dataset type
    * @return {@link DatasetTypeMeta} of the dataset type
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public DatasetTypeMeta get(String typeName) throws IOException {
+  public DatasetTypeMeta get(String typeName) throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("data/types/%s", typeName));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, DatasetTypeMeta.class).getResponseObject();

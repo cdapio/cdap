@@ -17,6 +17,7 @@
 package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequestConfig;
@@ -24,6 +25,7 @@ import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.io.IOException;
@@ -55,26 +57,29 @@ public class RESTClient {
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException {
-    return execute(addExtraHeaders(request, getAuthHeaders(accessToken)), allowedErrorCodes);
+    throws IOException, UnAuthorizedAccessTokenException {
+    return execute(HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
-    throws IOException {
+    throws IOException, UnAuthorizedAccessTokenException {
     return execute(HttpRequest.builder(httpMethod, url).addHeaders(getAuthHeaders(accessToken)).build(),
                    allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
-                              int... allowedErrorCodes) throws IOException {
+                              int... allowedErrorCodes) throws IOException, UnAuthorizedAccessTokenException {
     return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).addHeaders(getAuthHeaders(accessToken))
                      .build(), allowedErrorCodes);
   }
 
-  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException {
+  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
+    UnAuthorizedAccessTokenException {
     HttpResponse response = HttpRequests.execute(request, defaultConfig);
-    if (!isSuccessful(response.getResponseCode())
-      && !ArrayUtils.contains(allowedErrorCodes, response.getResponseCode())) {
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpStatus.SC_UNAUTHORIZED) {
+      throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
+    } else if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       throw new IOException(response.getResponseBodyAsString());
     }
     return response;
@@ -82,9 +87,10 @@ public class RESTClient {
 
   public HttpResponse upload(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
     throws IOException {
-    HttpResponse response = HttpRequests.execute(addExtraHeaders(request, getAuthHeaders(accessToken)), uploadConfig);
-    if (!isSuccessful(response.getResponseCode())
-      && !ArrayUtils.contains(allowedErrorCodes, response.getResponseCode())) {
+    HttpResponse response = HttpRequests.execute(
+      HttpRequest.builder(request).addHeaders(getAuthHeaders(accessToken)).build(), uploadConfig);
+    int responseCode = response.getResponseCode();
+    if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       throw new IOException(response.getResponseBodyAsString());
     }
     return response;
@@ -92,14 +98,6 @@ public class RESTClient {
 
   private boolean isSuccessful(int responseCode) {
     return 200 <= responseCode && responseCode <= 299;
-  }
-
-  private HttpRequest addExtraHeaders(HttpRequest request, Map<String, String> headers) {
-    return HttpRequest.builder(request.getMethod(), request.getURL())
-      .addHeaders(request.getHeaders())
-      .withBody(request.getBody())
-      .addHeaders(headers)
-      .build();
   }
 
   private Map<String, String> getAuthHeaders(AccessToken accessToken) {

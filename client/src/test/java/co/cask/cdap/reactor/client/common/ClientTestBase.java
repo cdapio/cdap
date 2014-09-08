@@ -17,13 +17,18 @@
 package co.cask.cdap.reactor.client.common;
 
 import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
+import org.junit.Before;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +41,16 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class ClientTestBase extends SingleNodeTestBase {
   protected static final String HOSTNAME = "localhost";
-  protected static final int PORT = 20000;
+  protected static final int PORT = 10000;
+
+  protected ClientConfig clientConfig;
+
+  @Before
+  public void setUp() throws Throwable {
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
+    clientConfig = new ClientConfig(HOSTNAME, authenticationClient);
+  }
 
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
     Assert.assertEquals(expected.size(), actual.size());
@@ -58,7 +72,9 @@ public abstract class ClientTestBase extends SingleNodeTestBase {
   }
 
   protected void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
-                                          int numInstances) throws IOException, NotFoundException {
+                                          int numInstances) throws IOException, NotFoundException,
+    UnAuthorizedAccessTokenException {
+
     int actualInstances;
     int numTries = 0;
     int maxTries = 5;
@@ -70,7 +86,9 @@ public abstract class ClientTestBase extends SingleNodeTestBase {
   }
 
   protected void assertFlowletInstances(ProgramClient programClient, String appId, String flowId,
-                                        String flowletId, int numInstances) throws IOException, NotFoundException {
+                                        String flowletId, int numInstances) throws IOException, NotFoundException,
+    UnAuthorizedAccessTokenException {
+
     int actualInstances;
     int numTries = 0;
     int maxTries = 5;
@@ -82,19 +100,23 @@ public abstract class ClientTestBase extends SingleNodeTestBase {
   }
 
   protected void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId) throws IOException, ProgramNotFoundException {
+                                      String programId) throws IOException, ProgramNotFoundException,
+    UnAuthorizedAccessTokenException {
+
     assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
   }
 
 
   protected void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId) throws IOException, ProgramNotFoundException {
+                                      String programId) throws IOException, ProgramNotFoundException,
+    UnAuthorizedAccessTokenException {
+
     assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
   }
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus)
-    throws IOException, ProgramNotFoundException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     String status;
     int numTries = 0;

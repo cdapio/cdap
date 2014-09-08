@@ -18,6 +18,7 @@ package co.cask.cdap.shell.completer.element;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.shell.completer.StringsCompleter;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -52,6 +53,8 @@ public class DatasetNameCompleter extends StringsCompleter {
             })
           );
         } catch (IOException e) {
+          return Lists.newArrayList();
+        } catch (UnAuthorizedAccessTokenException e) {
           return Lists.newArrayList();
         }
       }
