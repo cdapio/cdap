@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
@@ -89,6 +90,7 @@ public class NettyRouter extends AbstractIdleService {
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
   private final CConfiguration configuration;
+  private final SConfiguration sConfiguration;
   private final String realm;
 
   private ServerBootstrap serverBootstrap;
@@ -101,7 +103,7 @@ public class NettyRouter extends AbstractIdleService {
   private final SSLHandlerFactory sslHandlerFactory;
 
   @Inject
-  public NettyRouter(CConfiguration cConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
+  public NettyRouter(CConfiguration cConf, SConfiguration sConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
                      RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
                      AccessTokenTransformer accessTokenTransformer,
                      DiscoveryServiceClient discoveryServiceClient) {
@@ -128,6 +130,7 @@ public class NettyRouter extends AbstractIdleService {
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
+    this.sConfiguration = sConf;
 
     this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
     this.webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
@@ -143,15 +146,15 @@ public class NettyRouter extends AbstractIdleService {
 
       File keystore;
       try {
-        keystore = new File(cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
+        keystore = new File(sConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
       } catch (Throwable e) {
         throw new RuntimeException("Cannot read keystore file : "
-                                     + cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
+                                     + sConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
       }
       this.sslHandlerFactory = new SSLHandlerFactory(
-        keystore, cConf.get(Constants.Security.Router.SSL_KEYSTORE_TYPE),
-        cConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
-        cConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
+        keystore, sConf.get(Constants.Security.Router.SSL_KEYSTORE_TYPE),
+        sConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
+        sConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
                         Integer.parseInt(cConf.get(Constants.Router.ROUTER_PORT,

@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -69,10 +70,13 @@ public class RoutingToDataSetsTest {
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
     CConfiguration cConf = CConfiguration.create();
+    SConfiguration sConf = SConfiguration.create();
     cConf.set(Constants.Router.ADDRESS, "localhost");
     port = Networks.getRandomPort();
+
     cConf.setInt(Constants.Router.ROUTER_PORT, port);
-    nettyRouter = new NettyRouter(cConf, InetAddresses.forString("127.0.0.1"),
+    nettyRouter = new NettyRouter(cConf, sConf, InetAddresses.forString("127.0.0.1"),
+
                                   new RouterServiceLookup(discoveryServiceClient,
                                                           new RouterPathLookup(new NoAuthenticator())),
                                   new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
