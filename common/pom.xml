@@ -170,31 +170,6 @@
           </execution>
         </executions>
       </plugin>
-
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-default-configuration</id>
-            <phase>generate-resources</phase>
-            <goals>
-                <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>../web-app/server/common/resources</outputDirectory>
-                <overwrite>true</overwrite>
-                <resources>
-                  <resource>
-                    <directory>${project.build.directory}/src/main/resources</directory>
-                    <includes>
-                      <include>cdap-default.xml</include>
-                    </includes>
-                  </resource>
-                </resources>
-              </configuration>
-          </execution>
-      </executions>
-      </plugin>
     </plugins>
   </build>
 
