@@ -97,7 +97,7 @@ public class CLIConfig {
     return version;
   }
 
-  public void setHostname(String hostname, int port, boolean ssl) throws URISyntaxException {
+  public void setConnection(String hostname, int port, boolean ssl) throws URISyntaxException {
     this.hostname = hostname;
     if (ssl) {
       this.sslPort = port;
