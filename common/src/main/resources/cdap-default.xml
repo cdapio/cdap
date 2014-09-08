@@ -624,11 +624,34 @@
     </property>
 
     <property>
-        <name>router.forward.rule</name>
-        <value>10000:gateway,20000:webapp/$HOST</value>
-        <description>Forward rules for router (port:service -> forward port to service)</description>
+      <name>router.webapp.enabled</name>
+      <value>false</value>
+      <description>Specifies if webapp listening service should be started at Router</description>
     </property>
 
+    <property>
+        <name>router.bind.port</name>
+        <value>10000</value>
+        <description>Router listening port for gateway</description>
+    </property>
+
+    <property>
+        <name>router.webapp.bind.port</name>
+        <value>20000</value>
+        <description>Router listening port for webapp</description>
+    </property>
+
+    <property>
+        <name>router.ssl.bind.port</name>
+        <value>9443</value>
+        <description>Secure router listening port for gateway</description>
+    </property>
+
+    <property>
+        <name>router.ssl.webapp.bind.port</name>
+        <value>20443</value>
+        <description>Secure router listening port for webapp</description>
+    </property>
 
     <!-- Sets whether Devsuite is in Cloud or not -->
     <property>
@@ -743,6 +766,12 @@
         <name>metrics.dataset.hbase.stats.report.interval</name>
         <value>60</value>
         <description>Report interval for hbase stats, in seconds.</description>
+    </property>
+
+    <property>
+        <name>metrics.dataset.leveldb.stats.report.interval</name>
+        <value>60</value>
+        <description>Report interval for leveldb stats, in seconds.</description>
     </property>
 
     <!--
@@ -932,7 +961,7 @@
     </property>
 
     <property>
-        <name>security.auth.server.port</name>
+        <name>security.auth.server.bind.port</name>
         <value>10009</value>
     </property>
 
@@ -1013,7 +1042,7 @@
   </property>
 
   <property>
-    <name>security.auth.server.ssl.port</name>
+    <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
   </property>
 
@@ -1030,7 +1059,7 @@
   </property>
 
   <property>
-    <name>router.ssl.port</name>
+    <name>router.ssl.bind.port</name>
     <value>9443</value>
   </property>
 

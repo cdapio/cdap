@@ -36,6 +36,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
@@ -67,6 +68,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -137,7 +139,8 @@ public abstract class DatasetServiceTestBase {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf));
+                                 new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
+                                 new HashSet<DatasetMetricsReporter>());
 
     // Start dataset service, wait for it to be discoverable
     service.start();

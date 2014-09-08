@@ -183,8 +183,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       server.setHandler(handlers);
     } catch (Exception e) {
-      LOG.error("Error while starting server.");
-      LOG.error(e.getMessage());
+      LOG.error("Error while starting server.", e);
     }
   }
 
@@ -215,8 +214,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       server.stop();
       grantAccessToken.destroy();
     } catch (Exception e) {
-      LOG.error("Error stopping ExternalAuthenticationServer.");
-      LOG.error(e.getMessage());
+      LOG.error("Error stopping ExternalAuthenticationServer.", e);
     }
   }
 }
