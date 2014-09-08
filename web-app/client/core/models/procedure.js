@@ -44,11 +44,11 @@ define(['core/models/program'], function (Program) {
 
 		},
 
-		updateState: function (http, done) {
-		  var self = this;
+    updateState: function (http, done) {
+      var self = this;
 
- 		  //Update the flow's currentState. Program.updateState does this.
-		  this._super(http, done);
+      //Update the flow's currentState. Program.updateState does this.
+      this._super(http, done);
       if (!C.isLocal) {
         http.rest(this.get('context'), 'live-info', function (response) {
 
@@ -64,20 +64,20 @@ define(['core/models/program'], function (Program) {
           }
         });	
       }
-		},
+    },
 
-		getMeta: function () {
-			var arr = [];
-			for (var m in this.meta) {
-				arr.push({
-					k: m,
-					v: this.meta[m]
-				});
-			}
-			return arr;
-		}.property('meta')
+    getMeta: function () {
+      var arr = [];
+      for (var m in this.meta) {
+        arr.push({
+          k: m,
+          v: this.meta[m]
+        });
+      }
+      return arr;
+    }.property('meta')
 
-	});
+  });
 
 	Model.reopenClass({
 		type: 'Procedure',
