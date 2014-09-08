@@ -17,9 +17,6 @@
 package co.cask.cdap.reactor.client.app;
 
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import org.apache.twill.api.AbstractTwillRunnable;
-import org.apache.twill.api.TwillContext;
-import org.apache.twill.api.TwillRunnableSpecification;
 
 /**
  * Fake no-op Service.

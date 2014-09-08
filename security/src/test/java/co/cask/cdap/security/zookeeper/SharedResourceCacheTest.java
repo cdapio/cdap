@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Codec;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -30,6 +31,8 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.data.ACL;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -78,10 +82,13 @@ public class SharedResourceCacheTest {
   public void testCache() throws Exception {
     String parentZNode = ZK_NAMESPACE + "/testCache";
 
+    List<ACL> acls = Lists.newArrayList(ZooDefs.Ids.OPEN_ACL_UNSAFE);
+
     // create 2 cache instances
     ZKClientService zkClient1 = injector1.getInstance(ZKClientService.class);
     zkClient1.startAndWait();
-    SharedResourceCache<String> cache1 = new SharedResourceCache<String>(zkClient1, new StringCodec(), parentZNode);
+    SharedResourceCache<String> cache1 =
+      new SharedResourceCache<String>(zkClient1, new StringCodec(), parentZNode, acls);
     cache1.init();
 
     // add items to one and wait for them to show up in the second
@@ -91,7 +98,8 @@ public class SharedResourceCacheTest {
 
     ZKClientService zkClient2 = injector2.getInstance(ZKClientService.class);
     zkClient2.startAndWait();
-    SharedResourceCache<String> cache2 = new SharedResourceCache<String>(zkClient2, new StringCodec(), parentZNode);
+    SharedResourceCache<String> cache2 =
+      new SharedResourceCache<String>(zkClient2, new StringCodec(), parentZNode, acls);
     cache2.init();
 
     waitForEntry(cache2, key1, value1, 10000);

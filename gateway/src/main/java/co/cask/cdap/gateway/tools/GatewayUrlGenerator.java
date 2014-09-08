@@ -18,8 +18,6 @@ package co.cask.cdap.gateway.tools;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 
 /**
  * Helper to generate Gateway Url.
@@ -34,16 +32,11 @@ public class GatewayUrlGenerator {
   public static String getBaseUrl(CConfiguration config, String hostname, int port, boolean ssl) {
 
     if (port <= 0) {
-      for (String rule : config.getStrings(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD)) {
-        Iterable<String> portService = Splitter.on(':').split(rule);
-        if (Iterables.get(portService, 1).equals(Constants.Service.GATEWAY)) {
-          try {
-            port = Integer.parseInt(Iterables.get(portService, 0));
-          } catch (NumberFormatException e) {
-            // This is called from a command line client. Logging is turned off, ignore the error
-          }
-          break;
-        }
+      if (config.getBoolean(Constants.Security.Router.SSL_ENABLED)) {
+        port = Integer.parseInt(config.get(Constants.Router.ROUTER_SSL_PORT,
+                                           Constants.Router.DEFAULT_ROUTER_SSL_PORT));
+      } else {
+        port = Integer.parseInt(config.get(Constants.Router.ROUTER_PORT, Constants.Router.DEFAULT_ROUTER_PORT));
       }
     }
 

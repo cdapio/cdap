@@ -32,25 +32,32 @@ define(['core/models/program'], function (Program) {
       return this.get('currentState') === "RUNNING";
     }.property('currentState'),
 
-    updateRunnable: function (runnable, index, http) {
+    updateRunnable: function (runnable, http) {
       var self = this;
       var url = 'apps/' + self.app + '/services/' + self.name 
           + '/runnables/' + runnable.id + '/instances';
       http.rest(url, function (runnablesResponse) {
-        self.runnablesList[index].set('requested', runnablesResponse.requested);
-        self.runnablesList[index].set('provisioned', runnablesResponse.provisioned);
+        runnable.set('requested', runnablesResponse.requested);
+        runnable.set('provisioned', runnablesResponse.provisioned);
       });
     },
 
     populateRunnablesAndUpdate : function (http, userServicesArray) {
       var self = this;
       http.rest('apps/' + self.app + '/services/' + self.name, function (serviceSpec) {
-        var runnables = [];
+        var workers = [];
+        var handler;
         serviceSpec.runnables.forEach(function(runnable){
-          runnables.push(Ember.Object.create({id : runnable}));
+          obj = Ember.Object.create({id : runnable});
+          if(runnable === self.name) {
+            handler = obj;
+          } else {
+            workers.push(obj);
+          }
         });
-        self.set('runnablesList', runnables);
-        self.set('numRunnables', runnables.length);
+        self.set('workersList', workers);
+        self.set('handler', handler);
+        self.set('numWorkers', workers.length);
         if(userServicesArray != undefined) {
           userServicesArray.pushObject(self);
         }
@@ -62,9 +69,10 @@ define(['core/models/program'], function (Program) {
     update: function (http) {
       var self = this;
 
-      self.runnablesList.forEach(function (runnable, index) {
-        self.updateRunnable(runnable, index, http);
+      self.workersList.forEach(function (worker) {
+        self.updateRunnable(worker, http);
       });
+      self.updateRunnable(self.handler, http);
 
       var url = 'apps/' + self.app + '/services/' + self.name + '/status';
       http.rest(url, function (statusResponse) {
