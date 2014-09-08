@@ -16,6 +16,7 @@
 package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.SConfiguration;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -27,22 +28,29 @@ public final class ConfigModule extends AbstractModule {
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final SConfiguration sConf;
 
   public ConfigModule() {
-    this(CConfiguration.create(), new Configuration());
+    this(CConfiguration.create(), new Configuration(), SConfiguration.create());
   }
 
   public ConfigModule(Configuration hConf) {
-    this(CConfiguration.create(), hConf);
+    this(CConfiguration.create(), hConf, SConfiguration.create());
   }
 
   public ConfigModule(CConfiguration cConf) {
-    this(cConf, new Configuration());
+    this(cConf, new Configuration(), SConfiguration.create());
   }
 
+
   public ConfigModule(CConfiguration cConf, Configuration hConf) {
+    this(cConf, hConf, SConfiguration.create());
+  }
+
+  public ConfigModule(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
     this.cConf = cConf;
     this.hConf = hConf;
+    this.sConf = sConf;
     cConf.copyTxProperties(hConf);
   }
 
@@ -50,6 +58,7 @@ public final class ConfigModule extends AbstractModule {
   protected void configure() {
     bind(CConfiguration.class).toInstance(cConf);
     bind(Configuration.class).toInstance(hConf);
+    bind(SConfiguration.class).toInstance(sConf);
     bind(YarnConfiguration.class).toInstance(new YarnConfiguration(hConf));
   }
 }

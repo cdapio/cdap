@@ -64,7 +64,7 @@ define(['core/controllers/services'], function (servicesController) {
         "Request " + numRequested + " instances",
         "Request " + numRequested + " instances for runnable: " + runnableID + "?",
         function () {
-          var url = 'rest/apps/' + service.app + '/services/' + service.name 
+          var url = 'rest/apps/' + service.app + '/services/' + service.name
               + '/runnables/' + runnableID + '/instances';
           var callback =  function(){service.update(self.HTTP)};
           self.executeInstanceCall(url, numRequested, callback);

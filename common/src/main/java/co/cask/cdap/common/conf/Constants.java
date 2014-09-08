@@ -482,6 +482,11 @@ public final class Constants {
       /** SSL keystore password */
       public static final String SSL_KEYSTORE_PASSWORD = "security.auth.server.ssl.keystore.password";
     }
+
+    /** Path to the Kerberos keytab file used by CDAP */
+    public static final String CFG_CDAP_MASTER_KRB_KEYTAB_PATH = "cdap.master.kerberos.keytab";
+    /** Kerberos principal used by CDAP */
+    public static final String CFG_CDAP_MASTER_KRB_PRINCIPAL = "cdap.master.kerberos.principal";
   }
 
   /**
@@ -594,4 +599,24 @@ public final class Constants {
    * NOTE: value should be in sync with the one used by UI.
    */
   public static final String DEVELOPER_ACCOUNT_ID = "developer";
+
+  /**
+   * Constants related to external systems.
+   */
+  public static final class External {
+    /**
+     * Constants used by Java security.
+     */
+    public static final class JavaSecurity {
+      public static final String ENV_AUTH_LOGIN_CONFIG = "java.security.auth.login.config";
+    }
+
+    /**
+     * Constants used by Zookeeper.
+     */
+    public static final class Zookeeper {
+      public static final String ENV_AUTH_PROVIDER_1 = "zookeeper.authProvider.1";
+      public static final String ENV_ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
+    }
+  }
 }

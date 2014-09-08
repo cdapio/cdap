@@ -112,7 +112,7 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
         continue;
       }
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
-      collector.gauge("dataset.size.mb", statEntry.getValue().getTotalSizeMB(), datasetName);
+      collector.increment("dataset.size.mb", statEntry.getValue().getTotalSizeMB(), datasetName);
     }
   }
 }

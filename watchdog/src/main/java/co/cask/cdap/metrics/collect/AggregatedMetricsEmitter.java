@@ -61,7 +61,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     }
   }
 
-  void gauge(int value, String... tags) {
+  void increment(int value, String... tags) {
     this.value.addAndGet(value);
     for (String tag : tags) {
       tagValues.getUnchecked(tag).addAndGet(value);

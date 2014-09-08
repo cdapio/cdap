@@ -1046,11 +1046,6 @@
     <value>10010</value>
   </property>
 
-  <property>
-    <name>security.auth.server.ssl.keystore.type</name>
-    <value>JKS</value>
-  </property>
-
   <!-- Security configuration for the router -->
 
   <property>
@@ -1061,11 +1056,6 @@
   <property>
     <name>router.ssl.bind.port</name>
     <value>9443</value>
-  </property>
-
-  <property>
-    <name>router.ssl.keystore.type</name>
-    <value>JKS</value>
   </property>
 
 </configuration>

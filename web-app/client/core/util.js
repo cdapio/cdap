@@ -285,7 +285,7 @@ define([], function () {
 						if (id === (self.APP_NAME + ':' + self.FLOW_NAME)) {
 							self.popover('[href="#/apps/' + self.APP_NAME + '"]',
 								'bottom', self.TITLES[5], self.STRINGS[5]);
-						}						
+						}
 					break;
 					case 'controller:ProcedureStatus':
 						if (id === (self.APP_NAME + ':' + self.PROCEDURE_NAME)) {
@@ -1037,11 +1037,11 @@ define([], function () {
     		var ret = fn.toString();
 			  ret = ret.substr('function '.length);
 			  ret = ret.substr(0, ret.indexOf('('));
-			  return ret;	
+			  return ret;
     	} else {
     		throw 'Invalid call getFnName.';
     	}
-    	
+
     },
 
 		reset: function () {

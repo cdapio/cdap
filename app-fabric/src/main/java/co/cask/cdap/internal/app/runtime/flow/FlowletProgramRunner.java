@@ -51,12 +51,9 @@ import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamPropertyListener;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -468,7 +465,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
               QueueProducer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
                 @Override
                 public void emitEnqueue(int count) {
-                  flowletContext.getProgramMetrics().gauge(queueMetricsName, count, queueMetricsTag);
+                  flowletContext.getProgramMetrics().increment(queueMetricsName, count, queueMetricsTag);
                 }
 
                 @Override
@@ -598,8 +595,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new Function<S, T>() {
       @Override
       public T apply(S source) {
-        context.getProgramMetrics().gauge(eventsMetricsName, 1, eventsMetricsTag);
-        context.getProgramMetrics().gauge("process.tuples.read", 1, eventsMetricsTag);
+        context.getProgramMetrics().increment(eventsMetricsName, 1, eventsMetricsTag);
+        context.getProgramMetrics().increment("process.tuples.read", 1, eventsMetricsTag);
         return inputDecoder.apply(source);
       }
     };
