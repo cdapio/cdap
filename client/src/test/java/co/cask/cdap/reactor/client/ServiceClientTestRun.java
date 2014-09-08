@@ -24,6 +24,8 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.app.FakeService;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import org.apache.twill.discovery.Discoverable;
 import org.junit.Before;
@@ -46,7 +48,9 @@ public class ServiceClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
+    ClientConfig config = new ClientConfig(HOSTNAME, authenticationClient);
     appClient = new ApplicationClient(config);
     serviceClient = new ServiceClient(config);
     programClient = new ProgramClient(config);

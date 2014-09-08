@@ -16,7 +16,6 @@
 
 package co.cask.cdap.client.config;
 
-import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.http.HttpRequestConfig;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
@@ -32,10 +31,10 @@ import java.net.URL;
 public class ClientConfig {
 
   private static final boolean DEFAULT_SSL = false;
-  private static final String VERSION = "v2";
-  private static final String DEFAULT_AUTH_CLASS_NAME =
-    "co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient";
-  public static final int DEFAULT_SSL_PORT = 443;
+  private static final String DEFAULT_VERSION = "v2";
+  private static final String HTTP = "http";
+  private static final String HTTPS = "https";
+  private static final int DEFAULT_PORT = 10000;
 
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
@@ -51,9 +50,9 @@ public class ClientConfig {
    * @param defaultConfig {@link HttpRequestConfig} to use by default
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
    */
-  public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig,
-                      HttpRequestConfig uploadConfig) throws Exception {
-    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_SSL);
+  public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig,
+                      AuthenticationClient authenticationClient) {
+    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_SSL, authenticationClient);
   }
 
   /**
@@ -63,14 +62,13 @@ public class ClientConfig {
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
    * @param ssl true, if SSL is enabled in the gateway server
    */
-  public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig,
-                      HttpRequestConfig uploadConfig, boolean ssl) throws Exception {
+  public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig,
+                      boolean ssl, AuthenticationClient authenticationClient) {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
     this.port = port;
-    this.protocol = ssl ? "https" : "http";
-    authenticationClient = (AuthenticationClient) new Configuration().getClassByName(getAuthClassName()).newInstance();
-    authenticationClient.setConnectionInfo(hostname, port, ssl);
+    this.protocol = ssl ? HTTPS : HTTP;
+    this.authenticationClient = authenticationClient;
     this.baseURI = URI.create(String.format("%s://%s:%d", protocol, hostname, port));
   }
 
@@ -78,15 +76,16 @@ public class ClientConfig {
    * @param hostname Hostname of the CDAP server (i.e. example.com)
    * @param port Port of the CDAP server (i.e. 10000)
    */
-  public ClientConfig(String hostname, int port) throws Exception {
-    this(hostname, port, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
+  public ClientConfig(String hostname, int port, AuthenticationClient authenticationClient) {
+    this(hostname, port, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0), authenticationClient);
   }
 
   /**
    * @param hostname Hostname of the CDAP server (i.e. example.com)
    */
-  public ClientConfig(String hostname) throws Exception {
-    this(hostname, 10000, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
+  public ClientConfig(String hostname, AuthenticationClient authenticationClient) {
+    this(hostname, DEFAULT_PORT, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0),
+         authenticationClient);
   }
 
   /**
@@ -97,7 +96,7 @@ public class ClientConfig {
    * @throws MalformedURLException
    */
   public URL resolveURL(String path) throws MalformedURLException {
-    return baseURI.resolve("/" + VERSION + "/" + path).toURL();
+    return baseURI.resolve("/" + DEFAULT_VERSION + "/" + path).toURL();
   }
 
   /**
@@ -127,8 +126,8 @@ public class ClientConfig {
    */
   public void setHostnameAndPort(String hostname, int port, boolean ssl) {
     this.port = port;
-    this.protocol = ssl ? "https" : "http";
-    this.baseURI = URI.create(protocol + "://" + hostname + ":" + port);
+    this.protocol = ssl ? HTTPS : HTTP;
+    this.baseURI = URI.create(String.format("%s://%s:%d", protocol, hostname, port));
   }
 
   /**
@@ -150,24 +149,9 @@ public class ClientConfig {
   }
 
   /**
-   * @return the protocol
-   */
-  public String getProtocol() {
-    return protocol;
-  }
-
-  /**
    * @param protocol the protocol to set
    */
   public void setProtocol(String protocol) {
     this.protocol = protocol;
-  }
-
-  public String getAuthClassName() {
-    return DEFAULT_AUTH_CLASS_NAME;
-  }
-
-  public int getSSLPort() {
-    return DEFAULT_SSL_PORT;
   }
 }

@@ -19,6 +19,8 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import com.google.gson.JsonObject;
 import org.junit.Assert;
@@ -34,13 +36,13 @@ import org.slf4j.LoggerFactory;
 @Category(XSlowTests.class)
 public class MetricsClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MetricsClientTestRun.class);
-
   private MetricsClient metricsClient;
 
   @Before
   public void setUp() throws Throwable {
-    metricsClient = new MetricsClient(new ClientConfig("localhost"));
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
+    metricsClient = new MetricsClient(new ClientConfig(HOSTNAME, authenticationClient));
   }
 
   @Test

@@ -25,6 +25,8 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,14 +42,14 @@ import java.util.List;
 @Category(XSlowTests.class)
 public class QueryClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(QueryClientTestRun.class);
-
   private ApplicationClient appClient;
   private QueryClient queryClient;
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
+    ClientConfig config = new ClientConfig(HOSTNAME, authenticationClient);
     appClient = new ApplicationClient(config);
     queryClient = new QueryClient(config);
   }

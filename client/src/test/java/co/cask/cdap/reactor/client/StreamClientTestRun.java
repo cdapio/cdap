@@ -22,6 +22,8 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.StreamNotFoundException;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -47,14 +49,15 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
+    ClientConfig config = new ClientConfig(HOSTNAME, authenticationClient);
     streamClient = new StreamClient(config);
   }
 
   @Test
   public void testAll() throws Exception {
     String testStreamId = "teststream";
-    String testStreamEvent = "blargh_data";
 
     LOG.info("Getting stream list");
     int baseStreamCount = streamClient.list().size();

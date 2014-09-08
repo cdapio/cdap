@@ -20,12 +20,13 @@ import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.DatasetModuleCannotBeDeletedException;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.reactor.client.app.StandaloneDataset;
 import co.cask.cdap.reactor.client.app.StandaloneDatasetModule;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,7 +51,9 @@ public class DatasetClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
+    ClientConfig config = new ClientConfig(HOSTNAME, authenticationClient);
     datasetClient = new DatasetClient(config);
     moduleClient = new DatasetModuleClient(config);
     typeClient = new DatasetTypeClient(config);

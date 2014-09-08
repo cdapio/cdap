@@ -16,18 +16,18 @@
 
 package co.cask.cdap.shell.command.connect;
 
-import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.Credential;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.shell.CLIConfig;
 import co.cask.cdap.shell.command.AbstractCommand;
 import co.cask.cdap.shell.exception.CommandInputError;
 import co.cask.cdap.shell.util.SocketUtil;
+import jline.console.ConsoleReader;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Properties;
-import java.util.Scanner;
 import javax.inject.Inject;
 
 /**
@@ -51,34 +51,34 @@ public class ConnectCommand extends AbstractCommand {
     }
 
     String hostname = args[0];
-    int port = cliConfig.getClientConfig().getPort();
 
-    if (!SocketUtil.isAvailable(hostname, port)) {
-      throw new IOException(String.format("Host %s on port %d could not be reached", hostname, port));
+    int port;
+    boolean ssl = SocketUtil.isAvailable(hostname, cliConfig.getSslPort());
+    if (ssl) {
+      port = cliConfig.getSslPort();
+    } else if (SocketUtil.isAvailable(hostname, cliConfig.getPort())) {
+      port = cliConfig.getPort();
+    } else {
+      throw new IOException(String.format("Host %s on port %d and %d could not be reached", hostname,
+                                          cliConfig.getPort(), cliConfig.getSslPort()));
     }
 
-    boolean ssl = SocketUtil.isAvailable(hostname, cliConfig.getClientConfig().getSSLPort());
-
-    AuthenticationClient authenticationClient = (AuthenticationClient) new Configuration().getClassByName(
-      cliConfig.getClientConfig().getAuthClassName()).newInstance();
-
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
     authenticationClient.setConnectionInfo(hostname, port, ssl);
     Properties properties = new Properties();
     if (authenticationClient.isAuthEnabled()) {
-      output.printf("Authentication is enabled in the gateway server: %s.\n", cliConfig.getHost());
-      Scanner scan = new Scanner(System.in);
-
+      output.printf("Authentication is enabled in the gateway server: %s.\n", hostname);
+      ConsoleReader reader = new ConsoleReader();
       for (Credential credential : authenticationClient.getRequiredCredentials()) {
         output.printf("Please, specify " + credential.getDescription() + "> ");
-        String credentialValue = scan.nextLine();
+        String credentialValue = reader.readLine();
         properties.put(credential.getName(), credentialValue);
       }
-
       authenticationClient.configure(properties);
       cliConfig.getClientConfig().setAuthenticationClient(authenticationClient);
     }
 
-    cliConfig.setHostname(hostname, ssl);
+    cliConfig.setHostname(hostname, port, ssl);
     output.printf("Successfully connected CDAP host at %s:%d\n", hostname, port);
   }
 }

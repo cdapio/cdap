@@ -35,6 +35,8 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public abstract class ClientTestBase extends SingleNodeTestBase {
+  protected static final String HOSTNAME = "localhost";
+  protected static final int PORT = 20000;
 
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
     Assert.assertEquals(expected.size(), actual.size());

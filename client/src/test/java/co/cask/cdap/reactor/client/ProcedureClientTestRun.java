@@ -24,6 +24,8 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.app.FakeProcedure;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -42,7 +44,6 @@ import java.io.File;
 @Category(XSlowTests.class)
 public class ProcedureClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProcedureClientTestRun.class);
   private static final Gson GSON = new Gson();
 
   private ApplicationClient appClient;
@@ -51,7 +52,9 @@ public class ProcedureClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
+    ClientConfig config = new ClientConfig(HOSTNAME, authenticationClient);
     appClient = new ApplicationClient(config);
     procedureClient = new ProcedureClient(config);
     programClient = new ProgramClient(config);

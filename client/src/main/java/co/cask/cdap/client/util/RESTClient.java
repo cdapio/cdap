@@ -61,19 +61,14 @@ public class RESTClient {
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
     throws IOException {
-    return execute(HttpRequest.builder(httpMethod, url)
-                     .addHeaders(getAuthHeaders(accessToken))
-                     .build(),
+    return execute(HttpRequest.builder(httpMethod, url).addHeaders(getAuthHeaders(accessToken)).build(),
                    allowedErrorCodes);
   }
 
   public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
                               int... allowedErrorCodes) throws IOException {
-    return execute(HttpRequest.builder(httpMethod, url)
-                     .addHeaders(headers)
-                     .addHeaders(getAuthHeaders(accessToken))
-                     .build(),
-                   accessToken, allowedErrorCodes);
+    return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).addHeaders(getAuthHeaders(accessToken))
+                     .build(), allowedErrorCodes);
   }
 
   private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException {
@@ -87,7 +82,6 @@ public class RESTClient {
 
   public HttpResponse upload(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
     throws IOException {
-
     HttpResponse response = HttpRequests.execute(addExtraHeaders(request, getAuthHeaders(accessToken)), uploadConfig);
     if (!isSuccessful(response.getResponseCode())
       && !ArrayUtils.contains(allowedErrorCodes, response.getResponseCode())) {

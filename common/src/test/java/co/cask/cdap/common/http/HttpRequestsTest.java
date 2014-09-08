@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.matcher.Matcher;
-import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
@@ -42,7 +41,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.HttpHeaders;
 
 import static com.google.inject.matcher.Matchers.any;
 import static com.google.inject.matcher.Matchers.only;
@@ -51,7 +49,6 @@ import static com.google.inject.matcher.Matchers.only;
  * Test for {@link HttpRequests}.
  */
 public class HttpRequestsTest {
-  private static final String ACCESS_TOKEN = "ssdw221e2ffderrfg33322rr";
 
   private TestHttpService httpService;
 
@@ -121,29 +118,12 @@ public class HttpRequestsTest {
     testPost(path, ImmutableMap.<String, String>of(), "", expectedResponseCode, expectedMessage, expectedBody);
   }
 
-  private void testPostWithAccessToken(String path, String accessToken, Matcher<Object> expectedResponseCode,
-                        Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
-    URL url = getBaseURI().resolve(path).toURL();
-    HttpRequest request = HttpRequest.post(url).build();
-    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT);
-    verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
-  }
-
   private void testPut(String path, Map<String, String> headers, String body, Matcher<Object> expectedResponseCode,
                         Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
     URL url = getBaseURI().resolve(path).toURL();
     HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(body).build();
     HttpResponse response = HttpRequests.execute(request);
-    verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
-  }
-
-  private void testPutWithAccessToken(String path, String accessToken, Matcher<Object> expectedResponseCode,
-                        Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
-
-    URL url = getBaseURI().resolve(path).toURL();
-    HttpRequest request = HttpRequest.put(url).build();
-    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
@@ -156,30 +136,12 @@ public class HttpRequestsTest {
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
-  private void testGetWithAccessToken(String path, String accessToken, Matcher<Object> expectedResponseCode,
-                       Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
-
-    URL url = getBaseURI().resolve(path).toURL();
-    HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT);
-    verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
-  }
-
   private void testDelete(String path, Matcher<Object> expectedResponseCode,
                           Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
 
     URL url = getBaseURI().resolve(path).toURL();
     HttpRequest request = HttpRequest.delete(url).build();
     HttpResponse response = HttpRequests.execute(request);
-    verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
-  }
-
-  private void testDeleteWithAccessToken(String path, String accessToken, Matcher<Object> expectedResponseCode,
-                          Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
-
-    URL url = getBaseURI().resolve(path).toURL();
-    HttpRequest request = HttpRequest.delete(url).build();
-    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
@@ -428,21 +390,6 @@ public class HttpRequestsTest {
         + request.getHeader("sdf") + "409");
     }
 
-    @POST
-    @Path("/testPostAuth")
-    public void testPostAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
-                            HttpResponder responder) throws Exception {
-      responder.sendString(HttpResponseStatus.OK, "Access token received: "
-        + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
-    }
-
-    @POST
-    @Path("/testPostUnauthorized")
-    public void testPostUnauthorized(org.jboss.netty.handler.codec.http.HttpRequest request,
-                                    HttpResponder responder) throws Exception {
-      responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
-    }
-
     @PUT
     @Path("/testPut")
     public void testPut(org.jboss.netty.handler.codec.http.HttpRequest request,
@@ -459,21 +406,6 @@ public class HttpRequestsTest {
         + request.getHeader("sdf") + "409");
     }
 
-    @PUT
-    @Path("/testPutAuth")
-    public void testPutAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
-                           HttpResponder responder) throws Exception {
-      responder.sendString(HttpResponseStatus.OK, "Access token received: "
-        + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
-    }
-
-    @PUT
-    @Path("/testPutUnauthorized")
-    public void testPutUnauthorized(org.jboss.netty.handler.codec.http.HttpRequest request,
-                           HttpResponder responder) throws Exception {
-      responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
-    }
-
     @DELETE
     @Path("/testDelete")
     public void testDelete(org.jboss.netty.handler.codec.http.HttpRequest request,
@@ -481,41 +413,11 @@ public class HttpRequestsTest {
       responder.sendStatus(HttpResponseStatus.OK);
     }
 
-    @DELETE
-    @Path("/testDeleteAuth")
-    public void testDeleteAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
-                            HttpResponder responder) throws Exception {
-      responder.sendString(HttpResponseStatus.OK, "Access token received: "
-        + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
-    }
-
-    @DELETE
-    @Path("/testDeleteUnauthorized")
-    public void testDeleteUnauthorized(org.jboss.netty.handler.codec.http.HttpRequest request,
-                                    HttpResponder responder) throws Exception {
-      responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
-    }
-
     @GET
     @Path("/testWrongMethod")
     public void testWrongMethod(org.jboss.netty.handler.codec.http.HttpRequest request,
                                 HttpResponder responder) throws Exception {
       responder.sendStatus(HttpResponseStatus.OK);
-    }
-
-    @GET
-    @Path("/testGetAuth")
-    public void testGetAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
-                            HttpResponder responder) throws Exception {
-      responder.sendString(HttpResponseStatus.OK, "Access token received: "
-        + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
-    }
-
-    @GET
-    @Path("/testGetUnauthorized")
-    public void testGetUnauthorized(org.jboss.netty.handler.codec.http.HttpRequest request,
-                                    HttpResponder responder) throws Exception {
-      responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
     }
   }
 

@@ -20,6 +20,8 @@ import co.cask.cdap.client.MonitorClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
@@ -36,13 +38,13 @@ import java.util.List;
 @Category(XSlowTests.class)
 public class MonitorClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MonitorClientTestRun.class);
-
   private MonitorClient monitorClient;
 
   @Before
   public void setUp() throws Throwable {
-    monitorClient = new MonitorClient(new ClientConfig("localhost"));
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
+    monitorClient = new MonitorClient(new ClientConfig(HOSTNAME, authenticationClient));
   }
 
   @Test
