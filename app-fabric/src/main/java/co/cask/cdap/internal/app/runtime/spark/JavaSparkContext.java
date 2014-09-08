@@ -17,32 +17,24 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.MRJobConfig;
-import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 
-import java.util.List;
+import java.net.URL;
 
 /**
  * A concrete implementation of {@link AbstractSparkContext} which is used if the user's spark job is written in Java.
  */
 class JavaSparkContext extends AbstractSparkContext {
 
-  private final org.apache.spark.api.java.JavaSparkContext apacheContext;
+  org.apache.spark.api.java.JavaSparkContext originalSparkContext;
 
-  public JavaSparkContext(org.apache.spark.api.java.JavaSparkContext apacheContext, long logicalStartTime,
-                          SparkSpecification spec, Arguments runtimeArguments) {
-    super(logicalStartTime, spec, runtimeArguments);
-    this.apacheContext = apacheContext;
+  public JavaSparkContext() {
+    super();
+    this.originalSparkContext = new org.apache.spark.api.java.JavaSparkContext(getSparkConf());
   }
 
   /**
@@ -57,22 +49,8 @@ class JavaSparkContext extends AbstractSparkContext {
    */
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
-    Configuration hConf = new Configuration(getHConf());
-    Dataset dataset = basicSparkContext.getDataSet(datasetName);
-    List<Split> inputSplits;
-    if (dataset instanceof BatchReadable) {
-      BatchReadable curDataset = (BatchReadable) basicSparkContext.getDataSet(datasetName);
-      inputSplits = curDataset.getSplits();
-    } else {
-      throw new IllegalArgumentException("Failed to read dataset " + datasetName + ". The dataset does not implements" +
-                                           " BatchReadable");
-    }
-    hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, SparkDatasetInputFormat.class, InputFormat.class);
-    hConf.set(SparkDatasetInputFormat.HCONF_ATTR_INPUT_DATASET, datasetName);
-    hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLIT_CLASS, inputSplits.get(0).getClass().getName());
-    hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLITS, new Gson().toJson(inputSplits));
-
-    return (T) apacheContext.newAPIHadoopFile(datasetName, SparkDatasetInputFormat.class, kClass, vClass, hConf);
+    Configuration hConf = setInputDataset(datasetName);
+    return (T) originalSparkContext.newAPIHadoopFile(datasetName, SparkDatasetInputFormat.class, kClass, vClass, hConf);
   }
 
   /**
@@ -86,9 +64,7 @@ class JavaSparkContext extends AbstractSparkContext {
    */
   @Override
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
-    Configuration hConf = new Configuration(getHConf());
-    hConf.set(SparkDatasetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
-    hConf.setClass(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, SparkDatasetOutputFormat.class, OutputFormat.class);
+    Configuration hConf = setOutputDataset(datasetName);
     ((JavaPairRDD) rdd).saveAsNewAPIHadoopFile(datasetName, kClass, vClass, SparkDatasetOutputFormat.class, hConf);
   }
 
@@ -99,7 +75,17 @@ class JavaSparkContext extends AbstractSparkContext {
    * @return the {@link org.apache.spark.api.java.JavaSparkContext}
    */
   @Override
-  public <T> T getBaseSparkContext() {
-    return (T) apacheContext;
+  public <T> T getOriginalSparkContext() {
+    return (T) originalSparkContext;
+  }
+
+  @Override
+  public URL getServiceURL(String applicationId, String serviceId) {
+    throw new UnsupportedOperationException("Does not support service discovery");
+  }
+
+  @Override
+  public URL getServiceURL(String serviceId) {
+    throw new UnsupportedOperationException("Does not support service discovery");
   }
 }

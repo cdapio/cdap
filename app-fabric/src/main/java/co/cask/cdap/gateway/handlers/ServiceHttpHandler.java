@@ -145,29 +145,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return a list of discoverables for this service.
-   */
-  @Path("/apps/{app-id}/services/{service-id}/discover/{discoverable-id}")
-  @GET
-  public void getDiscoverables(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") String appId,
-                         @PathParam("service-id") String serviceId,
-                         @PathParam("discoverable-id") String discoverableId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ServiceDiscovered discoverables = programServiceDiscovery.discover(accountId, appId, serviceId, discoverableId);
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(discoverables,
-                                                              new TypeToken<ServiceDiscovered>() { }.getType()));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
    * Return the number of instances for the given runnable of a service.
    */
   @GET

@@ -16,11 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 
 /**
- *
+ * Spark Program Controller for {@link Spark} jobs
  */
 public final class SparkProgramController extends AbstractProgramController {
 

@@ -28,6 +28,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.spark.AbstractSparkContextBuilder;
+import co.cask.cdap.internal.app.runtime.spark.BasicSparkContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.collect.ImmutableList;
@@ -42,8 +43,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
- * Builds an instance of {@link co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext} good for
- * in-memory environment
+ * Builds an instance of {@link BasicSparkContext} good for in-memory environment
  */
 public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
   private final CConfiguration cConf;

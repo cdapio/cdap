@@ -1,8 +1,8 @@
-# Cask Data Application Platform
+# Cask Data Application Platform - CDAP
 
-**Local and Distributed Cask DAPs**
+**Standalone and Distributed CDAP**
 
-## Building Cask DAP Maven
+## Building CDAP Maven
 
 ### Clean all modules
     mvn clean

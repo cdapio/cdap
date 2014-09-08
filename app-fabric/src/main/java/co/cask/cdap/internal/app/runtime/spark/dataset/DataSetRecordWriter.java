@@ -28,14 +28,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-final class DatasetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
+final class DataSetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
   //TODO: Needs support for metrics
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetRecordWriter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordWriter.class);
 
   private final BatchWritable<KEY, VALUE> batchWritable;
   private final BasicSparkContext sparkContext;
 
-  public DatasetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicSparkContext sparkContext) {
+  public DataSetRecordWriter(final BatchWritable<KEY, VALUE> batchWritable, BasicSparkContext sparkContext) {
     this.batchWritable = batchWritable;
     this.sparkContext = sparkContext;
     // hack: making sure logging context is set on the thread that accesses the runtime context

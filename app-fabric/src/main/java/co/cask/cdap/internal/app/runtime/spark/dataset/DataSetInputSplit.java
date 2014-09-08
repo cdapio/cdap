@@ -27,13 +27,13 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-class DatasetInputSplit extends InputSplit implements Writable {
+class DataSetInputSplit extends InputSplit implements Writable {
   private Split split;
 
-  public DatasetInputSplit() {
+  public DataSetInputSplit() {
   }
 
-  public DatasetInputSplit(final Split split) {
+  public DataSetInputSplit(final Split split) {
     this.split = split;
   }
 

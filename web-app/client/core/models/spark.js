@@ -2,7 +2,7 @@
  * Spark Model
  */
 
-define(['core/models/program'], function (Program) {
+define(['core/models/program', 'core/controllers/app'], function (Program) {
 
     var EXPECTED_FIELDS = [
         'name',
@@ -28,6 +28,38 @@ define(['core/models/program'], function (Program) {
                 this.set('startTime', this.get('meta').startTime);
             }
 
+        },
+
+        start: function(http) {
+            var model = this;
+            model.set('currentState', 'STARTING');
+
+            http.post('rest', 'apps', this.get('app'), 'spark', model.get('name'), 'start',
+                function (response) {
+
+                    if (response.error) {
+                        C.Modal.show(response.error, response.message);
+                    } else {
+                        model.set('lastStarted', new Date().getTime() / 1000);
+                    }
+
+                });
+        },
+
+        stop: function(http) {
+            var model = this;
+            model.set('currentState', 'STOPPING');
+
+            http.post('rest', 'apps', this.get('app'), 'spark', model.get('name'), 'stop',
+                function (response) {
+
+                    if (response.error) {
+                        C.Modal.show(response.error, response.message);
+                    } else {
+                        model.set('lastStarted', new Date().getTime() / 1000);
+                    }
+
+                });
         },
 
         getStartDate: function () {

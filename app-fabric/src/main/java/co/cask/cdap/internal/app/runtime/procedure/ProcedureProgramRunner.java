@@ -44,6 +44,7 @@ import com.google.inject.name.Named;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.Channel;
@@ -80,6 +81,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
   private final CConfiguration conf;
 
@@ -95,12 +97,14 @@ public final class ProcedureProgramRunner implements ProgramRunner {
                                 @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                 MetricsCollectionService metricsCollectionService,
                                 ProgramServiceDiscovery serviceDiscovery,
+                                DiscoveryServiceClient discoveryServiceClient,
                                 DatasetFramework dsFramework, CConfiguration conf) {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.dsFramework = dsFramework;
     this.conf = conf;
   }
@@ -112,11 +116,12 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private BasicProcedureContextFactory createContextFactory(Program program, RunId runId, int instanceId, int count,
                                                             Arguments userArgs, ProcedureSpecification procedureSpec,
-                                                            ProgramServiceDiscovery serviceDiscovery) {
+                                                            ProgramServiceDiscovery serviceDiscovery,
+                                                            DiscoveryServiceClient discoveryServiceClient) {
 
     return new BasicProcedureContextFactory(program, runId, instanceId, count, userArgs,
                                             procedureSpec, metricsCollectionService, serviceDiscovery,
-                                            dsFramework, conf);
+                                            discoveryServiceClient, dsFramework, conf);
   }
 
   @Override
@@ -142,14 +147,14 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId, instanceCount,
                                                                          options.getUserArguments(), procedureSpec,
-                                                                         serviceDiscovery);
+                                                                         serviceDiscovery, discoveryServiceClient);
 
       // TODO: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
       // HandlerMethodFactory.
       procedureContext = new BasicProcedureContext(program, runId, instanceId, instanceCount,
                                                    ImmutableSet.<String>of(),
                                                    options.getUserArguments(), procedureSpec, metricsCollectionService,
-                                                   serviceDiscovery, dsFramework, conf);
+                                                   serviceDiscovery, discoveryServiceClient, dsFramework, conf);
 
       handlerMethodFactory = new ProcedureHandlerMethodFactory(program, dataFabricFacadeFactory, contextFactory);
       handlerMethodFactory.startAndWait();

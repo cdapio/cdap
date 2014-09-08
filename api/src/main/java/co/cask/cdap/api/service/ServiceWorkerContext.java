@@ -23,4 +23,9 @@ import co.cask.cdap.api.RuntimeContext;
  */
 public interface ServiceWorkerContext extends RuntimeContext {
 
+  /**
+   * Execute a set of operations on datasets via a {@link TxRunnable} that are committed as a single transaction.
+   * @param runnable
+   */
+  void execute(TxRunnable runnable);
 }

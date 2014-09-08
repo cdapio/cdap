@@ -44,8 +44,8 @@ import java.util.List;
  * @param <VALUE> Type of value.
  *                TODO: Refactor this and MapReduce DatasetInputFormat
  */
-public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(SparkDatasetInputFormat.class);
+public final class SparkDataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
+  private static final Logger LOG = LoggerFactory.getLogger(SparkDataSetInputFormat.class);
   public static final String HCONF_ATTR_INPUT_DATASET = "input.dataset.name";
 
   @Override
@@ -54,7 +54,7 @@ public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, 
     List<Split> splits = sparkContextConfig.getInputSelection();
     List<InputSplit> list = new ArrayList<InputSplit>();
     for (Split split : splits) {
-      list.add(new DatasetInputSplit(split));
+      list.add(new DataSetInputSplit(split));
     }
     return list;
   }
@@ -65,7 +65,7 @@ public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, 
                                                      final TaskAttemptContext context)
     throws IOException, InterruptedException {
 
-    DatasetInputSplit inputSplit = (DatasetInputSplit) split;
+    DataSetInputSplit inputSplit = (DataSetInputSplit) split;
 
     Configuration conf = context.getConfiguration();
     SparkContextProvider contextProvider = new SparkContextProvider(context.getConfiguration());
@@ -76,7 +76,7 @@ public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, 
     SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it
-    return new DatasetRecordReader<KEY, VALUE>(splitReader, sparkContext, dataSetName);
+    return new DataSetRecordReader<KEY, VALUE>(splitReader, sparkContext, dataSetName);
   }
 
   private String getInputName(Configuration conf) {

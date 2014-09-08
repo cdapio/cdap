@@ -26,10 +26,12 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
+import co.cask.cdap.internal.app.runtime.spark.inmemory.InMemorySparkContextBuilder;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;
 import com.google.common.base.Throwables;
 import com.google.inject.Injector;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
@@ -42,7 +44,6 @@ import java.net.URI;
  * Builds the {@link BasicSparkContext}.
  * Subclasses must override {@link #prepare()} method by providing Guice injector configured for running and starting
  * services specific to the environment. To release those resources subclass must override {@link #finish()}
- * environment.
  */
 public abstract class AbstractSparkContextBuilder {
 
@@ -80,22 +81,23 @@ public abstract class AbstractSparkContextBuilder {
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     CConfiguration configuration = injector.getInstance(CConfiguration.class);
 
-    ApplicationSpecification programSpec = program.getSpecification();
+    ApplicationSpecification appSpec = program.getSpecification();
 
     //TODO: Change this when Spark starts supporting Metrics
     MetricsCollectionService metricsCollectionService = null;
 
     ProgramServiceDiscovery serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
     // Creating Spark job context
-    SparkSpecification spec = program.getSpecification().getSpark().get(program.getName());
+    SparkSpecification sparkSpec = program.getSpecification().getSpark().get(program.getName());
     BasicSparkContext context =
-      new BasicSparkContext(program, RunIds.fromString(runId), runtimeArguments, programSpec.getDatasets().keySet(),
-                            spec, logicalStartTime, workflowBatch, serviceDiscovery, metricsCollectionService,
-                            datasetFramework, configuration);
+      new BasicSparkContext(program, RunIds.fromString(runId), runtimeArguments, appSpec.getDatasets().keySet(),
+                            sparkSpec, logicalStartTime, workflowBatch, serviceDiscovery, metricsCollectionService,
+                            datasetFramework, configuration, discoveryServiceClient);
 
     // propagating tx to all txAware guys
-    // NOTE: tx will be committed by client code
+    // The tx is committed or aborted depending upon the job success by the ProgramRunner and DatasetRecordWriter
     for (TransactionAware txAware : context.getDatasetInstantiator().getTransactionAware()) {
       txAware.startTx(tx);
     }
@@ -103,14 +105,15 @@ public abstract class AbstractSparkContextBuilder {
   }
 
   /**
-   * Refer to {@link AbstractSparkContextBuilder} for usage details
+   * Subclasses must override {@link #prepare()} method by providing Guice injector configured for running and starting
+   * services specific to the environment. Like {@link InMemorySparkContextBuilder} does.
    *
    * @return instance of {@link Injector} with bindings for current runtime environment
    */
   protected abstract Injector prepare();
 
   /**
-   * Refer to {@link AbstractSparkContextBuilder} for usage details
+   * Subclass must override {@link #finish()} to release resources
    */
   protected void finish() {
     // Do NOTHING by default

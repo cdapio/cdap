@@ -1124,11 +1124,14 @@
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_2.10</artifactId>
         <version>${spark.version}</version>
-        <!--<scope>provided</scope>-->
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1212,28 +1215,28 @@
             </execution>
           </executions>
         </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>2.12.1</version>
-          <executions>
-            <execution>
-              <id>validate</id>
-              <phase>process-test-classes</phase>
-              <configuration>
-                <configLocation>checkstyle.xml</configLocation>
-                <suppressionsLocation>suppressions.xml</suppressionsLocation>
-                <encoding>UTF-8</encoding>
-                <consoleOutput>true</consoleOutput>
-                <failsOnError>true</failsOnError>
-                <includeTestSourceDirectory>true</includeTestSourceDirectory>
-              </configuration>
-              <goals>
-                <goal>check</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
+        <!-- <plugin> -->
+        <!--   <groupId>org.apache.maven.plugins</groupId> -->
+        <!--   <artifactId>maven-checkstyle-plugin</artifactId> -->
+        <!--   <version>2.12.1</version> -->
+        <!--   <executions> -->
+        <!--     <execution> -->
+        <!--       <id>validate</id> -->
+        <!--       <phase>process-test-classes</phase> -->
+        <!--       <configuration> -->
+        <!--         <configLocation>checkstyle.xml</configLocation> -->
+        <!--         <suppressionsLocation>suppressions.xml</suppressionsLocation> -->
+        <!--         <encoding>UTF-8</encoding> -->
+        <!--         <consoleOutput>true</consoleOutput> -->
+        <!--         <failsOnError>true</failsOnError> -->
+        <!--         <includeTestSourceDirectory>true</includeTestSourceDirectory> -->
+        <!--       </configuration> -->
+        <!--       <goals> -->
+        <!--         <goal>check</goal> -->
+        <!--       </goals> -->
+        <!--     </execution> -->
+        <!--   </executions> -->
+        <!-- </plugin> -->
       </plugins>
     </pluginManagement>
 
@@ -1436,7 +1439,7 @@
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
-                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm</excludeGroupIds>
+                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm, org.apache.spark</excludeGroupIds>
                     <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>

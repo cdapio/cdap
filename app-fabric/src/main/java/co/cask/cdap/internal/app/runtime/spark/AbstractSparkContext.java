@@ -16,19 +16,29 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.InputFormat;
+import org.apache.hadoop.mapreduce.MRJobConfig;
+import org.apache.hadoop.mapreduce.OutputFormat;
+import org.apache.spark.SparkConf;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,15 +54,32 @@ abstract class AbstractSparkContext implements SparkContext {
   private final SparkSpecification spec;
   private final Arguments runtimeArguments;
   final BasicSparkContext basicSparkContext;
+  private final SparkConf sparkConf;
 
-  public AbstractSparkContext(long logicalStartTime, SparkSpecification spec, Arguments runtimeArguments) {
-    this.logicalStartTime = logicalStartTime;
-    this.spec = spec;
-    this.runtimeArguments = runtimeArguments;
+  public AbstractSparkContext() {
     hConf = loadHConf();
     // Create an instance of BasicSparkContext from the Hadoop Configuration file which was just loaded
     SparkContextProvider sparkContextProvider = new SparkContextProvider(hConf);
     basicSparkContext = sparkContextProvider.get();
+    this.logicalStartTime = basicSparkContext.getLogicalStartTime();
+    this.spec = basicSparkContext.getSpecification();
+    this.runtimeArguments = basicSparkContext.getRuntimeArgs();
+    this.sparkConf = initializeSparkConf();
+  }
+
+  /**
+   * Initializes the {@link SparkConf} with proper settings.
+   *
+   * @return the initialized {@link SparkConf}
+   */
+  private SparkConf initializeSparkConf() {
+    SparkConf sparkConf = new SparkConf();
+    sparkConf.setAppName(basicSparkContext.getProgramName());
+    return sparkConf;
+  }
+
+  public SparkConf getSparkConf() {
+    return sparkConf;
   }
 
   Configuration getHConf() {
@@ -67,6 +94,7 @@ abstract class AbstractSparkContext implements SparkContext {
    * This function requires that the hConf.xml file containing {@link Configuration} is present in the job jar.
    */
   private Configuration loadHConf() {
+    // TODO: Inject through Guice in Distributed mode. REACTOR-941
     Configuration hConf = new Configuration();
     hConf.clear();
 
@@ -78,6 +106,44 @@ abstract class AbstractSparkContext implements SparkContext {
                                    "Configuration file with name " + SparkProgramRunner.SPARK_HCONF_FILENAME);
     }
     hConf.addResource(url);
+    return hConf;
+  }
+
+  /**
+   * Sets the input {@link Dataset} with splits in the {@link Configuration}
+   *
+   * @param datasetName the name of the {@link Dataset} to read from
+   * @return updated {@link Configuration}
+   * @throws {@link IllegalArgumentException} if the {@link Dataset} to read is not {@link BatchReadable}
+   */
+  Configuration setInputDataset(String datasetName) {
+    Configuration hConf = new Configuration(getHConf());
+    Dataset dataset = basicSparkContext.getDataSet(datasetName);
+    List<Split> inputSplits;
+    if (dataset instanceof BatchReadable) {
+      BatchReadable curDataset = (BatchReadable) dataset;
+      inputSplits = curDataset.getSplits();
+    } else {
+      throw new IllegalArgumentException("Failed to read dataset " + datasetName + ". The dataset does not implement" +
+                                           " BatchReadable");
+    }
+    hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, SparkDatasetInputFormat.class, InputFormat.class);
+    hConf.set(SparkDatasetInputFormat.HCONF_ATTR_INPUT_DATASET, datasetName);
+    hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLIT_CLASS, inputSplits.get(0).getClass().getName());
+    hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLITS, new Gson().toJson(inputSplits));
+    return hConf;
+  }
+
+  /**
+   * Sets the output {@link Dataset} with splits in the {@link Configuration}
+   *
+   * @param datasetName the name of the {@link Dataset} to write to
+   * @return updated {@link Configuration}
+   */
+  Configuration setOutputDataset(String datasetName) {
+    Configuration hConf = new Configuration(getHConf());
+    hConf.set(SparkDatasetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
+    hConf.setClass(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, SparkDatasetOutputFormat.class, OutputFormat.class);
     return hConf;
   }
 

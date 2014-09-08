@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -25,26 +26,35 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.SparkLoggingContext;
+import co.cask.cdap.proto.ProgramType;
 import com.continuuity.tephra.TransactionAware;
 import com.google.common.collect.ImmutableMap;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Spark job runtime context
+ * Spark job runtime context. This context serves as the bridge between CDAP {@link SparkProgramRunner} and Spark
+ * programs running in YARN containers. The {@link SparkProgramRunner} builds this context and writes it to {@link
+ * Configuration} through {@link SparkContextConfig}. The running Spark jobs loads the {@link Configuration} files
+ * which was packaged with the dependency jar when the job was submitted and constructs this context back through
+ * {@link SparkContextProvider}. This allow Spark jobs running outside CDAP have access to Transaction,
+ * start time and other stuff.
  */
 public class BasicSparkContext extends AbstractContext implements SparkContext {
 
-  // todo:  REACTOR-853: "InstanceId is not supported in Spark jobs"
+  // todo: REACTOR-937: "InstanceId is not supported in Spark jobs"
   public static final String INSTANCE_ID = "0";
   private final Arguments runtimeArguments;
-  private final SparkSpecification spec;
+  private final SparkSpecification sparkSpec;
   private final long logicalStartTime;
   private final String accountId;
   private final String workflowBatch;
@@ -53,10 +63,12 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   private final SparkLoggingContext loggingContext;
 
   public BasicSparkContext(Program program, RunId runId, Arguments runtimeArguments, Set<String> datasets,
-                           SparkSpecification spec, long logicalStartTime, String workflowBatch,
+                           SparkSpecification sparkSpec, long logicalStartTime, String workflowBatch,
                            ProgramServiceDiscovery serviceDiscovery, MetricsCollectionService metricsCollectionService,
-                           DatasetFramework dsFramework, CConfiguration conf) {
-    super(program, runId, datasets, getMetricContext(program), metricsCollectionService, dsFramework, conf);
+                           DatasetFramework dsFramework, CConfiguration conf,
+                           DiscoveryServiceClient discoveryServiceClient) {
+    super(program, runId, datasets, getMetricContext(program), metricsCollectionService, dsFramework, conf,
+          serviceDiscovery, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
@@ -67,17 +79,18 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     //TODO: Metrics needs to be initialized here properly when implemented.
 
     this.loggingContext = new SparkLoggingContext(getAccountId(), getApplicationId(), getProgramName());
-    this.spec = spec;
+    this.sparkSpec = sparkSpec;
   }
 
   @Override
   public String toString() {
-    return String.format("job=%s,=%s", spec.getName(), super.toString());
+    return String.format("Job=%s: %s, %s", ProgramType.SPARK.name().toLowerCase(), sparkSpec.getName(),
+                         super.toString());
   }
 
   @Override
   public SparkSpecification getSpecification() {
-    return spec;
+    return sparkSpec;
   }
 
   @Override
@@ -96,11 +109,12 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   }
 
   private static String getMetricContext(Program program) {
-    return String.format("%s.b.%s.%s", program.getApplicationId(), program.getName(), INSTANCE_ID);
+    return String.format("%s.%s.%s.%s", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SPARK),
+                         program.getName(), INSTANCE_ID);
   }
 
   @Override
-  public <T> T getBaseSparkContext() {
+  public <T> T getOriginalSparkContext() {
     throw new IllegalStateException("Getting base Spark Context is not supported here");
   }
 
@@ -125,16 +139,27 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     throw new UnsupportedOperationException("Metrics are not not supported in Spark yet");
   }
 
+  /**
+   * @return {@link LoggingContext} for the job which is {@link SparkLoggingContext}
+   */
   public LoggingContext getLoggingContext() {
     return loggingContext;
   }
 
+  /**
+   * Request all txAwares guys to persist all the writes which was cached in memory.
+   *
+   * @throws Exception which is thrown by the commit on the {@link Dataset}
+   */
   public void flushOperations() throws Exception {
     for (TransactionAware txAware : getDatasetInstantiator().getTransactionAware()) {
       txAware.commitTx();
     }
   }
 
+  /**
+   * @return {@link Arguments} for this job
+   */
   public Arguments getRuntimeArgs() {
     return runtimeArguments;
   }

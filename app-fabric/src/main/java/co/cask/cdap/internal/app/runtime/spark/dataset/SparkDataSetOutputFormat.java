@@ -37,8 +37,8 @@ import java.io.IOException;
  * @param <VALUE> Type of value.
  *                TODO: Refactor this OutputFormat and MapReduce OutputFormat
  */
-public final class SparkDatasetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(SparkDatasetOutputFormat.class);
+public final class SparkDataSetOutputFormat<KEY, VALUE> extends OutputFormat<KEY, VALUE> {
+  private static final Logger LOG = LoggerFactory.getLogger(SparkDataSetOutputFormat.class);
   public static final String HCONF_ATTR_OUTPUT_DATASET = "output.dataset.name";
 
   @Override
@@ -51,7 +51,7 @@ public final class SparkDatasetOutputFormat<KEY, VALUE> extends OutputFormat<KEY
     BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) sparkContext.getDataSet(getOutputDataSet(conf));
 
     // the record writer now owns the context and will close it
-    return new DatasetRecordWriter<KEY, VALUE>(dataset, sparkContext);
+    return new DataSetRecordWriter<KEY, VALUE>(dataset, sparkContext);
   }
 
   private String getOutputDataSet(Configuration conf) {
@@ -65,6 +65,6 @@ public final class SparkDatasetOutputFormat<KEY, VALUE> extends OutputFormat<KEY
 
   @Override
   public OutputCommitter getOutputCommitter(final TaskAttemptContext context) throws IOException, InterruptedException {
-    return new DatasetOutputCommitter();
+    return new DataSetOutputCommitter();
   }
 }

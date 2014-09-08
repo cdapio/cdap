@@ -11,12 +11,11 @@ define([], function () {
         }),
 
         elements: Em.Object.create(),
+        __HISTORY_UPDATE_TIMEOUT: 1000,
 
-        load: function () {
-            var model = this.get('model');
-            var self = this;
-
-            this.HTTP.rest('apps', model.app, 'spark', model.name, 'history', function (response) {
+        __updateHistoryTimeout: null,
+        __updateHistory: function(appName, jobName) {
+            this.HTTP.rest('apps', appName, 'spark', jobName, 'history', function (response) {
 
                 if (response) {
                     var history = response;
@@ -29,11 +28,27 @@ define([], function () {
                 }
 
             });
+        },
+
+        load: function () {
+            var model = this.get('model');
+            var self = this;
+
+            var runHistoryUpdate = function() {
+                this.__updateHistoryTimeout = setTimeout(function () {
+                    this.__updateHistory(model.app, model.name);
+
+                    runHistoryUpdate();
+                }, this.__HISTORY_UPDATE_TIMEOUT);
+            };
+
+            runHistoryUpdate();
 
         },
 
         unload: function () {
 
+            clearTimeout(this.__updateHistoryTimeout);
             this.get('runs').set('content', []);
 
         }

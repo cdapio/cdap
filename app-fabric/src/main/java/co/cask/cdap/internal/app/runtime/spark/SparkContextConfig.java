@@ -57,9 +57,9 @@ public class SparkContextConfig {
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
   private static final String HCONF_ATTR_PROGRAM_JAR_LOCATION = "hconf.program.jar.location";
 
-  private final Configuration hConf;
+  private static Configuration hConf;
 
-  public Configuration getHConf() {
+  public static Configuration getHConf() {
     return hConf;
   }
 
@@ -67,7 +67,9 @@ public class SparkContextConfig {
     this.hConf = hConf;
   }
 
-  public void set(BasicSparkContext context, CConfiguration conf, Transaction tx, Location programJarCopy) {
+  public static void set(Configuration hadoopConf, BasicSparkContext context, CConfiguration conf, Transaction tx,
+                         Location programJarCopy) {
+    hConf = hadoopConf;
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     //TODO: Change this once we start supporting Spark in Workflow
@@ -79,7 +81,7 @@ public class SparkContextConfig {
     setTx(tx);
   }
 
-  private void setArguments(Arguments runtimeArgs) {
+  private static void setArguments(Arguments runtimeArgs) {
     hConf.set(HCONF_ATTR_ARGS, new Gson().toJson(runtimeArgs));
   }
 
@@ -98,7 +100,7 @@ public class SparkContextConfig {
     return uri;
   }
 
-  private void setRunId(String runId) {
+  private static void setRunId(String runId) {
     hConf.set(HCONF_ATTR_RUN_ID, runId);
   }
 
@@ -106,7 +108,7 @@ public class SparkContextConfig {
     return hConf.get(HCONF_ATTR_RUN_ID);
   }
 
-  private void setLogicalStartTime(long startTime) {
+  private static void setLogicalStartTime(long startTime) {
     hConf.setLong(HCONF_ATTR_LOGICAL_START_TIME, startTime);
   }
 
@@ -114,7 +116,7 @@ public class SparkContextConfig {
     return hConf.getLong(HCONF_ATTR_LOGICAL_START_TIME, System.currentTimeMillis());
   }
 
-  private void setWorkflowBatch(String workflowBatch) {
+  private static void setWorkflowBatch(String workflowBatch) {
     if (workflowBatch != null) {
       hConf.set(HCONF_ATTR_WORKFLOW_BATCH, workflowBatch);
     }
@@ -132,22 +134,19 @@ public class SparkContextConfig {
     }
 
     try {
-      // Yes, we know that it implements Split
-      @SuppressWarnings("unchecked")
       Class<? extends Split> splitClass =
         (Class<? extends Split>) hConf.getClassLoader().loadClass(splitClassName);
       return new Gson().fromJson(splitsJson, new ListSplitType(splitClass));
     } catch (ClassNotFoundException e) {
-      //todo
+      LOG.warn("Class not found {}", splitClassName, e);
       throw Throwables.propagate(e);
     }
   }
 
-  private void setProgramLocation(URI programJarLocation) {
+  private static void setProgramLocation(URI programJarLocation) {
     hConf.set(HCONF_ATTR_PROGRAM_JAR_LOCATION, programJarLocation.toString());
   }
 
-  // This is needed to deserialize JSON into generified List
   private static final class ListSplitType implements ParameterizedType {
     private final Class<? extends Split> implementationClass;
 
@@ -167,12 +166,11 @@ public class SparkContextConfig {
 
     @Override
     public Type getOwnerType() {
-      // it is fine, as it is not inner class
       return null;
     }
   }
 
-  private void setConf(CConfiguration conf) {
+  private static void setConf(CConfiguration conf) {
     StringWriter stringWriter = new StringWriter();
     try {
       conf.writeXml(stringWriter);
@@ -183,7 +181,7 @@ public class SparkContextConfig {
     hConf.set(HCONF_ATTR_CCONF, stringWriter.toString());
   }
 
-  private void setProgramJarName(String programJarName) {
+  private static void setProgramJarName(String programJarName) {
     hConf.set(HCONF_ATTR_PROGRAM_JAR_NAME, programJarName);
   }
 
@@ -193,7 +191,7 @@ public class SparkContextConfig {
     return conf;
   }
 
-  private void setTx(Transaction tx) {
+  private static void setTx(Transaction tx) {
     hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 
