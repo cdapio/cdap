@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -112,6 +113,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
     @Override
     protected void startUp() {
       CConfiguration cConf = CConfiguration.create();
+      SConfiguration sConf = SConfiguration.create();
       cConf.setBoolean(Constants.Security.Router.SSL_ENABLED, true);
 
       URL certUrl = getClass().getClassLoader().getResource("cert.jks");
@@ -127,13 +129,10 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       cConf.setBoolean(Constants.Router.WEBAPP_ENABLED, true);
       cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
 
-      cConf.set(Constants.Security.Router.SSL_KEYPASSWORD, "secret");
-      cConf.set(Constants.Security.Router.SSL_KEYSTORE_PASSWORD, "secret");
-      cConf.set(Constants.Security.Router.SSL_KEYSTORE_TYPE, "JKS");
-      cConf.set(Constants.Security.Router.SSL_KEYSTORE_PATH, certUrl.getPath());
+      sConf.set(Constants.Security.Router.SSL_KEYSTORE_PATH, certUrl.getPath());
 
       router =
-        new NettyRouter(cConf, InetAddresses.forString(hostname),
+        new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup(new NoAuthenticator())),
                         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);

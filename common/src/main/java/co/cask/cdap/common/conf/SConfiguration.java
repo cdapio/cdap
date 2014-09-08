@@ -13,18 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.metrics;
+
+package co.cask.cdap.common.conf;
 
 /**
- * A MetricCollector allows client publish counter metrics.
+ * Used to create Configuration Object for security related properties
  */
-public interface MetricsCollector {
+public class SConfiguration extends Configuration {
+
+  private SConfiguration() {
+    // Shouldn't be used other than in this class.
+  }
 
   /**
-   * Log a metric value at the current time.
-   * @param metricName Name of the metric.
-   * @param value value of the metric.
-   * @param tags Tags associated with the metric.
+   * Creates an instance of {@link SConfiguration}.
+   *
+   * @return an instance of SConfiguration.
    */
-  void increment(String metricName, int value, String... tags);
+  public static SConfiguration create() {
+    // Create a new configuration instance, but do NOT initialize with
+    // the Hadoop default properties.
+    SConfiguration conf = new SConfiguration();
+    conf.addResource("cdap-security.xml");
+    return conf;
+  }
 }

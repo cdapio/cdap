@@ -119,23 +119,23 @@ public class MetricsDiscoveryQueryTest extends MetricsSuiteTestBase {
   private static void setupMetrics() throws InterruptedException {
     MetricsCollector collector =
       collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0");
-    collector.gauge("reads", 1);
-    collector.gauge("writes", 1);
+    collector.increment("reads", 1);
+    collector.increment("writes", 1);
     collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WordCounter.splitter", "0");
-    collector.gauge("reads", 1);
+    collector.increment("reads", 1);
     collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WCounter.splitter", "0");
-    collector.gauge("reads", 1);
+    collector.increment("reads", 1);
     collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WCounter.counter", "0");
-    collector.gauge("reads", 1);
+    collector.increment("reads", 1);
     collector = collectionService.getCollector(MetricsScope.USER, "WCount.p.RCounts", "0");
-    collector.gauge("reads", 1);
+    collector.increment("reads", 1);
     collector = collectionService.getCollector(MetricsScope.USER, "WCount.b.ClassicWordCount.m", "0");
-    collector.gauge("reads", 1);
+    collector.increment("reads", 1);
     collector = collectionService.getCollector(MetricsScope.USER, "WCount.b.ClassicWordCount.r", "0");
-    collector.gauge("reads", 1);
+    collector.increment("reads", 1);
     collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0");
-    collector.gauge("reads", 1);
-    collector.gauge("writes", 1);
+    collector.increment("reads", 1);
+    collector.increment("writes", 1);
 
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);

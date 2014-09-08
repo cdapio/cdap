@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -74,6 +75,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
     @Override
     protected void startUp() {
       CConfiguration cConf = CConfiguration.create();
+      SConfiguration sConfiguration = SConfiguration.create();
       Injector injector = Guice.createInjector(new ConfigModule(cConf), new IOModule(),
                                                new SecurityModules().getInMemoryModules(),
                                                new DiscoveryRuntimeModule().getInMemoryModules());
@@ -84,7 +86,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
       cConf.setBoolean(Constants.Router.WEBAPP_ENABLED, true);
       cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
       router =
-        new NettyRouter(cConf, InetAddresses.forString(hostname),
+        new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup(new NoAuthenticator())),
                         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);

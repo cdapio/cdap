@@ -1051,7 +1051,7 @@ headers and body.
 
 The request type is defined by the Service's method::
 
-  GET/POST/PUT/DELETE <base-url>/apps/<app-id>/services/<service-id>/methods/<method-id>
+  <REQUEST-TYPE> <base-url>/apps/<app-id>/services/<service-id>/methods/<method-id>
 
 .. list-table::
    :widths: 20 80
@@ -1059,6 +1059,8 @@ The request type is defined by the Service's method::
 
    * - Parameter
      - Description
+   * - ``<REQUEST-TYPE>``
+     - One of GET, POST, PUT and DELETE. This is defined by the handler method.
    * - ``<app-id>``
      - Name of the Application being called
    * - ``<service-id>``
@@ -1075,7 +1077,7 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``503 Service Unavailable``
-     - The Service is unavailable. For example, it may not have been started.
+     - The Service is unavailable. For example, it may not yet have been started.
 
 Other responses are defined by the Service's method.
 
@@ -1086,14 +1088,11 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookup/methods/v1/product/computer/catalog``
+     - ``GET <base-url>/apps/ExampleApplication/services/PingService/methods/ping``
    * - Description
-     - Make a request to the ``/v1/product/{id}/catalog`` endpoint of the CatalogLookup Service in
-       the Application PurchaseHistory.
+     - Make a request to the ``ping`` endpoint of the PingService in ExampleApplication.
    * - Response status code
      - ``200 OK``
-   * - Response body
-     - Cat-computer
 
 .. rst2pdf: PageBreak
 

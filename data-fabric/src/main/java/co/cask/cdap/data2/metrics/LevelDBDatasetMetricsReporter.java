@@ -102,7 +102,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
       }
       // legacy format: dataset name is in the tag. See DatasetInstantiator for more details
       int sizeInMb = (int) (statEntry.getValue().getDiskSizeBytes() / BYTES_IN_MB);
-      collector.gauge("dataset.size.mb", sizeInMb, datasetName);
+      collector.increment("dataset.size.mb", sizeInMb, datasetName);
     }
   }
 }

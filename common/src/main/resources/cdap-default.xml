@@ -1053,11 +1053,12 @@
 
   <!-- Front Configuration-->
   <property>
-    <name>dashboard.bind.port</name>
-    <value>9999</value>
+    <name>router.ssl.enabled</name>
+    <value>false</value>
   </property>
+
   <property>
-    <name>dashboard.ssl.bind.port</name>
+    <name>router.ssl.bind.port</name>
     <value>9443</value>
   </property>
 
