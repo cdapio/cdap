@@ -29,7 +29,7 @@ var logLevel = 'INFO';
 
 var EntServer = function() {
   EntServer.super_.call(this, __dirname, logLevel, 'Enterprise UI');
-  this.extractConfig()
+  this.extractConfig("enterprise")
       .then(function () {
         this.setUpServer();
       }.bind(this));
@@ -52,7 +52,7 @@ EntServer.prototype.setAttrs = function() {
   }
   this.apiKey = this.config.apiKey;
   this.version = this.config.version;
-  this.configSet = this.config.configSet;
+  this.configSet = this.configSet;
   this.cookieName = 'continuuity-enterprise-edition';
   this.secret = 'enterprise-edition-secret';
   this.setCookieSession(this.cookieName, this.secret);
@@ -80,35 +80,36 @@ EntServer.prototype.configureSSL = function () {
        requestCert: false,
        rejectUnauthorized: false
      };
-     this.config['dashboard.bind.port'] = this.config['dashboard.bind.port.ssl'];
+     this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
    }
   return options;
    }
 
 EntServer.prototype.startServer = function () {
  this.bindRoutes();
+ var self = this;
  this.logger.info('I am the master.', cluster.isMaster);
-
+ var clusters = 'webapp.cluster.count' in this.config ? this.config['webapp.cluster.count'] : 2;
  if (cluster.isMaster) {
    for (var i = 0; i < clusters; i++) {
      cluster.fork();
    }
 
    cluster.on('online', function (worker) {
-     this.logger.info('Worker ' + worker.id + ' was forked with pid ' + worker.process.pid);
+     self.logger.info('Worker ' + worker.id + ' was forked with pid ' + worker.process.pid);
    });
 
    cluster.on('listening', function (worker, address) {
-     this.logger.info('Worker ' + worker.id + ' with pid ' + worker.process.pid +
+     self.logger.info('Worker ' + worker.id + ' with pid ' + worker.process.pid +
      ' is listening on ' + address.address + ':' + address.port);
    });
 
    cluster.on('exit', function (worker, code, signal) {
-     this.logger.info('Worker ' + worker.process.pid + ' died.');
+     self.logger.info('Worker ' + worker.process.pid + ' died.');
 
      // Create a new process once one dies.
      var newWorker = cluster.fork();
-     this.logger.info('Started new worker at ' + newWorker.process.pid);
+     self.logger.info('Started new worker at ' + newWorker.process.pid);
    });
 
  } else {
@@ -123,7 +124,8 @@ EntServer.prototype.startServer = function () {
  * Catch anything uncaught.
  */
 process.on('uncaughtException', function (err) {
-  entServer.logger.info('Uncaught Exception', err);
+  //entServer.logger.info('Uncaught Exception', err);
+  console.info(err);
 });
 
 var entServer = new EntServer();
