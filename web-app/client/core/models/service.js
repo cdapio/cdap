@@ -12,7 +12,7 @@ define(['core/models/program'], function (Program) {
       this._super();
       this.set('id', this.get('modelId'));
     },
-    
+
     context: function () {
       return 'system/services/' + this.get('id');
     }.property('id'),

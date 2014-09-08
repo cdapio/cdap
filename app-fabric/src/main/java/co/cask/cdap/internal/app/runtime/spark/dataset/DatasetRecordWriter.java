@@ -29,7 +29,7 @@ import java.io.IOException;
 
 final class DatasetRecordWriter<KEY, VALUE> extends RecordWriter<KEY, VALUE> {
   //TODO: Needs support for metrics
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetRecordWriter.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordWriter.class);
 
   private final BatchWritable<KEY, VALUE> batchWritable;
   private final BasicSparkContext sparkContext;

@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 final class DatasetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetRecordReader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordReader.class);
   private final SplitReader<KEY, VALUE> splitReader;
   private final BasicSparkContext context;
   private final String dataSetName;

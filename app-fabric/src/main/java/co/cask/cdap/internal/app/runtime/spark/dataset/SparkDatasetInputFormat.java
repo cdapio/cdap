@@ -46,7 +46,7 @@ import java.util.List;
  *                TODO: Refactor this and MapReduce DatasetInputFormat
  */
 public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(SparkDatasetInputFormat.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SparkDataSetInputFormat.class);
   public static final String HCONF_ATTR_INPUT_DATASET = "input.dataset.name";
 
   @Override
@@ -77,7 +77,7 @@ public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, 
     SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it
-    return new DatasetRecordReader<KEY, VALUE>(splitReader, sparkContext, dataSetName);
+    return new DataSetRecordReader<KEY, VALUE>(splitReader, sparkContext, dataSetName);
   }
 
   private String getInputName(Configuration conf) {

@@ -1251,6 +1251,84 @@
     </div>
   </script>
 
+  <script type="text/x-handlebars" data-template-name="Spark">
+
+    <div id="title">
+      {{view C.Embed.TimeSelector}}
+      <ul class="nav nav-pills pull-right" style="margin: 2px 14px;">
+        <li>{{#linkTo SparkStatus model}}Status{{/linkTo}}</li>
+        <li>{{#linkTo Spark.Log model}}Log{{/linkTo}}</li>
+        <li>{{#linkTo Spark.History model}}History{{/linkTo}}</li>
+      </ul>
+      <h1>
+        <span>Spark</span>
+        <span class="breadcrumb-app-name"><a {{bindAttr href="model.appHref"}}>{{model.app}}</a> : {{model.name}}
+        </span>
+      </h1>
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="SparkStatus">
+
+    <div id="info">
+
+      <div class="info-box" style="float: right; border: 0;">
+        <div id="action-buttons" class="btn-group pull-right">
+          <button class="btn btn-blank" {{bindAttr disabled="model.startStopDisabled"}} style="width:64px;" {{action "exec" on="click"}}>
+            <span {{bindAttr class="model.actionIcon"}}></span><span>{{model.defaultAction}}</span>
+          </button>
+          <button class="btn btn-blank btn-icon" {{bindAttr disabled="model.startStopDisabled"}} {{action "config"}}>
+            <span class="btn-config"></span>
+          </button>
+        </div>
+        <div class="flow-state"><strong>{{model.currentState}}</strong></div>
+      </div>
+
+    </div>
+
+    {{outlet}}
+
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="Spark/History">
+    <div id="panels">
+      <div id="informer"></div>
+      <div class="panel">
+        <div id="object-list">
+          {{#if runs.length}}
+            <table class="table table-condensed">
+            <thead>
+              <tr><th style="width: 300px;">Started</th>
+              <th>Ended</th>
+              <th style="width:250px;">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+            {{#each runs}}
+              <tr class="run-list">
+                <td>{{started}}<div class="flow-run-date"> {{startDate}} </div></td>
+                <td>{{ended}} <div class="flow-run-date"> {{endDate}}</div></td>
+                <td>{{detail}}</td>
+              </tr>
+            {{/each}}
+            </tbody>
+            </table>
+          {{else}}
+            <div class="object-list-empty">
+            <div class="object-list-empty-content">
+            <div>No History.</div>
+            <span>This Spark job has not completed a run yet.</span>
+            </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </script>
+
   <script type="text/x-handlebars" data-template-name="Flow">
 
     <div id="title">
@@ -2043,6 +2121,22 @@
               </td>
               <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/mappers/process.completion" unit="percent"}}</td>
               <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Mapreduce" metrics="/reactor/apps/{parent}/mapreduce/{id}/reducers/process.completion" unit="percent"}}</td>
+            </tr>
+          {{/each}}
+          </tbody>
+        </table>
+    {{/if}}
+    {{#if elements.Spark.length}}
+      <table class="table">
+          <thead>
+            <th style="padding-left: 14px;">Spark</th>
+          </thead>
+          <tbody>
+          {{#each elements.Spark.content }}
+            <tr>
+              <td class="app-list-name">
+              <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+              </td>
             </tr>
           {{/each}}
           </tbody>
