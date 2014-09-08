@@ -492,7 +492,7 @@ define([], function () {
 							label = map[path].get('currents')[C.Util.enc(path)].value;
 							var transform = map[path].get('currents')[C.Util.enc(path)].options.transform;
 							if (label) {
-                resultValue = result[i].result.data[0].value;
+								resultValue = result[i].result.data[0].value;
 								if (transform) {
 									resultValue = transform(resultValue);
 								}
