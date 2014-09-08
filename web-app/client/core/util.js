@@ -467,8 +467,11 @@ define([], function () {
 				metrics = Em.keys(models[j].get('currents') || {});
 
 				for (var k = 0; k < metrics.length; k ++) {
-
 						var metric = models[j].get('currents').get(metrics[k]);
+						if (metric.options) {
+              buffer = metric.options.buffer || buffer;
+              transform = metric.options.transform;
+            }
 						queries.push(metric.path + '?start=now-' + (buffer || 5) + 's&count=1&interpolate=step');
 						map[metric.path] = models[j];
 
@@ -487,9 +490,13 @@ define([], function () {
 						for (i = 0; i < result.length; i ++) {
 							path = result[i].path.split('?')[0];
 							label = map[path].get('currents')[C.Util.enc(path)].value;
-
+							var transform = map[path].get('currents')[C.Util.enc(path)].options.transform;
 							if (label) {
-								map[path].setMetric(label, result[i].result.data[0].value);
+                resultValue = result[i].result.data[0].value;
+                if (transform) {
+                  resultValue = transform(resultValue);
+                }
+								map[path].setMetric(label, resultValue);
 							}
 						}
 					}

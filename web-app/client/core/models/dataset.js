@@ -19,12 +19,12 @@ define(['core/models/element'], function (Element) {
 				this.set('id', this.get('name'));
 			}
 
-			this.trackMetric('/reactor/datasets/{id}/dataset.store.bytes', 'aggregates', 'storage');
+			this.trackMetric('/reactor/datasets/{id}/dataset.size.mb', 'currents', 'storage', false,
+			                 {'buffer': 70, transform: function(x) { return x * 1000000; } });
 
 		},
 
 		interpolate: function (path) {
-
 			return path.replace(/\{id\}/, this.get('id'));
 
 		}
