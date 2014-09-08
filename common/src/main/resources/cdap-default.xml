@@ -1046,8 +1046,12 @@
     <value>10010</value>
   </property>
 
-  <!-- Security configuration for the router -->
+  <property>
+    <name>security.auth.server.ssl.keystore.type</name>
+    <value>JKS</value>
+  </property>
 
+  <!-- Front Configuration-->
   <property>
     <name>router.ssl.enabled</name>
     <value>false</value>
@@ -1056,6 +1060,16 @@
   <property>
     <name>router.ssl.bind.port</name>
     <value>9443</value>
+  </property>
+
+  <property>
+    <name>dashboard.https.enabled</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>router.server.address</name>
+    <value>localhost</value>
   </property>
 
 </configuration>
