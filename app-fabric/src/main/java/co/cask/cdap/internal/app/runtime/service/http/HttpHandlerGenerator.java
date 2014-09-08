@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.annotation.EnableTransaction;
+import co.cask.cdap.api.annotation.Transactional;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -335,7 +335,7 @@ final class HttpHandlerGenerator {
       if (visible) {
         AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
         annotations.add(annotationNode);
-        if (desc.equals(Type.getType(EnableTransaction.class).getDescriptor())) {
+        if (desc.equals(Type.getType(Transactional.class).getDescriptor())) {
           transactionsEnabled = true;
         }
         return annotationNode;

@@ -41,7 +41,7 @@ public final class TypeId {
       case SPARK:
         return "s";
       case SERVICE:
-        return "us";
+        return "u";
       default:
         return "unknown";
     }
