@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
@@ -141,7 +142,9 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     this.program = program;
     this.runId = runId;
     this.cConfiguration = cConfiguration;
-    this.metricsContext = String.format("%s.s.%s.%s", program.getApplicationId(), program.getName(), runnableName);
+    this.metricsContext = String.format("%s.%s.%s.%s",
+                                        program.getApplicationId(), TypeId.getMetricContextId(program.getType()),
+                                        program.getName(), runnableName);
     this.metricsCollectionService = metricsCollectionService;
     this.programServiceDiscovery = programServiceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
