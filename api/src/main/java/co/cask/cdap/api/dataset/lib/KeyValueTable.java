@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
+import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
@@ -28,6 +29,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.reflect.TypeToken;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -37,7 +39,7 @@ import javax.annotation.Nullable;
  */
 public class KeyValueTable extends AbstractDataset implements
   BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>,
-    RecordScannable<KeyValue<byte[], byte[]>> {
+  RecordScannable<KeyValue<byte[], byte[]>>, RecordWritable<KeyValue<byte[], byte[]>> {
 
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
@@ -176,6 +178,11 @@ public class KeyValueTable extends AbstractDataset implements
   @Override
   public SplitReader<byte[], byte[]> createSplitReader(Split split) {
     return new KeyValueScanner(table.createSplitReader(split));
+  }
+
+  @Override
+  public void write(KeyValue<byte[], byte[]> keyValue) throws IOException {
+    write(keyValue.getKey(), keyValue.getValue());
   }
 
   /**

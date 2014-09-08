@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.dataset.Dataset;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.Text;
@@ -27,7 +28,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-class DataSetInputSplit extends InputSplit implements Writable {
+/**
+ * Class for {@link InputSplit} of a {@link Dataset}
+ * @see {link InputSplit}
+ */
+public class DataSetInputSplit extends InputSplit implements Writable {
   private Split split;
 
   public DataSetInputSplit() {

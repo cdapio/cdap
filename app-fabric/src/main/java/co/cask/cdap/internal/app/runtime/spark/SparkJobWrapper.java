@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
-import co.cask.cdap.api.spark.SparkContextFactory;
+import co.cask.cdap.api.spark.JavaSparkJob;
+import co.cask.cdap.api.spark.ScalaSparkJob;
+import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -35,30 +36,26 @@ import java.lang.reflect.Method;
  * Validates that there is at least {@link SparkJobWrapper#JOB_WRAPPER_ARGUMENTS_SIZE} command line arguments
  * </li>
  * <li>
- * Extract user job arguments by removing the first argument from the argument list
+ * Gets the user's job class through Spark's ExecutorURLClassLoader.
  * </li>
  * <li>
- * Creates a new instance of user's job class
+ * Sets {@link SparkContext} to concrete implementation of {@link JavaSparkContext} if user job implements {@link
+ * JavaSparkJob} or to {@link ScalaSparkContext} if user's job implements {@link ScalaSparkJob}
  * </li>
  * <li>
- * Binds the {@link SparkContextFactory} field to a concrete implementation {@link DefaultSparkContextFactory}
- * depending upon whether user's job class is written in Java or Scala
- * </li>
- * <li>
- * Calls the user's job main class
+ * Run user's job with extracted arguments from the argument list
  * </li>
  * </ol>
  */
-//TODO: This class should be made private when we will have SparkProgramRunner using it and not using it from outside.
+
 public class SparkJobWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkJobWrapper.class);
   private static final int JOB_WRAPPER_ARGUMENTS_SIZE = 1;
-  private static final String SCALA_SETTER_SUFFIX = "_$eq";
-
   private final String[] arguments;
   private final Class userJobClass;
-  private final Field sparkContextFactoryField;
+  private static SparkContext sparkContext;
+  private static boolean scalaJobFlag;
 
   /**
    * Constructor
@@ -76,41 +73,11 @@ public class SparkJobWrapper {
       LOG.warn("Unable to find the user job class: {}", arguments[0], cnfe);
       throw Throwables.propagate(cnfe);
     }
-    sparkContextFactoryField = getSparkContxtFactoryField();
+    setSparkContext();
   }
 
   public static void main(String[] args) {
-    new SparkJobWrapper(args).invoke();
-  }
-
-  /**
-   * Determines whether the user job is a scala job or not through {@link SparkJobWrapper#isScalaJob()} and then
-   * calls {@link SparkJobWrapper#invokeUserJobMain(Object)} accordingly.
-   */
-  private void invoke() {
-    if (isScalaJob()) {
-      Object userJobObject = scalaJobSparkContextBinder();
-      invokeUserJobMain(userJobObject);
-    } else {
-      javaJobSparkContextBinder();
-      invokeUserJobMain(null);
-    }
-  }
-
-  /**
-   * Sets {@link SparkJobWrapper#sparkContextFactoryField} to the {@link SparkContextFactory} field in user's job class
-   *
-   * @return {@link SparkContextFactory} {@link Field}
-   * @throws RuntimeException if the {@link SparkContextFactory} field is not found in user's job class
-   */
-  private Field getSparkContxtFactoryField() {
-    for (Field field : userJobClass.getDeclaredFields()) {
-      if (SparkContextFactory.class.isAssignableFrom(field.getType())) {
-        return field;
-      }
-    }
-    throw new RuntimeException("SparkContextFactory field not found in user's job class. Please include a member " +
-                                 "field of this class");
+    new SparkJobWrapper(args).instantiateUserJobClass();
   }
 
   /**
@@ -142,15 +109,14 @@ public class SparkJobWrapper {
   }
 
   /**
-   * Instantiate an object of user's job class
+   * Instantiate an object of user's job class and call {@link #runUserJob(Object)} to run it
    *
-   * @return a new object of user's job class
    * @throws RuntimeException if failed to instantiate an object of user's job class
    */
-  private Object instantiateUserJobClass() {
-    Object userJobObject;
+  private void instantiateUserJobClass() {
     try {
-      userJobObject = userJobClass.newInstance();
+      Object userJobObject = userJobClass.newInstance();
+      runUserJob(userJobObject);
     } catch (InstantiationException ie) {
       LOG.warn("Unable to instantiate an object of user's job class: {}", arguments[0], ie);
       throw Throwables.propagate(ie);
@@ -158,91 +124,59 @@ public class SparkJobWrapper {
       LOG.warn("Illegal access to class: {}", arguments[0] + "or to its constructor", iae);
       throw Throwables.propagate(iae);
     }
-    return userJobObject;
   }
 
   /**
-   * Injects {@link DefaultSparkContextFactory} to {@link SparkContextFactory} if the user's job class
-   * is written in Java
-   *
-   * @throws RuntimeException if the binding to {@link DefaultSparkContextFactory} fails
+   * Sets the {@link SparkContext} to {@link JavaSparkContext} or to {@link ScalaSparkContext} depending on whether
+   * the user class implements {@link JavaSparkJob} or {@link ScalaSparkJob}
    */
-  private void javaJobSparkContextBinder() {
-    if (!sparkContextFactoryField.isAccessible()) {
-      sparkContextFactoryField.setAccessible(true);
-    }
-    try {
-      sparkContextFactoryField.set(null, new DefaultSparkContextFactory());
-    } catch (IllegalAccessException iae) {
-      LOG.warn("Unable to access field: {}", sparkContextFactoryField.getName(), iae);
-      throw Throwables.propagate(iae);
+  public void setSparkContext() {
+    if (JavaSparkJob.class.isAssignableFrom(userJobClass)) {
+      sparkContext = new JavaSparkContext();
+    } else if (ScalaSparkJob.class.isAssignableFrom(userJobClass)) {
+      sparkContext = new ScalaSparkContext();
+      scalaJobFlag = true;
+    } else {
+      throw new IllegalArgumentException("User's Spark Job must implement either JavaSparkJob or ScalaSparkJob");
     }
   }
 
   /**
-   * Injects {@link DefaultSparkContextFactory} to {@link SparkContextFactory} if the user's job class
-   * is written in Scala
-   *
-   * @throws RuntimeException if the binding to {@link DefaultSparkContextFactory} fails
-   */
-  private Object scalaJobSparkContextBinder() {
-    Object userJobObject = instantiateUserJobClass();
-    try {
-      Method setSparkContext = userJobObject.getClass().getMethod(sparkContextFactoryField.getName() +
-                                                                    SCALA_SETTER_SUFFIX, SparkContextFactory.class);
-      setSparkContext.invoke(userJobObject, new DefaultSparkContextFactory());
-    } catch (NoSuchMethodException nsme) {
-      LOG.warn("Unable to find setter method for field: {}", sparkContextFactoryField.getName(), nsme);
-      throw Throwables.propagate(nsme);
-    } catch (IllegalAccessException iae) {
-      LOG.warn("Unable to access method: {}", (sparkContextFactoryField.getName() + SCALA_SETTER_SUFFIX), iae);
-      throw Throwables.propagate(iae);
-    } catch (InvocationTargetException ite) {
-      LOG.warn("The method: {}", (sparkContextFactoryField.getName() + SCALA_SETTER_SUFFIX) + "threw an exception",
-               ite);
-      throw Throwables.propagate(ite);
-    }
-    return userJobObject;
-  }
-
-  /**
-   * Determines if the user's job is written in Scala or Java
-   * We assume that if we find a setter method for {@link SparkContextFactory} with method name "fieldname_$eq" then
-   * the user's job is in Scala or else in Java.
-   *
-   * @return a boolean which is true if the job is in scala
-   */
-  private boolean isScalaJob() {
-    Method[] methods = userJobClass.getMethods();
-    for (Method curMethod : methods) {
-      if (curMethod.getName().equalsIgnoreCase((sparkContextFactoryField.getName() + SCALA_SETTER_SUFFIX))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Extracts arguments which belongs to user's job and then invokes the main function on the user's job object
-   * passing the arguments
+   * Extracts arguments which belongs to user's job and then invokes the run method on the user's job object with the
+   * arguments and the appropriate implementation {@link SparkContext}
    *
    * @param userJobObject the user job's object
-   * @throws RuntimeException if failed to invoke main function on the user's job object
+   * @throws RuntimeException if failed to invokeUserJob main function on the user's job object
    */
-  private void invokeUserJobMain(Object userJobObject) {
+  private void runUserJob(Object userJobObject) {
     String[] userJobArgs = extractUserArgs();
     try {
-      Method userJobMain = userJobClass.getMethod("main", String[].class);
-      userJobMain.invoke(userJobObject, (Object) userJobArgs);
+      Method userJobMain = userJobClass.getMethod("run", String[].class, SparkContext.class);
+      userJobMain.invoke(userJobObject, userJobArgs, sparkContext);
     } catch (NoSuchMethodException nsme) {
-      LOG.warn("Unable to find main method in user's job class: {}", userJobObject.getClass().getName(), nsme);
+      LOG.warn("Unable to find run method in user's job class: {}", userJobObject.getClass().getName(), nsme);
       throw Throwables.propagate(nsme);
     } catch (IllegalAccessException iae) {
-      LOG.warn("Unable to access main method in user's job class: {}", userJobObject.getClass().getName(), iae);
+      LOG.warn("Unable to access run method in user's job class: {}", userJobObject.getClass().getName(), iae);
       throw Throwables.propagate(iae);
     } catch (InvocationTargetException ite) {
-      LOG.warn("User's job class main method threw an exception", ite);
+      LOG.warn("User's job class run method threw an exception", ite);
       throw Throwables.propagate(ite);
+    }
+  }
+
+  /**
+   * @return {@link SparkContext}
+   */
+  public static SparkContext getSparkContext() {
+    return sparkContext;
+  }
+
+  public static void stopJob() {
+    if (scalaJobFlag) {
+      ((org.apache.spark.SparkContext) getSparkContext().getOriginalSparkContext()).stop();
+    } else {
+      ((org.apache.spark.api.java.JavaSparkContext) getSparkContext().getOriginalSparkContext()).stop();
     }
   }
 }

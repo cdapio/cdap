@@ -4,8 +4,6 @@
 
 define([], function () {
 
-  var ERROR_TXT = 'Requested Instance count out of bounds.';
-
   var Controller = Em.Controller.extend({
 
     load: function () {
@@ -70,7 +68,7 @@ define([], function () {
       self.HTTP.rest('system/services', function (services) {
         services.map(function(service) {
           var existingService = self.find(service.name);
-          
+
           existingService.set('modelId', service.name);
           existingService.set('description', service.description);
           existingService.set('id', service.name);
@@ -110,16 +108,9 @@ define([], function () {
     },
 
     keyPressed: function (evt) {
-      console.log('cakked');
-      var btn = this.$().parent().parent().next();
+      var btn = this.$().parent().parent().next().children();
       var inp = this.value;
-      if (inp.length > 0 && parseInt(inp) != this.placeholder){
-          btn.children().css("opacity",'1')
-
-      } else {
-          btn.children().css("opacity",'')
-      }
-      return true;
+      return C.Util.handleInstancesKeyPress(btn, inp, this.placeholder);
     },
 
     changeInstances: function (service) {
@@ -131,36 +122,23 @@ define([], function () {
         $('.services-instances-input').keyup();
       },500);
 
-      if(!inputStr || inputStr.length === 0){
-        C.Modal.show('Change Instances','Enter a valid number of instances.');
+      if (service && service.requested === input) {
+        return; //no-op
+      }
+      var isInvalid = C.Util.isInvalidNumInstances(inputStr, service.min, service.max);
+      if(isInvalid){
+        C.Modal.show('Error', isInvalid);
         return;
       }
 
-      if(isNaN(input) || isNaN(inputStr)){
-        C.Modal.show('Incorrect Input', 'Instance count can only be set to numbers (between 1 and 100).');
-        return;
-      }
-
-      this.verifyInstanceBounds(service, input, "Request " + input);
+      this.setInstances(service, input);
     },
 
-    increaseInstance: function (service, instanceCount) {
-      this.verifyInstanceBounds(service, ++instanceCount, "Increase");
-    },
-
-    decreaseInstance: function (service, instanceCount) {
-      this.verifyInstanceBounds(service, --instanceCount, "Decrease");
-    },
-
-    verifyInstanceBounds: function(service, numRequested, direction) {
+    setInstances: function(service, numRequested) {
       var self = this;
-      if (numRequested > service.max || numRequested < service.min) {
-        C.Modal.show("Instances Error", ERROR_TXT);
-        return;
-      }
       C.Modal.show(
-        direction + " instances",
-        direction + " instances for " + service.name + "?",
+        "Request " + numRequested + " instances",
+        "Request " + numRequested + " instances for " + service.name + "?",
         function () {
           var callback = function(){ self.updateServices() };
           self.executeInstanceCall('rest/system/services/' + service.name + '/instances', numRequested, callback);

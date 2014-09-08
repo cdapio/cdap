@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.api;
 
 import org.apache.twill.discovery.ServiceDiscovered;
 
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -29,6 +30,8 @@ public interface RuntimeContext {
    */
   Map<String, String> getRuntimeArguments();
 
+
+  //TODO: the following discover method will be used for TwillApps.
   /**
    * Used to discover services inside a given application and twill-service.
    * @param applicationId Application Name.
@@ -37,4 +40,19 @@ public interface RuntimeContext {
    * @return ServiceDiscovered
    */
   ServiceDiscovered discover(String applicationId, String serviceId, String serviceName);
+
+  /**
+   * Used to discover services inside a given application.
+   * @param applicationId Application name
+   * @param serviceId Service name
+   * @return URL
+   */
+  URL getServiceURL(String applicationId, String serviceId);
+
+  /**
+   * Omitting an applicationId assumes that the program wants to discover a service within its own application.
+   * @param serviceId Service Name
+   * @return URL
+   */
+  URL getServiceURL(String serviceId);
 }

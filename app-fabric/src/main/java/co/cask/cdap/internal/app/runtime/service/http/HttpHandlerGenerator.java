@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,17 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
+import co.cask.cdap.internal.asm.Signatures;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
+import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.objectweb.asm.AnnotationVisitor;
@@ -38,6 +39,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureVisitor;
 import org.objectweb.asm.signature.SignatureWriter;
 import org.objectweb.asm.tree.AnnotationNode;
 
@@ -46,7 +48,6 @@ import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.concurrent.NotThreadSafe;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
@@ -61,47 +62,49 @@ import javax.ws.rs.Path;
  * It is needed for wrapping user class that annotated with {@link Path} into a class that implements
  * {@link co.cask.http.HttpHandler} for the netty http service to inspect.
  *
- * Also, the generated class can impose transaction boundary for every call those {@link Path @Path} methods.
+ * Also, the generated class can impose transaction boundary for calls to those {@link Path @Path} methods.
+ *
+ * The generated class has a skeleton looks like this:
+ *
+ * <pre>{@code
+ *   public final class GeneratedClassName extends AbstractHttpHandlerDelegator<UserHandlerClass> {
+ *
+ *     public GeneratedClassName(DelegatorContext<UserHandlerClass> instantiator) {
+ *       super(context);
+ *     }
+ *
+ *     @literal@GET
+ *     @literal@Path("/path")
+ *     public void userMethod(HttpRequest request, HttpResponder responder) {
+ *       getHandler().userMethod(wrapRequest(request), wrapResponder(responder));
+ *     }
+ *   }
+ * }</pre>
  */
-@NotThreadSafe
 final class HttpHandlerGenerator {
 
-  public static final Type SUPER_CLASS_TYPE = Type.getType(AbstractHttpHandlerDelegator.class);
-
-  private ClassWriter classWriter;
-  private Type classType;
-  private TypeToken<?> delegateType;
-
-  ClassDefinition generate(TypeToken<?> delegateType, String pathPrefix) throws IOException {
+  ClassDefinition generate(TypeToken<? extends HttpServiceHandler> delegateType, String pathPrefix) throws IOException {
     Class<?> rawType = delegateType.getRawType();
 
-    this.classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    this.delegateType = delegateType;
+    ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
     String internalName = Type.getInternalName(rawType);
     String className = internalName + Hashing.md5().hashString(internalName);
 
     // Generate the class
-    classType = Type.getObjectType(className);
+    Type classType = Type.getObjectType(className);
     classWriter.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
-                      className, null,
+                      className, getClassSignature(delegateType),
                       Type.getInternalName(AbstractHttpHandlerDelegator.class), null);
 
     // Inspect the delegate class hierarchy to generate public handler methods.
-    boolean firstVisit = true;
     for (TypeToken<?> type : delegateType.getTypes().classes()) {
       if (!Object.class.equals(type.getRawType())) {
-        inspectHandler(type, firstVisit, pathPrefix);
-        firstVisit = false;
+        inspectHandler(delegateType, type, pathPrefix, classType, classWriter);
       }
     }
 
-    // Generate the delegate field
-    // DelegateType delegate;
-    classWriter.visitField(Opcodes.ACC_PRIVATE + Opcodes.ACC_FINAL, "delegate",
-                           Type.getDescriptor(rawType), null, null).visitEnd();
-
-    generateConstructor(delegateType);
+    generateConstructor(delegateType, classWriter);
 
     ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
     // DEBUG block. Uncomment for debug
@@ -112,9 +115,13 @@ final class HttpHandlerGenerator {
 
   /**
    * Inspects the given type and copy/rewrite handler methods from it into the newly generated class.
+   *
+   * @param delegateType The user handler type
+   * @param inspectType The type that needs to be inspected. It's either the delegateType or one of its parents
    */
-  private void inspectHandler(TypeToken<?> type, final boolean firstVisit, final String pathPrefix) throws IOException {
-    Class<?> rawType = type.getRawType();
+  private void inspectHandler(final TypeToken<?> delegateType, final TypeToken<?> inspectType, final String pathPrefix,
+                              final Type classType, final ClassWriter classWriter) throws IOException {
+    Class<?> rawType = inspectType.getRawType();
 
     // Visit the delegate class, copy and rewrite handler method, with method body just do delegation
     InputStream sourceBytes = rawType.getClassLoader().getResourceAsStream(Type.getInternalName(rawType) + ".class");
@@ -122,7 +129,9 @@ final class HttpHandlerGenerator {
       ClassReader classReader = new ClassReader(sourceBytes);
       classReader.accept(new ClassVisitor(Opcodes.ASM4) {
 
-        private boolean visitedPath = !firstVisit;
+        // Only need to visit @Path at the class level if we are inspecting the user handler class
+        private final boolean inspectDelegate = delegateType.equals(inspectType);
+        private boolean visitedPath = !inspectDelegate;
 
         @Override
         public void visit(int version, int access, String name, String signature,
@@ -134,7 +143,7 @@ final class HttpHandlerGenerator {
         public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
           // Copy the class annotation if it is @Path. Only do it for one time
           Type type = Type.getType(desc);
-          if (firstVisit && type.equals(Type.getType(Path.class))) {
+          if (inspectDelegate && type.equals(Type.getType(Path.class))) {
             visitedPath = true;
             AnnotationVisitor annotationVisitor = classWriter.visitAnnotation(desc, visible);
             return new AnnotationVisitor(Opcodes.ASM4, annotationVisitor) {
@@ -171,7 +180,8 @@ final class HttpHandlerGenerator {
           if (!Modifier.isPublic(access)) {
             return mv;
           }
-          return new HandlerMethodVisitor(mv, desc, signature, access, name, exceptions);
+          return new HandlerMethodVisitor(delegateType, mv, desc, signature,
+                                          access, name, exceptions, classType, classWriter);
         }
       }, ClassReader.SKIP_DEBUG);
     } finally {
@@ -180,59 +190,20 @@ final class HttpHandlerGenerator {
   }
 
   /**
-   * Generates the constructor. The constructor generated has signature {@code (DelegateType, HttpServiceContext)}.
+   * Generates the constructor. The constructor generated has signature {@code (DelegatorContext)}.
    */
-  private void generateConstructor(TypeToken<?> delegateType) {
-    Method constructor = Methods.getMethod(void.class, "<init>", delegateType.getRawType(), HttpServiceContext.class);
+  private void generateConstructor(TypeToken<? extends HttpServiceHandler> delegateType, ClassWriter classWriter) {
+    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class);
+    String signature = Signatures.getMethodSignature(constructor, getContextType(delegateType));
 
-    // Constructor(DelegateType, HttpServiceContext)
-    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, null, null, classWriter);
+    // Constructor(DelegatorContext)
+    GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, signature, null, classWriter);
 
-    // super(delegate, context);
+    // super(context);
     mg.loadThis();
     mg.loadArg(0);
-    mg.loadArg(1);
-    mg.invokeConstructor(SUPER_CLASS_TYPE,
-                         Methods.getMethod(void.class, "<init>", HttpServiceHandler.class, HttpServiceContext.class));
-
-    // this.delegate = delegate;
-    mg.loadThis();
-    mg.loadArg(0);
-    mg.putField(classType, "delegate", Type.getType(delegateType.getRawType()));
-
-    mg.returnValue();
-    mg.endMethod();
-  }
-
-  /**
-   * Generates the handler method body. It has the form:
-   *
-   * <pre>{@code
-   *   public void handle(HttpRequest request, HttpResponder responder, ...) {
-   *     delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
-   *   }
-   * }
-   * </pre>
-   */
-  private void generateDelegateMethodBody(GeneratorAdapter mg, Method method) {
-    mg.loadThis();
-    mg.getField(classType, "delegate", Type.getType(delegateType.getRawType()));
-
-    mg.loadThis();
-    mg.loadArg(0);
-    mg.invokeVirtual(SUPER_CLASS_TYPE,
-                     Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
-
-    mg.loadThis();
-    mg.loadArg(1);
-    mg.invokeVirtual(SUPER_CLASS_TYPE,
-                     Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
-
-    for (int i = 2; i < method.getArgumentTypes().length; i++) {
-      mg.loadArg(i);
-    }
-
-    mg.invokeVirtual(Type.getType(delegateType.getRawType()), method);
+    mg.invokeConstructor(Type.getType(AbstractHttpHandlerDelegator.class),
+                         Methods.getMethod(void.class, "<init>", DelegatorContext.class));
     mg.returnValue();
     mg.endMethod();
   }
@@ -260,11 +231,41 @@ final class HttpHandlerGenerator {
   }
 
   /**
+   * Returns a {@link TypeToken} that represents the type {@code HandlerDelegatorContext<UserHandlerClass>}.
+   */
+  private <T extends HttpServiceHandler> TypeToken<DelegatorContext<T>> getContextType(TypeToken<T> delegateType) {
+    return new TypeToken<DelegatorContext<T>>() {
+    }.where(new TypeParameter<T>() { }, delegateType);
+  }
+
+  /**
+   * Generates the class signature of the generate class. The generated class is not parameterized, however
+   * it extends from {@link AbstractHttpHandlerDelegator} with parameterized type of the user http handler.
+   *
+   * @param delegateType Type of the user http handler
+   * @return The signature string
+   */
+  private String getClassSignature(TypeToken<?> delegateType) {
+    SignatureWriter writer = new SignatureWriter();
+
+    // Construct the superclass signature as "AbstractHttpHandlerDelegator<UserHandlerClass>"
+    SignatureVisitor sv = writer.visitSuperclass();
+    sv.visitClassType(Type.getInternalName(AbstractHttpHandlerDelegator.class));
+    SignatureVisitor tv = sv.visitTypeArgument('=');
+    tv.visitClassType(Type.getInternalName(delegateType.getRawType()));
+    tv.visitEnd();
+    sv.visitEnd();
+
+    return writer.toString();
+  }
+
+  /**
    * The ASM MethodVisitor for visiting handler class methods and optionally copy them if it is a handler
    * method.
    */
   private class HandlerMethodVisitor extends MethodVisitor {
 
+    private final TypeToken<?> delegateType;
     private final List<AnnotationNode> annotations;
     private final Map<Integer, AnnotationNode> paramAnnotations;
     private final String desc;
@@ -272,17 +273,35 @@ final class HttpHandlerGenerator {
     private final int access;
     private final String name;
     private final String[] exceptions;
+    private final Type classType;
+    private final ClassWriter classWriter;
 
-    public HandlerMethodVisitor(MethodVisitor mv, String desc, String signature,
-                                int access, String name, String[] exceptions) {
+    /**
+     * Constructs a {@link HandlerMethodVisitor}.
+     *
+     * @param delegateType The user handler type
+     * @param mv The {@link MethodVisitor} to delegate calls to if not handled by this class
+     * @param desc Method description
+     * @param signature Method signature
+     * @param access Method access flag
+     * @param name Method name
+     * @param exceptions Method exceptions list
+     * @param classType Type of the generated class
+     * @param classWriter Writer for generating bytecode
+     */
+    HandlerMethodVisitor(TypeToken<?> delegateType, MethodVisitor mv, String desc, String signature,
+                         int access, String name, String[] exceptions, Type classType, ClassWriter classWriter) {
       super(Opcodes.ASM4, mv);
+      this.delegateType = delegateType;
       this.desc = desc;
       this.signature = signature;
       this.access = access;
       this.name = name;
       this.exceptions = exceptions;
-      annotations = Lists.newArrayList();
-      paramAnnotations = Maps.newLinkedHashMap();
+      this.annotations = Lists.newArrayList();
+      this.paramAnnotations = Maps.newLinkedHashMap();
+      this.classType = classType;
+      this.classWriter = classWriter;
     }
 
     @Override
@@ -386,6 +405,41 @@ final class HttpHandlerGenerator {
       reader.accept(writer);
 
       return writer.toString();
+    }
+
+    /**
+     * Generates the handler method body. It has the form:
+     *
+     * <pre>{@code
+     *   public void handle(HttpRequest request, HttpResponder responder, ...) {
+     *     delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
+     *   }
+     * }
+     * </pre>
+     */
+    private void generateDelegateMethodBody(GeneratorAdapter mg, Method method) {
+      mg.loadThis();
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceHandler.class, "getHandler"));
+      mg.checkCast(Type.getType(delegateType.getRawType()));
+
+      mg.loadThis();
+      mg.loadArg(0);
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceRequest.class, "wrapRequest", HttpRequest.class));
+
+      mg.loadThis();
+      mg.loadArg(1);
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
+
+      for (int i = 2; i < method.getArgumentTypes().length; i++) {
+        mg.loadArg(i);
+      }
+
+      mg.invokeVirtual(Type.getType(delegateType.getRawType()), method);
+      mg.returnValue();
+      mg.endMethod();
     }
   }
 }

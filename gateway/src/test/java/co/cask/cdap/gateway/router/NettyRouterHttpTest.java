@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
@@ -34,7 +33,6 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Tests Netty Router running on HTTP.
@@ -48,8 +46,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
 
   @Override
   protected RouterService createRouterService() {
-    return new HttpRouterService(HOSTNAME, DISCOVERY_SERVICE,
-                                 ImmutableSet.of("0:" + DEFAULT_SERVICE, "0:" + WEBAPP_SERVICE));
+    return new HttpRouterService(HOSTNAME, DISCOVERY_SERVICE);
   }
 
   @Override
@@ -65,15 +62,13 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
   private static class HttpRouterService extends RouterService {
     private final String hostname;
     private final DiscoveryService discoveryService;
-    private final Set<String> forwards;
     private final Map<String, Integer> serviceMap = Maps.newHashMap();
 
     private NettyRouter router;
 
-    private HttpRouterService(String hostname, DiscoveryService discoveryService, Set<String> forwards) {
+    private HttpRouterService(String hostname, DiscoveryService discoveryService) {
       this.hostname = hostname;
       this.discoveryService = discoveryService;
-      this.forwards = forwards;
     }
 
     @Override
@@ -85,7 +80,9 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
-      cConf.setStrings(Constants.Router.FORWARD, forwards.toArray(new String[forwards.size()]));
+      cConf.setInt(Constants.Router.ROUTER_PORT, 0);
+      cConf.setBoolean(Constants.Router.WEBAPP_ENABLED, true);
+      cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
       router =
         new NettyRouter(cConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,

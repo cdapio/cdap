@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,11 +23,10 @@ import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
 import com.continuuity.security.tools.SSLHandlerFactory;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -62,7 +61,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -81,7 +80,7 @@ public class NettyRouter extends AbstractIdleService {
   private final int clientBossThreadPoolSize;
   private final int clientWorkerThreadPoolSize;
   private final InetAddress hostname;
-  private final Set<String> forwards; // format port:service
+  private final Map<String, Integer> serviceToPortMap;
 
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
   private final RouterServiceLookup serviceLookup;
@@ -98,6 +97,7 @@ public class NettyRouter extends AbstractIdleService {
   private DiscoveryServiceClient discoveryServiceClient;
 
   private final boolean sslEnabled;
+  private final boolean webAppEnabled;
   private final SSLHandlerFactory sslHandlerFactory;
 
   @Inject
@@ -119,9 +119,7 @@ public class NettyRouter extends AbstractIdleService {
                                                    Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
 
     this.hostname = hostname;
-    this.forwards = Sets.newHashSet(cConf.getStrings(Constants.Router.FORWARD, Constants.Router.DEFAULT_FORWARD));
-    Preconditions.checkState(!this.forwards.isEmpty(), "Require at least one forward rule for router to start");
-    LOG.info("Forwards - {}", this.forwards);
+    this.serviceToPortMap = Maps.newHashMap();
 
     this.serviceLookup = serviceLookup;
     this.securityEnabled = cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED, false);
@@ -132,7 +130,17 @@ public class NettyRouter extends AbstractIdleService {
     this.configuration = cConf;
 
     this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
+    this.webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
     if (isSSLEnabled()) {
+      this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
+                                Integer.parseInt(cConf.get(Constants.Router.ROUTER_SSL_PORT,
+                                                           Constants.Router.DEFAULT_ROUTER_SSL_PORT)));
+      if (webAppEnabled) {
+        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
+                                  Integer.parseInt(cConf.get(Constants.Router.WEBAPP_SSL_PORT,
+                                                             Constants.Router.DEFAULT_WEBAPP_SSL_PORT)));
+      }
+
       File keystore;
       try {
         keystore = new File(cConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
@@ -145,8 +153,17 @@ public class NettyRouter extends AbstractIdleService {
         cConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
         cConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
+      this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
+                        Integer.parseInt(cConf.get(Constants.Router.ROUTER_PORT,
+                                                   Constants.Router.DEFAULT_ROUTER_PORT)));
+      if (webAppEnabled) {
+        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
+                                  Integer.parseInt(cConf.get(Constants.Router.WEBAPP_PORT,
+                                                             Constants.Router.DEFAULT_WEBAPP_PORT)));
+      }
       this.sslHandlerFactory = null;
     }
+    LOG.info("Service to Port Mapping - {}", this.serviceToPortMap);
   }
 
   @Override
@@ -244,10 +261,9 @@ public class NettyRouter extends AbstractIdleService {
 
     // Start listening on ports.
     ImmutableMap.Builder<Integer, String> serviceMapBuilder = ImmutableMap.builder();
-    for (String forward : forwards) {
-      int ind = forward.indexOf(':');
-      int port = Integer.parseInt(forward.substring(0, ind));
-      String service = forward.substring(ind + 1);
+    for (Map.Entry<String, Integer> forward : serviceToPortMap.entrySet()) {
+      int port = forward.getValue();
+      String service = forward.getKey();
 
       String boundService = serviceLookup.getService(port);
       if (boundService != null) {

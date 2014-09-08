@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright 2014 Cask, Inc.
+REM ## Copyright 2014 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -32,14 +32,11 @@ SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
 
 cd %CDAP_HOME%
 
-
-
 REM Get app jar with latest version
 SET APP_JAR_PREFIX=ResponseCodeAnalytics
 for /r %CDAP_HOME%\examples\%APP_JAR_PREFIX%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
 
 if %JAR_PATH% == "" echo "Could not find example application jar with name %APP_JAR_PREFIX%"
-
 
 REM Process command line
 IF "%1" == "start" GOTO START
@@ -49,11 +46,10 @@ IF "%1" == "status" GOTO STATUS
 IF "%1" == "reset" GOTO RESET
 GOTO USAGE
 
-
 :USAGE
 echo Usage: %0 {start^|stop^|restart^|status^|reset}
 echo Additional options with start, restart:
-echo --enable-debug [ ^<port^> ] to connect to a debug port for Cask Local DAP (default port is 5005)
+echo --enable-debug [ ^<port^> ] to connect to a debug port for Standalone CDAP (default port is 5005)
 GOTO :FINALLY
 
 :RESET
@@ -82,9 +78,9 @@ if NOT "%answer%" == "y" (
 )
 
 REM delete logs and data directories
-echo Resetting Cask Local DAP...
+echo Resetting Standalone CDAP...
 rmdir /S /Q %CDAP_HOME%\logs %CDAP_HOME%\data > NUL 2>&1
-echo Cask Local DAP reset successfully.
+echo CDAP reset successfully.
 GOTO :FINALLY
 
 
@@ -121,7 +117,7 @@ endlocal
 
 REM Check if Node.js is installed
 for %%x in (node.exe) do if [%%~$PATH:x]==[] (
-  echo Node.js Cask Local DAP requires nodeJS but it's either not installed or not in path. Aborting. 1>&2
+  echo Node.js Standalone CDAP requires Node.js but it's either not installed or not in path. Exiting. 1>&2
   GOTO :FINALLY
 )
 
@@ -166,7 +162,7 @@ if exist %~dsp0MyProg.pid (
 attrib +h %~dsp0MyProg.pid >NUL
 
 REM Check for new version of CDAP
-bitsadmin /Transfer NAME http://www.cdap.co/version %~f0_version.txt > NUL 2>&1
+bitsadmin /Transfer NAME http://cask.co/cdap/version %~f0_version.txt > NUL 2>&1
 if exist %~f0_version.txt (
   for /f "tokens=* delims= " %%f in (%~f0_version.txt) do (
     SET new_version = %%f
@@ -177,8 +173,8 @@ if exist %~f0_version.txt (
   del %~f0_version.txt > NUL 2>&1
 
   if not "%current_version%" == "%new_version%" (
-    echo UPDATE: There is a newer version of Cdap Developer Suite available.
-    echo         Download it from your account: https://accounts.cdap.com.
+    echo UPDATE: There is a newer version of the CDAP SDK available.
+    echo         Download it from http://cask.co/cdap/download
   )
 )
 
@@ -220,7 +216,7 @@ IF "%2" == "--enable-debug" (
 )
 
 start /B %JAVACMD% !DEBUG_OPTIONS! -Dhadoop.security.group.mapping=org.apache.hadoop.security.JniBasedUnixGroupsMappingWithFallback -Dhadoop.home.dir=%CDAP_HOME%\libexec -classpath %CLASSPATH% co.cask.cdap.SingleNodeMain --web-app-path %WEB_APP_PATH% >> %CDAP_HOME%\logs\cdap-process.log 2>&1 < NUL
-echo Starting Cask Local DAP...
+echo Starting Standalone CDAP...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b
 echo %MyPID% > %~dsp0MyProg.pid
@@ -241,14 +237,14 @@ echo Failed to start, please check logs for more information
 GOTO :STOP
 
 :ServerSuccess
-echo Cask Local DAP started succesfully.
+echo Standalone CDAP started succesfully.
 
 IF NOT "!DEBUG_OPTIONS!" == "" (
   echo Remote debugger agent started on port !port!.
 )
 ENDLOCAL
 
-REM Sleep for 5 seconds to wait for node.Js startup
+REM Sleep for 5 seconds to wait for Node.js startup
 PING 127.0.0.1 -n 6 > NUL 2>&1
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
@@ -274,7 +270,7 @@ if not exist %CDAP_HOME%\.nux_dashboard (
 GOTO :EOF
 
 :STOP
-echo Stopping Cask Local DAP ...
+echo Stopping Standalone CDAP ...
 attrib -h %~dsp0MyProg.pid >NUL
 if exist %~dsp0MyProg.pid (
   for /F %%i in (%~dsp0MyProg.pid) do (

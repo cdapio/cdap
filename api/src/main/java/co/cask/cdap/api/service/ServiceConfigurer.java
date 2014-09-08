@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Interface for configurers used to create custom Services.
@@ -97,4 +98,22 @@ public interface ServiceConfigurer {
    * @return properties of the Service.
    */
   Map<String, String> getProperties();
+
+  /**
+   * Specify a dataset to be used by the Service.
+   * @param dataset name of dataset used.
+   */
+  void useDataset(String dataset);
+
+  /**
+   * Specify a list of datasets that will be used by the Service.
+   * @param datasets names of datasets used.
+   */
+  void useDatasets(Iterable<String> datasets);
+
+  /**
+   * Get a set of datasets used by the Service.
+   * @return set of datasets.
+   */
+  Set<String> getDatasets();
 }

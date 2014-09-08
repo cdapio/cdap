@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 # Set environment variables here.
 
 # Main cmd is the non-java command to run.  

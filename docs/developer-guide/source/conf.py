@@ -1,4 +1,19 @@
 # -*- coding: utf-8 -*-
+
+# Copyright 2014 Cask Data, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
 #
 # CDAP documentation build configuration file
 #
@@ -65,7 +80,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Cask Data Application Platform'
-copyright = u'2014 Cask, Inc.'
+copyright = u'2014 Cask Data, Inc.'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -192,7 +207,7 @@ html_show_sourcelink = False
 html_copy_source = False
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
-#html_show_sphinx = True
+html_show_sphinx = False
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
 #html_show_copyright = True
@@ -227,7 +242,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'CDAP.tex', u'CDAP Documentation',
-   u'Cask, Inc.', 'manual'),
+   u'Cask Data, Inc.', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -257,7 +272,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'cdap', u'CDAP Documentation',
-     [u'Cask, Inc.'], 1)
+     [u'Cask Data, Inc.'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -271,7 +286,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'CDAP', u'CDAP Documentation',
-   u'Cask, Inc.', 'CDAP', 'Cask Data Application Platform',
+   u'Cask Data, Inc.', 'CDAP', 'Cask Data Application Platform',
    'Miscellaneous'),
 ]
 
@@ -308,7 +323,7 @@ texinfo_documents = [
 # regardless of the global pdf_compressed setting.
 
 pdf_documents = [
-    ('index', u'CDAP', u'Cask Data Application Platform', u'Cask, Inc.'),
+    ('index', u'CDAP', u'Cask Data Application Platform', u'Cask Data, Inc.'),
 ]
 
 # A comma-separated list of custom stylesheets. Example:

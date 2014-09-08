@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,29 +17,24 @@
 package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
+import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.service.ExploreService;
-import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
-import co.cask.cdap.hive.objectinspector.ReflectionStructObjectInspector;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -89,10 +84,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      if (!(dataset instanceof RecordScannable)) {
-        // It is not an error to get non-RecordScannable datasets, since the type of dataset may not be known where this
+      if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
+        // It is not an error to get non-RecordEnabled datasets, since the type of dataset may not be known where this
         // call originates from.
-        LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
+        LOG.debug("Dataset {} neither implements {} nor {}", datasetName, RecordScannable.class.getName(),
+                  RecordWritable.class.getName());
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
@@ -100,10 +96,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       }
 
       LOG.debug("Enabling explore for dataset instance {}", datasetName);
-      RecordScannable<?> scannable = (RecordScannable) dataset;
       String createStatement;
       try {
-        createStatement = DatasetExploreFacade.generateCreateStatement(datasetName, scannable);
+        createStatement = DatasetExploreFacade.generateCreateStatement(datasetName, dataset);
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for dataset {}", datasetName, e);
         responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -168,54 +163,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
-  /**
-    * Get the schema of a dataset.
-    */
-  @GET
-  @Path("/data/explore/datasets/{dataset}/schema")
-  public void getDatasetSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                               @PathParam("dataset") final String datasetName) {
-    try {
-      LOG.trace("Retrieving Explore schema for dataset {}", datasetName);
-
-      Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
-      if (dataset == null) {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot find dataset " + datasetName);
-        return;
-      }
-
-      if (!(dataset instanceof RecordScannable)) {
-        LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
-        responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                            String.format("Dataset %s does not implement %s",
-                                          datasetName, RecordScannable.class.getName()));
-        return;
-      }
-
-      RecordScannable recordScannable = (RecordScannable) dataset;
-
-      ObjectInspector oi = ObjectInspectorFactory.getReflectionObjectInspector(recordScannable.getRecordType());
-      if (!(oi instanceof ReflectionStructObjectInspector)) {
-        LOG.debug("Record type {} for dataset {} is not a RECORD.",
-                  recordScannable.getRecordType().getClass().getName(), datasetName);
-        responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                            String.format("Record type %s for dataset %s is not a RECORD.",
-                                          recordScannable.getRecordType().getClass().getName(), datasetName));
-        return;
-      }
-
-      ImmutableMap.Builder builder = ImmutableMap.builder();
-      for (StructField structField : ((ReflectionStructObjectInspector) oi).getAllStructFieldRefs()) {
-        ObjectInspector tmp = structField.getFieldObjectInspector();
-        builder.put(structField.getFieldName(), tmp.getTypeName());
-      }
-      responder.sendJson(HttpResponseStatus.OK, builder.build());
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());

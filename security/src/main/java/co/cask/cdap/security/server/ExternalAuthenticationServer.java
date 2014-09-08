@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -152,27 +151,27 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       if (configuration.getBoolean(Constants.Security.AuthenticationServer.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
-        Configuration sslConfiguration = new Configuration();
-        String keyStorePath = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
-        String keyStorePassword = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
-        String keyStoreType = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE);
-        String keyPassword = sslConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
+        String keyStorePath = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
+        String keyStorePassword = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
+        String keyStoreType = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE);
+        String keyPassword = configuration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
 
         Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
         Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");
 
         sslContextFactory.setKeyStorePath(keyStorePath);
         sslContextFactory.setKeyStorePassword(keyStorePassword);
-        sslContextFactory.setKeyManagerPassword(keyPassword);
         sslContextFactory.setKeyStoreType(keyStoreType);
+        if (keyPassword != null && keyPassword.length() != 0) {
+          sslContextFactory.setKeyManagerPassword(keyPassword);
+        }
         // TODO Figure out how to pick a certificate from key store
 
         SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
         int sslPort = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
         sslConnector.setHost(address.getCanonicalHostName());
         sslConnector.setPort(sslPort);
-        connector.setConfidentialPort(sslPort);
-        server.setConnectors(new Connector[]{connector, sslConnector});
+        server.setConnectors(new Connector[]{sslConnector});
       } else {
         server.setConnectors(new Connector[]{connector});
       }
@@ -184,8 +183,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
 
       server.setHandler(handlers);
     } catch (Exception e) {
-      LOG.error("Error while starting server.");
-      LOG.error(e.getMessage());
+      LOG.error("Error while starting server.", e);
     }
   }
 
@@ -216,8 +214,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       server.stop();
       grantAccessToken.destroy();
     } catch (Exception e) {
-      LOG.error("Error stopping ExternalAuthenticationServer.");
-      LOG.error(e.getMessage());
+      LOG.error("Error stopping ExternalAuthenticationServer.", e);
     }
   }
 }

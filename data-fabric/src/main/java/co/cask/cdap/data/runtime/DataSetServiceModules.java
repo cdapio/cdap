@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.ACLTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
@@ -37,6 +38,9 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModul
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBOrderedTableModule;
+import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
+import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.Maps;
@@ -64,6 +68,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("orderedTable-memory", new InMemoryOrderedTableModule());
     INMEMORY_DATASET_MODULES.put("metricsTable-memory", new InMemoryMetricsTableModule());
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
+    INMEMORY_DATASET_MODULES.put("aclTable", new ACLTableModule());
   }
 
   public Module getInMemoryModule() {
@@ -75,6 +80,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
         defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
+        defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -93,6 +99,8 @@ public class DataSetServiceModules {
         Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class, datasetUserName);
         handlerBinder.addBinding().to(DatasetAdminOpHTTPHandler.class);
         handlerBinder.addBinding().to(PingHandler.class);
+
+        Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class);
 
         bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
         expose(DatasetOpExecutorService.class);
@@ -113,6 +121,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-leveldb", new LevelDBOrderedTableModule());
         defaultModules.put("metricsTable-leveldb", new LevelDBMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
+        defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -124,6 +133,10 @@ public class DataSetServiceModules {
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
+
+        Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
+          .addBinding().to(LevelDBDatasetMetricsReporter.class);
+
         bind(DatasetService.class);
         expose(DatasetService.class);
 
@@ -151,6 +164,7 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-hbase", new HBaseOrderedTableModule());
         defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
+        defaultModules.put("aclTable", new ACLTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -162,6 +176,10 @@ public class DataSetServiceModules {
         //       as long as the data is durably persisted
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).to(InMemoryDatasetFramework.class);
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
+
+        Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
+          .addBinding().to(HBaseDatasetMetricsReporter.class);
+
         bind(DatasetService.class);
         expose(DatasetService.class);
 

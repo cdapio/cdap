@@ -1,13 +1,17 @@
-=================
- Java Client API
-=================
+.. :author: Cask Data, Inc.
+   :description: A Java Client for Interacting With the Cask Data Application Platform 
+
+==============================================
+Cask Data Application Platform Java Client API
+==============================================
 
 .. highlight:: console
 
 Introduction
 ============
 
-The CDAP Java Client API provides methods for interacting with CDAP from Java applications.
+The Cask Data Application Platform (CDAP) Java Client API provides methods for interacting
+with CDAP from Java applications.
 
 Maven Dependency
 ================
@@ -45,7 +49,7 @@ ApplicationClient
 
 ::
 
-  // Interact with the DAP instance located at example.com, port 10000
+  // Interact with the CDAP instance located at example.com, port 10000
   ClientConfig clientConfig = new ClientConfig("example.com", 10000);
 
   // Construct the client used to interact with CDAP
@@ -69,7 +73,7 @@ DatasetClient
 
 ::
 
-  // Interact with the DAP instance located at example.com, port 10000
+  // Interact with the CDAP instance located at example.com, port 10000
   ClientConfig clientConfig = new ClientConfig("example.com", 10000);
 
   // Construct the client used to interact with CDAP

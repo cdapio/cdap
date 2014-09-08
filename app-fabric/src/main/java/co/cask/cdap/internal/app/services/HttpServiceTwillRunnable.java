@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,12 +24,15 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.service.http.DefaultHttpServiceHandlerConfigurer;
+import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.service.http.DefaultHttpServiceContext;
 import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -46,11 +49,17 @@ import org.apache.twill.common.Services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A Twill Runnable which runs a {@link NettyHttpService} with a list of {@link HttpServiceHandler}s.
@@ -66,13 +75,19 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private static final String CONF_HANDLER = "service.runnable.handlers";
   private static final String CONF_SPEC = "service.runnable.handler.spec";
   private static final String CONF_APP = "app.name";
+  private static final long HANDLER_CLEANUP_PERIOD_MS = TimeUnit.SECONDS.toMillis(60);
 
+  // The metrics field is injected at runtime
   private Metrics metrics;
   private ClassLoader programClassLoader;
   private String serviceName;
   private String appName;
   private List<HttpServiceHandler> handlers;
   private NettyHttpService service;
+
+  // The following two fields are for tracking GC'ed suppliers of handler and be able to call destroy on them.
+  private Map<Reference<? extends Supplier<HttpServiceHandler>>, HttpServiceHandler> handlerReferences;
+  private ReferenceQueue<Supplier<HttpServiceHandler>> handlerReferenceQueue;
 
   /**
    * Instantiates this class with a name which will be used when this service is announced
@@ -109,14 +124,27 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     int port = service.getBindAddress().getPort();
     Cancellable contextCancellable = getContext().announce(serviceName, port);
     LOG.info("Announced HTTP Service");
+
+    // Create a Timer thread to periodically collect handler that are no longer in used and call destroy on it
+    Timer timer = new Timer("http-handler-gc", true);
+    timer.scheduleAtFixedRate(createHandlerDestroyTask(), HANDLER_CLEANUP_PERIOD_MS, HANDLER_CLEANUP_PERIOD_MS);
+
     try {
       completion.get();
-      // once the service has been stopped, don't announce it anymore.
-      contextCancellable.cancel();
     } catch (InterruptedException e) {
       LOG.error("Caught exception in HTTP Service run", e);
     } catch (ExecutionException e) {
       LOG.error("Caught exception in HTTP Service run", e);
+    } finally {
+      // once the service has been stopped, don't announce it anymore.
+      contextCancellable.cancel();
+      timer.cancel();
+
+      // Go through all non-cleanup'ed handler and call destroy() upon them
+      // At this point, there should be no call to any handler method, hence it's safe to call from this thread
+      for (HttpServiceHandler handler : handlerReferences.values()) {
+        destroyHandler(handler);
+      }
     }
   }
 
@@ -158,6 +186,10 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     LOG.info("In initialize method in HTTP Service");
     // initialize the base class so that we can use this context later
     super.initialize(context);
+
+    handlerReferences = Maps.newConcurrentMap();
+    handlerReferenceQueue = new ReferenceQueue<Supplier<HttpServiceHandler>>();
+
     Map<String, String> runnableArgs = Maps.newHashMap(context.getSpecification().getConfigs());
     appName = runnableArgs.get(CONF_APP);
     serviceName = runnableArgs.get(CONF_RUNNABLE);
@@ -165,21 +197,18 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     List<String> handlerNames = GSON.fromJson(runnableArgs.get(CONF_HANDLER), HANDLER_NAMES_TYPE);
     List<HttpServiceSpecification> specs = GSON.fromJson(runnableArgs.get(CONF_SPEC), HANDLER_SPEC_TYPE);
     // we will need the context based on the spec when we create NettyHttpService
-    List<HandlerContextPair> handlerContextPairs = Lists.newArrayList();
-    InstantiatorFactory factory = new InstantiatorFactory(false);
+    List<HandlerDelegatorContext> delegatorContexts = Lists.newArrayList();
+    InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
+
     for (int i = 0; i < handlerNames.size(); ++i) {
       try {
-        TypeToken<?> type = TypeToken.of(programClassLoader.loadClass(handlerNames.get(i)));
-        HttpServiceHandler handler = (HttpServiceHandler) factory.get(type).create();
-        // create context with spec and runtime args
+        Class<?> handlerClass = programClassLoader.loadClass(handlerNames.get(i));
+        @SuppressWarnings("unchecked")
+        TypeToken<HttpServiceHandler> type = TypeToken.of((Class<HttpServiceHandler>) handlerClass);
+
         DefaultHttpServiceContext httpServiceContext =
           new DefaultHttpServiceContext(specs.get(i), context.getApplicationArguments());
-        // call handler initialize method with the spec from configure time
-        handler.initialize(httpServiceContext);
-        // set up metrics for HttpServiceHandlers
-        Reflections.visit(handler, type, new MetricsFieldSetter(metrics));
-        handlerContextPairs.add(new HandlerContextPair(handler, httpServiceContext));
-        handlers.add(handler);
+        delegatorContexts.add(new HandlerDelegatorContext(type, instantiatorFactory, httpServiceContext));
       } catch (Exception e) {
         LOG.error("Could not initialize HTTP Service");
         Throwables.propagate(e);
@@ -187,7 +216,7 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     }
     String pathPrefix = String.format("%s/apps/%s/services/%s/methods", Constants.Gateway.GATEWAY_VERSION, appName,
                                       serviceName);
-    service = createNettyHttpService(context.getHost().getCanonicalHostName(), handlerContextPairs, pathPrefix);
+    service = createNettyHttpService(context.getHost().getCanonicalHostName(), delegatorContexts, pathPrefix);
   }
 
   /**
@@ -195,9 +224,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
    */
   @Override
   public void destroy() {
-    for (HttpServiceHandler handler : handlers) {
-      handler.destroy();
-    }
   }
 
   /**
@@ -208,22 +234,57 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     service.stop();
   }
 
+  private TimerTask createHandlerDestroyTask() {
+    return new TimerTask() {
+      @Override
+      public void run() {
+        Reference<? extends Supplier<HttpServiceHandler>> ref = handlerReferenceQueue.poll();
+        while (ref != null) {
+          HttpServiceHandler handler = handlerReferences.remove(ref);
+          if (handler != null) {
+            destroyHandler(handler);
+          }
+          ref = handlerReferenceQueue.poll();
+        }
+      }
+    };
+  }
+
+  private void initHandler(HttpServiceHandler handler, HttpServiceContext serviceContext) {
+    try {
+      handler.initialize(serviceContext);
+    } catch (Throwable t) {
+      LOG.error("Exception raised in HttpServiceHandler.initialize of class {}", handler.getClass(), t);
+      throw Throwables.propagate(t);
+    }
+  }
+
+  private void destroyHandler(HttpServiceHandler handler) {
+    try {
+      handler.destroy();
+    } catch (Throwable t) {
+      LOG.error("Exception raised in HttpServiceHandler.destroy of class {}", handler.getClass(), t);
+      // Don't propagate
+    }
+  }
+
   /**
-   * Creates a {@link NettyHttpService} from the given host, and list of {@link HandlerContextPair}s
+   * Creates a {@link NettyHttpService} from the given host, and list of {@link HandlerDelegatorContext}s
    *
    * @param host the host which the service will run on
-   * @param handlerContextPairs the list of pairs of HttpServiceHandlers and HttpServiceContexts
+   * @param delegatorContexts the list {@link HandlerDelegatorContext}
    * @param pathPrefix a string prepended to the paths which the handlers in handlerContextPairs will bind to
    * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
    */
-  private static NettyHttpService createNettyHttpService(String host, List<HandlerContextPair> handlerContextPairs,
-                                                         String pathPrefix) {
+  private NettyHttpService createNettyHttpService(String host,
+                                                  Iterable<HandlerDelegatorContext> delegatorContexts,
+                                                  String pathPrefix) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
     HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix);
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
     // get the runtime args from the twill context
-    for (HandlerContextPair pair : handlerContextPairs) {
-      nettyHttpHandlers.add(factory.createHttpHandler(pair.getHandler(), pair.getContext()));
+    for (HandlerDelegatorContext context : delegatorContexts) {
+      nettyHttpHandlers.add(factory.createHttpHandler(context.getHandlerType(), context));
     }
 
     return NettyHttpService.builder().setHost(host)
@@ -232,31 +293,51 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
       .build();
   }
 
-  /**
-   * Convenience class for storing a pair of {@link HttpServiceHandler} and {@link HttpServiceContext}
-   */
-  private static final class HandlerContextPair {
+  private final class HandlerDelegatorContext implements DelegatorContext<HttpServiceHandler> {
 
-    private final HttpServiceHandler handler;
-    private final HttpServiceContext context;
+    private final InstantiatorFactory instantiatorFactory;
+    private final ThreadLocal<Supplier<HttpServiceHandler>> handlerThreadLocal;
+    private final HttpServiceContext serviceContext;
+    private final TypeToken<HttpServiceHandler> handlerType;
 
+    private HandlerDelegatorContext(TypeToken<HttpServiceHandler> handlerType,
+                                    InstantiatorFactory instantiatorFactory, HttpServiceContext serviceContext) {
+      this.handlerType = handlerType;
+      this.instantiatorFactory = instantiatorFactory;
+      this.serviceContext = serviceContext;
+      this.handlerThreadLocal = new ThreadLocal<Supplier<HttpServiceHandler>>();
+    }
+
+    @Override
     public HttpServiceHandler getHandler() {
+      Supplier<HttpServiceHandler> supplier = handlerThreadLocal.get();
+      if (supplier != null) {
+        return supplier.get();
+      }
+      HttpServiceHandler handler = instantiatorFactory.get(handlerType).create();
+      Reflections.visit(handler, handlerType, new MetricsFieldSetter(metrics));
+      initHandler(handler, serviceContext);
+      supplier = Suppliers.ofInstance(handler);
+
+      // We use GC of the supplier as a signal for us to know that a thread is gone
+      // The supplier is set into the thread local, which will get GC'ed when the thread is gone.
+      // Since we use a weak reference key to the supplier that points to the handler
+      // (in the handlerReferences map), it won't block GC of the supplier instance.
+      // We can use the weak reference, which retrieved through polling the ReferenceQueue,
+      // to get back the handler and call destroy() on it.
+      handlerReferences.put(new WeakReference<Supplier<HttpServiceHandler>>(supplier, handlerReferenceQueue), handler);
+
+      handlerThreadLocal.set(supplier);
       return handler;
     }
 
-    public HttpServiceContext getContext() {
-      return context;
+    @Override
+    public HttpServiceContext getServiceContext() {
+      return serviceContext;
     }
 
-    /**
-     * Instantiates the class with a {@link HttpServiceHandler} and {@link HttpServiceContext} pair
-     *
-     * @param handler the handler
-     * @param context the context
-     */
-    public HandlerContextPair(HttpServiceHandler handler, HttpServiceContext context) {
-      this.handler = handler;
-      this.context = context;
+    TypeToken<HttpServiceHandler> getHandlerType() {
+      return handlerType;
     }
   }
 }

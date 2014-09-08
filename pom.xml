@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2014 Cask, Inc.
+  Copyright 2014 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -131,6 +131,7 @@
     <module>watchdog-tests</module>
     <module>app-fabric</module>
     <module>security</module>
+    <module>security-service</module>
     <module>gateway</module>
     <module>explore-client</module>
     <module>explore-jdbc</module>
@@ -908,33 +909,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.hive</groupId>
-        <artifactId>hive-beeline</artifactId>
-        <version>${hive.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-exec</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>asm</groupId>
-            <artifactId>asm-commons</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>asm</groupId>
-            <artifactId>asm-tree</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hive</groupId>
         <artifactId>hive-jdbc</artifactId>
         <version>${hive.version}</version>
         <exclusions>
@@ -963,6 +937,33 @@
       <dependency>
         <groupId>org.apache.hive</groupId>
         <artifactId>hive-metastore</artifactId>
+        <version>${hive.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-exec</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm-commons</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm-tree</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hive</groupId>
+        <artifactId>hive-service</artifactId>
         <version>${hive.version}</version>
         <exclusions>
           <exclusion>
@@ -1123,11 +1124,14 @@
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_2.10</artifactId>
         <version>${spark.version}</version>
-        <scope>provided</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1357,7 +1361,7 @@
                 </links>
                 <doctitle>${project.name} ${project.version}</doctitle>
                 <bottom>
-                  <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
+                  <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
                 </bottom>
               </configuration>
               <executions>
@@ -1435,7 +1439,7 @@
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
-                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm</excludeGroupIds>
+                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm, org.apache.spark</excludeGroupIds>
                     <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>
@@ -1813,9 +1817,9 @@
                     <executable>fpm</executable>
                     <commandlineArgs>
                       --name "cdap-${project.artifactId}"
-                      --vendor "Cask, Inc."
+                      --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask, Inc. Licensed under the Apache License, Version 2.0."
+                      --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
                       --description "Component of Cask DAP"
                       --category misc
                       -s dir
@@ -1864,9 +1868,9 @@
                     <executable>fpm</executable>
                     <commandlineArgs>
                       --name "cdap-${project.artifactId}"
-                      --vendor "Cask, Inc."
+                      --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask, Inc. Licensed under the Apache License, Version 2.0."
+                      --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
                       --description "Component of Cask DAP"
                       --category misc
                       -s dir
@@ -1962,7 +1966,7 @@
           </links>
           <doctitle>${project.name} ${project.version}</doctitle>
           <bottom>
-            <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
+            <![CDATA[Copyright &#169; {currentYear} <a href="http://cask.co" target="_blank">Cask Data, Inc.</a> Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0" target="_blank">Apache License, Version 2.0</a>.]]>
           </bottom>
         </configuration>
         <reportSets>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
@@ -42,6 +43,7 @@ public class AuthenticationServerMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationServerMain.class);
   private ZKClientService zkClientService;
   private ExternalAuthenticationServer authServer;
+  private CConfiguration configuration;
 
   @Override
   public void init(String[] args) {
@@ -50,7 +52,7 @@ public class AuthenticationServerMain extends DaemonMain {
                                              new SecurityModules().getDistributedModules(),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
                                              new ZKClientModule());
-    CConfiguration configuration = injector.getInstance(CConfiguration.class);
+    configuration = injector.getInstance(CConfiguration.class);
 
     if (configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
       this.zkClientService = injector.getInstance(ZKClientService.class);
@@ -61,13 +63,21 @@ public class AuthenticationServerMain extends DaemonMain {
   @Override
   public void start() {
     if (authServer != null) {
-      LOG.info("Starting AuthenticationServer.");
-      Services.chainStart(zkClientService, authServer);
+      try {
+        LOG.info("Starting AuthenticationServer.");
+
+        // Enable Kerberos login
+        SecurityUtil.enableKerberosLogin(configuration);
+
+        Services.chainStart(zkClientService, authServer);
+      } catch (Exception e) {
+        LOG.error("Got exception while starting authenticaion server", e);
+      }
     } else {
-      String error = "AuthenticationServer not started since security is disabled." +
-                      " To enable security, set \"security.enabled\" = \"true\" in continuuity-site.xml" +
-                      " and edit the appropriate configuration.";
-      LOG.error(error);
+      String warning = "AuthenticationServer not started since security is disabled." +
+                        " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +
+                        " and edit the appropriate configuration.";
+      LOG.warn(warning);
     }
   }
 

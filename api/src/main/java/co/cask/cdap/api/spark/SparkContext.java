@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,8 +54,7 @@ public interface SparkContext extends RuntimeContext {
    * @param vClass      the value class
    * @param <T>         type of RDD
    * @return the RDD created from Dataset
-   * @throws UnsupportedOperationException if the SparkContext is not yet initialized through
-   * {@link SparkContextFactory}
+   * @throws UnsupportedOperationException if the SparkContext is not yet initialized
    */
   <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass);
 
@@ -67,8 +66,7 @@ public interface SparkContext extends RuntimeContext {
    * @param kClass      the key class
    * @param vClass      the value class
    * @param <T>         type of RDD
-   * @throws UnsupportedOperationException if the SparkContext is not yet initialized through
-   * {@link SparkContextFactory}
+   * @throws UnsupportedOperationException if the SparkContext is not yet initialized
    */
   <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass);
 
@@ -79,8 +77,8 @@ public interface SparkContext extends RuntimeContext {
    * <a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.SparkContext">SparkContext</a>
    * depending on user's job type.
    *
-   * @param <T> the type of Apache Spark Context
-   * @return the Apache Spark Context
+   * @param <T> the type of Spark Context
+   * @return the Spark Context
    */
-  <T> T getApacheSparkContext();
+  <T> T getOriginalSparkContext();
 }

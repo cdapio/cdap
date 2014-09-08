@@ -26,7 +26,7 @@ define([
 				this.set('elementId', id);
 
 			},
-	
+
 			className: function () {
 				var model;
 				if ((model = this.get('model'))) {
