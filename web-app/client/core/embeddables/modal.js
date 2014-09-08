@@ -11,10 +11,10 @@ define([
 			template: Em.Handlebars.compile(Template),
 			classNames: ['modal', 'hide', 'fade'],
 			elementId: 'modal-from-dom',
-			
+
 			didInsertElement: function () {
 				var self = this;
-				
+
 				// Hide on escape.
 				$(document).keyup(function (e) {
 					if(e.which == 27) {
@@ -22,7 +22,7 @@ define([
 					}
 				});
 			},
-			
+
 			show: function (title, body, callback, nocancel) {
 				this.set('title', title);
 				this.set('body', body);
