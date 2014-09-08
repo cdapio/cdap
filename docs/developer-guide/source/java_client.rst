@@ -45,6 +45,8 @@ The Java Client API allows you to interact with these CDAP components:
 Sample Usage
 ============
 
+.. highlight:: java
+
 ApplicationClient
 -----------------
 
@@ -89,4 +91,3 @@ DatasetClient
   // Delete a Dataset
   datasetClient.delete("someDataset");
   
-  .. highlight:: java
