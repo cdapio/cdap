@@ -58,7 +58,7 @@ New Features
 Major CDAP Bug Fixes
 --------------------
 - Fixed a problem with a HADOOP_HOME exception stacktrace when unit-testing an Application
-- Fixed an issue with Hive creating directories in /tmp in the Singlenode and unit-test frameworks
+- Fixed an issue with Hive creating directories in /tmp in the Standalone and unit-test frameworks
 - Fixed a problem with type inconsistency of Service API calls, where numbers were showing up as strings
 - Fixed an issue with the premature expiration of long-term Authentication Tokens
 - Fixed a problem with the cliService returning a double when an integer was stored
