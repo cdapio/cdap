@@ -49,21 +49,21 @@ define(['core/models/program'], function (Program) {
 
  		  //Update the flow's currentState. Program.updateState does this.
 		  this._super(http, done);
-		  if (!C.isLocal) {
-			  http.rest(this.get('context'), 'live-info', function (response) {
+      if (!C.isLocal) {
+        http.rest(this.get('context'), 'live-info', function (response) {
 
-	        var containers = response.containers;
-	        if(containers === undefined){
-	          return;
-	        }
+          var containers = response.containers;
+          if(containers === undefined){
+            return;
+          }
 
-	        self.set('instances', containers.length);
+          self.set('instances', containers.length);
 
-	        if (typeof done === 'function') {
-	          done(response.status);
-	        }
-	      });	
-		  }
+          if (typeof done === 'function') {
+            done(response.status);
+          }
+        });	
+      }
 		},
 
 		getMeta: function () {
