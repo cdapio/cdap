@@ -73,7 +73,8 @@ public class StreamClient {
    */
   public StreamProperties getConfig(String streamId) throws IOException, StreamNotFoundException {
     URL url = config.resolveURL(String.format("streams/%s/info", streamId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new StreamNotFoundException(streamId);
     }
