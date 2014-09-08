@@ -1,21 +1,11 @@
-
 /**
  * Copyright (c) 2013 Cask Data, Inc.
  */
 
 var util = require('util'),
-  fs = require('fs'),
-  http = require('http'),
-  https = require('https'),
-  promise = require('q'),
-  cluster = require('cluster'),
-  lodash = require('lodash'),
-  os = require('os');
-
-var WebAppServer = require('../common/server'),
-    configParser = require('../common/configParser');
-
-var CONF_DIRECTORY = '/etc/cdap/conf';
+    cluster = require('cluster'),
+    os = require('os');
+var WebAppServer = require('../common/server');
 
 /**
  * Set environment.
@@ -28,105 +18,46 @@ process.env.NODE_ENV = 'production';
 var logLevel = 'INFO';
 
 var EntServer = function() {
-  EntServer.super_.call(this, __dirname, logLevel, 'Enterprise UI');
-  this.extractConfig("enterprise")
-      .then(function () {
-        this.setUpServer();
-      }.bind(this));
+  this.productId = 'enterprise';
+  this.productName = 'Enterprise Reactor';
+  this.cookieName = 'continuuity-enterprise-edition';
+  this.secret = 'enterprise-edition-secret';
+  EntServer.super_.call(this, __dirname, logLevel, 'Enterprise UI', "enterprise");
 };
 util.inherits(EntServer, WebAppServer);
 
-
-EntServer.prototype.extractConfig = configParser.extractConfig;
-
-EntServer.prototype.setUpServer = function setUpServer(configuration) {
-  this.setAttrs();
-  this.Api.configure(this.config, this.apiKey || null);
-  this.launchServer();
-}
-EntServer.prototype.setAttrs = function() {
-  if (this.config['dashboard.https.enabled'] === "true") {
-    this.lib = https;
-  } else {
-    this.lib = http;
-  }
-  this.apiKey = this.config.apiKey;
-  this.version = this.config.version;
-  this.configSet = this.configSet;
-  this.cookieName = 'continuuity-enterprise-edition';
-  this.secret = 'enterprise-edition-secret';
-  this.setCookieSession(this.cookieName, this.secret);
-  this.configureExpress();
-}
-
-
-EntServer.prototype.launchServer = function() {
-   var key,
-       cert,
-       options = this.configureSSL() || {};
-   this.server = this.getServerInstance(options, this.app);
-   //LaunchServer and then StartServer?? Kind of redundant on names. Any alternative is welcome.
-   this.setEnvironment('enterprise', 'Enterprise Reactor', this.version, this.startServer.bind(this));
-}
-
-EntServer.prototype.configureSSL = function () {
-  var options = {};
-   if (this.config['dashboard.https.enabled'] === "true") {
-     key = this.config['dashboard.ssl.key'],
-     cert = this.config['dashboard.ssl.cert'];
-     options = {
-       key: fs.readFileSync(key),
-       cert: fs.readFileSync(cert),
-       requestCert: false,
-       rejectUnauthorized: false
-     };
-     this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
-   }
-  return options;
-   }
-
 EntServer.prototype.startServer = function () {
- this.bindRoutes();
- var self = this;
- this.logger.info('I am the master.', cluster.isMaster);
- var clusters = 'webapp.cluster.count' in this.config ? this.config['webapp.cluster.count'] : 2;
- if (cluster.isMaster) {
-   for (var i = 0; i < clusters; i++) {
-     cluster.fork();
-   }
+  this.bindRoutes();
+  var self = this;
+  this.logger.info('I am the master.', cluster.isMaster);
+  var clusters = 'webapp.cluster.count' in this.config ? this.config['webapp.cluster.count'] : 2;
+  if (cluster.isMaster) {
+    for (var i = 0; i < clusters; i++) {
+      cluster.fork();
+    }
 
-   cluster.on('online', function (worker) {
-     self.logger.info('Worker ' + worker.id + ' was forked with pid ' + worker.process.pid);
-   });
+    cluster.on('online', function (worker) {
+      self.logger.info('Worker ' + worker.id + ' was forked with pid ' + worker.process.pid);
+    });
 
-   cluster.on('listening', function (worker, address) {
-     self.logger.info('Worker ' + worker.id + ' with pid ' + worker.process.pid +
-     ' is listening on ' + address.address + ':' + address.port);
-   });
+    cluster.on('listening', function (worker, address) {
+      self.logger.info('Worker ' + worker.id + ' with pid ' + worker.process.pid +
+      ' is listening on ' + address.address + ':' + address.port);
+    });
 
-   cluster.on('exit', function (worker, code, signal) {
-     self.logger.info('Worker ' + worker.process.pid + ' died.');
+    cluster.on('exit', function (worker, code, signal) {
+      self.logger.info('Worker ' + worker.process.pid + ' died.');
 
-     // Create a new process once one dies.
-     var newWorker = cluster.fork();
-     self.logger.info('Started new worker at ' + newWorker.process.pid);
-   });
+      // Create a new process once one dies.
+      var newWorker = cluster.fork();
+      self.logger.info('Started new worker at ' + newWorker.process.pid);
+    });
 
- } else {
-   this.server.listen(this.config['dashboard.bind.port']);
- }
-
- this.logger.info('Listening on port', this.config['dashboard.bind.port']);
-
+  } else {
+    this.server.listen(this.config['dashboard.bind.port']);
+  }
+  this.logger.info('Listening on port', this.config['dashboard.bind.port']);
 }
-
-/**
- * Catch anything uncaught.
- */
-process.on('uncaughtException', function (err) {
-  //entServer.logger.info('Uncaught Exception', err);
-  console.info(err);
-});
 
 var entServer = new EntServer();
 

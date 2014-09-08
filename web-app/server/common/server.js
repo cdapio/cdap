@@ -11,10 +11,15 @@ var express = require('express'),
   log4js = require('log4js'),
   path = require('path'),
   promise = require('q'),
+  http = require('http'),
+  https = require('https'),
+  promise = require('q'),
+  lodash = require('lodash'),
   request = require('request');
 
 
-var Api = require('../common/api'),
+var Api = require('./api'),
+    configParser = require('./configParser');
     Env = require('./env');
 
 /**
@@ -25,12 +30,21 @@ var Api = require('../common/api'),
  * @param {string} logLevel log level {TRACE|INFO|ERROR}
  * @param {boolean} https whether to use https for requests.
  */
-var WebAppServer = function(dirPath, logLevel, httpsEnabled, loggerType) {
+var WebAppServer = function(dirPath, logLevel, loggerType, mode) {
   this.dirPath = dirPath;
   this.logger = this.getLogger('console', loggerType);
   this.isDefaultConfig = false;
   this.LOG_LEVEL = logLevel;
+  process.on('uncaughtException', function (err) {
+    this.logger.info('Uncaught Exception', err);
+  }.bind(this));
+  this.extractConfig(mode)
+      .then(function () {
+        this.setUpServer();
+      }.bind(this));
 };
+
+WebAppServer.prototype.extractConfig = configParser.extractConfig;
 
 /**
  * Thrift API service.
@@ -71,6 +85,50 @@ var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
  * Security Globals
  */
 var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
+
+WebAppServer.prototype.setUpServer = function setUpServer(configuration) {
+  this.setAttributes();
+  this.Api.configure(this.config, this.apiKey || null);
+  this.launchServer();
+}
+
+WebAppServer.prototype.setAttributes = function setCommonAttributes() {
+  if (this.config['dashboard.https.enabled'] === "true") {
+      this.lib = https;
+    } else {
+      this.lib = http;
+    }
+    this.apiKey = this.config.apiKey;
+    this.version = this.config.version;
+    this.configSet = this.configSet;
+    this.configureExpress();
+    this.setCookieSession(this.cookieName, this.secret);
+}
+
+WebAppServer.prototype.launchServer = function() {
+  var key,
+      cert,
+      options = this.configureSSL() || {};
+  this.server = this.getServerInstance(options, this.app);
+  this.setEnvironment(this.productId, this.productName, this.version, this.startServer.bind(this));
+}
+
+WebAppServer.prototype.configureSSL = function () {
+  var options = {};
+  if (this.config['dashboard.https.enabled'] === "true") {
+    key = this.config['dashboard.ssl.key'],
+    cert = this.config['dashboard.ssl.cert'];
+    options = {
+      key: fs.readFileSync(key),
+      cert: fs.readFileSync(cert),
+      requestCert: false,
+      rejectUnauthorized: false
+    };
+    this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
+  }
+  return options;
+}
+
 
 /**
  * Determines security status. Continues until it is able to determine if security is enabled if

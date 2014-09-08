@@ -3,17 +3,10 @@
  */
 
 var util = require('util'),
-  fs = require('fs'),
-  http = require('http'),
-  https = require('https'),
-  promise = require('q'),
-  sys = require('sys'),
-  argv = require('optimist').argv,
-  lodash = require('lodash'),
-  nock = require('nock');
+    argv = require('optimist').argv,
+    nock = require('nock');
 
-var WebAppServer = require('../common/server'),
-    configParser = require('../common/configParser');
+var WebAppServer = require('../common/server');
 
 /**
  * Set environment.
@@ -27,61 +20,14 @@ var logLevel = 'INFO';
 var devServer;
 
 var DevServer = function() {
-  DevServer.super_.call(this, __dirname, logLevel, 'Development UI');
-  this.extractConfig()
-      .then(function () {
-        this.setUpServer();
-      }.bind(this));
+  this.cookieName = 'continuuity-local-edition';
+  this.secret = 'local-edition-secret';
+  this.productId = 'local';
+  this.productName = 'Development Kit';
+  DevServer.super_.call(this, __dirname, logLevel, 'Development UI', "developer");
 };
 
 util.inherits(DevServer, WebAppServer);
-
-DevServer.prototype.extractConfig = configParser.extractConfig;
-
-DevServer.prototype.setUpServer = function setUpServer() {
-  this.setAttrs();
-  this.Api.configure(this.config, this.apiKey || null);
-  this.launchServer();
-}
-DevServer.prototype.setAttrs = function() {
-  if (this.config['dashboard.https.enabled'] === "true") {
-    this.lib = https;
-  } else {
-    this.lib = http;
-  }
-  this.apiKey = this.config.apiKey;
-  this.version = this.config.version;
-  this.cookieName = 'continuuity-local-edition';
-  this.secret = 'local-edition-secret';
-  this.setCookieSession(this.cookieName, this.secret);
-  this.configureExpress();
-}
-
-
-DevServer.prototype.launchServer = function() {
-   var key,
-       cert,
-       options = this.configureSSL() || {};
-   this.server = this.getServerInstance(options, this.app);
-   //LaunchServer and then StartServer?? Kind of redundant on names. Any alternative is welcome.
-   this.setEnvironment('local', 'Development Kit', this.version, this.startServer.bind(this));
-}
-
-DevServer.prototype.configureSSL = function () {
-  var options = {};
-  if (this.config['dashboard.https.enabled'] === "true") {
-    key = this.config['dashboard.ssl.key'],
-    cert = this.config['dashboard.ssl.cert'];
-    options = {
-      key: fs.readFileSync(key),
-      cert: fs.readFileSync(cert),
-      requestCert: false,
-      rejectUnauthorized: false
-    };
-    this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
-  }
-  return options;
-}
 
 DevServer.prototype.startServer = function () {
   this.bindRoutes();
@@ -104,14 +50,6 @@ DevServer.prototype.startServer = function () {
     }
   }
 }
-
-/**
- * Catch anything uncaught.
- */
-process.on('uncaughtException', function (err) {
-  //log.logger.info('Uncaught Exception', err);
-  console.log(err);
-});
 
 devServer = new DevServer();
 /**
