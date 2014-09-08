@@ -39,7 +39,7 @@ public final class TypeId {
       case WORKFLOW:
         return "w";
       case SERVICE:
-        return "s";
+        return "us";
       case SPARK:
         return "s";
       default:

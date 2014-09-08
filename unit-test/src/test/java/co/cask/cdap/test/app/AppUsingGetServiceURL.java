@@ -81,12 +81,11 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         responder.error(ProcedureResponse.Code.NOT_FOUND, "serviceURL is null");
         return;
       }
-      String response = null;
       URL url = new URL(serviceURL, "ping");
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
       try {
         if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
-          response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+          String response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
           responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), response);
         } else {
           responder.error(ProcedureResponse.Code.FAILURE, "Failed to retrieve a response from the service");

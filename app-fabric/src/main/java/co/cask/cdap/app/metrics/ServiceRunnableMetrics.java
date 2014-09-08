@@ -18,6 +18,8 @@ package co.cask.cdap.app.metrics;
 
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.proto.ProgramType;
 
 /**
  * Metrics Collector for Service.
@@ -27,6 +29,7 @@ public class ServiceRunnableMetrics extends AbstractProgramMetrics {
   public ServiceRunnableMetrics(MetricsCollectionService collectionService, String applicationId,
                                 String serviceId, String runnableId) {
     super(collectionService.getCollector(
-      MetricsScope.USER, String.format("%s.s.%s.%s", applicationId, serviceId, runnableId), "0"));
+      MetricsScope.USER, String.format("%s.%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SERVICE),
+                                       serviceId, runnableId), "0"));
   }
 }
