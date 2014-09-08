@@ -16,8 +16,8 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.annotation.Transactional;
 import co.cask.cdap.api.annotation.Handle;
+import co.cask.cdap.api.annotation.Transactional;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
