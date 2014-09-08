@@ -27,6 +27,7 @@ import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.proto.StreamRecord;
+import co.cask.cdap.security.authentication.client.AccessToken;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -52,7 +53,6 @@ import javax.ws.rs.core.HttpHeaders;
 public class StreamClient {
 
   private static final Gson GSON = StreamEventTypeAdapter.register(new GsonBuilder()).create();
-  private static final String AUTHENTICATION_HEADER_PREFIX_BEARER = "Bearer ";
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -186,9 +186,9 @@ public class StreamClient {
     URL url = config.resolveURL(String.format("streams/%s/events?start=%d&end=%d&limit=%d",
                                               streamId, startTime, endTime, limit));
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-    String accessToken = config.getAccessToken();
-    if (StringUtils.isNotEmpty(accessToken)) {
-      urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION, AUTHENTICATION_HEADER_PREFIX_BEARER + accessToken);
+    AccessToken accessToken = config.getAccessToken();
+    if (accessToken != null) {
+      urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
     }
     try {
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

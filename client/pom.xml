@@ -45,6 +45,10 @@
       <artifactId>commons-lang</artifactId>
       <version>2.6</version>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>authentication-client-java</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>co.cask.cdap</groupId>

@@ -16,11 +16,14 @@
 
 package co.cask.cdap.client.config;
 
+import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.http.HttpRequestConfig;
+import co.cask.cdap.security.authentication.client.AccessToken;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
@@ -28,8 +31,11 @@ import java.net.URL;
  */
 public class ClientConfig {
 
-  private static final String DEFAULT_PROTOCOL = "http";
+  private static final boolean DEFAULT_SSL = false;
   private static final String VERSION = "v2";
+  private static final String DEFAULT_AUTH_CLASS_NAME =
+    "co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient";
+  public static final int DEFAULT_SSL_PORT = 443;
 
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
@@ -37,18 +43,17 @@ public class ClientConfig {
   private String protocol;
   private URI baseURI;
   private int port;
-  private String accessToken;
+  private AuthenticationClient authenticationClient;
 
   /**
    * @param hostname Hostname of the CDAP server (i.e. example.com)
    * @param port Port of the CDAP server (i.e. 10000)
    * @param defaultConfig {@link HttpRequestConfig} to use by default
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
-   * @throws URISyntaxException
    */
   public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig,
-                      HttpRequestConfig uploadConfig) throws URISyntaxException {
-    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_PROTOCOL);
+                      HttpRequestConfig uploadConfig) throws Exception {
+    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_SSL);
   }
 
   /**
@@ -56,32 +61,31 @@ public class ClientConfig {
    * @param port Port of the CDAP server (i.e. 10000)
    * @param defaultConfig {@link HttpRequestConfig} to use by default
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
-   * @param protocol http/https according to SSL is enabled in the gateway server or not
-   * @throws URISyntaxException
+   * @param ssl true, if SSL is enabled in the gateway server
    */
   public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig,
-                      HttpRequestConfig uploadConfig, String protocol) throws URISyntaxException {
+                      HttpRequestConfig uploadConfig, boolean ssl) throws Exception {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
     this.port = port;
-    this.protocol = protocol;
-    this.baseURI = new URI(String.format("%s://%s:%d", protocol, hostname, port));
+    this.protocol = ssl ? "https" : "http";
+    authenticationClient = (AuthenticationClient) new Configuration().getClassByName(getAuthClassName()).newInstance();
+    authenticationClient.setConnectionInfo(hostname, port, ssl);
+    this.baseURI = URI.create(String.format("%s://%s:%d", protocol, hostname, port));
   }
 
   /**
    * @param hostname Hostname of the CDAP server (i.e. example.com)
    * @param port Port of the CDAP server (i.e. 10000)
-   * @throws URISyntaxException
    */
-  public ClientConfig(String hostname, int port) throws URISyntaxException {
+  public ClientConfig(String hostname, int port) throws Exception {
     this(hostname, port, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
   }
 
   /**
    * @param hostname Hostname of the CDAP server (i.e. example.com)
-   * @throws URISyntaxException
    */
-  public ClientConfig(String hostname) throws URISyntaxException {
+  public ClientConfig(String hostname) throws Exception {
     this(hostname, 10000, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0));
   }
 
@@ -120,25 +124,29 @@ public class ClientConfig {
   /**
    * @param hostname Hostname of the CDAP server (i.e. example.com)
    * @param port Port of the CDAP server (i.e. 10000)
-   * @throws URISyntaxException
    */
-  public void setHostnameAndPort(String hostname, int port) throws URISyntaxException {
+  public void setHostnameAndPort(String hostname, int port, boolean ssl) {
     this.port = port;
-    this.baseURI = new URI(protocol + "://" + hostname + ":" + port);
-  }
-
-  /**
-   * @param accessToken the accessToken to set
-   */
-  public void setAccessToken(String accessToken) {
-    this.accessToken = accessToken;
+    this.protocol = ssl ? "https" : "http";
+    this.baseURI = URI.create(protocol + "://" + hostname + ":" + port);
   }
 
   /**
    * @return the accessToken
    */
-  public String getAccessToken() {
-    return accessToken;
+  public AccessToken getAccessToken() throws IOException {
+    return (authenticationClient.isAuthEnabled()) ? authenticationClient.getAccessToken() : null;
+  }
+
+  /**
+   * @param authenticationClient the authenticationClient to set
+   */
+  public void setAuthenticationClient(AuthenticationClient authenticationClient) {
+    this.authenticationClient = authenticationClient;
+  }
+
+  public AuthenticationClient getAuthenticationClient() {
+    return authenticationClient;
   }
 
   /**
@@ -153,5 +161,13 @@ public class ClientConfig {
    */
   public void setProtocol(String protocol) {
     this.protocol = protocol;
+  }
+
+  public String getAuthClassName() {
+    return DEFAULT_AUTH_CLASS_NAME;
+  }
+
+  public int getSSLPort() {
+    return DEFAULT_SSL_PORT;
   }
 }

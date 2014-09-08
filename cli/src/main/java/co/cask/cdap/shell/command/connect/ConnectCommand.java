@@ -16,10 +16,9 @@
 
 package co.cask.cdap.shell.command.connect;
 
-import co.cask.cdap.client.auth.AuthenticationClient;
-import co.cask.cdap.client.auth.rest.BasicAuthenticationClient;
-import co.cask.cdap.client.auth.rest.BasicAuthenticationClientConfig;
-import co.cask.cdap.client.auth.rest.BasicCredentials;
+import co.cask.cdap.common.conf.Configuration;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.shell.CLIConfig;
 import co.cask.cdap.shell.command.AbstractCommand;
 import co.cask.cdap.shell.exception.CommandInputError;
@@ -27,6 +26,8 @@ import co.cask.cdap.shell.util.SocketUtil;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Properties;
+import java.util.Scanner;
 import javax.inject.Inject;
 
 /**
@@ -35,14 +36,12 @@ import javax.inject.Inject;
 public class ConnectCommand extends AbstractCommand {
 
   private final CLIConfig cliConfig;
-  private final AuthenticationClient<BasicAuthenticationClientConfig, BasicCredentials> authenticationClient;
 
   @Inject
   public ConnectCommand(CLIConfig cliConfig) {
-    super("connect", "<cdap-hostname> [<username> <password>]", "Connects to a CDAP instance. <username> and " +
-      "<password> parameters could be used if authentication is enabled in the gateway server.");
+    super("connect", "<cdap-hostname> [<credential(s)>]", "Connects to a CDAP instance. <credential(s)> " +
+          "parameter(s) could be used if authentication is enabled in the gateway server.");
     this.cliConfig = cliConfig;
-    this.authenticationClient = new BasicAuthenticationClient();
   }
 
   @Override
@@ -57,20 +56,29 @@ public class ConnectCommand extends AbstractCommand {
     if (!SocketUtil.isAvailable(hostname, port)) {
       throw new IOException(String.format("Host %s on port %d could not be reached", hostname, port));
     }
-    //TODO: Check the provided hostname on HTTP and HTTPS. If HTTPS is available, make ClientConfig.resolve() use HTTPS
-    authenticationClient.configure(new BasicAuthenticationClientConfig(hostname, port, false));
+
+    boolean ssl = SocketUtil.isAvailable(hostname, cliConfig.getClientConfig().getSSLPort());
+
+    AuthenticationClient authenticationClient = (AuthenticationClient) new Configuration().getClassByName(
+      cliConfig.getClientConfig().getAuthClassName()).newInstance();
+
+    authenticationClient.setConnectionInfo(hostname, port, ssl);
+    Properties properties = new Properties();
     if (authenticationClient.isAuthEnabled()) {
-      if (args.length != 3) {
-        throw new IOException("The authentication is enabled in the server. Please use command: " +
-                                "connect <cdap-hostname> <username> <password> to connect successfully.");
+      output.printf("Authentication is enabled in the gateway server: %s.\n", cliConfig.getHost());
+      Scanner scan = new Scanner(System.in);
+
+      for (Credential credential : authenticationClient.getRequiredCredentials()) {
+        output.printf("Please, specify " + credential.getDescription() + "> ");
+        String credentialValue = scan.nextLine();
+        properties.put(credential.getName(), credentialValue);
       }
-      String username = args[1];
-      String password = args[2];
-      authenticationClient.setCredentials(new BasicCredentials(username, password));
-      cliConfig.setAccessToken(authenticationClient.getAccessToken());
+
+      authenticationClient.configure(properties);
+      cliConfig.getClientConfig().setAuthenticationClient(authenticationClient);
     }
 
-    cliConfig.setHostname(hostname);
+    cliConfig.setHostname(hostname, ssl);
     output.printf("Successfully connected CDAP host at %s:%d\n", hostname, port);
   }
 }

@@ -47,7 +47,7 @@ public class CLIConfig {
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
    * @throws java.net.URISyntaxException
    */
-  public CLIConfig(String hostname) throws URISyntaxException {
+  public CLIConfig(String hostname) throws Exception {
     this.hostname = Objects.firstNonNull(hostname, "localhost");
     this.clientConfig = new ClientConfig(hostname, PORT);
     this.version = tryGetVersion();
@@ -80,20 +80,12 @@ public class CLIConfig {
     return version;
   }
 
-  public void setHostname(String hostname) throws URISyntaxException {
+  public void setHostname(String hostname, boolean ssl) throws URISyntaxException {
     this.hostname = hostname;
-    this.clientConfig.setHostnameAndPort(hostname, PORT);
+    this.clientConfig.setHostnameAndPort(hostname, PORT, ssl);
     for (HostnameChangeListener listener : hostnameChangeListeners) {
       listener.onHostnameChanged(hostname);
     }
-  }
-
-  public void setAccessToken(String accessToken) {
-    this.clientConfig.setAccessToken(accessToken);
-  }
-
-  public void setProtocol(String protocol) {
-    this.clientConfig.setProtocol(protocol);
   }
 
   public void addHostnameChangeListener(HostnameChangeListener listener) {

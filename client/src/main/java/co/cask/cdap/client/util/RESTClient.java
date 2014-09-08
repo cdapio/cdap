@@ -22,11 +22,14 @@ import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequestConfig;
 import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
+import co.cask.cdap.security.authentication.client.AccessToken;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
+import javax.ws.rs.core.HttpHeaders;
 
 /**
  * Wrapper around the HTTP client implementation.
@@ -51,8 +54,30 @@ public class RESTClient {
     return new RESTClient(config.getDefaultConfig(), config.getUploadConfig());
   }
 
-  public HttpResponse execute(HttpRequest request, String accessToken, int... allowedErrorCodes) throws IOException {
-    HttpResponse response = HttpRequests.execute(request, defaultConfig, accessToken);
+  public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
+    throws IOException {
+    return execute(addExtraHeaders(request, getAuthHeaders(accessToken)), allowedErrorCodes);
+  }
+
+  public HttpResponse execute(HttpMethod httpMethod, URL url, AccessToken accessToken, int... allowedErrorCodes)
+    throws IOException {
+    return execute(HttpRequest.builder(httpMethod, url)
+                     .addHeaders(getAuthHeaders(accessToken))
+                     .build(),
+                   allowedErrorCodes);
+  }
+
+  public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, AccessToken accessToken,
+                              int... allowedErrorCodes) throws IOException {
+    return execute(HttpRequest.builder(httpMethod, url)
+                     .addHeaders(headers)
+                     .addHeaders(getAuthHeaders(accessToken))
+                     .build(),
+                   accessToken, allowedErrorCodes);
+  }
+
+  private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException {
+    HttpResponse response = HttpRequests.execute(request, defaultConfig);
     if (!isSuccessful(response.getResponseCode())
       && !ArrayUtils.contains(allowedErrorCodes, response.getResponseCode())) {
       throw new IOException(response.getResponseBodyAsString());
@@ -60,18 +85,10 @@ public class RESTClient {
     return response;
   }
 
-  public HttpResponse execute(HttpMethod httpMethod, URL url, String accessToken, int... allowedErrorCodes)
+  public HttpResponse upload(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
     throws IOException {
-    return execute(HttpRequest.builder(httpMethod, url).build(), accessToken, allowedErrorCodes);
-  }
 
-  public HttpResponse execute(HttpMethod httpMethod, URL url, Map<String, String> headers, String accessToken,
-                              int... allowedErrorCodes) throws IOException {
-    return execute(HttpRequest.builder(httpMethod, url).addHeaders(headers).build(), accessToken, allowedErrorCodes);
-  }
-
-  public HttpResponse upload(HttpRequest request, String accessToken, int... allowedErrorCodes) throws IOException {
-    HttpResponse response = HttpRequests.execute(request, uploadConfig, accessToken);
+    HttpResponse response = HttpRequests.execute(addExtraHeaders(request, getAuthHeaders(accessToken)), uploadConfig);
     if (!isSuccessful(response.getResponseCode())
       && !ArrayUtils.contains(allowedErrorCodes, response.getResponseCode())) {
       throw new IOException(response.getResponseBodyAsString());
@@ -83,4 +100,19 @@ public class RESTClient {
     return 200 <= responseCode && responseCode <= 299;
   }
 
+  private HttpRequest addExtraHeaders(HttpRequest request, Map<String, String> headers) {
+    return HttpRequest.builder(request.getMethod(), request.getURL())
+      .addHeaders(request.getHeaders())
+      .withBody(request.getBody())
+      .addHeaders(headers)
+      .build();
+  }
+
+  private Map<String, String> getAuthHeaders(AccessToken accessToken) {
+    Map<String, String> headers = ImmutableMap.of();
+    if (accessToken != null) {
+      headers = ImmutableMap.of(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
+    }
+    return headers;
+  }
 }

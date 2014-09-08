@@ -115,7 +115,7 @@
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.0.1</spark.version>
-    <cdap.client.version>1.0-SNAPSHOT</cdap.client.version>
+    <cdap.client.version>1.0.0-SNAPSHOT</cdap.client.version>
   </properties>
 
   <modules>

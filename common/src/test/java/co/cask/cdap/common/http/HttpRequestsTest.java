@@ -104,24 +104,6 @@ public class HttpRequestsTest {
     testPut("/api/testPut409", ImmutableMap.of("sdf", "123zz"), "somebody", only(409), any(), only("somebody123zz409"));
 
     testDelete("/api/testDelete", only(200), any(), any());
-
-    //Testing authenticated requests
-    testPutWithAccessToken("/api/testPutAuth", ACCESS_TOKEN, only(200), any(),
-                           only("Access token received: " + ACCESS_TOKEN));
-    testPutWithAccessToken("/api/testPutUnauthorized", "Unknown", only(401), any(),
-                           only("Access token received: " + "Unknown"));
-    testPostWithAccessToken("/api/testPostAuth", ACCESS_TOKEN, only(200), any(),
-                           only("Access token received: " + ACCESS_TOKEN));
-    testPostWithAccessToken("/api/testPostUnauthorized", "Unknown", only(401), any(),
-                           only("Access token received: " + "Unknown"));
-    testGetWithAccessToken("/api/testGetAuth", ACCESS_TOKEN, only(200), any(),
-                           only("Access token received: " + ACCESS_TOKEN));
-    testGetWithAccessToken("/api/testGetUnauthorized", "Unknown", only(401), any(),
-                           only("Access token received: " + "Unknown"));
-    testDeleteWithAccessToken("/api/testDeleteAuth", ACCESS_TOKEN, only(200), any(),
-                           only("Access token received: " + ACCESS_TOKEN));
-    testDeleteWithAccessToken("/api/testDeleteUnauthorized", "Unknown", only(401), any(),
-                           only("Access token received: " + "Unknown"));
   }
 
   private void testPost(String path, Map<String, String> headers, String body, Matcher<Object> expectedResponseCode,
@@ -143,7 +125,7 @@ public class HttpRequestsTest {
                         Matcher<Object> expectedMessage, Matcher<Object> expectedBody) throws Exception {
     URL url = getBaseURI().resolve(path).toURL();
     HttpRequest request = HttpRequest.post(url).build();
-    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT, accessToken);
+    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
@@ -161,7 +143,7 @@ public class HttpRequestsTest {
 
     URL url = getBaseURI().resolve(path).toURL();
     HttpRequest request = HttpRequest.put(url).build();
-    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT, accessToken);
+    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
@@ -179,7 +161,7 @@ public class HttpRequestsTest {
 
     URL url = getBaseURI().resolve(path).toURL();
     HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT, accessToken);
+    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
@@ -197,7 +179,7 @@ public class HttpRequestsTest {
 
     URL url = getBaseURI().resolve(path).toURL();
     HttpRequest request = HttpRequest.delete(url).build();
-    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT, accessToken);
+    HttpResponse response = HttpRequests.execute(request, HttpRequestConfig.DEFAULT);
     verifyResponse(response, expectedResponseCode, expectedMessage, expectedBody);
   }
 
