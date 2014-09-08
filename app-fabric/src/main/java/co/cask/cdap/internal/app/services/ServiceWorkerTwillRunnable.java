@@ -56,6 +56,7 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
   private ServiceWorker worker;
   private Program program;
   private RunId runId;
+  private String runnableName;
   private ClassLoader programClassLoader;
   private TransactionSystemClient transactionSystemClient;
   private MetricsCollectionService metricsCollectionService;
@@ -79,7 +80,7 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
    * Create a {@link TwillRunnable} for a {@link ServiceWorker} from a classloader.
    * @param classLoader to create runnable with.
    */
-  public ServiceWorkerTwillRunnable(Program program, RunId runId, ClassLoader classLoader,
+  public ServiceWorkerTwillRunnable(Program program, RunId runId, String runnableName, ClassLoader classLoader,
                                     CConfiguration cConfiguration,
                                     MetricsCollectionService metricsCollectionService,
                                     DatasetFramework datasetFramework,
@@ -88,6 +89,7 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
                                     DiscoveryServiceClient discoveryServiceClient) {
     this.program = program;
     this.runId = runId;
+    this.runnableName = runnableName;
     this.programClassLoader = classLoader;
     this.transactionSystemClient = transactionSystemClient;
     this.metricsCollectionService = metricsCollectionService;
@@ -132,7 +134,7 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
         type = TypeToken.of(programClassLoader.loadClass(delegateClassName));
         ((GuavaServiceWorker) worker).setDelegate((Service) factory.get(type).create());
       }
-      worker.initialize(new BasicServiceWorkerContext(program, runId, programClassLoader, cConfiguration,
+      worker.initialize(new BasicServiceWorkerContext(program, runId, runnableName, programClassLoader, cConfiguration,
                                                         context.getSpecification().getConfigs(), datasets,
                                                         metricsCollectionService, datasetFramework,
                                                         transactionSystemClient, serviceDiscovery,

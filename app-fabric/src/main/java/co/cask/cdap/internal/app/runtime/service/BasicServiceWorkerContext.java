@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.TxRunnable;
+import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -63,6 +64,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
   private final ClassLoader programClassLoader;
+  private final ServiceRunnableMetrics serviceRunnableMetrics;
 
   /**
    * Create a ServiceWorkerContext with runtime arguments and access to Datasets.
@@ -72,7 +74,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
    * @param datasetFramework used to get datasets.
    * @param transactionSystemClient used to transactionalize operations.
    */
-  public BasicServiceWorkerContext(Program program, RunId runId, ClassLoader programClassLoader,
+  public BasicServiceWorkerContext(Program program, RunId runId, String runnableName, ClassLoader programClassLoader,
                                    CConfiguration cConfiguration,
                                    Map<String, String> runtimeArgs, Set<String> datasets,
                                    MetricsCollectionService metricsCollectionService,
@@ -80,7 +82,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                    TransactionSystemClient transactionSystemClient,
                                    ProgramServiceDiscovery serviceDiscovery,
                                    DiscoveryServiceClient discoveryServiceClient) {
-    super(program, runId, datasets, getMetricContext(program, runId), metricsCollectionService, datasetFramework,
+    super(program, runId, datasets, getMetricContext(program, runnableName), metricsCollectionService, datasetFramework,
           cConfiguration, serviceDiscovery, discoveryServiceClient);
     this.programClassLoader = programClassLoader;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
@@ -88,6 +90,9 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConfiguration, Namespace.USER));
+    this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService, getApplicationId(),
+                                                     program.getName(), runnableName);
+
   }
 
   @Override
@@ -97,12 +102,12 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
 
   @Override
   public Metrics getMetrics() {
-    throw new UnsupportedOperationException("Metrics currently not supported.");
+    return serviceRunnableMetrics;
   }
 
-  private static String getMetricContext(Program program, RunId runId) {
+  private static String getMetricContext(Program program, String runnableName) {
     return String.format("%s.%s.%s.%s", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SERVICE),
-                         program.getName(), runId.getId());
+                         program.getName(), runnableName);
   }
 
   @Override

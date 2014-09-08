@@ -218,7 +218,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
         // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program.getClassLoader());
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
-        delegate = new ServiceWorkerTwillRunnable(program, runId, program.getClassLoader(), cConf,
+        delegate = new ServiceWorkerTwillRunnable(program, runId, runnableName, program.getClassLoader(), cConf,
                                                   metricsCollectionService, datasetFramework,
                                                   transactionSystemClient, serviceDiscovery, discoveryServiceClient);
       } else {

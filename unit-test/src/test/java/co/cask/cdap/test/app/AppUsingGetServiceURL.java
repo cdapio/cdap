@@ -87,6 +87,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       try {
         if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
           response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+          responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), response);
         } else {
           responder.error(ProcedureResponse.Code.FAILURE, "Failed to retrieve a response from the service");
         }
@@ -94,7 +95,6 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           conn.disconnect();
       }
 
-      responder.sendJson(new ProcedureResponse(ProcedureResponse.Code.SUCCESS), response);
     }
 
     @Handle("readDataSet")
@@ -138,6 +138,16 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         // no-op
       }
 
+      private void writeToDataSet(final String key, final String val) {
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DataSetContext context) throws Exception {
+            KeyValueTable table = context.getDataSet(DATASET_NAME);
+            table.write(key, val);
+          }
+        });
+      }
+
       @Override
       public void run() {
         URL baseURL = getContext().getServiceURL(CENTRAL_SERVICE);
@@ -158,6 +168,8 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           try {
             if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
               response = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+              // Write the response to dataset, so that we can verify it from a test.
+              writeToDataSet(DATASET_KEY, response);
             }
           } finally {
             conn.disconnect();
@@ -166,16 +178,6 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           LOG.error("Got exception {}", e);
           return;
         }
-
-        // Write the response to dataset, so that we can verify it from a test.
-        final String writeValue = response;
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DataSetContext context) throws Exception {
-            KeyValueTable table = context.getDataSet(DATASET_NAME);
-            table.write(DATASET_KEY, writeValue);
-          }
-        });
       }
     }
   }
