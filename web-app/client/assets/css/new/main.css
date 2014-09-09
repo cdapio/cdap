@@ -4263,6 +4263,8 @@ div.tooltip-inner {
 
 .object-list-empty.dataexplore-nodataset {
   position: relative;
+  height:500px;
+  padding-top:20px;
 }
 
 #goto-btn {
