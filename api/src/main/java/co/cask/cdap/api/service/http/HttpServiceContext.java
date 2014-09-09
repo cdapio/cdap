@@ -16,13 +16,15 @@
 
 package co.cask.cdap.api.service.http;
 
+import co.cask.cdap.api.data.DataSetContext;
+
 import java.util.Map;
 
 /**
  * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the
  * {@link HttpServiceSpecification} and the runtime arguments passed by the user.
  */
-public interface HttpServiceContext {
+public interface HttpServiceContext extends DataSetContext {
   /**
    * @return the specification bound to this HttpServiceContext
    */

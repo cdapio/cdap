@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
@@ -39,6 +40,7 @@ import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -64,6 +66,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -304,6 +310,80 @@ public class TestFrameworkTest extends TestBase {
 
     procedureManager.stop();
     LOG.info("DatasetUpdateService Stopped");
+  }
+
+  @Test
+  public void testTransactionHandlerService() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithServices.class);
+    LOG.info("Deployed.");
+    ServiceManager serviceManager = applicationManager.startService(AppWithServices.TRANSACTIONS_SERVICE_NAME);
+    serviceStatusCheck(serviceManager, true);
+
+    LOG.info("Service Started");
+
+    // Look for service endpoint
+    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices",
+                                                                        AppWithServices.TRANSACTIONS_SERVICE_NAME);
+    final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
+    serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
+      @Override
+      public void onChange(ServiceDiscovered serviceDiscovered) {
+        Iterables.addAll(discoverables, serviceDiscovered);
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
+    final Discoverable discoverable = discoverables.poll(5, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+    Assert.assertTrue(discoverables.isEmpty());
+
+    // Make a request to write in a separate thread and wait for it to return.
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
+    Future<Integer> requestFuture = executorService.submit(new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        try {
+          URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/write/%s/%s/%d",
+                                          discoverable.getSocketAddress().getHostName(),
+                                          discoverable.getSocketAddress().getPort(),
+                                          AppWithServices.TRANSACTIONS_SERVICE_NAME,
+                                          AppWithServices.DATASET_TEST_KEY,
+                                          AppWithServices.DATASET_TEST_VALUE,
+                                          10000));
+          HttpRequest request = HttpRequest.get(url).build();
+          HttpResponse response = HttpRequests.execute(request);
+          return response.getResponseCode();
+        } catch (Exception e) {
+          LOG.error("Request thread got exception.", e);
+          throw Throwables.propagate(e);
+        }
+      }
+    });
+
+    // The dataset should not be written by the time this request is made, since the transaction to write
+    // has not been committed yet.
+    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/read/%s",
+                                    discoverable.getSocketAddress().getHostName(),
+                                    discoverable.getSocketAddress().getPort(),
+                                    AppWithServices.TRANSACTIONS_SERVICE_NAME,
+                                    AppWithServices.DATASET_TEST_KEY));
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(204, response.getResponseCode());
+
+    // Wait for the transaction to commit.
+    Integer writeStatusCode = requestFuture.get();
+    Assert.assertEquals(200, writeStatusCode.intValue());
+
+    // Make the same request again. By now the transaction should've completed.
+    request = HttpRequest.get(url).build();
+    response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE,
+                        new Gson().fromJson(response.getResponseBodyAsString(), String.class));
+
+    executorService.shutdown();
+    serviceManager.stop();
+    serviceStatusCheck(serviceManager, false);
   }
 
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
