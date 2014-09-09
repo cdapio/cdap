@@ -310,6 +310,18 @@
       <description>How often to run Stream file cleanup process in milliseconds</description>
     </property>
 
+    <property>
+      <name>stream.async.worker.threads</name>
+      <value>${stream.worker.threads}</value>
+      <description>Number of async worker threads for handling async write request</description>
+    </property>
+
+    <property>
+      <name>stream.async.queue.size</name>
+      <value>100</value>
+      <description>Queue size per async worker thread for queuing up async write request</description>
+    </property>
+
     <!--
         Data Fabric Configuration
     -->
