@@ -188,8 +188,11 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
                            @PathParam("stream") final String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
+    // No need to copy the content buffer as the netty-http library always uses a ChannelBufferFactory
+    // that won't reuse buffer. Until that is changed, it is safe to do it without copying the bytes.
+    // TODO: See ENG-4171 for fix in netty-http library
     streamWriter.asyncEnqueue(accountId, stream,
-                              getHeaders(request, stream), request.getContent().copy().toByteBuffer(), asyncExecutor);
+                              getHeaders(request, stream), request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
 
