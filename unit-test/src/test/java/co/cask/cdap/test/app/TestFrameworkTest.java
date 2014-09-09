@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
@@ -277,6 +276,44 @@ public class TestFrameworkTest extends TestBase {
 
     centralServiceManager.stop();
     serviceStatusCheck(centralServiceManager, false);
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testServiceRunnableInstances() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
+    try {
+      ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+      serviceStatusCheck(serviceManager, true);
+
+      // Should be 1 instance when first started.
+      int actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+      Assert.assertEquals(actualInstances, 1);
+
+      // Test increasing instances.
+      serviceManager.setRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER, 5);
+      actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+      Assert.assertEquals(actualInstances, 5);
+
+      // Test decreasing instances.
+      serviceManager.setRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER, 2);
+      actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+      Assert.assertEquals(actualInstances, 2);
+
+      // Test requesting same number of instances.
+      serviceManager.setRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER, 2);
+      actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+      Assert.assertEquals(actualInstances, 2);
+
+      serviceManager.stop();
+      serviceStatusCheck(serviceManager, false);
+
+      // Should be 0 instances when stopped.
+      actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+      Assert.assertEquals(actualInstances, 0);
+    } finally {
+      applicationManager.stopAll();
+    }
   }
 
   @Category(SlowTests.class)

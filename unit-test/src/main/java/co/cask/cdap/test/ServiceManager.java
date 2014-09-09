@@ -23,6 +23,21 @@ import org.apache.twill.discovery.ServiceDiscovered;
  */
 public interface ServiceManager {
   /**
+   * Changes the number of runnable instances.
+   *
+   * @param runnable Name of the runnable (can be either handler or worker).
+   * @param instances Number of instances to change to.
+   */
+  void setRunnableInstances(String runnable, int instances);
+
+  /**
+   * Returns the number of runnable instances.
+   *
+   * @param runnableName Name of the runnable (can be either handler or worker).
+   */
+  Integer getRunnableInstances(String runnableName);
+
+  /**
    * Stops the running service.
    */
   void stop();

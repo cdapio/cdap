@@ -36,6 +36,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
@@ -49,6 +50,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * For Running Services in Singlenode.
@@ -136,11 +139,14 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
   class ServiceProgramController extends AbstractProgramController {
     private final Table<String, Integer, ProgramController> runnables;
+    private final Program program;
     private final ServiceSpecification serviceSpec;
+    private final Lock lock = new ReentrantLock();
 
     ServiceProgramController(Table<String, Integer, ProgramController> runnables,
                              RunId runId, Program program, ServiceSpecification serviceSpec) {
       super(program.getName(), runId);
+      this.program = program;
       this.runnables = runnables;
       this.serviceSpec = serviceSpec;
       started();
@@ -163,23 +169,115 @@ public class InMemoryServiceRunner implements ProgramRunner {
     @Override
     protected void doStop() throws Exception {
       LOG.info("Stopping Service : " + serviceSpec.getName());
-      Futures.successfulAsList
-        (Iterables.transform(runnables.values(), new Function<ProgramController,
-                               ListenableFuture<ProgramController>>() {
-                               @Override
-                               public ListenableFuture<ProgramController> apply(ProgramController input) {
-                                 return input.stop();
+      lock.lock();
+      try {
+        Futures.successfulAsList
+          (Iterables.transform(runnables.values(), new Function<ProgramController,
+                                 ListenableFuture<ProgramController>>() {
+                                 @Override
+                                 public ListenableFuture<ProgramController> apply(ProgramController input) {
+                                   return input.stop();
+                                 }
                                }
-                             }
-         )
-        ).get();
+           )
+          ).get();
+      } finally {
+        lock.unlock();
+      }
       LOG.info("Service stopped: " + serviceSpec.getName());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected void doCommand(String name, Object value) throws Exception {
-
+      if (!ProgramOptionConstants.RUNNABLE_INSTANCES.equals(name) || !(value instanceof Map)) {
+        return;
+      }
+      Map<String, String> command = (Map<String, String>) value;
+      lock.lock();
+      try {
+        changeInstances(command.get("runnable"), Integer.valueOf(command.get("newInstances")));
+      } catch (Throwable t) {
+        LOG.error(String.format("Fail to change instances: %s", command), t);
+      } finally {
+        lock.unlock();
+      }
     }
+
+    /**
+     * Change the number of instances of the running runnable. Notice that this method needs to be
+     * synchronized as change of instances involves multiple steps that need to be completed all at once.
+     * @param runnableName Name of the runnable
+     * @param newInstanceCount New instance count
+     * @throws java.util.concurrent.ExecutionException
+     * @throws InterruptedException
+     */
+    private synchronized void changeInstances(String runnableName, final int newInstanceCount) throws Exception {
+      Map<Integer, ProgramController> liveRunnables = runnables.row(runnableName);
+      int liveCount = liveRunnables.size();
+      if (liveCount == newInstanceCount) {
+        return;
+      }
+
+      // First stop any extra runnables
+      if (liveCount > newInstanceCount) {
+        List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
+        for (int instanceId = liveCount - 1; instanceId >= newInstanceCount; instanceId--) {
+          futures.add(runnables.remove(runnableName, instanceId).stop());
+        }
+        Futures.successfulAsList(futures).get();
+      }
+
+      // Then pause all runnables
+      pauseRunnables(liveRunnables);
+
+      // Next updates instance count for each runnable
+      setRunnableInstances(liveRunnables, newInstanceCount);
+
+      // Last resume all remaining runnables
+      resumeRunnables(liveRunnables);
+
+      // Last create more runnable instances, if necessary.
+      for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
+        ProgramOptions newProgramOpts = createRunnableOptions(runnableName, instanceId, newInstanceCount, getRunId());
+        ProgramController programController = startRunnable(program, newProgramOpts);
+        runnables.put(runnableName, instanceId, programController);
+      }
+    }
+
+    private synchronized void pauseRunnables(Map<Integer, ProgramController> liveRunnables) throws Exception {
+      Futures.successfulAsList(Iterables.transform(
+        liveRunnables.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.suspend();
+          }
+        })).get();
+    }
+
+    private synchronized void resumeRunnables(Map<Integer, ProgramController> liveRunnables) throws Exception {
+      Futures.successfulAsList(Iterables.transform(
+        liveRunnables.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.resume();
+          }
+        })).get();
+    }
+
+    private synchronized void setRunnableInstances(Map<Integer, ProgramController> liveRunnables,
+                                                   final int newInstanceCount) throws Exception {
+      Futures.successfulAsList(Iterables.transform(
+        liveRunnables.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.command(ProgramOptionConstants.INSTANCES, newInstanceCount);
+          }
+        })).get();
+    }
+
   }
 }
