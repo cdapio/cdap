@@ -5,7 +5,7 @@
 Interacting with Datasets with SQL
 ==================================
 
-**Ad-hoc Querying of and Inserting into Cask Data Application Platform (CDAP) Datasets using SQL**
+**Ad-hoc Querying and Inserting using SQL with Cask Data Application Platform (CDAP) Datasets**
 
 Querying Datasets with SQL
 ==========================
@@ -235,20 +235,17 @@ directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
 Writing to Datasets with SQL
 ============================
-You may be interested in inserting query results in a dataset. For example, you can write in a dataset named
-``ProductCatalog`` with the following SQL query::
+Data can be inserted into Datasets using SQL. For example, you can write in a Dataset named
+``ProductCatalog`` with this SQL query::
 
   INSERT INTO TABLE cdap_user_productcatalog SELECT ...
 
-For more examples of queries, please refer to the `Hive language manual
-<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`_.
-
-In order for a dataset to enable record insertion from SQL query, it simply has to expose a way to write records
+In order for a Dataset to enable record insertion from SQL query, it simply has to expose a way to write records
 into itself.
 
 For CDAP Datasets, this is done by implementing the ``RecordWritable`` interface.
-Once again, the CDAP built-in Dataset ``KeyValueTable`` already implements this and can be used to insert records from
-SQL queries.
+Similarly to `Querying Datasets with SQL`_, the CDAP built-in Dataset KeyValueTable already implements this and
+can be used to insert records from SQL queries.
 
 Let's take a closer look at the ``RecordWritable`` interface.
 
@@ -259,22 +256,22 @@ using the method::
 
   Type getRecordType();
 
-The same rules as for the type of the ``RecordScannable`` interface apply to the type of the ``RecordWritable`` interface.
-In fact, if a dataset implements both ``RecordScannable`` and ``RecordWritable`` interfaces, they will have to
-have the same record type.
+`The same rules <limitations>`_ as for the type of the ``RecordScannable`` interface apply to the type of the
+``RecordWritable`` interface. In fact, if a Dataset implements both ``RecordScannable`` and ``RecordWritable``
+interfaces, they will have to use identical record types.
 
 Writing Records
 ---------------
 To enable inserting SQL queries result into a Dataset, it needs to provide a means of writing a record into itself.
 This is similar to how the ``BatchWritable`` interface makes Datasets writable from Map/Reduce jobs by providing
-a way to write pairs of key and value. You need to implement the following ``RecordWritable`` method::
+a way to write pairs of key and value. You need to implement the ``RecordWritable`` method::
 
       void write(RECORD record) throws IOException;
 
-To continue with the example used above which showed an implementation of ``RecordScannable``, this example shows
-a implementation of a ``RecordWritable`` dataset that is backed by a ``Table``::
+Continuing the * MyDataset*`example used above <scanning-records>`_, which showed an implementation of
+``RecordScannable``, this example shows implementing a ``RecordWritable`` Dataset that is backed by a ``Table``::
 
-  class MyDataset implements Dataset, RecordWritable<Entry> {
+  class MyDataset implements Dataset, ..., RecordWritable<Entry> {
 
     private Table table;
     private static final byte[] VALUE_COLUMN = { 'c' };
@@ -294,17 +291,20 @@ a implementation of a ``RecordWritable`` dataset that is backed by a ``Table``::
     }
   }
 
-Note that a Dataset can implement either ``RecordScannable``, or ``RecordWritable``, or both.
+Note that a Dataset can implement either ``RecordScannable``, ``RecordWritable``, or both.
 
 Formulating Queries
 ===================
 When creating your queries, keep these limitations in mind:
 
 - The query syntax of CDAP is a subset of the variant of SQL that was first defined by Apache Hive.
-- These SQL commands are not allowed on CDAP Datasets: ``UPDATE``, ``DELETE``.
+- The SQL commands ``UPDATE`` and ``DELETE`` are not allowed on CDAP Datasets.
 - When addressing your datasets in queries, you need to prefix the data set name with the CDAP
   namespace ``cdap_user_``. For example, if your Dataset is named ``ProductCatalog``, then the corresponding table
   name is ``cdap_user_productcatalog``. Note that the table name is lower-case.
+  
+For more examples of queries, please refer to the `Hive language manual
+<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`_.
 
 Where to Go Next
 ================
