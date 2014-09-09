@@ -220,11 +220,13 @@ public class InMemoryServiceRunner implements ProgramRunner {
       }
 
       // First stop any extra runnables
-      List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
-      for (int instanceId = liveCount - 1; instanceId >= newInstanceCount; instanceId--) {
-        futures.add(runnables.remove(runnableName, instanceId).stop());
+      if (liveCount > newInstanceCount) {
+        List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
+        for (int instanceId = liveCount - 1; instanceId >= newInstanceCount; instanceId--) {
+          futures.add(runnables.remove(runnableName, instanceId).stop());
+        }
+        Futures.successfulAsList(futures).get();
       }
-      Futures.successfulAsList(futures).get();
 
       // Then pause all runnables
       pauseRunnables(liveRunnables);
@@ -237,9 +239,9 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
       // Last create more runnable instances, if necessary.
       for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
-        runnables.put(runnableName, instanceId,
-                      startRunnable(program,
-                                    createRunnableOptions(runnableName, instanceId, newInstanceCount, getRunId())));
+        ProgramOptions newProgramOpts = createRunnableOptions(runnableName, instanceId, newInstanceCount, getRunId());
+        ProgramController programController = startRunnable(program, newProgramOpts);
+        runnables.put(runnableName, instanceId, programController);
       }
     }
 
