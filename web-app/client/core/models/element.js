@@ -24,13 +24,14 @@ define([], function () {
 
     },
 
-    trackMetric: function (path, kind, label, interpolate) {
+    trackMetric: function (path, kind, label, interpolate, options) {
 
       path = this.interpolate(path);
       this.get(kind).set(C.Util.enc(path), Em.Object.create({
         path: path,
         value: label || [],
-        interpolate: interpolate
+        interpolate: interpolate,
+        options: options || {}
       }));
       return path;
 
