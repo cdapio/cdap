@@ -144,7 +144,8 @@ public class SparkProgramWrapper {
       sparkContext = new ScalaSparkContext();
       scalaJobFlag = true;
     } else {
-      throw new IllegalArgumentException("User's Spark Job must implement either JavaSparkProgram or ScalaSparkProgram");
+      String error = "User's Spark Job must implement either JavaSparkProgram or ScalaSparkProgram";
+      throw new IllegalArgumentException(error);
     }
   }
 
