@@ -38,7 +38,7 @@
 
     <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
-        <file>logs/reactor.log</file>
+        <file>logs/cdap.log</file>
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
