@@ -218,59 +218,8 @@ public class InMemoryServiceRunner implements ProgramRunner {
       if (liveCount == newInstanceCount) {
         return;
       }
-      if (liveCount < newInstanceCount) {
-        increaseInstances(runnableName, newInstanceCount, liveRunnables, liveCount);
-        return;
-      }
-      decreaseInstances(runnableName, newInstanceCount, liveRunnables, liveCount);
-    }
 
-    private synchronized void increaseInstances(String runnableName, final int newInstanceCount,
-                                                Map<Integer, ProgramController> liveRunnables,
-                                                int liveCount) throws Exception {
-      // First pause all runnables
-      Futures.successfulAsList(Iterables.transform(
-        liveRunnables.values(),
-        new Function<ProgramController, ListenableFuture<?>>() {
-          @Override
-          public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.suspend();
-          }
-        })).get();
-
-      // Then change instance count of current runnables
-      Futures.successfulAsList(Iterables.transform(
-        liveRunnables.values(),
-        new Function<ProgramController, ListenableFuture<?>>() {
-          @Override
-          public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.command(ProgramOptionConstants.INSTANCES, newInstanceCount);
-          }
-        })).get();
-
-      // Next resume all current runnables
-      Futures.successfulAsList(Iterables.transform(
-        liveRunnables.values(),
-        new Function<ProgramController, ListenableFuture<?>>() {
-          @Override
-          public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.resume();
-          }
-        })).get();
-
-      // Last create more instances
-      for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
-        runnables.put(runnableName, instanceId,
-                      startRunnable(program,
-                                    createRunnableOptions(runnableName, instanceId, newInstanceCount, getRunId())));
-      }
-    }
-
-    private synchronized void decreaseInstances(String runnableName, final int newInstanceCount,
-                                                Map<Integer, ProgramController> liveRunnables,
-                                                int liveCount) throws Exception {
-      // Shrink number of runnables
-      // First stop the extra runnables
+      // First stop any extra runnables
       List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
       for (int instanceId = liveCount - 1; instanceId >= newInstanceCount; instanceId--) {
         futures.add(runnables.remove(runnableName, instanceId).stop());
@@ -278,6 +227,23 @@ public class InMemoryServiceRunner implements ProgramRunner {
       Futures.successfulAsList(futures).get();
 
       // Then pause all runnables
+      pauseRunnables(liveRunnables);
+
+      // Next updates instance count for each runnable
+      setRunnableInstances(liveRunnables, newInstanceCount);
+
+      // Last resume all remaining runnables
+      resumeRunnables(liveRunnables);
+
+      // Last create more runnable instances, if necessary.
+      for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
+        runnables.put(runnableName, instanceId,
+                      startRunnable(program,
+                                    createRunnableOptions(runnableName, instanceId, newInstanceCount, getRunId())));
+      }
+    }
+
+    private synchronized void pauseRunnables(Map<Integer, ProgramController> liveRunnables) throws Exception {
       Futures.successfulAsList(Iterables.transform(
         liveRunnables.values(),
         new Function<ProgramController, ListenableFuture<?>>() {
@@ -286,24 +252,27 @@ public class InMemoryServiceRunner implements ProgramRunner {
             return controller.suspend();
           }
         })).get();
+    }
 
-      // Next updates instance count for each runnables
-      Futures.successfulAsList(Iterables.transform(
-        liveRunnables.values(),
-        new Function<ProgramController, ListenableFuture<?>>() {
-          @Override
-          public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.command(ProgramOptionConstants.INSTANCES, newInstanceCount);
-          }
-        })).get();
-
-      // Last resume all remaining runnables
+    private synchronized void resumeRunnables(Map<Integer, ProgramController> liveRunnables) throws Exception {
       Futures.successfulAsList(Iterables.transform(
         liveRunnables.values(),
         new Function<ProgramController, ListenableFuture<?>>() {
           @Override
           public ListenableFuture<?> apply(ProgramController controller) {
             return controller.resume();
+          }
+        })).get();
+    }
+
+    private synchronized void setRunnableInstances(Map<Integer, ProgramController> liveRunnables,
+                                                   final int newInstanceCount) throws Exception {
+      Futures.successfulAsList(Iterables.transform(
+        liveRunnables.values(),
+        new Function<ProgramController, ListenableFuture<?>>() {
+          @Override
+          public ListenableFuture<?> apply(ProgramController controller) {
+            return controller.command(ProgramOptionConstants.INSTANCES, newInstanceCount);
           }
         })).get();
     }
