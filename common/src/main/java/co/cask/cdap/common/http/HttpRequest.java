@@ -70,6 +70,10 @@ public class HttpRequest {
     return new Builder(method, url);
   }
 
+  public static Builder builder(HttpRequest request) {
+    return new Builder(request.method, request.url).addHeaders(request.getHeaders()).withBody(request.getBody());
+  }
+
   public HttpMethod getMethod() {
     return method;
   }

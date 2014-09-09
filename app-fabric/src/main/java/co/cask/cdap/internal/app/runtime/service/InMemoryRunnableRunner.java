@@ -75,13 +75,15 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
   private final CConfiguration cConfiguration;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
   public InMemoryRunnableRunner(CConfiguration cConfiguration, ProgramServiceDiscovery serviceDiscovery,
                                 DiscoveryServiceClient discoveryServiceClient,
                                 DiscoveryService dsService, InMemoryElectionRegistry electionRegistry,
                                 MetricsCollectionService metricsCollectionService,
-                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework) {
+                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework,
+                                DiscoveryServiceClient discoveryServiceClient) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -91,6 +93,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = datasetFramework;
     this.cConfiguration = cConfiguration;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @SuppressWarnings("unchecked")
@@ -180,7 +183,9 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
       if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running HTTP services
-        runnable = new HttpServiceTwillRunnable(program.getClassLoader());
+        runnable = new HttpServiceTwillRunnable(program, runId, cConfiguration, runnableName, metricsCollectionService,
+                                                serviceDiscovery, discoveryServiceClient, datasetFramework,
+                                                transactionSystemClient);
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         runnable = new ServiceWorkerTwillRunnable(program, runId, runnableName, program.getClassLoader(),
                                                   cConfiguration, metricsCollectionService, datasetFramework,
@@ -199,7 +204,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       Reflections.visit(runnable, runnableType,
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
-                                                                          serviceSpec.getName(), runnableName)),
+                                                                          serviceSpec.getName(), runnableName,
+                                                                          twillContext.getInstanceId())),
                         new PropertyFieldSetter(runnableSpec.getRunnableSpecification().getConfigs()));
 
       ProgramController controller = new InMemoryRunnableProgramController(program.getName(), runnableName,

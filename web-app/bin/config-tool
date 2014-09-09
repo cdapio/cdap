@@ -50,7 +50,7 @@ fi
 
 # Load the configuration too.
 if [ -d "$conf" ]; then
-  CLASSPATH=$CLASSPATH:"$conf"/
+  CLASSPATH=$CLASSPATH:"$conf"/:/etc/cdap/conf
 fi
 
 auth_file="$HOME/.cdap.accesstoken"

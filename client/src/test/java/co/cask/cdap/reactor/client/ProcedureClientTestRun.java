@@ -19,7 +19,6 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProcedureClient;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.app.FakeProcedure;
@@ -31,8 +30,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
@@ -42,7 +39,6 @@ import java.io.File;
 @Category(XSlowTests.class)
 public class ProcedureClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProcedureClientTestRun.class);
   private static final Gson GSON = new Gson();
 
   private ApplicationClient appClient;
@@ -51,10 +47,10 @@ public class ProcedureClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
-    appClient = new ApplicationClient(config);
-    procedureClient = new ProcedureClient(config);
-    programClient = new ProgramClient(config);
+    super.setUp();
+    appClient = new ApplicationClient(clientConfig);
+    procedureClient = new ProcedureClient(clientConfig);
+    programClient = new ProgramClient(clientConfig);
   }
 
   @Test

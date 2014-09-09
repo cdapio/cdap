@@ -125,8 +125,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
   private TransactionSystemClient transactionSystemClient;
+  private ProgramServiceDiscovery programServiceDiscovery;
   private DatasetFramework datasetFramework;
-  private ProgramServiceDiscovery serviceDiscovery;
   private DiscoveryServiceClient discoveryServiceClient;
   private TwillRunnable delegate;
   private String runnableName;
@@ -180,7 +180,7 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
       datasetFramework = injector.getInstance(DatasetFramework.class);
-      serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
+      programServiceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
       discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
       try {
@@ -199,28 +199,29 @@ public class ServiceTwillRunnable implements TwillRunnable {
       String processorName = program.getName();
       runnableName = programOpts.getName();
 
-      ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
-      final RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
-
-      String className = runtimeSpec.getRunnableSpecification().getClassName();
-      LOG.info("Getting class : {}", program.getMainClass().getName());
-      Class<?> clz = Class.forName(className, true, program.getClassLoader());
-      Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
-
       Arguments arguments = programOpts.getArguments();
       RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
         ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
         : RunIds.generate();
 
+      ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
+      final RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
+      String className = runtimeSpec.getRunnableSpecification().getClassName();
+      LOG.info("Getting class : {}", program.getMainClass().getName());
+      Class<?> clz = Class.forName(className, true, program.getClassLoader());
+      Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
       if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
-        delegate = new HttpServiceTwillRunnable(program.getClassLoader());
+        delegate = new HttpServiceTwillRunnable(program, runId, cConf, runnableName, metricsCollectionService,
+                                                programServiceDiscovery, discoveryServiceClient, datasetFramework,
+                                                transactionSystemClient);
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         delegate = new ServiceWorkerTwillRunnable(program, runId, runnableName, program.getClassLoader(), cConf,
                                                   metricsCollectionService, datasetFramework,
-                                                  transactionSystemClient, serviceDiscovery, discoveryServiceClient);
+                                                  transactionSystemClient, programServiceDiscovery,
+                                                  discoveryServiceClient);
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       }
@@ -228,7 +229,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
                         new MetricsFieldSetter(new ServiceRunnableMetrics(metricsCollectionService,
                                                                           program.getApplicationId(),
-                                                                          program.getName(), runnableName)),
+                                                                          program.getName(), runnableName,
+                                                                          context.getInstanceId())),
                         new PropertyFieldSetter(runtimeSpec.getRunnableSpecification().getConfigs()));
 
       final String[] argArray = RuntimeArguments.toPosixArray(programOpts.getUserArguments());
@@ -362,6 +364,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
         protected void configure() {
           // For program loading
           install(createProgramFactoryModule());
+
+          bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class).in(Scopes.SINGLETON);
         }
       }
     );

@@ -310,6 +310,18 @@
       <description>How often to run Stream file cleanup process in milliseconds</description>
     </property>
 
+    <property>
+      <name>stream.async.worker.threads</name>
+      <value>${stream.worker.threads}</value>
+      <description>Number of async worker threads for handling async write request</description>
+    </property>
+
+    <property>
+      <name>stream.async.queue.size</name>
+      <value>100</value>
+      <description>Queue size per async worker thread for queuing up async write request</description>
+    </property>
+
     <!--
         Data Fabric Configuration
     -->
@@ -1046,8 +1058,12 @@
     <value>10010</value>
   </property>
 
-  <!-- Security configuration for the router -->
+  <property>
+    <name>security.auth.server.ssl.keystore.type</name>
+    <value>JKS</value>
+  </property>
 
+  <!-- Front Configuration-->
   <property>
     <name>router.ssl.enabled</name>
     <value>false</value>
@@ -1056,6 +1072,16 @@
   <property>
     <name>router.ssl.bind.port</name>
     <value>9443</value>
+  </property>
+
+  <property>
+    <name>dashboard.https.enabled</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>router.server.address</name>
+    <value>localhost</value>
   </property>
 
 </configuration>

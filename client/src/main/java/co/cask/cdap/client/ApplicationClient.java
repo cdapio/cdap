@@ -18,6 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.ApplicationNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
@@ -58,9 +59,10 @@ public class ApplicationClient {
    *
    * @return list of {@link ApplicationRecord}s.
    * @throws IOException
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public List<ApplicationRecord> list() throws IOException {
-    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("apps"));
+  public List<ApplicationRecord> list() throws IOException, UnAuthorizedAccessTokenException {
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("apps"), config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
   }
 
@@ -70,10 +72,11 @@ public class ApplicationClient {
    * @param appId ID of the application to delete
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void delete(String appId) throws ApplicationNotFoundException, IOException {
+  public void delete(String appId) throws ApplicationNotFoundException, IOException, UnAuthorizedAccessTokenException {
     HttpResponse response = restClient.execute(HttpMethod.DELETE, config.resolveURL("apps/" + appId),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);
     }
@@ -90,7 +93,7 @@ public class ApplicationClient {
     Map<String, String> headers = ImmutableMap.of("X-Archive-Name", jarFile.getName());
 
     HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(jarFile).build();
-    restClient.upload(request);
+    restClient.upload(request, config.getAccessToken());
   }
 
   /**
@@ -99,11 +102,14 @@ public class ApplicationClient {
    * @param appId ID of the application to promote
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void promote(String appId) throws ApplicationNotFoundException, IOException {
+  public void promote(String appId) throws ApplicationNotFoundException, IOException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("apps/" + appId);
 
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);
     }
@@ -115,15 +121,18 @@ public class ApplicationClient {
    * @param programType type of the programs to list
    * @return list of {@link ProgramRecord}s
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public List<ProgramRecord> listAllPrograms(ProgramType programType) throws IOException {
+  public List<ProgramRecord> listAllPrograms(ProgramType programType) throws IOException,
+    UnAuthorizedAccessTokenException {
+
     Preconditions.checkArgument(programType.isListable());
 
     URL url = config.resolveURL(programType.getCategoryName());
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
-      restClient.execute(request), new TypeToken<List<ProgramRecord>>() { });
+      restClient.execute(request, config.getAccessToken()), new TypeToken<List<ProgramRecord>>() { });
 
     return response.getResponseObject();
   }
@@ -133,8 +142,9 @@ public class ApplicationClient {
    *
    * @return list of {@link ProgramRecord}s
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public Map<ProgramType, List<ProgramRecord>> listAllPrograms() throws IOException {
+  public Map<ProgramType, List<ProgramRecord>> listAllPrograms() throws IOException, UnAuthorizedAccessTokenException {
 
     ImmutableMap.Builder<ProgramType, List<ProgramRecord>> allPrograms = ImmutableMap.builder();
     for (ProgramType programType : ProgramType.values()) {
@@ -146,7 +156,7 @@ public class ApplicationClient {
     }
     return allPrograms.build();
   }
-  
+
 
   /**
    * Lists programs of some type belonging to an application.
@@ -156,16 +166,18 @@ public class ApplicationClient {
    * @return list of {@link ProgramRecord}s
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<ProgramRecord> listPrograms(String appId, ProgramType programType)
-    throws ApplicationNotFoundException, IOException {
+    throws ApplicationNotFoundException, IOException, UnAuthorizedAccessTokenException {
     Preconditions.checkArgument(programType.isListable());
 
     URL url = config.resolveURL(String.format("apps/%s/%s", appId, programType.getCategoryName()));
     HttpRequest request = HttpRequest.get(url).build();
 
     ObjectResponse<List<ProgramRecord>> response = ObjectResponse.fromJsonBody(
-      restClient.execute(request, HttpURLConnection.HTTP_NOT_FOUND), new TypeToken<List<ProgramRecord>>() { });
+      restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND),
+      new TypeToken<List<ProgramRecord>>() { });
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);
@@ -181,9 +193,10 @@ public class ApplicationClient {
    * @return Map of {@link ProgramType} to list of {@link ProgramRecord}s
    * @throws ApplicationNotFoundException if the application with the given ID was not found
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public Map<ProgramType, List<ProgramRecord>> listPrograms(String appId)
-    throws ApplicationNotFoundException, IOException {
+    throws ApplicationNotFoundException, IOException, UnAuthorizedAccessTokenException {
 
     ImmutableMap.Builder<ProgramType, List<ProgramRecord>> allPrograms = ImmutableMap.builder();
     for (ProgramType programType : ProgramType.values()) {

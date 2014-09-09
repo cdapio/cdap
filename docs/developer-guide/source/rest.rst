@@ -185,6 +185,10 @@ An event can be sent to a Stream by sending an HTTP POST method to the URL of th
 
   POST <base-url>/streams/<stream-id>
 
+In cases where it is acceptable to have some events lost if the system crashes, you can send events to a Stream asynchronously with higher throughput by sending an HTTP POST method to the ``async`` URL::
+
+  POST <base-url>/streams/<stream-id>/async
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -203,7 +207,9 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event was successfully received
+     - The event was successfully received and persisted
+   * - ``202 ACCEPTED``
+     - The event was successfully received but may not be persisted. Only the asynchronous endpoint will return this status code
    * - ``404 Not Found``
      - The Stream does not exist
 
