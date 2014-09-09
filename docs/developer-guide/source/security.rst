@@ -30,6 +30,11 @@ By enabling perimeter security for CDAP, you can prevent access by any clients w
 credentials.  In addition, access logging can be enabled in CDAP to provide an audit log of all
 operations.
 
+We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with 
+`secure Hadoop clusters <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html>`__.
+In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
+running on the cluster are effectively "trusted”. Though there is still value in having the perimeter access
+be authenticated in that situation, whenever possible a secure Hadoop cluster should be employed with CDAP security.
 
 Enabling Security
 ==================
