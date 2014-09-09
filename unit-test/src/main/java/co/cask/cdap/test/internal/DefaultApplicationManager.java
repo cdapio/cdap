@@ -25,6 +25,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -45,12 +46,19 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -74,6 +82,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
   private final AppFabricClient appFabricClient;
+  private final ServiceHttpHandler serviceHttpHandler;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
@@ -85,6 +94,7 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    CConfiguration configuration,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    AppFabricHttpHandler httpHandler,
+                                   ServiceHttpHandler serviceHttpHandler,
                                    TemporaryFolder tempFolder,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
@@ -96,6 +106,8 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
     this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
+    this.serviceHttpHandler = serviceHttpHandler;
+
     try {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
@@ -317,6 +329,41 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
 
       return new ServiceManager() {
+        @Override
+        public void setRunnableInstances(String runnableName, int instances) {
+          Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
+          try {
+            MockResponder responder = new MockResponder();
+            String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
+                                       applicationId, serviceName, runnableName);
+            HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+            JsonObject json = new JsonObject();
+            json.addProperty("instances", instances);
+            request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
+            serviceHttpHandler.setInstances(request, responder, applicationId, serviceName, runnableName);
+            Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set runnable instances failed");
+
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
+        @Override
+        public Integer getRunnableInstances(String runnableName) {
+          try {
+            MockResponder responder = new MockResponder();
+            String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
+                                       applicationId, serviceName, runnableName);
+            HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+            serviceHttpHandler.getInstances(request, responder, applicationId, serviceName, runnableName);
+            Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get runnable instances failed");
+            Map<String, String> decodedResponse = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { } );
+            return Integer.decode(decodedResponse.get("provisioned"));
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
         @Override
         public void stop() {
           try {
