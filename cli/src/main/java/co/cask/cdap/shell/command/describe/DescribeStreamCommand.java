@@ -20,37 +20,30 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.StreamIdCompleter;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
 
 import java.io.PrintStream;
-import java.util.List;
 import javax.inject.Inject;
 
 /**
  * Shows detailed information about a stream.
  */
-public class DescribeStreamCommand extends AbstractCommand implements Completable {
+public class DescribeStreamCommand extends AbstractCommand {
 
   private final StreamClient streamClient;
-  private final StreamIdCompleter completer;
 
   @Inject
-  public DescribeStreamCommand(StreamIdCompleter completer, StreamClient streamClient) {
-    super("stream", "<stream-id>", "Shows detailed information about a " + ElementType.STREAM.getPrettyName());
-    this.completer = completer;
+  public DescribeStreamCommand(StreamClient streamClient) {
     this.streamClient = streamClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String streamId = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String streamId = arguments.get(ArgumentName.STREAM);
     StreamProperties config = streamClient.getConfig(streamId);
 
     new AsciiTable<StreamProperties>(
@@ -66,7 +59,12 @@ public class DescribeStreamCommand extends AbstractCommand implements Completabl
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completer));
+  public String getPattern() {
+    return String.format("describe stream <%s>", ArgumentName.STREAM);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Shows detailed information about a " + ElementType.STREAM.getPrettyName();
   }
 }

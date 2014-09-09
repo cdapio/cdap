@@ -14,9 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command;
+package co.cask.cdap.shell.command.common;
 
 import co.cask.cdap.shell.CLIConfig;
+import co.cask.cdap.shell.command.AbstractCommand;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -30,12 +33,21 @@ public class VersionCommand extends AbstractCommand {
 
   @Inject
   public VersionCommand(CLIConfig cliConfig) {
-    super("version", null, "Prints the version");
     this.cliConfig = cliConfig;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     output.println(cliConfig.getVersion());
+  }
+
+  @Override
+  public String getPattern() {
+    return "version";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Prints the version";
   }
 }

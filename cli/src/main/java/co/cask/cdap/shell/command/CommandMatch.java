@@ -14,19 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command.call;
+package co.cask.cdap.shell.command;
 
-import co.cask.cdap.shell.command.CommandSet;
-
-import javax.inject.Inject;
+import co.cask.cdap.shell.CommandPattern;
 
 /**
- * Contains commands for calling stuff.
+ * Represents an input matching for a command and provided arguments.
  */
-public class CallCommandSet extends CommandSet {
+public final class CommandMatch {
+  private final Command command;
+  private final String input;
 
-  @Inject
-  public CallCommandSet(CallProcedureCommand callProcedureCommand) {
-    super("call", callProcedureCommand);
+  public CommandMatch(Command command, String input) {
+    this.command = command;
+    this.input = input;
+  }
+
+  public Command getCommand() {
+    return command;
+  }
+
+  public Arguments getArguments() {
+    return new CommandPattern(command.getPattern()).parseArguments(input);
   }
 }

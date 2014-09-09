@@ -21,12 +21,11 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.AppIdCompleter;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -36,23 +35,18 @@ import javax.inject.Inject;
 /**
  * Shows detailed information about an application.
  */
-public class DescribeAppCommand extends AbstractCommand implements Completable {
+public class DescribeAppCommand extends AbstractCommand {
 
   private final ApplicationClient applicationClient;
-  private final AppIdCompleter completer;
 
   @Inject
-  public DescribeAppCommand(AppIdCompleter completer, ApplicationClient applicationClient) {
-    super("app", "<app-id>", "Shows detailed information about an " + ElementType.APP.getPrettyName());
-    this.completer = completer;
+  public DescribeAppCommand(ApplicationClient applicationClient) {
     this.applicationClient = applicationClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String appId = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String appId = arguments.get(ArgumentName.APP);
     Map<ProgramType, List<ProgramRecord>> programs = applicationClient.listPrograms(appId);
     List<ProgramRecord> programsList = Lists.newArrayList();
     for (List<ProgramRecord> subList : programs.values()) {
@@ -73,7 +67,12 @@ public class DescribeAppCommand extends AbstractCommand implements Completable {
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completer));
+  public String getPattern() {
+    return String.format("describe app <%s>", ArgumentName.APP);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Shows detailed information about an " + ElementType.APP.getPrettyName();
   }
 }

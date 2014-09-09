@@ -20,39 +20,31 @@ import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.DatasetModuleNameCompleter;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
 
 import java.io.PrintStream;
-import java.util.List;
 import javax.inject.Inject;
 
 /**
  * Shows information about a dataset module.
  */
-public class DescribeDatasetModuleCommand extends AbstractCommand implements Completable {
+public class DescribeDatasetModuleCommand extends AbstractCommand {
 
   private final DatasetModuleClient datasetModuleClient;
-  private final DatasetModuleNameCompleter completer;
 
   @Inject
-  public DescribeDatasetModuleCommand(DatasetModuleNameCompleter completer,
-                                      DatasetModuleClient datasetModuleClient) {
-    super("module", "<module-name>", "Shows information about a " + ElementType.DATASET_MODULE.getPrettyName());
-    this.completer = completer;
+  public DescribeDatasetModuleCommand(DatasetModuleClient datasetModuleClient) {
     this.datasetModuleClient = datasetModuleClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String moduleName = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String moduleName = arguments.get(ArgumentName.DATASET_MODULE);
     DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(moduleName);
 
     new AsciiTable<DatasetModuleMeta>(
@@ -71,7 +63,12 @@ public class DescribeDatasetModuleCommand extends AbstractCommand implements Com
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completer));
+  public String getPattern() {
+    return String.format("describe dataset module <%s>", ArgumentName.DATASET_MODULE);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Shows information about a " + ElementType.DATASET_MODULE.getPrettyName();
   }
 }

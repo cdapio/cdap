@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command.get;
+package co.cask.cdap.shell.command.set;
 
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.shell.ElementType;
@@ -28,18 +28,18 @@ import javax.inject.Inject;
 /**
  * Contains commands for getting the number of instances a program is running on.
  */
-public class GetLogsCommandSet extends CommandSet {
+public class SetProgramInstancesCommandSet extends CommandSet {
 
   @Inject
-  public GetLogsCommandSet(ProgramClient programClient) {
+  public SetProgramInstancesCommandSet(ProgramClient programClient) {
     super(generateCommands(programClient));
   }
 
-  private static List<HasCommand> generateCommands(ProgramClient programClient) {
+  public static List<HasCommand> generateCommands(ProgramClient programClient) {
     List<HasCommand> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
-      if (elementType.hasLogs()) {
-        commands.add(new GetProgramLogsCommand(elementType, programClient));
+      if (elementType.canScale()) {
+        commands.add(new SetProgramInstancesCommand(elementType, programClient));
       }
     }
     return commands;

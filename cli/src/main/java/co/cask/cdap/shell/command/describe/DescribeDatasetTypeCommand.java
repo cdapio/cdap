@@ -20,39 +20,31 @@ import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.DatasetTypeNameCompleter;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
 
 import java.io.PrintStream;
-import java.util.List;
 import javax.inject.Inject;
 
 /**
  * Shows information about a dataset type.
  */
-public class DescribeDatasetTypeCommand extends AbstractCommand implements Completable {
+public class DescribeDatasetTypeCommand extends AbstractCommand {
 
   private final DatasetTypeClient datasetTypeClient;
-  private final DatasetTypeNameCompleter completer;
 
   @Inject
-  public DescribeDatasetTypeCommand(DatasetTypeNameCompleter completer,
-                                    DatasetTypeClient datasetTypeClient) {
-    super("type", "<type-name>", "Shows information about a " + ElementType.DATASET_TYPE.getPrettyName());
-    this.completer = completer;
+  public DescribeDatasetTypeCommand(DatasetTypeClient datasetTypeClient) {
     this.datasetTypeClient = datasetTypeClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String typeName = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String typeName = arguments.get(ArgumentName.DATASET_TYPE);
     DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(typeName);
 
     new AsciiTable<DatasetTypeMeta>(
@@ -66,7 +58,12 @@ public class DescribeDatasetTypeCommand extends AbstractCommand implements Compl
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completer));
+  public String getPattern() {
+    return String.format("describe dataset type <%s>", ArgumentName.DATASET_TYPE);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Shows information about a " + ElementType.DATASET_TYPE.getPrettyName();
   }
 }

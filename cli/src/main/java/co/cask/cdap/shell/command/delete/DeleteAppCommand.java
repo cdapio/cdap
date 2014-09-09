@@ -19,42 +19,39 @@ package co.cask.cdap.shell.command.delete;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.AppIdCompleter;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 
 import java.io.PrintStream;
-import java.util.List;
 import javax.inject.Inject;
 
 /**
  * Deletes an application.
  */
-public class DeleteAppCommand extends AbstractCommand implements Completable {
+public class DeleteAppCommand extends AbstractCommand {
 
   private final ApplicationClient appClient;
-  private final AppIdCompleter completer;
 
   @Inject
-  public DeleteAppCommand(AppIdCompleter completer, ApplicationClient appClient) {
-    super("app", "<app-id>", "Deletes an " + ElementType.APP.getPrettyName());
-    this.completer = completer;
+  public DeleteAppCommand(ApplicationClient appClient) {
     this.appClient = appClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String appId = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String appId = arguments.get(ArgumentName.APP);
 
     appClient.delete(appId);
     output.printf("Successfully deleted application '%s'\n", appId);
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completer));
+  public String getPattern() {
+    return String.format("delete app <%s>", ArgumentName.APP);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Deletes an " + ElementType.APP.getPrettyName();
   }
 }

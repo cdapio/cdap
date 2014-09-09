@@ -20,6 +20,8 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 
@@ -36,14 +38,11 @@ public class ListDatasetInstancesCommand extends AbstractCommand {
 
   @Inject
   public ListDatasetInstancesCommand(DatasetClient datasetClient) {
-    super("instances", null, "Lists all " + ElementType.DATASET.getPluralPrettyName());
     this.datasetClient = datasetClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     List<DatasetSpecification> datasetMetas = datasetClient.list();
 
     new AsciiTable<DatasetSpecification>(
@@ -54,5 +53,15 @@ public class ListDatasetInstancesCommand extends AbstractCommand {
           return new Object[] { object.getName(), object.getType() };
         }
       }).print(output);
+  }
+
+  @Override
+  public String getPattern() {
+    return "list dataset instances";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Lists all " + ElementType.DATASET.getPluralPrettyName();
   }
 }
