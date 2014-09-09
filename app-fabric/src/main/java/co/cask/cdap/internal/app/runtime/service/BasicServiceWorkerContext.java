@@ -91,8 +91,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConfiguration, Namespace.USER));
-    this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService, getApplicationId(),
-                                                     program.getName(), runnableName);
+    this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService,
+                                                             getMetricContext(program, runnableName, instanceId));
 
   }
 

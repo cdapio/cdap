@@ -68,7 +68,6 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
-  private final DiscoveryServiceClient discoveryServiceClient;
   private final DiscoveryService dsService;
   private final InMemoryElectionRegistry electionRegistry;
   private final ConcurrentLinkedQueue<Discoverable> discoverables;
@@ -82,8 +81,7 @@ public class InMemoryRunnableRunner implements ProgramRunner {
                                 DiscoveryServiceClient discoveryServiceClient,
                                 DiscoveryService dsService, InMemoryElectionRegistry electionRegistry,
                                 MetricsCollectionService metricsCollectionService,
-                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework,
-                                DiscoveryServiceClient discoveryServiceClient) {
+                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -93,7 +91,6 @@ public class InMemoryRunnableRunner implements ProgramRunner {
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = datasetFramework;
     this.cConfiguration = cConfiguration;
-    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @SuppressWarnings("unchecked")
