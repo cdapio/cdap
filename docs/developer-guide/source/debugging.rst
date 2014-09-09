@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Introduction to Testing, Debugging, and Troubleshooting the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==========================================================
 Cask Data Application Platform Testing and Debugging Guide
@@ -21,13 +22,13 @@ in one of two ways:
 
 - include all JAR files in the ``lib`` directory of the CDAP SDK installation,
   or
-- include the ``unit-test`` artifact in your Maven test dependencies
-  (see the ``pom.xml`` file of the *WordCount* example).
+- include both the ``co.cask.cdap:api`` and 
+  ``co.cask.cdap:unit-test`` artifacts in your Maven test dependencies
+  (see the ``pom.xml`` file in the examples folder of the CDAP SDK).
 
 Note that for building an application, you only need to include the
-CDAP API in your dependencies. For testing, however, you need the
-CDAP run-time. To build your test case, extend the
-``AppTestBase`` class.
+CDAP API in your dependencies. For testing, however, you need both the CDAP API and the
+CDAP unit-test. To build your test case, extend the ``AppTestBase`` class.
 
 Strategies in Testing Flows
 ---------------------------

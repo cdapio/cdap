@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: A Java Client for Interacting With the Cask Data Application Platform 
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==============================================
 Cask Data Application Platform Java Client API
@@ -43,6 +44,8 @@ The Java Client API allows you to interact with these CDAP components:
 
 Sample Usage
 ============
+
+.. highlight:: java
 
 ApplicationClient
 -----------------
@@ -88,4 +91,3 @@ DatasetClient
   // Delete a Dataset
   datasetClient.delete("someDataset");
   
-  .. highlight:: java

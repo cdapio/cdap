@@ -1,11 +1,23 @@
 .. :author: Cask Data, Inc.
    :description: HTTP RESTful Interface to the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. highlight:: console
 
 ===============================================
 Cask Data Application Platform HTTP RESTful API
 ===============================================
+
+.. rst2pdf: .. class:: center
+
+.. rst2pdf:    **Copyright © 2014 Cask Data, Inc. All Rights Reserved.**
+
+.. rst2pdf:    .. raw:: pdf
+   
+.. rst2pdf:       Spacer 0,200
+
+.. rst2pdf:    .. image:: _static/cask_logo_horizontal.pdf
+.. rst2pdf:       :width: 4in
 
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
@@ -128,11 +140,9 @@ For CDAP-issued access tokens, the authentication scheme must always be ``Bearer
 
 Stream HTTP API
 ===============
-This interface supports creating Streams, sending events to a Stream, and reading single events from a Stream.
+This interface supports creating Streams, sending events to a Stream, and reading events from a Stream.
 
 Streams may have multiple consumers (for example, multiple Flows), each of which may be a group of different agents (for example, multiple instances of a Flowlet).
-
-In order to read events from a Stream, a client application must first obtain a consumer (group) id, which is then passed to subsequent read requests.
 
 
 Creating a Stream

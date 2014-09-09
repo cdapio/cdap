@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  Copyright 2014 Cask Data, Inc.
+#  Copyright © 2014 Cask Data, Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -390,6 +390,8 @@ def print_dependencies(title, file_base, header, widths, data_list):
 # Example: "Level 1", LEVEL_1, ...
     RST_HEADER=""".. :author: Cask Data, Inc.
    :version: %(version)s
+   :copyright: Copyright © %(year) Cask Data, Inc.
+   
 ============================================
 Cask Data Application Platform %(version)s\
 ============================================
@@ -409,8 +411,10 @@ Cask Data Application Platform %(title)s Dependencies
    :widths: %(widths)s
 
 """
-    sdk_version = get_sdk_version()        
-    RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths}
+    sdk_version = get_sdk_version()
+    import datetime
+    now = datetime.datetime.now()
+    RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths, 'year': now.year}
     rst_path = os.path.join(SCRIPT_DIR_PATH, file_base + ".rst")
 
     try:
