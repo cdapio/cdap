@@ -32,6 +32,8 @@ define([], function () {
 
 	var Util = Em.Object.extend({
 
+	  BYTES_IN_MBYTE: 1024 * 1024,
+
     warningContainer: $('#warning'),
     warningSpan: $('#warning .warning-text'),
 
@@ -467,9 +469,13 @@ define([], function () {
 				metrics = Em.keys(models[j].get('currents') || {});
 
 				for (var k = 0; k < metrics.length; k ++) {
-
 						var metric = models[j].get('currents').get(metrics[k]);
-						queries.push(metric.path + '?start=now-' + (buffer || 5) + 's&count=1&interpolate=step');
+						if (metric.options) {
+							buffer = metric.options.buffer || buffer;
+							transform = metric.options.transform;
+						}
+                        buffer = buffer || 5;
+						queries.push(metric.path + '?start=now-' + buffer + 's&count=' + buffer);
 						map[metric.path] = models[j];
 
 				}
@@ -486,10 +492,25 @@ define([], function () {
 						var i, k, data, path, label;
 						for (i = 0; i < result.length; i ++) {
 							path = result[i].path.split('?')[0];
-							label = map[path].get('currents')[C.Util.enc(path)].value;
-
+                            var metric = map[path].get('currents')[C.Util.enc(path)];
+							label = metric.value;
 							if (label) {
-								map[path].setMetric(label, result[i].result.data[0].value);
+                                var values = result[i].result.data;
+                                // find last one that is not zero
+                                // todo: this is a hack until we don't support gauge on the back-end
+                                var last = 0;
+                                for (var j = values.length - 1; j >= 0; j--) {
+                                    if (values[j].value != 0) {
+                                        last = values[j].value;
+                                        break;
+                                    }
+                                }
+                                resultValue = last;
+								var options = metric.options;
+								if (options && options.transform) {
+									resultValue = options.transform(resultValue);
+								}
+								map[path].setMetric(label, resultValue);
 							}
 						}
 					}

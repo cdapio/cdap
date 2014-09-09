@@ -54,6 +54,7 @@ define([], function () {
 			this.clearTriggers(false);
       C.Util.updateTimeSeries(models, this.HTTP, this);
       C.Util.updateAggregates(models, this.HTTP, this);
+      C.Util.updateCurrents(models, this.HTTP, this);
 
 		},
 

@@ -57,7 +57,7 @@ public class ServiceTwillApplication implements TwillApplication {
                                      .setName(configurer.getName())
                                      .withRunnable()
                                      .add(new HttpServiceTwillRunnable(appName, configurer.getName(),
-                                                                       serviceHandlers))
+                                                                       serviceHandlers, datasets))
                                      .noLocalFiles();
     for (ServiceWorker worker : configurer.getWorkers()) {
       TwillRunnable runnable = new ServiceWorkerTwillRunnable(worker, datasets);
