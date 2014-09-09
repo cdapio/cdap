@@ -27,5 +27,8 @@ describe 'cdap::default' do
       expect(chef_run).to create_template('/etc/cdap/conf.chef/cdap-site.xml')
     end
 
+    it 'logs JAVA_HOME' do
+      expect(chef_run).to write_log('JAVA_HOME = /usr/lib/jvm/java')
+    end
   end
 end
