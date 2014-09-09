@@ -23,9 +23,9 @@ import com.google.common.base.Objects;
 public final class TagMetric {
 
   private final String tag;
-  private final int value;
+  private final long value;
 
-  public TagMetric(String tag, int value) {
+  public TagMetric(String tag, long value) {
     this.tag = tag;
     this.value = value;
   }
@@ -34,7 +34,7 @@ public final class TagMetric {
     return tag;
   }
 
-  public int getValue() {
+  public long getValue() {
     return value;
   }
 

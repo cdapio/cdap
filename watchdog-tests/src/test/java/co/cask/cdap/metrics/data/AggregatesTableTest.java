@@ -101,6 +101,27 @@ public class AggregatesTableTest {
   }
 
   @Test
+  public void testIntOverflow() throws OperationException {
+    AggregatesTable aggregatesTable = tableFactory.createAggregates("intOverflow");
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // checking that we can store more than just int
+    long value = Integer.MAX_VALUE * 2L;
+    aggregatesTable.update(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                              ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                              time, value)));
+    aggregatesTable.update(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                              ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                              time, value)));
+
+    AggregatesScanner scanner = aggregatesTable.scan("context", "bigmetric");
+    Assert.assertTrue(scanner.hasNext());
+    Assert.assertEquals(value * 2, scanner.next().getValue());
+  }
+
+  @Test
   public void testScanAllTags() throws OperationException {
     AggregatesTable aggregatesTable = tableFactory.createAggregates("aggScanAllTags");
     try {

@@ -103,11 +103,11 @@ public final class AggregatesTable {
         Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
         // The no tag value
-        increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), (long) record.getValue());
+        increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
 
         // For each tag, increments corresponding values
         for (TagMetric tag : record.getTags()) {
-          increments.put(Bytes.toBytes(tag.getTag()), (long) tag.getValue());
+          increments.put(Bytes.toBytes(tag.getTag()), tag.getValue());
         }
         aggregatesTable.increment(rowKey, increments);
       }
