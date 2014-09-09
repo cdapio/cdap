@@ -141,10 +141,13 @@ public class DatasetSerDe implements SerDe {
       if (obj instanceof LazyNonPrimitive || obj instanceof LazyPrimitive) {
         // In case the SerDe that deserialized the object is the one of a native table
         structMap.put(names.get(structIndex),
-                      fromLazyObject(info.get(structIndex), struct.get(structIndex)));
+                      fromLazyObject(info.get(structIndex), obj));
+      } else if (obj instanceof LongWritable) {
+        // TODO take care of all the writables
+        structMap.put(names.get(structIndex), ((LongWritable) obj).get());
       } else {
         // In case the deserializer is the DatasetSerDe
-        structMap.put(names.get(structIndex), struct.get(structIndex));
+        structMap.put(names.get(structIndex), obj);
       }
     }
 

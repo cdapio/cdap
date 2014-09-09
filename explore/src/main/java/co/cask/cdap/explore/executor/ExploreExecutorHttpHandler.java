@@ -22,19 +22,24 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.service.ExploreService;
+import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
+import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -98,7 +103,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Enabling explore for dataset instance {}", datasetName);
       String createStatement;
       try {
-        createStatement = DatasetExploreFacade.generateCreateStatement(datasetName, dataset);
+        createStatement = generateCreateStatement(datasetName, dataset);
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for dataset {}", datasetName, e);
         responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -156,7 +161,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      String deleteStatement = DatasetExploreFacade.generateDeleteStatement(datasetName);
+      String deleteStatement = generateDeleteStatement(datasetName);
       LOG.debug("Running delete statement for dataset {} - {}", datasetName, deleteStatement);
 
       QueryHandle handle = exploreService.execute(deleteStatement);
@@ -167,5 +172,71 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+  public static String getHiveTableName(String datasetName) {
+    // TODO: fix namespacing - REACTOR-264
+    // Instnace name is like continuuity.user.my_table.
+    // For now replace . with _ since Hive tables cannot have . in them.
+    return datasetName.replaceAll("\\.", "_").toLowerCase();
+  }
+
+  public static String generateCreateStatement(String name, Dataset dataset)
+    throws UnsupportedTypeException {
+    String hiveSchema = hiveSchemaFor(dataset);
+    String tableName = getHiveTableName(name);
+    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Cask CDAP Dataset\" " +
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
+                         tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
+                         Constants.Explore.DATASET_NAME, name);
+  }
+
+  public static String generateDeleteStatement(String name) {
+    return String.format("DROP TABLE IF EXISTS %s", getHiveTableName(name));
+  }
+
+  /**
+   * Given a record-enabled dataset, determine its record type and generate a schema string compatible with Hive.
+   * @param dataset The data set
+   * @return the hive schema
+   * @throws UnsupportedTypeException if the dataset is neither RecordScannable, nor RecordWritable,
+   * or if the row type is not a record or contains null types.
+   */
+  static String hiveSchemaFor(Dataset dataset) throws UnsupportedTypeException {
+    if (dataset instanceof RecordScannable) {
+      return hiveSchemaFor(((RecordScannable) dataset).getRecordType());
+    } else if (dataset instanceof RecordWritable) {
+      return hiveSchemaFor(((RecordWritable) dataset).getRecordType());
+    }
+    throw new UnsupportedTypeException("Dataset neither implements RecordScannable not RecordWritable.");
+  }
+
+  static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
+    // This call will make sure that the type is not recursive
+    new ReflectionSchemaGenerator().generate(type, false);
+
+    ObjectInspector objectInspector = ObjectInspectorFactory.getReflectionObjectInspector(type);
+    if (!(objectInspector instanceof StructObjectInspector)) {
+      throw new UnsupportedTypeException(String.format("Type must be a RECORD, but is %s",
+                                                       type.getClass().getName()));
+    }
+    StructObjectInspector structObjectInspector = (StructObjectInspector) objectInspector;
+
+    StringBuilder sb = new StringBuilder("(");
+    boolean first = true;
+    for (StructField structField : structObjectInspector.getAllStructFieldRefs()) {
+      if (first) {
+        first = false;
+      } else {
+        sb.append(", ");
+      }
+      ObjectInspector oi = structField.getFieldObjectInspector();
+      String typeName;
+      typeName = oi.getTypeName();
+      sb.append(structField.getFieldName()).append(" ").append(typeName);
+    }
+    sb.append(")");
+
+    return sb.toString();
   }
 }
