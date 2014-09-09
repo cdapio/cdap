@@ -38,10 +38,10 @@ public final class TypeId {
         return "b";
       case WORKFLOW:
         return "w";
-      case SERVICE:
-        return "u";
       case SPARK:
         return "s";
+      case SERVICE:
+        return "u";
       default:
         return "unknown";
     }

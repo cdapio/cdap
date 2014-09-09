@@ -126,8 +126,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private LogAppenderInitializer logAppenderInitializer;
   private TransactionSystemClient transactionSystemClient;
   private ProgramServiceDiscovery programServiceDiscovery;
-  private DatasetFramework datasetFramework;
   private DiscoveryServiceClient discoveryServiceClient;
+  private DatasetFramework datasetFramework;
   private TwillRunnable delegate;
   private String runnableName;
 
