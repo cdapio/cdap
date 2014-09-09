@@ -19,7 +19,7 @@ package co.cask.cdap.shell;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
-import co.cask.cdap.shell.command.VersionCommand;
+import co.cask.cdap.shell.command.common.VersionCommand;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;

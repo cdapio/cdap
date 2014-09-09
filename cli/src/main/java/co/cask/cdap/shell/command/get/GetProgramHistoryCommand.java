@@ -19,13 +19,11 @@ package co.cask.cdap.shell.command.get;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -33,27 +31,19 @@ import java.util.List;
 /**
  * Gets the run history of a program.
  */
-public class GetProgramHistoryCommand extends AbstractCommand implements Completable {
+public class GetProgramHistoryCommand extends AbstractCommand {
 
   private final ProgramClient programClient;
-  private final ProgramIdCompleterFactory completerFactory;
   private final ElementType elementType;
 
-  protected GetProgramHistoryCommand(ElementType elementType,
-                                     ProgramIdCompleterFactory completerFactory,
-                                     ProgramClient programClient) {
-    super(elementType.getName(), "<app-id>.<program-id>",
-          "Gets the run history of a " + elementType.getPrettyName());
+  protected GetProgramHistoryCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
-    this.completerFactory = completerFactory;
     this.programClient = programClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String[] programIdParts = args[0].split("\\.");
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String[] programIdParts = arguments.get(ArgumentName.PROGRAM).split("\\.");
     String appId = programIdParts[0];
 
     List<RunRecord> history;
@@ -81,7 +71,12 @@ public class GetProgramHistoryCommand extends AbstractCommand implements Complet
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completerFactory.getProgramIdCompleter(elementType)));
+  public String getPattern() {
+    return String.format("get %s history <%s>", elementType.getName(), ArgumentName.PROGRAM);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Gets the run history of a " + elementType.getPrettyName();
   }
 }

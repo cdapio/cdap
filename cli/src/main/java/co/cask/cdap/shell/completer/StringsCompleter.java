@@ -18,10 +18,13 @@ package co.cask.cdap.shell.completer;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableList;
 import jline.console.completer.Completer;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -31,45 +34,29 @@ import static jline.internal.Preconditions.checkNotNull;
 /**
  * Completer for a set of strings.
  */
-public class StringsCompleter implements Completer {
+public abstract class StringsCompleter extends AbstractCompleter {
 
-  private final Supplier<Collection<String>> strings;
+  protected abstract Supplier<Collection<String>> getStringsSupplier();
 
-  public StringsCompleter(Supplier<Collection<String>> strings) {
-    checkNotNull(strings);
-    this.strings = Suppliers.memoizeWithExpiration(strings, 5000, TimeUnit.MILLISECONDS);
-  }
-
-  public StringsCompleter(Collection<String> strings) {
-    checkNotNull(strings);
-    this.strings = Suppliers.ofInstance(strings);
-  }
-
-  public TreeSet<String> getStrings() {
-    return new TreeSet<String>(strings.get());
+  @Override
+  protected Collection<String> getAllCandidates() {
+    return getStrings();
   }
 
   @Override
-  public int complete(@Nullable final String buffer, final int cursor, final List<CharSequence> candidates) {
-    checkNotNull(candidates);
+  protected Collection<String> getCandidates(String buffer) {
+    ImmutableList.Builder<String> candidates = ImmutableList.builder();
 
-    TreeSet<String> strings = getStrings();
-    if (buffer == null) {
-      candidates.addAll(strings);
-    } else {
-      for (String match : strings.tailSet(buffer)) {
-        if (!match.startsWith(buffer)) {
-          break;
-        }
-
-        candidates.add(match);
+    for (String candidate : getStrings()) {
+      if (candidate.startsWith(buffer)) {
+        candidates.add(candidate);
       }
     }
 
-    if (candidates.size() == 1) {
-      candidates.set(0, candidates.get(0) + " ");
-    }
+    return candidates.build();
+  }
 
-    return candidates.isEmpty() ? -1 : 0;
+  public Collection<String> getStrings() {
+    return getStringsSupplier().get();
   }
 }

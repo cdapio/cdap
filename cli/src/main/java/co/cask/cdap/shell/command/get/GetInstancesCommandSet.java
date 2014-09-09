@@ -18,9 +18,9 @@ package co.cask.cdap.shell.command.get;
 
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
 import co.cask.cdap.shell.command.Command;
 import co.cask.cdap.shell.command.CommandSet;
+import co.cask.cdap.shell.command.HasCommand;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -32,17 +32,15 @@ import javax.inject.Inject;
 public class GetInstancesCommandSet extends CommandSet {
 
   @Inject
-  public GetInstancesCommandSet(ProgramIdCompleterFactory programIdCompleterFactory,
-                                ProgramClient programClient) {
-    super("instances", generateCommands(programIdCompleterFactory, programClient));
+  public GetInstancesCommandSet(ProgramClient programClient) {
+    super(generateCommands(programClient));
   }
 
-  private static List<Command> generateCommands(ProgramIdCompleterFactory programIdCompleterFactory,
-                                                ProgramClient programClient) {
-    List<Command> commands = Lists.newArrayList();
+  private static List<HasCommand> generateCommands(ProgramClient programClient) {
+    List<HasCommand> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.canScale()) {
-        commands.add(new GetProgramInstancesCommand(elementType, programIdCompleterFactory, programClient));
+        commands.add(new GetProgramInstancesCommand(elementType, programClient));
       }
     }
     return commands;

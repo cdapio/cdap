@@ -17,9 +17,10 @@
 package co.cask.cdap.shell.command.create;
 
 import co.cask.cdap.client.StreamClient;
-import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 
 import java.io.PrintStream;
 import javax.inject.Inject;
@@ -33,17 +34,24 @@ public class CreateStreamCommand extends AbstractCommand {
 
   @Inject
   public CreateStreamCommand(StreamClient streamClient) {
-    super("stream", "<new-stream-id>", "Creates a " + ElementType.STREAM.getPrettyName());
     this.streamClient = streamClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String streamId = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String streamId = arguments.get(ArgumentName.NEW_STREAM);
 
     streamClient.create(streamId);
     output.printf("Successfully created stream with ID '%s'\n", streamId);
+  }
+
+  @Override
+  public String getPattern() {
+    return String.format("create stream <%s>", ArgumentName.NEW_STREAM);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Creates a " + ElementType.STREAM.getPrettyName();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright 2012-2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command.create;
-
-import co.cask.cdap.shell.command.CommandSet;
-
-import javax.inject.Inject;
+package co.cask.cdap.shell.command;
 
 /**
- * Contains commands for creating dataset stuff.
+ * Base interface for {@link Command} and {@link CommandSet}.
  */
-public class CreateDatasetCommandSet extends CommandSet {
-
-  @Inject
-  public CreateDatasetCommandSet(CreateDatasetInstanceCommand createDatasetInstanceCommand) {
-    super("dataset", createDatasetInstanceCommand);
-  }
+public interface HasCommand {
+  Iterable<Command> getCommands();
 }

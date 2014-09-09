@@ -17,52 +17,51 @@
 package co.cask.cdap.shell.command.deploy;
 
 import co.cask.cdap.client.DatasetModuleClient;
-import co.cask.cdap.client.exception.AlreadyExistsException;
-import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
-import jline.console.completer.FileNameCompleter;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.List;
 import javax.inject.Inject;
 
 /**
  * Deploys a dataset module.
  */
-public class DeployDatasetModuleCommand extends AbstractCommand implements Completable {
+public class DeployDatasetModuleCommand extends AbstractCommand {
 
   private final DatasetModuleClient datasetModuleClient;
 
   @Inject
   public DeployDatasetModuleCommand(DatasetModuleClient datasetModuleClient) {
-    super("module", "<module-jar-file> <module-name> <module-jar-classname>",
-          "Deploys a " + ElementType.DATASET_MODULE.getPrettyName());
     this.datasetModuleClient = datasetModuleClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    File moduleJarFile = new File(args[0]);
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    File moduleJarFile = new File(arguments.get(ArgumentName.DATASET_MODULE_JAR_FILE));
     Preconditions.checkArgument(moduleJarFile.exists(),
                                 "Module jar file '" + moduleJarFile.getAbsolutePath() + "' does not exist");
     Preconditions.checkArgument(moduleJarFile.canRead());
-    String moduleName = args[1];
-    String moduleJarClassname = args[2];
+    String moduleName = arguments.get(ArgumentName.NEW_DATASET_MODULE);
+    String moduleJarClassname = arguments.get(ArgumentName.DATASET_MODULE_JAR_CLASSNAME);
 
     datasetModuleClient.add(moduleName, moduleJarClassname, moduleJarFile);
     output.printf("Successfully deployed dataset module '%s'\n", moduleName);
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, new FileNameCompleter()));
+  public String getPattern() {
+    return String.format("deploy dataset module <%s> <%s> <%s>",
+                         ArgumentName.NEW_DATASET_MODULE,
+                         ArgumentName.DATASET_MODULE_JAR_FILE,
+                         ArgumentName.DATASET_MODULE_JAR_CLASSNAME);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Deploys a " + ElementType.DATASET_MODULE.getPrettyName();
   }
 }

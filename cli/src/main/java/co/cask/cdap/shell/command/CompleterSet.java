@@ -14,19 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command.deploy;
+package co.cask.cdap.shell.command;
 
-import co.cask.cdap.shell.command.CommandSet;
+import com.google.common.collect.ImmutableMap;
+import jline.console.completer.Completer;
 
-import javax.inject.Inject;
+import java.util.Map;
 
 /**
- * Contains commands for deploying stuff.
+ * Set of {@link Completer}s.
  */
-public class DeployCommandSet extends CommandSet {
+public class CompleterSet {
 
-  @Inject
-  public DeployCommandSet(DeployAppCommand deployAppCommand, DeployDatasetCommandSet deployDatasetCommandSet) {
-    super("deploy", deployAppCommand, deployDatasetCommandSet);
+  private final Map<String, Completer> completers;
+
+  public CompleterSet(Map<String, Completer> completers) {
+    this.completers = ImmutableMap.copyOf(completers);
+  }
+
+  public Map<String, Completer> getCompleters() {
+    return completers;
+  }
+
+  public Completer getCompleter(String type) {
+    return completers.get(type);
   }
 }

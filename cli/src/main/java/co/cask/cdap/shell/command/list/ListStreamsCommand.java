@@ -20,6 +20,8 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 
@@ -35,14 +37,11 @@ public class ListStreamsCommand extends AbstractCommand {
 
   @Inject
   public ListStreamsCommand(StreamClient streamClient) {
-    super("streams", null, "Lists " + ElementType.STREAM.getPluralPrettyName());
     this.streamClient = streamClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     new AsciiTable<StreamRecord>(
       new String[] { "name" },
       streamClient.list(),
@@ -52,5 +51,15 @@ public class ListStreamsCommand extends AbstractCommand {
           return new String[]{object.getId()};
         }
       }).print(output);
+  }
+
+  @Override
+  public String getPattern() {
+    return "list streams";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Lists " + ElementType.STREAM.getPluralPrettyName();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Cask Data, Inc.
+ * Copyright 2012-2014 Cask, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,20 +24,23 @@ import co.cask.cdap.shell.completer.StringsCompleter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Completer for program IDs.
  */
-public abstract class ProgramIdCompleter extends StringsCompleter {
+public abstract class AllProgramIdCompleter extends StringsCompleter {
 
   private final ApplicationClient appClient;
 
-  public ProgramIdCompleter(final ApplicationClient appClient) {
+  @Inject
+  public AllProgramIdCompleter(final ApplicationClient appClient) {
     this.appClient = appClient;
   }
 
@@ -47,20 +50,18 @@ public abstract class ProgramIdCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<ProgramRecord> programs = appClient.listAllPrograms(getProgramType());
+          Map<ProgramType, List<ProgramRecord>> programMap = appClient.listAllPrograms();
           List<String> programIds = Lists.newArrayList();
-          for (ProgramRecord programRecord : programs) {
-            programIds.add(programRecord.getApp() + "." + programRecord.getId());
+          for (Collection<ProgramRecord> programs : programMap.values()) {
+            for (ProgramRecord programRecord : programs) {
+              programIds.add(programRecord.getApp() + "." + programRecord.getId());
+            }
           }
           return programIds;
-        } catch (IOException e) {
-          return Lists.newArrayList();
-        } catch (UnAuthorizedAccessTokenException e) {
+        } catch (Exception e) {
           return Lists.newArrayList();
         }
       }
     }, 3, TimeUnit.SECONDS);
   }
-
-  public abstract ProgramType getProgramType();
 }
