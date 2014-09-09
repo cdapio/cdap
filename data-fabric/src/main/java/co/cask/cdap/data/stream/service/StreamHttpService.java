@@ -32,6 +32,7 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.jboss.netty.buffer.HeapChannelBufferFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Set;
@@ -65,8 +66,10 @@ public final class StreamHttpService extends AbstractIdleService {
                                                                 Constants.Stream.STREAM_HANDLER)))
       .setHost(cConf.get(Constants.Stream.ADDRESS))
       .setWorkerThreadPoolSize(workerThreads)
-      .setExecThreadPoolSize(0)
+      .setExecThreadPoolSize(0)         // Execution happens in the io worker thread directly
       .setConnectionBacklog(20000)
+      .setChannelConfig("child.bufferFactory",
+                        HeapChannelBufferFactory.getInstance()) // ChannelBufferFactory that always creates new Buffer
       .build();
   }
 

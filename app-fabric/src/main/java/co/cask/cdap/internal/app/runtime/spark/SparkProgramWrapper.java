@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
-import co.cask.cdap.api.spark.JavaSparkJob;
-import co.cask.cdap.api.spark.ScalaSparkJob;
+import co.cask.cdap.api.spark.JavaSparkProgram;
+import co.cask.cdap.api.spark.ScalaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ import java.lang.reflect.Method;
  * </li>
  * <li>
  * Sets {@link SparkContext} to concrete implementation of {@link JavaSparkContext} if user job implements {@link
- * JavaSparkJob} or to {@link ScalaSparkContext} if user's job implements {@link ScalaSparkJob}
+ * JavaSparkProgram} or to {@link ScalaSparkContext} if user's job implements {@link ScalaSparkProgram}
  * </li>
  * <li>
  * Run user's job with extracted arguments from the argument list
@@ -135,16 +135,17 @@ public class SparkProgramWrapper {
 
   /**
    * Sets the {@link SparkContext} to {@link JavaSparkContext} or to {@link ScalaSparkContext} depending on whether
-   * the user class implements {@link JavaSparkJob} or {@link ScalaSparkJob}
+   * the user class implements {@link JavaSparkProgram} or {@link ScalaSparkProgram}
    */
   public void setSparkContext() {
-    if (JavaSparkJob.class.isAssignableFrom(userJobClass)) {
+    if (JavaSparkProgram.class.isAssignableFrom(userJobClass)) {
       sparkContext = new JavaSparkContext();
-    } else if (ScalaSparkJob.class.isAssignableFrom(userJobClass)) {
+    } else if (ScalaSparkProgram.class.isAssignableFrom(userJobClass)) {
       sparkContext = new ScalaSparkContext();
       scalaJobFlag = true;
     } else {
-      throw new IllegalArgumentException("User's Spark Job must implement either JavaSparkJob or ScalaSparkJob");
+      String error = "User's Spark Job must implement either JavaSparkProgram or ScalaSparkProgram";
+      throw new IllegalArgumentException(error);
     }
   }
 
