@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 package co.cask.cdap.explore.client;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
+import co.cask.cdap.api.data.batch.RecordWritable;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
@@ -25,9 +27,7 @@ import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
-import co.cask.cdap.proto.ColumnDesc;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -135,45 +135,6 @@ public class DatasetExploreFacade {
     }
   }
 
-  /**
-   * Return a list of datasets Hive table names. If Explore is disabled, an empty list is returned.
-   */
-  public List<String> getExplorableDatasetsTableNames() throws SQLException, ExploreException {
-    if (!exploreEnabled) {
-      ImmutableList.of();
-    }
-
-    // NOTE: here we return all the hive tables, because, depending on the user,
-    // the prefix of the table might be different. Today they all start with "continuuity_user"
-    // but this might not be the case in the future.
-    ListenableFuture<ExploreExecutionResult> tablesFuture = exploreClient.tables(null, null, "%", null);
-    try {
-      ExploreExecutionResult results = tablesFuture.get();
-      int tableNameIdx = -1;
-      for (ColumnDesc columnDesc : results.getResultSchema()) {
-        if (columnDesc.getName().equals("TABLE_NAME")) {
-          tableNameIdx = columnDesc.getPosition() - 1;
-          break;
-        }
-      }
-      if (tableNameIdx == -1) {
-        throw new ExploreException("Could not find TABLE_NAME column in getTables request.");
-      }
-      ImmutableList.Builder<String> hiveTablesBuilder = ImmutableList.builder();
-      while (results.hasNext()) {
-        hiveTablesBuilder.add(results.next().getColumns().get(tableNameIdx).toString().toLowerCase());
-      }
-      return hiveTablesBuilder.build();
-    } catch (InterruptedException e) {
-      LOG.error("Caught exception", e);
-      Thread.currentThread().interrupt();
-      throw Throwables.propagate(e);
-    } catch (ExecutionException e) {
-      LOG.error("Error executing query", e);
-      throw new SQLException(e);
-    }
-  }
-
   public static String getHiveTableName(String datasetName) {
     // TODO: fix namespacing - REACTOR-264
     // Instnace name is like continuuity.user.my_table.
@@ -181,9 +142,9 @@ public class DatasetExploreFacade {
     return datasetName.replaceAll("\\.", "_").toLowerCase();
   }
 
-  public static <ROW> String generateCreateStatement(String name, RecordScannable<ROW> scannable)
+  public static String generateCreateStatement(String name, Dataset dataset)
     throws UnsupportedTypeException {
-    String hiveSchema = hiveSchemaFor(scannable);
+    String hiveSchema = hiveSchemaFor(dataset);
     String tableName = getHiveTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Cask CDAP Dataset\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
@@ -196,14 +157,19 @@ public class DatasetExploreFacade {
   }
 
   /**
-   * Given a row-scannable dataset, determine its row type and generate a schema string compatible with Hive.
+   * Given a record-enabled dataset, determine its record type and generate a schema string compatible with Hive.
    * @param dataset The data set
-   * @param <ROW> The row type
    * @return the hive schema
-   * @throws UnsupportedTypeException if the row type is not a record or contains null types.
+   * @throws UnsupportedTypeException if the dataset is neither RecordScannable, nor RecordWritable,
+   * or if the row type is not a record or contains null types.
    */
-  static <ROW> String hiveSchemaFor(RecordScannable<ROW> dataset) throws UnsupportedTypeException {
-    return hiveSchemaFor(dataset.getRecordType());
+  static String hiveSchemaFor(Dataset dataset) throws UnsupportedTypeException {
+    if (dataset instanceof RecordScannable) {
+      return hiveSchemaFor(((RecordScannable) dataset).getRecordType());
+    } else if (dataset instanceof RecordWritable) {
+      return hiveSchemaFor(((RecordWritable) dataset).getRecordType());
+    }
+    throw new UnsupportedTypeException("Dataset neither implements RecordScannable not RecordWritable.");
   }
 
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {

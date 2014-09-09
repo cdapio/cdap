@@ -190,11 +190,11 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
             query: function(query) {
 
               var model = self.configuring.element, metrics;
-              
+
               if ('type' in model) {
-                var metrics = self.metricsCache.get(model.type);  
+                var metrics = self.metricsCache.get(model.type);
               }
-              
+
 
               if (metrics) {
 

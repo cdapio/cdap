@@ -9,16 +9,18 @@ var express = require('express'),
   Int64 = require('node-int64'),
   fs = require('fs'),
   log4js = require('log4js'),
+  path = require('path'),
+  promise = require('q'),
   http = require('http'),
   https = require('https'),
-  cookie = require('cookie'),
-  utils = require('connect').utils,
-  crypto = require('crypto'),
-  path = require('path'),
+  promise = require('q'),
+  lodash = require('lodash'),
   request = require('request');
 
-var Api = require('../common/api');
-var Env = require('./env');
+
+var Api = require('./api'),
+    configParser = require('./configParser');
+    Env = require('./env');
 
 /**
  * Generic web app server. This is a base class used for creating different editions of the server.
@@ -28,21 +30,26 @@ var Env = require('./env');
  * @param {string} logLevel log level {TRACE|INFO|ERROR}
  * @param {boolean} https whether to use https for requests.
  */
-var WebAppServer = function(dirPath, logLevel, httpsEnabled) {
+var WebAppServer = function(dirPath, logLevel, loggerType, mode) {
   this.dirPath = dirPath;
+  this.logger = this.getLogger('console', loggerType);
+  this.isDefaultConfig = false;
   this.LOG_LEVEL = logLevel;
-  this.httpsEnabled = httpsEnabled;
-  this.lib = http;
-  if (httpsEnabled) {
-    this.lib = https;
-  }
+  process.on('uncaughtException', function (err) {
+    this.logger.info('Uncaught Exception', err);
+  }.bind(this));
+  this.extractConfig(mode)
+      .then(function () {
+        this.setUpServer();
+      }.bind(this));
 };
+
+WebAppServer.prototype.extractConfig = configParser.extractConfig;
 
 /**
  * Thrift API service.
  */
 WebAppServer.prototype.Api = Api;
-
 /**
  * API version.
  */
@@ -79,13 +86,53 @@ var PRODUCT_VERSION, PRODUCT_ID, PRODUCT_NAME, IP_ADDRESS;
  */
 var SECURITY_ENABLED, AUTH_SERVER_ADDRESSES;
 
-WebAppServer.prototype.getProtocol = function () {
-  if (this.httpsEnabled) {
-    return "https";
-  } else {
-    return "http"
-  }
+WebAppServer.prototype.setUpServer = function setUpServer(configuration) {
+  this.setAttributes();
+  this.Api.configure(this.config, this.apiKey || null);
+  this.launchServer();
 }
+
+WebAppServer.prototype.setAttributes = function setCommonAttributes() {
+  if (this.config['dashboard.https.enabled'] === "true") {
+      this.lib = https;
+    } else {
+      this.lib = http;
+    }
+    this.apiKey = this.config.apiKey;
+    this.version = this.config.version;
+    this.configSet = this.configSet;
+    this.configureExpress();
+    this.setCookieSession(this.cookieName, this.secret);
+}
+
+WebAppServer.prototype.launchServer = function() {
+  var key,
+      cert,
+      options = this.configureSSL() || {};
+  this.server = this.getServerInstance(options, this.app);
+  this.setEnvironment(this.productId, this.productName, this.version, this.startServer.bind(this));
+}
+
+WebAppServer.prototype.configureSSL = function () {
+  var options = {};
+  if (this.config['dashboard.https.enabled'] === "true") {
+    key = this.config['dashboard.ssl.key'],
+    cert = this.config['dashboard.ssl.cert'];
+    try {
+      options = {
+        key: fs.readFileSync(key),
+        cert: fs.readFileSync(cert),
+        requestCert: false,
+        rejectUnauthorized: false
+      };
+      this.config['dashboard.bind.port'] = this.config['dashboard.ssl.bind.port'];
+    } catch (e) {
+      this.logger.info("Error Reading ssl key/certificate: ", e);
+    }
+  }
+  return options;
+}
+
 
 /**
  * Determines security status. Continues until it is able to determine if security is enabled if
@@ -96,23 +143,21 @@ WebAppServer.prototype.getProtocol = function () {
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
 
-  var path = '/' + this.API_VERSION + '/ping';
-  var url = (this.getProtocol() + '://' + this.config['gateway.server.address'] + ':'
-    + this.config['gateway.server.port'] + path);
+  var path = '/' + this.API_VERSION + '/ping',
+      url;
+  if (this.config['dashboard.https.enabled'] === "true") {
+    url = 'https://' + this.config['gateway.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
+  } else {
+    url = 'http://' + this.config['gateway.server.address'] + ':' + this.config['router.bind.port'] + path;
+  }
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
     request({
       method: 'GET',
-      url: url,
-      rejectUnauthorized: false,
-      requestCert: true,
-      agent: false
+      url: url
     }, function (err, response, body) {
       // If the response is a 401 and contains "auth_uri" as part of the body, Reactor security is enabled.
       // On other response codes, and when "auth_uri" is not part of the body, Reactor security is disabled.
-      if (err) {
-        self.logger.info('Got error: ' + err + ', ' + response);
-      }
       if (!err && response) {
         clearInterval(interval);
         if (body) {
@@ -223,24 +268,12 @@ WebAppServer.prototype.setCookieSession = function(cookieName, secret) {
  * @param {Object} app framework.
  * @return {Object} instance of the http server.
  */
-WebAppServer.prototype.getServerInstance = function(app) {
-  return this.lib.createServer(app);
-};
+WebAppServer.prototype.getServerInstance = function(options, app) {
+  if (Object.keys(options).length > 0) {
+    return this.lib.createServer(options, app);
+  }
 
-/**
- * Creates https server based on app framework.
- * Currently works only with express.
- * @param {Object} app framework.
- * @param {string} key path to SSL key
- * @param {string} cert path to SSL cert
- * @return {Object} instance of the http server.
- */
-WebAppServer.prototype.getHttpsServerInstance = function(app, key, cert) {
-  var options = {
-    key: fs.readFileSync(key),
-    cert: fs.readFileSync(cert)
-  };
-  return this.lib.createServer(options, app);
+  return this.lib.createServer(app);
 };
 
 WebAppServer.prototype.checkAuth = function(req, res, next) {
@@ -373,7 +406,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
     request({
       method: 'DELETE',
-      url: self.getProtocol() + '://' + path,
+      url: 'http://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -403,7 +436,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'PUT',
-      url: self.getProtocol() + '://' + path,
+      url: 'http://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -440,7 +473,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
-      url: self.getProtocol() + '://' + path,
+      url: 'http://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -481,7 +514,7 @@ WebAppServer.prototype.bindRoutes = function() {
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
-      url: self.getProtocol() + '://' + path,
+      url: 'http://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -520,7 +553,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
     var opts = {
       method: 'GET',
-      url: self.getProtocol() + '://' + path,
+      url: 'http://' + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -617,7 +650,7 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', this.checkAuth, function (req, res) {
-    var url = self.getProtocol() + '://' + self.config['gateway.server.address'] + ':' +
+    var url = 'http://' + self.config['gateway.server.address'] + ':' +
       self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
 
     var opts = {
@@ -677,7 +710,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
     var opts = {
       method: 'POST',
-      url: self.getProtocol() + '://' + host + '/' + self.API_VERSION + '/unrecoverable/reset',
+      url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset',
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -788,7 +821,10 @@ WebAppServer.prototype.bindRoutes = function() {
           auth: {
             user: post.username,
             password: post.password
-          }
+          },
+          rejectUnauthorized: false,
+          requestCert: true,
+          agent: false
         }
         request(options, function (nerr, nres, nbody) {
           if (nerr || nres.statusCode !== 200) {

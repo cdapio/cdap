@@ -1,21 +1,11 @@
-
 /**
- * Copyright (c) 2013 Continuuity, Inc.
+ * Copyright (c) 2013 Cask Data, Inc.
  */
 
 var util = require('util'),
-  fs = require('fs'),
-  xml2js = require('xml2js'),
-  sys = require('sys'),
-  cluster = require('cluster'),
-  os = require('os');
-
+    cluster = require('cluster'),
+    os = require('os');
 var WebAppServer = require('../common/server');
-
-// The location of continuuity-site.xml
-var CONF_DIRECTORY = '/etc/cdap/conf';
-// Default port for the Dashboard.
-var DEFAULT_BIND_PORT = 9999;
 
 /**
  * Set environment.
@@ -28,127 +18,48 @@ process.env.NODE_ENV = 'production';
 var logLevel = 'INFO';
 
 var EntServer = function() {
-  var self = this;
-  this.getConfig(function(version) {
-    if (self.config['dashboard.https.enabled'] === "true") {
-      EntServer.super_.call(self, __dirname, logLevel, true);
-    } else {
-      EntServer.super_.call(self, __dirname, logLevel, false);
-    }
-
-    self.cookieName = 'continuuity-enterprise-edition';
-    self.secret = 'enterprise-edition-secret';
-    self.logger = self.getLogger('console', 'Enterprise UI');
-    self.setCookieSession(self.cookieName, self.secret);
-    self.configureExpress();
-  });
+  this.productId = 'enterprise';
+  this.productName = 'Enterprise Reactor';
+  this.cookieName = 'continuuity-enterprise-edition';
+  this.secret = 'enterprise-edition-secret';
+  EntServer.super_.call(this, __dirname, logLevel, 'Enterprise UI', "enterprise");
 };
 util.inherits(EntServer, WebAppServer);
 
-/**
- * Sets config data for application server.
- * @param {Function} opt_callback Callback function to start sever start process.
- */
-EntServer.prototype.getConfig = function(opt_callback) {
+EntServer.prototype.startServer = function () {
+  this.bindRoutes();
   var self = this;
-  fs.readFile(CONF_DIRECTORY + '/cdap-site.xml', function(error, result) {
-
-    if (error) {
-      self.logger.error('Could not read configuration file at ' + CONF_DIRECTORY + '/cdap-site.xml');
-      return;
+  this.logger.info('I am the master.', cluster.isMaster);
+  var clusters = 'webapp.cluster.count' in this.config ? this.config['webapp.cluster.count'] : 2;
+  if (cluster.isMaster) {
+    for (var i = 0; i < clusters; i++) {
+      cluster.fork();
     }
 
-    var parser = new xml2js.Parser();
-    parser.parseString(result, function(err, result) {
-      result = result.configuration.property;
-      var localhost = self.getLocalHost();
-      for (var item in result) {
-        item = result[item];
-        self.config[item.name] = item.value[0];
-      }
+    cluster.on('online', function (worker) {
+      self.logger.info('Worker ' + worker.id + ' was forked with pid ' + worker.process.pid);
     });
-    self.Api.configure(self.config, null);
-    self.configSet = true;
 
-    fs.readFile(process.env.COMPONENT_HOME + '/VERSION', "utf-8", function(error, version) {
-
-      if (typeof opt_callback === "function") {
-        opt_callback(version);
-      }
-
+    cluster.on('listening', function (worker, address) {
+      self.logger.info('Worker ' + worker.id + ' with pid ' + worker.process.pid +
+      ' is listening on ' + address.address + ':' + address.port);
     });
-  });
-};
 
-/**
- * Starts the server after getting config, sets up socket io, configures route handlers.
- */
-EntServer.prototype.start = function() {
-  var self = this;
+    cluster.on('exit', function (worker, code, signal) {
+      self.logger.info('Worker ' + worker.process.pid + ' died.');
 
-  self.getConfig(function(version) {
-    if (self.config['dashboard.https.enabled'] === "true") {
-      self.server = self.getHttpsServerInstance(self.app, self.config['dashboard.ssl.key'],
-                                                self.config['dashboard.ssl.cert']);
-    } else {
-      self.server = self.getServerInstance(self.app);
-    }
+      // Create a new process once one dies.
+      var newWorker = cluster.fork();
+      self.logger.info('Started new worker at ' + newWorker.process.pid);
+    });
 
-    if (!('dashboard.bind.port' in self.config)) {
-      self.config['dashboard.bind.port'] = DEFAULT_BIND_PORT;
-    }
-
-    var clusters = 'webapp.cluster.count' in self.config ? self.config['webapp.cluster.count'] : 2;
-
-    self.setEnvironment('enterprise', 'Enterprise Reactor', version, function () {
-
-      self.bindRoutes();
-      self.logger.info('I am the master.', cluster.isMaster);
-
-      if (cluster.isMaster) {
-        for (var i = 0; i < clusters; i++) {
-          cluster.fork();
-        }
-
-        cluster.on('online', function (worker) {
-          self.logger.info('Worker ' + worker.id + ' was forked with pid ' + worker.process.pid);
-        });
-
-        cluster.on('listening', function (worker, address) {
-          self.logger.info('Worker ' + worker.id + ' with pid ' + worker.process.pid +
-          ' is listening on ' + address.address + ':' + address.port);
-        });
-
-        cluster.on('exit', function (worker, code, signal) {
-          self.logger.info('Worker ' + worker.process.pid + ' died.');
-
-          // Create a new process once one dies.
-          var newWorker = cluster.fork();
-          self.logger.info('Started new worker at ' + newWorker.process.pid);
-        });
-
-      } else {
-        self.server.listen(self.config['dashboard.bind.port']);
-      }
-
-      self.logger.info('Listening on port', self.config['dashboard.bind.port']);
-      self.logger.info(self.config);
-
-    }.bind(this));
-
-  });
-};
-
+  } else {
+    this.server.listen(this.config['dashboard.bind.port']);
+  }
+  this.logger.info('Listening on port', this.config['dashboard.bind.port']);
+}
 
 var entServer = new EntServer();
-entServer.start();
-
-/**
- * Catch anything uncaught.
- */
-process.on('uncaughtException', function (err) {
-  entServer.logger.info('Uncaught Exception', err);
-});
 
 /**
  * Export app.

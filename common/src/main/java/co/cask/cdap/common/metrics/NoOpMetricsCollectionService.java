@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,7 @@ public class NoOpMetricsCollectionService extends AbstractIdleService implements
   public MetricsCollector getCollector(MetricsScope scope, String context, String runId) {
     return new MetricsCollector() {
       @Override
-      public void gauge(String metricName, int value, String... tags) {
+      public void increment(String metricName, int value, String... tags) {
         // no-op
       }
     };

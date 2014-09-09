@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -85,7 +85,7 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
     }
 
     @Override
-    public void gauge(String metricName, int value, String... tags) {
+    public void increment(String metricName, int value, String... tags) {
       synchronized (MockMetricsCollectionService.this) {
         Integer v = metrics.get(context, metricName);
         metrics.put(context, metricName, v == null ? value : v + value);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,6 @@
 package co.cask.cdap.reactor.client.app;
 
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import org.apache.twill.api.AbstractTwillRunnable;
-import org.apache.twill.api.TwillContext;
-import org.apache.twill.api.TwillRunnableSpecification;
 
 /**
  * Fake no-op Service.

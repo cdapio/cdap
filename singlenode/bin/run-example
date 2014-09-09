@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright 2014 Cask, Inc.
+# Copyright 2014 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -47,7 +47,7 @@ build_jars() {
 }
 
 #
-# Checks if Local DAP is running.
+# Checks if Standalone CDAP is running.
 # 
 ensure_environment() {
   response=$(curl --write-out %{http_code} -s --output /dev/null -f http://$gateway/v2/apps)

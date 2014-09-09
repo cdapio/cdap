@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,16 +41,16 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
     // Insert some metrics
     MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                 "WCount.f.WordCounter.unique", "0");
-    collector.gauge("process.events.processed", 6);
-    collector.gauge("process.events.out", 5);
+    collector.increment("process.events.processed", 6);
+    collector.increment("process.events.out", 5);
 
     collector = collectionService.getCollector(MetricsScope.REACTOR, "WCount.f.WordCounter.counter", "0");
-    collector.gauge("process.events.processed", 4);
-    collector.gauge("process.events.out", 3);
+    collector.increment("process.events.processed", 4);
+    collector.increment("process.events.out", 3);
 
     collector = collectionService.getCollector(MetricsScope.REACTOR, "WCount.f.WCounter.counter", "0");
-    collector.gauge("process.events.processed", 2);
-    collector.gauge("process.events.out", 1);
+    collector.increment("process.events.processed", 2);
+    collector.increment("process.events.out", 1);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -82,13 +82,13 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
     // Insert some metrics
     MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                 "WCount.f.WordCounter.unique", "0");
-    collector.gauge("process.events.processed", 6);
-    collector.gauge("process.events.out", 5);
-    collector.gauge("store.ops", 7);
+    collector.increment("process.events.processed", 6);
+    collector.increment("process.events.out", 5);
+    collector.increment("store.ops", 7);
 
     collector = collectionService.getCollector(MetricsScope.REACTOR, "WCount.f.WordCounter.counter", "0");
-    collector.gauge("process.events.processed", 4);
-    collector.gauge("process.events.out", 3);
+    collector.increment("process.events.processed", 4);
+    collector.increment("process.events.out", 3);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -118,9 +118,9 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
     // Insert some metrics
     MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                 "WCount.f.WordCounter.unique", "0");
-    collector.gauge("store.ops", 7);
-    collector.gauge("process.events.processed", 6);
-    collector.gauge("process.events.out", 5);
+    collector.increment("store.ops", 7);
+    collector.increment("process.events.processed", 6);
+    collector.increment("process.events.out", 5);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);

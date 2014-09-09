@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.DatasetModuleClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.client.exception.DatasetNotFoundException;
 import co.cask.cdap.proto.ProgramRecord;
@@ -52,7 +51,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig clientConfig = new ClientConfig("localhost");
+    super.setUp();
     appClient = new ApplicationClient(clientConfig);
     datasetClient = new DatasetClient(clientConfig);
     datasetModuleClient = new DatasetModuleClient(clientConfig);

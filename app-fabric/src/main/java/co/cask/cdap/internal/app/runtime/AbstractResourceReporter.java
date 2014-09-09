@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -80,9 +80,9 @@ public abstract class AbstractResourceReporter extends AbstractScheduledService 
     LOG.trace("Reporting resources in context {}: (containers, memory, vcores) = ({}, {}, {})",
               context, containers, memory, vcores);
     MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR, context, "0");
-    collector.gauge(METRIC_CONTAINERS, containers);
-    collector.gauge(METRIC_MEMORY_USAGE, memory);
-    collector.gauge(METRIC_VIRTUAL_CORE_USAGE, vcores);
+    collector.increment(METRIC_CONTAINERS, containers);
+    collector.increment(METRIC_MEMORY_USAGE, memory);
+    collector.increment(METRIC_VIRTUAL_CORE_USAGE, vcores);
   }
 
   protected MetricsCollector getCollector(String context) {

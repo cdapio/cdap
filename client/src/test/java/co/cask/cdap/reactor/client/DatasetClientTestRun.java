@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,6 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.client.DatasetTypeClient;
-import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.client.exception.DatasetModuleCannotBeDeletedException;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.reactor.client.app.StandaloneDataset;
@@ -50,10 +48,10 @@ public class DatasetClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
-    datasetClient = new DatasetClient(config);
-    moduleClient = new DatasetModuleClient(config);
-    typeClient = new DatasetTypeClient(config);
+    super.setUp();
+    datasetClient = new DatasetClient(clientConfig);
+    moduleClient = new DatasetModuleClient(clientConfig);
+    typeClient = new DatasetTypeClient(clientConfig);
   }
 
   @Test

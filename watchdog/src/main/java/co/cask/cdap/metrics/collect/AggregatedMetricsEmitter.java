@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,7 +61,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     }
   }
 
-  void gauge(int value, String... tags) {
+  void increment(int value, String... tags) {
     this.value.addAndGet(value);
     for (String tag : tags) {
       tagValues.getUnchecked(tag).addAndGet(value);

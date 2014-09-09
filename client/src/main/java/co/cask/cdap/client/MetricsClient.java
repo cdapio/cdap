@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpResponse;
@@ -50,12 +51,14 @@ public class MetricsClient {
    * @param timeRange time range to query
    * @return value of the metric
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   // TODO: currently response from metrics endpoint is not "regular", so it's not easy to return an object from here
   // (e.g. metrics endpoint sometimes returns {"data":0} and other times returns {"data":[..]})
-  public JsonObject getMetric(String scope, String context, String metric, String timeRange) throws IOException {
+  public JsonObject getMetric(String scope, String context, String metric, String timeRange) throws IOException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("metrics/%s/%s/%s?%s", scope, context, metric, timeRange));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, JsonObject.class).getResponseObject();
   }
 

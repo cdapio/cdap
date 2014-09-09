@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -69,9 +70,12 @@ public class RoutingToExploreTest {
     AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Router.ADDRESS, "localhost");
+    SConfiguration sConf = injector.getInstance(SConfiguration.class);
     port = Networks.getRandomPort();
-    cConf.set(Constants.Router.FORWARD, port + ":" + Constants.Service.GATEWAY);
-    nettyRouter = new NettyRouter(cConf, InetAddresses.forString("127.0.0.1"),
+
+    cConf.setInt(Constants.Router.ROUTER_PORT, port);
+    nettyRouter = new NettyRouter(cConf, sConf, InetAddresses.forString("127.0.0.1"),
+
         new RouterServiceLookup(discoveryServiceClient,
             new RouterPathLookup(new NoAuthenticator())),
         new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);

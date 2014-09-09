@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -160,8 +160,8 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
               });
 
           @Override
-          public void gauge(String metricName, int value, String... tags) {
-            emitters.getUnchecked(keys.getUnchecked(metricName)).gauge(value, tags);
+          public void increment(String metricName, int value, String... tags) {
+            emitters.getUnchecked(keys.getUnchecked(metricName)).increment(value, tags);
           }
         };
       }

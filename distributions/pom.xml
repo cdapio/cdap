@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2014 Cask, Inc.
+  Copyright 2014 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.5.0-SNAPSHOT</version>
+    <version>2.6.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>distributions</artifactId>
@@ -78,9 +78,9 @@
                   <executable>fpm</executable>
                   <commandlineArgs>
                     --name "cdap"
-                    --vendor "Cask, Inc."
+                    --vendor "Cask Data, Inc."
                     --maintainer "support@cask.co"
-                    --license "Copyright ${package.build.year} Cask, Inc. Licensed under the Apache License, Version 2.0."
+                    --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
                     --description "Component of Cask CDAP"
                     --category misc
                     -s dir
@@ -154,9 +154,9 @@
                   <executable>fpm</executable>
                   <commandlineArgs>
                     --name "cdap"
-                    --vendor "Cask, Inc."
+                    --vendor "Cask Data, Inc."
                     --maintainer "support@cask.co"
-                    --license "Copyright 2014 Cask, Inc. All Rights Reserved."
+                    --license "Copyright 2014 Cask Data, Inc. All Rights Reserved."
                     --description "Component of Cask CDAP"
                     --category misc
                     -s dir

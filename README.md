@@ -1,9 +1,9 @@
 
-# Cask Data Application Platform
+# Cask Data Application Platform - CDAP
 
 ![CDAP Logo](/docs/developer-guide/source/_images/CDAP.png)
 
-**A Platform for Data Applications**
+**Introduction**
 
 The Cask Data Application Platform (CDAP) is an application server providing such a
 platform for the development, deployment and management of data applications and the
@@ -13,14 +13,13 @@ Out-of-the-box, its features include transaction management, dataset abstraction
 performance, scalability, security, metrics and log collection, service discovery and a 
 web-based management dashboard.
 
-CDAP provides abstractions over Hadoop that do not require understanding the implementation or the 
-complexity of Apache Hadoop&trade;, HBase or Zookeeper. It provides independence of Hadoop versions, 
-and runs on any distribution of Hadoop.
-
-CDAP's container model allows for the integration of different processing paradigms with these
-features. It provides a common environment, the abstraction of a unified API, the lifecycle management
-and a programming model for data applications and their data. You can package, deploy and 
-manage applications as a single unit.
+CDAP provides data virtualization and application containerization for you data and application
+needs. With CDAP you do not require understanding the implementation or the complexity of Apache 
+Hadoop&trade;, HBase or Zookeeper. It provides independence of Hadoop versions and runs on any 
+distribution of Hadoop. CDAP's container model allows for the integration of different processing 
+paradigms with these features. It provides a common environment, the abstraction of a unified API, 
+the lifecycle management and a programming model for data applications and their data. You can package, 
+deploy and manage applications as a single unit.
 
 You can run applications ranging from simple MapReduce Jobs through complete ETL (extract, transform, and load) 
 pipelines all the way up to complex, enterprise-scale data-intensive applications. 
@@ -40,12 +39,16 @@ Build                                                                    | Statu
 
 ## Getting Started
 
+### Prerequiste
+
 To install and use CDAP and its included examples, there are a few simple prerequisites:
 
   1. JDK 6 or JDK 7 (required to run CDAP; note that $JAVA_HOME should be set)
   2. Node.js 0.8.16+ (required to run the CDAP Console)
   3. Apache Maven 3.0+ (required to build the example applications)
   
+### Build
+
 You can get started with CDAP by building directly from the latest source code::
 
 ```
@@ -54,12 +57,14 @@ You can get started with CDAP by building directly from the latest source code::
   mvn clean package
 ```
 
-After the build completes, you will have a distribution of the CDAP Single-node SDK under the
+After the build completes, you will have a distribution of the CDAP standalone under the
 `cdap-distribution/target/` directory.  
 
 Take the `cdap-<version>.tar.gz` file and unzip it into a suitable location.
 
-### Quick Start
+For more build options please refer [here](BUILD.md)
+
+## Quick Start
 
 Visit our web site for a [Quick Start](http://cask.co/docs/cdap/current/en/quickstart.html)
 that will guide you through installing CDAP, running an example that counts HTTP status codes and then

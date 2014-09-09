@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,7 +49,18 @@ public final class Signatures {
     return signWriter.toString();
   }
 
-  public static String getMethodSignature(Method method, TypeToken<?>[] types) {
+  /**
+   * Generates signature for the given method.
+   *
+   * @param method Method that needs signature to be generated
+   * @param types List of {@link TypeToken} that matches with the number of arguments in the given method.
+   *              For a given method argument, if the coresponding {@link TypeToken} is non-null, it will be
+   *              used to generate the type parameter in the signature, otherwise, the one in the method will be used.
+   *              It's useful if the method is parameterized so that parameterize type information can be passed
+   *              through the type tokens.
+   * @return A method signature string
+   */
+  public static String getMethodSignature(Method method, TypeToken<?>...types) {
     SignatureWriter signWriter = new SignatureWriter();
 
     Type[] argumentTypes = method.getArgumentTypes();

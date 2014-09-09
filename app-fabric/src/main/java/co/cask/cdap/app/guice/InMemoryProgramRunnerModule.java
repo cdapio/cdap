@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.service.InMemoryRunnableRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryServiceRunner;
+import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.internal.app.runtime.webapp.IntactJarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.JarHttpHandler;
 import co.cask.cdap.internal.app.runtime.webapp.WebappHttpHandlerFactory;
@@ -85,6 +86,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.FLOWLET).to(FlowletProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.PROCEDURE).to(ProcedureProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.MAPREDUCE).to(MapReduceProgramRunner.class);
+    runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SPARK).to(SparkProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(WebappProgramRunner.class);
 

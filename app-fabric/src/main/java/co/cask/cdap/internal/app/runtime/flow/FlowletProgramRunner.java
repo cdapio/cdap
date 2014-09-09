@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,12 +51,9 @@ import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.common.logging.logback.CAppender;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamPropertyListener;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -100,6 +97,7 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,6 +131,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final QueueReaderFactory queueReaderFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final ProgramServiceDiscovery serviceDiscovery;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
   private final CConfiguration configuration;
 
@@ -143,6 +142,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
                               ProgramServiceDiscovery serviceDiscovery,
+                              DiscoveryServiceClient discoveryServiceClient,
                               DatasetFramework dsFramework,
                               CConfiguration configuration) {
     this.schemaGenerator = schemaGenerator;
@@ -152,6 +152,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = configuration;
     this.dsFramework = dsFramework;
   }
@@ -211,7 +212,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, serviceDiscovery,
+                                               metricsCollectionService, serviceDiscovery, discoveryServiceClient,
                                                dsFramework, configuration);
 
       // Creates tx related objects
@@ -464,7 +465,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
               QueueProducer producer = queueClientFactory.createProducer(queueSpec.getQueueName(), new QueueMetrics() {
                 @Override
                 public void emitEnqueue(int count) {
-                  flowletContext.getProgramMetrics().gauge(queueMetricsName, count, queueMetricsTag);
+                  flowletContext.getProgramMetrics().increment(queueMetricsName, count, queueMetricsTag);
                 }
 
                 @Override
@@ -594,8 +595,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
     return new Function<S, T>() {
       @Override
       public T apply(S source) {
-        context.getProgramMetrics().gauge(eventsMetricsName, 1, eventsMetricsTag);
-        context.getProgramMetrics().gauge("process.tuples.read", 1, eventsMetricsTag);
+        context.getProgramMetrics().increment(eventsMetricsName, 1, eventsMetricsTag);
+        context.getProgramMetrics().increment("process.tuples.read", 1, eventsMetricsTag);
         return inputDecoder.apply(source);
       }
     };

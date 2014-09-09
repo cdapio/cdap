@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.QueryClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
@@ -29,8 +28,6 @@ import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -40,16 +37,14 @@ import java.util.List;
 @Category(XSlowTests.class)
 public class QueryClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(QueryClientTestRun.class);
-
   private ApplicationClient appClient;
   private QueryClient queryClient;
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
-    appClient = new ApplicationClient(config);
-    queryClient = new QueryClient(config);
+    super.setUp();
+    appClient = new ApplicationClient(clientConfig);
+    queryClient = new QueryClient(clientConfig);
   }
 
   // TODO: explore query in singlenode?

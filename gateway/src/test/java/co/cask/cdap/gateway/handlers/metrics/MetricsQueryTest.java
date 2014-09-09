@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,19 +49,19 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     // Insert queue metrics
     MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                        "WordCount.f.WordCounter.counter", "0");
-    enqueueCollector.gauge("process.events.out", 10, queueName.getSimpleName());
+    enqueueCollector.increment("process.events.out", 10, queueName.getSimpleName());
 
     // Insert ack metrics
     MetricsCollector ackCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                    "WordCount.f.WordCounter.unique", "0");
-    ackCollector.gauge("process.events.processed", 6, "input." + queueName.toString());
-    ackCollector.gauge("process.events.processed", 2, "input.stream:///streamX");
-    ackCollector.gauge("process.events.processed", 1, "input.stream://developer/streamX");
+    ackCollector.increment("process.events.processed", 6, "input." + queueName.toString());
+    ackCollector.increment("process.events.processed", 2, "input.stream:///streamX");
+    ackCollector.increment("process.events.processed", 1, "input.stream://developer/streamX");
 
     // Insert stream metrics
     MetricsCollector streamCollector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                       Constants.Gateway.METRICS_CONTEXT, "0");
-    streamCollector.gauge("collect.events", 5, "streamX");
+    streamCollector.increment("collect.events", 5, "streamX");
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -97,7 +97,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                 "appfabric.AppFabricHttpHandler.getAllApps",
                                                                 "0");
-    collector.gauge("request.received", 1);
+    collector.increment("request.received", 1);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -138,7 +138,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   public void testingUserServiceMetrics() throws Exception {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
                                                                 "WordCount.s.CounterService.CountRunnable", "0");
-    collector.gauge("reads", 1);
+    collector.increment("reads", 1);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -157,7 +157,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   public void testingInvalidUserServiceMetrics() throws Exception {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
                                                                 "WordCount.s.InvalidService.CountRunnable", "0");
-    collector.gauge("reads", 1);
+    collector.increment("reads", 1);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -213,7 +213,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   public void testingTransactoinMetrics() throws Exception {
     // Insert system metric  (stream.handler is the service name)
     MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
-    collector.gauge("inprogress", 1);
+    collector.increment("inprogress", 1);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -227,10 +227,10 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     // Insert some metric
     MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
                                                                 "WordCount.f.WordCounter.counter", "0");
-    collector.gauge("reads", 10, "wordStats");
-    collector.gauge("collect.events", 10, "wordStream");
+    collector.increment("reads", 10, "wordStats");
+    collector.increment("collect.events", 10, "wordStream");
     collector = collectionService.getCollector(MetricsScope.REACTOR, "-.cluster", "0");
-    collector.gauge("resources.total.storage", 10);
+    collector.increment("resources.total.storage", 10);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);

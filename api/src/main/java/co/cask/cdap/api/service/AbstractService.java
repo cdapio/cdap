@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,6 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-
-import java.util.List;
 
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
@@ -80,6 +78,22 @@ public abstract class AbstractService implements Service {
    */
   protected void addWorkers(Iterable<? extends ServiceWorker> workers) {
     configurer.addWorkers(workers);
+  }
+
+  /**
+   * Specify a dataset that will be used by the Service.
+   * @param dataset name of dataset.
+   */
+  protected void useDataset(String dataset) {
+    configurer.useDataset(dataset);
+  }
+
+  /**
+   * Specify a list of datasets that will be used by the Service.
+   * @param datasets names of datasets.
+   */
+  protected void useDatasets(Iterable<String> datasets) {
+    configurer.useDatasets(datasets);
   }
 
   /**

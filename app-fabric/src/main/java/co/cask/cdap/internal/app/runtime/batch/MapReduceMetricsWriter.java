@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,12 +90,12 @@ public class MapReduceMetricsWriter {
     // current metrics API only supports int, cast it for now. Need another rev to support long.
     // we want to output the # of records since the last time we wrote metrics in order to get a count
     // of how much was written this second and so that we can aggregate the counts.
-    context.getSystemMapperMetrics().gauge(METRIC_COMPLETION, (int) (mapProgress * 100));
-    context.getSystemMapperMetrics().gauge(METRIC_INPUT_RECORDS, mapInputRecords);
-    context.getSystemMapperMetrics().gauge(METRIC_OUTPUT_RECORDS, mapOutputRecords);
-    context.getSystemMapperMetrics().gauge(METRIC_BYTES, mapOutputBytes);
-    context.getSystemMapperMetrics().gauge(METRIC_USED_CONTAINERS, runningMappers);
-    context.getSystemMapperMetrics().gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
+    context.getSystemMapperMetrics().increment(METRIC_COMPLETION, (int) (mapProgress * 100));
+    context.getSystemMapperMetrics().increment(METRIC_INPUT_RECORDS, mapInputRecords);
+    context.getSystemMapperMetrics().increment(METRIC_OUTPUT_RECORDS, mapOutputRecords);
+    context.getSystemMapperMetrics().increment(METRIC_BYTES, mapOutputBytes);
+    context.getSystemMapperMetrics().increment(METRIC_USED_CONTAINERS, runningMappers);
+    context.getSystemMapperMetrics().increment(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
 
     LOG.trace("Reporting mapper stats: (completion, ins, outs, bytes, containers, memory) = ({}, {}, {}, {}, {}, {})",
               (int) (mapProgress * 100), mapInputRecords, mapOutputRecords, mapOutputBytes, runningMappers,
@@ -108,11 +108,11 @@ public class MapReduceMetricsWriter {
     int reduceOutputRecords =
       calcDiffAndSetReduceStat(METRIC_OUTPUT_RECORDS, getTaskCounter(TaskCounter.REDUCE_OUTPUT_RECORDS));
 
-    context.getSystemReducerMetrics().gauge(METRIC_COMPLETION, (int) (reduceProgress * 100));
-    context.getSystemReducerMetrics().gauge(METRIC_INPUT_RECORDS, reduceInputRecords);
-    context.getSystemReducerMetrics().gauge(METRIC_OUTPUT_RECORDS, reduceOutputRecords);
-    context.getSystemReducerMetrics().gauge(METRIC_USED_CONTAINERS, runningReducers);
-    context.getSystemReducerMetrics().gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
+    context.getSystemReducerMetrics().increment(METRIC_COMPLETION, (int) (reduceProgress * 100));
+    context.getSystemReducerMetrics().increment(METRIC_INPUT_RECORDS, reduceInputRecords);
+    context.getSystemReducerMetrics().increment(METRIC_OUTPUT_RECORDS, reduceOutputRecords);
+    context.getSystemReducerMetrics().increment(METRIC_USED_CONTAINERS, runningReducers);
+    context.getSystemReducerMetrics().increment(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
 
     LOG.trace("Reporting reducer stats: (completion, ins, outs, containers, memory) = ({}, {}, {}, {}, {})",
               (int) (reduceProgress * 100), reduceInputRecords, reduceOutputRecords, runningReducers,
@@ -156,7 +156,7 @@ public class MapReduceMetricsWriter {
 
     // we don't want to overcount the untagged version of the metric.  For example.  If "metric":"store.bytes"
     // comes in with "tag":"dataset1" and value 10, we will also have another counter for just the metric without the
-    // tag, also with value 10.  If we gauge both of them with their values, the final count sent off to the metrics
+    // tag, also with value 10.  If we increment both of them with their values, the final count sent off to the metrics
     // system for the untagged metric will be 20 instead of 10.  So we need to keep track of the sum of the tagged
     // values so that we can adjust accordingly.
     Map<String, Integer> metricTagValues = Maps.newHashMap();
@@ -175,7 +175,7 @@ public class MapReduceMetricsWriter {
       if (parts.length == 2) {
         // has tag
         String tag = parts[1];
-        collector.gauge(metric, emitValue, tag);
+        collector.increment(metric, emitValue, tag);
         int tagCountSoFar = (metricTagValues.containsKey(metric)) ? metricTagValues.get(metric) : 0;
         metricTagValues.put(metric, tagCountSoFar + emitValue);
       } else {
@@ -188,7 +188,7 @@ public class MapReduceMetricsWriter {
       String metric = untaggedEntry.getKey();
       int tagValueSum = (metricTagValues.containsKey(metric)) ? metricTagValues.get(metric) : 0;
       int adjustedValue = untaggedEntry.getValue() - tagValueSum;
-      collector.gauge(metric, adjustedValue);
+      collector.increment(metric, adjustedValue);
     }
   }
 

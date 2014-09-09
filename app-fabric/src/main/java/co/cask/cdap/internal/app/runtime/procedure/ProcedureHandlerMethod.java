@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -118,11 +118,11 @@ final class ProcedureHandlerMethod implements HandlerMethod {
 
   @Override
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
-    context.getProgramMetrics().gauge("query.requests", 1);
+    context.getProgramMetrics().increment("query.requests", 1);
     HandlerMethod handlerMethod = handlers.get(request.getMethod());
     if (handlerMethod == null) {
       LOG.error("Unsupport procedure method " + request.getMethod() + " on procedure " + procedure.getClass());
-      context.getProgramMetrics().gauge("query.failures", 1);
+      context.getProgramMetrics().increment("query.failures", 1);
       try {
         responder.stream(new ProcedureResponse(ProcedureResponse.Code.NOT_FOUND));
       } catch (IOException e) {
@@ -136,9 +136,9 @@ final class ProcedureHandlerMethod implements HandlerMethod {
       Thread.currentThread().setContextClassLoader(context.getProgram().getClassLoader());
       handlerMethod.handle(request, responder);
       Thread.currentThread().setContextClassLoader(oldClassLoader);
-      context.getProgramMetrics().gauge("query.processed", 1);
+      context.getProgramMetrics().increment("query.processed", 1);
     } catch (Throwable t) {
-      context.getProgramMetrics().gauge("query.failures", 1);
+      context.getProgramMetrics().increment("query.failures", 1);
       throw Throwables.propagate(t);
     }
   }

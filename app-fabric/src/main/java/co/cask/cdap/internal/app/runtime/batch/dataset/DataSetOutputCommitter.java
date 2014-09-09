@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,18 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
+import co.cask.cdap.api.dataset.Dataset;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-class DataSetOutputCommitter extends OutputCommitter {
+/**
+ * Implementation of {@link OutputCommitter} for {@link Dataset}
+ * @see {@link OutputCommitter} for details.
+ */
+public class DataSetOutputCommitter extends OutputCommitter {
   @Override
   public void setupJob(final JobContext jobContext) throws IOException {
     // DO NOTHING, see needsTaskCommit() comment

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.security.server;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.scheme.Scheme;
@@ -46,12 +47,12 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
     Assert.assertNotNull(certUrl);
 
     CConfiguration cConf = CConfiguration.create();
+    SConfiguration sConf = SConfiguration.create();
     cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "true");
-    cConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD, "secret");
-    cConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, certUrl.getPath());
+    sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, certUrl.getPath());
 
     configuration = cConf;
-
+    sConfiguration = sConf;
     setup();
   }
 

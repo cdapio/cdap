@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -219,6 +219,8 @@ public final class Constants {
     public static final String STREAM_HANDLER = "stream.handler";
     public static final String ADDRESS = "stream.bind.address";
     public static final String WORKER_THREADS = "stream.worker.threads";
+    public static final String ASYNC_WORKER_THREADS = "stream.async.worker.threads";
+    public static final String ASYNC_QUEUE_SIZE = "stream.async.queue.size";
 
     // YARN container configurations.
     public static final String CONTAINER_VIRTUAL_CORES = "stream.container.num.cores";
@@ -300,7 +302,11 @@ public final class Constants {
    */
   public static final class Router {
     public static final String ADDRESS = "router.bind.address";
-    public static final String FORWARD = "router.forward.rule";
+    public static final String ROUTER_PORT = "router.bind.port";
+    public static final String WEBAPP_PORT = "router.webapp.bind.port";
+    public static final String WEBAPP_ENABLED = "router.webapp.enabled";
+    public static final String ROUTER_SSL_PORT = "router.ssl.bind.port";
+    public static final String WEBAPP_SSL_PORT = "router.ssl.webapp.bind.port";
     public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
@@ -310,12 +316,21 @@ public final class Constants {
     /**
      * Defaults.
      */
-    public static final String DEFAULT_FORWARD = "10000:" + Service.GATEWAY;
+    public static final String DEFAULT_ROUTER_PORT = "10000";
+    public static final String DEFAULT_WEBAPP_PORT = "20000";
+    public static final String DEFAULT_ROUTER_SSL_PORT = "10443";
+    public static final String DEFAULT_WEBAPP_SSL_PORT = "20443";
+    public static final boolean DEFAULT_WEBAPP_ENABLED = false;
+
+
     public static final int DEFAULT_BACKLOG = 20000;
     public static final int DEFAULT_SERVER_BOSS_THREADS = 1;
     public static final int DEFAULT_SERVER_WORKER_THREADS = 10;
     public static final int DEFAULT_CLIENT_BOSS_THREADS = 1;
     public static final int DEFAULT_CLIENT_WORKER_THREADS = 10;
+
+    public static final String GATEWAY_DISCOVERY_NAME = Service.GATEWAY;
+    public static final String WEBAPP_DISCOVERY_NAME = "webapp/$HOST";
   }
 
   /**
@@ -342,6 +357,16 @@ public final class Constants {
     public static final String MEMORY_MB = "metrics.memory.mb";
     public static final String MAX_INSTANCES = "metrics.max.instances";
     public static final String SERVICE_DESCRIPTION = "Service to handle metrics requests.";
+
+    /**
+     * Metric's dataset related constants.
+     */
+    public static final class Dataset {
+      /** Defines reporting interval for HBase stats, in seconds */
+      public static final String HBASE_STATS_REPORT_INTERVAL = "metrics.dataset.hbase.stats.report.interval";
+      /** Defines reporting interval for LevelDB stats, in seconds */
+      public static final String LEVELDB_STATS_REPORT_INTERVAL = "metrics.dataset.leveldb.stats.report.interval";
+    }
   }
 
   /**
@@ -405,7 +430,7 @@ public final class Constants {
     /** Address the Authentication Server should bind to*/
     public static final String AUTH_SERVER_ADDRESS = "security.auth.server.address";
     /** Configuration for External Authentication Server. */
-    public static final String AUTH_SERVER_PORT = "security.auth.server.port";
+    public static final String AUTH_SERVER_PORT = "security.auth.server.bind.port";
     /** Maximum number of handler threads for the Authentication Server embedded Jetty instance. */
     public static final String MAX_THREADS = "security.server.maxthreads";
     /** Access token expiration time in milliseconds. */
@@ -432,8 +457,6 @@ public final class Constants {
     public static final class Router {
       /** Enables SSL */
       public static final String SSL_ENABLED = "router.ssl.enabled";
-      /** SSL port */
-      public static final String SSL_PORT = "router.ssl.port";
       /** SSL keystore location */
       public static final String SSL_KEYSTORE_PATH = "router.ssl.keystore.path";
       /** SSL keystore type */
@@ -451,7 +474,7 @@ public final class Constants {
       /** Enables SSL */
       public static final String SSL_ENABLED = "security.auth.server.ssl.enabled";
       /** SSL port */
-      public static final String SSL_PORT = "security.auth.server.ssl.port";
+      public static final String SSL_PORT = "security.auth.server.ssl.bind.port";
       /** SSL keystore location */
       public static final String SSL_KEYSTORE_PATH = "security.auth.server.ssl.keystore.path";
       /** SSL keystore type */
@@ -461,6 +484,11 @@ public final class Constants {
       /** SSL keystore password */
       public static final String SSL_KEYSTORE_PASSWORD = "security.auth.server.ssl.keystore.password";
     }
+
+    /** Path to the Kerberos keytab file used by CDAP */
+    public static final String CFG_CDAP_MASTER_KRB_KEYTAB_PATH = "cdap.master.kerberos.keytab";
+    /** Kerberos principal used by CDAP */
+    public static final String CFG_CDAP_MASTER_KRB_PRINCIPAL = "cdap.master.kerberos.principal";
   }
 
   /**
@@ -573,4 +601,24 @@ public final class Constants {
    * NOTE: value should be in sync with the one used by UI.
    */
   public static final String DEVELOPER_ACCOUNT_ID = "developer";
+
+  /**
+   * Constants related to external systems.
+   */
+  public static final class External {
+    /**
+     * Constants used by Java security.
+     */
+    public static final class JavaSecurity {
+      public static final String ENV_AUTH_LOGIN_CONFIG = "java.security.auth.login.config";
+    }
+
+    /**
+     * Constants used by Zookeeper.
+     */
+    public static final class Zookeeper {
+      public static final String ENV_AUTH_PROVIDER_1 = "zookeeper.authProvider.1";
+      public static final String ENV_ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
+    }
+  }
 }

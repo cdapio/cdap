@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.reactor.client;
 
 import co.cask.cdap.client.MetricsClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import com.google.gson.JsonObject;
@@ -25,8 +24,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Test for {@link MetricsClient}.
@@ -34,13 +31,12 @@ import org.slf4j.LoggerFactory;
 @Category(XSlowTests.class)
 public class MetricsClientTestRun extends ClientTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MetricsClientTestRun.class);
-
   private MetricsClient metricsClient;
 
   @Before
   public void setUp() throws Throwable {
-    metricsClient = new MetricsClient(new ClientConfig("localhost"));
+    super.setUp();
+    metricsClient = new MetricsClient(clientConfig);
   }
 
   @Test

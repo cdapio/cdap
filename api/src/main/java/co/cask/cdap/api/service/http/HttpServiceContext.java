@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,15 @@
 
 package co.cask.cdap.api.service.http;
 
+import co.cask.cdap.api.data.DataSetContext;
+
 import java.util.Map;
 
 /**
  * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the
  * {@link HttpServiceSpecification} and the runtime arguments passed by the user.
  */
-public interface HttpServiceContext {
+public interface HttpServiceContext extends DataSetContext {
   /**
    * @return the specification bound to this HttpServiceContext
    */

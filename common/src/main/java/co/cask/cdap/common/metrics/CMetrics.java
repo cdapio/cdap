@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -99,9 +99,7 @@ public class CMetrics {
   }
 
   /**
-   * Increments a given metric counter. It's a specialization of a gauge
-   * that allows to increment or decrement a value associated with the
-   * counter metric.
+   * Increments a given metric counter.
    *
    * @param metricName name of the metric.
    * @param value to increment the metric by.
@@ -111,9 +109,7 @@ public class CMetrics {
   }
 
   /**
-   * Increments a given metric counter. It's a specialization of a gauge
-   * that allows to increment or decrement a value associated with the
-   * counter metric.
+   * Increments a given metric counter.
    *
    * @param scope of the metric being measured.
    * @param metricName name of the metric.
