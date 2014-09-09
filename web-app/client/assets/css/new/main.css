@@ -4139,6 +4139,10 @@ div.tooltip-inner {
 }
 
 .query-table-entry:hover .lighter-color, .query-table-entry:hover .bolder-font {
+  color: white;
+}
+
+.query-table-entry.selected .lighter-color, .query-table-entry.selected .bolder-font {
     color: white;
 }
 .data-explore-results .results-table-holder {
