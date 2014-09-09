@@ -93,8 +93,6 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -108,7 +106,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
   private static final Gson GSON = new Gson();
   private static final int PREVIEW_COUNT = 5;
-  private static final long METASTORE_CLIENT_CLEANUP_PERIOD_MS = TimeUnit.SECONDS.toMillis(60);
+  private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -124,13 +122,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final ScheduledExecutorService scheduledExecutorService;
   private final long cleanupJobSchedule;
   private final File previewsDir;
-  private final Timer metastoreClientsTimer;
+  private final ScheduledExecutorService metastoreClientsExecutorService;
 
-  private ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
+  private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
 
   // The following two fields are for tracking GC'ed metastore clients and be able to call close on them.
-  private Map<Reference<? extends Supplier<IMetaStoreClient>>, IMetaStoreClient> metastoreClientReferences;
-  private ReferenceQueue<Supplier<IMetaStoreClient>> metastoreClientReferenceQueue;
+  private final Map<Reference<? extends Supplier<IMetaStoreClient>>, IMetaStoreClient> metastoreClientReferences;
+  private final ReferenceQueue<Supplier<IMetaStoreClient>> metastoreClientReferenceQueue;
 
   protected abstract QueryStatus fetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
@@ -148,7 +146,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientReferenceQueue = new ReferenceQueue<Supplier<IMetaStoreClient>>();
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
-    this.metastoreClientsTimer = new Timer("metastore-client-gc", true);
+    this.metastoreClientsExecutorService =
+      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metastore-client-gc"));
 
     this.scheduledExecutorService =
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("explore-handle-timeout"));
@@ -217,30 +216,27 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
   }
 
-  private TimerTask createClientCloseTask() {
-    return new TimerTask() {
-      @Override
-      public void run() {
-        Reference<? extends Supplier<IMetaStoreClient>> ref = metastoreClientReferenceQueue.poll();
-        while (ref != null) {
-          IMetaStoreClient client = metastoreClientReferences.remove(ref);
-          if (client != null) {
-            closeMetastoreClient(client);
-          }
-          ref = metastoreClientReferenceQueue.poll();
-        }
-      }
-    };
-  }
-
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
     cliService.init(getHiveConf());
     cliService.start();
 
-    metastoreClientsTimer.scheduleAtFixedRate(createClientCloseTask(), METASTORE_CLIENT_CLEANUP_PERIOD_MS,
-                                              METASTORE_CLIENT_CLEANUP_PERIOD_MS);
+    metastoreClientsExecutorService.scheduleWithFixedDelay(
+      new Runnable() {
+        @Override
+        public void run() {
+          Reference<? extends Supplier<IMetaStoreClient>> ref = metastoreClientReferenceQueue.poll();
+          while (ref != null) {
+            IMetaStoreClient client = metastoreClientReferences.remove(ref);
+            if (client != null) {
+              closeMetastoreClient(client);
+            }
+            ref = metastoreClientReferenceQueue.poll();
+          }
+        }
+      },
+      METASTORE_CLIENT_CLEANUP_PERIOD, METASTORE_CLIENT_CLEANUP_PERIOD, TimeUnit.SECONDS);
 
     // Schedule the cache cleanup
     scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
@@ -269,6 +265,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     scheduledExecutorService.awaitTermination(10, TimeUnit.SECONDS);
     scheduledExecutorService.shutdown();
 
+    metastoreClientsExecutorService.shutdownNow();
     // Go through all non-cleanup'ed clients and call close() upon them
     for (IMetaStoreClient client : metastoreClientReferences.values()) {
       closeMetastoreClient(client);
