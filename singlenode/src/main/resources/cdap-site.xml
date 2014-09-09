@@ -97,4 +97,24 @@
         <value>1</value>
         <description>Number of stream writer instance. In local mode, it's always one</description>
     </property>
+
+  <property>
+    <name>security.enabled</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>security.authorization.enabled</name>
+    <value>true</value>
+  </property>
+
+  <property>
+    <name>security.authentication.handlerClassName</name>
+    <value>co.cask.cdap.security.server.BasicAuthenticationHandler</value>
+  </property>
+
+  <property>
+    <name>security.authentication.basic.realmfile</name>
+    <value>/Users/alvin/Work/workspace/caskco/realmfile</value>
+  </property>
 </configuration>

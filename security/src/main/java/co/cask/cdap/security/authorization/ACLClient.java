@@ -27,7 +27,6 @@ import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -47,62 +46,40 @@ import javax.inject.Inject;
 /**
  * Provides ways to list and set ACLs.
  */
-public class ACLClient {
+public interface ACLClient {
 
-  private static final Gson GSON = new Gson();
+  /**
+   * List ACLs by entityId
+   * @param entityId entityId to list ACLs by
+   * @return the ACLs belonging to the entityId
+   * @throws Exception if something went wrong
+   */
+  public List<ACL> listACLs(EntityId entityId) throws Exception;
 
-  private final Supplier<URI> baseURI;
+  /**
+   * List ACLs by entityId and userId
+   * @param entityId entityId to list ACLs by
+   * @param userId userId to list ACLs by
+   * @return the ACLs belonging to the entityId and userId
+   * @throws Exception if something went wrong
+   */
+  public List<ACL> listACLs(EntityId entityId, String userId) throws Exception;
 
-  @Inject
-  public ACLClient(final DiscoveryServiceClient discoveryServiceClient) {
-    this.baseURI = new Supplier<URI>() {
-      @Override
-      public URI get() {
-        Iterable<Discoverable> serviceDiscovered = discoveryServiceClient.discover(Constants.Service.ACL);
-        TimeLimitEndpointStrategy strategy = new TimeLimitEndpointStrategy(
-          new RandomEndpointStrategy(serviceDiscovered), 5, TimeUnit.SECONDS);
-        Preconditions.checkNotNull(strategy.pick(), "No discoverable endpoint found for ACLService");
+  /**
+   * Sets an ACL for an entityId and userId
+   * @param entityId entityId to set the ACL on
+   * @param userId userId to set the ACL on
+   * @param permissions permissions to set
+   * @throws Exception if something went wrong
+   */
+  public void setACLForUser(EntityId entityId, String userId, List<PermissionType> permissions) throws Exception;
 
-        InetSocketAddress socketAddress = strategy.pick().getSocketAddress();
-        try {
-          // TODO: support https by checking router ssl enabled from Configuration
-          String url = String.format("http://%s:%d", socketAddress.getAddress().getHostName(), socketAddress.getPort());
-          return new URI(url);
-        } catch (URISyntaxException e) {
-          return null;
-        }
-      }
-    };
-  }
-
-  public List<ACL> listAcls(EntityId entityId) throws IOException {
-    URL url = resolveURL(String.format("/v2/admin/acls/%s/%s", entityId.getType().getPluralForm(), entityId.getId()));
-    HttpResponse response = HttpRequests.execute(HttpRequest.builder(HttpMethod.GET, url).build());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ACL>>() { }).getResponseObject();
-  }
-
-  public List<ACL> listAcls(EntityId entityId, String userId) throws IOException {
-    URL url = resolveURL(String.format("/v2/admin/acls/%s/%s/user/%s", entityId.getType().getPluralForm(),
-                                       entityId.getId(), userId));
-    HttpResponse response = HttpRequests.execute(HttpRequest.builder(HttpMethod.GET, url).build());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ACL>>() { }).getResponseObject();
-  }
-
-  public void setAclForUser(EntityId entityId, String userId, List<PermissionType> permissions) throws IOException {
-    URL url = resolveURL(String.format("/v2/admin/acls/%s/%s/user/%s", entityId.getType().getPluralForm(),
-                                       entityId.getId(), userId));
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, url).withBody(GSON.toJson(permissions)).build();
-    HttpRequests.execute(request);
-  }
-
-  public void setAclForGroup(EntityId entityId, String groupId, List<PermissionType> permissions) throws IOException {
-    URL url = resolveURL(String.format("/v2/admin/acls/%s/%s/group/%s", entityId.getType().getPluralForm(),
-                                       entityId.getId(), groupId));
-    HttpRequest request = HttpRequest.builder(HttpMethod.PUT, url).withBody(GSON.toJson(permissions)).build();
-    HttpRequests.execute(request);
-  }
-
-  private URL resolveURL(String path) throws MalformedURLException {
-    return baseURI.get().resolve(path).toURL();
-  }
+  /**
+   * Sets an ACL for an entityId and groupId
+   * @param entityId entityId to set the ACL on
+   * @param groupId groupId to set the ACL on
+   * @param permissions permissions to set
+   * @throws Exception if something went wrong
+   */
+  public void setACLForGroup(EntityId entityId, String groupId, List<PermissionType> permissions) throws Exception;
 }

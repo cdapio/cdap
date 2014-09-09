@@ -57,14 +57,23 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
       HttpRequest request = (HttpRequest) message;
       String userIdHeader = request.getHeader(Constants.Security.Headers.USER_ID);
       if (userIdHeader == null) {
-        throw new CredentialNotFoundException("No userId was found in request.");
+        if (currentUserId != null) {
+          currentUserId = null;
+        }
+        SecurityRequestContext.setUserId(null);
+        super.messageReceived(ctx, e);
+        return;
+//        throw new CredentialNotFoundException("No userId was found in request.");
       }
 
       currentUserId = userIdHeader;
       SecurityRequestContext.setUserId(userIdHeader);
     } else if (message instanceof HttpChunk) {
       if (currentUserId == null) {
-        throw new CredentialNotFoundException("No userId was found in request.");
+        SecurityRequestContext.setUserId(null);
+        super.messageReceived(ctx, e);
+        return;
+//        throw new CredentialNotFoundException("No userId was found in request.");
       }
       SecurityRequestContext.setUserId(currentUserId);
     }

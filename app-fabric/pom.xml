@@ -33,6 +33,11 @@
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
+      <artifactId>api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>common</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -54,6 +59,11 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>explore-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>security</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

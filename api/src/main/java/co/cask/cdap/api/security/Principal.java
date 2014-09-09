@@ -53,10 +53,12 @@ public class Principal {
     if (this == obj) {
       return true;
     }
+
     if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
-    final Principal other = (Principal) obj;
+
+    Principal other = (Principal) obj;
     return Objects.equal(this.type, other.type) && Objects.equal(this.id, other.id);
   }
 

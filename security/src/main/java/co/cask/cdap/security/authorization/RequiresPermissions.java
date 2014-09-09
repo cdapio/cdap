@@ -14,14 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.procedure;
+package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.internal.app.runtime.DataFabricFacade;
+import co.cask.cdap.api.security.PermissionType;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Factory for {@link ProcedureHandlerMethod}.
+ * Annotation for a method that requires permissions to execute.
  */
-public interface ProcedureHandlerMethodFactory {
-  ProcedureHandlerMethod create(Program program, DataFabricFacade dataFabricFacade, BasicProcedureContext context);
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface RequiresPermissions {
+
+  public PermissionType[] value();
+
 }

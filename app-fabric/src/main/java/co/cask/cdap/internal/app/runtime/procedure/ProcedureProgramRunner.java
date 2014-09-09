@@ -85,12 +85,15 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private final DatasetFramework dsFramework;
   private final CConfiguration conf;
 
-  private ProcedureHandlerMethodFactory handlerMethodFactory;
+  private ProcedureHandlerMethodManager handlerMethodManager;
 
   private ExecutionHandler executionHandler;
   private ServerBootstrap bootstrap;
   private ChannelGroup channelGroup;
   private BasicProcedureContext procedureContext;
+
+  @Inject
+  private ProcedureHandlerMethodFactory methodFactory;
 
   @Inject
   public ProcedureProgramRunner(DataFabricFacadeFactory dataFabricFacadeFactory, ServiceAnnouncer serviceAnnouncer,
@@ -156,12 +159,13 @@ public final class ProcedureProgramRunner implements ProgramRunner {
                                                    options.getUserArguments(), procedureSpec, metricsCollectionService,
                                                    serviceDiscovery, discoveryServiceClient, dsFramework, conf);
 
-      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, dataFabricFacadeFactory, contextFactory);
-      handlerMethodFactory.startAndWait();
+      handlerMethodManager = new ProcedureHandlerMethodManager(program, dataFabricFacadeFactory,
+                                                               contextFactory, methodFactory);
+      handlerMethodManager.startAndWait();
 
       channelGroup = new DefaultChannelGroup();
       executionHandler = createExecutionHandler();
-      bootstrap = createBootstrap(program, executionHandler, handlerMethodFactory,
+      bootstrap = createBootstrap(program, executionHandler, handlerMethodManager,
                                   procedureContext.getProgramMetrics(), channelGroup);
 
       // TODO: Might need better way to get the host name
@@ -267,7 +271,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
         bootstrap.releaseExternalResources();
         executionHandler.releaseExternalResources();
       }
-      handlerMethodFactory.stopAndWait();
+      handlerMethodManager.stopAndWait();
 
       LOG.info("Procedure stopped: " + procedureContext);
     }

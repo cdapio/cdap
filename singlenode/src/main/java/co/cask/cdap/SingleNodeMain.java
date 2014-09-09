@@ -52,6 +52,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.security.authorization.ACLService;
+import co.cask.cdap.security.guice.SecurityClientModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import com.continuuity.tephra.inmemory.InMemoryTransactionService;
@@ -118,9 +119,9 @@ public class SingleNodeMain {
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
     securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
+    aclService = injector.getInstance(ACLService.class);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
-      aclService = injector.getInstance(ACLService.class);
     }
 
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
@@ -173,8 +174,8 @@ public class SingleNodeMain {
     }
     streamHttpService.startAndWait();
 
+    aclService.startAndWait();
     if (securityEnabled) {
-      aclService.startAndWait();
       externalAuthenticationServer.startAndWait();
     }
 
@@ -218,8 +219,8 @@ public class SingleNodeMain {
       if (securityEnabled) {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
-        aclService.stopAndWait();
       }
+      aclService.stopAndWait();
       logAppenderInitializer.close();
 
     } catch (Throwable e) {
@@ -357,6 +358,7 @@ public class SingleNodeMain {
       new IOModule(),
       new MetricsHandlerModule(),
       new AuthModule(),
+      new SecurityClientModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new LocationRuntimeModule().getInMemoryModules(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
@@ -407,6 +409,7 @@ public class SingleNodeMain {
       new IOModule(),
       new MetricsHandlerModule(),
       new AuthModule(),
+      new SecurityClientModule(),
       new DiscoveryRuntimeModule().getSingleNodeModules(),
       new LocationRuntimeModule().getSingleNodeModules(),
       new AppFabricServiceRuntimeModule().getSingleNodeModules(),

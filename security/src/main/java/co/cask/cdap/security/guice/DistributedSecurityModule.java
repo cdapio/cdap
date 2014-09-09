@@ -32,6 +32,7 @@ import org.apache.twill.zookeeper.ZKClientService;
  * environment.
  */
 public class DistributedSecurityModule extends SecurityModule {
+
   @Override
   protected void bindKeyManager(Binder binder) {
     binder.bind(KeyManager.class).toProvider(DistributedKeyManagerProvider.class).in(Scopes.SINGLETON);
