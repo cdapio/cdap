@@ -33,7 +33,7 @@ import java.lang.reflect.Method;
  * This Wrapper class is submitted to Spark and it does the following:
  * <ol>
  * <li>
- * Validates that there is at least {@link SparkJobWrapper#JOB_WRAPPER_ARGUMENTS_SIZE} command line arguments
+ * Validates that there is at least {@link SparkProgramWrapper#JOB_WRAPPER_ARGUMENTS_SIZE} command line arguments
  * </li>
  * <li>
  * Gets the user's job class through Spark's ExecutorURLClassLoader.
@@ -48,14 +48,21 @@ import java.lang.reflect.Method;
  * </ol>
  */
 
-public class SparkJobWrapper {
+public class SparkProgramWrapper {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SparkJobWrapper.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SparkProgramWrapper.class);
   private static final int JOB_WRAPPER_ARGUMENTS_SIZE = 1;
   private final String[] arguments;
   private final Class userJobClass;
   private static SparkContext sparkContext;
   private static boolean scalaJobFlag;
+
+  // we are not calling it job because spark program defines job as operations/transformations which are sent to
+  // worker node so a spark program basically consists of multiple jobs
+  // TODO: Get around Spark's limitation of only one SparkContext in a JVM and support multiple spark context:
+  // REACTOR-950
+  private static boolean sparkProgramSuccessful;
+  private static boolean sparkProgramRunning;
 
   /**
    * Constructor
@@ -63,7 +70,7 @@ public class SparkJobWrapper {
    * @param args the command line arguments
    * @throws RuntimeException if the user's job class is not found
    */
-  public SparkJobWrapper(String[] args) {
+  public SparkProgramWrapper(String[] args) {
     arguments = validateArgs(args);
     try {
       // get the Spark job main class with the custom classloader created by spark which has the program and
@@ -77,12 +84,12 @@ public class SparkJobWrapper {
   }
 
   public static void main(String[] args) {
-    new SparkJobWrapper(args).instantiateUserJobClass();
+    new SparkProgramWrapper(args).instantiateUserJobClass();
   }
 
   /**
    * Validates command line arguments being passed
-   * Expects at least {@link SparkJobWrapper#JOB_WRAPPER_ARGUMENTS_SIZE} command line arguments to be present
+   * Expects at least {@link SparkProgramWrapper#JOB_WRAPPER_ARGUMENTS_SIZE} command line arguments to be present
    *
    * @param arguments String[] the arguments
    * @return String[] if the command line arguments are sufficient else throws a {@link RuntimeException}
@@ -172,11 +179,42 @@ public class SparkJobWrapper {
     return sparkContext;
   }
 
-  public static void stopJob() {
+  /**
+   * Stops the Spark program by calling {@link org.apache.spark.SparkContext#stop()}
+   */
+  public static void stopSparkProgram() {
     if (scalaJobFlag) {
       ((org.apache.spark.SparkContext) getSparkContext().getOriginalSparkContext()).stop();
     } else {
       ((org.apache.spark.api.java.JavaSparkContext) getSparkContext().getOriginalSparkContext()).stop();
     }
+  }
+
+  /**
+   * @return spark program running status which is true if it is still running else false
+   */
+  public static boolean isSparkProgramRunning() {
+    return sparkProgramRunning;
+  }
+
+  /**
+   * @param sparkProgramRunning a boolean to which the sparkProgramRunning status will be set to
+   */
+  public static void setSparkProgramRunning(boolean sparkProgramRunning) {
+    SparkProgramWrapper.sparkProgramRunning = sparkProgramRunning;
+  }
+
+  /**
+   * @return spark program success status which is true if the program succeeded else false
+   */
+  public static boolean isSparkProgramSuccessful() {
+    return sparkProgramSuccessful;
+  }
+
+  /**
+   * @param sparkProgramSuccessful a boolean to which the jobSuccess status will be set to
+   */
+  public static void setSparkProgramSuccessful(boolean sparkProgramSuccessful) {
+    SparkProgramWrapper.sparkProgramSuccessful = sparkProgramSuccessful;
   }
 }
