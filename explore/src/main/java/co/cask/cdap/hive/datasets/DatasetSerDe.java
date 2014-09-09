@@ -81,6 +81,9 @@ public class DatasetSerDe implements SerDe {
   public void initialize(Configuration entries, Properties properties) throws SerDeException {
     // The column names are saved as the given inspector to #serialize doesn't preserves them
     // - maybe because it's an external table
+    // The columns property comes from the Hive metastore, which has it from the create table statement
+    // It is then important that this schema be accurate and in the right order - the same order as
+    // object inspectors will reflect them.
     columnNames = new ArrayList<String>(Arrays.asList(StringUtils.split(properties.getProperty("columns"), ",")));
 
     String datasetName = properties.getProperty(Constants.Explore.DATASET_NAME);
@@ -133,26 +136,25 @@ public class DatasetSerDe implements SerDe {
     List<TypeInfo> info = structTypeInfo.getAllStructFieldTypeInfos();
     List<String> names = structTypeInfo.getAllStructFieldNames();
 
-    Map<String, Object> structMap = Maps.newConcurrentMap();
-    List<Object> struct = ((StructObjectInspector) objectInspector).getStructFieldsDataAsList(o);
+    Map<String, Object> recordMap = Maps.newConcurrentMap();
+    List<Object> recordObjects = ((StructObjectInspector) objectInspector).getStructFieldsDataAsList(o);
 
     for (int structIndex = 0; structIndex < info.size(); structIndex++) {
-      Object obj = struct.get(structIndex);
+      Object obj = recordObjects.get(structIndex);
       if (obj instanceof LazyNonPrimitive || obj instanceof LazyPrimitive) {
         // In case the SerDe that deserialized the object is the one of a native table
-        structMap.put(names.get(structIndex),
-                      fromLazyObject(info.get(structIndex), obj));
-      } else if (obj instanceof LongWritable) {
-        // TODO take care of all the writables
-        structMap.put(names.get(structIndex), ((LongWritable) obj).get());
+        recordMap.put(names.get(structIndex), fromLazyObject(info.get(structIndex), obj));
+      } else if (obj instanceof Writable) {
+        // Native tables sometimes introduce primitive Writable objects at this point
+        recordMap.put(names.get(structIndex), fromWritable((Writable) obj));
       } else {
         // In case the deserializer is the DatasetSerDe
-        structMap.put(names.get(structIndex), obj);
+        recordMap.put(names.get(structIndex), obj);
       }
     }
 
     // TODO Improve serialization logic - REACTOR-927
-    return new Text(GSON.toJson(structMap));
+    return new Text(GSON.toJson(recordMap));
   }
 
   @Override
@@ -173,6 +175,43 @@ public class DatasetSerDe implements SerDe {
     return ObjectInspectorFactory.getReflectionObjectInspector(recordType);
   }
 
+  private Object fromWritable(Writable writable) {
+    if (writable instanceof IntWritable) {
+      return ((IntWritable) writable).get();
+    } else if (writable instanceof LongWritable) {
+      return ((LongWritable) writable).get();
+    } else if (writable instanceof ShortWritable) {
+      return ((ShortWritable) writable).get();
+    } else if (writable instanceof BooleanWritable) {
+      return ((BooleanWritable) writable).get();
+    } else if (writable instanceof DoubleWritable) {
+      return ((DoubleWritable) writable).get();
+    } else if (writable instanceof FloatWritable) {
+      return ((FloatWritable) writable).get();
+    } else if (writable instanceof Text) {
+      return writable.toString();
+    } else if (writable instanceof BytesWritable) {
+      return ((BytesWritable) writable).getBytes();
+    } else if (writable instanceof ByteWritable) {
+      return ((ByteWritable) writable).get();
+    } else if (writable instanceof DateWritable) {
+      return ((DateWritable) writable).get();
+    } else if (writable instanceof org.apache.hadoop.hive.serde2.io.ShortWritable) {
+      return ((org.apache.hadoop.hive.serde2.io.ShortWritable) writable).get();
+    } else if (writable instanceof HiveBaseCharWritable) {
+      return ((HiveBaseCharWritable) writable).getTextValue().toString();
+    } else if (writable instanceof TimestampWritable) {
+      return ((TimestampWritable) writable).getTimestamp();
+    } else if (writable instanceof org.apache.hadoop.hive.serde2.io.DoubleWritable) {
+      return ((org.apache.hadoop.hive.serde2.io.DoubleWritable) writable).get();
+    } else if (writable instanceof HiveDecimalWritable) {
+      return ((HiveDecimalWritable) writable).getHiveDecimal();
+    } else if (writable instanceof NullWritable) {
+      return null;
+    }
+    return writable.toString();
+  }
+
   private Object fromLazyObject(TypeInfo type, Object data) {
     if (data == null) {
       return null;
@@ -181,40 +220,7 @@ public class DatasetSerDe implements SerDe {
     switch (type.getCategory()) {
       case PRIMITIVE:
         Writable writable = ((LazyPrimitive) data).getWritableObject();
-        if (writable instanceof IntWritable) {
-          return ((IntWritable) writable).get();
-        } else if (writable instanceof LongWritable) {
-          return ((LongWritable) writable).get();
-        } else if (writable instanceof ShortWritable) {
-          return ((ShortWritable) writable).get();
-        } else if (writable instanceof BooleanWritable) {
-          return ((BooleanWritable) writable).get();
-        } else if (writable instanceof DoubleWritable) {
-          return ((DoubleWritable) writable).get();
-        } else if (writable instanceof FloatWritable) {
-          return ((FloatWritable) writable).get();
-        } else if (writable instanceof Text) {
-          return writable.toString();
-        } else if (writable instanceof BytesWritable) {
-          return ((BytesWritable) writable).getBytes();
-        } else if (writable instanceof ByteWritable) {
-          return ((ByteWritable) writable).get();
-        } else if (writable instanceof DateWritable) {
-          return ((DateWritable) writable).get();
-        } else if (writable instanceof org.apache.hadoop.hive.serde2.io.ShortWritable) {
-          return ((org.apache.hadoop.hive.serde2.io.ShortWritable) writable).get();
-        } else if (writable instanceof HiveBaseCharWritable) {
-          return ((HiveBaseCharWritable) writable).getTextValue().toString();
-        } else if (writable instanceof TimestampWritable) {
-          return ((TimestampWritable) writable).getTimestamp();
-        } else if (writable instanceof org.apache.hadoop.hive.serde2.io.DoubleWritable) {
-          return ((org.apache.hadoop.hive.serde2.io.DoubleWritable) writable).get();
-        } else if (writable instanceof HiveDecimalWritable) {
-          return ((HiveDecimalWritable) writable).getHiveDecimal();
-        } else if (writable instanceof NullWritable) {
-          return null;
-        }
-        return writable.toString();
+        return fromWritable(writable);
 
       case LIST:
         ListTypeInfo listType = (ListTypeInfo) type;
