@@ -74,7 +74,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
    * @param datasetFramework used to get datasets.
    * @param transactionSystemClient used to transactionalize operations.
    */
-  public BasicServiceWorkerContext(Program program, RunId runId, String runnableName, ClassLoader programClassLoader,
+  public BasicServiceWorkerContext(Program program, RunId runId, int instanceId, String runnableName,
+                                   ClassLoader programClassLoader,
                                    CConfiguration cConfiguration,
                                    Map<String, String> runtimeArgs, Set<String> datasets,
                                    MetricsCollectionService metricsCollectionService,
@@ -82,8 +83,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                    TransactionSystemClient transactionSystemClient,
                                    ProgramServiceDiscovery serviceDiscovery,
                                    DiscoveryServiceClient discoveryServiceClient) {
-    super(program, runId, datasets, getMetricContext(program, runnableName), metricsCollectionService, datasetFramework,
-          cConfiguration, serviceDiscovery, discoveryServiceClient);
+    super(program, runId, datasets, getMetricContext(program, runnableName, instanceId), metricsCollectionService,
+          datasetFramework, cConfiguration, serviceDiscovery, discoveryServiceClient);
     this.programClassLoader = programClassLoader;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
     this.datasets = ImmutableSet.copyOf(datasets);
@@ -105,9 +106,9 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     return serviceRunnableMetrics;
   }
 
-  private static String getMetricContext(Program program, String runnableName) {
-    return String.format("%s.%s.%s.%s", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SERVICE),
-                         program.getName(), runnableName);
+  private static String getMetricContext(Program program, String runnableName, int instanceId) {
+    return String.format("%s.%s.%s.%s.%s", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SERVICE),
+                         program.getName(), runnableName, instanceId);
   }
 
   @Override

@@ -134,11 +134,12 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
         type = TypeToken.of(programClassLoader.loadClass(delegateClassName));
         ((GuavaServiceWorker) worker).setDelegate((Service) factory.get(type).create());
       }
-      worker.initialize(new BasicServiceWorkerContext(program, runId, runnableName, programClassLoader, cConfiguration,
-                                                        context.getSpecification().getConfigs(), datasets,
-                                                        metricsCollectionService, datasetFramework,
-                                                        transactionSystemClient, serviceDiscovery,
-                                                        discoveryServiceClient));
+      int instanceId = context.getInstanceId();
+      worker.initialize(new BasicServiceWorkerContext(program, runId, instanceId, runnableName, programClassLoader,
+                                                      cConfiguration, context.getSpecification().getConfigs(), datasets,
+                                                      metricsCollectionService, datasetFramework,
+                                                      transactionSystemClient, serviceDiscovery,
+                                                      discoveryServiceClient));
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);
       Throwables.propagate(e);
