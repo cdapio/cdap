@@ -14,9 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command;
+package co.cask.cdap.shell.command.common;
 
-import com.google.inject.Inject;
+import co.cask.cdap.shell.command.AbstractCommand;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
 
 import java.io.PrintStream;
 
@@ -25,13 +27,18 @@ import java.io.PrintStream;
  */
 public class ExitCommand extends AbstractCommand {
 
-  @Inject
-  public ExitCommand() {
-    super("exit", null, "Exits the shell");
+  @Override
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    System.exit(0);
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    System.exit(0);
+  public String getPattern() {
+    return "exit";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Exits the CLI";
   }
 }

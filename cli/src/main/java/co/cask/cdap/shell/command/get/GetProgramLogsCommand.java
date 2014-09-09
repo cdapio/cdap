@@ -18,52 +18,32 @@ package co.cask.cdap.shell.command.get;
 
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
 
 import java.io.PrintStream;
-import java.util.List;
 
 /**
  * Gets the logs of a program.
  */
-public class GetProgramLogsCommand extends AbstractCommand implements Completable {
+public class GetProgramLogsCommand extends AbstractCommand {
 
   private final ProgramClient programClient;
-  private final ProgramIdCompleterFactory completerFactory;
   private final ElementType elementType;
 
-  protected GetProgramLogsCommand(ElementType elementType,
-                                  ProgramIdCompleterFactory completerFactory,
-                                  ProgramClient programClient) {
-    super(elementType.getName(), "<app-id>.<program-id> [<start-time> <end-time>]",
-          "Gets the logs of a " + elementType.getPrettyName());
+  protected GetProgramLogsCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
-    this.completerFactory = completerFactory;
     this.programClient = programClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String[] programIdParts = args[0].split("\\.");
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String[] programIdParts = arguments.get(ArgumentName.PROGRAM).split("\\.");
     String appId = programIdParts[0];
-
-    long start;
-    long stop;
-    if (args.length >= 4) {
-      start = Long.parseLong(args[2]);
-      stop = Long.parseLong(args[3]);
-      Preconditions.checkArgument(stop >= start, "stop timestamp must be greater than start timestamp");
-    } else {
-      start = 0;
-      stop = Long.MAX_VALUE;
-    }
+    long start = arguments.getLong(ArgumentName.START_TIME, 0);
+    long stop = arguments.getLong(ArgumentName.START_TIME, Long.MAX_VALUE);
 
     String logs;
     if (elementType == ElementType.RUNNABLE) {
@@ -81,7 +61,13 @@ public class GetProgramLogsCommand extends AbstractCommand implements Completabl
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completerFactory.getProgramIdCompleter(elementType)));
+  public String getPattern() {
+    return String.format("get %s logs <%s> [%s] [%s]", elementType.getName(), ArgumentName.PROGRAM,
+                         ArgumentName.START_TIME, ArgumentName.END_TIME);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Gets the logs of a " + elementType.getPrettyName();
   }
 }

@@ -21,12 +21,14 @@ import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.shell.CLIConfig;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.exception.CommandInputError;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 import co.cask.cdap.shell.util.SocketUtil;
 import jline.console.ConsoleReader;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.Properties;
 import javax.inject.Inject;
 
@@ -39,16 +41,13 @@ public class ConnectCommand extends AbstractCommand {
 
   @Inject
   public ConnectCommand(CLIConfig cliConfig) {
-    super("connect", "<cdap-hostname>", "Connects to a CDAP instance. <credential(s)> " +
-          "parameter(s) could be used if authentication is enabled in the gateway server.");
     this.cliConfig = cliConfig;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String hostname = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    URI uri = URI.create(arguments.get(ArgumentName.HOSTNAME));
+    String hostname = uri.getHost();
 
     int port;
     boolean ssl = SocketUtil.isAvailable(hostname, cliConfig.getSslPort());
@@ -78,5 +77,16 @@ public class ConnectCommand extends AbstractCommand {
 
     cliConfig.setConnection(hostname, port, ssl);
     output.printf("Successfully connected CDAP host at %s:%d\n", hostname, port);
+  }
+
+  @Override
+  public String getPattern() {
+    return String.format("connect <%s> [credentials]", ArgumentName.HOSTNAME);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Connects to a CDAP instance. [credentials] parameter should be provided if"
+      + " authentication is enabled in the gateway server.";
   }
 }

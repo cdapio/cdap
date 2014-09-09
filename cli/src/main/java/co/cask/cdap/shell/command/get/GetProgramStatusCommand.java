@@ -18,39 +18,29 @@ package co.cask.cdap.shell.command.get;
 
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
 
 import java.io.PrintStream;
-import java.util.List;
 
 /**
  * Gets the status of a program.
  */
-public class GetProgramStatusCommand extends AbstractCommand implements Completable {
+public class GetProgramStatusCommand extends AbstractCommand {
 
   private final ProgramClient programClient;
-  private final ProgramIdCompleterFactory completerFactory;
   private final ElementType elementType;
 
-  protected GetProgramStatusCommand(ElementType elementType,
-                                    ProgramIdCompleterFactory completerFactory,
-                                    ProgramClient programClient) {
-    super(elementType.getName(), "<app-id>.<program-id>",
-          "Gets the status of a " + elementType.getPrettyName());
+  protected GetProgramStatusCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
-    this.completerFactory = completerFactory;
     this.programClient = programClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String[] programIdParts = args[0].split("\\.");
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String[] programIdParts = arguments.get(ArgumentName.PROGRAM).split("\\.");
     String appId = programIdParts[0];
     String programId = programIdParts[1];
 
@@ -59,7 +49,12 @@ public class GetProgramStatusCommand extends AbstractCommand implements Completa
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completerFactory.getProgramIdCompleter(elementType)));
+  public String getPattern() {
+    return String.format("get %s status <%s>", elementType.getName(), ArgumentName.PROGRAM);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Gets the status of a " + elementType.getPrettyName();
   }
 }

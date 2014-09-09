@@ -14,10 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command;
+package co.cask.cdap.shell.command.common;
 
 import co.cask.cdap.shell.CLIConfig;
 import co.cask.cdap.shell.Constants;
+import co.cask.cdap.shell.command.AbstractCommand;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
+import co.cask.cdap.shell.command.CommandSet;
 import com.google.common.base.Supplier;
 
 import java.io.PrintStream;
@@ -31,16 +35,25 @@ public class HelpCommand extends AbstractCommand {
   private final CLIConfig config;
 
   public HelpCommand(Supplier<CommandSet> getCommands, CLIConfig config) {
-    super("help", null, "Prints this helper text");
     this.getCommands = getCommands;
     this.config = config;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     output.println("CLI version " + config.getVersion());
-    output.println(Constants.EV_HOSTNAME + "=" + config.getHost());
+    output.println(Constants.ENV_HOSTNAME + "=" + config.getHost());
     output.println();
-    output.println("Available commands: \n" + getCommands.get().getHelperText(""));
+    output.println("Available commands: \n" + getCommands.get().getHelperText());
+  }
+
+  @Override
+  public String getPattern() {
+    return "help";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Prints this helper text";
   }
 }

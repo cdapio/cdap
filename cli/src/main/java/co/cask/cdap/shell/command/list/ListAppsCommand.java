@@ -20,6 +20,8 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 
@@ -35,14 +37,11 @@ public class ListAppsCommand extends AbstractCommand {
 
   @Inject
   public ListAppsCommand(ApplicationClient appClient) {
-    super("apps", null, "Lists all " + ElementType.APP.getPluralPrettyName());
     this.appClient = appClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     new AsciiTable<ApplicationRecord>(
       new String[] { "id", "description" },
       appClient.list(),
@@ -53,5 +52,15 @@ public class ListAppsCommand extends AbstractCommand {
         }
       }
     ).print(output);
+  }
+
+  @Override
+  public String getPattern() {
+    return "list apps";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Lists all " + ElementType.APP.getPluralPrettyName();
   }
 }

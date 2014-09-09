@@ -19,41 +19,38 @@ package co.cask.cdap.shell.command.truncate;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.StreamIdCompleter;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 
 import java.io.PrintStream;
-import java.util.List;
 import javax.inject.Inject;
 
 /**
  * Truncates a stream.
  */
-public class TruncateStreamCommand extends AbstractCommand implements Completable {
+public class TruncateStreamCommand extends AbstractCommand {
 
   private final StreamClient streamClient;
-  private final StreamIdCompleter completer;
 
   @Inject
-  public TruncateStreamCommand(StreamIdCompleter completer, StreamClient streamClient) {
-    super("stream", "<stream-id>", "Truncates a " + ElementType.STREAM.getPrettyName());
-    this.completer = completer;
+  public TruncateStreamCommand(StreamClient streamClient) {
     this.streamClient = streamClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String streamId = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String streamId = arguments.get(ArgumentName.STREAM);
     streamClient.truncate(streamId);
     output.printf("Successfully truncated stream '%s'\n", streamId);
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completer));
+  public String getPattern() {
+    return String.format("truncate stream <%s>", ArgumentName.STREAM);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Truncates a " + ElementType.STREAM.getPrettyName();
   }
 }

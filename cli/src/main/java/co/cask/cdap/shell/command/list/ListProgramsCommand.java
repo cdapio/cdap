@@ -21,6 +21,8 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 
@@ -36,16 +38,12 @@ public class ListProgramsCommand extends AbstractCommand {
   private final ProgramType programType;
 
   public ListProgramsCommand(ProgramType programType, ApplicationClient appClient) {
-    super(programType.getCategoryName(), null,
-          "Lists " + ElementType.fromProgramType(programType).getPluralPrettyName());
     this.programType = programType;
     this.appClient = appClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     List<ProgramRecord> programs = appClient.listAllPrograms(programType);
     new AsciiTable<ProgramRecord>(
       new String[] { "app", "id", "description" },
@@ -56,5 +54,15 @@ public class ListProgramsCommand extends AbstractCommand {
           return new Object[] { object.getApp(), object.getId(), object.getDescription() };
         }
       }).print(output);
+  }
+
+  @Override
+  public String getPattern() {
+    return String.format("list %s", programType.getCategoryName());
+  }
+
+  @Override
+  public String getDescription() {
+    return "Lists " + ElementType.fromProgramType(programType).getPluralPrettyName();
   }
 }

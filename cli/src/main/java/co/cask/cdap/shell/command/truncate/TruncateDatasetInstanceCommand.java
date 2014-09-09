@@ -19,41 +19,39 @@ package co.cask.cdap.shell.command.truncate;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.DatasetNameCompleter;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
+import co.cask.cdap.shell.command.Command;
 
 import java.io.PrintStream;
-import java.util.List;
 import javax.inject.Inject;
 
 /**
  * Truncates a dataset.
  */
-public class TruncateDatasetInstanceCommand extends AbstractCommand implements Completable {
+public class TruncateDatasetInstanceCommand extends AbstractCommand {
 
   private final DatasetClient datasetClient;
-  private final DatasetNameCompleter completer;
 
   @Inject
-  public TruncateDatasetInstanceCommand(DatasetNameCompleter completer, DatasetClient datasetClient) {
-    super("instance", "<dataset-name>", "Truncates a " + ElementType.DATASET.getPrettyName());
-    this.completer = completer;
+  public TruncateDatasetInstanceCommand(DatasetClient datasetClient) {
     this.datasetClient = datasetClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String datasetName = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String datasetName = arguments.get(ArgumentName.DATASET);
     datasetClient.truncate(datasetName);
     output.printf("Successfully truncated dataset '%s'\n", datasetName);
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completer));
+  public String getPattern() {
+    return String.format("truncate dataset instance <%s>", ArgumentName.DATASET);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Truncates a " + ElementType.DATASET.getPrettyName();
   }
 }

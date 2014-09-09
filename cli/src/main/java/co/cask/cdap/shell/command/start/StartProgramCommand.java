@@ -18,37 +18,28 @@ package co.cask.cdap.shell.command.start;
 
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
 import co.cask.cdap.shell.command.AbstractCommand;
-import co.cask.cdap.shell.completer.Completable;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
+import co.cask.cdap.shell.command.ArgumentName;
+import co.cask.cdap.shell.command.Arguments;
 
 import java.io.PrintStream;
-import java.util.List;
 
 /**
  * Starts a program.
  */
-public class StartProgramCommand extends AbstractCommand implements Completable {
+public class StartProgramCommand extends AbstractCommand {
 
   private final ProgramClient programClient;
-  private final ProgramIdCompleterFactory completerFactory;
   private final ElementType elementType;
 
-  public StartProgramCommand(ElementType elementType, ProgramIdCompleterFactory completerFactory,
-                             ProgramClient programClient) {
-    super(elementType.getName(), "<program-id>", "Starts a " + elementType.getPrettyName());
+  public StartProgramCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
-    this.completerFactory = completerFactory;
     this.programClient = programClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String[] programIdParts = args[0].split("\\.");
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String[] programIdParts = arguments.get(ArgumentName.PROGRAM).split("\\.");
     String appId = programIdParts[0];
     String programId = programIdParts[1];
 
@@ -57,7 +48,12 @@ public class StartProgramCommand extends AbstractCommand implements Completable 
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completerFactory.getProgramIdCompleter(elementType)));
+  public String getPattern() {
+    return String.format("start %s <%s>", elementType.getName(), ArgumentName.PROGRAM);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Starts a " + elementType.getPrettyName();
   }
 }
