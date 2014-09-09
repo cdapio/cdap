@@ -201,8 +201,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       Arguments arguments = programOpts.getArguments();
       RunId runId = arguments.hasOption(ProgramOptionConstants.RUN_ID)
-                                        ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
-                                        : RunIds.generate();
+        ? RunIds.fromString(arguments.getOption(ProgramOptionConstants.RUN_ID))
+        : RunIds.generate();
 
       ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
       final RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
@@ -218,8 +218,10 @@ public class ServiceTwillRunnable implements TwillRunnable {
                                                 programServiceDiscovery, discoveryServiceClient, datasetFramework,
                                                 transactionSystemClient);
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
-        delegate = new ServiceWorkerTwillRunnable(program.getClassLoader(), cConf,
-                                                  datasetFramework, transactionSystemClient);
+        delegate = new ServiceWorkerTwillRunnable(program, runId, runnableName, program.getClassLoader(), cConf,
+                                                  metricsCollectionService, datasetFramework,
+                                                  transactionSystemClient, programServiceDiscovery,
+                                                  discoveryServiceClient);
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
       }

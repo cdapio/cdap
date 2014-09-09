@@ -246,6 +246,41 @@ public class TestFrameworkTest extends TestBase {
 
   @Category(SlowTests.class)
   @Test
+  public void testGetServiceURL() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
+    ServiceManager centralServiceManager = applicationManager.startService(AppUsingGetServiceURL.CENTRAL_SERVICE);
+    serviceStatusCheck(centralServiceManager, true);
+
+    // Test procedure's getServiceURL
+    ProcedureManager procedureManager = applicationManager.startProcedure(AppUsingGetServiceURL.PROCEDURE);
+    ProcedureClient procedureClient = procedureManager.getClient();
+    String result = procedureClient.query("ping", Collections.<String, String>emptyMap());
+    String decodedResult = new Gson().fromJson(result, String.class);
+    // Verify that the procedure was able to hit the CentralService and retrieve the answer.
+    Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
+
+
+    // Test serviceWorker's getServiceURL
+    ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+    serviceStatusCheck(serviceWithWorker, true);
+    // Since the worker is passive (we can not ping it), allow the service worker 2 seconds to ping the CentralService,
+    // get the appropriate response, and write to to a dataset.
+    Thread.sleep(2000);
+    serviceWithWorker.stop();
+    serviceStatusCheck(serviceWithWorker, false);
+
+    result = procedureClient.query("readDataSet", ImmutableMap.of(AppUsingGetServiceURL.DATASET_WHICH_KEY,
+                                                           AppUsingGetServiceURL.DATASET_KEY));
+    decodedResult = new Gson().fromJson(result, String.class);
+    Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
+    procedureManager.stop();
+
+    centralServiceManager.stop();
+    serviceStatusCheck(centralServiceManager, false);
+  }
+
+  @Category(SlowTests.class)
+  @Test
   public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
