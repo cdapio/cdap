@@ -55,7 +55,7 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
     FileWriter writer = null;
     try {
       writer = new FileWriter(JSON_PATH);
-      ConfigurationJsonTool.exportToJson("cConfig", writer);
+      ConfigurationJsonTool.exportToJson("--cConfig", writer);
       ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
       builder.redirectErrorStream(true);
       LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");

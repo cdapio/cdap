@@ -13,6 +13,8 @@ function extractConfig(mode) {
       decoder = new StringDecoder('utf8'),
       configReader;
   if (mode === "enterprise") {
+  //@ajai : you have to call /../bin/config-tool --cConfig (for cConfiguration) and /../bin/config-tool --sConfig for
+  //Security configuration
     configReader = spawn(__dirname + "/../bin/config-tool" ,["--output", "/tmp/cdap-config.json"]);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('end', function onXmlReadEnd(data) {
