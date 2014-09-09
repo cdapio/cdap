@@ -32,7 +32,7 @@ public class GatewayUrlGenerator {
   public static String getBaseUrl(CConfiguration config, String hostname, int port, boolean ssl) {
 
     if (port <= 0) {
-      if (config.getBoolean(Constants.Security.Router.SSL_ENABLED)) {
+      if (config.getBoolean(Constants.SSL.SSL_ENABLED)) {
         port = Integer.parseInt(config.get(Constants.Router.ROUTER_SSL_PORT,
                                            Constants.Router.DEFAULT_ROUTER_SSL_PORT));
       } else {

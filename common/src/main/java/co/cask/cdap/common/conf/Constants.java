@@ -416,6 +416,14 @@ public final class Constants {
   }
 
   /**
+   * SSL configuration.
+   */
+  public static final class SSL {
+    /** Enables SSL */
+    public static final String SSL_ENABLED = "ssl.enabled";
+  }
+
+  /**
    * Security configuration.
    */
   public static final class Security {
@@ -455,8 +463,6 @@ public final class Constants {
      * Security configuration for Router.
      */
     public static final class Router {
-      /** Enables SSL */
-      public static final String SSL_ENABLED = "router.ssl.enabled";
       /** SSL keystore location */
       public static final String SSL_KEYSTORE_PATH = "router.ssl.keystore.path";
       /** SSL keystore type */
@@ -471,8 +477,6 @@ public final class Constants {
      * Security configuration for ExternalAuthenticationServer.
      */
     public static final class AuthenticationServer {
-      /** Enables SSL */
-      public static final String SSL_ENABLED = "security.auth.server.ssl.enabled";
       /** SSL port */
       public static final String SSL_PORT = "security.auth.server.ssl.bind.port";
       /** SSL keystore location */

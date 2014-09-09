@@ -48,7 +48,7 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
 
     CConfiguration cConf = CConfiguration.create();
     SConfiguration sConf = SConfiguration.create();
-    cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "true");
+    cConf.set(Constants.SSL.SSL_ENABLED, "true");
     sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, certUrl.getPath());
 
     configuration = cConf;
