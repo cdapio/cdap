@@ -17,44 +17,45 @@
 package co.cask.cdap.common.conf;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.GsonBuilder;
 
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A tool to save the CConfiguration as Json.
  */
 public class ConfigurationJsonTool {
 
-  public static void exportToJson(String outputFile) throws IOException {
-    CConfiguration config = CConfiguration.create();
+  public static void exportToJson(String configParam, Appendable output) {
+    Configuration config;
+    if (configParam.equals("--cConfig")) {
+      config = CConfiguration.create();
+    } else if (configParam.equals("--sConfig")) {
+      config = SConfiguration.create();
+    } else {
+      return;
+    }
+
     Map<String, String> map = Maps.newHashMapWithExpectedSize(config.size());
     for (Map.Entry<String, String> entry : config) {
       map.put(entry.getKey(), entry.getValue());
     }
-    FileWriter writer = new FileWriter(outputFile);
-    try {
-      new GsonBuilder().setPrettyPrinting().create().toJson(map, writer);
-    } finally {
-      writer.close();
-    }
+    new GsonBuilder().setPrettyPrinting().create().toJson(map, output);
   }
 
   public static void main(String[] args) {
 
     String programName = System.getProperty("script", "ConfigurationJsonTool");
-
-    if (args.length != 2 || !"--output".equals(args[0])) {
-      System.err.println("Usage: " + programName + " --output <file name>");
+    Set<String> validArgument = Sets.newHashSet();
+    validArgument.add("--cConfig");
+    validArgument.add("--sConfig");
+    if (args.length != 1 || !(validArgument.contains(args[0].trim()))) {
+      System.err.println("Usage: " + programName + "--cConfig or " + programName + " --sConfig");
       System.exit(1);
     }
-    String outputFile = args[1];
-    try {
-      exportToJson(outputFile);
-    } catch (IOException e) {
-      System.err.println("Error writing to file '" + outputFile + "': " + e.getMessage());
-    }
+    exportToJson(args[0].trim(), System.out);
   }
 }

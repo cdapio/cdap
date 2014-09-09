@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.Executor;
@@ -51,14 +52,22 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-    ConfigurationJsonTool.exportToJson(JSON_PATH);
-    ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
-    builder.redirectErrorStream(true);
-    LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");
-    process = builder.start();
-    final InputStream is = process.getInputStream();
-    final InputStreamReader isr = new InputStreamReader(is);
-    bufferedReader = new BufferedReader(isr);
+    FileWriter writer = null;
+    try {
+      writer = new FileWriter(JSON_PATH);
+      ConfigurationJsonTool.exportToJson("cConfig", writer);
+      ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
+      builder.redirectErrorStream(true);
+      LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");
+      process = builder.start();
+      final InputStream is = process.getInputStream();
+      final InputStreamReader isr = new InputStreamReader(is);
+      bufferedReader = new BufferedReader(isr);
+    } finally {
+      if (writer != null) {
+        writer.close();
+      }
+    }
   }
 
   /**
