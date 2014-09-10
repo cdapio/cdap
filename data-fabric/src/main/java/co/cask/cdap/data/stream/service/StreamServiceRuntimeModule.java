@@ -39,7 +39,7 @@ public final class StreamServiceRuntimeModule extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNodeModules() {
+  public Module getStandaloneModules() {
     return new StreamServiceModule() {
       @Override
       protected void configure() {

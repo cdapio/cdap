@@ -63,8 +63,8 @@ public class LocalQueueTest extends QueueTest {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
-      new LocationRuntimeModule().getSingleNodeModules(),
-      new DiscoveryRuntimeModule().getSingleNodeModules(),
+      new LocationRuntimeModule().getStandaloneModules(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
@@ -82,10 +82,10 @@ public class LocalQueueTest extends QueueTest {
   public void testInjection() throws IOException {
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
-      new LocationRuntimeModule().getSingleNodeModules(),
-      new DiscoveryRuntimeModule().getSingleNodeModules(),
+      new LocationRuntimeModule().getStandaloneModules(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
-      new DataFabricModules().getSingleNodeModules(),
+      new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule());
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     QueueProducer producer = factory.createProducer(QueueName.fromStream("bigriver"));

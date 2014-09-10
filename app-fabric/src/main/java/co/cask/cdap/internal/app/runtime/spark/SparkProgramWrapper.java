@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
-import co.cask.cdap.api.spark.JavaSparkJob;
-import co.cask.cdap.api.spark.ScalaSparkJob;
+import co.cask.cdap.api.spark.JavaSparkProgram;
+import co.cask.cdap.api.spark.ScalaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
@@ -27,23 +27,23 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
- * Class which wraps around user's job class to integrate the spark program with CDAP.
- * This first command line argument to this class is the name of the user's Spark job class followed by the arguments
- * which will be passed to user's job class.
+ * Class which wraps around user's program class to integrate the spark program with CDAP.
+ * This first command line argument to this class is the name of the user's Spark program class
+ * followed by the arguments which will be passed to user's program class.
  * This Wrapper class is submitted to Spark and it does the following:
  * <ol>
  * <li>
- * Validates that there is at least {@link SparkProgramWrapper#JOB_WRAPPER_ARGUMENTS_SIZE} command line arguments
+ * Validates that there is at least {@link SparkProgramWrapper#PROGRAM_WRAPPER_ARGUMENTS_SIZE} command line arguments
  * </li>
  * <li>
- * Gets the user's job class through Spark's ExecutorURLClassLoader.
+ * Gets the user's program class through Spark's ExecutorURLClassLoader.
  * </li>
  * <li>
- * Sets {@link SparkContext} to concrete implementation of {@link JavaSparkContext} if user job implements {@link
- * JavaSparkJob} or to {@link ScalaSparkContext} if user's job implements {@link ScalaSparkJob}
+ * Sets {@link SparkContext} to concrete implementation of {@link JavaSparkContext} if user program implements {@link
+ * JavaSparkProgram} or to {@link ScalaSparkContext} if user's program implements {@link ScalaSparkProgram}
  * </li>
  * <li>
- * Run user's job with extracted arguments from the argument list
+ * Run user's program with extracted arguments from the argument list
  * </li>
  * </ol>
  */
@@ -51,14 +51,12 @@ import java.lang.reflect.Method;
 public class SparkProgramWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramWrapper.class);
-  private static final int JOB_WRAPPER_ARGUMENTS_SIZE = 1;
+  private static final int PROGRAM_WRAPPER_ARGUMENTS_SIZE = 1;
   private final String[] arguments;
-  private final Class userJobClass;
+  private final Class userProgramClass;
   private static SparkContext sparkContext;
-  private static boolean scalaJobFlag;
+  private static boolean scalaProgramFlag;
 
-  // we are not calling it job because spark program defines job as operations/transformations which are sent to
-  // worker node so a spark program basically consists of multiple jobs
   // TODO: Get around Spark's limitation of only one SparkContext in a JVM and support multiple spark context:
   // REACTOR-950
   private static boolean sparkProgramSuccessful;
@@ -68,64 +66,66 @@ public class SparkProgramWrapper {
    * Constructor
    *
    * @param args the command line arguments
-   * @throws RuntimeException if the user's job class is not found
+   * @throws RuntimeException if the user's program class is not found
    */
   public SparkProgramWrapper(String[] args) {
     arguments = validateArgs(args);
     try {
-      // get the Spark job main class with the custom classloader created by spark which has the program and
+      // get the Spark program main class with the custom classloader created by spark which has the program and
       // dependency jar.
-      userJobClass = Class.forName(arguments[0], true, Thread.currentThread().getContextClassLoader());
+      userProgramClass = Class.forName(arguments[0], true, Thread.currentThread().getContextClassLoader());
     } catch (ClassNotFoundException cnfe) {
-      LOG.warn("Unable to find the user job class: {}", arguments[0], cnfe);
+      LOG.warn("Unable to find the program class: {}", arguments[0], cnfe);
       throw Throwables.propagate(cnfe);
     }
     setSparkContext();
   }
 
   public static void main(String[] args) {
-    new SparkProgramWrapper(args).instantiateUserJobClass();
+    new SparkProgramWrapper(args).instantiateUserProgramClass();
   }
 
   /**
    * Validates command line arguments being passed
-   * Expects at least {@link SparkProgramWrapper#JOB_WRAPPER_ARGUMENTS_SIZE} command line arguments to be present
+   * Expects at least {@link SparkProgramWrapper#PROGRAM_WRAPPER_ARGUMENTS_SIZE} command line arguments to be present
    *
    * @param arguments String[] the arguments
    * @return String[] if the command line arguments are sufficient else throws a {@link RuntimeException}
    * @throws IllegalArgumentException if the required numbers of command line arguments were not present
    */
   private String[] validateArgs(String[] arguments) {
-    if (arguments.length < JOB_WRAPPER_ARGUMENTS_SIZE) {
-      throw new IllegalArgumentException("Insufficient number of arguments. User's job class name followed by its " +
-                                           "arguments (if any) should be provided");
+    if (arguments.length < PROGRAM_WRAPPER_ARGUMENTS_SIZE) {
+      throw new IllegalArgumentException("Insufficient number of arguments. Program class name followed by its" +
+                                           " arguments (if any) should be provided");
     }
     return arguments;
   }
 
   /**
-   * Extracts arguments belonging to the user's job class
+   * Extracts arguments belonging to the user's program class
    *
-   * @return String[] of arguments with which user's job class should be called
+   * @return String[] of arguments with which user's program class should be called
    */
   private String[] extractUserArgs() {
-    String[] userJobArgs = new String[(arguments.length - JOB_WRAPPER_ARGUMENTS_SIZE)];
-    System.arraycopy(arguments, JOB_WRAPPER_ARGUMENTS_SIZE, userJobArgs, 0,
-                     (arguments.length - JOB_WRAPPER_ARGUMENTS_SIZE));
-    return userJobArgs;
+    //TODO: The arguments should not be constructed in this way. We are getting it from hconf and we will just create
+    // a string out of it. This will be fixed after we fix standalone distribution bug as its dependent on it.
+    String[] userProgramArgs = new String[(arguments.length - PROGRAM_WRAPPER_ARGUMENTS_SIZE)];
+    System.arraycopy(arguments, PROGRAM_WRAPPER_ARGUMENTS_SIZE, userProgramArgs, 0,
+                     (arguments.length - PROGRAM_WRAPPER_ARGUMENTS_SIZE));
+    return userProgramArgs;
   }
 
   /**
-   * Instantiate an object of user's job class and call {@link #runUserJob(Object)} to run it
+   * Instantiate an object of user's program class and call {@link #runUserProgram(Object)} to run it
    *
-   * @throws RuntimeException if failed to instantiate an object of user's job class
+   * @throws RuntimeException if failed to instantiate an object of user's program class
    */
-  private void instantiateUserJobClass() {
+  private void instantiateUserProgramClass() {
     try {
-      Object userJobObject = userJobClass.newInstance();
-      runUserJob(userJobObject);
+      Object userProgramObject = userProgramClass.newInstance();
+      runUserProgram(userProgramObject);
     } catch (InstantiationException ie) {
-      LOG.warn("Unable to instantiate an object of user's job class: {}", arguments[0], ie);
+      LOG.warn("Unable to instantiate an object of program class: {}", arguments[0], ie);
       throw Throwables.propagate(ie);
     } catch (IllegalAccessException iae) {
       LOG.warn("Illegal access to class: {}", arguments[0] + "or to its constructor", iae);
@@ -135,39 +135,40 @@ public class SparkProgramWrapper {
 
   /**
    * Sets the {@link SparkContext} to {@link JavaSparkContext} or to {@link ScalaSparkContext} depending on whether
-   * the user class implements {@link JavaSparkJob} or {@link ScalaSparkJob}
+   * the user class implements {@link JavaSparkProgram} or {@link ScalaSparkProgram}
    */
   public void setSparkContext() {
-    if (JavaSparkJob.class.isAssignableFrom(userJobClass)) {
+    if (JavaSparkProgram.class.isAssignableFrom(userProgramClass)) {
       sparkContext = new JavaSparkContext();
-    } else if (ScalaSparkJob.class.isAssignableFrom(userJobClass)) {
+    } else if (ScalaSparkProgram.class.isAssignableFrom(userProgramClass)) {
       sparkContext = new ScalaSparkContext();
-      scalaJobFlag = true;
+      scalaProgramFlag = true;
     } else {
-      throw new IllegalArgumentException("User's Spark Job must implement either JavaSparkJob or ScalaSparkJob");
+      String error = "Spark program must implement either JavaSparkProgram or ScalaSparkProgram";
+      throw new IllegalArgumentException(error);
     }
   }
 
   /**
-   * Extracts arguments which belongs to user's job and then invokes the run method on the user's job object with the
-   * arguments and the appropriate implementation {@link SparkContext}
+   * Extracts arguments which belongs to user's program and then invokes the run method on the user's program object
+   * with the arguments and the appropriate implementation {@link SparkContext}
    *
-   * @param userJobObject the user job's object
-   * @throws RuntimeException if failed to invokeUserJob main function on the user's job object
+   * @param userProgramObject the user program's object
+   * @throws RuntimeException if failed to invokeUserProgram main function on the user's program object
    */
-  private void runUserJob(Object userJobObject) {
-    String[] userJobArgs = extractUserArgs();
+  private void runUserProgram(Object userProgramObject) {
+    String[] userprogramArgs = extractUserArgs();
     try {
-      Method userJobMain = userJobClass.getMethod("run", String[].class, SparkContext.class);
-      userJobMain.invoke(userJobObject, userJobArgs, sparkContext);
+      Method userProgramMain = userProgramClass.getMethod("run", String[].class, SparkContext.class);
+      userProgramMain.invoke(userProgramObject, userprogramArgs, sparkContext);
     } catch (NoSuchMethodException nsme) {
-      LOG.warn("Unable to find run method in user's job class: {}", userJobObject.getClass().getName(), nsme);
+      LOG.warn("Unable to find run method in program class: {}", userProgramObject.getClass().getName(), nsme);
       throw Throwables.propagate(nsme);
     } catch (IllegalAccessException iae) {
-      LOG.warn("Unable to access run method in user's job class: {}", userJobObject.getClass().getName(), iae);
+      LOG.warn("Unable to access run method in program class: {}", userProgramObject.getClass().getName(), iae);
       throw Throwables.propagate(iae);
     } catch (InvocationTargetException ite) {
-      LOG.warn("User's job class run method threw an exception", ite);
+      LOG.warn("Program class run method threw an exception", ite);
       throw Throwables.propagate(ite);
     }
   }
@@ -183,7 +184,7 @@ public class SparkProgramWrapper {
    * Stops the Spark program by calling {@link org.apache.spark.SparkContext#stop()}
    */
   public static void stopSparkProgram() {
-    if (scalaJobFlag) {
+    if (scalaProgramFlag) {
       ((org.apache.spark.SparkContext) getSparkContext().getOriginalSparkContext()).stop();
     } else {
       ((org.apache.spark.api.java.JavaSparkContext) getSparkContext().getOriginalSparkContext()).stop();
@@ -212,7 +213,7 @@ public class SparkProgramWrapper {
   }
 
   /**
-   * @param sparkProgramSuccessful a boolean to which the jobSuccess status will be set to
+   * @param sparkProgramSuccessful a boolean to which the programSuccess status will be set to
    */
   public static void setSparkProgramSuccessful(boolean sparkProgramSuccessful) {
     SparkProgramWrapper.sparkProgramSuccessful = sparkProgramSuccessful;
