@@ -304,7 +304,7 @@ When creating your queries, keep these limitations in mind:
   name is ``cdap_user_productcatalog``. Note that the table name is lower-case.
   
 For more examples of queries, please refer to the `Hive language manual
-<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`_.
+<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`__.
 
 Where to Go Next
 ================
