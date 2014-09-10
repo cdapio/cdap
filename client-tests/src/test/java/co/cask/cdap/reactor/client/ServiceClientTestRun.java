@@ -32,7 +32,7 @@ import org.junit.experimental.categories.Category;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Tests for {@link co.cask.cdap.client.ServiceClient}
+ * Tests for {@link ServiceClient}.
  */
 @Category(XSlowTests.class)
 public class ServiceClientTestRun extends ClientTestBase {

@@ -28,7 +28,7 @@ import org.junit.experimental.categories.Category;
 import java.util.List;
 
 /**
- * Test for {@link co.cask.cdap.client.MonitorClient}.
+ * Test for {@link MonitorClient}.
  */
 @Category(XSlowTests.class)
 public class MonitorClientTestRun extends ClientTestBase {
