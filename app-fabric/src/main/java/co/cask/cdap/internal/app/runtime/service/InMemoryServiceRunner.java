@@ -207,29 +207,29 @@ public class InMemoryServiceRunner implements ProgramRunner {
     /**
      * Change the number of instances of the running runnable.
      * @param runnableName Name of the runnable
-     * @param newInstanceCount New instance count
+     * @param newCount New instance count
      * @throws java.util.concurrent.ExecutionException
      * @throws InterruptedException
      */
-    private void changeInstances(String runnableName, final int newInstanceCount) throws Exception {
+    private void changeInstances(String runnableName, final int newCount) throws Exception {
       Map<Integer, ProgramController> liveRunnables = runnables.row(runnableName);
       int liveCount = liveRunnables.size();
-      if (liveCount == newInstanceCount) {
+      if (liveCount == newCount) {
         return;
       }
 
       // stop any extra runnables
-      if (liveCount > newInstanceCount) {
-        List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
-        for (int instanceId = liveCount - 1; instanceId >= newInstanceCount; instanceId--) {
+      if (liveCount > newCount) {
+        List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newCount);
+        for (int instanceId = liveCount - 1; instanceId >= newCount; instanceId--) {
           futures.add(runnables.remove(runnableName, instanceId).stop());
         }
         Futures.allAsList(futures).get();
       }
 
       // create more runnable instances, if necessary.
-      for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
-        ProgramOptions newProgramOpts = createRunnableOptions(runnableName, instanceId, newInstanceCount, getRunId());
+      for (int instanceId = liveCount; instanceId < newCount; instanceId++) {
+        ProgramOptions newProgramOpts = createRunnableOptions(runnableName, instanceId, newCount, getRunId());
         ProgramController programController = startRunnable(program, newProgramOpts);
         runnables.put(runnableName, instanceId, programController);
       }
