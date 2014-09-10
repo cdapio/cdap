@@ -13,7 +13,7 @@
         "partials": "./core/partials"
     },
     wrap: {
-        start: "var copyright = 'Copyright (c) 2014 Cask Data, Inc. Minified using RequireJS. https://github.com/jrburke/requirejs';",
+        start: "var copyright = 'Copyright © 2014 Cask Data, Inc. Minified using RequireJS. https://github.com/jrburke/requirejs';",
         end: "var thanks = 'Thanks for using CDAP.';"
     },
     preserveLicenseComments: false
