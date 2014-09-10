@@ -27,8 +27,8 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
 ### Build all examples
     mvn package -DskipTests -pl examples -am -amd -P examples
 
-### Build Singlenode distribution ZIP
-    mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
+### Build Standalone distribution ZIP
+    mvn clean package -DskipTests -P examples && mvn package -pl standalone -am -DskipTests -P dist,release
     
 ### Build the limited set of Javadocs used in distribution ZIP
     mvn clean package javadoc:javadoc -pl api -am -DskipTests -P release

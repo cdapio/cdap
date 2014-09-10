@@ -42,7 +42,7 @@ public class GatewayModule extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNodeModules() {
+  public Module getStandaloneModules() {
     return getCommonModules();
   }
 

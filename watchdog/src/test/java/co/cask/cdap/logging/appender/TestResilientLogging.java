@@ -44,7 +44,7 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.SingleNodeLogReader;
+import co.cask.cdap.logging.read.StandaloneLogReader;
 import com.continuuity.tephra.TransactionManager;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.collect.Iterables;
@@ -180,8 +180,8 @@ public class TestResilientLogging {
 
     // Verify - we should have at least 5 events.
     LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "");
-    SingleNodeLogReader logTail =
-      new SingleNodeLogReader(cConf, dsFramework, txSystemClient, new LocalLocationFactory());
+    StandaloneLogReader logTail =
+      new StandaloneLogReader(cConf, dsFramework, txSystemClient, new LocalLocationFactory());
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, -1, 10, Filter.EMPTY_FILTER,
                        logCallback1);

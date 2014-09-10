@@ -64,7 +64,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>singlenode</artifactId>
+      <artifactId>standalone</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

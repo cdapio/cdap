@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * For Running Services in Singlenode.
+ * For Running Services in standalone mode.
  */
 public class InMemoryServiceRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryServiceRunner.class);

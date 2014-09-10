@@ -160,7 +160,7 @@ public abstract class GatewayTestBase {
         new InMemorySecurityModule(),
         new GatewayModule().getInMemoryModules(),
         new AppFabricTestModule(conf),
-        new StreamServiceRuntimeModule().getSingleNodeModules()
+        new StreamServiceRuntimeModule().getStandaloneModules()
       ).with(new AbstractModule() {
         @Override
         protected void configure() {

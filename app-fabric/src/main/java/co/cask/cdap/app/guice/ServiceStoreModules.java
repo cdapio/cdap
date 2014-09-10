@@ -53,7 +53,7 @@ public class ServiceStoreModules {
     };
   }
 
-  public Module getSingleNodeModule() {
+  public Module getStandaloneModule() {
     return new PrivateModule() {
       @Override
       protected void configure() {

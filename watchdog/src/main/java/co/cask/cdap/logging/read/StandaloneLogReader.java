@@ -55,8 +55,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Reads log events in single node setup.
  */
-public class SingleNodeLogReader implements LogReader {
-  private static final Logger LOG = LoggerFactory.getLogger(SingleNodeLogReader.class);
+public class StandaloneLogReader implements LogReader {
+  private static final Logger LOG = LoggerFactory.getLogger(StandaloneLogReader.class);
 
   private static final int MAX_THREAD_POOL_SIZE = 20;
 
@@ -65,10 +65,8 @@ public class SingleNodeLogReader implements LogReader {
   private final ExecutorService executor;
 
   @Inject
-  public SingleNodeLogReader(CConfiguration cConf,
-                             DatasetFramework dsFramework,
-                             TransactionSystemClient txClient,
-                             LocalLocationFactory locationFactory) {
+  public StandaloneLogReader(CConfiguration cConf, DatasetFramework dsFramework,
+                             TransactionSystemClient txClient, LocalLocationFactory locationFactory) {
     String baseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
     Preconditions.checkNotNull(baseDir, "Log base dir cannot be null");
 

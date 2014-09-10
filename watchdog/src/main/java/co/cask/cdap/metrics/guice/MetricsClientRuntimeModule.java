@@ -51,7 +51,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNodeModules() {
+  public Module getStandaloneModules() {
     return new PrivateModule() {
       @Override
       protected void configure() {

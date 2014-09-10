@@ -27,8 +27,8 @@ public abstract class RuntimeModule {
 
   /**
    * Implementers of this method should return a combined Module that includes
-   * all of the modules and classes required to instantiate and run an in
-   * memory instance of Continuuity.
+   * all of the modules and classes required to instantiate and run an
+   * in-memory CDAP instance.
    *
    * @return A combined set of Modules required for InMemory execution.
    */
@@ -36,17 +36,17 @@ public abstract class RuntimeModule {
 
   /**
    * Implementers of this method should return a combined Module that includes
-   * all of the modules and classes required to instantiate and run an a single
-   * node instance of Continuuity.
+   * all of the modules and classes required to instantiate and run an a
+   * standalone CDAP instance.
    *
-   * @return A combined set of Modules required for SingleNode execution.
+   * @return A combined set of Modules required for standalone execution.
    */
-  public abstract Module getSingleNodeModules();
+  public abstract Module getStandaloneModules();
 
   /**
    * Implementers of this method should return a combined Module that includes
-   * all of the modules and classes required to instantiate and the fully
-   * distributed Continuuity PaaS.
+   * all of the modules and classes required to instantiate and run the fully
+   * distributed CDAP instance.
    *
    * @return A combined set of Modules required for distributed execution.
    */

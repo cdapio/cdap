@@ -71,7 +71,7 @@ public final class InMemoryConfigurator implements Configurator {
   /**
    * Executes the <code>Application.configure</code> within the same JVM.
    * <p>
-   * This method could be dangerous and should be used only in singlenode.
+   * This method could be dangerous and should be used only in standalone mode.
    * </p>
    *
    * @return A instance of {@link ListenableFuture}.

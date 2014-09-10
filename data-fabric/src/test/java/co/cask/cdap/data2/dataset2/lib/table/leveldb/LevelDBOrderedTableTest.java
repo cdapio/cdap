@@ -53,7 +53,7 @@ public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBO
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
       new ConfigModule(conf),
-      new LocationRuntimeModule().getSingleNodeModules(),
+      new LocationRuntimeModule().getStandaloneModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
     service = injector.getInstance(LevelDBOrderedTableService.class);

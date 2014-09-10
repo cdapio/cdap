@@ -29,7 +29,7 @@ public final class ProgramRunnerRuntimeModule extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNodeModules() {
+  public Module getStandaloneModules() {
     return new InMemoryProgramRunnerModule();
   }
 

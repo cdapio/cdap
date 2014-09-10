@@ -84,20 +84,20 @@ public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
   }
 
   private Injector createPersistentModules() {
-    ImmutableList<Module> singleNodeModules = ImmutableList.of(
+    ImmutableList<Module> standaloneModules = ImmutableList.of(
       new ConfigModule(cConf),
       new LocalConfigModule(),
       new IOModule(),
       new AuthModule(),
-      new LocationRuntimeModule().getSingleNodeModules(),
-      new DiscoveryRuntimeModule().getSingleNodeModules(),
-      new ProgramRunnerRuntimeModule().getSingleNodeModules(),
-      new DataFabricModules().getSingleNodeModules(),
+      new LocationRuntimeModule().getStandaloneModules(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
+      new ProgramRunnerRuntimeModule().getStandaloneModules(),
+      new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule(),
       new MetricsClientRuntimeModule().getNoopModules(),
-      new LoggingModules().getSingleNodeModules()
+      new LoggingModules().getStandaloneModules()
     );
-    return Guice.createInjector(singleNodeModules);
+    return Guice.createInjector(standaloneModules);
   }
 
   /**

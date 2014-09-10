@@ -158,7 +158,7 @@ check_before_start() {
   fi
 }
 
-# checks for any updates of singlenode
+# checks for any updates of standalone
 check_for_updates() {
   # check if connected to internet
   l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`
@@ -261,7 +261,7 @@ start() {
     rotate_log $APP_HOME/logs/cdap.log
     rotate_log $APP_HOME/logs/cdap-debug.log
 
-    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" co.cask.cdap.SingleNodeMain \
+    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
         --web-app-path ${WEB_APP_PATH} \
         >> $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
     echo $! > $pid

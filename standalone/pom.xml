@@ -28,8 +28,8 @@
   </parent>
 
 
-  <artifactId>singlenode</artifactId>
-  <name>Cask CDAP Singlenode</name>
+  <artifactId>standalone</artifactId>
+  <name>Cask CDAP Standalone</name>
   <packaging>jar</packaging>
 
   <dependencies>

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.reactor.client.common;
 
-import co.cask.cdap.SingleNodeMain;
+import co.cask.cdap.StandaloneMain;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import org.apache.hadoop.conf.Configuration;
@@ -30,35 +30,35 @@ import org.slf4j.LoggerFactory;
 /**
  *
  */
-public class SingleNodeTestBase {
+public class StandaloneTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SingleNodeTestBase.class);
+  private static final Logger LOG = LoggerFactory.getLogger(StandaloneTestBase.class);
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static SingleNodeMain singleNodeMain;
+  private static StandaloneMain standaloneMain;
   /**
    * Index of the current test being run.
-   * TODO: Hack to handle when SingleNodeTestBase is used as a suite and part of a suite.
+   * TODO: Hack to handle when StandaloneTestBase is used as a suite and part of a suite.
    */
   private static int testStackIndex = 0;
 
   @BeforeClass
   public static void setUpClass() throws Throwable {
     testStackIndex++;
-    if (singleNodeMain == null) {
+    if (standaloneMain == null) {
       try {
         CConfiguration cConf = CConfiguration.create();
         cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
-        // Start singlenode without UI
-        singleNodeMain = SingleNodeMain.createSingleNodeMain(false, null, cConf, new Configuration());
-        singleNodeMain.startUp();
+        // Start without UI
+        standaloneMain = StandaloneMain.create(false, null, cConf, new Configuration());
+        standaloneMain.startUp();
       } catch (Throwable e) {
-        LOG.error("Failed to start singlenode", e);
-        if (singleNodeMain != null) {
-          singleNodeMain.shutDown();
+        LOG.error("Failed to start standalone", e);
+        if (standaloneMain != null) {
+          standaloneMain.shutDown();
         }
         throw e;
       }
@@ -68,9 +68,9 @@ public class SingleNodeTestBase {
   @AfterClass
   public static void tearDownClass() {
     testStackIndex--;
-    if (singleNodeMain != null && testStackIndex == 0) {
-      singleNodeMain.shutDown();
-      singleNodeMain = null;
+    if (standaloneMain != null && testStackIndex == 0) {
+      standaloneMain.shutDown();
+      standaloneMain = null;
     }
   }
 }

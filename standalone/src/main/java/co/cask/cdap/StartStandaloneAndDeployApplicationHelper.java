@@ -22,19 +22,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * Class for deploying to singlenode.
+ * Class for deploying to standalone.
  */
-public final class StartSingleNodeAndDeployApplicationHelper {
+public final class StartStandaloneAndDeployApplicationHelper {
 
-  public static final String ARG_APPFABRIC_SINGLENODE_DEPLOY_COMMAND =
-    "appfabric.singlenode.deploy.command";
+  public static final String ARG_APPFABRIC_STANDALONE_DEPLOY_COMMAND =
+    "appfabric.standalone.deploy.command";
 
   public static void main(String[] args) throws IOException, InterruptedException {
-    // Starting Singlenode
-    SingleNodeMain.main(args);
+    // Starting Standalone
+    StandaloneMain.main(args);
 
     String deployCmd =
-      System.getProperty(ARG_APPFABRIC_SINGLENODE_DEPLOY_COMMAND);
+      System.getProperty(ARG_APPFABRIC_STANDALONE_DEPLOY_COMMAND);
     System.out.println("Deploying application...");
     Process proc = Runtime.getRuntime().exec(deployCmd);
 
