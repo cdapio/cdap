@@ -222,12 +222,12 @@
                 </td>
                 <td style="max-width: 200px;" class="instance-col center-align">
                   <div>
-                    <div class="inline-block">
+                    <div class="instances-requested">
                     <form {{action "changeInstances" service on="submit"}}>
                       {{input keyUp=keyPressed placeholder=service.requested maxlength="3" value=service.instancesInput class="services-instances-input" }}
                     </form>
                     </div>
-                    <div class="inline-block">
+                    <div class="instances-requested">
                       <button class="btn btn-blank btn-set" disabled="true" {{action changeInstances service on="click"}}>SET</button>
                     </div>
                   </div>
