@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
@@ -60,7 +61,7 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   }
 
   protected final TransactionContext getTransactionContext() {
-    Preconditions.checkState(context.getServiceContext() instanceof BasicHttpServiceContext,
+    Preconditions.checkState(context.getServiceContext() instanceof TransactionalHttpServiceContext,
                              "This instance of HttpServiceContext does not support transactions.");
     return ((BasicHttpServiceContext) context.getServiceContext()).getTransactionContext();
   }
