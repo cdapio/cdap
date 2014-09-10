@@ -44,12 +44,28 @@ Application's ``configure`` method::
     protected void configure() {
       setName("IpGeoLookupService");
       setDescription("Service to lookup locations of IP addresses.");
+      useDataset("IPGeoTable");
       addHandler(new IPGeoLookupHandler());
       addWorker(new LogCleanupWorker();
     }
   }
 
+Service Handlers
+----------------
+``ServiceHandler`` \s are used to handle and serve HTTP requests.
+
+You add handlers to your Service by calling the ``addHandler`` method in the Service's ``configure`` method.
+
+To use a Dataset within a handler, specify the Dataset by calling the ``useDataset`` method in the Service's
+``configure`` method and add the ``@UseDataSet`` annotation to the handler to obtain an instance of the Dataset.
+By default, operations on a Dataset are non-transactional. To use Datasets transactionally, annotate the handler
+method with ``@Transactional``. Each request to that method is then committed as a single transaction.
+
+::
+
   public class IPGeoLookupHandler implements AbstractHttpServiceHandler {
+    @UseDataSet("IPGeoTable")
+    Table table;
 
     @Path("lookup/{ip}")
     @GET

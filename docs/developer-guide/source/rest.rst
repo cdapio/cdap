@@ -195,6 +195,10 @@ An event can be sent to a Stream by sending an HTTP POST method to the URL of th
 
   POST <base-url>/streams/<stream-id>
 
+In cases where it is acceptable to have some events lost if the system crashes, you can send events to a Stream asynchronously with higher throughput by sending an HTTP POST method to the ``async`` URL::
+
+  POST <base-url>/streams/<stream-id>/async
+
 .. list-table::
    :widths: 20 80
    :header-rows: 1
@@ -213,7 +217,9 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The event was successfully received
+     - The event was successfully received and persisted
+   * - ``202 ACCEPTED``
+     - The event was successfully received but may not be persisted. Only the asynchronous endpoint will return this status code
    * - ``404 Not Found``
      - The Stream does not exist
 
@@ -1047,6 +1053,65 @@ Example
 
 .. rst2pdf: PageBreak
 
+Service HTTP API
+==================
+
+This interface supports making requests to the methods of an Application’s Services.
+See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
+Services.
+
+Requesting Service Methods
+-----------------------------
+To make a request to a Service's method, send the method's path as part of the request URL along with any additional
+headers and body.
+
+The request type is defined by the Service's method::
+
+  <REQUEST-TYPE> <base-url>/apps/<app-id>/services/<service-id>/methods/<method-id>
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<REQUEST-TYPE>``
+     - One of GET, POST, PUT and DELETE. This is defined by the handler method.
+   * - ``<app-id>``
+     - Name of the Application being called
+   * - ``<service-id>``
+     - Name of the Service being called
+   * - ``<method-id>``
+     - Name of the method being called
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``503 Service Unavailable``
+     - The Service is unavailable. For example, it may not yet have been started.
+
+Other responses are defined by the Service's method.
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/ExampleApplication/services/PingService/methods/ping``
+   * - Description
+     - Make a request to the ``ping`` endpoint of the PingService in ExampleApplication.
+   * - Response status code
+     - ``200 OK``
+
+.. rst2pdf: PageBreak
+
 CDAP Client HTTP API
 =======================
 
@@ -1262,51 +1327,6 @@ The response is formatted in JSON; an example of this is shown in the
 
   `CDAP Testing and Debugging Guide <http://cask.co/docs/cdap/current/en/debugging.html#debugging-cdap-applications>`__.
 
-Service Discovery
-------------------
-To find a list of the host and ports of an announced discoverable, you can query the Service's ``discover`` method via
-an HTTP GET method::
-
-  GET <base-url>/apps/<app-id>/services/<service-name>/discover/<discoverable-id>
-
-.. list-table::
-    :widths: 20 80
-    :header-rows: 1
-
-    * - Parameter
-      - Description
-    * - ``<app-id>``
-      - Name of the Application being called
-    * - ``<service-name>``
-      - Name of the Custom Service
-    * - ``<discoverable-id>``
-      - ID of ``TwillRunnable`` to be discovered
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookupService/discover/LookupByProductId``
-   * - Description
-     - Find the host and port of ``LookupByProductId`` service announced from ``CatalogLookupService``.
-   * - Result
-     - ::
-
-         [
-          {
-            "host": "node-1003.my.cluster.net",
-            "port": 40324
-          }
-         ]
-
-Accessing Services directly via their host and port is not advisable as it bypasses all CDAP security.
-
-Note that this feature is experimental and may be deprecated or removed in future releases.
-
-.. rst2pdf: PageBreak
 
 Scale
 -----

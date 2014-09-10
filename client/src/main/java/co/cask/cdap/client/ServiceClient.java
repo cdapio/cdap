@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpResponse;
@@ -59,44 +60,11 @@ public class ServiceClient {
    * @param serviceId ID of the service
    * @return {@link ServiceMeta} representing the service.
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public ServiceMeta get(String appId, String serviceId) throws IOException {
+  public ServiceMeta get(String appId, String serviceId) throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("apps/%s/services/%s", appId, serviceId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, ServiceMeta.class).getResponseObject();
-  }
-
-  public List<Discoverable> discover(String appId, String serviceId, final String discoverableId) throws Exception {
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/discover/%s", appId, serviceId, discoverableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND,
-                                                                    HttpURLConnection.HTTP_INTERNAL_ERROR,
-                                                                    HttpURLConnection.HTTP_UNAUTHORIZED);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new ServiceNotFoundException("Could not discover " + discoverableId);
-    } else if (response.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-      throw new AuthorizationException("Invalid or missing authorization");
-    } else if (response.getResponseCode() == HttpURLConnection.HTTP_INTERNAL_ERROR) {
-      throw new InternalError("Error attempting to discover " + discoverableId);
-    }
-
-    List<Discoverable> discoverables = new ArrayList<Discoverable>();
-    JsonParser parser = new JsonParser();
-    JsonArray array = (JsonArray) parser.parse(response.getResponseBodyAsString());
-
-    for (JsonElement element: array) {
-      final JsonObject object = element.getAsJsonObject();
-      discoverables.add(new Discoverable() {
-        @Override
-        public String getName() {
-          return discoverableId;
-        }
-
-        @Override
-        public InetSocketAddress getSocketAddress() {
-          return new InetSocketAddress(object.get("host").getAsString(), object.get("port").getAsInt());
-        }
-      });
-    }
-    return discoverables;
   }
 }

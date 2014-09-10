@@ -22,7 +22,17 @@ var connection = require('./connection');
 exports.Connection = connection.Connection;
 exports.createClient = connection.createClient;
 exports.createConnection = connection.createConnection;
+exports.createStdIOClient = connection.createStdIOClient;
+exports.createStdIOConnection = connection.createStdIOConnection;
 
 exports.createServer = require('./server').createServer;
 
 exports.Int64 = require('node-int64')
+
+/*
+ * Export transport and protocol so they can be used outside of a 
+ * cassandra/server context
+ */
+exports.TFramedTransport = require('./transport').TFramedTransport;
+exports.TBufferedTransport = require('./transport').TBufferedTransport;
+exports.TBinaryProtocol = require('./protocol').TBinaryProtocol;

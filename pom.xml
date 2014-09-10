@@ -102,7 +102,7 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.4.0-SNAPSHOT</netty.http.version>
+    <netty.http.version>0.4.0</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -115,6 +115,7 @@
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.0.1</spark.version>
+    <cdap.client.version>1.0.0-SNAPSHOT</cdap.client.version>
   </properties>
 
   <modules>
@@ -142,7 +143,7 @@
     <module>proto</module>
     <module>client</module>
     <module>cli</module>
-    <module>singlenode</module>
+    <module>standalone</module>
     <module>distributions</module>
   </modules>
 
@@ -1124,13 +1125,21 @@
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_2.10</artifactId>
         <version>${spark.version}</version>
-        <scope>provided</scope>
         <exclusions>
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+          </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.cdap</groupId>
+        <artifactId>authentication-client-java</artifactId>
+        <version>${cdap.client.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -1436,7 +1445,7 @@
                     <overWriteReleases>false</overWriteReleases>
                     <overWriteSnapshots>false</overWriteSnapshots>
                     <overWriteIfNewer>true</overWriteIfNewer>
-                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm</excludeGroupIds>
+                    <excludeGroupIds>org.apache.hadoop,org.apache.hbase,org.apache.hive,com.google.protobuf,org.datanucleus,asm, org.apache.spark</excludeGroupIds>
                     <excludeArtifactIds>hive-exec</excludeArtifactIds>
                     <prependGroupId>true</prependGroupId>
                     <silent>true</silent>

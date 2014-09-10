@@ -67,7 +67,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
     if (metricsCollectionService != null) {
       try {
         MetricsCollector collector = collectorCache.get(createContext(handlerInfo));
-        collector.gauge("request.received", 1);
+        collector.increment("request.received", 1);
       } catch (Throwable e) {
         LOG.error("Got exception while getting collector", e);
       }
@@ -97,7 +97,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         } else {
           name = "unknown";
         }
-        collector.gauge("response." + name, 1, "status:" + code);
+        collector.increment("response." + name, 1, "status:" + code);
       } catch (Throwable e) {
         LOG.error("Got exception while getting collector", e);
       }

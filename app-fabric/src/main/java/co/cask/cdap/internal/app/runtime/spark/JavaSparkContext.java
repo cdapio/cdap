@@ -16,11 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
+import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.api.java.JavaPairRDD;
 
@@ -31,12 +30,12 @@ import java.net.URL;
  */
 class JavaSparkContext extends AbstractSparkContext {
 
-  private final org.apache.spark.api.java.JavaSparkContext apacheContext;
+  org.apache.spark.api.java.JavaSparkContext originalSparkContext;
 
-  public JavaSparkContext(org.apache.spark.api.java.JavaSparkContext apacheContext, long logicalStartTime,
-                          SparkSpecification spec, Arguments runtimeArguments) {
-    super(logicalStartTime, spec, runtimeArguments);
-    this.apacheContext = apacheContext;
+  public JavaSparkContext() {
+    super();
+    this.originalSparkContext = new org.apache.spark.api.java.JavaSparkContext(getSparkConf());
+    originalSparkContext.sc().addSparkListener(new SparkProgramListener());
   }
 
   /**
@@ -47,12 +46,12 @@ class JavaSparkContext extends AbstractSparkContext {
    * @param vClass      the value class
    * @param <T>         type of the RDD
    * @return the {@link JavaPairRDD} created from the dataset to be read
+   * @throws {@link IllegalArgumentException} if the dataset to be read does not implements {@link BatchReadable}
    */
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass) {
-    Configuration hConf = new Configuration(getHConf());
-    hConf.set(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET, datasetName);
-    return (T) apacheContext.newAPIHadoopFile(datasetName, DataSetInputFormat.class, kClass, vClass, hConf);
+    Configuration hConf = setInputDataset(datasetName);
+    return (T) originalSparkContext.newAPIHadoopFile(datasetName, SparkDatasetInputFormat.class, kClass, vClass, hConf);
   }
 
   /**
@@ -66,9 +65,8 @@ class JavaSparkContext extends AbstractSparkContext {
    */
   @Override
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
-    Configuration hConf = new Configuration(getHConf());
-    hConf.set(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
-    ((JavaPairRDD) rdd).saveAsNewAPIHadoopFile(datasetName, kClass, vClass, DataSetOutputFormat.class, hConf);
+    Configuration hConf = setOutputDataset(datasetName);
+    ((JavaPairRDD) rdd).saveAsNewAPIHadoopFile(datasetName, kClass, vClass, SparkDatasetOutputFormat.class, hConf);
   }
 
   /**
@@ -78,8 +76,8 @@ class JavaSparkContext extends AbstractSparkContext {
    * @return the {@link org.apache.spark.api.java.JavaSparkContext}
    */
   @Override
-  public <T> T getApacheSparkContext() {
-    return (T) apacheContext;
+  public <T> T getOriginalSparkContext() {
+    return (T) originalSparkContext;
   }
 
   @Override

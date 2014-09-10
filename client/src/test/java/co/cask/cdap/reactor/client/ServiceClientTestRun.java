@@ -19,21 +19,17 @@ package co.cask.cdap.reactor.client;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ServiceMeta;
 import co.cask.cdap.reactor.client.app.FakeApp;
 import co.cask.cdap.reactor.client.app.FakeService;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
-import org.apache.twill.discovery.Discoverable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests for {@link ServiceClient}
@@ -46,19 +42,20 @@ public class ServiceClientTestRun extends ClientTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    ClientConfig config = new ClientConfig("localhost");
-    appClient = new ApplicationClient(config);
-    serviceClient = new ServiceClient(config);
-    programClient = new ProgramClient(config);
+    super.setUp();
+    appClient = new ApplicationClient(clientConfig);
+    serviceClient = new ServiceClient(clientConfig);
+    programClient = new ProgramClient(clientConfig);
   }
 
   @Test
-  public void testDiscover() throws Exception {
+  public void testGetServiceMeta() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
     programClient.start(FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
     assertProgramRunning(programClient, FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
-    List<Discoverable> discoverables = serviceClient.discover(FakeApp.NAME, FakeService.NAME, FakeService.NAME);
-    assertEquals(discoverables.size(), 1);
-    assertNotNull(discoverables.get(0).getSocketAddress());
+
+    ServiceMeta serviceMeta = serviceClient.get(FakeApp.NAME, FakeService.NAME);
+    assertEquals(serviceMeta.getName(), FakeService.NAME);
+    assertEquals(serviceMeta.getRunnables().size(), 1);
   }
 }

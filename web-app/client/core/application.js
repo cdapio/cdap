@@ -407,7 +407,7 @@ function(Components, Embeddables, HTTP, Util) {
        */
       //Call initially first so there is no wait, then call every 3 seconds.
       Em.run(function() {
-        callServiceStatus()
+        callServiceStatus();
         setInterval(function () {
           callServiceStatus();
         }, SERVICES_INTERVAL);
@@ -433,7 +433,7 @@ function(Components, Embeddables, HTTP, Util) {
 	        $("#failed-services-container").show();
 	      } else {
 	        $("#failed-services-container").hide();
-	      }      	
+	      }
       }
     });
 };
@@ -468,7 +468,7 @@ function(Components, Embeddables, HTTP, Util) {
 		}
 	};
 
-	Em.run.next(function() {			
+	Em.run.next(function() {
 		$('#warning-close').click(function() {
 			$('#warning').hide();
 		});

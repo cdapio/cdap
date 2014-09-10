@@ -22,6 +22,7 @@ import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.DatasetModuleAlreadyExistsException;
 import co.cask.cdap.client.exception.DatasetModuleCannotBeDeletedException;
 import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
@@ -58,10 +59,11 @@ public class DatasetModuleClient {
    *
    * @return list of {@link DatasetModuleMeta}s.
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public List<DatasetModuleMeta> list() throws IOException {
+  public List<DatasetModuleMeta> list() throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("data/modules");
-    return ObjectResponse.fromJsonBody(restClient.execute(HttpMethod.GET, url),
+    return ObjectResponse.fromJsonBody(restClient.execute(HttpMethod.GET, url, config.getAccessToken()),
                                        new TypeToken<List<DatasetModuleMeta>>() { }).getResponseObject();
   }
 
@@ -82,7 +84,8 @@ public class DatasetModuleClient {
     Map<String, String> headers = ImmutableMap.of("X-Continuuity-Class-Name", className);
     HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(moduleJarFile).build();
 
-    HttpResponse response = restClient.upload(request, HttpURLConnection.HTTP_BAD_REQUEST,
+    HttpResponse response = restClient.upload(request, config.getAccessToken(),
+                                              HttpURLConnection.HTTP_BAD_REQUEST,
                                               HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(String.format("Module jar file does not exist: %s", moduleJarFile));
@@ -99,12 +102,15 @@ public class DatasetModuleClient {
    * usually due to other dataset modules or dataset instances using the dataset module
    * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public void delete(String moduleName)
-    throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException, IOException {
+    throws DatasetModuleCannotBeDeletedException, DatasetModuleNotFoundException, IOException,
+    UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, HttpURLConnection.HTTP_CONFLICT,
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_CONFLICT,
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       throw new DatasetModuleCannotBeDeletedException(moduleName);
@@ -119,10 +125,12 @@ public class DatasetModuleClient {
    * @throws DatasetModuleCannotBeDeletedException if one of the dataset modules cannot be deleted,
    * usually due to existing dataset instances using the dataset module
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public void deleteAll() throws DatasetModuleCannotBeDeletedException, IOException {
+  public void deleteAll() throws DatasetModuleCannotBeDeletedException, IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL("data/modules");
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, HttpURLConnection.HTTP_CONFLICT);
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_CONFLICT);
     if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
       // TODO: exception for all modules
       throw new DatasetModuleCannotBeDeletedException(null);
@@ -136,10 +144,13 @@ public class DatasetModuleClient {
    * @return {@link DatasetModuleMeta} of the dataset module
    * @throws DatasetModuleNotFoundException if the dataset module with the specified name was not found
    * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public DatasetModuleMeta get(String moduleName) throws DatasetModuleNotFoundException, IOException {
+  public DatasetModuleMeta get(String moduleName) throws DatasetModuleNotFoundException, IOException,
+    UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, HttpURLConnection.HTTP_NOT_FOUND);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new DatasetModuleNotFoundException(moduleName);
     }

@@ -310,6 +310,18 @@
       <description>How often to run Stream file cleanup process in milliseconds</description>
     </property>
 
+    <property>
+      <name>stream.async.worker.threads</name>
+      <value>${stream.worker.threads}</value>
+      <description>Number of async worker threads for handling async write request</description>
+    </property>
+
+    <property>
+      <name>stream.async.queue.size</name>
+      <value>100</value>
+      <description>Queue size per async worker thread for queuing up async write request</description>
+    </property>
+
     <!--
         Data Fabric Configuration
     -->
@@ -624,11 +636,34 @@
     </property>
 
     <property>
-        <name>router.forward.rule</name>
-        <value>10000:gateway,20000:webapp/$HOST</value>
-        <description>Forward rules for router (port:service -> forward port to service)</description>
+      <name>router.webapp.enabled</name>
+      <value>false</value>
+      <description>Specifies if webapp listening service should be started at Router</description>
     </property>
 
+    <property>
+        <name>router.bind.port</name>
+        <value>10000</value>
+        <description>Router listening port for gateway</description>
+    </property>
+
+    <property>
+        <name>router.webapp.bind.port</name>
+        <value>20000</value>
+        <description>Router listening port for webapp</description>
+    </property>
+
+    <property>
+        <name>router.ssl.bind.port</name>
+        <value>9443</value>
+        <description>Secure router listening port for gateway</description>
+    </property>
+
+    <property>
+        <name>router.ssl.webapp.bind.port</name>
+        <value>20443</value>
+        <description>Secure router listening port for webapp</description>
+    </property>
 
     <!-- Sets whether Devsuite is in Cloud or not -->
     <property>
@@ -938,7 +973,7 @@
     </property>
 
     <property>
-        <name>security.auth.server.port</name>
+        <name>security.auth.server.bind.port</name>
         <value>10009</value>
     </property>
 
@@ -1019,7 +1054,7 @@
   </property>
 
   <property>
-    <name>security.auth.server.ssl.port</name>
+    <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
   </property>
 
@@ -1028,21 +1063,25 @@
     <value>JKS</value>
   </property>
 
-  <!-- Security configuration for the router -->
-
+  <!-- Front Configuration-->
   <property>
     <name>router.ssl.enabled</name>
     <value>false</value>
   </property>
 
   <property>
-    <name>router.ssl.port</name>
+    <name>router.ssl.bind.port</name>
     <value>9443</value>
   </property>
 
   <property>
-    <name>router.ssl.keystore.type</name>
-    <value>JKS</value>
+    <name>dashboard.https.enabled</name>
+    <value>false</value>
+  </property>
+
+  <property>
+    <name>router.server.address</name>
+    <value>localhost</value>
   </property>
 
 </configuration>

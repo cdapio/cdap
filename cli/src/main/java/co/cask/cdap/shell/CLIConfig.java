@@ -17,6 +17,8 @@
 package co.cask.cdap.shell;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.shell.command.VersionCommand;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
@@ -35,21 +37,27 @@ import java.util.List;
  */
 public class CLIConfig {
 
-  public static final int PORT = 10000;
+  private static final int DEFAULT_PORT = 10000;
+  private static final int DEFAULT_SSL_PORT = 443;
+  private static final boolean DEFAULT_SSL = false;
 
   private final ClientConfig clientConfig;
   private final String version;
-
   private String hostname;
   private List<HostnameChangeListener> hostnameChangeListeners;
+  private int port;
+  private int sslPort;
 
   /**
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
-   * @throws java.net.URISyntaxException
    */
-  public CLIConfig(String hostname) throws URISyntaxException {
+  public CLIConfig(String hostname) {
     this.hostname = Objects.firstNonNull(hostname, "localhost");
-    this.clientConfig = new ClientConfig(hostname, PORT);
+    this.port = DEFAULT_PORT;
+    this.sslPort = DEFAULT_SSL_PORT;
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(hostname, port, DEFAULT_SSL);
+    this.clientConfig = new ClientConfig(hostname, port, authenticationClient);
     this.version = tryGetVersion();
     this.hostnameChangeListeners = Lists.newArrayList();
   }
@@ -72,6 +80,14 @@ public class CLIConfig {
     return hostname;
   }
 
+  public int getPort() {
+    return port;
+  }
+
+  public int getSslPort() {
+    return sslPort;
+  }
+
   public ClientConfig getClientConfig() {
     return clientConfig;
   }
@@ -80,9 +96,14 @@ public class CLIConfig {
     return version;
   }
 
-  public void setHostname(String hostname) throws URISyntaxException {
+  public void setConnection(String hostname, int port, boolean ssl) throws URISyntaxException {
     this.hostname = hostname;
-    this.clientConfig.setHostnameAndPort(hostname, PORT);
+    if (ssl) {
+      this.sslPort = port;
+    } else {
+      this.port = port;
+    }
+    this.clientConfig.setHostnameAndPort(hostname, port, ssl);
     for (HostnameChangeListener listener : hostnameChangeListeners) {
       listener.onHostnameChanged(hostname);
     }

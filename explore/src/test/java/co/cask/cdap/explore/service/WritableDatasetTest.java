@@ -20,8 +20,9 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
-import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.XSlowTests;
 import com.continuuity.tephra.Transaction;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.AfterClass;
@@ -30,10 +31,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.io.File;
+import java.net.URL;
+
 /**
  *
  */
-@Category(SlowTests.class)
+@Category(XSlowTests.class)
 public class WritableDatasetTest extends BaseHiveExploreServiceTest {
   @BeforeClass
   public static void start() throws Exception {
@@ -267,7 +271,77 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
     }
   }
 
-  // TODO test write from native table to dataset,
+  @Test
+  public void writeFromNativeTableIntoDatasetTest() throws Exception {
+
+    datasetFramework.addModule("kvTable", new KeyValueTableDefinition.KeyValueTableModule());
+    datasetFramework.addInstance("kvTable", "simple_table", DatasetProperties.EMPTY);
+    try {
+      URL loadFileUrl = getClass().getResource("/test_table.dat");
+      Assert.assertNotNull(loadFileUrl);
+
+      exploreClient.submit("create table test (first INT, second STRING) ROW FORMAT " +
+                             "DELIMITED FIELDS TERMINATED BY '\\t'").get().close();
+      exploreClient.submit("LOAD DATA LOCAL INPATH '" + new File(loadFileUrl.toURI()).getAbsolutePath() +
+                             "' INTO TABLE test").get().close();
+
+      exploreClient.submit("insert into table simple_table select * from test").get().close();
+
+      ExploreExecutionResult result = exploreClient.submit("select * from simple_table").get();
+      Assert.assertEquals(ImmutableList.of(1.0, "one"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(2.0, "two"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(3.0, "three"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(4.0, "four"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(5.0, "five"), result.next().getColumns());
+      Assert.assertFalse(result.hasNext());
+      result.close();
+
+    } finally {
+      exploreClient.submit("drop table if exists test").get().close();
+      datasetFramework.deleteInstance("simple_table");
+      datasetFramework.deleteModule("kvTable");
+    }
+  }
+
+  @Test
+  public void writeFromDatasetIntoNativeTableTest() throws Exception {
+
+    datasetFramework.addModule("kvTable", new KeyValueTableDefinition.KeyValueTableModule());
+    datasetFramework.addInstance("kvTable", "simple_table", DatasetProperties.EMPTY);
+    try {
+      exploreClient.submit("create table test (first INT, second STRING) ROW FORMAT " +
+                             "DELIMITED FIELDS TERMINATED BY '\\t'").get().close();
+
+      // Accessing dataset instance to perform data operations
+      KeyValueTableDefinition.KeyValueTable table =
+        datasetFramework.getDataset("simple_table", DatasetDefinition.NO_ARGUMENTS, null);
+      Assert.assertNotNull(table);
+
+      Transaction tx1 = transactionManager.startShort(100);
+      table.startTx(tx1);
+
+      table.put(10, "ten");
+      Assert.assertEquals("ten", table.get(10));
+
+      Assert.assertTrue(table.commitTx());
+      transactionManager.canCommit(tx1, table.getTxChanges());
+      transactionManager.commit(tx1);
+      table.postTxCommit();
+
+      exploreClient.submit("insert into table test select * from simple_table").get().close();
+
+      ExploreExecutionResult result = exploreClient.submit("select * from test").get();
+      Assert.assertEquals(ImmutableList.of(10.0, "ten"), result.next().getColumns());
+      Assert.assertFalse(result.hasNext());
+      result.close();
+
+    } finally {
+      exploreClient.submit("drop table if exists test").get().close();
+      datasetFramework.deleteInstance("simple_table");
+      datasetFramework.deleteModule("kvTable");
+    }
+  }
+
   // TODO test insert overwrite table: overwrite is the same as into
   // TODO test trying to write with incompatible types
 }

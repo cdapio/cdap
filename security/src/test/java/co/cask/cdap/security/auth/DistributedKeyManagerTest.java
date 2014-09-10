@@ -36,7 +36,9 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.zookeeper.MiniZooKeeperCluster;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.apache.zookeeper.ZooDefs;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -53,7 +55,6 @@ import static org.junit.Assert.assertEquals;
 public class DistributedKeyManagerTest extends TestTokenManager {
   private static final Logger LOG = LoggerFactory.getLogger(DistributedKeyManagerTest.class);
   private static MiniZooKeeperCluster zkCluster;
-  private static String zkConnectString;
   private static Injector injector1;
   private static Injector injector2;
 
@@ -61,7 +62,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   public static void setup() throws Exception {
     HBaseTestingUtility testUtil = new HBaseTestingUtility();
     zkCluster = testUtil.startMiniZKCluster();
-    zkConnectString = testUtil.getConfiguration().get(HConstants.ZOOKEEPER_QUORUM) + ":"
+    String zkConnectString = testUtil.getConfiguration().get(HConstants.ZOOKEEPER_QUORUM) + ":"
       + zkCluster.getClientPort();
     LOG.info("Running ZK cluster at " + zkConnectString);
     CConfiguration cConf1 = CConfiguration.create();
@@ -114,6 +115,18 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     tokenManager2.stopAndWait();
   }
 
+  @Test
+  public void testGetACLs() throws Exception {
+    CConfiguration kerbConf = CConfiguration.create();
+    kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "prinicpal@REALM.NET");
+    kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, "/path/to/keytab");
+    Assert.assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, DistributedKeyManager.getACLs(kerbConf));
+
+    CConfiguration noKerbConf = CConfiguration.create();
+    noKerbConf.unset(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    Assert.assertEquals(ZooDefs.Ids.OPEN_ACL_UNSAFE, DistributedKeyManager.getACLs(noKerbConf));
+  }
+
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() {
     try {
@@ -144,7 +157,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
 
   private static class WaitableDistributedKeyManager extends DistributedKeyManager {
     public WaitableDistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClientService zk) {
-      super(conf, codec, zk);
+      super(conf, codec, zk, Lists.newArrayList(ZooDefs.Ids.OPEN_ACL_UNSAFE));
     }
 
     public void waitForLeader(long duration, TimeUnit unit) throws InterruptedException, TimeoutException {

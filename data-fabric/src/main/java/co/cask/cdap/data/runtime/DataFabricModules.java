@@ -30,7 +30,7 @@ public class DataFabricModules extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNodeModules() {
+  public Module getStandaloneModules() {
     return new DataFabricLocalModule();
   }
 

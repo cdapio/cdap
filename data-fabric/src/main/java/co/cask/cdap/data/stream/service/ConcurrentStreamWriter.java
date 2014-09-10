@@ -48,6 +48,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -109,24 +110,49 @@ public final class ConcurrentStreamWriter implements Closeable {
   /**
    * Writes an event to the given stream.
    *
-   * @param stream Name of the stream
+   * @param accountId The account id for the requester
+   * @param stream name of the stream
    * @param headers header of the event
    * @param body content of the event
    *
    * @throws IOException if failed to write to stream
    * @throws java.lang.IllegalArgumentException If the stream doesn't exists
    */
-  public boolean enqueue(String accountId, String stream,
+  public void enqueue(String accountId, String stream,
                          Map<String, String> headers, ByteBuffer body) throws IOException {
     EventQueue eventQueue = getEventQueue(accountId, stream);
     HandlerStreamEventData event = eventQueue.add(headers, body);
-    do {
-      if (!eventQueue.tryWrite()) {
-        Thread.yield();
-      }
-    } while (!event.isCompleted());
+    persistUntilCompleted(eventQueue, event);
 
-    return event.isSuccess();
+    if (!event.isSuccess()) {
+      Throwables.propagateIfInstanceOf(event.getFailure(), IOException.class);
+      throw new IOException("Unable to write stream event to " + stream, event.getFailure());
+    }
+  }
+
+  /**
+   * Writes an event to the given stream asynchronously. This method returns when the new event is stored to
+   * the in-memory event queue, but before persisted.
+   *
+   * @param accountId account id for the requester
+   * @param stream name of the stream
+   * @param headers header of the event
+   * @param body content of the event
+   * @param executor The executor for performing the async write flush operation
+   * @throws IOException if fails to get stream information
+   * @throws java.lang.IllegalArgumentException If the stream doesn't exists
+   */
+  public void asyncEnqueue(String accountId, String stream,
+                           Map<String, String> headers, ByteBuffer body, Executor executor) throws IOException {
+    // Put the event to the queue first and then execute the write asynchronously
+    final EventQueue eventQueue = getEventQueue(accountId, stream);
+    final HandlerStreamEventData event = eventQueue.add(headers, body);
+    executor.execute(new Runnable() {
+      @Override
+      public void run() {
+        persistUntilCompleted(eventQueue, event);
+      }
+    });
   }
 
   @Override
@@ -143,7 +169,6 @@ public final class ConcurrentStreamWriter implements Closeable {
       }
     }
   }
-
 
   private EventQueue getEventQueue(String accountId, String streamName) throws IOException {
     EventQueue eventQueue = eventQueues.get(streamName);
@@ -178,6 +203,20 @@ public final class ConcurrentStreamWriter implements Closeable {
       throw new IOException(e);
     } finally {
       createLock.unlock();
+    }
+  }
+
+  /**
+   * Persists events in the given eventQueue until the given event is persisted.
+   *
+   * @param eventQueue The queue containing events that needs to be persisted
+   * @param event The event that must be persisted
+   */
+  private void persistUntilCompleted(EventQueue eventQueue, HandlerStreamEventData event) {
+    while (!event.isCompleted()) {
+      if (!eventQueue.tryWrite()) {
+        Thread.yield();
+      }
     }
   }
 
@@ -291,7 +330,7 @@ public final class ConcurrentStreamWriter implements Closeable {
         }
         writer.flush();
         for (HandlerStreamEventData processed : processQueue) {
-          processed.setState(HandlerStreamEventData.State.SUCCESS);
+          processed.completed(null);
           bytesWritten += processed.getBody().remaining();
         }
         eventsWritten = processQueue.size();
@@ -302,15 +341,15 @@ public final class ConcurrentStreamWriter implements Closeable {
         Closeables.closeQuietly(writerSupplier.get());
 
         for (HandlerStreamEventData processed : processQueue) {
-          processed.setState(HandlerStreamEventData.State.FAILURE);
+          processed.completed(t);
         }
       } finally {
         writerFlag.set(false);
       }
 
       if (eventsWritten > 0) {
-        metricsCollector.gauge("collect.events", eventsWritten, streamName);
-        metricsCollector.gauge("collect.bytes", bytesWritten, streamName);
+        metricsCollector.increment("collect.events", eventsWritten, streamName);
+        metricsCollector.increment("collect.bytes", bytesWritten, streamName);
       }
 
       return true;
@@ -331,8 +370,9 @@ public final class ConcurrentStreamWriter implements Closeable {
           // 1. Shutting down of http service, which is fine to set to failure as all connections are closed already.
           // 2. When stream generation change. In this case, the client would received failure.
           HandlerStreamEventData data = queue.poll();
+          Throwable writerClosedException = new IOException("Stream writer closed").fillInStackTrace();
           while (data != null) {
-            data.setState(HandlerStreamEventData.State.FAILURE);
+            data.completed(writerClosedException);
             data = queue.poll();
           }
         } finally {
@@ -353,11 +393,11 @@ public final class ConcurrentStreamWriter implements Closeable {
      */
     enum State {
       PENDING,
-      SUCCESS,
-      FAILURE
+      COMPLETED
     }
 
     private State state;
+    private Throwable failure;
 
     public HandlerStreamEventData(Map<String, String> headers, ByteBuffer body) {
       super(headers, body);
@@ -369,11 +409,16 @@ public final class ConcurrentStreamWriter implements Closeable {
     }
 
     public boolean isSuccess() {
-      return state == State.SUCCESS;
+      return isCompleted() && (failure == null);
     }
 
-    public void setState(State state) {
-      this.state = state;
+    public void completed(Throwable failure) {
+      this.state = State.COMPLETED;
+      this.failure = failure;
+    }
+
+    public Throwable getFailure() {
+      return failure;
     }
   }
 

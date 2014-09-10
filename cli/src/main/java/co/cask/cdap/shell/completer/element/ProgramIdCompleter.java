@@ -17,6 +17,7 @@
 package co.cask.cdap.shell.completer.element;
 
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.shell.completer.StringsCompleter;
@@ -44,6 +45,8 @@ public class ProgramIdCompleter extends StringsCompleter {
           }
           return programIds;
         } catch (IOException e) {
+          return Lists.newArrayList();
+        } catch (UnAuthorizedAccessTokenException e) {
           return Lists.newArrayList();
         }
       }
