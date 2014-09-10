@@ -278,6 +278,25 @@ public class TestFrameworkTest extends TestBase {
     serviceStatusCheck(centralServiceManager, false);
   }
 
+  /**
+   * Checks to ensure that a particular runnable of the {@param serviceManager} has {@param expected} number of
+   * instances. If the initial check fails, it performs {@param retries} more attempts, sleeping 1 second before each
+   * successive attempt.
+   */
+  private void runnableInstancesCheck(ServiceManager serviceManager, String runnableName,
+                                      int expected, int retries) throws InterruptedException {
+    for (int i = 0; i <= retries; i++) {
+      int actualInstances = serviceManager.getRunnableInstances(runnableName);
+      if (actualInstances == expected) {
+        return;
+      }
+      if (i == retries) {
+        Assert.assertEquals(expected, actualInstances);
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+  }
+
   @Category(SlowTests.class)
   @Test
   public void testServiceRunnableInstances() throws Exception {
@@ -286,31 +305,30 @@ public class TestFrameworkTest extends TestBase {
       ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
       serviceStatusCheck(serviceManager, true);
 
+      String runnableName = AppUsingGetServiceURL.SERVICE_WITH_WORKER;
+      int retries = 5;
+
       // Should be 1 instance when first started.
-      int actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-      Assert.assertEquals(actualInstances, 1);
+      runnableInstancesCheck(serviceManager, runnableName, 1, retries);
 
       // Test increasing instances.
-      serviceManager.setRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER, 5);
-      actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-      Assert.assertEquals(actualInstances, 5);
+      serviceManager.setRunnableInstances(runnableName, 5);
+      runnableInstancesCheck(serviceManager, runnableName, 5, retries);
 
       // Test decreasing instances.
-      serviceManager.setRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER, 2);
-      actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-      Assert.assertEquals(actualInstances, 2);
+      serviceManager.setRunnableInstances(runnableName, 2);
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries);
 
       // Test requesting same number of instances.
-      serviceManager.setRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER, 2);
-      actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-      Assert.assertEquals(actualInstances, 2);
+      serviceManager.setRunnableInstances(runnableName, 2);
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries);
 
       serviceManager.stop();
       serviceStatusCheck(serviceManager, false);
 
       // Should be 0 instances when stopped.
-      actualInstances = serviceManager.getRunnableInstances(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-      Assert.assertEquals(actualInstances, 0);
+      runnableInstancesCheck(serviceManager, runnableName, 0, retries);
+
     } finally {
       applicationManager.stopAll();
     }
