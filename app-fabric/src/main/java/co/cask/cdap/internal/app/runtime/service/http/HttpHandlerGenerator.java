@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.service.http;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
@@ -547,7 +546,6 @@ final class HttpHandlerGenerator {
       mg.returnValue();
       mg.endMethod();
     }
-
 
     private void generateNonTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
       generateInvokeDelegate(mg, method);
