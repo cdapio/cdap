@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Cask Data, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,27 +16,33 @@
 
 package co.cask.cdap.shell.command;
 
+import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.shell.AbstractCommand;
-import co.cask.cdap.shell.CLIConfig;
-import com.google.inject.Inject;
+import co.cask.cdap.shell.ElementType;
 
 import java.io.PrintStream;
+import javax.inject.Inject;
 
 /**
- * Prints the version.
+ * Creates a stream.
  */
-public class VersionCommand extends AbstractCommand {
+public class CreateStreamCommand extends AbstractCommand {
 
-  private final CLIConfig cliConfig;
+  private final StreamClient streamClient;
 
   @Inject
-  public VersionCommand(CLIConfig cliConfig) {
-    super("version", null, "Prints the version");
-    this.cliConfig = cliConfig;
+  public CreateStreamCommand(StreamClient streamClient) {
+    super("stream", "<new-stream-id>", "Creates a " + ElementType.STREAM.getPrettyName());
+    this.streamClient = streamClient;
   }
 
   @Override
   public void process(String[] args, PrintStream output) throws Exception {
-    output.println(cliConfig.getVersion());
+    super.process(args, output);
+
+    String streamId = args[0];
+
+    streamClient.create(streamId);
+    output.printf("Successfully created stream with ID '%s'\n", streamId);
   }
 }
