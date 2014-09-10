@@ -35,7 +35,7 @@ public interface ServiceManager {
    *
    * @param runnableName Name of the runnable (can be either handler or worker).
    */
-  Integer getRunnableInstances(String runnableName);
+  int getRunnableInstances(String runnableName);
 
   /**
    * Stops the running service.

@@ -349,7 +349,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         }
 
         @Override
-        public Integer getRunnableInstances(String runnableName) {
+        public int getRunnableInstances(String runnableName) {
           try {
             MockResponder responder = new MockResponder();
             String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
@@ -357,8 +357,8 @@ public class DefaultApplicationManager implements ApplicationManager {
             HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
             serviceHttpHandler.getInstances(request, responder, applicationId, serviceName, runnableName);
             Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get runnable instances failed");
-            Map<String, String> decodedResponse = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { } );
-            return Integer.decode(decodedResponse.get("provisioned"));
+            Map<String, String> instances = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+            return Integer.parseInt(instances.get("provisioned"));
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
