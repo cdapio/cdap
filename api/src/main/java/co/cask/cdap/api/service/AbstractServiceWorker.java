@@ -77,12 +77,10 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
     return context;
   }
 
-
   @Override
   public void stop() {
     // default no-op
   }
-
 
   @Override
   public void destroy() {
