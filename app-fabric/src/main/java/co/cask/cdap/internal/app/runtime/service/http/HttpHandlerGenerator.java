@@ -547,12 +547,6 @@ final class HttpHandlerGenerator {
       mg.endMethod();
     }
 
-    private void generateNonTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
-      generateInvokeDelegate(mg, method);
-      mg.returnValue();
-      mg.endMethod();
-    }
-
     private void generateInvokeDelegate(GeneratorAdapter mg, Method method) {
       mg.loadThis();
       mg.invokeVirtual(classType,

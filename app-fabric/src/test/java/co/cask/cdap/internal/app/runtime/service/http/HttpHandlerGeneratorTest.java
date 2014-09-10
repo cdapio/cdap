@@ -169,7 +169,7 @@ public class HttpHandlerGeneratorTest {
   /**
    * An no-op implementation of {@link HttpServiceContext} that implements no-op transactional operations.
    */
-  public static class NoOpHttpServiceContext implements HttpServiceContext, TransactionalHttpServiceContext {
+  private static class NoOpHttpServiceContext implements HttpServiceContext, TransactionalHttpServiceContext {
 
     @Override
     public HttpServiceSpecification getSpecification() {

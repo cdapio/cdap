@@ -62,7 +62,7 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   protected final TransactionContext getTransactionContext() {
     Preconditions.checkState(context.getServiceContext() instanceof TransactionalHttpServiceContext,
                              "This instance of HttpServiceContext does not support transactions.");
-    return ((BasicHttpServiceContext) context.getServiceContext()).getTransactionContext();
+    return ((TransactionalHttpServiceContext) context.getServiceContext()).getTransactionContext();
   }
 
   protected final HttpServiceRequest wrapRequest(HttpRequest request) {
