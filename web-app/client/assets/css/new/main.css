@@ -1677,6 +1677,9 @@ span.log-icon.complete {
 .instance-wrapper div {
     display: inline-block;
 }
+.inline-block {
+    display: inline-block;
+}
 
 .instance-num {
     background-color: #3C4355;

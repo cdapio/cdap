@@ -221,13 +221,13 @@
                   {{/if}}
                 </td>
                 <td style="max-width: 200px;" class="instance-col center-align">
-                  <div class="instance-wrapper">
-                    <div>
+                  <div>
+                    <div class="inline-block">
                     <form {{action "changeInstances" service on="submit"}}>
                       {{input keyUp=keyPressed placeholder=service.requested maxlength="3" value=service.instancesInput class="services-instances-input" }}
                     </form>
                     </div>
-                    <div>
+                    <div class="inline-block">
                       <button class="btn btn-blank btn-set" disabled="true" {{action changeInstances service on="click"}}>SET</button>
                     </div>
                   </div>
