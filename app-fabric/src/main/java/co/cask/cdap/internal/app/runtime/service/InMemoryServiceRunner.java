@@ -205,14 +205,13 @@ public class InMemoryServiceRunner implements ProgramRunner {
     }
 
     /**
-     * Change the number of instances of the running runnable. Notice that this method needs to be
-     * synchronized as change of instances involves multiple steps that need to be completed all at once.
+     * Change the number of instances of the running runnable.
      * @param runnableName Name of the runnable
      * @param newInstanceCount New instance count
      * @throws java.util.concurrent.ExecutionException
      * @throws InterruptedException
      */
-    private synchronized void changeInstances(String runnableName, final int newInstanceCount) throws Exception {
+    private void changeInstances(String runnableName, final int newInstanceCount) throws Exception {
       Map<Integer, ProgramController> liveRunnables = runnables.row(runnableName);
       int liveCount = liveRunnables.size();
       if (liveCount == newInstanceCount) {
@@ -221,11 +220,11 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
       // stop any extra runnables
       if (liveCount > newInstanceCount) {
-        List<ListenableFuture<?>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
+        List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newInstanceCount);
         for (int instanceId = liveCount - 1; instanceId >= newInstanceCount; instanceId--) {
           futures.add(runnables.remove(runnableName, instanceId).stop());
         }
-        Futures.successfulAsList(futures).get();
+        Futures.allAsList(futures).get();
       }
 
       // create more runnable instances, if necessary.
