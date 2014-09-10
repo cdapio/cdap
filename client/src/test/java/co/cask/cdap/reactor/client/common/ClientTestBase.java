@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public abstract class ClientTestBase extends SingleNodeTestBase {
+public abstract class ClientTestBase extends StandaloneTestBase {
   protected static final String HOSTNAME = "localhost";
   protected static final int PORT = 10000;
 
