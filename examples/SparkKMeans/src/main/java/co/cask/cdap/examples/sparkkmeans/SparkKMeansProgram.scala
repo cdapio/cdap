@@ -16,7 +16,7 @@
 package co.cask.cdap.examples.sparkkmeans
 
 import breeze.linalg.{DenseVector, Vector, squaredDistance}
-import co.cask.cdap.api.spark.{ScalaSparkJob, SparkContext}
+import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.NewHadoopRDD
 import org.slf4j.{Logger, LoggerFactory}
@@ -24,8 +24,8 @@ import org.slf4j.{Logger, LoggerFactory}
 /**
  * Implementation of KMeans Clustering Spark job.
  */
-class SparkKMeansJobBuilder extends ScalaSparkJob {
-  private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkKMeansJobBuilder])
+class SparkKMeansProgram extends ScalaSparkProgram {
+  private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkKMeansProgram])
 
   def parseVector(line: String): Vector[Double] = {
     DenseVector(line.split(' ').map(_.toDouble))
@@ -44,23 +44,20 @@ class SparkKMeansJobBuilder extends ScalaSparkJob {
     bestIndex
   }
 
-  def showWarning() {
-    System.err.println(
-      """WARN: This is a naive implementation of KMeans Clustering and is given as an example!
-        |Please use the KMeans method found in org.apache.spark.mllib.clustering
-        |for more conventional use.
-      """.stripMargin)
-  }
-
   def run(args: Array[String], sc: SparkContext) {
-    showWarning()
-    val linesDataset: NewHadoopRDD[Array[Byte], String] = sc.readFromDataset("points", classOf[Array[Byte]], classOf[String])
+
+    LOG.info("Processing points data")
+
+    val linesDataset: NewHadoopRDD[Array[Byte], String] =
+      sc.readFromDataset("points", classOf[Array[Byte]], classOf[String])
     val lines = linesDataset.values
-    val data = lines.map(parseVector _).cache()
+    val data = lines.map(parseVector).cache()
 
     // Amount of centers to calculate
     val K = "2".toInt
     val convergeDist = "0.5".toDouble
+
+    LOG.info("Calculating canters")
 
     val kPoints = data.takeSample(withReplacement = false, K, 42).toArray
     var tempDist = 1.0
@@ -79,17 +76,20 @@ class SparkKMeansJobBuilder extends ScalaSparkJob {
       }
       LOG.debug("Finished iteration (delta = {})", tempDist)
     }
-    LOG.info("Center count {}", kPoints.size);
 
-    val centers = new Array[Tuple2[Array[Byte], String]](kPoints.size)
+    LOG.info("Center count {}", kPoints.size)
+
+    val centers = new Array[(Array[Byte], String)](kPoints.size)
     for (i <- kPoints.indices) {
-      LOG.debug("Center {}, {}", i, kPoints(i).toString);
-      centers(i) = new Tuple2(i.toString.getBytes, kPoints(i).toArray.mkString(","));
+      LOG.debug("Center {}, {}", i, kPoints(i).toString)
+      centers(i) = new Tuple2(i.toString.getBytes, kPoints(i).toArray.mkString(","))
     }
 
-    //Original Spark context
+    LOG.info("Writing centers data")
+
     val originalContext: org.apache.spark.SparkContext = sc.getOriginalSparkContext()
     sc.writeToDataset(originalContext.parallelize(centers), "centers", classOf[Array[Byte]], classOf[String])
+
     LOG.info("Done!")
   }
 }

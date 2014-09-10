@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright 2014 Cask Data, Inc.
+REM ## Copyright © 2014 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ SET APP_JAR_PREFIX=SparkKMeans
 SET APP_NAME=SparkKMeans
 SET FLOW_NAME=PointsFlow
 SET PROCEDURE_NAME=CentersProcedure
-SET SPARK_NAME=SparkKMeansJob
+SET SPARK_NAME=SparkKMeansProgram
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)

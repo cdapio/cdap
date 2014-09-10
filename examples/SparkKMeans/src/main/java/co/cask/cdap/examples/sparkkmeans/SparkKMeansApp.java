@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,7 +54,7 @@ public class SparkKMeansApp extends AbstractApplication {
     setDescription("Spark KMeans app");
     addStream(new Stream("pointsStream"));
     addFlow(new PointsFlow());
-    addSpark(new SparkKMeansJob());
+    addSpark(new SparkKMeansSpecification());
     addProcedure(new CentersProcedure());
 
     try {
@@ -72,13 +72,13 @@ public class SparkKMeansApp extends AbstractApplication {
   /**
    * A Spark job that uses KMeans algorithm.
    */
-  public static class SparkKMeansJob extends AbstractSpark {
+  public static class SparkKMeansSpecification extends AbstractSpark {
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
-        .setName("SparkKMeansJob")
-        .setDescription("Spark KMeans Job")
-        .setMainClassName(SparkKMeansJobBuilder.class.getName())
+        .setName("SparkKMeansProgram")
+        .setDescription("Spark KMeans Program")
+        .setMainClassName(SparkKMeansProgram.class.getName())
         .build();
     }
   }

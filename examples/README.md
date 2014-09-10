@@ -117,6 +117,10 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 - A simple example to illustrate how to read and write key/values in a Flow.
 
+## SparkKMeans
+
+- An example of usage K-Means clustering algorithm 
+
 ## Ticker
 
 - This application pulls in stock market activity data and stores it in Datasets that 
