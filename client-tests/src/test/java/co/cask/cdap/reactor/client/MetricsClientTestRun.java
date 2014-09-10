@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
- * Test for {@link MetricsClient}.
+ * Test for {@link co.cask.cdap.client.MetricsClient}.
  */
 @Category(XSlowTests.class)
 public class MetricsClientTestRun extends ClientTestBase {

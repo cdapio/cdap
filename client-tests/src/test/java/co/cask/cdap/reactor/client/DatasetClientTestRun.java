@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 /**
- * Test for {@link DatasetClient}, {@link DatasetModuleClient}, and {@link DatasetTypeClient}.
+ * Test for {@link co.cask.cdap.client.DatasetClient}, {@link co.cask.cdap.client.DatasetModuleClient}, and {@link co.cask.cdap.client.DatasetTypeClient}.
  */
 @Category(XSlowTests.class)
 public class DatasetClientTestRun extends ClientTestBase {

@@ -145,6 +145,7 @@
     <module>cli</module>
     <module>standalone</module>
     <module>distributions</module>
+    <module>client-tests</module>
   </modules>
 
   <dependencyManagement>

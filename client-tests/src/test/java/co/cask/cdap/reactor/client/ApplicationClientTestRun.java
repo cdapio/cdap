@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Test for {@link ApplicationClient}.
+ * Test for {@link co.cask.cdap.client.ApplicationClient}.
  */
 @Category(XSlowTests.class)
 public class ApplicationClientTestRun extends ClientTestBase {
