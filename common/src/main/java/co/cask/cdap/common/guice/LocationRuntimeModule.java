@@ -46,7 +46,7 @@ public final class LocationRuntimeModule extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNodeModules() {
+  public Module getStandaloneModules() {
     return new LocalLocationModule();
   }
 

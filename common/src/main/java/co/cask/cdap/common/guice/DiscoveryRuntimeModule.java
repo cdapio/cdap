@@ -40,7 +40,7 @@ public final class DiscoveryRuntimeModule extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNodeModules() {
+  public Module getStandaloneModules() {
     return new InMemoryDiscoveryModule();
   }
 

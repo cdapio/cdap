@@ -73,11 +73,11 @@ import java.net.InetAddress;
 import java.util.List;
 
 /**
- * Singlenode Main.
+ * Standalone Main.
  * NOTE: Use AbstractIdleService
  */
-public class SingleNodeMain {
-  private static final Logger LOG = LoggerFactory.getLogger(SingleNodeMain.class);
+public class StandaloneMain {
+  private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
   private final WebCloudAppService webCloudAppService;
   private final NettyRouter router;
@@ -100,7 +100,7 @@ public class SingleNodeMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
-  private SingleNodeMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
+  private StandaloneMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
     this.webCloudAppService = (webAppPath == null) ? null : new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
@@ -283,10 +283,10 @@ public class SingleNodeMain {
       }
     }
 
-    SingleNodeMain main = null;
+    StandaloneMain main = null;
 
     try {
-      main = createSingleNodeMain(inMemory, webAppPath);
+      main = create(inMemory, webAppPath);
       main.startUp();
     } catch (Throwable e) {
       System.err.println("Failed to start server. " + e.getMessage());
@@ -298,8 +298,8 @@ public class SingleNodeMain {
     }
   }
 
-  public static SingleNodeMain createSingleNodeMain(boolean inMemory) {
-    return createSingleNodeMain(inMemory, WebCloudAppService.WEB_APP);
+  public static StandaloneMain create(boolean inMemory) {
+    return create(inMemory, WebCloudAppService.WEB_APP);
   }
 
   /**
@@ -308,16 +308,15 @@ public class SingleNodeMain {
    * @param inMemory
    * @param webAppPath
    */
-  public static SingleNodeMain createSingleNodeMain(boolean inMemory, String webAppPath) {
-    return createSingleNodeMain(inMemory, webAppPath, CConfiguration.create(), new Configuration());
+  public static StandaloneMain create(boolean inMemory, String webAppPath) {
+    return create(inMemory, webAppPath, CConfiguration.create(), new Configuration());
   }
 
-  public static SingleNodeMain createSingleNodeMain(boolean inMemory, CConfiguration cConf, Configuration hConf) {
-    return createSingleNodeMain(inMemory, WebCloudAppService.WEB_APP, cConf, hConf);
+  public static StandaloneMain create(boolean inMemory, CConfiguration cConf, Configuration hConf) {
+    return create(inMemory, WebCloudAppService.WEB_APP, cConf, hConf);
   }
 
-  public static SingleNodeMain createSingleNodeMain(boolean inMemory, String webAppPath,
-                                                    CConfiguration cConf, Configuration hConf) {
+  public static StandaloneMain create(boolean inMemory, String webAppPath, CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     hConf.addResource("mapred-site-local.xml");
@@ -345,7 +344,7 @@ public class SingleNodeMain {
     List<Module> modules = inMemory ? createInMemoryModules(cConf, hConf)
       : createPersistentModules(cConf, hConf);
 
-    return new SingleNodeMain(modules, cConf, webAppPath);
+    return new StandaloneMain(modules, cConf, webAppPath);
   }
 
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
@@ -407,21 +406,21 @@ public class SingleNodeMain {
       new IOModule(),
       new MetricsHandlerModule(),
       new AuthModule(),
-      new DiscoveryRuntimeModule().getSingleNodeModules(),
-      new LocationRuntimeModule().getSingleNodeModules(),
-      new AppFabricServiceRuntimeModule().getSingleNodeModules(),
-      new ProgramRunnerRuntimeModule().getSingleNodeModules(),
-      new GatewayModule().getSingleNodeModules(),
-      new DataFabricModules().getSingleNodeModules(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
+      new LocationRuntimeModule().getStandaloneModules(),
+      new AppFabricServiceRuntimeModule().getStandaloneModules(),
+      new ProgramRunnerRuntimeModule().getStandaloneModules(),
+      new GatewayModule().getStandaloneModules(),
+      new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule(),
       new DataSetServiceModules().getLocalModule(),
-      new MetricsClientRuntimeModule().getSingleNodeModules(),
-      new LoggingModules().getSingleNodeModules(),
-      new RouterModules().getSingleNodeModules(),
-      new SecurityModules().getSingleNodeModules(),
-      new StreamServiceRuntimeModule().getSingleNodeModules(),
-      new ExploreRuntimeModule().getSingleNodeModules(),
-      new ServiceStoreModules().getSingleNodeModule(),
+      new MetricsClientRuntimeModule().getStandaloneModules(),
+      new LoggingModules().getStandaloneModules(),
+      new RouterModules().getStandaloneModules(),
+      new SecurityModules().getStandaloneModules(),
+      new StreamServiceRuntimeModule().getStandaloneModules(),
+      new ExploreRuntimeModule().getStandaloneModules(),
+      new ServiceStoreModules().getStandaloneModule(),
       new ExploreClientModule()
     );
   }
