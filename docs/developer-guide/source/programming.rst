@@ -619,7 +619,9 @@ declaration and (2) an injection:
 
 Processing Data: Spark (Standalone CDAP Only)
 =============================================
-**Spark** is used for in-memory cluster computing. It lets you load large sets of data into memory and query them repeatedly. This makes it suitable for both iterative and interactive jobs. Similar to MapReduce, Spark can access **Datasets** as both input and output. Spark jobs in CDAP can be written in either Java or Scala. 
+**Spark** is used for in-memory cluster computing. It lets you load large sets of data into memory and query them
+repeatedly. This makes it suitable for both iterative and interactive programs. Similar to MapReduce,
+Spark can access **Datasets** as both input and output. Spark programs in CDAP can be written in either Java or Scala.
 
 In the current release, Spark is supported only in the Standalone CDAP.
 
@@ -627,7 +629,7 @@ To process data using Spark, specify ``addSpark()`` in your Application specific
 
 	public void configure() {
 	  ...
-    	addSpark(new WordCountJob());
+    	addSpark(new WordCountProgram());
 
 You must implement the ``Spark`` interface, which requires the
 implementation of three methods:
@@ -638,21 +640,21 @@ implementation of three methods:
 
 ::
 
-  public class WordCountJob implements Spark {
+  public class WordCountProgram implements Spark {
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
-        .setName("WordCountJob")
+        .setName("WordCountProgram")
         .setDescription("Calculates word frequency")
         .setMainClassName("com.example.WordCounter")
         .build();
     }
 
 The configure method is similar to the one found in Flows and
-MapReduce jobs. It defines the name, description, and the class containing the main method of a Spark job.
+MapReduce jobs. It defines the name, description, and the class containing the main method of a Spark program.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
-Spark job is executed. Because many Spark jobs do not
+Spark program is executed. Because many Spark programs do not
 need this method, the ``AbstractSpark`` class provides a default
 implementation that does nothing::
 
@@ -661,9 +663,9 @@ implementation that does nothing::
     // Do nothing by default
   }
 
-The ``onFinish()`` method is invoked after the Spark job has
-finished. You could perform cleanup or send a notification of job
-completion, if that was required. Like ``beforeSubmit()``, as many Spark jobs do not
+The ``onFinish()`` method is invoked after the Spark program has
+finished. You could perform cleanup or send a notification of program
+completion, if that was required. Like ``beforeSubmit()``, as many Spark programs do not
 need this method, the ``AbstractSpark`` class also provides a default
 implementation for this method that does nothing::
 
@@ -676,31 +678,35 @@ CDAP SparkContext
 -------------------
 CDAP provides its own ``SparkContext`` which is needed to access **Datasets**.
 
-CDAP Spark programs must implement either ``JavaSparkJob`` or ``ScalaSparkJob``, depending upon the language (Java or Scala) in which the job is written. You can also access the Spark's ``SparkContext`` (for Scala jobs) and ``JavaSparkContext`` (for Java job) in your CDAP Spark job by calling ``getOriginalSparkContext()`` on CDAP ``SparkContext``.
+CDAP Spark programs must implement either ``JavaSparkProgram`` or ``ScalaSparkProgram``,
+depending upon the language (Java or Scala) in which the program is written. You can also access the Spark's
+``SparkContext`` (for Scala programs) and ``JavaSparkContext`` (for Java programs) in your CDAP Spark program by calling
+``getOriginalSparkContext()`` on CDAP ``SparkContext``.
 
 - Java::
 
-	public class MySparkJob implements JavaSparkJob {
-                @Override
-                public void run(String[] args, SparkContext sparkContext) {
-                        JavaSparkContext originalSparkContext = sparkContext.originalSparkContext();
-			 ...
-		}
-	}
+     public class MyJavaSparkProgram implements JavaSparkProgram {
+       @Override
+       public void run(String[] args, SparkContext sparkContext) {
+         JavaSparkContext originalSparkContext = sparkContext.originalSparkContext();
+           ...
+       }
+     }
 
 - Scala::
 
-	class ScalaSparkJob implements ScalaSparkJob {
-		override def run(args: Array[String], sparkContext: SparkContext) {
-			val originalSparkContext = sparkContext.originalSparkContext();
-			...
-		}
-	}
+    class MyScalaSparkProgram implements ScalaSparkProgram {
+      override def run(args: Array[String], sparkContext: SparkContext) {
+        val originalSparkContext = sparkContext.originalSparkContext();
+          ...
+        }
+    }
 
 Spark and Datasets
 ----------------------
-Spark jobs in CDAP can directly access **Dataset** similar to the way a MapReduce or
-Procedure can. These jobs can create Spark's Resilient Distributed Dataset (RDD) by reading a Datasets and also write RDD to a Dataset.
+Spark programs in CDAP can directly access **Dataset** similar to the way a MapReduce or
+Procedure can. These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a Datasets and also
+write RDD to a Dataset.
 
 - Creating an RDD from Dataset
 
