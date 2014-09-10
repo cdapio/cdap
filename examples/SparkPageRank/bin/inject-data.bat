@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright 2014 Cask Data, Inc.
+REM ## Copyright © 2014 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
 
 REM Set path for curl.exe
 SET PATH=%PATH%;%APP_HOME%\libexec
-SET STREAM=neighborUrlStream
+SET STREAM=neighborURLStream
 
 REM enable delayed expansion so that variables are expanded in the for loop
 SETLOCAL ENABLEDELAYEDEXPANSION

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright 2014 Cask Data, Inc.
+# Copyright © 2014 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -144,12 +144,12 @@ if [ "x$action" == "xdeploy" ]; then
   jar_path=`ls $dir/../target/SparkPageRank-*.jar`
   deploy_action $app $jar_path $host
 elif [ "x$action" == "xrun" ]; then
-  program_action $app "SparkPageRankJob" "spark" "start" $host
+  program_action $app "SparkPageRankProgram" "spark" "start" $host
 else
-  program_action $app "PageRankFlow" "flow" $action $host
+  program_action $app "URLPairFlow" "flow" $action $host
   program_action $app "RanksProcedure" "procedure" $action $host
 #  dont start and stop mapreduce if start/stop is specified
   if [ "x$action" == "xstatus" ]; then
-    program_action $app "SparkPageRankJob" "spark" $action $host
+    program_action $app "SparkPageRankProgram" "spark" $action $host
   fi
 fi

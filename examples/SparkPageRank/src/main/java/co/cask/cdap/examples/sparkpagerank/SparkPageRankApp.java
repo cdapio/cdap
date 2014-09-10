@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,9 +53,9 @@ public class SparkPageRankApp extends AbstractApplication {
   public void configure() {
     setName("SparkPageRank");
     setDescription("Spark page rank app");
-    addStream(new Stream("neighborUrlStream"));
-    addFlow(new PageRankFlow());
-    addSpark(new SparkPageRankJob());
+    addStream(new Stream("neighborURLStream"));
+    addFlow(new URLPairFlow());
+    addSpark(new SparkPageRankSpecification());
     addProcedure(new RanksProcedure());
 
     try {
@@ -65,7 +65,7 @@ public class SparkPageRankApp extends AbstractApplication {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
-      // because String are actual classes.
+      // because String and Double are actual classes.
       throw new RuntimeException(e);
     }
   }
@@ -73,31 +73,31 @@ public class SparkPageRankApp extends AbstractApplication {
   /**
    * A Spark job that calculates page rank.
    */
-  public static class SparkPageRankJob extends AbstractSpark {
+  public static class SparkPageRankSpecification extends AbstractSpark {
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
-        .setName("SparkPageRankJob")
-        .setDescription("Spark Page Rank Job")
-        .setMainClassName("co.cask.cdap.examples.sparkpagerank.SparkPageRankJobBuilder")
+        .setName("SparkPageRankProgram")
+        .setDescription("Spark Page Rank Program")
+        .setMainClassName(SparkPageRankProgram.class.getName())
         .build();
     }
   }
 
   /**
-   * This is a simple Flow that consumes url pair events from a Stream and stores them in a dataset.
+   * This is a simple Flow that consumes URL pair events from a Stream and stores them in a dataset.
    */
-  public static class PageRankFlow implements Flow {
+  public static class URLPairFlow implements Flow {
 
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with()
-        .setName("PageRankFlow")
-        .setDescription("Reads url pair and stores in dataset")
+        .setName("URLPairFlow")
+        .setDescription("Reads URL pair and stores in dataset")
         .withFlowlets()
           .add("reader", new NeighborURLsReader())
         .connect()
-          .fromStream("neighborUrlStream").to("reader")
+          .fromStream("neighborURLStream").to("reader")
         .build();
     }
   }
@@ -115,11 +115,11 @@ public class SparkPageRankApp extends AbstractApplication {
 
     /**
      * Input file should be in format of:
-     * URL neighbor URL
-     * URL neighbor URL
-     * URL neighbor URL
+     * URL neighbor-URL
+     * URL neighbor-URL
+     * URL neighbor-URL
      * ...
-     * where URL and their neighbors are separated by space(s).
+     * where URL and its neighbor are separated by a space.
      */
     @ProcessInput
     public void process(StreamEvent event) {
@@ -138,7 +138,7 @@ public class SparkPageRankApp extends AbstractApplication {
   }
 
   /**
-   * A Procedure that returns rank of the url.
+   * A Procedure that returns rank of the URL.
    */
   public static class RanksProcedure extends AbstractProcedure {
 
@@ -154,12 +154,12 @@ public class SparkPageRankApp extends AbstractApplication {
 
       // Get the url from the query parameters.
       byte[] url = request.getArgument("url").getBytes(UTF8);
-      // Get the rank from the ranks data set.
+      // Get the rank from the ranks dataset.
       Double rank = ranks.read(url);
 
       LOG.trace("Key: {}, Data: {}", Arrays.toString(url), rank);
 
-      // Send response with JSON format.
+      // Send response in JSON format.
       responder.sendJson(String.valueOf(rank));
     }
   }

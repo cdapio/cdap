@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,10 +37,10 @@ import java.util.regex.Pattern;
 import static co.cask.cdap.examples.sparkpagerank.SparkPageRankApp.UTF8;
 
 /**
- * Builder for Spark PageRank job
+ * Spark PageRank program
  */
-public class SparkPageRankJobBuilder implements JavaSparkJob {
-  private static final Logger LOG = LoggerFactory.getLogger(SparkPageRankJobBuilder.class);
+public class SparkPageRankProgram implements JavaSparkJob {
+  private static final Logger LOG = LoggerFactory.getLogger(SparkPageRankProgram.class);
 
   private static final int ITERATIONS_COUNT = 10;
   private static final Pattern SPACES = Pattern.compile("\\s+");
@@ -55,12 +55,12 @@ public class SparkPageRankJobBuilder implements JavaSparkJob {
   @Override
   public void run(String[] args, SparkContext sc) {
     LOG.info("Processing neighborURLs data");
-    JavaPairRDD<byte[], String> logData = sc.readFromDataset("neighborURLs", byte[].class, String.class);
+    JavaPairRDD<byte[], String> neighborURLs = sc.readFromDataset("neighborURLs", byte[].class, String.class);
 
     LOG.info("Grouping data by key");
-    // Loads all URLs from input and initialize their neighbors.
+    // Grouping neighbors by unique URL in key
     JavaPairRDD<String, Iterable<String>> links =
-      logData.values().mapToPair(new PairFunction<String, String, String>() {
+      neighborURLs.values().mapToPair(new PairFunction<String, String, String>() {
       @Override
       public Tuple2<String, String> call(String s) {
         String[] parts = SPACES.split(s);
@@ -68,7 +68,7 @@ public class SparkPageRankJobBuilder implements JavaSparkJob {
       }
     }).distinct().groupByKey().cache();
 
-    // Loads all URLs with other URL(s) link to from input file and initialize ranks of them to one.
+    // Initialize default rank for each key URL
     JavaPairRDD<String, Double> ranks = links.mapValues(new Function<Iterable<String>, Double>() {
       @Override
       public Double call(Iterable<String> rs) {
@@ -107,12 +107,12 @@ public class SparkPageRankJobBuilder implements JavaSparkJob {
     JavaPairRDD<byte[], Double> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>, byte[], Double>() {
       @Override
       public Tuple2<byte[], Double> call(Tuple2<String, Double> tuple) throws Exception {
-        LOG.debug("Url {} has rank {}", Arrays.toString(tuple._1().getBytes(UTF8)), tuple._2());
+        LOG.debug("URL {} has rank {}", Arrays.toString(tuple._1().getBytes(UTF8)), tuple._2());
         return new Tuple2<byte[], Double>(tuple._1().getBytes(UTF8), tuple._2());
       }
     });
 
-    // Store calculated results in output DataSet.
+    // Store calculated results in output Dataset.
     // All calculated results are stored in one row.
     // Each result, the calculated URL rank based on neighbor contributions, is an entry of the row.
     // The value of the entry is the URL rank.

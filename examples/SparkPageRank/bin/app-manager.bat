@@ -2,7 +2,7 @@
 
 REM #################################################################################
 REM ##
-REM ## Copyright 2014 Cask Data, Inc.
+REM ## Copyright © 2014 Cask Data, Inc.
 REM ##
 REM ## Licensed under the Apache License, Version 2.0 (the "License"); you may not
 REM ## use this file except in compliance with the License. You may obtain a copy of
@@ -22,9 +22,9 @@ REM Application Manager for managing application lifecycle for SparkPageRank
 SET APP_JAR_PREFIX=SparkPageRank
 
 SET APP_NAME=SparkPageRank
-SET FLOW_NAME=PageRankFlow
+SET FLOW_NAME=URLPairFlow
 SET PROCEDURE_NAME=RanksProcedure
-SET SPARK_NAME=SparkPageRankJob
+SET SPARK_NAME=SparkPageRankProgram
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
