@@ -38,7 +38,7 @@
 
     <appender name="Rolling" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
-        <file>logs/reactor.log</file>
+        <file>logs/cdap.log</file>
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
@@ -47,7 +47,7 @@
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/reactor.log.%i</FileNamePattern>
+            <FileNamePattern>logs/cdap.log.%i</FileNamePattern>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
             <MaxFileSize>50000KB</MaxFileSize>
@@ -55,7 +55,7 @@
     </appender>
 
     <appender name="Debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/reactor-debug.log</file>
+        <file>logs/cdap-debug.log</file>
         <encoder>
             <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
         </encoder>
@@ -64,7 +64,7 @@
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <maxIndex>10</maxIndex>
-            <FileNamePattern>logs/reactor-debug.log.%i</FileNamePattern>
+            <FileNamePattern>logs/cdap-debug.log.%i</FileNamePattern>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
             <MaxFileSize>50000KB</MaxFileSize>
