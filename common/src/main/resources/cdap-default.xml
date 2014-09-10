@@ -1077,4 +1077,11 @@
     <value>localhost</value>
   </property>
 
+  <!-- Frontend configuration -->
+
+  <property>
+    <name>dashboard.ssl.bind.port</name>
+    <value>10443</value>
+  </property>
+
 </configuration>
