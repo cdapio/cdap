@@ -38,7 +38,7 @@ var WebAppServer = function(dirPath, logLevel, loggerType, mode) {
   process.on('uncaughtException', function (err) {
     this.logger.info('Uncaught Exception', err);
   }.bind(this));
-  this.extractConfig(mode)
+  this.extractConfig(mode, "cConfig")
       .then(function () {
         this.setUpServer();
       }.bind(this));

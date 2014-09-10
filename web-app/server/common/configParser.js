@@ -3,25 +3,23 @@ module.exports = {
 };
 
 var promise = require('q'),
+    lodash = require('lodash'),
     spawn = require('child_process').spawn,
     xml2js = require('xml2js'),
     StringDecoder = require('string_decoder').StringDecoder,
-    configObj = {};
+    configObj = {},
+    configString = "";
 
-function extractConfig(mode) {
+function extractConfig(mode, configParam) {
   var deferred = promise.defer(),
       decoder = new StringDecoder('utf8'),
       configReader;
   if (mode === "enterprise") {
-  //@ajai : you have to call /../bin/config-tool --cConfig (for cConfiguration) and /../bin/config-tool --sConfig for
-  //Security configuration
-    configReader = spawn(__dirname + "/../bin/config-tool" ,["--output", "/tmp/cdap-config.json"]);
+    configReader = spawn(__dirname + "/../bin/config-tool", ["--" + configParam]);
     configReader.stderr.on('data', configReadFail.bind(this));
-    configReader.stdout.on('end', function onXmlReadEnd(data) {
-      this.config = require("/tmp/cdap-config.json");
-      this.configSet = true;
-      deferred.resolve();
-    }.bind(this));
+    configReader.stdout.on('data', configRead.bind(this));
+    partialConfigRead = lodash.partial(onConfigReadEnd, deferred);
+    configReader.stdout.on('end', partialConfigRead.bind(this));
   } else {
     this.config = require("../../cdap-config.json");
     this.configSet = true;
@@ -30,8 +28,34 @@ function extractConfig(mode) {
   return deferred.promise;
 }
 
+function onConfigReadEnd(deferred, data) {
+  this.config = lodash.extend(this.config, JSON.parse(configString));
+  if (this.config["dashboard.https.enabled"] === "false" && !this.configSet) {
+    this.config["dashboard.https.enabled"] = "true";
+    this.configSet = true;
+    configString = "";
+    this.extractConfig("enterprise", "sConfig")
+      .then(function onSecureConfigComplete() {
+        deferred.resolve();
+      }.bind(this));
+  } else {
+    this.configSet = true;
+    deferred.resolve();
+  }
+}
+
+function configRead() {
+  var decoder = new StringDecoder('utf-8');
+  var textChunk = decoder.write(arguments[0]);
+  if (textChunk) {
+    configString += textChunk;
+  } else {
+    this.logger.error('Extracting the config file failed!');
+  }
+}
+
 function configReadFail() {
-  var decoder = new (require('string_decoder').StringDecoder)('utf-8');
+  var decoder = new StringDecoder('utf-8');
   var textChunk = decoder.write(arguments[0]);
   if (textChunk) {
     this.logger.info(textChunk);
