@@ -54,7 +54,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         .build(new CacheLoader<String, MetricsCollector>() {
           @Override
           public MetricsCollector load(String key) throws Exception {
-            return metricsCollectionService.getCollector(MetricsScope.REACTOR, key, "0");
+            return metricsCollectionService.getCollector(MetricsScope.CDAP, key, "0");
           }
         });
     } else {

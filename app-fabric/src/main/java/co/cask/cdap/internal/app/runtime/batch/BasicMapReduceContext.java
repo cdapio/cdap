@@ -194,11 +194,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   public MetricsCollector getSystemMapperMetrics() {
-    return systemMapperMetrics.get(MetricsScope.REACTOR);
+    return systemMapperMetrics.get(MetricsScope.CDAP);
   }
 
   public MetricsCollector getSystemReducerMetrics() {
-    return systemReducerMetrics.get(MetricsScope.REACTOR);
+    return systemReducerMetrics.get(MetricsScope.CDAP);
   }
 
   public MetricsCollector getSystemMapperMetrics(MetricsScope scope) {

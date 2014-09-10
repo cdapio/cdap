@@ -31,7 +31,7 @@ define([], function () {
 			for (var i = 0; i < streams.length; i ++) {
 				streams[i]['level'] = 'stream';
 				objects.push(C.Stream.create(streams[i]));
-				objects[i].trackMetric('/reactor/streams/{id}/collect.events', 'aggregates', 'events');
+				objects[i].trackMetric('/cdap/streams/{id}/collect.events', 'aggregates', 'events');
 
 			}
 
@@ -139,9 +139,9 @@ define([], function () {
 		setFlowletLabel: function (label) {
 
 			var paths = {
-				'rate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.in',
-				'pending': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.pending',
-				'aggregate': '/reactor/apps/{app}/flows/{flow}/flowlets/{id}/process.events.processed'
+				'rate': '/cdap/apps/{app}/flows/{flow}/flowlets/{id}/process.events.in',
+				'pending': '/cdap/apps/{app}/flows/{flow}/flowlets/{id}/process.events.pending',
+				'aggregate': '/cdap/apps/{app}/flows/{flow}/flowlets/{id}/process.events.processed'
 			};
 			var kinds = {
 				'rate': 'rates',

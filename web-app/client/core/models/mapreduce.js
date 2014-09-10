@@ -6,12 +6,12 @@ define(['core/lib/date', 'core/models/program'],
   function (Datejs, Program) {
 
   var METRICS_PATHS = {
-    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.completion?count=30': 'mappersCompletion',
-    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.completion?count=30': 'reducersCompletion',
-    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.entries.in?aggregate=true': 'mappersEntriesIn',
-    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.entries.out?aggregate=true': 'mappersEntriesOut',
-    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.entries.in?aggregate=true': 'reducersEntriesIn',
-    '/reactor/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.entries.out?aggregate=true': 'reducersEntriesOut'
+    '/cdap/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.completion?count=30': 'mappersCompletion',
+    '/cdap/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.completion?count=30': 'reducersCompletion',
+    '/cdap/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.entries.in?aggregate=true': 'mappersEntriesIn',
+    '/cdap/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.entries.out?aggregate=true': 'mappersEntriesOut',
+    '/cdap/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.entries.in?aggregate=true': 'reducersEntriesIn',
+    '/cdap/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.entries.out?aggregate=true': 'reducersEntriesOut'
   };
 
   var METRIC_TYPES = {
