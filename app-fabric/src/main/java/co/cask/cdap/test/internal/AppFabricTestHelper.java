@@ -27,6 +27,7 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
@@ -107,6 +108,7 @@ public class AppFabricTestHelper {
    */
   public static void deployApplication(Class<?> applicationClz, String fileName) throws Exception {
     AppFabricClient appFabricClient = new AppFabricClient(getInjector().getInstance(AppFabricHttpHandler.class),
+                                                          getInjector().getInstance(ServiceHttpHandler.class),
                                                           getInjector().getInstance(LocationFactory.class));
     Location deployedJar = appFabricClient.deployApplication(fileName, applicationClz);
     deployedJar.delete(true);

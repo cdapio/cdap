@@ -65,6 +65,7 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -271,8 +272,9 @@ public class TestBase {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
+    ServiceHttpHandler serviceHttpHandler = injector.getInstance(ServiceHttpHandler.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    appFabricClient = new AppFabricClient(httpHandler, locationFactory);
+    appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
     datasetFramework =
       new NamespacedDatasetFramework(dsFramework,

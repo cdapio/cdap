@@ -46,19 +46,12 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
-import org.jboss.netty.handler.codec.http.HttpMethod;
-import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -105,7 +98,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.procedureClientFactory = procedureClientFactory;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
-    this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
+    this.appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
     this.serviceHttpHandler = serviceHttpHandler;
 
     try {
@@ -333,16 +326,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         public void setRunnableInstances(String runnableName, int instances) {
           Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
           try {
-            MockResponder responder = new MockResponder();
-            String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
-                                       applicationId, serviceName, runnableName);
-            HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
-            JsonObject json = new JsonObject();
-            json.addProperty("instances", instances);
-            request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
-            serviceHttpHandler.setInstances(request, responder, applicationId, serviceName, runnableName);
-            Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set runnable instances failed");
-
+            appFabricClient.setRunnableInstances(applicationId, serviceName, runnableName, instances);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
@@ -351,14 +335,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         @Override
         public int getRunnableInstances(String runnableName) {
           try {
-            MockResponder responder = new MockResponder();
-            String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
-                                       applicationId, serviceName, runnableName);
-            HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-            serviceHttpHandler.getInstances(request, responder, applicationId, serviceName, runnableName);
-            Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get runnable instances failed");
-            Map<String, String> instances = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
-            return Integer.parseInt(instances.get("provisioned"));
+            return appFabricClient.getRunnableInstances(applicationId, serviceName, runnableName);
           } catch (Exception e) {
             throw Throwables.propagate(e);
           }
