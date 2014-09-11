@@ -27,19 +27,25 @@ import java.util.Set;
  * A tool to save the CConfiguration as Json.
  */
 public class ConfigurationJsonTool {
+  private static final String CDAP_CONFIG = "--cdap";
+  private static final String SECURITY_CONFIG = "--security";
+
 
   public static void exportToJson(String configParam, Appendable output) {
     Configuration config;
-    if (configParam.equals("--cdap")) {
+    if (configParam.equals(CDAP_CONFIG)) {
       config = CConfiguration.create();
-    } else if (configParam.equals("--security")) {
+    } else if (configParam.equals(SECURITY_CONFIG)) {
       config = SConfiguration.create();
     } else {
       return;
     }
+    exportToJson(config, output);
+  }
 
-    Map<String, String> map = Maps.newHashMapWithExpectedSize(config.size());
-    for (Map.Entry<String, String> entry : config) {
+  public static void exportToJson(Configuration configuration, Appendable output) {
+    Map<String, String> map = Maps.newHashMapWithExpectedSize(configuration.size());
+    for (Map.Entry<String, String> entry : configuration) {
       map.put(entry.getKey(), entry.getValue());
     }
     new GsonBuilder().setPrettyPrinting().create().toJson(map, output);
@@ -49,12 +55,12 @@ public class ConfigurationJsonTool {
 
     String programName = System.getProperty("script", "ConfigurationJsonTool");
     Set<String> validArgument = Sets.newHashSet();
-    validArgument.add("--cdap");
-    validArgument.add("--security");
+    validArgument.add(CDAP_CONFIG);
+    validArgument.add(SECURITY_CONFIG);
     if (args.length != 1 || !(validArgument.contains(args[0]))) {
-      System.err.println("Usage: " + programName + "(--cdap | --security)");
+      System.err.println(String.format("Usage: %s (%s | %s)", programName, CDAP_CONFIG, SECURITY_CONFIG));
       System.exit(1);
     }
-    exportToJson(args[0].trim(), System.out);
+    exportToJson(args[0], System.out);
   }
 }

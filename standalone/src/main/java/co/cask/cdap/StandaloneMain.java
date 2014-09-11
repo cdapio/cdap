@@ -62,6 +62,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
 import org.slf4j.Logger;
@@ -101,7 +102,6 @@ public class StandaloneMain {
   private final ExploreClient exploreClient;
 
   private StandaloneMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
-    this.webCloudAppService = (webAppPath == null) ? null : new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
     txService = injector.getInstance(InMemoryTransactionService.class);
@@ -114,6 +114,8 @@ public class StandaloneMain {
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
+
+    this.webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
@@ -341,13 +343,14 @@ public class StandaloneMain {
     cConf.setInt(Constants.Gateway.PORT, 0);
 
     //Run dataset service on random port
-    List<Module> modules = inMemory ? createInMemoryModules(cConf, hConf)
-      : createPersistentModules(cConf, hConf);
+    List<Module> modules = inMemory ? createInMemoryModules(cConf, hConf, webAppPath)
+      : createPersistentModules(cConf, hConf, webAppPath);
 
     return new StandaloneMain(modules, cConf, webAppPath);
   }
 
-  private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
+  private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf,
+                                                    final String webAppPath) {
 
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
 
@@ -371,11 +374,18 @@ public class StandaloneMain {
       new StreamServiceRuntimeModule().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModule(),
-      new ExploreClientModule()
+      new ExploreClientModule(),
+      new AbstractModule() {
+        @Override
+        public void configure() {
+          bindConstant().annotatedWith(Names.named("web-app-path")).to(webAppPath);
+        }
+    }
     );
   }
 
-  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
+  private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf,
+                                                      final String webAppPath) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
     String environment =
@@ -421,7 +431,13 @@ public class StandaloneMain {
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModule(),
-      new ExploreClientModule()
+      new ExploreClientModule(),
+      new AbstractModule() {
+        @Override
+        public void configure() {
+          bindConstant().annotatedWith(Names.named("web-app-path")).to(webAppPath);
+        }
+      }
     );
   }
 }

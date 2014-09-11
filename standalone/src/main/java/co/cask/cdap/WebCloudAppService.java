@@ -15,8 +15,13 @@
  */
 package co.cask.cdap;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.ConfigurationJsonTool;
+import co.cask.cdap.common.conf.SConfiguration;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,11 +46,17 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
   private static final String NODE_JS_EXECUTABLE = "node";
 
   private final String webAppPath;
+  private final CConfiguration cConf;
+  private final SConfiguration sConf;
+
   private Process process;
   private BufferedReader bufferedReader;
 
-  public WebCloudAppService(String webAppPath) {
+  @Inject
+  public WebCloudAppService(@Named("web-app-path")String webAppPath, CConfiguration cConf, SConfiguration sConf) {
     this.webAppPath = webAppPath;
+    this.cConf = cConf;
+    this.sConf = sConf;
   }
 
   /**
@@ -53,27 +64,24 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-      generateConfigFile(JSON_PATH, "--cdap");
-      generateConfigFile(JSON_SECURITY_PATH, "--security");
+    generateConfigFile(JSON_PATH, cConf);
+    generateConfigFile(JSON_SECURITY_PATH, sConf);
 
-      ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
-      builder.redirectErrorStream(true);
-      LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");
-      process = builder.start();
-      final InputStream is = process.getInputStream();
-      final InputStreamReader isr = new InputStreamReader(is);
-      bufferedReader = new BufferedReader(isr);
+    ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
+    builder.redirectErrorStream(true);
+    LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");
+    process = builder.start();
+    final InputStream is = process.getInputStream();
+    final InputStreamReader isr = new InputStreamReader(is);
+    bufferedReader = new BufferedReader(isr);
   }
 
-  private void generateConfigFile(String path, String configParam) throws Exception {
-    FileWriter configWriter = null;
+  private void generateConfigFile(String path, Configuration config) throws Exception {
+    FileWriter configWriter = new FileWriter(path);
     try {
-      configWriter = new FileWriter(path);
-      ConfigurationJsonTool.exportToJson(configParam, configWriter);
+      ConfigurationJsonTool.exportToJson(config, configWriter);
     } finally {
-      if (configWriter != null) {
-        configWriter.close();
-      }
+      configWriter.close();
     }
   }
 
