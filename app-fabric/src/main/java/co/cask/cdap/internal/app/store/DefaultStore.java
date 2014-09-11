@@ -242,6 +242,7 @@ public class DefaultStore implements Store {
 
       ImmutableMap<String, ProgramSpecification> existingSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
                                                                       .putAll(existingAppSpec.getMapReduce())
+                                                                      .putAll(existingAppSpec.getSpark())
                                                                       .putAll(existingAppSpec.getWorkflows())
                                                                       .putAll(existingAppSpec.getFlows())
                                                                       .putAll(existingAppSpec.getProcedures())
@@ -250,6 +251,7 @@ public class DefaultStore implements Store {
 
       ImmutableMap<String, ProgramSpecification> newSpec = new ImmutableMap.Builder<String, ProgramSpecification>()
                                                                       .putAll(appSpec.getMapReduce())
+                                                                      .putAll(existingAppSpec.getSpark())
                                                                       .putAll(appSpec.getWorkflows())
                                                                       .putAll(appSpec.getFlows())
                                                                       .putAll(appSpec.getProcedures())
@@ -615,6 +617,8 @@ public class DefaultStore implements Store {
             programSpecification = appSpec.getWorkflows().get(id.getId());
           } else if (type == ProgramType.MAPREDUCE) {
             programSpecification = appSpec.getMapReduce().get(id.getId());
+          } else if (type == ProgramType.SPARK) {
+            programSpecification = appSpec.getSpark().get(id.getId());
           } else if (type == ProgramType.WEBAPP) {
             // no-op
           } else {
