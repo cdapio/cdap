@@ -142,10 +142,10 @@
     <module>web-app</module>
     <module>proto</module>
     <module>client</module>
+    <module>client-tests</module>
     <module>cli</module>
     <module>standalone</module>
     <module>distributions</module>
-    <module>client-tests</module>
   </modules>
 
   <dependencyManagement>

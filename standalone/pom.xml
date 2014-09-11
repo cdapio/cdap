@@ -29,7 +29,7 @@
 
 
   <artifactId>standalone</artifactId>
-  <name>Cask CDAP Standalone</name>
+  <name>CDAP Standalone</name>
   <packaging>jar</packaging>
 
   <dependencies>

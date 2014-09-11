@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>master</artifactId>
-  <name>Cask CDAP Master</name>
+  <name>CDAP Master</name>
   <packaging>jar</packaging>
 
   <dependencies>
