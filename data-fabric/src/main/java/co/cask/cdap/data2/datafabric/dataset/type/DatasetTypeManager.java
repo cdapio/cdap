@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -139,21 +140,25 @@ public class DatasetTypeManager extends AbstractIdleService {
               LOG.warn("Failed to delete directory {}", unpackedLocation, e);
             }
           }
-          List<String> moduleDependencies = Lists.newArrayList();
+          // NOTE: we use set to avoid duplicated dependencies
+          // NOTE: we use LinkedHashSet to preserve order in which dependencies must be loaded
+          Set<String> moduleDependencies = Sets.newLinkedHashSet();
           for (String usedType : reg.getUsedTypes()) {
             DatasetModuleMeta usedModule = datasets.getTypeMDS().getModuleByType(usedType);
             // adding all used types and the module itself, in this very order to keep the order of loading modules
             // for instantiating a type
             moduleDependencies.addAll(usedModule.getUsesModules());
-            moduleDependencies.add(usedModule.getName());
-            // also adding this module as a dependent for all modules it uses
-            usedModule.addUsedByModule(name);
-            datasets.getTypeMDS().write(usedModule);
+            boolean added = moduleDependencies.add(usedModule.getName());
+            if (added) {
+              // also adding this module as a dependent for all modules it uses
+              usedModule.addUsedByModule(name);
+              datasets.getTypeMDS().write(usedModule);
+            }
           }
 
           DatasetModuleMeta moduleMeta = new DatasetModuleMeta(name, className,
                                                                jarLocation == null ? null : jarLocation.toURI(),
-                                                               reg.getTypes(), moduleDependencies);
+                                                               reg.getTypes(), Lists.newArrayList(moduleDependencies));
           datasets.getTypeMDS().write(moduleMeta);
 
           return null;
@@ -355,7 +360,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     private final InMemoryDatasetDefinitionRegistry registry;
 
     private final List<String> types = Lists.newArrayList();
-    private final List<String> usedTypes = Lists.newArrayList();
+    private final LinkedHashSet<String> usedTypes = Sets.newLinkedHashSet();
 
     public DependencyTrackingRegistry(MDSDatasets datasets) {
       this.datasets = datasets;
@@ -366,7 +371,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       return types;
     }
 
-    public List<String> getUsedTypes() {
+    public Set<String> getUsedTypes() {
       return usedTypes;
     }
 

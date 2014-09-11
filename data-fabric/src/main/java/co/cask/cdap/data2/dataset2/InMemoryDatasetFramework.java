@@ -230,7 +230,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   private void add(String moduleName, DatasetModule module, boolean defaultModule) {
-    DependencyTrackingRegistry trackingRegistry = new DependencyTrackingRegistry(registry);
+    TypesTrackingRegistry trackingRegistry = new TypesTrackingRegistry(registry);
     module.register(trackingRegistry);
     if (defaultModule) {
       defaultTypes.addAll(trackingRegistry.getTypes());
@@ -250,22 +250,18 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     }
   }
 
-  private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {
+  // NOTE: this class is needed to collect all types added by a module
+  private class TypesTrackingRegistry implements DatasetDefinitionRegistry {
     private final DatasetDefinitionRegistry delegate;
 
     private final List<String> types = Lists.newArrayList();
-    private final List<String> usedTypes = Lists.newArrayList();
 
-    public DependencyTrackingRegistry(DatasetDefinitionRegistry delegate) {
+    public TypesTrackingRegistry(DatasetDefinitionRegistry delegate) {
       this.delegate = delegate;
     }
 
     public List<String> getTypes() {
       return types;
-    }
-
-    public List<String> getUsedTypes() {
-      return usedTypes;
     }
 
     @Override
@@ -276,9 +272,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
     @Override
     public <T extends DatasetDefinition> T get(String datasetTypeName) {
-      T def = delegate.get(datasetTypeName);
-      usedTypes.add(datasetTypeName);
-      return def;
+      return delegate.get(datasetTypeName);
     }
 
     @Override
