@@ -152,7 +152,7 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
     this.transferProtocol = "https://";
     url = 'https://' + this.config['gateway.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
   } else {
-    this.routerBindPort = this.config['router.ssl.bind.port'];
+    this.routerBindPort = this.config['router.bind.port'];
     this.transferProtocol = "http://";
     url = 'http://' + this.config['gateway.server.address'] + ':' + this.config['router.bind.port'] + path;
   }
