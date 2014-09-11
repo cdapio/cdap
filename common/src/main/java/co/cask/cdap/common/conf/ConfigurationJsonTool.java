@@ -30,9 +30,9 @@ public class ConfigurationJsonTool {
 
   public static void exportToJson(String configParam, Appendable output) {
     Configuration config;
-    if (configParam.equals("--cConfig")) {
+    if (configParam.equals("--cdap")) {
       config = CConfiguration.create();
-    } else if (configParam.equals("--sConfig")) {
+    } else if (configParam.equals("--security")) {
       config = SConfiguration.create();
     } else {
       return;
@@ -49,10 +49,10 @@ public class ConfigurationJsonTool {
 
     String programName = System.getProperty("script", "ConfigurationJsonTool");
     Set<String> validArgument = Sets.newHashSet();
-    validArgument.add("--cConfig");
-    validArgument.add("--sConfig");
-    if (args.length != 1 || !(validArgument.contains(args[0].trim()))) {
-      System.err.println("Usage: " + programName + "--cConfig or " + programName + " --sConfig");
+    validArgument.add("--cdap");
+    validArgument.add("--security");
+    if (args.length != 1 || !(validArgument.contains(args[0]))) {
+      System.err.println("Usage: " + programName + "(--cdap | --security)");
       System.exit(1);
     }
     exportToJson(args[0].trim(), System.out);

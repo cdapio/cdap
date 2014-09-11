@@ -53,14 +53,8 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-    FileWriter configWriter = null;
-    FileWriter configSecurityWriter = null;
-    try {
-      configWriter = new FileWriter(JSON_PATH);
-      configSecurityWriter = new FileWriter(JSON_SECURITY_PATH);
-
-      ConfigurationJsonTool.exportToJson("--cConfig", configWriter);
-      ConfigurationJsonTool.exportToJson("--sConfig", configSecurityWriter);
+      generateConfigFile(JSON_PATH, "--cdap");
+      generateConfigFile(JSON_SECURITY_PATH, "--security");
 
       ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
       builder.redirectErrorStream(true);
@@ -69,12 +63,16 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
       final InputStream is = process.getInputStream();
       final InputStreamReader isr = new InputStreamReader(is);
       bufferedReader = new BufferedReader(isr);
+  }
+
+  private void generateConfigFile(String path, String configParam) throws Exception {
+    FileWriter configWriter = null;
+    try {
+      configWriter = new FileWriter(path);
+      ConfigurationJsonTool.exportToJson(configParam, configWriter);
     } finally {
       if (configWriter != null) {
         configWriter.close();
-      }
-      if (configSecurityWriter != null) {
-        configSecurityWriter.close();
       }
     }
   }

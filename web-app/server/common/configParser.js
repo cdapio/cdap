@@ -39,7 +39,7 @@ function onConfigReadEnd(deferred, data) {
   if (this.config["dashboard.https.enabled"] === "true" && !this.configSet) {
     this.configSet = true;
     configString = "";
-    this.extractConfig("enterprise", "sConfig")
+    this.extractConfig("enterprise", "security")
       .then(function onSecureConfigComplete() {
         deferred.resolve();
       }.bind(this));
