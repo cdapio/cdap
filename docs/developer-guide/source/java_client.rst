@@ -5,8 +5,6 @@
 Cask Data Application Platform Java Client API
 ==============================================
 
-.. highlight:: console
-
 Introduction
 ============
 
@@ -16,6 +14,8 @@ with CDAP from Java applications.
 Maven Dependency
 ================
 
+.. highlight:: console
+
 To use the Java Client API in your project, add this Maven dependency::
 
   <dependency>
@@ -24,29 +24,30 @@ To use the Java Client API in your project, add this Maven dependency::
     <version>${cdap.version}</version>
   </dependency>
 
+.. highlight:: java
+
 Components
 ==========
 
 The Java Client API allows you to interact with these CDAP components:
 
-- **ApplicationClient:** interacting with applications
-- **DatasetClient:** interacting with Datasets
-- **DatasetModuleClient:** interacting with Dataset Modules
-- **DatasetTypeClient:** interacting with Dataset Types
-- **MetricsClient:** interacting with Metrics
-- **MonitorClient:** monitoring System Services
-- **ProcedureClient:** interacting with Procedures
-- **ProgramClient:** interacting with Flows, Procedures, MapReduce Jobs, User Services, and Workflows
-- **QueryClient:** querying Datasets
-- **ServiceClient:** interacting with User Services
-- **StreamClient:** interacting with Streams
+- `ApplicationClient`_: interacting with applications
+- `DatasetClient`_: interacting with Datasets
+- `DatasetModuleClient`_: interacting with Dataset Modules
+- `DatasetTypeClient`_: interacting with Dataset Types
+- `MetricsClient`_: interacting with Metrics
+- `MonitorClient`_: monitoring System Services
+- `ProcedureClient`_: interacting with Procedures
+- `ProgramClient`_: interacting with Flows, Procedures, MapReduce Jobs, User Services, and Workflows
+- `QueryClient`_: querying Datasets
+- `ServiceClient`_: interacting with User Services
+- `StreamClient`_: interacting with Streams
 
 Sample Usage
 ============
 
 ApplicationClient
 -----------------
-
 ::
 
   // Interact with the CDAP instance located at example.com, port 10000
@@ -68,9 +69,9 @@ ApplicationClient
   // List programs belonging to an application
   appClient.listPrograms("Purchase");
 
+
 DatasetClient
 -------------
-
 ::
 
   // Interact with the CDAP instance located at example.com, port 10000
@@ -87,5 +88,16 @@ DatasetClient
 
   // Delete a Dataset
   datasetClient.delete("someDataset");
-  
-  .. highlight:: java
+
+
+MetricsClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // 
+  JsonObject metric = metricsClient.getMetric("user", "/apps/HelloWorld/flows", 
+                                              "process.events", "aggregate=true");
+
