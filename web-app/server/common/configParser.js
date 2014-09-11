@@ -13,6 +13,7 @@ var promise = require('q'),
 function extractConfig(mode, configParam) {
   var deferred = promise.defer(),
       decoder = new StringDecoder('utf8'),
+      partialConfigRead,
       configReader;
   if (mode === "enterprise") {
     configReader = spawn(__dirname + "/../bin/config-tool", ["--" + configParam]);
