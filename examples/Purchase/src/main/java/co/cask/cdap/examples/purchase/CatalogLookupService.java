@@ -36,7 +36,7 @@ public class CatalogLookupService extends AbstractService {
     setName(PurchaseApp.SERVICE_NAME);
     setDescription("Service to lookup product ids.");
     addHandler(new ProductCatalogLookup());
-    addWorker(new CatalogLookupHelper());
+    addWorker(new CatalogLookupWorker());
     useDataset("purchases");
   }
 

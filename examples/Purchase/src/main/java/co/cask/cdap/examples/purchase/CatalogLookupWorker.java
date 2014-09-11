@@ -37,8 +37,8 @@ import java.util.List;
  * purchases for which the catalogID is invalid (null or empty string). This attribute may be invalid for a purchase,
  * for instance, if the CatalogLookup service was down, while a purchased arrived in the purchaseStream.
  */
-public final class CatalogLookupHelper extends AbstractServiceWorker {
-  private static final Logger LOG = LoggerFactory.getLogger(CatalogLookupHelper.class);
+public final class CatalogLookupWorker extends AbstractServiceWorker {
+  private static final Logger LOG = LoggerFactory.getLogger(CatalogLookupWorker.class);
   private int numUpdates = 0;
 
   private void updateCatalogIDs() {
