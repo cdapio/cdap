@@ -27,13 +27,6 @@ var EntServer = function() {
 util.inherits(EntServer, WebAppServer);
 
 EntServer.prototype.startServer = function () {
-  if (this.config['dashboard.ssl.cert.allow.unauthorized']) {
-    /**
-     * Allow self-signed SSL certificates.
-     */
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
-  }
-
   this.bindRoutes();
   var self = this;
   this.logger.info('I am the master.', cluster.isMaster);

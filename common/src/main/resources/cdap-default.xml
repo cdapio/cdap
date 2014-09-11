@@ -655,7 +655,7 @@
 
     <property>
         <name>router.ssl.bind.port</name>
-        <value>9443</value>
+        <value>10443</value>
         <description>Secure router listening port for gateway</description>
     </property>
 
@@ -1068,11 +1068,6 @@
   <!-- Router configuration-->
 
   <property>
-    <name>router.ssl.bind.port</name>
-    <value>9443</value>
-  </property>
-
-  <property>
     <name>router.server.address</name>
     <value>localhost</value>
   </property>
@@ -1086,7 +1081,7 @@
 
   <property>
     <name>dashboard.ssl.bind.port</name>
-    <value>10443</value>
+    <value>9443</value>
   </property>
 
   <property>

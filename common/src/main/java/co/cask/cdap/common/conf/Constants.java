@@ -637,6 +637,6 @@ public final class Constants {
     /**
      * True to allow self-signed SSL certificates for endpoints accessed by the dashboard.
      */
-    public static final String SSL_CERT_ALLOW_UNAUTHORIZED = "dashboard.ssl.cert.allow.unauthorized";
+    public static final String SSL_ALLOW_SELFSIGNEDCERT = "dashboard.selfsignedcertificate.enabled";
   }
 }
