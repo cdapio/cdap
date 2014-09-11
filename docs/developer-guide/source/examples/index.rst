@@ -63,6 +63,13 @@ in a single Application.
 The application uses a scheduled MapReduce job and Workflow to read from one ObjectStore dataset
 and write to another.
 
+`SparkPageRank <sparkPageRank.html>`_
+=======================================================================
+This example shows another application of streaming analysis, but this time it
+computes the page rank based on information about neighbor URLs.
+
+The application show how to use a **Spark** Program.
+
 Where to Go Next
 ================
 Now that you've seen some examples using CDAP, take a look at:
