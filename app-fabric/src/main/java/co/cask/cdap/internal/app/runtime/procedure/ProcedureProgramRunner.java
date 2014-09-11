@@ -33,7 +33,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -80,7 +79,6 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
   private final CConfiguration conf;
@@ -96,14 +94,12 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   public ProcedureProgramRunner(DataFabricFacadeFactory dataFabricFacadeFactory, ServiceAnnouncer serviceAnnouncer,
                                 @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                 MetricsCollectionService metricsCollectionService,
-                                ProgramServiceDiscovery serviceDiscovery,
                                 DiscoveryServiceClient discoveryServiceClient,
                                 DatasetFramework dsFramework, CConfiguration conf) {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
     this.dsFramework = dsFramework;
     this.conf = conf;
@@ -116,11 +112,10 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
   private BasicProcedureContextFactory createContextFactory(Program program, RunId runId, int instanceId, int count,
                                                             Arguments userArgs, ProcedureSpecification procedureSpec,
-                                                            ProgramServiceDiscovery serviceDiscovery,
                                                             DiscoveryServiceClient discoveryServiceClient) {
 
     return new BasicProcedureContextFactory(program, runId, instanceId, count, userArgs,
-                                            procedureSpec, metricsCollectionService, serviceDiscovery,
+                                            procedureSpec, metricsCollectionService,
                                             discoveryServiceClient, dsFramework, conf);
   }
 
@@ -147,14 +142,14 @@ public final class ProcedureProgramRunner implements ProgramRunner {
 
       BasicProcedureContextFactory contextFactory = createContextFactory(program, runId, instanceId, instanceCount,
                                                                          options.getUserArguments(), procedureSpec,
-                                                                         serviceDiscovery, discoveryServiceClient);
+                                                                         discoveryServiceClient);
 
       // TODO: A dummy context for getting the cmetrics. We should initialize the dataset here and pass it to
       // HandlerMethodFactory.
       procedureContext = new BasicProcedureContext(program, runId, instanceId, instanceCount,
                                                    ImmutableSet.<String>of(),
                                                    options.getUserArguments(), procedureSpec, metricsCollectionService,
-                                                   serviceDiscovery, discoveryServiceClient, dsFramework, conf);
+                                                   discoveryServiceClient, dsFramework, conf);
 
       handlerMethodFactory = new ProcedureHandlerMethodFactory(program, dataFabricFacadeFactory, contextFactory);
       handlerMethodFactory.startAndWait();

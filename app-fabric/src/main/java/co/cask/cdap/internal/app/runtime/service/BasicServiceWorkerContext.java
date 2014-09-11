@@ -34,7 +34,6 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.proto.ProgramType;
 import com.continuuity.tephra.TransactionAware;
 import com.continuuity.tephra.TransactionContext;
@@ -81,10 +80,9 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                    MetricsCollectionService metricsCollectionService,
                                    DatasetFramework datasetFramework,
                                    TransactionSystemClient transactionSystemClient,
-                                   ProgramServiceDiscovery serviceDiscovery,
                                    DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, datasets, getMetricContext(program, runnableName, instanceId), metricsCollectionService,
-          datasetFramework, cConfiguration, serviceDiscovery, discoveryServiceClient);
+          datasetFramework, cConfiguration, discoveryServiceClient);
     this.programClassLoader = programClassLoader;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
     this.datasets = ImmutableSet.copyOf(datasets);

@@ -69,7 +69,6 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.io.ByteBufferInputStream;
 import co.cask.cdap.internal.io.DatumWriterFactory;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
@@ -130,7 +129,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final StreamCoordinator streamCoordinator;
   private final QueueReaderFactory queueReaderFactory;
   private final MetricsCollectionService metricsCollectionService;
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
   private final CConfiguration configuration;
@@ -141,7 +139,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               DataFabricFacadeFactory dataFabricFacadeFactory, StreamCoordinator streamCoordinator,
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
-                              ProgramServiceDiscovery serviceDiscovery,
                               DiscoveryServiceClient discoveryServiceClient,
                               DatasetFramework dsFramework,
                               CConfiguration configuration) {
@@ -151,7 +148,6 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.streamCoordinator = streamCoordinator;
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = configuration;
     this.dsFramework = dsFramework;
@@ -212,7 +208,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, serviceDiscovery, discoveryServiceClient,
+                                               metricsCollectionService, discoveryServiceClient,
                                                dsFramework, configuration);
 
       // Creates tx related objects

@@ -165,8 +165,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       DiscoveryServiceClient dClient = new DiscoveryServiceClient() {
         @Override
         public ServiceDiscovered discover(String s) {
-          return serviceDiscovery.discover(program.getAccountId(), program.getApplicationId(),
-                                           program.getName(), s);
+          return discoveryServiceClient.discover(String.format("service.%s.%s.%s", program.getAccountId(),
+                                                               program.getApplicationId(), program.getName()));
         }
       };
       twillContext = new InMemoryTwillContext(twillRunId, runId, InetAddress.getLocalHost(), new String[0], argArray,
@@ -181,12 +181,12 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running HTTP services
         runnable = new HttpServiceTwillRunnable(program, runId, cConfiguration, runnableName, metricsCollectionService,
-                                                serviceDiscovery, discoveryServiceClient, datasetFramework,
+                                                discoveryServiceClient, datasetFramework,
                                                 transactionSystemClient);
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         runnable = new ServiceWorkerTwillRunnable(program, runId, runnableName, program.getClassLoader(),
                                                   cConfiguration, metricsCollectionService, datasetFramework,
-                                                  transactionSystemClient, serviceDiscovery, discoveryServiceClient);
+                                                  transactionSystemClient, discoveryServiceClient);
       } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }

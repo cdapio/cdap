@@ -26,7 +26,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import com.continuuity.tephra.TransactionContext;
 import com.continuuity.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
@@ -56,10 +55,10 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   public BasicHttpServiceContext(HttpServiceSpecification spec, String[] runtimeArgs, Program program, RunId runId,
                                  Set<String> datasets, String metricsContext,
                                  MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
-                                 CConfiguration conf, ProgramServiceDiscovery programServiceDiscovery,
+                                 CConfiguration conf,
                                  DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
     super(program, runId, datasets, metricsContext, metricsCollectionService, dsFramework, conf,
-          programServiceDiscovery, discoveryServiceClient);
+          discoveryServiceClient);
     this.spec = spec;
     this.runtimeArgs = ImmutableMap.copyOf(RuntimeArguments.fromPosixArray(runtimeArgs));
     this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());

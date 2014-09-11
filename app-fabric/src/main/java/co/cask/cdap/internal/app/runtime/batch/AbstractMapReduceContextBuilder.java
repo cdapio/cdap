@@ -108,7 +108,6 @@ public abstract class AbstractMapReduceContextBuilder {
     MetricsCollectionService metricsCollectionService =
       (type == null) ? null : injector.getInstance(MetricsCollectionService.class);
 
-    ProgramServiceDiscovery serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
     // Creating mapreduce job context
@@ -116,7 +115,7 @@ public abstract class AbstractMapReduceContextBuilder {
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId),
                                 runtimeArguments, programSpec.getDatasets().keySet(), spec, logicalStartTime,
-                                workflowBatch, serviceDiscovery, discoveryServiceClient, metricsCollectionService,
+                                workflowBatch, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, configuration);
 
     // propagating tx to all txAware guys
