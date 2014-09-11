@@ -10,6 +10,13 @@ var promise = require('q'),
     configObj = {},
     configString = "";
 
+/*
+ *  Extracts the config based on mode.
+ *  @param {string} Current running mode. Enterprise/Developer
+ *  @param {string} type of config required. --cConfig for Common Config --sConfig for Security Config
+ *  @returns {promise} Returns a promise that gets resolved once the the configs are fetched.
+ */
+
 function extractConfig(mode, configParam) {
   var deferred = promise.defer(),
       decoder = new StringDecoder('utf8'),
@@ -26,6 +33,16 @@ function extractConfig(mode, configParam) {
     if (this.config["dashboard.https.enabled"] === "true") {
       this.config = lodash.extend(this.config, require("../../cdap-security-config.json"));
       if (this.config["dashboard.selfsignedcertificate.enabled"] === "true") {
+        /*
+          We use mikeal/request library to make xhr request to cdap server.
+          In a ssl enabled environment where cdap server uses a self-signed certificate
+          node server will fail to connect to cdap server as it is self-signed.
+          This environment variable enables that.
+
+          The github issue in relation to this is : https://github.com/mikeal/request/issues/418
+
+          Could not find nodejs doc that discusses about this variable.
+        */
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
       }
     }
@@ -41,9 +58,9 @@ function onConfigReadEnd(deferred, data) {
     this.configSet = true;
     configString = "";
     this.extractConfig("enterprise", "security")
-      .then(function onSecureConfigComplete() {
-        deferred.resolve();
-      }.bind(this));
+        .then(function onSecureConfigComplete() {
+          deferred.resolve();
+        }.bind(this));
   } else {
     this.configSet = true;
     deferred.resolve();
