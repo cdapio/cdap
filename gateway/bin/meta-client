@@ -50,11 +50,10 @@ else
 fi
 
 # Load the configuration too.
-if [ -d "$conf" ]; then
-  CLASSPATH=$CLASSPATH:"$conf"/
-fi
 if [ -d "$CDAP_CONF" ]; then
   CLASSPATH=$CLASSPATH:"$CDAP_CONF"
+elif [ -d "$conf" ]; then
+  CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
 auth_file="$HOME/.cdap.accesstoken"
