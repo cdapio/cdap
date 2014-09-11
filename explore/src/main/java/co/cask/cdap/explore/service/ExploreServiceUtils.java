@@ -347,7 +347,7 @@ public class ExploreServiceUtils {
             return false;
           }
 
-          if (KRYO_PATTERN.matcher(classPathUrl.getFile()).matches()) {
+          if (KRYO_PATTERN.matcher(className).matches()) {
             return false;
           }
 
