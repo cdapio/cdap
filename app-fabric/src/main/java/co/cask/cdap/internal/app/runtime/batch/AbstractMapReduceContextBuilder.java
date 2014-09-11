@@ -26,7 +26,6 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionAware;

@@ -32,7 +32,6 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
 import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
 import co.cask.cdap.internal.lang.Reflections;
@@ -67,7 +66,6 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryRunnableRunner.class);
 
   private final MetricsCollectionService metricsCollectionService;
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryService dsService;
   private final InMemoryElectionRegistry electionRegistry;
   private final ConcurrentLinkedQueue<Discoverable> discoverables;
@@ -77,13 +75,12 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
-  public InMemoryRunnableRunner(CConfiguration cConfiguration, ProgramServiceDiscovery serviceDiscovery,
+  public InMemoryRunnableRunner(CConfiguration cConfiguration,
                                 DiscoveryServiceClient discoveryServiceClient,
                                 DiscoveryService dsService, InMemoryElectionRegistry electionRegistry,
                                 MetricsCollectionService metricsCollectionService,
                                 TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework) {
     this.metricsCollectionService = metricsCollectionService;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
     this.dsService = dsService;
     this.electionRegistry = electionRegistry;

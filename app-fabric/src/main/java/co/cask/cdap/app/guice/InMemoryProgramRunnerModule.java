@@ -24,13 +24,11 @@ import co.cask.cdap.common.logging.common.LocalLogWriter;
 import co.cask.cdap.common.logging.common.LogWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import co.cask.cdap.internal.app.runtime.procedure.ProcedureProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
-import co.cask.cdap.internal.app.runtime.service.InMemoryProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.service.InMemoryRunnableRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryServiceRunner;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramRunner;
@@ -104,10 +102,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // For binding DataSet transaction stuff
     install(new DataFabricFacadeModule());
-
-    //install discovery service modules
-    bind(ProgramServiceDiscovery.class).to(InMemoryProgramServiceDiscovery.class).in(Scopes.SINGLETON);
-    expose(ProgramServiceDiscovery.class);
 
     // Create webapp http handler factory.
     install(new FactoryModuleBuilder().implement(JarHttpHandler.class, IntactJarHttpHandler.class)

@@ -29,7 +29,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
@@ -71,7 +70,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Store store;
   private final ProgramRuntimeService runtimeService;
-  private final ProgramServiceDiscovery programServiceDiscovery;
   private static final Gson GSON = new GsonBuilder()
                                       .registerTypeAdapter(new TypeToken<ServiceDiscovered>() { }.getType(),
                                                             new ServiceDiscoveredCodec())
@@ -81,11 +79,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                            ProgramRuntimeService runtimeService, ProgramServiceDiscovery programServiceDiscovery) {
+                            ProgramRuntimeService runtimeService) {
     super(authenticator);
     this.store = storeFactory.create();
     this.runtimeService = runtimeService;
-    this.programServiceDiscovery = programServiceDiscovery;
   }
 
   /**
