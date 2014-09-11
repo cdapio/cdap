@@ -1080,8 +1080,18 @@
   <!-- Frontend configuration -->
 
   <property>
+    <name>dashboard.bind.port</name>
+    <value>9999</value>
+  </property>
+
+  <property>
     <name>dashboard.ssl.bind.port</name>
     <value>10443</value>
+  </property>
+
+  <property>
+    <name>dashboard.ssl.cert.allow.unauthorized</name>
+    <value>false</value>
   </property>
 
 </configuration>

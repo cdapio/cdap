@@ -92,6 +92,8 @@ public class StandaloneMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
   private final boolean securityEnabled;
+  private final boolean sslEnabled;
+  private final CConfiguration configuration;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ACLService aclService;
@@ -101,6 +103,7 @@ public class StandaloneMain {
   private final ExploreClient exploreClient;
 
   private StandaloneMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
+    this.configuration = configuration;
     this.webCloudAppService = (webAppPath == null) ? null : new WebCloudAppService(webAppPath);
 
     Injector injector = Guice.createInjector(modules);
@@ -117,6 +120,7 @@ public class StandaloneMain {
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
+    sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
     securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
@@ -183,8 +187,12 @@ public class StandaloneMain {
     }
 
     String hostname = InetAddress.getLocalHost().getHostName();
+    String protocol = sslEnabled ? "https" : "http";
+    int dashboardPort = sslEnabled ?
+      configuration.getInt(Constants.Dashboard.SSL_BIND_PORT) :
+      configuration.getInt(Constants.Dashboard.BIND_PORT);
     System.out.println("Application Server started successfully");
-    System.out.println("Connect to dashboard at http://" + hostname + ":9999");
+    System.out.printf("Connect to dashboard at %s://%s:%d\n", protocol, hostname, dashboardPort);
   }
 
   /**

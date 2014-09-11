@@ -619,4 +619,24 @@ public final class Constants {
       public static final String ENV_ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
     }
   }
+
+  /**
+   * Constants for the dashboard/frontend.
+   */
+  public static final class Dashboard {
+    /**
+     * Port for the dashboard to bind to in non-SSL mode.
+     */
+    public static final String BIND_PORT = "dashboard.bind.port";
+
+    /**
+     * Port for the dashboard to bind to in SSL mode.
+     */
+    public static final String SSL_BIND_PORT = "dashboard.ssl.bind.port";
+
+    /**
+     * True to allow self-signed SSL certificates for endpoints accessed by the dashboard.
+     */
+    public static final String SSL_CERT_ALLOW_UNAUTHORIZED = "dashboard.ssl.cert.allow.unauthorized";
+  }
 }
