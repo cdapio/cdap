@@ -214,8 +214,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Futures.getUnchecked(
         Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
-      LOG.info("!!! Chain starting zkClient, et all");
-
       if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
