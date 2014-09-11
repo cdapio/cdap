@@ -1041,6 +1041,12 @@
   </property>
 
   <property>
+    <name>kerberos.auth.enabled</name>
+    <value>${security.enabled}</value>
+    <description>If true, Kerberos authentication will be enabled</description>
+  </property>
+
+  <property>
       <name>security.realm</name>
       <value>cdap</value>
       <description>Security realm used for authentication</description>
