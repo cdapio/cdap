@@ -18,8 +18,8 @@ package co.cask.cdap.internal.app.runtime.procedure;
 
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
-import com.continuuity.tephra.TransactionContext;
-import com.continuuity.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionContext;
+import co.cask.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -19,7 +19,7 @@ package co.cask.cdap.data2.transaction.metrics;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
-import com.continuuity.tephra.metrics.TxMetricsCollector;
+import co.cask.tephra.metrics.TxMetricsCollector;
 import com.google.inject.Inject;
 
 /**
