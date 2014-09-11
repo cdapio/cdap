@@ -114,7 +114,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
     protected void startUp() {
       CConfiguration cConf = CConfiguration.create();
       SConfiguration sConf = SConfiguration.create();
-      cConf.setBoolean(Constants.Security.Router.SSL_ENABLED, true);
+      cConf.setBoolean(Constants.Security.SSL_ENABLED, true);
 
       URL certUrl = getClass().getClassLoader().getResource("cert.jks");
       Assert.assertNotNull(certUrl);

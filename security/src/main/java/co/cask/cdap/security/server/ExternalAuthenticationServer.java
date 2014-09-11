@@ -153,7 +153,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       connector.setHost(address.getCanonicalHostName());
       connector.setPort(port);
 
-      if (configuration.getBoolean(Constants.Security.AuthenticationServer.SSL_ENABLED, false)) {
+      if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
         String keyStorePath = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
         String keyStorePassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
