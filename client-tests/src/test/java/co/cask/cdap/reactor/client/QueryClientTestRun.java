@@ -32,7 +32,7 @@ import org.junit.experimental.categories.Category;
 import java.util.List;
 
 /**
- *
+ * Test for {@link QueryClient}.
  */
 @Category(XSlowTests.class)
 public class QueryClientTestRun extends ClientTestBase {
