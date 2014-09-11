@@ -48,8 +48,8 @@ import javax.annotation.Nullable;
  *
  * The instantiation and injection uses Java reflection a lot. This may look
  * unclean, but it helps us keep the DataSet API clean and simple (no need
- * to pass in data fabric runtime, no exposure of the developer to the raw
- * data fabric, he only interacts with data sets).
+ * to pass in data fabric runtime, no exposure of developers to the raw
+ * data fabric, they only interacts with Datasets).
  */
 public class DataSetInstantiator implements DataSetContext {
 
