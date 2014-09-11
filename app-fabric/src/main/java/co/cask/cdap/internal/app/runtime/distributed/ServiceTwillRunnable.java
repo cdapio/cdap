@@ -195,6 +195,11 @@ public class ServiceTwillRunnable implements TwillRunnable {
       programOpts = new SimpleProgramOptions(name, createProgramArguments(context, configs), runtimeArguments);
       resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
 
+      // These services need to be starting before initializing the delegate since they are used in
+      // AbstractContext's constructor to create datasets.
+      Futures.getUnchecked(
+        Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
+
       ApplicationSpecification appSpec = program.getSpecification();
       String processorName = program.getName();
       runnableName = programOpts.getName();
@@ -210,11 +215,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
       LOG.info("Getting class : {}", program.getMainClass().getName());
       Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
-
-      // These services need to be starting before initializing the delegate since they are used in
-      // AbstractContext's constructor to create datasets.
-      Futures.getUnchecked(
-        Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
       if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running http services since we need to instantiate the http service
