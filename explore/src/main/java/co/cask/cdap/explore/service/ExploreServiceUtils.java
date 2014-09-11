@@ -318,8 +318,6 @@ public class ExploreServiceUtils {
     return orderedDependencies;
   }
 
-  private static final Pattern KRYO_PATTERN = Pattern.compile(".*\\Qcom.esotericsoftware.kryo\\E.*");
-
   /**
    * Trace the dependencies files of the given className, using the classLoader,
    * and excluding any class contained in the bootstrapClassPaths and Kryo classes.
@@ -347,7 +345,7 @@ public class ExploreServiceUtils {
             return false;
           }
 
-          if (KRYO_PATTERN.matcher(className).matches()) {
+          if (className.startsWith("com.esotericsoftware.kryo")) {
             return false;
           }
 
