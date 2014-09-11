@@ -220,8 +220,8 @@
                     <span data-toggle="tooltip" data-placement="right" title="Please contact your system administrator for logs.">NA</span>
                   {{/if}}
                 </td>
-                <td style="max-width: 200px;" class="instance-col">
-                  <div class="instance-wrapper">
+                <td style="max-width: 200px;" class="instance-col center-align">
+                  <div class="instances-requested">
                     <div>
                     <form {{action "changeInstances" service on="submit"}}>
                       {{input keyUp=keyPressed placeholder=service.requested maxlength="3" value=service.instancesInput class="services-instances-input" }}
@@ -232,7 +232,7 @@
                     </div>
                   </div>
                 </td>
-                <td style="max-width: 350px;" class="instance-provisioned service-col">
+                <td style="max-width: 350px;" class="instance-provisioned service-col center-align">
                     <div class="instance-num auto-margin"><span>{{service.provisioned}}</span></div>
                 </td>
               </tr>

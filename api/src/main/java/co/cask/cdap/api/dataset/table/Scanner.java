@@ -16,13 +16,22 @@
 
 package co.cask.cdap.api.dataset.table;
 
+import javax.annotation.Nullable;
+
 /**
  * Interface for table scan operation.
  */
 public interface Scanner {
 
+  /**
+   * Returns the next row or {@code null} if the scanner is exhausted.
+   */
+  @Nullable
   public Row next();
 
+  /**
+   * Closes the scanner and releases any resources.
+   */
   public void close();
 
 }

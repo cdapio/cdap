@@ -17,7 +17,10 @@
 package co.cask.cdap.shell;
 
 import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.shell.completer.StringsCompleter;
 import co.cask.cdap.shell.completer.element.ProgramIdCompleter;
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import jline.console.completer.Completer;
 
@@ -46,6 +49,7 @@ public class ProgramIdCompleterFactory {
   }
 
   public Completer getProgramIdCompleter(ElementType elementType) {
-    return programIdCompleters.get(elementType);
+    return Objects.firstNonNull(programIdCompleters.get(elementType),
+                                new StringsCompleter(ImmutableList.<String>of()));
   }
 }

@@ -76,4 +76,14 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   protected ServiceWorkerContext getContext() {
     return context;
   }
+
+  @Override
+  public void stop() {
+    // default no-op
+  }
+
+  @Override
+  public void destroy() {
+    // default no-op
+  }
 }
