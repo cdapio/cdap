@@ -53,7 +53,7 @@ public class StandaloneTestBase {
         cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
 
         // Start without UI
-        standaloneMain = StandaloneMain.create(false, null, cConf, new Configuration());
+        standaloneMain = StandaloneMain.create(null, cConf, new Configuration());
         standaloneMain.startUp();
       } catch (Throwable e) {
         LOG.error("Failed to start standalone", e);
