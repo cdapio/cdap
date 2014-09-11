@@ -1134,10 +1134,6 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>com.esotericsoftware.kryo</groupId>
-            <artifactId>kryo</artifactId>
-          </exclusion>
         </exclusions>
       </dependency>
       <dependency>

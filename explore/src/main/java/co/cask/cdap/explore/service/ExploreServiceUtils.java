@@ -318,9 +318,12 @@ public class ExploreServiceUtils {
     return orderedDependencies;
   }
 
+  private static final Pattern KRYO_PATTERN = Pattern.compile(".*\\Qcom.esotericsoftware.kryo\\E.*");
+
   /**
    * Trace the dependencies files of the given className, using the classLoader,
-   * and excluding any class contained in the bootstrapClassPaths.
+   * and excluding any class contained in the bootstrapClassPaths and Kryo classes.
+   * Hive needs Kryo 2.22 to work, and since Spark has a dependency on Kryo 2.21, it enters in our components' jars.
    * Nothing is returned if the classLoader does not contain the className.
    */
   public static Set<File> traceDependencies(String className, final Set<String> bootstrapClassPaths,
@@ -338,6 +341,10 @@ public class ExploreServiceUtils {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
           if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
+            return false;
+          }
+
+          if (KRYO_PATTERN.matcher(classPathUrl.getFile()).matches()) {
             return false;
           }
 
