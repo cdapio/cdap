@@ -41,7 +41,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 /**
- * Provides ways to interact with Reactor Programs.
+ * Provides ways to interact with CDAP Programs.
  */
 public class ProgramClient {
 

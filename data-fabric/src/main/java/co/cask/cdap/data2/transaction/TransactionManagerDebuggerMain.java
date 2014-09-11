@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Management tool to retrieve the state of the transaction manager of a reactor, and to query it.
+ * Management tool to retrieve the state of the CDAP transaction manager and to query it.
  */
 public class TransactionManagerDebuggerMain {
 

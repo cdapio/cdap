@@ -41,7 +41,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 /**
- * Provides ways to interact with Reactor applications.
+ * Provides ways to interact with CDAP applications.
  */
 public class ApplicationClient {
 

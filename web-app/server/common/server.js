@@ -136,7 +136,7 @@ WebAppServer.prototype.configureSSL = function () {
 
 /**
  * Determines security status. Continues until it is able to determine if security is enabled if
- * reactor is down.
+ * CDAP is down.
  * @param  {Function} callback to call after security status is determined.
  * TODO: https://jira.continuuity.com/browse/REACTOR-531
  */
@@ -156,8 +156,8 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
       method: 'GET',
       url: url
     }, function (err, response, body) {
-      // If the response is a 401 and contains "auth_uri" as part of the body, Reactor security is enabled.
-      // On other response codes, and when "auth_uri" is not part of the body, Reactor security is disabled.
+      // If the response is a 401 and contains "auth_uri" as part of the body, CDAP security is enabled.
+      // On other response codes, and when "auth_uri" is not part of the body, CDAP security is disabled.
       if (!err && response) {
         clearInterval(interval);
         if (body) {

@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Transaction Reactor Service Management in Distributed Mode.
+ * Transaction Service Management in Distributed Mode.
  */
 public class TransactionServiceManager extends AbstractDistributedMasterServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceManager.class);

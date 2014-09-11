@@ -22,7 +22,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 /**
  * Starts {@link DatasetOpExecutorService} in YARN.
  *
- * TODO: Currently the DatasetOpExecutorService (which this communicates with) is started by ReactorTwillApplication.
+ * TODO: Currently the DatasetOpExecutorService (which this communicates with) is started by MasterTwillApplication.
  * We want to start the DatasetOpExecutorService in this class startUp(), but it's not possible currently
  * since the service relies on MetricsClientRuntimeModules which is in watchdog module.
  */

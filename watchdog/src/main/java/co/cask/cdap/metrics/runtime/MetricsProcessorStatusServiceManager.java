@@ -24,7 +24,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * Metrics Processor Reactor Service Management in Distributed Mode.
+ * CDAP Metrics Processor Service Management in Distributed Mode.
  */
 public class MetricsProcessorStatusServiceManager extends AbstractDistributedMasterServiceManager {
 
