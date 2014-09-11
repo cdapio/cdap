@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,27 +16,17 @@
 
 package co.cask.cdap.shell.command;
 
-import co.cask.cdap.shell.AbstractCommand;
-import co.cask.cdap.shell.CLIConfig;
-import com.google.inject.Inject;
+import co.cask.cdap.shell.CommandSet;
 
-import java.io.PrintStream;
+import javax.inject.Inject;
 
 /**
- * Prints the version.
+ * Contains commands related to setting stream properties.
  */
-public class VersionCommand extends AbstractCommand {
-
-  private final CLIConfig cliConfig;
+public class SetStreamCommandSet extends CommandSet {
 
   @Inject
-  public VersionCommand(CLIConfig cliConfig) {
-    super("version", null, "Prints the version");
-    this.cliConfig = cliConfig;
-  }
-
-  @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    output.println(cliConfig.getVersion());
+  public SetStreamCommandSet(SetStreamTTLCommand setStreamTTLCommand) {
+    super("stream", setStreamTTLCommand);
   }
 }

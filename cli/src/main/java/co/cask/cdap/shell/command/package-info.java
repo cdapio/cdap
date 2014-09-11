@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command;
-
-import co.cask.cdap.shell.AbstractCommand;
-import com.google.inject.Inject;
-
-import java.io.PrintStream;
-
 /**
- * Exits the shell.
+ * CLI commands.
  */
-public class ExitCommand extends AbstractCommand {
-
-  @Inject
-  public ExitCommand() {
-    super("exit", null, "Exits the CLI");
-  }
-
-  @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    System.exit(0);
-  }
-}
+package co.cask.cdap.shell.command;
