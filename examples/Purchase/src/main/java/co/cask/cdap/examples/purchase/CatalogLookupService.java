@@ -16,21 +16,12 @@
 
 package co.cask.cdap.examples.purchase;
 
-import co.cask.cdap.api.data.DataSetContext;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.AbstractServiceWorker;
-import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -49,46 +40,6 @@ public class CatalogLookupService extends AbstractService {
     useDataset("purchases");
   }
 
-  /**
-   * Example ServiceWorker which upon start-up, iterates through the purchases dataset, and sets the catalogId for any
-   * purchases for which the catalogID is invalid (null or empty string). This attribute may be invalid for a purchase,
-   * for instance, if the CatalogLookup service was down, while a purchased arrived in the purchaseStream.
-   */
-  public static final class CatalogLookupHelper extends AbstractServiceWorker {
-    private static final Logger LOG = LoggerFactory.getLogger(CatalogLookupHelper.class);
-    private int numUpdates = 0;
-
-    private void updateCatalogIDs() {
-      getContext().execute(new TxRunnable() {
-        @Override
-        public void run(DataSetContext context) throws Exception {
-          ObjectStore<Purchase> table = context.getDataSet("purchases");
-          List<Split> splits = table.getSplits();
-          for (Split split : splits) {
-            SplitReader<byte[], Purchase> reader = table.createSplitReader(split);
-            reader.initialize(split);
-            while (reader.nextKeyValue()) {
-              byte[] key = reader.getCurrentKey();
-              Purchase purchase = reader.getCurrentValue();
-              String catalogId = purchase.getCatalogId();
-              if (catalogId == null || catalogId.length() == 0) {
-                LOG.info("catalogId was missing for item: " + purchase.getProduct());
-                purchase.setCatalogId("Catalog-" + purchase.getProduct());
-                table.write(key, purchase);
-                numUpdates++;
-              }
-            }
-          }
-        }
-      });
-    }
-
-    @Override
-    public void run() {
-      updateCatalogIDs();
-      LOG.info("Done updating the dataset. Performed {} updates.", numUpdates);
-    }
-  }
 
   /**
    * Lookup Handler to serve requests.
