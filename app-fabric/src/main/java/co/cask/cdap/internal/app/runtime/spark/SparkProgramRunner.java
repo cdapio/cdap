@@ -230,7 +230,7 @@ public class SparkProgramRunner implements ProgramRunner {
             SparkProgramWrapper.setSparkProgramRunning(true);
             SparkSubmit.main(sparkSubmitArgs);
           } catch (Exception e) {
-            LOG.error("Received Exception after submitting Spark Job", e);
+            LOG.error("Caught an Exception after submitting Spark Job", e);
           } finally {
             // job completed so update running status and get the success status
             success = SparkProgramWrapper.isSparkProgramSuccessful();
@@ -238,6 +238,7 @@ public class SparkProgramRunner implements ProgramRunner {
             Thread.currentThread().setContextClassLoader(oldClassLoader);
           }
         } catch (Exception e) {
+          LOG.warn("Caught an exception while setting classloader for the current thread", e);
           throw Throwables.propagate(e);
         } finally {
           stopController(success, context, job, tx);
