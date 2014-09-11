@@ -2262,7 +2262,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     LOG.debug("Deleting metrics for flow {}.{}", application, flow);
-    String url = String.format("http://%s:%d%s/metrics/reactor/apps/%s/flows/%s?prefixEntity=process",
+    String url = String.format("http://%s:%d%s/metrics/cdap/apps/%s/flows/%s?prefixEntity=process",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort(),
                                Constants.Gateway.GATEWAY_VERSION,

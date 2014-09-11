@@ -33,7 +33,7 @@ define([], function () {
 			/*
 			 * Track container metric.
 			 */
-			model.trackMetric('/reactor/' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
+			model.trackMetric('/cdap/' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
 
 			/*
 			 * Setup connections based on the Flow.

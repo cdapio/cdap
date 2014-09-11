@@ -30,7 +30,7 @@ define([], function () {
             var self = this;
             var model = this.get('model');
 
-            model.trackMetric('/reactor/apps/{id}/store.bytes', 'aggregates', 'storage');
+            model.trackMetric('/cdap/apps/{id}/store.bytes', 'aggregates', 'storage');
 
             /*
              * Load Streams

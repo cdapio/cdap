@@ -54,7 +54,7 @@ final class MetricsRequestParser {
     DATASETS,
     STREAMS,
     CLUSTER,
-    SERVICES;
+    SERVICES
   }
 
   public enum RequestType {
@@ -99,7 +99,7 @@ final class MetricsRequestParser {
   }
 
   /**
-   * Given a full metrics path like '/v2/metrics/reactor/apps/collect.events', strip the preceding version and
+   * Given a full metrics path like '/v2/metrics/cdap/apps/collect.events', strip the preceding version and
    * metrics to return 'reactor/apps/collect.events', representing the context and metric, which can then be
    * parsed by this parser.
    *
@@ -129,13 +129,13 @@ final class MetricsRequestParser {
     String strippedPath = uriPath.substring(0, index);
 
     MetricsRequestContext metricsRequestContext;
-    if (strippedPath.startsWith("/reactor/cluster")) {
+    if (strippedPath.startsWith("/cdap/cluster")) {
       builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
-      builder.setScope(MetricsScope.REACTOR);
+      builder.setScope(MetricsScope.CDAP);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
-    } else if (strippedPath.startsWith("/reactor/transactions")) {
+    } else if (strippedPath.startsWith("/cdap/transactions")) {
       builder.setContextPrefix(TRANSACTION_METRICS_CONTEXT);
-      builder.setScope(MetricsScope.REACTOR);
+      builder.setScope(MetricsScope.CDAP);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
     } else {
       metricsRequestContext = parseContext(strippedPath, builder);

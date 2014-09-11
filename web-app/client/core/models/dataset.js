@@ -19,7 +19,7 @@ define(['core/models/element'], function (Element) {
 				this.set('id', this.get('name'));
 			}
 
-			this.trackMetric('/reactor/datasets/{id}/dataset.size.mb', 'currents', 'storage', false,
+			this.trackMetric('/cdap/datasets/{id}/dataset.size.mb', 'currents', 'storage', false,
 			                 {'buffer': 70, transform: function(x) { return x * C.Util.BYTES_IN_MBYTE; } });
 
 		},

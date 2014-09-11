@@ -30,7 +30,7 @@ public final class TestMetricsCollectionService extends AggregatedMetricsCollect
   @Override
   protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
     // Currently the test framework only supports REACTOR metrics.
-    if (scope != MetricsScope.REACTOR) {
+    if (scope != MetricsScope.CDAP) {
       return;
     }
     while (metrics.hasNext()) {

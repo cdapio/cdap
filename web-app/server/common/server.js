@@ -297,33 +297,33 @@ WebAppServer.prototype.bindRoutes = function() {
 
   var availableMetrics = {
     'App': [
-      { name: 'Events Collected', path: '/reactor/apps/{id}/collect.events' },
-      { name: 'Busyness', path: '/reactor/apps/{id}/process.busyness' },
-      { name: 'Bytes Stored', path: '/reactor/apps/{id}/store.bytes' },
-      { name: 'Queries Served', path: '/reactor/apps/{id}/query.requests' }
+      { name: 'Events Collected', path: '/cdap/apps/{id}/collect.events' },
+      { name: 'Busyness', path: '/cdap/apps/{id}/process.busyness' },
+      { name: 'Bytes Stored', path: '/cdap/apps/{id}/store.bytes' },
+      { name: 'Queries Served', path: '/cdap/apps/{id}/query.requests' }
     ],
     'Stream': [
-      { name: 'Events Collected', path: '/reactor/streams/{id}/collect.events' },
-      { name: 'Bytes Collected', path: '/reactor/streams/{id}/collect.bytes' },
-      { name: 'Reads per Second', path: '/reactor/streams/{id}/collect.reads' }
+      { name: 'Events Collected', path: '/cdap/streams/{id}/collect.events' },
+      { name: 'Bytes Collected', path: '/cdap/streams/{id}/collect.bytes' },
+      { name: 'Reads per Second', path: '/cdap/streams/{id}/collect.reads' }
     ],
     'Flow': [
-      { name: 'Busyness', path: '/reactor/apps/{parent}/flows/{id}/process.busyness' },
-      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events.processed' },
-      { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
-      { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
+      { name: 'Busyness', path: '/cdap/apps/{parent}/flows/{id}/process.busyness' },
+      { name: 'Events Processed', path: '/cdap/apps/{parent}/flows/{id}/process.events.processed' },
+      { name: 'Bytes Processed', path: '/cdap/apps/{parent}/flows/{id}/process.bytes' },
+      { name: 'Errors per Second', path: '/cdap/apps/{parent}/flows/{id}/process.errors' }
     ],
     'Mapreduce': [
-      { name: 'Completion', path: '/reactor/apps/{parent}/mapreduce/{id}/process.completion' },
-      { name: 'Records Processed', path: '/reactor/apps/{parent}/mapreduce/{id}/process.entries' }
+      { name: 'Completion', path: '/cdap/apps/{parent}/mapreduce/{id}/process.completion' },
+      { name: 'Records Processed', path: '/cdap/apps/{parent}/mapreduce/{id}/process.entries' }
     ],
     'Dataset': [
-      { name: 'Bytes per Second', path: '/reactor/datasets/{id}/dataset.store.bytes' },
-      { name: 'Reads per Second', path: '/reactor/datasets/{id}/dataset.store.reads' }
+      { name: 'Bytes per Second', path: '/cdap/datasets/{id}/dataset.store.bytes' },
+      { name: 'Reads per Second', path: '/cdap/datasets/{id}/dataset.store.reads' }
     ],
     'Procedure': [
-      { name: 'Requests per Second', path: '/reactor/apps/{parent}/procedures/{id}/query.requests' },
-      { name: 'Failures per Second', path: '/reactor/apps/{parent}/procedures/{id}/query.failures' }
+      { name: 'Requests per Second', path: '/cdap/apps/{parent}/procedures/{id}/query.requests' },
+      { name: 'Failures per Second', path: '/cdap/apps/{parent}/procedures/{id}/query.failures' }
     ]
 
   };

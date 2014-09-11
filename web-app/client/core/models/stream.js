@@ -18,8 +18,8 @@ define(['core/models/element'], function (Element) {
 				this.set('id', this.get('name'));
 			}
 
-			this.trackMetric('/reactor/streams/{id}/collect.bytes', 'aggregates', 'storage');
-			this.trackMetric('/reactor/streams/{id}/collect.events', 'aggregates', 'events');
+			this.trackMetric('/cdap/streams/{id}/collect.bytes', 'aggregates', 'storage');
+			this.trackMetric('/cdap/streams/{id}/collect.events', 'aggregates', 'events');
 
 		},
 		isSource: true,

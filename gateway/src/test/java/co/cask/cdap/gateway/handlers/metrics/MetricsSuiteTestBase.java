@@ -263,40 +263,40 @@ public abstract class MetricsSuiteTestBase {
   // write WordCount app to metadata store
   public static void setupMeta() throws OperationException {
     validResources = ImmutableList.of(
-      "/reactor/reads?aggregate=true",
-      "/reactor/apps/WordCount/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/reactor/datasets/wordStats/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/reactor/streams/wordStream/collect.events?aggregate=true",
-      "/reactor/cluster/resources.total.storage?aggregate=true"
+      "/cdap/reads?aggregate=true",
+      "/cdap/apps/WordCount/reads?aggregate=true",
+      "/cdap/apps/WordCount/flows/reads?aggregate=true",
+      "/cdap/apps/WordCount/flows/WordCounter/reads?aggregate=true",
+      "/cdap/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
+      "/cdap/datasets/wordStats/reads?aggregate=true",
+      "/cdap/datasets/wordStats/apps/WordCount/reads?aggregate=true",
+      "/cdap/datasets/wordStats/apps/WordCount/flows/WordCounter/reads?aggregate=true",
+      "/cdap/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
+      "/cdap/streams/wordStream/collect.events?aggregate=true",
+      "/cdap/cluster/resources.total.storage?aggregate=true"
     );
 
     malformedResources = ImmutableList.of(
-      "/reacto/reads?aggregate=true",
-      "/reactor/app/WordCount/reads?aggregate=true",
-      "/reactor/apps/WordCount/flow/WordCounter/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/flowlets/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
-      "/reactor/dataset/wordStats/reads?aggregate=true",
-      "/reactor/datasets/wordStats/app/WordCount/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true"
+      "/cda/reads?aggregate=true",
+      "/cdap/app/WordCount/reads?aggregate=true",
+      "/cdap/apps/WordCount/flow/WordCounter/reads?aggregate=true",
+      "/cdap/apps/WordCount/flows/WordCounter/flowlets/reads?aggregate=true",
+      "/cdap/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
+      "/cdap/dataset/wordStats/reads?aggregate=true",
+      "/cdap/datasets/wordStats/app/WordCount/reads?aggregate=true",
+      "/cdap/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
+      "/cdap/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true"
     );
 
     nonExistingResources = ImmutableList.of(
-      "/reactor/apps/WordCont/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCouner/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/flowlets/couter/reads?aggregate=true",
-      "/reactor/datasets/wordStat/reads?aggregate=true",
-      "/reactor/datasets/wordStat/apps/WordCount/reads?aggregate=true",
-      "/reactor/datasets/wordStas/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/reactor/datasets/wordStts/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/reactor/streams/wordStrea/collect.events?aggregate=true"
+      "/cdap/apps/WordCont/reads?aggregate=true",
+      "/cdap/apps/WordCount/flows/WordCouner/reads?aggregate=true",
+      "/cdap/apps/WordCount/flows/WordCounter/flowlets/couter/reads?aggregate=true",
+      "/cdap/datasets/wordStat/reads?aggregate=true",
+      "/cdap/datasets/wordStat/apps/WordCount/reads?aggregate=true",
+      "/cdap/datasets/wordStas/apps/WordCount/flows/WordCounter/reads?aggregate=true",
+      "/cdap/datasets/wordStts/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
+      "/cdap/streams/wordStrea/collect.events?aggregate=true"
     );
   }
 
