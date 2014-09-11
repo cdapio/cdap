@@ -1204,6 +1204,7 @@
                   <exclude>LICENSE*.txt</exclude>
                   <exclude>*.rst</exclude>
                   <exclude>*.md</exclude>
+                  <exclude>**/*.md</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>docs/**</exclude>
                   <exclude>conf/**</exclude>
@@ -1217,6 +1218,7 @@
                   <exclude>**/*.avsc</exclude>
                   <!-- Excludes examples by default, include it in the examples profile -->
                   <exclude>examples/**</exclude>
+                  <exclude>archetypes/**/resources/**/*.txt</exclude>
                 </excludes>
               </configuration>
             </execution>
