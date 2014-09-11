@@ -115,6 +115,10 @@ public class TableInfo {
     return location;
   }
 
+  public List<ColumnInfo> getSchema() {
+    return schema;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
