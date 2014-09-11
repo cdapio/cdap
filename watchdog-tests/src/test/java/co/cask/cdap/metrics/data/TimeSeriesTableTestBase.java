@@ -52,19 +52,18 @@ import org.junit.experimental.categories.Category;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- *
+ * Test base for {@link TimeSeriesTable}.
  */
-@Category(SlowTests.class)
-public class TimeSeriesTableTest {
+public abstract class TimeSeriesTableTestBase {
 
-  private static MetricsTableFactory tableFactory;
-  private static HBaseTestBase testHBase;
+  protected abstract MetricsTableFactory getTableFactory();
 
   @Test
   public void testAggregate() throws OperationException {
-    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("test", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("test", 1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -72,6 +71,15 @@ public class TimeSeriesTableTest {
     // Insert metrics for flow
     for (int i = 0; i < 5; i++) {
       String context = "app.f.flow.flowlet" + i;
+      String metric = "input." + i;
+
+      // Insert 500 metrics for each flowlet with the same time series.
+      insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 500, 100);
+    }
+
+    // Inset metrics for flow in another app. This is to make sure the prefix matching works correctly.
+    for (int i = 0; i < 5; i++) {
+      String context = "app2.f.flow.flowlet" + i;
       String metric = "input." + i;
 
       // Insert 500 metrics for each flowlet with the same time series.
@@ -87,8 +95,20 @@ public class TimeSeriesTableTest {
       insertMetrics(timeSeriesTable, context, "runId", metric, ImmutableList.<String>of(), time, 0, 500, 100);
     }
 
+    // Query aggregate for a specific flowlet
+    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow.flowlet0")
+      .setMetric("input.0")
+      .build(time, time + 1000);
+    assertAggregate(query, timeSeriesTable.scan(query), 500, 2, new Function<Long, Integer>() {
+      @Override
+      public Integer apply(Long ts) {
+        return (int) (ts - time);
+      }
+    });
+
+
     // Query aggregate for flow. Expect 10 rows scanned (metric per flowlet spreads across 2 rows).
-    MetricsScanQuery query = new MetricsScanQueryBuilder().setContext("app.f.flow")
+    query = new MetricsScanQueryBuilder().setContext("app.f.flow")
       .setMetric("input")
       .build(time, time + 1000);
     assertAggregate(query, timeSeriesTable.scan(query), 500, 10, new Function<Long, Integer>() {
@@ -144,7 +164,7 @@ public class TimeSeriesTableTest {
 
   @Test
   public void testClear() throws OperationException {
-    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testDeleteAll", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testDeleteAll", 1);
     // 2012-10-01T12:00:00
     final long time = 1317470400;
 
@@ -176,7 +196,7 @@ public class TimeSeriesTableTest {
   @Test
   public void testDelete() throws OperationException {
 
-    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testDelete", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testDelete", 1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -238,7 +258,7 @@ public class TimeSeriesTableTest {
   @Test
   public void testDeleteContextAndMetric() throws OperationException {
 
-    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testContextAndMetricDelete", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testContextAndMetricDelete", 1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -323,7 +343,7 @@ public class TimeSeriesTableTest {
   @Test
   public void testRangeDelete() throws OperationException {
 
-    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testRangeDelete", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testRangeDelete", 1);
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
@@ -433,7 +453,7 @@ public class TimeSeriesTableTest {
   @Test
   public void testScanAllTags() throws OperationException {
 
-    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("testScanAllTags", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testScanAllTags", 1);
 
     try {
       timeSeriesTable.save(ImmutableList.of(
@@ -503,42 +523,5 @@ public class TimeSeriesTableTest {
     Assert.assertEquals(expectedCount, count);
 
     Assert.assertEquals(expectedRowScanned, scanner.getRowScanned());
-
-  }
-
-  @BeforeClass
-  public static void init() throws Exception {
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
-    cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
-    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
-
-    Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
-                                             new DiscoveryRuntimeModule().getDistributedModules(),
-                                             new ZKClientModule(),
-                                             new LocationRuntimeModule().getDistributedModules(),
-                                             new DataFabricDistributedModule(),
-                                             new TransactionMetricsModule(),
-                                             new AbstractModule() {
-                                               @Override
-                                               protected void configure() {
-                                                 install(new FactoryModuleBuilder()
-                                                           .implement(DatasetDefinitionRegistry.class,
-                                                                      DefaultDatasetDefinitionRegistry.class)
-                                                           .build(DatasetDefinitionRegistryFactory.class));
-                                               }
-                                             });
-
-    DatasetFramework dsFramework =
-      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule("metrics-hbase", new HBaseMetricsTableModule());
-    tableFactory = new DefaultMetricsTableFactory(cConf, dsFramework);
-  }
-
-  @AfterClass
-  public static void finish() throws Exception {
-    testHBase.stopHBase();
   }
 }

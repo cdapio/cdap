@@ -42,11 +42,12 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
 
   AggregatesScanner(String contextPrefix, String metricPrefix, String runId, String tagPrefix,
                     Scanner scanner, MetricsEntityCodec entityCodec) {
-
-    this.contextPrefix = contextPrefix;
-    this.metricPrefix = metricPrefix;
+    // The prefix is always have a "." suffix for unique matching for entity string, which uses "." as level separator
+    // E.g. app.f.flowId would not match with app.f.flowId2, but match with app.f.flowId.flowletId
+    this.contextPrefix = contextPrefix == null ? null : contextPrefix + ".";
+    this.metricPrefix = metricPrefix == null ? null : metricPrefix + ".";
     this.runId = runId;
-    this.tagPrefix = tagPrefix;
+    this.tagPrefix = tagPrefix == null ? null : tagPrefix + ".";
     this.scanner = scanner;
     this.entityCodec = entityCodec;
     this.internalIterator = createIterator();
@@ -100,13 +101,15 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
           // Decode context and metric from key
           int offset = 0;
           context = entityCodec.decode(MetricsEntityType.CONTEXT, rowKey, offset);
-          if (contextPrefix != null && !context.startsWith(contextPrefix)) {
+          // Always have a "." suffix for unique matching
+          if (contextPrefix != null && !(context + ".").startsWith(contextPrefix)) {
             continue;
           }
 
           offset += entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
           metric = entityCodec.decode(MetricsEntityType.METRIC, rowKey, offset);
-          if (metricPrefix != null && !metric.startsWith(metricPrefix)) {
+          // Always have a "." suffix for unique matching
+          if (metricPrefix != null && !(metric + ".").startsWith(metricPrefix)) {
             continue;
           }
 
@@ -132,7 +135,8 @@ public class AggregatesScanner implements Iterator<AggregatesScanResult> {
         while (currentTag != null && currentTag.hasNext()) {
           Map.Entry<byte[], byte[]> tagValue = currentTag.next();
           String tag = Bytes.toString(tagValue.getKey());
-          if (tagPrefix != null && !tag.startsWith(tagPrefix)) {
+          // Always have a "." suffix for unique matching
+          if (tagPrefix != null && !(tag + ".").startsWith(tagPrefix)) {
             continue;
           }
           if (MetricsConstants.EMPTY_TAG.equals(tag)) {

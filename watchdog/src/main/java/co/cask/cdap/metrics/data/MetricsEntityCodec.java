@@ -161,7 +161,7 @@ final class MetricsEntityCodec {
         break;
       }
       builder.append(entityTable.getName(id, type.getType() + i))
-        .append('.');
+             .append('.');
     }
 
     builder.setLength(builder.length() - 1);
