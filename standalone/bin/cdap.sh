@@ -16,11 +16,12 @@
 # the License.
 #
 
+# We need a larger PermSize for SparkProgramRunner to call SparkSubmit
 if [ -d /opt/cdap ]; then
  CDAP_HOME=/opt/cdap; export CDAP_HOME
- DEFAULT_JVM_OPTS="-Xmx3072m"
+ DEFAULT_JVM_OPTS="-Xmx3072m -XX:MaxPermSize=512m"
 else
- DEFAULT_JVM_OPTS="-Xmx1024m"
+ DEFAULT_JVM_OPTS="-Xmx1024m -XX:MaxPermSize=512m"
 fi
 
 # Add default JVM options here. You can also use JAVA_OPTS and CDAP_OPTS to pass JVM options to this script.
