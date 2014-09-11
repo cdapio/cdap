@@ -25,6 +25,7 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -111,5 +113,49 @@ public class StreamClientTestRun extends ClientTestBase {
     for (int i = 1; i < 3; i++) {
       Assert.assertEquals("Testing " + i, Charsets.UTF_8.decode(events.get(i - 1).getBody()).toString());
     }
+  }
+
+  /**
+   * Tests for async write to stream.
+   */
+  @Test
+  public void testAsyncWrite() throws Exception {
+    String streamId = "testAsync";
+
+    streamClient.create(streamId);
+
+    // Send 10 async writes
+    int msgCount = 10;
+    for (int i = 0; i < msgCount; i++) {
+      streamClient.asyncSendEvent(streamId, "Testing " + i);
+    }
+
+    // Reads them back to verify. Needs to do it multiple times as the writes happens async.
+    List<StreamEvent> events = Lists.newArrayList();
+
+    Stopwatch stopwatch = new Stopwatch();
+    stopwatch.start();
+    while (events.size() != msgCount && stopwatch.elapsedTime(TimeUnit.SECONDS) < 10L) {
+      events.clear();
+      streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
+    }
+
+    Assert.assertEquals(msgCount, events.size());
+    long lastTimestamp = 0L;
+    for (int i = 0; i < msgCount; i++) {
+      Assert.assertEquals("Testing " + i, Charsets.UTF_8.decode(events.get(i).getBody()).toString());
+      lastTimestamp = events.get(i).getTimestamp();
+    }
+
+    // No more events
+    stopwatch = new Stopwatch();
+    stopwatch.start();
+    events.clear();
+    while (events.isEmpty() && stopwatch.elapsedTime(TimeUnit.SECONDS) < 1L) {
+      events.clear();
+      streamClient.getEvents(streamId, lastTimestamp + 1, Long.MAX_VALUE, msgCount, events);
+    }
+
+    Assert.assertTrue(events.isEmpty());
   }
 }

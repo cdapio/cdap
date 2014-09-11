@@ -49,7 +49,7 @@ public class LevelDBQueueTest extends QueueTest {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
-      new LocationRuntimeModule().getSingleNodeModules(),
+      new LocationRuntimeModule().getStandaloneModules(),
       new DataFabricLevelDBModule(),
       new TransactionMetricsModule());
     // transaction manager is a "service" and must be started

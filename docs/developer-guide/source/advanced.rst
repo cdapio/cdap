@@ -58,7 +58,7 @@ You add handlers to your Service by calling the ``addHandler`` method in the Ser
 To use a Dataset within a handler, specify the Dataset by calling the ``useDataset`` method in the Service's
 ``configure`` method and add the ``@UseDataSet`` annotation to the handler to obtain an instance of the Dataset.
 By default, operations on a Dataset are non-transactional. To use Datasets transactionally, annotate the handler
-method with ``@EnableTransaction``. Each request to that method is then committed as a single transaction.
+method with ``@Transactional``. Each request to that method is then committed as a single transaction.
 
 ::
 

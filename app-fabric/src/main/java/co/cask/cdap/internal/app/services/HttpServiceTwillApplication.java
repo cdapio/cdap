@@ -18,6 +18,8 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 
@@ -55,7 +57,7 @@ public class HttpServiceTwillApplication implements TwillApplication {
     return TwillSpecification.Builder.with()
       .setName(serviceName)
       .withRunnable()
-      .add(new HttpServiceTwillRunnable(appName, serviceName, handlers))
+      .add(new HttpServiceTwillRunnable(appName, serviceName, handlers, ImmutableSet.<String>of()))
       .noLocalFiles()
       .anyOrder()
       .build();

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.reactor.client;
 
-import co.cask.cdap.reactor.client.common.SingleNodeTestBase;
+import co.cask.cdap.reactor.client.common.StandaloneTestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -30,6 +30,6 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({ ApplicationClientTestRun.class, DatasetClientTestRun.class, MetricsClientTestRun.class,
                       MonitorClientTestRun.class, ProcedureClientTestRun.class, ProgramClientTestRun.class,
                       /*QueryClientTestRun.class, */StreamClientTestRun.class, ServiceClientTestRun.class })
-public class ClientTestsSuite extends SingleNodeTestBase {
+public class ClientTestsSuite extends StandaloneTestBase {
 
 }

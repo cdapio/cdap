@@ -41,12 +41,19 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
+import org.apache.twill.common.Threads;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -62,13 +69,19 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
+  private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);
+
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StreamProperties.class, new StreamPropertiesAdapter())
     .create();
 
   private final CConfiguration cConf;
   private final StreamAdmin streamAdmin;
+  private final MetricsCollector metricsCollector;
   private final ConcurrentStreamWriter streamWriter;
+
+  // Executor for serving async enqueue requests
+  private ExecutorService asyncExecutor;
 
   // TODO: Need to make the decision of whether this should be inside StreamAdmin or not.
   // Currently is here to align with the existing Reactor organization that dataset admin is not aware of MDS
@@ -84,14 +97,35 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
 
-    MetricsCollector collector = metricsCollectionService.getCollector(MetricsScope.REACTOR, getMetricsContext(), "0");
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
-                                                   cConf.getInt(Constants.Stream.WORKER_THREADS, 10), collector);
+                                                   cConf.getInt(Constants.Stream.WORKER_THREADS), metricsCollector);
+  }
+
+  @Override
+  public void init(HandlerContext context) {
+    super.init(context);
+    int asyncWorkers = cConf.getInt(Constants.Stream.ASYNC_WORKER_THREADS);
+    // The queue size config is size per worker, hence multiple by workers here
+    int asyncQueueSize = cConf.getInt(Constants.Stream.ASYNC_QUEUE_SIZE) * asyncWorkers;
+
+    // Creates a thread pool that will shrink inactive threads
+    // Also, it limits how many tasks can get queue up to guard against out of memory if incoming requests are
+    // coming too fast.
+    // It uses the caller thread execution rejection policy so that it slows down request naturally by resorting
+    // to sync enqueue (enqueue by caller thread is the same as sync enqueue)
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(asyncWorkers, asyncWorkers, 60, TimeUnit.SECONDS,
+                                                         new ArrayBlockingQueue<Runnable>(asyncQueueSize),
+                                                         Threads.createDaemonThreadFactory("async-exec-%d"),
+                                                         createAsyncRejectedExecutionHandler());
+    executor.allowCoreThreadTimeOut(true);
+    asyncExecutor = executor;
   }
 
   @Override
   public void destroy(HandlerContext context) {
     Closeables.closeQuietly(streamWriter);
+    asyncExecutor.shutdownNow();
   }
 
   @GET
@@ -139,14 +173,26 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     String accountId = getAuthenticatedAccountId(request);
 
     try {
-      if (streamWriter.enqueue(accountId, stream, getHeaders(request, stream), request.getContent().toByteBuffer())) {
-        responder.sendStatus(HttpResponseStatus.OK);
-      } else {
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
+      streamWriter.enqueue(accountId, stream, getHeaders(request, stream), request.getContent().toByteBuffer());
+      responder.sendStatus(HttpResponseStatus.OK);
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Stream does not exists");
+    } catch (IOException e) {
+      LOG.error("Failed to write to stream {}", stream, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+  @POST
+  @Path("/{stream}/async")
+  public void asyncEnqueue(HttpRequest request, HttpResponder responder,
+                           @PathParam("stream") final String stream) throws Exception {
+    String accountId = getAuthenticatedAccountId(request);
+    // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
+    // See StreamHttpService
+    streamWriter.asyncEnqueue(accountId, stream,
+                              getHeaders(request, stream), request.getContent().toByteBuffer(), asyncExecutor);
+    responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
 
   @POST
@@ -219,6 +265,19 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       }
     }
     return config;
+  }
+
+  private RejectedExecutionHandler createAsyncRejectedExecutionHandler() {
+    return new RejectedExecutionHandler() {
+      @Override
+      public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+        if (!executor.isShutdown()) {
+          // TODO: Should be a gauge, not increment. Need to wait till metrics system supports it
+          metricsCollector.increment("collect.async.reject", 1);
+          r.run();
+        }
+      }
+    };
   }
 
   private boolean isValidName(String streamName) {

@@ -64,16 +64,6 @@ public class CatalogLookupService extends AbstractService {
     private int numIterations;
 
     @Override
-    public void stop() {
-      //no-op
-    }
-
-    @Override
-    public void destroy() {
-      //no-op
-    }
-
-    @Override
     public void run() {
       while (true) {
         numIterations++;
@@ -105,8 +95,8 @@ public class CatalogLookupService extends AbstractService {
     @Path("product/{id}/catalog")
     @GET
     public void handler(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("id") String id) {
-      // send string Cat-<id> with 200 OK response.
-      responder.sendString(200, "Cat-" + id, Charsets.UTF_8);
+      // send string Catalog-<id> with 200 OK response.
+      responder.sendString(200, "Catalog-" + id, Charsets.UTF_8);
     }
   }
 }

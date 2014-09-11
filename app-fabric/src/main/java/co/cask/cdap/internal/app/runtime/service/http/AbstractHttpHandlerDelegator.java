@@ -23,6 +23,8 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
+import com.continuuity.tephra.TransactionContext;
+import com.google.common.base.Preconditions;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
 /**
@@ -55,6 +57,12 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   @Override
   public HttpServiceContext getServiceContext() {
     return context.getServiceContext();
+  }
+
+  protected final TransactionContext getTransactionContext() {
+    Preconditions.checkState(context.getServiceContext() instanceof BasicHttpServiceContext,
+                             "This instance of HttpServiceContext does not support transactions.");
+    return ((BasicHttpServiceContext) context.getServiceContext()).getTransactionContext();
   }
 
   protected final HttpServiceRequest wrapRequest(HttpRequest request) {

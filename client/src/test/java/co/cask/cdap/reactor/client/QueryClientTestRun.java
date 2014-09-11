@@ -47,7 +47,7 @@ public class QueryClientTestRun extends ClientTestBase {
     queryClient = new QueryClient(clientConfig);
   }
 
-  // TODO: explore query in singlenode?
+  // TODO: explore query in standalone?
 //  @Test
   public void testAll() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
