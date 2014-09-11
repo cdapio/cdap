@@ -35,6 +35,7 @@ import java.util.concurrent.Executor;
 public class WebCloudAppService extends AbstractExecutionThreadService {
   static final String WEB_APP = "web-app/server/local/main.js"; // Right path passed on command line.
   static final String JSON_PATH = "web-app/cdap-config.json";
+  static final String JSON_SECURITY_PATH = "web-app/cdap-security-config.json";
 
   private static final Logger LOG = LoggerFactory.getLogger(WebCloudAppService.class);
   private static final String NODE_JS_EXECUTABLE = "node";
@@ -52,10 +53,15 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-    FileWriter writer = null;
+    FileWriter configWriter = null;
+    FileWriter configSecurityWriter = null;
     try {
-      writer = new FileWriter(JSON_PATH);
-      ConfigurationJsonTool.exportToJson("--cConfig", writer);
+      configWriter = new FileWriter(JSON_PATH);
+      configSecurityWriter = new FileWriter(JSON_SECURITY_PATH);
+
+      ConfigurationJsonTool.exportToJson("--cConfig", configWriter);
+      ConfigurationJsonTool.exportToJson("--sConfig", configSecurityWriter);
+
       ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
       builder.redirectErrorStream(true);
       LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");
@@ -64,8 +70,11 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
       final InputStreamReader isr = new InputStreamReader(is);
       bufferedReader = new BufferedReader(isr);
     } finally {
-      if (writer != null) {
-        writer.close();
+      if (configWriter != null) {
+        configWriter.close();
+      }
+      if (configSecurityWriter != null) {
+        configSecurityWriter.close();
       }
     }
   }

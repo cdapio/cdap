@@ -22,6 +22,12 @@ function extractConfig(mode, configParam) {
     configReader.stdout.on('end', partialConfigRead.bind(this));
   } else {
     this.config = require("../../cdap-config.json");
+    if (this.config["dashboard.https.enabled"] === "true") {
+      this.config = lodash.extend(this.config, require("../../cdap-security-config.json"));
+      if (this.config["dashboard.selfsignedcertificate.enabled"] === "true") {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      }
+    }
     this.configSet = true;
     deferred.resolve();
   }
@@ -30,8 +36,7 @@ function extractConfig(mode, configParam) {
 
 function onConfigReadEnd(deferred, data) {
   this.config = lodash.extend(this.config, JSON.parse(configString));
-  if (this.config["dashboard.https.enabled"] === "false" && !this.configSet) {
-    this.config["dashboard.https.enabled"] = "true";
+  if (this.config["dashboard.https.enabled"] === "true" && !this.configSet) {
     this.configSet = true;
     configString = "";
     this.extractConfig("enterprise", "sConfig")
