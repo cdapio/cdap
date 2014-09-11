@@ -87,9 +87,11 @@ define(['core/models/program'], function (Program) {
 
         startStopDisabled: function () {
 
-            if (this.currentState !== 'STOPPED') {
+            if(this.currentState === 'STARTING' ||
+                this.currentState === 'STOPPING') {
                 return true;
             }
+
             return false;
 
         }.property('currentState')
