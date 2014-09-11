@@ -58,11 +58,6 @@ public final class GuavaServiceWorker extends AbstractServiceWorker {
   }
 
   @Override
-  public void destroy() {
-    //no-op
-  }
-
-  @Override
   public void run() {
     try {
       completion.get();

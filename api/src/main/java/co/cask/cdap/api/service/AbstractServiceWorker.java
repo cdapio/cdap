@@ -61,7 +61,9 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   }
 
   /**
-   * Currently defaults to {@link ResourceSpecification.BASIC}, until we allow the user to specify it.
+   * Currently defaults to {@link ResourceSpecification#BASIC}
+   * until we allow the user to specify it.
+   * 
    * @return The resourceSpecification to be used for this serviceWorker
    */
   protected ResourceSpecification getResourceSpecification() {
@@ -75,5 +77,15 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
 
   protected ServiceWorkerContext getContext() {
     return context;
+  }
+
+  @Override
+  public void stop() {
+    // default no-op
+  }
+
+  @Override
+  public void destroy() {
+    // default no-op
   }
 }

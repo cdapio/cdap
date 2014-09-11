@@ -16,6 +16,7 @@
 
 package co.cask.cdap.shell.command;
 
+import co.cask.cdap.shell.AbstractCommand;
 import co.cask.cdap.shell.CLIConfig;
 import com.google.inject.Inject;
 

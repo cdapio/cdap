@@ -78,7 +78,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNodeModules() {
+  public Module getStandaloneModules() {
     return Modules.combine(new ExploreExecutorModule(), new ExploreLocalModule(false));
   }
 
@@ -114,7 +114,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      // Current version of hive used in Singlenode is Hive 13
+      // Current version of hive used in standalone is Hive 13
       bind(ExploreService.class).annotatedWith(Names.named("explore.service.impl")).to(Hive13ExploreService.class);
       bind(ExploreService.class).toProvider(ExploreServiceProvider.class).in(Scopes.SINGLETON);
       expose(ExploreService.class);

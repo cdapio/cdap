@@ -1677,18 +1677,21 @@ span.log-icon.complete {
 .instance-wrapper div {
     display: inline-block;
 }
+.instances-requested div {
+    display: inline-block;
+}
 
 .instance-num {
     background-color: #3C4355;
     margin-right: 15px;
-    width: 60px;
+    width: 64px;
 }
 
 .instance-num span {
     color: white;
     display: block;
     font-weight: bold;
-    line-height: 30px;
+    line-height: 37px;
     text-align: center;
 }
 

@@ -51,6 +51,8 @@ public class LevelDBOrderedTableCore {
 
   private static final Logger LOG = LoggerFactory.getLogger(LevelDBOrderedTableCore.class);
 
+  private static final Scanner EMPTY_SCANNER = createEmptyScanner();
+
   // this represents deleted values
   protected static final byte[] DELETE_MARKER = { };
 
@@ -168,6 +170,14 @@ public class LevelDBOrderedTableCore {
   public Scanner scan(byte[] startRow, byte[] stopRow,
                       @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns, @Nullable Transaction tx)
     throws IOException {
+    if (columns != null) {
+      if (columns.length == 0) {
+        return EMPTY_SCANNER;
+      }
+      columns = Arrays.copyOf(columns, columns.length);
+      Arrays.sort(columns, Bytes.BYTES_COMPARATOR);
+    }
+
     DBIterator iterator = getDB().iterator();
     seekToStart(iterator, startRow);
     byte[] endKey = stopRow == null ? null : createEndKey(stopRow);
@@ -196,6 +206,21 @@ public class LevelDBOrderedTableCore {
     }
   }
 
+  private static Scanner createEmptyScanner() {
+    return new Scanner() {
+      @Override
+      public Row next() {
+        return null;
+      }
+
+      @Override
+      public void close() {
+        // no-op
+      }
+    };
+  }
+
+
   /**
    * Read one row of the table. This is used both by getRow() and by Scanner.next().
    * @param iterator An iterator over the database. This is passed in such that the caller can reuse the same
@@ -205,7 +230,7 @@ public class LevelDBOrderedTableCore {
    * @param multiRow If true indicates that the row may end before the endKey. In that case,
    *                 this method will stop reading as soon as it sees more than one row key. The iterator will not be
    *                 advanced past the beginning of the next row (so that next time, we still see the entire next row).
-   * @param columns If non-null, only columns contained in this will be returned.
+   * @param columns If non-null, only columns contained in this will be returned. The given columns should be sorted.
    * @param limit If non-negative, at most this many columns will be returned. If multiRow is true, this is ignored.
    * @return a pair consisting of the row key of the next non-empty row and the column map for that row. If multiRow
    *         is false, null is returned for row key because the caller already knows it.
@@ -347,6 +372,14 @@ public class LevelDBOrderedTableCore {
 
   public void deleteRange(byte[] startRow, byte[] stopRow, @Nullable FuzzyRowFilter filter, @Nullable byte[][] columns)
     throws IOException {
+    if (columns != null) {
+      if (columns.length == 0) {
+        return;
+      }
+      columns = Arrays.copyOf(columns, columns.length);
+      Arrays.sort(columns, Bytes.BYTES_COMPARATOR);
+    }
+
     DB db = getDB();
     DBIterator iterator = db.iterator();
     seekToStart(iterator, startRow);
@@ -434,7 +467,6 @@ public class LevelDBOrderedTableCore {
       throw e;
     }
   }
-
 
   /**
    * A scanner for a range of rows.

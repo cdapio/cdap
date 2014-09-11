@@ -6,7 +6,7 @@ define([], function () {
 
     var Controller = Em.Controller.extend({
 
-        __STATUS_UPDATE_TIMEOUT: 2000,
+        __STATUS_UPDATE_TIMEOUT: 1000,
         __updateStatusTimeout: null,
         __updateStatus: function(appName, jobName) {
             var model = this.get('model');
