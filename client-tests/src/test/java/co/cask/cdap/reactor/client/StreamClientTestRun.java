@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Test for {@link StreamClient}.
  */
 @Category(XSlowTests.class)
 public class StreamClientTestRun extends ClientTestBase {
