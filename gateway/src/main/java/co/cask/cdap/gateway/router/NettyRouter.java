@@ -132,7 +132,7 @@ public class NettyRouter extends AbstractIdleService {
     this.configuration = cConf;
     this.sConfiguration = sConf;
 
-    this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
+    this.sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
     this.webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
     if (isSSLEnabled()) {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,

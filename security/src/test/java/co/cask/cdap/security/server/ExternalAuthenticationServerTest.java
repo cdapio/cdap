@@ -31,7 +31,7 @@ public class ExternalAuthenticationServerTest extends ExternalAuthenticationServ
   @BeforeClass
   public static void beforeClass() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "false");
+    cConf.set(Constants.Security.SSL_ENABLED, "false");
 
     configuration = cConf;
     sConfiguration = SConfiguration.create();
