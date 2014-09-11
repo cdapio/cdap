@@ -41,33 +41,70 @@ security.enabled                              true
 security.auth.server.address                  <hostname>
 ==========================================  ==============
 
+Default Port Information
+=========================
+Without SSL:
+
+=======================================   =================
+   Property                               Default Value
+=======================================   =================
+router.bind.port                            10000
+security.auth.server.bind.port              10009
+dashboard.bind.port                         9999
+=======================================   =================
+
+With SSL:
+
+==========================================  =================
+   Property                                  Default Value
+==========================================  =================
+router.ssl.bind.port                          9443
+security.auth.server.ssl.bind.port            10010
+dashboard.ssl.bind.port                       10043
+==========================================  =================
+
+Propert
+
 Configuring SSL for the Authentication Server
 ==============================================
-To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-site.xml``:
+To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-security.xml``:
 
-=============================================  =======================
-   Property                                      Value
-=============================================  =======================
-security.auth.server.ssl.enabled                  true
-security.auth.server.ssl.keystore.path            <path>
-security.auth.server.ssl.keystore.password        <password>
-security.auth.server.ssl.keystore.keypassword     <password>
-security.auth.server.ssl.keystore.type            <keystore-file-type>
-=============================================  =======================
+=============================================     =====================     ====================================
+   Property                                        Default Value                Description
+=============================================     =====================     ====================================
+security.auth.server.ssl.keystore.path              None                      Keystore file location. CDAP user
+                                                                              should own this file and should
+                                                                              have default permissions.
+security.auth.server.ssl.keystore.password          None                      Keystore password
+security.auth.server.ssl.keystore.keypassword       None                      Keystore key password
+security.auth.server.ssl.keystore.type              JKS                       Keystore file type
+=============================================     =====================     ====================================
 
 Configuring SSL for the Router
 ==============================================
-To configure SSL for the Router, add these properties to ``cdap-site.xml``:
+To configure SSL for the Router, add these properties to ``cdap-security.xml``:
 
-================================    =======================
-   Property                           Value
-================================    =======================
-router.ssl.enabled                    true
-router.ssl.keystore.path              <path>
-router.ssl.keystore.password          <password>
-router.ssl.keystore.keypassword       <password>
-router.ssl.keystore.type              <keystore-file-type>
-================================    =======================
+================================    =======================      ================================================
+   Property                           Default Value                Description
+================================    =======================      ================================================
+router.ssl.keystore.path              None                         Keystore file location. CDAP user should own
+                                                                   this file and should have default permissions.
+router.ssl.keystore.password          None                         Keystore password
+router.ssl.keystore.keypassword       None                         Keystore key password
+router.ssl.keystore.type              JKS                          Keystore file type
+================================    =======================      ================================================
+
+Configuring SSL for UI
+=============================================
+To configure SSL for the Web-UI, add these properties to ``cdap-security.xml``:
+
+=======================================          =======================
+   Property                                        Value
+=======================================          =======================
+dashboard.ssl.cert                                  <path>
+dashboard.ssl.key                                   <path>
+dashboard.selfsignedcertificate.enabled             true/false
+=======================================          =======================
 
 Configuring Kerberos (required)
 ================================
