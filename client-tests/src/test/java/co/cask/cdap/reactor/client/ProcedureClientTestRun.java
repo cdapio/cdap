@@ -34,7 +34,7 @@ import org.junit.experimental.categories.Category;
 import java.io.File;
 
 /**
- *
+ * Test for {@link ProcedureClient}.
  */
 @Category(XSlowTests.class)
 public class ProcedureClientTestRun extends ClientTestBase {

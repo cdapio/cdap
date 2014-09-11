@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Test for {@link ProgramClient}.
  */
 @Category(XSlowTests.class)
 public class ProgramClientTestRun extends ClientTestBase {

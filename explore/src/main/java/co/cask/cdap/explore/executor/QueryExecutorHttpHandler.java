@@ -312,7 +312,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       }
     } catch (HandleNotFoundException e) {
       if (!responseStarted) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        if (e.isInactive()) {
+          responder.sendString(HttpResponseStatus.CONFLICT, "Query is inactive");
+        } else {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        }
       }
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
