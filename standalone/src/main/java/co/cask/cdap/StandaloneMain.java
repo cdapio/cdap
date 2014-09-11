@@ -256,7 +256,6 @@ public class StandaloneMain {
     out.println("");
     out.println("Additional options:");
     out.println("  --web-app-path  Path to Webapp");
-    out.println("  --in-memory     To run everything in memory");
     out.println("  --help          To print this message");
     out.println("");
 
@@ -266,16 +265,12 @@ public class StandaloneMain {
   }
 
   public static void main(String[] args) {
-    // Single node use persistent data fabric by default
-    boolean inMemory = false;
     String webAppPath = WebCloudAppService.WEB_APP;
 
     if (args.length > 0) {
       if ("--help".equals(args[0]) || "-h".equals(args[0])) {
         usage(false);
         return;
-      } else if ("--in-memory".equals(args[0])) {
-        inMemory = true;
       } else if ("--web-app-path".equals(args[0])) {
         webAppPath = args[1];
       } else {
@@ -286,7 +281,7 @@ public class StandaloneMain {
     StandaloneMain main = null;
 
     try {
-      main = create(inMemory, webAppPath);
+      main = create(webAppPath);
       main.startUp();
     } catch (Throwable e) {
       System.err.println("Failed to start server. " + e.getMessage());
@@ -298,25 +293,22 @@ public class StandaloneMain {
     }
   }
 
-  public static StandaloneMain create(boolean inMemory) {
-    return create(inMemory, WebCloudAppService.WEB_APP);
+  public static StandaloneMain create() {
+    return create(WebCloudAppService.WEB_APP);
   }
 
   /**
    * The root of all goodness!
-   *
-   * @param inMemory
-   * @param webAppPath
    */
-  public static StandaloneMain create(boolean inMemory, String webAppPath) {
-    return create(inMemory, webAppPath, CConfiguration.create(), new Configuration());
+  public static StandaloneMain create(String webAppPath) {
+    return create(webAppPath, CConfiguration.create(), new Configuration());
   }
 
-  public static StandaloneMain create(boolean inMemory, CConfiguration cConf, Configuration hConf) {
-    return create(inMemory, WebCloudAppService.WEB_APP, cConf, hConf);
+  public static StandaloneMain create(CConfiguration cConf, Configuration hConf) {
+    return create(WebCloudAppService.WEB_APP, cConf, hConf);
   }
 
-  public static StandaloneMain create(boolean inMemory, String webAppPath, CConfiguration cConf, Configuration hConf) {
+  public static StandaloneMain create(String webAppPath, CConfiguration cConf, Configuration hConf) {
     // This is needed to use LocalJobRunner with fixes (we have it in app-fabric).
     // For the modified local job runner
     hConf.addResource("mapred-site-local.xml");
@@ -341,38 +333,9 @@ public class StandaloneMain {
     cConf.setInt(Constants.Gateway.PORT, 0);
 
     //Run dataset service on random port
-    List<Module> modules = inMemory ? createInMemoryModules(cConf, hConf)
-      : createPersistentModules(cConf, hConf);
+    List<Module> modules = createPersistentModules(cConf, hConf);
 
     return new StandaloneMain(modules, cConf, webAppPath);
-  }
-
-  private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
-
-    configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-
-    return ImmutableList.of(
-      new ConfigModule(configuration, hConf),
-      new IOModule(),
-      new MetricsHandlerModule(),
-      new AuthModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
-      new LocationRuntimeModule().getInMemoryModules(),
-      new AppFabricServiceRuntimeModule().getInMemoryModules(),
-      new ProgramRunnerRuntimeModule().getInMemoryModules(),
-      new GatewayModule().getInMemoryModules(),
-      new DataFabricModules().getInMemoryModules(),
-      new DataSetsModules().getLocalModule(),
-      new DataSetServiceModules().getInMemoryModule(),
-      new MetricsClientRuntimeModule().getInMemoryModules(),
-      new LoggingModules().getInMemoryModules(),
-      new RouterModules().getInMemoryModules(),
-      new SecurityModules().getInMemoryModules(),
-      new StreamServiceRuntimeModule().getInMemoryModules(),
-      new ExploreRuntimeModule().getInMemoryModules(),
-      new ServiceStoreModules().getInMemoryModule(),
-      new ExploreClientModule()
-    );
   }
 
   private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {

@@ -16,7 +16,9 @@
 
 package co.cask.cdap.shell.command;
 
+import co.cask.cdap.shell.AbstractCommand;
 import co.cask.cdap.shell.CLIConfig;
+import co.cask.cdap.shell.CommandSet;
 import co.cask.cdap.shell.Constants;
 import com.google.common.base.Supplier;
 

@@ -61,7 +61,9 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   }
 
   /**
-   * Currently defaults to {@link ResourceSpecification.BASIC}, until we allow the user to specify it.
+   * Currently defaults to {@link ResourceSpecification#BASIC}
+   * until we allow the user to specify it.
+   * 
    * @return The resourceSpecification to be used for this serviceWorker
    */
   protected ResourceSpecification getResourceSpecification() {
