@@ -416,14 +416,6 @@ public final class Constants {
   }
 
   /**
-   * SSL configuration.
-   */
-  public static final class SSL {
-    /** Enables SSL */
-    public static final String SSL_ENABLED = "ssl.enabled";
-  }
-
-  /**
    * Security configuration.
    */
   public static final class Security {
@@ -458,6 +450,8 @@ public final class Constants {
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
+    /** Enables SSL */
+    public static final String SSL_ENABLED = "ssl.enabled";
 
     /**
      * Security configuration for Router.
