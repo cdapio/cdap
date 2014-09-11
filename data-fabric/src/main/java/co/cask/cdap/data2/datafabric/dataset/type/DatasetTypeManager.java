@@ -351,7 +351,7 @@ public class DatasetTypeManager extends AbstractIdleService {
 
   private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {
     private final MDSDatasets datasets;
-    private final DatasetDefinitionRegistry registry;
+    private final InMemoryDatasetDefinitionRegistry registry;
 
     private final List<String> types = Lists.newArrayList();
     private final List<String> usedTypes = Lists.newArrayList();
@@ -373,8 +373,9 @@ public class DatasetTypeManager extends AbstractIdleService {
     public void add(DatasetDefinition def) {
       String typeName = def.getName();
       if (datasets.getTypeMDS().getType(typeName) != null) {
-        throw new RuntimeException(
-          new DatasetModuleConflictException("Cannot add dataset type: it already exists: " + typeName));
+        String msg = "Cannot add dataset type: it already exists: " + typeName;
+        LOG.error(msg);
+        throw new IllegalArgumentException(msg);
       }
       types.add(typeName);
       registry.add(def);
@@ -382,12 +383,13 @@ public class DatasetTypeManager extends AbstractIdleService {
 
     @Override
     public <T extends DatasetDefinition> T get(String datasetTypeName) {
-      T def = registry.get(datasetTypeName);
-      if (def == null) {
+      T def;
+      if (registry.hasType(datasetTypeName)) {
+        def = registry.get(datasetTypeName);
+      } else {
         DatasetTypeMeta typeMeta = datasets.getTypeMDS().getType(datasetTypeName);
         if (typeMeta == null) {
-          throw new RuntimeException(
-            new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName));
+          throw new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName);
         }
         try {
           def = new DatasetDefinitionLoader(locationFactory).load(typeMeta, registry);
@@ -397,6 +399,11 @@ public class DatasetTypeManager extends AbstractIdleService {
       }
       usedTypes.add(datasetTypeName);
       return def;
+    }
+
+    @Override
+    public boolean hasType(String datasetTypeName) {
+      return datasets.getTypeMDS().getType(datasetTypeName) != null;
     }
   }
 }
