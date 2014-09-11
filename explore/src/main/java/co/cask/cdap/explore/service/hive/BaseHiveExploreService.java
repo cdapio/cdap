@@ -40,6 +40,8 @@ import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import com.continuuity.tephra.Transaction;
 import com.continuuity.tephra.TransactionSystemClient;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -52,8 +54,10 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
@@ -80,7 +84,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.Field;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
@@ -100,6 +106,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
   private static final Gson GSON = new Gson();
   private static final int PREVIEW_COUNT = 5;
+  private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -115,8 +122,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final ScheduledExecutorService scheduledExecutorService;
   private final long cleanupJobSchedule;
   private final File previewsDir;
+  private final ScheduledExecutorService metastoreClientsExecutorService;
 
-  private IMetaStoreClient metastoreClient;
+  private final ThreadLocal<Supplier<IMetaStoreClient>> metastoreClientLocal;
+
+  // The following two fields are for tracking GC'ed metastore clients and be able to call close on them.
+  private final Map<Reference<? extends Supplier<IMetaStoreClient>>, IMetaStoreClient> metastoreClientReferences;
+  private final ReferenceQueue<Supplier<IMetaStoreClient>> metastoreClientReferenceQueue;
 
   protected abstract QueryStatus fetchStatus(OperationHandle handle) throws HiveSQLException, ExploreException,
     HandleNotFoundException;
@@ -129,7 +141,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.hConf = hConf;
     this.hiveConf = hiveConf;
     this.previewsDir = previewsDir;
-    this.metastoreClient = null;
+    this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
+    this.metastoreClientReferences = Maps.newConcurrentMap();
+    this.metastoreClientReferenceQueue = new ReferenceQueue<Supplier<IMetaStoreClient>>();
+
+    // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
+    this.metastoreClientsExecutorService =
+      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metastore-client-gc"));
 
     this.scheduledExecutorService =
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("explore-handle-timeout"));
@@ -166,23 +184,59 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     return cliService;
   }
 
+  private IMetaStoreClient getMetaStoreClient() throws ExploreException {
+    if (metastoreClientLocal.get() == null) {
+      try {
+        IMetaStoreClient client = new HiveMetaStoreClient(new HiveConf());
+        Supplier<IMetaStoreClient> supplier = Suppliers.ofInstance(client);
+        metastoreClientLocal.set(supplier);
+
+        // We use GC of the supplier as a signal for us to know that a thread is gone
+        // The supplier is set into the thread local, which will get GC'ed when the thread is gone.
+        // Since we use a weak reference key to the supplier that points to the client
+        // (in the metastoreClientReferences map), it won't block GC of the supplier instance.
+        // We can use the weak reference, which is retrieved through polling the ReferenceQueue,
+        // to get back the client and call close() on it.
+        metastoreClientReferences.put(
+          new WeakReference<Supplier<IMetaStoreClient>>(supplier, metastoreClientReferenceQueue),
+          client
+        );
+      } catch (MetaException e) {
+        throw new ExploreException("Error initializing Hive Metastore client", e);
+      }
+    }
+    return metastoreClientLocal.get().get();
+  }
+
+  private void closeMetastoreClient(IMetaStoreClient client) {
+    try {
+      client.close();
+    } catch (Throwable t) {
+      LOG.error("Exception raised in closing Metastore client", t);
+    }
+  }
+
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
     cliService.init(getHiveConf());
     cliService.start();
 
-    Field[] fields = CLIService.class.getDeclaredFields();
-    for (Field field : fields) {
-      if (field.getGenericType().equals(IMetaStoreClient.class)) {
-        field.setAccessible(true);
-        metastoreClient = (IMetaStoreClient) field.get(cliService);
-        break;
-      }
-    }
-    if (metastoreClient == null) {
-      throw new ExploreException("Could not find MetastoreClient field in Hive CLI Service");
-    }
+    metastoreClientsExecutorService.scheduleWithFixedDelay(
+      new Runnable() {
+        @Override
+        public void run() {
+          Reference<? extends Supplier<IMetaStoreClient>> ref = metastoreClientReferenceQueue.poll();
+          while (ref != null) {
+            IMetaStoreClient client = metastoreClientReferences.remove(ref);
+            if (client != null) {
+              closeMetastoreClient(client);
+            }
+            ref = metastoreClientReferenceQueue.poll();
+          }
+        }
+      },
+      METASTORE_CLIENT_CLEANUP_PERIOD, METASTORE_CLIENT_CLEANUP_PERIOD, TimeUnit.SECONDS);
 
     // Schedule the cache cleanup
     scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
@@ -210,6 +264,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     // Wait for all cleanup jobs to complete
     scheduledExecutorService.awaitTermination(10, TimeUnit.SECONDS);
     scheduledExecutorService.shutdown();
+
+    metastoreClientsExecutorService.shutdownNow();
+    // Go through all non-cleanup'ed clients and call close() upon them
+    for (IMetaStoreClient client : metastoreClientReferences.values()) {
+      closeMetastoreClient(client);
+    }
 
     cliService.stop();
   }
@@ -373,13 +433,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     try {
       List<String> databases;
       if (database == null) {
-        databases = metastoreClient.getAllDatabases();
+        databases = getMetaStoreClient().getAllDatabases();
       } else {
         databases = ImmutableList.of(database);
       }
       ImmutableList.Builder<TableNameInfo> builder = ImmutableList.builder();
       for (String db : databases) {
-        List<String> tables = metastoreClient.getAllTables(db);
+        List<String> tables = getMetaStoreClient().getAllTables(db);
         for (String table : tables) {
           builder.add(new TableNameInfo(db, table));
         }
@@ -398,7 +458,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     try {
       String db = database == null ? "default" : database;
-      Table tableInfo = metastoreClient.getTable(db, table);
+      Table tableInfo = getMetaStoreClient().getTable(db, table);
       ImmutableList.Builder<TableInfo.ColumnInfo> schemaBuilder = ImmutableList.builder();
       ImmutableList.Builder<TableInfo.ColumnInfo> partitionKeysBuilder = ImmutableList.builder();
       for (FieldSchema column : tableInfo.getSd().getCols()) {

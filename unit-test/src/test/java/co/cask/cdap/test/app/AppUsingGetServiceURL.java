@@ -127,16 +127,6 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     private static final class PingingWorker extends AbstractServiceWorker {
       private static final Logger LOG = LoggerFactory.getLogger(PingingWorker.class);
 
-      @Override
-      public void stop() {
-        // no-op
-      }
-
-      @Override
-      public void destroy() {
-        // no-op
-      }
-
       private void writeToDataSet(final String key, final String val) {
         getContext().execute(new TxRunnable() {
           @Override

@@ -122,7 +122,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   }
 
   @Override
-  public Module getSingleNodeModules() {
+  public Module getStandaloneModules() {
 
     return Modules.combine(new AppFabricServiceModule(),
                            new AbstractModule() {

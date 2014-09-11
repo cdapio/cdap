@@ -151,7 +151,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
         }
       }
     }
-    // unchecked because we cannot do much if it fails. We will still shutdown the singlenode.
+    // unchecked because we cannot do much if it fails. We will still shutdown the standalone CDAP instance.
     try {
       Futures.successfulAsList(futures).get(60, TimeUnit.SECONDS);
       LOG.info("All programs have been stopped.");

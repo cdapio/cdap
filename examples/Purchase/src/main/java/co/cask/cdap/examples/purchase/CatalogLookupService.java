@@ -64,16 +64,6 @@ public class CatalogLookupService extends AbstractService {
     private int numIterations;
 
     @Override
-    public void stop() {
-      //no-op
-    }
-
-    @Override
-    public void destroy() {
-      //no-op
-    }
-
-    @Override
     public void run() {
       while (true) {
         numIterations++;
