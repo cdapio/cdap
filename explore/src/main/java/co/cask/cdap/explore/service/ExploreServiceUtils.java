@@ -323,7 +323,10 @@ public class ExploreServiceUtils {
   /**
    * Trace the dependencies files of the given className, using the classLoader,
    * and excluding any class contained in the bootstrapClassPaths and Kryo classes.
-   * Hive needs Kryo 2.22 to work, and since Spark has a dependency on Kryo 2.21, it enters in our components' jars.
+   * We need to remove Kryo dependency in the Explore container. Spark introduced version 2.21 version of Kryo,
+   * which would be normally shipped to the Explore container. Yet, Hive requires Kryo 2.22,
+   * and gets it from the Hive jars - hive-exec.jar to be precise.
+   *
    * Nothing is returned if the classLoader does not contain the className.
    */
   public static Set<File> traceDependencies(String className, final Set<String> bootstrapClassPaths,
