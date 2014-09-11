@@ -49,7 +49,6 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,18 +158,11 @@ public class InMemoryRunnableRunner implements ProgramRunner {
         }
       };
 
-      DiscoveryServiceClient dClient = new DiscoveryServiceClient() {
-        @Override
-        public ServiceDiscovered discover(String s) {
-          return discoveryServiceClient.discover(String.format("service.%s.%s.%s", program.getAccountId(),
-                                                               program.getApplicationId(), program.getName()));
-        }
-      };
       twillContext = new InMemoryTwillContext(twillRunId, runId, InetAddress.getLocalHost(), new String[0], argArray,
                                               runnableSpec.getRunnableSpecification(), instanceId,
                                               runnableSpec.getResourceSpecification().getVirtualCores(),
                                               runnableSpec.getResourceSpecification().getMemorySize(),
-                                              dClient, dService, instanceCount, electionRegistry);
+                                              discoveryServiceClient, dService, instanceCount, electionRegistry);
 
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
       TwillRunnable runnable = null;
