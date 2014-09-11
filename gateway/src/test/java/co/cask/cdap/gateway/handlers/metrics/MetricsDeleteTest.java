@@ -39,23 +39,23 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
   @Test
   public void testContextDelete() throws Exception {
     // Insert some metrics
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                                 "WCount.f.WordCounter.unique", "0");
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);
 
-    collector = collectionService.getCollector(MetricsScope.REACTOR, "WCount.f.WordCounter.counter", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WordCounter.counter", "0");
     collector.increment("process.events.processed", 4);
     collector.increment("process.events.out", 3);
 
-    collector = collectionService.getCollector(MetricsScope.REACTOR, "WCount.f.WCounter.counter", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WCounter.counter", "0");
     collector.increment("process.events.processed", 2);
     collector.increment("process.events.out", 1);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    String base = "/v2/metrics/reactor/apps/WCount/flows";
+    String base = "/v2/metrics/system/apps/WCount/flows";
     // make sure data is there
     Assert.assertEquals(6, getMetricCount(base + "/WordCounter/flowlets/unique", "process.events.processed"));
     Assert.assertEquals(5, getMetricCount(base + "/WordCounter/flowlets/unique", "process.events.out"));
@@ -80,20 +80,20 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
   @Test
   public void testContextAndMetricDelete() throws Exception {
     // Insert some metrics
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                                 "WCount.f.WordCounter.unique", "0");
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);
     collector.increment("store.ops", 7);
 
-    collector = collectionService.getCollector(MetricsScope.REACTOR, "WCount.f.WordCounter.counter", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WordCounter.counter", "0");
     collector.increment("process.events.processed", 4);
     collector.increment("process.events.out", 3);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    String base = "/v2/metrics/reactor/apps/WCount/flows/WordCounter";
+    String base = "/v2/metrics/system/apps/WCount/flows/WordCounter";
     // make sure data is there
     Assert.assertEquals(6, getMetricCount(base + "/flowlets/unique", "process.events.processed"));
     Assert.assertEquals(5, getMetricCount(base + "/flowlets/unique", "process.events.out"));
@@ -116,7 +116,7 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
   @Test
   public void testMetricNoContextDelete() throws Exception {
     // Insert some metrics
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                                 "WCount.f.WordCounter.unique", "0");
     collector.increment("store.ops", 7);
     collector.increment("process.events.processed", 6);
@@ -125,7 +125,7 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    String base = "/v2/metrics/reactor";
+    String base = "/v2/metrics/system";
     // make sure data is there
     Assert.assertEquals(7, getMetricCount(base, "store.ops"));
     Assert.assertEquals(6, getMetricCount(base, "process.events.processed"));

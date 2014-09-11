@@ -30,7 +30,7 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
 
   @Inject
   public TransactionManagerMetricsCollector(MetricsCollectionService metricsCollectionService) {
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, "transactions", "0");
   }
 
   @Override
