@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>data-fabric-tests</artifactId>
-  <name>Cask CDAP Data-Fabric Tests</name>
+  <name>CDAP Data-Fabric Tests</name>
   <packaging>jar</packaging>
 
   <dependencies>

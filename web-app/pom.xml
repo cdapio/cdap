@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>web-app</artifactId>
-  <name>Cask CDAP Web-App</name>
+  <name>CDAP Web-App</name>
 
   <dependencies>
     <dependency>

@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>unit-test</artifactId>
-  <name>Cask CDAP Unit Test Framework</name>
+  <name>CDAP Unit Test Framework</name>
   <packaging>jar</packaging>
 
   <dependencies>

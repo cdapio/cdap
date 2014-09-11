@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>kafka</artifactId>
-  <name>Cask CDAP Kafka Server</name>
+  <name>CDAP Kafka Server</name>
   <packaging>jar</packaging>
 
   <dependencies>
