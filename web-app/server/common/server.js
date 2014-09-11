@@ -146,7 +146,7 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
   var path = '/' + this.API_VERSION + '/ping',
       url;
   this.routerBindAddress = this.config['gateway.server.address'];
-  if (this.config['dashboard.https.enabled'] === "true") {
+  if (this.config['ssl.enabled'] === "true") {
     this.routerBindPort = this.config['router.ssl.bind.port'];
     this.transferProtocol = "https://";
     url = 'https://' + this.config['gateway.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
