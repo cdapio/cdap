@@ -33,6 +33,7 @@ the License.
       <groupId>co.cask.cdap</groupId>
       <artifactId>client</artifactId>
       <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
