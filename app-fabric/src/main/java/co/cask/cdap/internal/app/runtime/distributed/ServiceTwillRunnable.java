@@ -211,6 +211,11 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
+      Futures.getUnchecked(
+        Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
+
+      LOG.info("!!! Chain starting zkClient, et all");
+
       if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
@@ -290,9 +295,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void run() {
-    Futures.getUnchecked(
-      Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
-
     LOG.info("Starting runnable: {}", name);
     try {
       delegate.run();
