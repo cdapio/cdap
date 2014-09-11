@@ -146,10 +146,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      if (!(dataset instanceof RecordScannable)) {
-        // It is not an error to get non-RecordScannable datasets, since the type of dataset may not be known where this
+      if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
+        // It is not an error to get non-Record enabled datasets, since the type of dataset may not be known where this
         // call originates from.
-        LOG.debug("Dataset {} does not implement {}", datasetName, RecordScannable.class.getName());
+        LOG.debug("Dataset {} neither implements {} nor {}", datasetName, RecordScannable.class.getName(),
+                  RecordWritable.class.getName());
         JsonObject json = new JsonObject();
         json.addProperty("handle", QueryHandle.NO_OP.getHandle());
         responder.sendJson(HttpResponseStatus.OK, json);
