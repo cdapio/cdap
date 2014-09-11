@@ -18,8 +18,10 @@ package co.cask.cdap.data2.dataset2;
 
 /**
  * Thrown when operation conflicts with existing data set types in the system.
+ * NOTE: for now we don't want to leak this exception class into dev-facing APIs,
+ * see {@link co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry}.
  */
-public class TypeConflictException extends DatasetManagementException {
+public class TypeConflictException extends IllegalArgumentException {
   public TypeConflictException(String message) {
     super(message);
   }

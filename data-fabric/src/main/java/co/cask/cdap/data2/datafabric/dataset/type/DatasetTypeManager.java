@@ -27,6 +27,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasets;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.TypeConflictException;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.data2.dataset2.tx.TxCallable;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -160,12 +161,12 @@ public class DatasetTypeManager extends AbstractIdleService {
       });
 
     } catch (TransactionFailureException e) {
-      if (e.getCause() != null) {
-        if (e.getCause() instanceof DatasetModuleConflictException) {
-          throw (DatasetModuleConflictException) e.getCause();
-        } else if (e.getCause().getCause() != null &&
-                   e.getCause().getCause() instanceof DatasetModuleConflictException) {
-          throw (DatasetModuleConflictException) e.getCause().getCause();
+      Throwable cause = e.getCause();
+      if (cause != null) {
+        if (cause instanceof DatasetModuleConflictException) {
+          throw (DatasetModuleConflictException) cause;
+        } else if (cause instanceof TypeConflictException) {
+          throw new DatasetModuleConflictException(cause);
         }
       }
       throw Throwables.propagate(e);
@@ -375,7 +376,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       if (datasets.getTypeMDS().getType(typeName) != null) {
         String msg = "Cannot add dataset type: it already exists: " + typeName;
         LOG.error(msg);
-        throw new IllegalArgumentException(msg);
+        throw new TypeConflictException(msg);
       }
       types.add(typeName);
       registry.add(def);
