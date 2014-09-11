@@ -41,10 +41,9 @@ public class TestBatchStreamIntegration extends TestBase {
       }
 
       MapReduceManager mapReduceManager = applicationManager.startMapReduce("StreamTestBatch");
-      mapReduceManager.waitForFinish(60, TimeUnit.SECONDS);
+      mapReduceManager.waitForFinish(2, TimeUnit.MINUTES);
 
       // TODO: verify results
-
     } finally {
       applicationManager.stopAll();
       TimeUnit.SECONDS.sleep(1);

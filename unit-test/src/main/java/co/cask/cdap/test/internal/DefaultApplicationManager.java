@@ -465,7 +465,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       String status = appFabricClient.getStatus(programId.getApplicationId(),
                                                     programId.getRunnableId(), programId.getRunnableType());
       // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
-      return "RUNNING".equals(status);
+      return "STARTING".equals(status) || "RUNNING".equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
