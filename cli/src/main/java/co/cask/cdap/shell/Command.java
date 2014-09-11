@@ -14,29 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command;
-
-import co.cask.cdap.shell.AbstractCommand;
-import co.cask.cdap.shell.CLIConfig;
-import com.google.inject.Inject;
+package co.cask.cdap.shell;
 
 import java.io.PrintStream;
 
 /**
- * Prints the version.
+ * Executable command that takes input from the command-line and writes output.
  */
-public class VersionCommand extends AbstractCommand {
-
-  private final CLIConfig cliConfig;
-
-  @Inject
-  public VersionCommand(CLIConfig cliConfig) {
-    super("version", null, "Prints the version");
-    this.cliConfig = cliConfig;
-  }
-
-  @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    output.println(cliConfig.getVersion());
-  }
+public interface Command {
+  void process(String[] args, PrintStream output) throws Exception;
+  String getName();
+  String getHelperText(String namePrefix);
 }
