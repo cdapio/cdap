@@ -16,6 +16,7 @@
 
 package co.cask.cdap.shell.command;
 
+import co.cask.cdap.shell.AbstractCommand;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -27,7 +28,7 @@ public class ExitCommand extends AbstractCommand {
 
   @Inject
   public ExitCommand() {
-    super("exit", null, "Exits the shell");
+    super("exit", null, "Exits the CLI");
   }
 
   @Override
