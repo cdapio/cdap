@@ -161,7 +161,7 @@ function build_rest_pdf() {
 
 function build_standalone() {
   cd $PROJECT_PATH
-  mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
+  mvn clean package -DskipTests -P examples && mvn package -pl standalone -am -DskipTests -P dist,release
 }
 
 function build_sdk() {
