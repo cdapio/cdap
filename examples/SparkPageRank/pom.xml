@@ -25,7 +25,9 @@
   </parent>
 
   <artifactId>SparkPageRank</artifactId>
-
+  <name>Spark Page Rank</name>
+  <packaging>jar</packaging>
+  
   <properties>
     <app.main.class>co.cask.cdap.examples.sparkpagerank.SparkPageRankApp</app.main.class>
   </properties>
@@ -37,6 +39,4 @@
       <scope>provided</scope>
     </dependency>
   </dependencies>
-
-
 </project>

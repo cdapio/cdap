@@ -12,6 +12,11 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
+ * This example is based on the Apache Spark Example JavaPageRank. The original file may be found at
+ * https://github.com/apache/spark/blob/master/examples/src/main/java/org/apache/spark/examples/JavaPageRank.java
+ *
+ * Copyright 2014 The Apache Software Foundation. Licensed under the Apache License, Version 2.0.
  */
 
 

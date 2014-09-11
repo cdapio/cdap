@@ -117,6 +117,11 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 - A simple example to illustrate how to read and write key/values in a Flow.
 
+## SparkPageRank
+
+- An application that demonstrates streaming text analysis using a Spark job.
+- It computes the page rank of URLs from an input stream.
+
 ## Ticker
 
 - This application pulls in stock market activity data and stores it in Datasets that 
