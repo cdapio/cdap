@@ -32,10 +32,9 @@ cd "`dirname \"$PRG\"`/.."
 APP_HOME="`pwd -P`"
 
 # Add conf directory
-confDistributed="/etc/cdap/conf"
-if [ -d "$confDistributed" ]; then
-  CLASSPATH=$CLASSPATH:"$confDistributed"/
+CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
+if [ -d "$CDAP_CONF" ]; then
+  CLASSPATH=$CLASSPATH:"$CDAP_CONF"
 fi
-
 
 java -cp @classpath@ co.cask.cdap.performance.benchmark.BenchmarkRunner "$@"

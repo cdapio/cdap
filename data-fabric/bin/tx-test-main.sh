@@ -23,6 +23,8 @@ bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 lib="$bin"/../lib
 conf="$bin"/../conf
+CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
+
 script=`basename $0`
 
 # Resolve relative symlinks
@@ -67,6 +69,9 @@ fi
 # Load the configuration too.
 if [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
+fi
+if [ -d "$CDAP_CONF" ]; then
+  CLASSPATH=$CLASSPATH:"$CDAP_CONF"
 fi
 
 # Set Log location
