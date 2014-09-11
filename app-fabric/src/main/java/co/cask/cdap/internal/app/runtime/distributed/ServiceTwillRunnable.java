@@ -211,6 +211,8 @@ public class ServiceTwillRunnable implements TwillRunnable {
       Class<?> clz = Class.forName(className, true, program.getClassLoader());
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
+      // These services need to be starting before initializing the delegate since they are used in
+      // AbstractContext's constructor to create datasets.
       Futures.getUnchecked(
         Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
 
