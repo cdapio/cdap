@@ -14,11 +14,6 @@ var WebAppServer = require('../common/server');
 process.env.NODE_ENV = 'development';
 
 /**
- * Allow self-signed SSL certificates.
- */
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
-
-/**
  * Log level.
  */
 var logLevel = 'INFO';
@@ -35,6 +30,13 @@ var DevServer = function() {
 util.inherits(DevServer, WebAppServer);
 
 DevServer.prototype.startServer = function () {
+  if (this.config['dashboard.ssl.cert.allow.unauthorized']) {
+    /**
+     * Allow self-signed SSL certificates.
+     */
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+  }
+
   this.bindRoutes();
 
   this.server.listen(this.config['dashboard.bind.port']);
