@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.operation.executor.remote;
 
-import com.continuuity.tephra.distributed.ElasticPool;
+import co.cask.tephra.distributed.ElasticPool;
 import org.junit.Assert;
 import org.junit.Test;
 

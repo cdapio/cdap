@@ -47,19 +47,19 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     QueueName queueName = QueueName.fromFlowlet("WordCount", "WordCounter", "counter", "queue");
 
     // Insert queue metrics
-    MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.REACTOR,
+    MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                                        "WordCount.f.WordCounter.counter", "0");
     enqueueCollector.increment("process.events.out", 10, queueName.getSimpleName());
 
     // Insert ack metrics
-    MetricsCollector ackCollector = collectionService.getCollector(MetricsScope.REACTOR,
+    MetricsCollector ackCollector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                                    "WordCount.f.WordCounter.unique", "0");
     ackCollector.increment("process.events.processed", 6, "input." + queueName.toString());
     ackCollector.increment("process.events.processed", 2, "input.stream:///streamX");
     ackCollector.increment("process.events.processed", 1, "input.stream://developer/streamX");
 
     // Insert stream metrics
-    MetricsCollector streamCollector = collectionService.getCollector(MetricsScope.REACTOR,
+    MetricsCollector streamCollector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                                       Constants.Gateway.METRICS_CONTEXT, "0");
     streamCollector.increment("collect.events", 5, "streamX");
 
@@ -70,7 +70,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     HttpPost post = getPost("/v2/metrics");
     post.setHeader("Content-type", "application/json");
     post.setEntity(new StringEntity(
-      "[\"/reactor/apps/WordCount/flows/WordCounter/flowlets/unique/process.events.pending?aggregate=true\"]"));
+      "[\"/system/apps/WordCount/flows/WordCounter/flowlets/unique/process.events.pending?aggregate=true\"]"));
     HttpResponse response = doPost(post);
     Reader reader = new InputStreamReader(response.getEntity().getContent(), Charsets.UTF_8);
     try {
@@ -94,7 +94,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   @Test
   public void testingSystemMetrics() throws Exception {
     // Insert system metric
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                                 "appfabric.AppFabricHttpHandler.getAllApps",
                                                                 "0");
     collector.increment("request.received", 1);
@@ -103,12 +103,12 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     TimeUnit.SECONDS.sleep(2);
 
     String methodRequest =
-      "/reactor/services/appfabric/handlers/AppFabricHttpHandler/methods/getAllApps/" +
+      "/system/services/appfabric/handlers/AppFabricHttpHandler/methods/getAllApps/" +
         "request.received?aggregate=true";
     String handlerRequest =
-      "/reactor/services/appfabric/handlers/AppFabricHttpHandler/request.received?aggregate=true";
+      "/system/services/appfabric/handlers/AppFabricHttpHandler/request.received?aggregate=true";
     String serviceRequest =
-      "/reactor/services/appfabric/request.received?aggregate=true";
+      "/system/services/appfabric/request.received?aggregate=true";
 
     testSingleMetric(methodRequest, 1);
     testSingleMetric(handlerRequest, 1);
@@ -119,7 +119,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   public void testingInvalidSystemMetrics() throws Exception {
     //appfabrics service does not exist
     String methodRequest =
-      "/reactor/services/appfabrics/handlers/AppFabricHttpHandler/methods/getAllApps/" +
+      "/system/services/appfabrics/handlers/AppFabricHttpHandler/methods/getAllApps/" +
         "request.received?aggregate=true";
 
     HttpResponse response = doGet("/v2/metrics" + methodRequest);
@@ -212,24 +212,24 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   @Test
   public void testingTransactoinMetrics() throws Exception {
     // Insert system metric  (stream.handler is the service name)
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM, "transactions", "0");
     collector.increment("inprogress", 1);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    String request = "/reactor/transactions/inprogress?aggregate=true";
+    String request = "/system/transactions/inprogress?aggregate=true";
     testSingleMetric(request, 1);
   }
 
   @Test
   public void testGetMetric() throws Exception {
     // Insert some metric
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR,
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                                 "WordCount.f.WordCounter.counter", "0");
     collector.increment("reads", 10, "wordStats");
     collector.increment("collect.events", 10, "wordStream");
-    collector = collectionService.getCollector(MetricsScope.REACTOR, "-.cluster", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM, "-.cluster", "0");
     collector.increment("resources.total.storage", 10);
 
     // Wait for collection to happen

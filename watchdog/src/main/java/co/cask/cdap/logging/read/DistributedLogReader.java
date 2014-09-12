@@ -31,7 +31,7 @@ import co.cask.cdap.logging.kafka.KafkaConsumer;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.write.FileMetaDataManager;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;

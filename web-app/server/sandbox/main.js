@@ -41,7 +41,7 @@ var SandboxServer = function () {
   this.secret = 'production-edition-secret';
 
   this.logger = this.getLogger('console', 'Cloud UI');
-  this.setEnvironment('sandbox', 'Sandbox Reactor');
+  this.setEnvironment('sandbox', 'Sandbox CDAP');
 
   this.setCookieSession(this.cookieName, this.secret);
 
@@ -368,7 +368,7 @@ SandboxServer.prototype.start = function () {
 
         self.config.info = info;
 
-        self.setEnvironment('sandbox', 'Sandbox Reactor', version, function (version, address) {
+        self.setEnvironment('sandbox', 'Sandbox CDAP', version, function (version, address) {
 
           self.logger.info('Version', version);
           self.logger.info('IP Address', address);
@@ -406,7 +406,7 @@ SandboxServer.prototype.start = function () {
 
           /*
            * Don't change this.
-           * Reactor start-up script looks for output "Listening on port "
+           * CDAP start-up script looks for output "Listening on port "
            */
           self.logger.info('Listening on port (HTTP)', self.config['cloud-ui-port']);
 
@@ -427,7 +427,7 @@ SandboxServer.prototype.start = function () {
 
           /*
            * Don't change this.
-           * Reactor start-up script looks for output "Listening on port "
+           * CDAP start-up script looks for output "Listening on port "
            */
           self.logger.info('Listening on port (HTTPS)', self.config['cloud-ui-ssl-port']);
 

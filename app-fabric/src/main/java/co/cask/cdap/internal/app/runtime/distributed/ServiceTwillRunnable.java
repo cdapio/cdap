@@ -53,7 +53,7 @@ import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.ProgramType;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -195,6 +195,11 @@ public class ServiceTwillRunnable implements TwillRunnable {
       programOpts = new SimpleProgramOptions(name, createProgramArguments(context, configs), runtimeArguments);
       resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
 
+      // These services need to be starting before initializing the delegate since they are used in
+      // AbstractContext's constructor to create datasets.
+      Futures.getUnchecked(
+        Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
+
       ApplicationSpecification appSpec = program.getSpecification();
       String processorName = program.getName();
       runnableName = programOpts.getName();
@@ -290,9 +295,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void run() {
-    Futures.getUnchecked(
-      Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
-
     LOG.info("Starting runnable: {}", name);
     try {
       delegate.run();

@@ -17,7 +17,7 @@
 package co.cask.cdap.hive.context;
 
 import co.cask.cdap.common.io.Codec;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;

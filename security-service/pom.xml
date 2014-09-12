@@ -25,8 +25,8 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>security-authorization</artifactId>
-  <name>Cask CDAP Security: Authorization</name>
+  <artifactId>security-service</artifactId>
+  <name>CDAP Security Services</name>
 
   <dependencies>
     <dependency>

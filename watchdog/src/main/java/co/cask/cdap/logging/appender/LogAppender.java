@@ -22,7 +22,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 
 /**
- * Continuuity log appender interface.
+ * CDAP log appender interface.
  */
 public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
   public final void append(ILoggingEvent eventObject) {

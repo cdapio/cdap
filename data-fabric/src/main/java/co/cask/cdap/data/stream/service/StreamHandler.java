@@ -97,7 +97,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
 
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, getMetricsContext(), "0");
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS), metricsCollector);
   }
@@ -188,9 +188,8 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
                            @PathParam("stream") final String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
-    // No need to copy the content buffer as the netty-http library always uses a ChannelBufferFactory
-    // that won't reuse buffer. Until that is changed, it is safe to do it without copying the bytes.
-    // TODO: See ENG-4171 for fix in netty-http library
+    // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
+    // See StreamHttpService
     streamWriter.asyncEnqueue(accountId, stream,
                               getHeaders(request, stream), request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);

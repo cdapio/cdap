@@ -43,7 +43,7 @@ DevServer.prototype.startServer = function () {
   if (enableMocks) {
     this.logger.info('Webapp running with mocks enabled.');
     HttpMockInjector = require('../../test/httpMockInjector');
-    if (!this.config['dashboard.https.enabled'] === "true") {
+    if (!this.config['ssl.enabled'] === "true") {
       new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.bind.port']);
     } else {
       new HttpMockInjector(nock, this.config['router.server.address'], this.config['router.ssl.bind.port']);

@@ -17,11 +17,11 @@
 package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.common.conf.Constants;
-import com.continuuity.tephra.ChangeId;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.persist.TransactionSnapshot;
-import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
+import co.cask.tephra.ChangeId;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.snapshot.SnapshotCodecProvider;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.cli.CommandLine;
@@ -57,7 +57,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Management tool to retrieve the state of the transaction manager of a reactor, and to query it.
+ * Management tool to retrieve the state of the CDAP transaction manager and to query it.
  */
 public class TransactionManagerDebuggerMain {
 
@@ -287,7 +287,7 @@ public class TransactionManagerDebuggerMain {
       }
 
       System.out.println("About to invalidate transaction " +
-                          txId + " on Reactor running at " + hostname);
+                          txId + " on CDAP running at " + hostname);
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         System.out.println("Transaction successfully invalidated.");
@@ -320,7 +320,7 @@ public class TransactionManagerDebuggerMain {
         connection.setRequestProperty("Authorization", "Bearer " + accessToken);
       }
 
-      System.out.println("About to reset the transaction manager state for the Reactor running at " + hostname);
+      System.out.println("About to reset the CDAP transaction manager state running at " + hostname);
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         System.out.println("Transaction manager state reset successfully.");
@@ -401,7 +401,7 @@ public class TransactionManagerDebuggerMain {
   }
 
   /**
-   * Take a snapshot from the transaction manager of a reactor and retrieve it.
+   * Take a snapshot from the CDAP transaction manager and retrieve it.
    * @return the transaction manager snapshot just taken
    */
   private TransactionSnapshot takeSnapshot() {

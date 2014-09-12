@@ -193,11 +193,11 @@ public class MapReduceMetricsWriter {
   }
 
   private int calcDiffAndSetMapStat(String key, long value) {
-    return calcDiffAndSetTableValue(previousMapStats, MetricsScope.REACTOR, key, value);
+    return calcDiffAndSetTableValue(previousMapStats, MetricsScope.SYSTEM, key, value);
   }
 
   private int calcDiffAndSetReduceStat(String key, long value) {
-    return calcDiffAndSetTableValue(previousReduceStats, MetricsScope.REACTOR, key, value);
+    return calcDiffAndSetTableValue(previousReduceStats, MetricsScope.SYSTEM, key, value);
   }
 
   // convenience function to set the table value to the given value and return the difference between the given value

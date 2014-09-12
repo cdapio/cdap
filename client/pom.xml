@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>client</artifactId>
-  <name>Cask CDAP Java Client</name>
+  <name>CDAP Java Client</name>
 
   <dependencies>
     <dependency>
@@ -48,25 +48,6 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>authentication-client-java</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>unit-test</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>common-unit-test</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>singlenode</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

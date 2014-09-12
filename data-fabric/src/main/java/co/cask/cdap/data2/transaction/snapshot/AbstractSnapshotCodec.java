@@ -16,12 +16,12 @@
 
 package co.cask.cdap.data2.transaction.snapshot;
 
-import com.continuuity.tephra.ChangeId;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.persist.TransactionSnapshot;
-import com.continuuity.tephra.snapshot.BinaryDecoder;
-import com.continuuity.tephra.snapshot.BinaryEncoder;
-import com.continuuity.tephra.snapshot.SnapshotCodec;
+import co.cask.tephra.ChangeId;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.snapshot.BinaryDecoder;
+import co.cask.tephra.snapshot.BinaryEncoder;
+import co.cask.tephra.snapshot.SnapshotCodec;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -39,7 +39,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 /**
- * Handles serialization/deserialization of a {@link com.continuuity.tephra.persist.TransactionSnapshot} and
+ * Handles serialization/deserialization of a {@link co.cask.tephra.persist.TransactionSnapshot} and
  * its elements to {@code byte[]}.
  */
 public abstract class AbstractSnapshotCodec implements SnapshotCodec {

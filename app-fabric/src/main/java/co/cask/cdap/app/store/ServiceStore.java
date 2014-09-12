@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.store;
 
-import com.continuuity.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionFailureException;
 
 /**
  * Stores/Retrieves Information about System Services.

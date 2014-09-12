@@ -1625,7 +1625,7 @@ span.log-icon.complete {
 }
 
 /*
- * Reactor Services
+ * CDAP Services
  */
 #reactor-services #panels {
     padding-top: 40px;
@@ -1677,18 +1677,21 @@ span.log-icon.complete {
 .instance-wrapper div {
     display: inline-block;
 }
+.instances-requested div {
+    display: inline-block;
+}
 
 .instance-num {
     background-color: #3C4355;
     margin-right: 15px;
-    width: 60px;
+    width: 64px;
 }
 
 .instance-num span {
     color: white;
     display: block;
     font-weight: bold;
-    line-height: 30px;
+    line-height: 37px;
     text-align: center;
 }
 
@@ -4234,28 +4237,37 @@ div.tooltip-inner {
   * Loading icon styles
   */
 
+.loading-icon {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  z-index: 3;
+}
+
 .loading-icon.hide {
   display: none;
 }
 
 .loading-icon .overlay-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   background-color: #000;
   opacity: .8;
   filter: alpha(opacity=80);
   z-index: 100;
+  height: inherit;
 }
 
 .loading-icon .overlay-background img {
-  position: fixed;
+  position: relative;
   top: 50%;
-  left: 50%;
   border-radius: 10px;
   transform: translate(-50%, -50%);
+
+}
+
+.object-list-empty.dataexplore-nodataset {
+  position: relative;
+  height:500px;
+  padding-top:20px;
 }
 
 #goto-btn {

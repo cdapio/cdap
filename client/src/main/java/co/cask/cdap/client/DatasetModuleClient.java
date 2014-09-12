@@ -41,7 +41,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 /**
- * Provides ways to interact with Reactor Dataset modules.
+ * Provides ways to interact with CDAP Dataset modules.
  */
 public class DatasetModuleClient {
 

@@ -25,7 +25,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.data2.dataset2.TableTest;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
-import com.continuuity.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
