@@ -43,6 +43,8 @@ The Java Client API allows you to interact with these CDAP components:
 - `ServiceClient`_: interacting with User Services
 - `StreamClient`_: interacting with Streams
 
+The above list links to the examples below for each portion of the API.
+
 Sample Usage
 ============
 
@@ -86,8 +88,49 @@ DatasetClient
   // Create a Dataset
   datasetClient.create("someDataset", "someDatasetType");
 
+  // Truncate a Dataset
+  datasetClient.truncate("someDataset");
+
   // Delete a Dataset
   datasetClient.delete("someDataset");
+
+
+DatasetModuleClient
+-------------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
+
+  // Adding a Dataset module
+  File moduleJarFile = createAppJarFile(someDatasetModule.class);
+  datasetModuleClient("someDatasetModule", SomeDatasetModule.class.getName(), moduleJarFile);
+
+  // Fetch the Dataset module information
+  DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get("someDatasetModule");
+
+  // Deleting all Dataset modules
+  datasetModuleClient.deleteAll();
+
+
+DatasetTypeClient
+-----------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
+
+  // Fetch the Dataset type information using the type name
+  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get("someDatasetType");
+
+  // Fetch the Dataset type information using the classname
+  datasetTypeMeta = datasetTypeClient.get(SomeDataset.class.getName());
 
 
 MetricsClient
@@ -134,9 +177,12 @@ ProcedureClient
   // Construct the client used to interact with CDAP
   ProcedureClient procedureClient = new ProcedureClient(clientConfig);
 
-  // Call procedure in the HelloWorld example
-  String result = procedureClient.call(FakeApp.NAME, FakeProcedure.NAME, FakeProcedure.METHOD_NAME,
-                                       ImmutableMap.of("customer", "joe"));
+  // Call a Procedure in the PageViewAnalytics example
+  String result = procedureClient.call("PageViewAnalytics", "PageViewProcedure", "getDistribution",
+                                       ImmutableMap.of("page", "http://www.cask.co"));
+
+  // Stop a Procedure
+  programClient.stop("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure");
 
 
 ProgramClient
@@ -149,44 +195,36 @@ ProgramClient
   // Construct the client used to interact with CDAP
   ProgramClient programClient = new ProgramClient(clientConfig);
 
-  // Call procedure in the HelloWorld example
-    LOG.info("Starting procedure");
-    programClient.start(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+  // Starting a Procedure in the PageViewAnalytics example
+  programClient.start("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure");
 
-    LOG.info("Getting live info");
-    programClient.getLiveInfo(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+  // Fetch live information from the HelloWorld example
+  // Live info includes the address of an element’s container host and the container’s debug port,
+  // formatted in JSON
+  programClient.getLiveInfo("HelloWorld", ProgramType.PROCEDURE, "greet");
 
-    LOG.info("Getting program logs");
-    programClient.getProgramLogs(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, 0, Long.MAX_VALUE);
+  // Fetch program logs in the PageViewAnalytics example
+  programClient.getProgramLogs("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure", 0,
+                               Long.MAX_VALUE);
 
-    LOG.info("Scaling procedure");
-    Assert.assertEquals(1, programClient.getProcedureInstances(FakeApp.NAME, FakeProcedure.NAME));
-    programClient.setProcedureInstances(FakeApp.NAME, FakeProcedure.NAME, 3);
-    assertProcedureInstances(programClient, FakeApp.NAME, FakeProcedure.NAME, 3);
+  // Scale a Procedure in the HelloWorld example
+  programClient.setProcedureInstances("HelloWorld", "greet", 3);
 
-    LOG.info("Stopping procedure");
-    programClient.stop(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
-    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);
+  // Stop a Procedure in the HelloWorld example
+  programClient.stop("HelloWorld", ProgramType.PROCEDURE, "greet");
 
-    // start, scale, and stop flow
-    verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
+  // Start, scale, and stop a Flow in the PageViewAnalytics example
+  programClient.start("PageViewAnalytics", ProgramType.FLOW, "PageViewFlow");
 
-    LOG.info("Starting flow");
-    programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+  // Fetch Flow history in the PageViewAnalytics example
+  programClient.getProgramHistory("PageViewAnalytics", ProgramType.FLOW, "PageViewFlow");
 
-    LOG.info("Getting flow history");
-    programClient.getProgramHistory(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+  // Scale a Flowlet in the PageViewAnalytics example
+  programClient.setFlowletInstances("PageViewAnalytics", "PageViewFlow", "parser", 3);
+ 
+  // Stop a Flow in the PageViewAnalytics example
+  programClient.stop("PageViewAnalytics", ProgramType.FLOW, "PageViewFlow");
 
-    LOG.info("Scaling flowlet");
-    Assert.assertEquals(1, programClient.getFlowletInstances(FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME));
-    programClient.setFlowletInstances(FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME, 3);
-    assertFlowletInstances(programClient, FakeApp.NAME, FakeFlow.NAME, FakeFlow.FLOWLET_NAME, 3);
-
-    LOG.info("Stopping flow");
-    programClient.stop(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
 
 QueryClient
 -------------
@@ -198,6 +236,41 @@ QueryClient
   // Construct the client used to interact with CDAP
   QueryClient queryClient = new QueryClient(clientConfig);
 
+  //
+  // Performing an ad-hoc query using the Purchase example
+  //
+  String query = "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
+  QueryHandle queryHandle = queryClient.execute(query);
+  QueryStatus status = new QueryStatus(null, false);
+
+  Stopwatch stopwatch = new Stopwatch();
+  stopwatch.start();
+  while ((QueryStatus.OpStatus.RUNNING == status.getStatus() ||
+          QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
+          QueryStatus.OpStatus.PENDING == status.getStatus()) &&
+         stopwatch.elapsedTime(TimeUnit.SECONDS) < 10L) {
+    Thread.sleep(1000);
+    status = queryClient.getStatus(queryHandle);
+  }
+
+  if (status.hasResults()) {
+    // Get first 20 results
+    List<QueryResult> results = queryClient.getResults(queryHandle, 20);
+    // Fetch schema
+    List<ColumnDesc> schema = queryClient.getSchema(queryHandle);
+    String[] header = new String[schema.size()];
+    for (int i = 0; i < header.length; i++) {
+      ColumnDesc column = schema.get(i);
+      // Hive columns start at 1
+      int index = column.getPosition() - 1;
+      header[index] = column.getName() + ": " + column.getType();
+    }
+  }
+
+  queryClient.delete(queryHandle);
+  //
+  // End performing an ad-hoc query
+  //
 
 ServiceClient
 -------------
@@ -209,7 +282,9 @@ ServiceClient
   // Construct the client used to interact with CDAP
   ServiceClient serviceClient = new ServiceClient(clientConfig);
 
-      ServiceMeta serviceMeta = serviceClient.get(FakeApp.NAME, FakeService.NAME);
+  // Fetching Service information using the Service in the PurchaseApp example
+  ServiceMeta serviceMeta = serviceClient.get("PurchaseApp", "CatalogLookup");
+
 
 StreamClient
 -------------
@@ -221,95 +296,64 @@ StreamClient
   // Construct the client used to interact with CDAP
   StreamClient streamClient = new StreamClient(clientConfig);
 
-    String testStreamId = "teststream";
-    LOG.info("Getting stream list");
-    int baseStreamCount = streamClient.list().size();
-    Assert.assertEquals(baseStreamCount, streamClient.list().size());
-    LOG.info("Creating stream");
-    streamClient.create(testStreamId);
-    LOG.info("Checking stream list");
-    Assert.assertEquals(baseStreamCount + 1, streamClient.list().size());
-    StreamProperties config = streamClient.getConfig(testStreamId);
+  // Fetch the Stream list
+  List streams = streamClient.list();
 
-  /**
-   * Tests for the get events call
-   */
-  @Test
-  public void testStreamEvents() throws IOException, BadRequestException, StreamNotFoundException,
-    UnAuthorizedAccessTokenException {
+  // Create a Stream, using the ResponseCodeAnalyticsApp example
+  streamClient.create("logEventStream");
 
-    String streamId = "testEvents";
+  // Fetch a Stream's properties, using the ResponseCodeAnalyticsApp example
+  StreamProperties config = streamClient.getConfig("logEventStream");
 
-    streamClient.create(streamId);
-    for (int i = 0; i < 10; i++) {
-      streamClient.sendEvent(streamId, "Testing " + i);
-    }
+  // Sending events to a Stream, using the Purchase example
+  streamClient.sendEvent("purchaseStream", "Tom bought 5 apples for $10");
 
-    // Read all events
-    List<StreamEvent> events = streamClient.getEvents(streamId, 0, Long.MAX_VALUE,
-                                                      Integer.MAX_VALUE, Lists.<StreamEvent>newArrayList());
-    Assert.assertEquals(10, events.size());
+  // Read all events from a Stream (results in events)
+  List<StreamEvent> events = Lists.newArrayList();
+  streamClient.getEvents("purchaseStream", 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
 
-    // Read first 5 only
-    events.clear();
-    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
-    Assert.assertEquals(5, events.size());
+  // Read first 5 events from a Stream (results in events)
+  List<StreamEvent> events = Lists.newArrayList();
+  streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
 
-    // Read 2nd and 3rd only
-    long startTime = events.get(1).getTimestamp();
-    long endTime = events.get(2).getTimestamp() + 1;
-    events.clear();
-    streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
+  // Read 2nd and 3rd events from a Stream, after first calling getEvents
+  long startTime = events.get(1).getTimestamp();
+  long endTime = events.get(2).getTimestamp() + 1;
+  events.clear()
+  streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
 
-    Assert.assertEquals(2, events.size());
+  //
+  // Demonstrating asynchronous writing to a Stream
+  //
+  String streamId = "testAsync";
+  List<StreamEvent> events = Lists.newArrayList();
 
-    for (int i = 1; i < 3; i++) {
-      Assert.assertEquals("Testing " + i, Charsets.UTF_8.decode(events.get(i - 1).getBody()).toString());
-    }
+  streamClient.create(streamId);
+
+  // Send 10 async writes
+  int msgCount = 10;
+  for (int i = 0; i < msgCount; i++) {
+    streamClient.asyncSendEvent(streamId, "Testing " + i);
   }
 
-  /**
-   * Tests for async write to stream.
-   */
-  @Test
-  public void testAsyncWrite() throws Exception {
-    String streamId = "testAsync";
-
-    streamClient.create(streamId);
-
-    // Send 10 async writes
-    int msgCount = 10;
-    for (int i = 0; i < msgCount; i++) {
-      streamClient.asyncSendEvent(streamId, "Testing " + i);
-    }
-
-    // Reads them back to verify. Needs to do it multiple times as the writes happens async.
-    List<StreamEvent> events = Lists.newArrayList();
-
-    Stopwatch stopwatch = new Stopwatch();
-    stopwatch.start();
-    while (events.size() != msgCount && stopwatch.elapsedTime(TimeUnit.SECONDS) < 10L) {
-      events.clear();
-      streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
-    }
-
-    Assert.assertEquals(msgCount, events.size());
-    long lastTimestamp = 0L;
-    for (int i = 0; i < msgCount; i++) {
-      Assert.assertEquals("Testing " + i, Charsets.UTF_8.decode(events.get(i).getBody()).toString());
-      lastTimestamp = events.get(i).getTimestamp();
-    }
-
-    // No more events
-    stopwatch = new Stopwatch();
-    stopwatch.start();
+  // Read them back; need to read it multiple times as the writes happen async
+  Stopwatch stopwatch = new Stopwatch();
+  stopwatch.start();
+  while (events.size() != msgCount && stopwatch.elapsedTime(TimeUnit.SECONDS) < 10L) {
     events.clear();
-    while (events.isEmpty() && stopwatch.elapsedTime(TimeUnit.SECONDS) < 1L) {
-      events.clear();
-      streamClient.getEvents(streamId, lastTimestamp + 1, Long.MAX_VALUE, msgCount, events);
-    }
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
+  }
 
-
-
+  // Check that there are no more events
+  stopwatch = new Stopwatch();
+  stopwatch.start();
+  events.clear();
+  while (events.isEmpty() && stopwatch.elapsedTime(TimeUnit.SECONDS) < 1L) {
+    events.clear();
+    streamClient.getEvents(streamId, lastTimestamp + 1, Long.MAX_VALUE, msgCount, events);
+  }
+  //
+  // End asynchronous writing 
+  //
 
 
