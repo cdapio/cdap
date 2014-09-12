@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,8 +34,8 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.StandaloneLogReader;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;

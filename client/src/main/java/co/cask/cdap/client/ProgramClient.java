@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 /**
- * Provides ways to interact with Reactor Programs.
+ * Provides ways to interact with CDAP Programs.
  */
 public class ProgramClient {
 
@@ -126,7 +126,7 @@ public class ProgramClient {
   }
 
   /**
-   * Gets the live information of a program. In Reactor distributed mode,
+   * Gets the live information of a program. In distributed CDAP,
    * this will contain IDs of the YARN applications that are running the program.
    *
    * @param appId ID of the application that the program belongs to

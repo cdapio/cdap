@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -118,6 +118,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   @Test
   public void testGetACLs() throws Exception {
     CConfiguration kerbConf = CConfiguration.create();
+    kerbConf.set(Constants.Security.KERBEROS_ENABLED, "true");
     kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "prinicpal@REALM.NET");
     kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, "/path/to/keytab");
     Assert.assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, DistributedKeyManager.getACLs(kerbConf));

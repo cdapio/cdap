@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
@@ -277,6 +276,62 @@ public class TestFrameworkTest extends TestBase {
 
     centralServiceManager.stop();
     serviceStatusCheck(centralServiceManager, false);
+  }
+
+  /**
+   * Checks to ensure that a particular runnable of the {@param serviceManager} has {@param expected} number of
+   * instances. If the initial check fails, it performs {@param retries} more attempts, sleeping 1 second before each
+   * successive attempt.
+   */
+  private void runnableInstancesCheck(ServiceManager serviceManager, String runnableName,
+                                      int expected, int retries) throws InterruptedException {
+    for (int i = 0; i <= retries; i++) {
+      int actualInstances = serviceManager.getRunnableInstances(runnableName);
+      if (actualInstances == expected) {
+        return;
+      }
+      if (i == retries) {
+        Assert.assertEquals(expected, actualInstances);
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testServiceRunnableInstances() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
+    try {
+      ServiceManager serviceManager = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+      serviceStatusCheck(serviceManager, true);
+
+      String runnableName = AppUsingGetServiceURL.SERVICE_WITH_WORKER;
+      int retries = 5;
+
+      // Should be 1 instance when first started.
+      runnableInstancesCheck(serviceManager, runnableName, 1, retries);
+
+      // Test increasing instances.
+      serviceManager.setRunnableInstances(runnableName, 5);
+      runnableInstancesCheck(serviceManager, runnableName, 5, retries);
+
+      // Test decreasing instances.
+      serviceManager.setRunnableInstances(runnableName, 2);
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries);
+
+      // Test requesting same number of instances.
+      serviceManager.setRunnableInstances(runnableName, 2);
+      runnableInstancesCheck(serviceManager, runnableName, 2, retries);
+
+      serviceManager.stop();
+      serviceStatusCheck(serviceManager, false);
+
+      // Should be 0 instances when stopped.
+      runnableInstancesCheck(serviceManager, runnableName, 0, retries);
+
+    } finally {
+      applicationManager.stopAll();
+    }
   }
 
   @Category(SlowTests.class)

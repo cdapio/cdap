@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,9 @@
 
 package co.cask.cdap.data.runtime;
 
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.metrics.TxMetricsCollector;
-import com.continuuity.tephra.persist.TransactionStateStorage;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.metrics.TxMetricsCollector;
+import co.cask.tephra.persist.TransactionStateStorage;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;

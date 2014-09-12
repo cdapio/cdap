@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,11 @@
 package co.cask.cdap.data2.transaction.snapshot;
 
 import co.cask.cdap.api.common.Bytes;
-import com.continuuity.tephra.ChangeId;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.persist.TransactionSnapshot;
-import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
+import co.cask.tephra.ChangeId;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.snapshot.SnapshotCodecProvider;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
