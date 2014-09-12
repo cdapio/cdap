@@ -43,7 +43,6 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.lang.Reflections;
@@ -108,7 +107,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
 
   private final TransactionSystemClient txSystemClient;
   private final TransactionExecutorFactory txExecutorFactory;
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   private Job jobConf;
@@ -122,7 +120,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 TransactionExecutorFactory txExecutorFactory,
-                                ProgramServiceDiscovery serviceDiscovery,
                                 DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.hConf = hConf;
@@ -132,7 +129,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.txExecutorFactory = txExecutorFactory;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
@@ -173,7 +169,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
                                 program.getSpecification().getDatasets().keySet(), spec,
                                 logicalStartTime,
-                                workflowBatch, serviceDiscovery, discoveryServiceClient, metricsCollectionService,
+                                workflowBatch, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, cConf);
 
     try {

@@ -43,7 +43,6 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
 import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
@@ -125,7 +124,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
   private TransactionSystemClient transactionSystemClient;
-  private ProgramServiceDiscovery programServiceDiscovery;
   private DiscoveryServiceClient discoveryServiceClient;
   private DatasetFramework datasetFramework;
   private TwillRunnable delegate;
@@ -180,7 +178,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
       datasetFramework = injector.getInstance(DatasetFramework.class);
-      programServiceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
       discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
       try {
@@ -220,12 +217,12 @@ public class ServiceTwillRunnable implements TwillRunnable {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program, runId, cConf, runnableName, metricsCollectionService,
-                                                programServiceDiscovery, discoveryServiceClient, datasetFramework,
+                                                discoveryServiceClient, datasetFramework,
                                                 transactionSystemClient);
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         delegate = new ServiceWorkerTwillRunnable(program, runId, runnableName, program.getClassLoader(), cConf,
                                                   metricsCollectionService, datasetFramework,
-                                                  transactionSystemClient, programServiceDiscovery,
+                                                  transactionSystemClient,
                                                   discoveryServiceClient);
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
@@ -367,7 +364,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
           // For program loading
           install(createProgramFactoryModule());
 
-          bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class).in(Scopes.SINGLETON);
         }
       }
     );

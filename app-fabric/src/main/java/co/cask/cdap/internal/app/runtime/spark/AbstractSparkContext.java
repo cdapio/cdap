@@ -33,7 +33,6 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkConf;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -185,9 +184,4 @@ abstract class AbstractSparkContext implements SparkContext {
     return arguments.build();
   }
 
-  @Override
-  public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-    //TODO: Change this once we start supporting services in Spark.
-    throw new UnsupportedOperationException("Service Discovery not supported");
-  }
 }

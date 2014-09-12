@@ -33,7 +33,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
@@ -93,7 +92,6 @@ public class SparkProgramRunner implements ProgramRunner {
   private final CConfiguration cConf;
   private SparkProgramController controller;
   private final MetricsCollectionService metricsCollectionService;
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final TransactionExecutorFactory txExecutorFactory;
   private final TransactionSystemClient txSystemClient;
   private final LocationFactory locationFactory;
@@ -102,7 +100,7 @@ public class SparkProgramRunner implements ProgramRunner {
   @Inject
   public SparkProgramRunner(DatasetFramework datasetFramework, CConfiguration cConf,
                             MetricsCollectionService metricsCollectionService,
-                            ProgramServiceDiscovery serviceDiscovery, Configuration hConf,
+                            Configuration hConf,
                             TransactionExecutorFactory txExecutorFactory,
                             TransactionSystemClient txSystemClient, LocationFactory locationFactory,
                             DiscoveryServiceClient discoveryServiceClient) {
@@ -110,7 +108,6 @@ public class SparkProgramRunner implements ProgramRunner {
     this.datasetFramework = datasetFramework;
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
-    this.serviceDiscovery = serviceDiscovery;
     this.txExecutorFactory = txExecutorFactory;
     this.locationFactory = locationFactory;
     this.txSystemClient = txSystemClient;
@@ -143,7 +140,7 @@ public class SparkProgramRunner implements ProgramRunner {
 
     final BasicSparkContext context = new BasicSparkContext(program, runId, options.getUserArguments(),
                                                             program.getSpecification().getDatasets().keySet(), spec,
-                                                            logicalStartTime, workflowBatch, serviceDiscovery,
+                                                            logicalStartTime, workflowBatch,
                                                             metricsCollectionService, datasetFramework, cConf,
                                                             discoveryServiceClient);
 

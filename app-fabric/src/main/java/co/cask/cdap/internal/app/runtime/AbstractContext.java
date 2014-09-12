@@ -63,7 +63,6 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
   private final DataSetInstantiator dsInstantiator;
 
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   public AbstractContext(Program program, RunId runId,
@@ -72,11 +71,9 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
                          MetricsCollectionService metricsCollectionService,
                          DatasetFramework dsFramework,
                          CConfiguration conf,
-                         ProgramServiceDiscovery serviceDiscovery,
                          DiscoveryServiceClient discoveryServiceClient) {
     this.program = program;
     this.runId = runId;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
 
     MetricsCollector datasetMetrics;
@@ -151,11 +148,6 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
   public RunId getRunId() {
     return runId;
-  }
-
-  @Override
-  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    return serviceDiscovery.discover(getAccountId(), appId, serviceId, serviceName);
   }
 
   @Override
