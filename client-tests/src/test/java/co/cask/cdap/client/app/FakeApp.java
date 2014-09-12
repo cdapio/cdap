@@ -14,13 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client.app;
+package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import org.apache.twill.api.ResourceSpecification;
 
 import java.util.List;
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client.app;
+package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.RecordScannable;
@@ -31,14 +31,14 @@ import java.util.List;
 /**
  *
  */
-public class StandaloneDataset extends AbstractDataset
+public class FakeDataset extends AbstractDataset
   implements BatchReadable<byte[], byte[]>, RecordScannable<KeyValue<byte[], byte[]>> {
 
-  public static final String TYPE_NAME = "standaloneType";
+  public static final String TYPE_NAME = "fakeType";
 
   private KeyValueTable table;
 
-  public StandaloneDataset(String instanceName, KeyValueTable table) {
+  public FakeDataset(String instanceName, KeyValueTable table) {
     super(instanceName, table);
     this.table = table;
   }

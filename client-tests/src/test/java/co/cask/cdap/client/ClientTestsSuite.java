@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client;
+package co.cask.cdap.client;
 
-import co.cask.cdap.reactor.client.common.StandaloneTestBase;
+import co.cask.cdap.client.common.StandaloneTestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;

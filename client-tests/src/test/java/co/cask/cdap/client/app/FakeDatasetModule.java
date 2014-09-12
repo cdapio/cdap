@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client.app;
+package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -25,14 +25,14 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 /**
  *
  */
-public class StandaloneDatasetModule implements DatasetModule {
+public class FakeDatasetModule implements DatasetModule {
 
-  public static final String NAME = "standaloneModule";
+  public static final String NAME = "fakeDSModule";
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = registry.get("keyValueTable");
-    registry.add(new StandaloneDatasetDefinition(StandaloneDataset.TYPE_NAME, kvTableDef));
-    registry.add(new StandaloneDatasetDefinition(StandaloneDataset.class.getName(), kvTableDef));
+    registry.add(new FakeDatasetDefinition(FakeDataset.TYPE_NAME, kvTableDef));
+    registry.add(new FakeDatasetDefinition(FakeDataset.class.getName(), kvTableDef));
   }
 }

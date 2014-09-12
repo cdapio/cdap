@@ -14,34 +14,42 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client;
+package co.cask.cdap.client;
 
-import co.cask.cdap.client.MetricsClient;
-import co.cask.cdap.reactor.client.common.ClientTestBase;
+import co.cask.cdap.proto.SystemServiceMeta;
+import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
-import com.google.gson.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.List;
+
 /**
- * Test for {@link MetricsClient}.
+ * Test for {@link MonitorClient}.
  */
 @Category(XSlowTests.class)
-public class MetricsClientTestRun extends ClientTestBase {
+public class MonitorClientTestRun extends ClientTestBase {
 
-  private MetricsClient metricsClient;
+  private MonitorClient monitorClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
-    metricsClient = new MetricsClient(clientConfig);
+    monitorClient = new MonitorClient(clientConfig);
   }
 
   @Test
   public void testAll() throws Exception {
-    JsonObject metric = metricsClient.getMetric("user", "/apps/FakeApp/flows", "process.events", "aggregate=true");
-    Assert.assertEquals(0, metric.get("data").getAsInt());
+    List<SystemServiceMeta> services = monitorClient.listSystemServices();
+    Assert.assertTrue(services.size() > 0);
+
+    String someService = services.get(0).getName();
+    String serviceStatus = monitorClient.getSystemServiceStatus(someService);
+    Assert.assertEquals("OK", serviceStatus);
+
+    int systemServiceInstances = monitorClient.getSystemServiceInstances(someService);
+    monitorClient.setSystemServiceInstances(someService, 1);
   }
 }

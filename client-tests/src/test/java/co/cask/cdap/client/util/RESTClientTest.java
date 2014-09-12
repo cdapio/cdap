@@ -15,11 +15,10 @@
  */
 
 
-package co.cask.cdap.reactor.client.util;
+package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.security.authentication.client.AccessToken;
@@ -39,7 +38,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
