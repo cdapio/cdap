@@ -15,7 +15,8 @@ define([], function () {
 			'Workflow': 'Process',
 			'Stream': 'Collect',
 			'Procedure': 'Query',
-			'Dataset': 'Store'
+			'Dataset': 'Store',
+            'Spark': 'Spark'
 		},
 
 		__plurals: {
@@ -25,7 +26,8 @@ define([], function () {
 			'Workflow': 'workflows',
 			'Stream': 'streams',
 			'Procedure': 'procedures',
-			'Dataset': 'datasets'
+			'Dataset': 'datasets',
+            'Spark': 'spark'
 		},
 
 		entityTypes: new Em.Set(),
