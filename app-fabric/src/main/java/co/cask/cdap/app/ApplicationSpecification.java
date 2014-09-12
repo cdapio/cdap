@@ -33,7 +33,7 @@ import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import java.util.Map;
 
 /**
- * Reactor Application Specification used in core code
+ * Application Specification used in core code
  */
 public interface ApplicationSpecification {
 

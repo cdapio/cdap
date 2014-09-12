@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>api</artifactId>
-  <name>Cask Data Application Platform (CDAP) API</name>
+  <name>CDAP API</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -48,7 +48,7 @@
       <artifactId>slf4j-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.continuuity.tephra</groupId>
+      <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-api</artifactId>
     </dependency>
     <dependency>

@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>explore-client</artifactId>
-  <name>Cask CDAP Explore Client</name>
+  <name>CDAP Explore Client</name>
   <packaging>jar</packaging>
 
   <dependencies>

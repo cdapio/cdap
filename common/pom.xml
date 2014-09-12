@@ -27,7 +27,7 @@
   </parent>
 
   <artifactId>common</artifactId>
-  <name>Cask CDAP Common</name>
+  <name>CDAP Common</name>
   <packaging>jar</packaging>
 
   <properties>

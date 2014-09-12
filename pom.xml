@@ -109,7 +109,7 @@
     <servlet.api.version>3.0.1</servlet.api.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.2.1</tephra.version>
+    <tephra.version>0.3.0</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <twill.version>0.4.0-incubating-SNAPSHOT</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
@@ -142,10 +142,10 @@
     <module>web-app</module>
     <module>proto</module>
     <module>client</module>
+    <module>client-tests</module>
     <module>cli</module>
     <module>standalone</module>
     <module>distributions</module>
-    <module>client-tests</module>
   </modules>
 
   <dependencyManagement>
@@ -159,11 +159,6 @@
         <groupId>javax.ws.rs</groupId>
         <artifactId>javax.ws.rs-api</artifactId>
         <version>${rs-api.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.continuuity.tephra</groupId>
-        <artifactId>tephra-api</artifactId>
-        <version>${tephra.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.twill</groupId>
@@ -182,7 +177,12 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.continuuity.tephra</groupId>
+        <groupId>co.cask.tephra</groupId>
+        <artifactId>tephra-api</artifactId>
+        <version>${tephra.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-core</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -193,7 +193,7 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.continuuity.tephra</groupId>
+        <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.94</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -204,7 +204,7 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.continuuity.tephra</groupId>
+        <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.96</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
@@ -1025,7 +1025,7 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>com.continuuity.tephra</groupId>
+        <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-core</artifactId>
         <version>${tephra.version}</version>
         <type>test-jar</type>

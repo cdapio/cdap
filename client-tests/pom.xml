@@ -26,7 +26,7 @@ the License.
   </parent>
 
   <artifactId>client-tests</artifactId>
-  <name>Cask CDAP Java Client Tests</name>
+  <name>CDAP Java Client Tests</name>
 
   <dependencies>
     <dependency>

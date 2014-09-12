@@ -57,13 +57,22 @@ public final class SecurityUtil {
     }
 
     if (!isKerberosEnabled(cConf)) {
-      LOG.info("Kerberos login is not enabled. To enable Kerberos login configure {} and {}",
-               Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+      LOG.info("Kerberos login is not enabled. To enable Kerberos login, enable {} and configure {} and {}",
+               Constants.Security.KERBEROS_ENABLED, Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL,
+               Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
       return;
     }
 
+    Preconditions.checkArgument(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL) != null,
+                                "Kerberos authentication is enabled, but " +
+                                Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL + " is not configured");
+
     String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     principal = SecurityUtil.expandPrincipal(principal);
+
+    Preconditions.checkArgument(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH) != null,
+                                "Kerberos authentication is enabled, but " +
+                                Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH + " is not configured");
 
     File keyTabFile = new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
     Preconditions.checkArgument(keyTabFile.exists(),
@@ -124,7 +133,7 @@ public final class SecurityUtil {
    * @return true, if Kerberos is enabled.
    */
   public static boolean isKerberosEnabled(CConfiguration cConf) {
-    return cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL) != null &&
-      cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH) != null;
+    return cConf.getBoolean(Constants.Security.KERBEROS_ENABLED,
+                            cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED));
   }
 }

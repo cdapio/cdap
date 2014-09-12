@@ -18,16 +18,16 @@ package co.cask.cdap.data2.transaction.coprocessor.hbase96;
 
 import co.cask.cdap.data2.increment.hbase96.IncrementFilter;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.coprocessor.TransactionStateCache;
-import com.continuuity.tephra.hbase96.coprocessor.TransactionProcessor;
-import com.continuuity.tephra.hbase96.coprocessor.TransactionVisibilityFilter;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.hbase96.coprocessor.TransactionProcessor;
+import co.cask.tephra.hbase96.coprocessor.TransactionVisibilityFilter;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
 
 /**
- * Implementation of the {@link com.continuuity.tephra.hbase96.coprocessor.TransactionProcessor}
+ * Implementation of the {@link co.cask.tephra.hbase96.coprocessor.TransactionProcessor}
  * coprocessor that uses {@link co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCache}
  * to automatically refresh transaction state.
  */

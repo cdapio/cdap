@@ -114,7 +114,7 @@ public class ClientConfig {
   }
 
   /**
-   * @return port of Reactor
+   * @return port of CDAP
    */
   public int getPort() {
     return port;

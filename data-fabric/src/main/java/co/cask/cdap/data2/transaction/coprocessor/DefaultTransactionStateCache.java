@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1;
 import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
-import com.continuuity.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.coprocessor.TransactionStateCache;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 
