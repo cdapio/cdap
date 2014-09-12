@@ -1831,7 +1831,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
 
   /**
-   * Promote an application to another CDAP.
+   * Promote an application to another CDAP instance.
    */
   @POST
   @Path("/apps/{app-id}/promote")
