@@ -27,6 +27,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasets;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.TypeConflictException;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.data2.dataset2.tx.TxCallable;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -50,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -138,21 +140,25 @@ public class DatasetTypeManager extends AbstractIdleService {
               LOG.warn("Failed to delete directory {}", unpackedLocation, e);
             }
           }
-          List<String> moduleDependencies = Lists.newArrayList();
+          // NOTE: we use set to avoid duplicated dependencies
+          // NOTE: we use LinkedHashSet to preserve order in which dependencies must be loaded
+          Set<String> moduleDependencies = Sets.newLinkedHashSet();
           for (String usedType : reg.getUsedTypes()) {
             DatasetModuleMeta usedModule = datasets.getTypeMDS().getModuleByType(usedType);
             // adding all used types and the module itself, in this very order to keep the order of loading modules
             // for instantiating a type
             moduleDependencies.addAll(usedModule.getUsesModules());
-            moduleDependencies.add(usedModule.getName());
-            // also adding this module as a dependent for all modules it uses
-            usedModule.addUsedByModule(name);
-            datasets.getTypeMDS().write(usedModule);
+            boolean added = moduleDependencies.add(usedModule.getName());
+            if (added) {
+              // also adding this module as a dependent for all modules it uses
+              usedModule.addUsedByModule(name);
+              datasets.getTypeMDS().write(usedModule);
+            }
           }
 
           DatasetModuleMeta moduleMeta = new DatasetModuleMeta(name, className,
                                                                jarLocation == null ? null : jarLocation.toURI(),
-                                                               reg.getTypes(), moduleDependencies);
+                                                               reg.getTypes(), Lists.newArrayList(moduleDependencies));
           datasets.getTypeMDS().write(moduleMeta);
 
           return null;
@@ -160,12 +166,12 @@ public class DatasetTypeManager extends AbstractIdleService {
       });
 
     } catch (TransactionFailureException e) {
-      if (e.getCause() != null) {
-        if (e.getCause() instanceof DatasetModuleConflictException) {
-          throw (DatasetModuleConflictException) e.getCause();
-        } else if (e.getCause().getCause() != null &&
-                   e.getCause().getCause() instanceof DatasetModuleConflictException) {
-          throw (DatasetModuleConflictException) e.getCause().getCause();
+      Throwable cause = e.getCause();
+      if (cause != null) {
+        if (cause instanceof DatasetModuleConflictException) {
+          throw (DatasetModuleConflictException) cause;
+        } else if (cause instanceof TypeConflictException) {
+          throw new DatasetModuleConflictException(cause);
         }
       }
       throw Throwables.propagate(e);
@@ -351,10 +357,10 @@ public class DatasetTypeManager extends AbstractIdleService {
 
   private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {
     private final MDSDatasets datasets;
-    private final DatasetDefinitionRegistry registry;
+    private final InMemoryDatasetDefinitionRegistry registry;
 
     private final List<String> types = Lists.newArrayList();
-    private final List<String> usedTypes = Lists.newArrayList();
+    private final LinkedHashSet<String> usedTypes = Sets.newLinkedHashSet();
 
     public DependencyTrackingRegistry(MDSDatasets datasets) {
       this.datasets = datasets;
@@ -365,7 +371,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       return types;
     }
 
-    public List<String> getUsedTypes() {
+    public Set<String> getUsedTypes() {
       return usedTypes;
     }
 
@@ -373,8 +379,9 @@ public class DatasetTypeManager extends AbstractIdleService {
     public void add(DatasetDefinition def) {
       String typeName = def.getName();
       if (datasets.getTypeMDS().getType(typeName) != null) {
-        throw new RuntimeException(
-          new DatasetModuleConflictException("Cannot add dataset type: it already exists: " + typeName));
+        String msg = "Cannot add dataset type: it already exists: " + typeName;
+        LOG.error(msg);
+        throw new TypeConflictException(msg);
       }
       types.add(typeName);
       registry.add(def);
@@ -382,12 +389,13 @@ public class DatasetTypeManager extends AbstractIdleService {
 
     @Override
     public <T extends DatasetDefinition> T get(String datasetTypeName) {
-      T def = registry.get(datasetTypeName);
-      if (def == null) {
+      T def;
+      if (registry.hasType(datasetTypeName)) {
+        def = registry.get(datasetTypeName);
+      } else {
         DatasetTypeMeta typeMeta = datasets.getTypeMDS().getType(datasetTypeName);
         if (typeMeta == null) {
-          throw new RuntimeException(
-            new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName));
+          throw new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName);
         }
         try {
           def = new DatasetDefinitionLoader(locationFactory).load(typeMeta, registry);
@@ -397,6 +405,11 @@ public class DatasetTypeManager extends AbstractIdleService {
       }
       usedTypes.add(datasetTypeName);
       return def;
+    }
+
+    @Override
+    public boolean hasType(String datasetTypeName) {
+      return datasets.getTypeMDS().getType(datasetTypeName) != null;
     }
   }
 }

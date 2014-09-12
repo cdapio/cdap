@@ -36,15 +36,24 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
   public <T extends DatasetDefinition> T get(String datasetType) {
     DatasetDefinition def = datasetTypes.get(datasetType);
     if (def == null) {
-      LOG.warn("Requested dataset type does NOT exist: " + datasetType);
-      // we still return null, as client logic may use info about presence of specific type
-      return null;
+      String msg = "Requested dataset type does NOT exist: " + datasetType;
+      LOG.debug(msg);
+      throw new IllegalArgumentException(msg);
     }
     return (T) def;
   }
 
   @Override
   public void add(DatasetDefinition def) {
-    datasetTypes.put(def.getName(), def);
+    String typeName = def.getName();
+    if (datasetTypes.containsKey(typeName)) {
+      throw new TypeConflictException("Cannot add dataset type: it already exists: " + typeName);
+    }
+    datasetTypes.put(typeName, def);
+  }
+
+  @Override
+  public boolean hasType(String typeName) {
+    return datasetTypes.containsKey(typeName);
   }
 }

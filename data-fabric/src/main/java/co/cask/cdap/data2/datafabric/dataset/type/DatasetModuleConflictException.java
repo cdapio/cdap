@@ -24,4 +24,8 @@ public class DatasetModuleConflictException extends Exception {
   public DatasetModuleConflictException(String message) {
     super(message);
   }
+
+  public DatasetModuleConflictException(Throwable cause) {
+    super(cause);
+  }
 }
