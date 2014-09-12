@@ -287,7 +287,7 @@ public class TransactionManagerDebuggerMain {
       }
 
       System.out.println("About to invalidate transaction " +
-                          txId + " on Reactor running at " + hostname);
+                          txId + " on CDAP running at " + hostname);
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         System.out.println("Transaction successfully invalidated.");
@@ -320,7 +320,7 @@ public class TransactionManagerDebuggerMain {
         connection.setRequestProperty("Authorization", "Bearer " + accessToken);
       }
 
-      System.out.println("About to reset the transaction manager state for the Reactor running at " + hostname);
+      System.out.println("About to reset the CDAP transaction manager state running at " + hostname);
       int responseCode = connection.getResponseCode();
       if (responseCode == 200) {
         System.out.println("Transaction manager state reset successfully.");
@@ -401,7 +401,7 @@ public class TransactionManagerDebuggerMain {
   }
 
   /**
-   * Take a snapshot from the transaction manager of a reactor and retrieve it.
+   * Take a snapshot from the CDAP transaction manager and retrieve it.
    * @return the transaction manager snapshot just taken
    */
   private TransactionSnapshot takeSnapshot() {

@@ -86,7 +86,7 @@ public abstract class ClientToolBase {
   protected int port = -1;
 
   /**
-   * A base class for implementing reactor tools.
+   * A base class for implementing CDAP tools.
    *
    * @param toolName The name of the tool.
    */
@@ -118,14 +118,14 @@ public abstract class ClientToolBase {
    */
   private void buildOptions() {
     options = new Options();
-    options.addOption(null, HOST_OPTION, true, "To specify the reactor host");
+    options.addOption(null, HOST_OPTION, true, "To specify the CDAP host");
     options.addOption(null, PORT_OPTION, true, "To specify the port to use. The default value is --port "
                       + Constants.Gateway.DEFAULT_PORT);
     options.addOption(null, HELP_OPTION, false, "To print this message");
     options.addOption(null, VERBOSE_OPTION, false, "Prints verbose output");
     options.addOption(null, API_KEY_OPTION, true, "To specify an API key for authentication");
-    options.addOption(null, TOKEN_OPTION, true, "To specify the access token for secure reactor");
-    options.addOption(null, TOKEN_FILE_OPTION, true, "To specify a path to the access token for secure reactor");
+    options.addOption(null, TOKEN_OPTION, true, "To specify the access token for secure CDAP");
+    options.addOption(null, TOKEN_FILE_OPTION, true, "To specify a path to the access token for secure CDAP");
     addOptions(options);
   }
 

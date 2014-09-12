@@ -126,7 +126,7 @@ public class ProgramClient {
   }
 
   /**
-   * Gets the live information of a program. In Reactor distributed mode,
+   * Gets the live information of a program. In distributed CDAP,
    * this will contain IDs of the YARN applications that are running the program.
    *
    * @param appId ID of the application that the program belongs to
