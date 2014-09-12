@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -82,7 +82,7 @@ import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
@@ -566,7 +566,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Get workflow name from mapreduceId.
    * Format of mapreduceId: WorkflowName_mapreduceName, if the mapreduce is a part of workflow.
    *
-   * @param mapreduceId id of the mapreduce job in reactor.
+   * @param mapreduceId id of the mapreduce job in CDAP
    * @return workflow name if exists null otherwise
    */
   private String getWorkflowName(String mapreduceId) {
@@ -1831,7 +1831,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
 
   /**
-   * Promote an application another reactor.
+   * Promote an application to another CDAP instance.
    */
   @POST
   @Path("/apps/{app-id}/promote")
@@ -2006,7 +2006,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Deletes all applications in the reactor.
+   * Deletes all applications in CDAP.
    */
   @DELETE
   @Path("/apps")
@@ -2262,7 +2262,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     LOG.debug("Deleting metrics for flow {}.{}", application, flow);
-    String url = String.format("http://%s:%d%s/metrics/reactor/apps/%s/flows/%s?prefixEntity=process",
+    String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort(),
                                Constants.Gateway.GATEWAY_VERSION,

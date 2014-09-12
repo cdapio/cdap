@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,12 +33,12 @@ import co.cask.cdap.data2.transaction.stream.hbase.HBaseStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.hbase.HBaseStreamFileConsumerFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.distributed.PooledClientProvider;
-import com.continuuity.tephra.distributed.ThreadLocalClientProvider;
-import com.continuuity.tephra.distributed.ThriftClientProvider;
-import com.continuuity.tephra.metrics.TxMetricsCollector;
-import com.continuuity.tephra.runtime.TransactionModules;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.distributed.PooledClientProvider;
+import co.cask.tephra.distributed.ThreadLocalClientProvider;
+import co.cask.tephra.distributed.ThriftClientProvider;
+import co.cask.tephra.metrics.TxMetricsCollector;
+import co.cask.tephra.runtime.TransactionModules;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provider;

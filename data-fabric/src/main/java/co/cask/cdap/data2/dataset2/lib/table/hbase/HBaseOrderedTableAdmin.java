@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import com.continuuity.tephra.TxConstants;
+import co.cask.tephra.TxConstants;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;

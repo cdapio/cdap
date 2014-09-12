@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,8 +31,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * This class hijacks Hadoop bin, and adds hbase-protocol jar to HADOOP_CLASSPATH, more info on why this
- * is needed - REACTOR-325.
+ * This class hijacks Hadoop bin, and adds hbase-protocol jar to HADOOP_CLASSPATH.
+ * This hack should go away when Twill supports setting of environmental variables for a TwillRunnable.
+ * Addition info on why this is needed is in https://jira.continuuity.com/browse/REACTOR-325
  */
 public class LocalMapreduceClasspathSetter {
   private static final Logger LOG = LoggerFactory.getLogger(LocalMapreduceClasspathSetter.class);
@@ -79,7 +80,7 @@ public class LocalMapreduceClasspathSetter {
     fileBuilder.append("#!/usr/bin/env bash\n");
     fileBuilder.append("# This file is a hack to set HADOOP_CLASSPATH for Hive local mapreduce tasks.\n");
     fileBuilder.append("# This hack should go away when Twill supports setting of environmental variables for a ");
-    fileBuilder.append("TwillRunnable - REACTOR-325.\n");
+    fileBuilder.append("TwillRunnable.\n");
     fileBuilder.append("\n");
     fileBuilder.append("function join { local IFS=\"$1\"; shift; echo \"$*\"; }\n");
     fileBuilder.append("if [ $# -ge 1 -a \"$1\" = \"jar\" ]; then\n");

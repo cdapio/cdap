@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,8 +27,8 @@ import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.TypeRepresentation;
-import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;

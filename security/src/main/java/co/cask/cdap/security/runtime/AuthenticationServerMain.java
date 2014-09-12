@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,8 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Server for authenticating clients accessing Reactor.  When a client authenticates successfully, it is issued
- * an access token containing a verifiable representation of the client's identity.  Other Reactor services
+ * Server for authenticating clients accessing CDAP.  When a client authenticates successfully, it is issued
+ * an access token containing a verifiable representation of the client's identity.  Other CDAP services
  * (such as the router) can independently verify client identities based on the token contents.
  */
 public class AuthenticationServerMain extends DaemonMain {
