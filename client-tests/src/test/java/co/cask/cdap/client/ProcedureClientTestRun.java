@@ -16,10 +16,10 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;

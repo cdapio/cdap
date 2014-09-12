@@ -16,11 +16,11 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.proto.DatasetModuleMeta;
-import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.client.app.StandaloneDataset;
 import co.cask.cdap.client.app.StandaloneDatasetModule;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;

@@ -16,12 +16,12 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.client.app.FakeApp;
+import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
