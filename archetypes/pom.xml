@@ -50,6 +50,7 @@
               <configuration>
                 <excludes>
                   <exclude>**/resources/**/*.txt</exclude>
+                  <exclude>**/README.md</exclude>
                 </excludes>
               </configuration>
             </execution>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,57 +47,57 @@ import java.util.UUID;
  */
 public class SparkPageRankApp extends AbstractApplication {
 
-  private static final Charset UTF8 = Charset.forName("UTF-8");
+  public static final Charset UTF8 = Charset.forName("UTF-8");
 
   @Override
   public void configure() {
     setName("SparkPageRank");
     setDescription("Spark page rank app");
-    addStream(new Stream("neighborUrlStream"));
-    addFlow(new PageRankFlow());
-    addSpark(new SparkPageRankJob());
+    addStream(new Stream("backlinkURLStream"));
+    addFlow(new BackLinkFlow());
+    addSpark(new SparkPageRankSpecification());
     addProcedure(new RanksProcedure());
 
     try {
-      ObjectStores.createObjectStore(getConfigurer(), "neighborURLs", String.class);
+      ObjectStores.createObjectStore(getConfigurer(), "backlinkURLs", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "ranks", Double.class);
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
-      // because String are actual classes.
+      // because String and Double are actual classes.
       throw new RuntimeException(e);
     }
   }
 
   /**
-   * A Spark job that calculates page rank.
+   * A Spark program that calculates page rank.
    */
-  public static class SparkPageRankJob extends AbstractSpark {
+  public static class SparkPageRankSpecification extends AbstractSpark {
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
-        .setName("SparkPageRankJob")
-        .setDescription("Spark Page Rank Job")
-        .setMainClassName(SparkPageRankJobBuilder.class.getName())
+        .setName("SparkPageRankProgram")
+        .setDescription("Spark Page Rank Program")
+        .setMainClassName(SparkPageRankProgram.class.getName())
         .build();
     }
   }
 
   /**
-   * This is a simple Flow that consumes url pair events from a Stream and stores them in a dataset.
+   * This is a simple Flow that consumes URL pair events from a Stream and stores them in a dataset.
    */
-  public static class PageRankFlow implements Flow {
+  public static class BackLinkFlow implements Flow {
 
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with()
-        .setName("PageRankFlow")
-        .setDescription("Reads url pair and stores in dataset")
+        .setName("BackLinkFlow")
+        .setDescription("Reads URL pair and stores in dataset")
         .withFlowlets()
-        .add("reader", new NeighborURLsReader())
+          .add("reader", new BacklinkURLsReader())
         .connect()
-        .fromStream("neighborUrlStream").to("reader")
+          .fromStream("backlinkURLStream").to("reader")
         .build();
     }
   }
@@ -105,28 +105,28 @@ public class SparkPageRankApp extends AbstractApplication {
   /**
    * This Flowlet reads events from a Stream and saves them to a datastore.
    */
-  public static class NeighborURLsReader extends AbstractFlowlet {
+  public static class BacklinkURLsReader extends AbstractFlowlet {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NeighborURLsReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BacklinkURLsReader.class);
 
-    // Annotation indicates that neighborURLs dataset is used in the Flowlet.
-    @UseDataSet("neighborURLs")
-    private ObjectStore<String> neighborStore;
+    // Annotation indicates that backlinkURLs dataset is used in the Flowlet.
+    @UseDataSet("backlinkURLs")
+    private ObjectStore<String> backlinkStore;
 
     /**
-     * Input file should be in format of:
-     * URL neighbor URL
-     * URL neighbor URL
-     * URL neighbor URL
+     * Input file format should be pairs of an URL and a backlink URL:
+     * URL backlink-URL
+     * URL backlink-URL
+     * URL backlink-URL
      * ...
-     * where URL and their neighbors are separated by space(s).
+     * where URL and its backlink URL are separated by a space.
      */
     @ProcessInput
     public void process(StreamEvent event) {
       String body = new String(event.getBody().array());
-      LOG.trace("Neighbor info: {}", body);
+      LOG.trace("Backlink info: {}", body);
       // Store the URL pairs in one row. One pair is kept in the value of an table entry.
-      neighborStore.write(getIdAsByte(UUID.randomUUID()), body);
+      backlinkStore.write(getIdAsByte(UUID.randomUUID()), body);
     }
 
     private static byte[] getIdAsByte(UUID uuid) {
@@ -138,7 +138,7 @@ public class SparkPageRankApp extends AbstractApplication {
   }
 
   /**
-   * A Procedure that returns rank of the url.
+   * A Procedure that returns rank of the URL.
    */
   public static class RanksProcedure extends AbstractProcedure {
 
@@ -154,12 +154,12 @@ public class SparkPageRankApp extends AbstractApplication {
 
       // Get the url from the query parameters.
       byte[] url = request.getArgument("url").getBytes(UTF8);
-      // Get the rank from the ranks data set.
+      // Get the rank from the ranks dataset.
       Double rank = ranks.read(url);
 
       LOG.trace("Key: {}, Data: {}", Arrays.toString(url), rank);
 
-      // Send response with JSON format.
+      // Send response in JSON format.
       responder.sendJson(String.valueOf(rank));
     }
   }

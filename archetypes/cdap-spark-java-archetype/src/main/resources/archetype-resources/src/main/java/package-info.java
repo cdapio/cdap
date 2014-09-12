@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 /**
  * Package for SparkPageRank Application.
  *
- * An Application that demonstrates streaming text analysis using a Spark job.
+ * An Application that demonstrates streaming text analysis using a Spark program.
  * It computes the page rank of URLs from an input stream.
  */
 package $package;
