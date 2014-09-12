@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.service.DefaultServiceWorkerConfigurer;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.program.Program;
@@ -101,7 +102,9 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
 
   @Override
   public TwillRunnableSpecification configure() {
-    ServiceWorkerSpecification workerSpecification = worker.configure();
+    DefaultServiceWorkerConfigurer workerConfigurer = new DefaultServiceWorkerConfigurer(worker);
+    worker.configure(workerConfigurer);
+    ServiceWorkerSpecification workerSpecification = workerConfigurer.createServiceWorkerSpec();
     Map<String, String> runnableArgs = Maps.newHashMap(workerSpecification.getProperties());
     if (worker instanceof GuavaServiceWorker) {
       runnableArgs.put("delegate.class.name", ((GuavaServiceWorker) worker).getDelegate().getClass().getName());
@@ -112,7 +115,7 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
     String serializedDatasets = GSON.toJson(datasets, new TypeToken<Set<String>>() { }.getType());
     runnableArgs.put("service.datasets", serializedDatasets);
     return TwillRunnableSpecification.Builder.with()
-                                             .setName(worker.getClass().getSimpleName())
+                                             .setName(workerSpecification.getName())
                                              .withConfigs(runnableArgs)
                                              .build();
   }
