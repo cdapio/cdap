@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2013 Continuuity, Inc.
+ * Copyright © 2013 Cask Data, Inc.
+ *
  * Base server used for developer and enterprise editions. This provides common functionality to
  * set up a node js server and define routes. All custom functionality to an edition
  * must be placed under the server file inside the edition folder.
@@ -38,7 +39,7 @@ var WebAppServer = function(dirPath, logLevel, loggerType, mode) {
   process.on('uncaughtException', function (err) {
     this.logger.info('Uncaught Exception', err);
   }.bind(this));
-  this.extractConfig(mode)
+  this.extractConfig(mode, "cdap")
       .then(function () {
         this.setUpServer();
       }.bind(this));
@@ -93,7 +94,7 @@ WebAppServer.prototype.setUpServer = function setUpServer(configuration) {
 }
 
 WebAppServer.prototype.setAttributes = function setCommonAttributes() {
-  if (this.config['dashboard.https.enabled'] === "true") {
+  if (this.config['ssl.enabled'] === "true") {
       this.lib = https;
     } else {
       this.lib = http;
@@ -115,7 +116,7 @@ WebAppServer.prototype.launchServer = function() {
 
 WebAppServer.prototype.configureSSL = function () {
   var options = {};
-  if (this.config['dashboard.https.enabled'] === "true") {
+  if (this.config['ssl.enabled'] === "true") {
     key = this.config['dashboard.ssl.key'],
     cert = this.config['dashboard.ssl.cert'];
     try {
@@ -136,28 +137,36 @@ WebAppServer.prototype.configureSSL = function () {
 
 /**
  * Determines security status. Continues until it is able to determine if security is enabled if
- * reactor is down.
+ * CDAP is down.
  * @param  {Function} callback to call after security status is determined.
- * TODO: https://jira.continuuity.com/browse/REACTOR-531
+ * TODO: https://jira.continuuity.com/browse/reactor-531
  */
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
 
   var path = '/' + this.API_VERSION + '/ping',
       url;
-  if (this.config['dashboard.https.enabled'] === "true") {
+  this.routerBindAddress = this.config['gateway.server.address'];
+  if (this.config['ssl.enabled'] === "true") {
+    this.routerBindPort = this.config['router.ssl.bind.port'];
+    this.transferProtocol = "https://";
     url = 'https://' + this.config['gateway.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
   } else {
+    this.routerBindPort = this.config['router.bind.port'];
+    this.transferProtocol = "http://";
     url = 'http://' + this.config['gateway.server.address'] + ':' + this.config['router.bind.port'] + path;
   }
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
     request({
       method: 'GET',
-      url: url
+      url: url,
+      rejectUnauthorized: false,
+      requestCert: true,
+      agent: false
     }, function (err, response, body) {
-      // If the response is a 401 and contains "auth_uri" as part of the body, Reactor security is enabled.
-      // On other response codes, and when "auth_uri" is not part of the body, Reactor security is disabled.
+      // If the response is a 401 and contains "auth_uri" as part of the body, CDAP security is enabled.
+      // On other response codes, and when "auth_uri" is not part of the body, CDAP security is disabled.
       if (!err && response) {
         clearInterval(interval);
         if (body) {
@@ -297,33 +306,33 @@ WebAppServer.prototype.bindRoutes = function() {
 
   var availableMetrics = {
     'App': [
-      { name: 'Events Collected', path: '/reactor/apps/{id}/collect.events' },
-      { name: 'Busyness', path: '/reactor/apps/{id}/process.busyness' },
-      { name: 'Bytes Stored', path: '/reactor/apps/{id}/store.bytes' },
-      { name: 'Queries Served', path: '/reactor/apps/{id}/query.requests' }
+      { name: 'Events Collected', path: '/system/apps/{id}/collect.events' },
+      { name: 'Busyness', path: '/system/apps/{id}/process.busyness' },
+      { name: 'Bytes Stored', path: '/system/apps/{id}/store.bytes' },
+      { name: 'Queries Served', path: '/system/apps/{id}/query.requests' }
     ],
     'Stream': [
-      { name: 'Events Collected', path: '/reactor/streams/{id}/collect.events' },
-      { name: 'Bytes Collected', path: '/reactor/streams/{id}/collect.bytes' },
-      { name: 'Reads per Second', path: '/reactor/streams/{id}/collect.reads' }
+      { name: 'Events Collected', path: '/system/streams/{id}/collect.events' },
+      { name: 'Bytes Collected', path: '/system/streams/{id}/collect.bytes' },
+      { name: 'Reads per Second', path: '/system/streams/{id}/collect.reads' }
     ],
     'Flow': [
-      { name: 'Busyness', path: '/reactor/apps/{parent}/flows/{id}/process.busyness' },
-      { name: 'Events Processed', path: '/reactor/apps/{parent}/flows/{id}/process.events.processed' },
-      { name: 'Bytes Processed', path: '/reactor/apps/{parent}/flows/{id}/process.bytes' },
-      { name: 'Errors per Second', path: '/reactor/apps/{parent}/flows/{id}/process.errors' }
+      { name: 'Busyness', path: '/system/apps/{parent}/flows/{id}/process.busyness' },
+      { name: 'Events Processed', path: '/system/apps/{parent}/flows/{id}/process.events.processed' },
+      { name: 'Bytes Processed', path: '/system/apps/{parent}/flows/{id}/process.bytes' },
+      { name: 'Errors per Second', path: '/system/apps/{parent}/flows/{id}/process.errors' }
     ],
     'Mapreduce': [
-      { name: 'Completion', path: '/reactor/apps/{parent}/mapreduce/{id}/process.completion' },
-      { name: 'Records Processed', path: '/reactor/apps/{parent}/mapreduce/{id}/process.entries' }
+      { name: 'Completion', path: '/system/apps/{parent}/mapreduce/{id}/process.completion' },
+      { name: 'Records Processed', path: '/system/apps/{parent}/mapreduce/{id}/process.entries' }
     ],
     'Dataset': [
-      { name: 'Bytes per Second', path: '/reactor/datasets/{id}/dataset.store.bytes' },
-      { name: 'Reads per Second', path: '/reactor/datasets/{id}/dataset.store.reads' }
+      { name: 'Bytes per Second', path: '/system/datasets/{id}/dataset.store.bytes' },
+      { name: 'Reads per Second', path: '/system/datasets/{id}/dataset.store.reads' }
     ],
     'Procedure': [
-      { name: 'Requests per Second', path: '/reactor/apps/{parent}/procedures/{id}/query.requests' },
-      { name: 'Failures per Second', path: '/reactor/apps/{parent}/procedures/{id}/query.failures' }
+      { name: 'Requests per Second', path: '/system/apps/{parent}/procedures/{id}/query.requests' },
+      { name: 'Failures per Second', path: '/system/apps/{parent}/procedures/{id}/query.failures' }
     ]
 
   };
@@ -345,8 +354,8 @@ WebAppServer.prototype.bindRoutes = function() {
     self.logger.trace('User Metrics', path);
 
     var options = {
-      host: self.config['gateway.server.address'],
-      port: self.config['gateway.server.port'],
+      host: self.routerBindAddress,
+      port: self.routerBindPort,
       method: 'GET',
       path: '/' + self.API_VERSION + '/metrics/available' + path,
       headers: {
@@ -401,12 +410,12 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.del('/rest/*', this.checkAuth, function (req, res) {
 
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
     request({
       method: 'DELETE',
-      url: 'http://' + path,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -432,11 +441,11 @@ WebAppServer.prototype.bindRoutes = function() {
    * REST PUT handler.
    */
   this.app.put('/rest/*', this.checkAuth, function (req, res) {
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'PUT',
-      url: 'http://' + path,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -469,11 +478,11 @@ WebAppServer.prototype.bindRoutes = function() {
    * Promote handler.
    */
   this.app.post('/rest/apps/:appId/promote', this.checkAuth, function (req, res) {
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
-      url: 'http://' + path,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -510,11 +519,11 @@ WebAppServer.prototype.bindRoutes = function() {
    * REST POST handler.
    */
   this.app.post('/rest/*', this.checkAuth, function (req, res) {
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
-      url: 'http://' + path,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -548,12 +557,12 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.get('/rest/*', this.checkAuth, function (req, res) {
 
-    var url = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
     var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
     var opts = {
       method: 'GET',
-      url: 'http://' + path,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -599,8 +608,8 @@ WebAppServer.prototype.bindRoutes = function() {
     var content = JSON.stringify(pathList);
 
     var options = {
-      host: self.config['gateway.server.address'],
-      port: self.config['gateway.server.port'],
+      host: self.routerBindAddress,
+      port: self.routerBindPort,
       path: '/' + self.API_VERSION + '/metrics',
       method: 'POST',
       headers: {
@@ -650,8 +659,8 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', this.checkAuth, function (req, res) {
-    var url = 'http://' + self.config['gateway.server.address'] + ':' +
-      self.config['gateway.server.port'] + '/' + self.API_VERSION + '/apps';
+    var url = self.transferProtocol + self.routerBindAddress + ':' +
+      self.routerBindPort + '/' + self.API_VERSION + '/apps';
 
     var opts = {
       method: 'POST',
@@ -670,8 +679,8 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.get('/upload/status', function (req, res) {
 
     var options = {
-      host: self.config['gateway.server.address'],
-      port: self.config['gateway.server.port'],
+      host: self.routerBindAddress,
+      port: self.routerBindPort,
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
       headers: {
@@ -706,11 +715,11 @@ WebAppServer.prototype.bindRoutes = function() {
 
   this.app.post('/unrecoverable/reset', this.checkAuth, function (req, res) {
 
-    var host = self.config['gateway.server.address'] + ':' + self.config['gateway.server.port'];
+    var host = self.routerBindAddress + ':' + self.routerBindPort;
 
     var opts = {
       method: 'POST',
-      url: 'http://' + host + '/' + self.API_VERSION + '/unrecoverable/reset',
+      url: self.transferProtocol + host + '/' + self.API_VERSION + '/unrecoverable/reset',
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -784,8 +793,8 @@ WebAppServer.prototype.bindRoutes = function() {
     }
 
     var options = {
-      host: self.config['gateway.server.address'],
-      port: self.config['gateway.server.port'],
+      host: self.routerBindAddress,
+      port: self.routerBindPort,
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
       headers: headerOpts

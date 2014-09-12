@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,8 +27,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import co.cask.cdap.internal.app.runtime.spark.inmemory.InMemorySparkContextBuilder;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionAware;
 import com.google.common.base.Throwables;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;

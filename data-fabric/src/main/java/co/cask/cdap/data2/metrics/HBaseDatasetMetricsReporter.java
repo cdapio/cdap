@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -104,7 +104,7 @@ public class HBaseDatasetMetricsReporter extends AbstractScheduledService implem
   private void report(Map<String, HBaseTableUtil.TableStats> datasetStat) {
     // we use "0" as runId: it is required by metrics system to provide something at this point
     MetricsCollector collector =
-      metricsService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
+      metricsService.getCollector(MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0");
     for (Map.Entry<String, HBaseTableUtil.TableStats> statEntry : datasetStat.entrySet()) {
       String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
       if (datasetName == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ public class ExternalAuthenticationServerTest extends ExternalAuthenticationServ
   @BeforeClass
   public static void beforeClass() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "false");
+    cConf.set(Constants.Security.SSL_ENABLED, "false");
 
     configuration = cConf;
     sConfiguration = SConfiguration.create();

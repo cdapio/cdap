@@ -3,7 +3,7 @@ Data-fabric
 
 The Transaction System
 =======================
-A flowlet processes the data objects from its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a transaction. This provides us with ACID properties:
+A Flowlet processes the data objects from its inputs one at a time. While processing a single input object, all operations, including the removal of the data from the input, and emission of data to the outputs, are executed in a transaction. This provides us with ACID properties:
 
   * The process method runs under read isolation to ensure that it does not see dirty writes (uncommitted writes from concurrent processing) in any of its reads. It does see, however, its own writes.
   * A failed attempt to process an input object leaves the DataFabric in a consistent state, that is, it does not leave partial writes behind.
@@ -32,7 +32,7 @@ Types of Datasets
 A dataset is a Java class that extends the abstract DataSet class with its own, custom methods. The implementation of a dataset typically relies on one or more underlying (embedded) datasets. For example, the IndexedTable dataset can be implemented by two underlying Table datasets, one holding the data itself, and one holding the index. We distinguish three categories of datasets: core, system, and custom datasets:
   * The core dataset of the DataFabric is a Table. Its implementation is hidden from developers and it may use private DataFabric interfaces that are not available to you.
   * A custom dataset is implemented by you and can have arbitrary code and methods. It is typically built around one or more tables (or other datasets) to implement a more specific data pattern. In fact, a custom dataset can only interact with the DataFabric through its underlying datasets. 
-  * A system dataset is bundled with the AppFabric but implemented in the same way as a custom dataset, relying on one or more underlying core or system datasets. The key difference between custom and system datasets is that system datasets are implemented (and tested) by Continuuity and as such they are reliable and trusted code.
+  * A system dataset is bundled with the AppFabric but implemented in the same way as a custom dataset, relying on one or more underlying core or system datasets. The key difference between custom and system datasets is that system datasets are implemented (and tested) by CDAP and as such they are reliable and trusted code.
   
 Each dataset instance has exactly one dataset class to manipulate it - we think of the class as the type or the interface of the dataset. Every instance of a dataset has a unique name (unique within the account that it belongs to), and some metadata that defines its behavior. For example, every IndexedTable has a name and indexes a particular column of its primary table: The name of that column is a metadata property of each instance. 
 

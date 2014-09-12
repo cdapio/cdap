@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 /**
  * Starts {@link DatasetOpExecutorService} in YARN.
  *
- * TODO: Currently the DatasetOpExecutorService (which this communicates with) is started by ReactorTwillApplication.
+ * TODO: Currently the DatasetOpExecutorService (which this communicates with) is started by MasterTwillApplication.
  * We want to start the DatasetOpExecutorService in this class startUp(), but it's not possible currently
  * since the service relies on MetricsClientRuntimeModules which is in watchdog module.
  */

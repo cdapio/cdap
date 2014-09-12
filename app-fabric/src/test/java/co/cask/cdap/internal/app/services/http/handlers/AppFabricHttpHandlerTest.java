@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,14 +38,14 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionAware;
-import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.TransactionExecutorFactory;
-import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.persist.TransactionSnapshot;
-import com.continuuity.tephra.snapshot.SnapshotCodec;
-import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.snapshot.SnapshotCodec;
+import co.cask.tephra.snapshot.SnapshotCodecProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

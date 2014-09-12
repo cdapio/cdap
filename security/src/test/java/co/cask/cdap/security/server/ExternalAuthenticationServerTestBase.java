@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -114,7 +114,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
-    if (configuration.getBoolean(Constants.Security.AuthenticationServer.SSL_ENABLED)) {
+    if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
       port = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
     } else {
       port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);

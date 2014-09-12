@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,9 @@ package co.cask.cdap.data2.increment.hbase94;
 
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import com.continuuity.tephra.coprocessor.TransactionStateCache;
-import com.continuuity.tephra.hbase94.Filters;
-import com.continuuity.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.hbase94.Filters;
+import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.TransactionAware;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
@@ -194,11 +194,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   public MetricsCollector getSystemMapperMetrics() {
-    return systemMapperMetrics.get(MetricsScope.REACTOR);
+    return systemMapperMetrics.get(MetricsScope.SYSTEM);
   }
 
   public MetricsCollector getSystemReducerMetrics() {
-    return systemReducerMetrics.get(MetricsScope.REACTOR);
+    return systemReducerMetrics.get(MetricsScope.SYSTEM);
   }
 
   public MetricsCollector getSystemMapperMetrics(MetricsScope scope) {

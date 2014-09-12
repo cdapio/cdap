@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,7 +48,7 @@ public class ExternalAuthenticationServerSSLTest extends ExternalAuthenticationS
 
     CConfiguration cConf = CConfiguration.create();
     SConfiguration sConf = SConfiguration.create();
-    cConf.set(Constants.Security.AuthenticationServer.SSL_ENABLED, "true");
+    cConf.set(Constants.Security.SSL_ENABLED, "true");
     sConf.set(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH, certUrl.getPath());
 
     configuration = cConf;

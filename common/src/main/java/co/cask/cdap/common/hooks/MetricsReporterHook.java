@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,7 +54,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         .build(new CacheLoader<String, MetricsCollector>() {
           @Override
           public MetricsCollector load(String key) throws Exception {
-            return metricsCollectionService.getCollector(MetricsScope.REACTOR, key, "0");
+            return metricsCollectionService.getCollector(MetricsScope.SYSTEM, key, "0");
           }
         });
     } else {

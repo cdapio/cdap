@@ -1,12 +1,9 @@
 .. :author: Cask Data, Inc.
    :description: A Java Client for Interacting With the Cask Data Application Platform 
-   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==============================================
 Cask Data Application Platform Java Client API
 ==============================================
-
-.. highlight:: console
 
 Introduction
 ============
@@ -17,6 +14,8 @@ with CDAP from Java applications.
 Maven Dependency
 ================
 
+.. highlight:: console
+
 To use the Java Client API in your project, add this Maven dependency::
 
   <dependency>
@@ -25,31 +24,32 @@ To use the Java Client API in your project, add this Maven dependency::
     <version>${cdap.version}</version>
   </dependency>
 
+.. highlight:: java
+
 Components
 ==========
 
 The Java Client API allows you to interact with these CDAP components:
 
-- **ApplicationClient:** interacting with applications
-- **DatasetClient:** interacting with Datasets
-- **DatasetModuleClient:** interacting with Dataset Modules
-- **DatasetTypeClient:** interacting with Dataset Types
-- **MetricsClient:** interacting with Metrics
-- **MonitorClient:** monitoring System Services
-- **ProcedureClient:** interacting with Procedures
-- **ProgramClient:** interacting with Flows, Procedures, MapReduce Jobs, User Services, and Workflows
-- **QueryClient:** querying Datasets
-- **ServiceClient:** interacting with User Services
-- **StreamClient:** interacting with Streams
+- `ApplicationClient`_: interacting with applications
+- `DatasetClient`_: interacting with Datasets
+- `DatasetModuleClient`_: interacting with Dataset Modules
+- `DatasetTypeClient`_: interacting with Dataset Types
+- `MetricsClient`_: interacting with Metrics
+- `MonitorClient`_: monitoring System Services
+- `ProcedureClient`_: interacting with Procedures
+- `ProgramClient`_: interacting with Flows, Procedures, MapReduce Jobs, User Services, and Workflows
+- `QueryClient`_: querying Datasets
+- `ServiceClient`_: interacting with User Services
+- `StreamClient`_: interacting with Streams
+
+The above list links to the examples below for each portion of the API.
 
 Sample Usage
 ============
 
-.. highlight:: java
-
 ApplicationClient
 -----------------
-
 ::
 
   // Interact with the CDAP instance located at example.com, port 10000
@@ -71,9 +71,9 @@ ApplicationClient
   // List programs belonging to an application
   appClient.listPrograms("Purchase");
 
+
 DatasetClient
 -------------
-
 ::
 
   // Interact with the CDAP instance located at example.com, port 10000
@@ -88,6 +88,265 @@ DatasetClient
   // Create a Dataset
   datasetClient.create("someDataset", "someDatasetType");
 
+  // Truncate a Dataset
+  datasetClient.truncate("someDataset");
+
   // Delete a Dataset
   datasetClient.delete("someDataset");
-  
+
+
+DatasetModuleClient
+-------------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
+
+  // Add a Dataset module
+  File moduleJarFile = createAppJarFile(someDatasetModule.class);
+  datasetModuleClient("someDatasetModule", SomeDatasetModule.class.getName(), moduleJarFile);
+
+  // Fetch the Dataset module information
+  DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get("someDatasetModule");
+
+  // Delete all Dataset modules
+  datasetModuleClient.deleteAll();
+
+
+DatasetTypeClient
+-----------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
+
+  // Fetch the Dataset type information using the type name
+  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get("someDatasetType");
+
+  // Fetch the Dataset type information using the classname
+  datasetTypeMeta = datasetTypeClient.get(SomeDataset.class.getName());
+
+
+MetricsClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  MetricsClient metricsClient = new MetricsClient(clientConfig);
+
+  // Fetch the total number of events that have been processed by a Flow
+  JsonObject metric = metricsClient.getMetric("user", "/apps/HelloWorld/flows", 
+                                              "process.events.processed", "aggregate=true");
+
+MonitorClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  MonitorClient monitorClient = new MonitorClient(clientConfig);
+
+  // Fetch the list of System Services
+  List<SystemServiceMeta> services = monitorClient.listSystemServices();
+
+  // Fetch status of System Transaction Service 
+  String serviceStatus = monitorClient.getSystemServiceStatus("transaction");
+
+  // Fetch the number of instances of the System Transaction Service
+  int systemServiceInstances = monitorClient.getSystemServiceInstances("transaction");
+
+
+ProcedureClient
+---------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ProcedureClient procedureClient = new ProcedureClient(clientConfig);
+
+  // Call a Procedure in the PageViewAnalytics example
+  String result = procedureClient.call("PageViewAnalytics", "PageViewProcedure", "getDistribution",
+                                       ImmutableMap.of("page", "http://www.cask.co"));
+
+  // Stop a Procedure
+  programClient.stop("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure");
+
+
+ProgramClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ProgramClient programClient = new ProgramClient(clientConfig);
+
+  // Start a Procedure in the PageViewAnalytics example
+  programClient.start("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure");
+
+  // Fetch live information from the HelloWorld example
+  // Live info includes the address of an element’s container host and the container’s debug port,
+  // formatted in JSON
+  programClient.getLiveInfo("HelloWorld", ProgramType.PROCEDURE, "greet");
+
+  // Fetch program logs in the PageViewAnalytics example
+  programClient.getProgramLogs("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure", 0,
+                               Long.MAX_VALUE);
+
+  // Scale a Procedure in the HelloWorld example
+  programClient.setProcedureInstances("HelloWorld", "greet", 3);
+
+  // Stop a Procedure in the HelloWorld example
+  programClient.stop("HelloWorld", ProgramType.PROCEDURE, "greet");
+
+  // Start, scale, and stop a Flow in the PageViewAnalytics example
+  programClient.start("PageViewAnalytics", ProgramType.FLOW, "PageViewFlow");
+
+  // Fetch Flow history in the PageViewAnalytics example
+  programClient.getProgramHistory("PageViewAnalytics", ProgramType.FLOW, "PageViewFlow");
+
+  // Scale a Flowlet in the PageViewAnalytics example
+  programClient.setFlowletInstances("PageViewAnalytics", "PageViewFlow", "parser", 3);
+ 
+  // Stop a Flow in the PageViewAnalytics example
+  programClient.stop("PageViewAnalytics", ProgramType.FLOW, "PageViewFlow");
+
+
+QueryClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  QueryClient queryClient = new QueryClient(clientConfig);
+
+  //
+  // Perform an ad-hoc query using the Purchase example
+  //
+  String query = "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
+  QueryHandle queryHandle = queryClient.execute(query);
+  QueryStatus status = new QueryStatus(null, false);
+
+  while (QueryStatus.OpStatus.RUNNING == status.getStatus() ||
+         QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
+         QueryStatus.OpStatus.PENDING == status.getStatus()) {
+    Thread.sleep(1000);
+    status = queryClient.getStatus(queryHandle);
+  }
+
+  if (status.hasResults()) {
+    // Get first 20 results
+    List<QueryResult> results = queryClient.getResults(queryHandle, 20);
+    // Fetch schema
+    List<ColumnDesc> schema = queryClient.getSchema(queryHandle);
+    String[] header = new String[schema.size()];
+    for (int i = 0; i < header.length; i++) {
+      ColumnDesc column = schema.get(i);
+      // Hive columns start at 1
+      int index = column.getPosition() - 1;
+      header[index] = column.getName() + ": " + column.getType();
+    }
+  }
+
+  queryClient.delete(queryHandle);
+  //
+  // End perform an ad-hoc query
+  //
+
+ServiceClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ServiceClient serviceClient = new ServiceClient(clientConfig);
+
+  // Fetch Service information using the Service in the PurchaseApp example
+  ServiceMeta serviceMeta = serviceClient.get("PurchaseApp", "CatalogLookup");
+
+
+StreamClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  StreamClient streamClient = new StreamClient(clientConfig);
+
+  // Fetch the Stream list
+  List streams = streamClient.list();
+
+  // Create a Stream, using the ResponseCodeAnalyticsApp example
+  streamClient.create("logEventStream");
+
+  // Fetch a Stream's properties, using the ResponseCodeAnalyticsApp example
+  StreamProperties config = streamClient.getConfig("logEventStream");
+
+  // Send events to a Stream, using the Purchase example
+  streamClient.sendEvent("purchaseStream", "Tom bought 5 apples for $10");
+
+  // Read all events from a Stream (results in events)
+  List<StreamEvent> events = Lists.newArrayList();
+  streamClient.getEvents("purchaseStream", 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+
+  // Read first 5 events from a Stream (results in events)
+  List<StreamEvent> events = Lists.newArrayList();
+  streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
+
+  // Read 2nd and 3rd events from a Stream, after first calling getEvents
+  long startTime = events.get(1).getTimestamp();
+  long endTime = events.get(2).getTimestamp() + 1;
+  events.clear()
+  streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
+
+  //
+  // Write asynchronously to a Stream
+  //
+  String streamId = "testAsync";
+  List<StreamEvent> events = Lists.newArrayList();
+
+  streamClient.create(streamId);
+
+  // Send 10 async writes
+  int msgCount = 10;
+  for (int i = 0; i < msgCount; i++) {
+    streamClient.asyncSendEvent(streamId, "Testing " + i);
+  }
+
+  // Read them back; need to read it multiple times as the writes happen asynchronously
+  while (events.size() != msgCount) {
+    events.clear();
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
+  }
+
+  // Check that there are no more events
+  events.clear();
+  while (events.isEmpty()) {
+    events.clear();
+    streamClient.getEvents(streamId, lastTimestamp + 1, Long.MAX_VALUE, msgCount, events);
+  }
+  //
+  // End write asynchronously  
+  //
+
+

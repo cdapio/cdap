@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2014 Cask Data, Inc.
+  Copyright © 2014 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>unit-test</artifactId>
-  <name>Cask CDAP Unit Test Framework</name>
+  <name>CDAP Unit Test Framework</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -73,7 +73,7 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.continuuity.tephra</groupId>
+      <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-core</artifactId>
     </dependency>
     <dependency>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,57 +52,57 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
   }
 
   @GET
-  @Path("/reactor/cluster/{metric}")
+  @Path("/system/cluster/{metric}")
   public void handleClusterMetrics(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/process.events.processed
+  // ex: /system/apps/appX/process.events.processed
   @GET
   @Path("/{scope}/{type}/{type-id}/{metric}")
   public void handleTopLevel(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/process.events.processed
+  // ex: /system/apps/appX/flows/process.events.processed
   @GET
   @Path("/{scope}/{type}/{type-id}/{request-type}/{metric}")
   public void handleProgramType(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/flowY/process.events.processed
+  // ex: /system/apps/appX/flows/flowY/process.events.processed
   @GET
   @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{metric}")
   public void handleProgram(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/mapreduce/jobId/mappers/process.entries.in
+  // ex: /system/apps/appX/mapreduce/jobId/mappers/process.entries.in
   @GET
   @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/{metric}")
   public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
-  // ex2: /reactor/services/{service-name}/handlers/{handler-name}/methods/{method-name}/{metric}
+  // ex: /system/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
+  // ex2: /system/services/{service-name}/handlers/{handler-name}/methods/{method-name}/{metric}
   @GET
   @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/{component-id}/{metric}")
   public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
-  // ex: /reactor/datasets/tickTimeseries/apps/Ticker/flows/TickerTimeseriesFlow/flowlets/saver/store.bytes
+  // ex: /system/datasets/tickTimeseries/apps/Ticker/flows/TickerTimeseriesFlow/flowlets/saver/store.bytes
   @GET
-  @Path("/reactor/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/{metric}")
+  @Path("/system/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/{metric}")
   public void handleFlowletDatasetMetrics(HttpRequest request, HttpResponder responder)
     throws IOException, OperationException {
     handleRequest(request, responder);
   }
 
   @GET
-  @Path("/reactor/transactions/{metric}")
+  @Path("/system/transactions/{metric}")
   public void handleTransactionMetrics(HttpRequest request, HttpResponder response) throws IOException {
     handleRequest(request, response);
   }
