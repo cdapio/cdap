@@ -64,7 +64,9 @@ define([], function () {
 
         onCurrentStatusChanged: function() {
           if (this.get("model").get("currentState") === "RUNNING") {
-            this.transitionToRoute("Spark.Log");
+            if (C.get("currentPath") === "Spark.SparkStatus.index") {
+              this.transitionToRoute("Spark.Log");
+            }
           }
         }.observes("model.currentState")
 
