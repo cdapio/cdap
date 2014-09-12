@@ -243,12 +243,9 @@ QueryClient
   QueryHandle queryHandle = queryClient.execute(query);
   QueryStatus status = new QueryStatus(null, false);
 
-  Stopwatch stopwatch = new Stopwatch();
-  stopwatch.start();
-  while ((QueryStatus.OpStatus.RUNNING == status.getStatus() ||
-          QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
-          QueryStatus.OpStatus.PENDING == status.getStatus()) &&
-         stopwatch.elapsedTime(TimeUnit.SECONDS) < 10L) {
+  while (QueryStatus.OpStatus.RUNNING == status.getStatus() ||
+         QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
+         QueryStatus.OpStatus.PENDING == status.getStatus()) {
     Thread.sleep(1000);
     status = queryClient.getStatus(queryHandle);
   }
@@ -337,23 +334,19 @@ StreamClient
   }
 
   // Read them back; need to read it multiple times as the writes happen asynchronously
-  Stopwatch stopwatch = new Stopwatch();
-  stopwatch.start();
-  while (events.size() != msgCount && stopwatch.elapsedTime(TimeUnit.SECONDS) < 10L) {
+  while (events.size() != msgCount) {
     events.clear();
     streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
   }
 
   // Check that there are no more events
-  stopwatch = new Stopwatch();
-  stopwatch.start();
   events.clear();
-  while (events.isEmpty() && stopwatch.elapsedTime(TimeUnit.SECONDS) < 1L) {
+  while (events.isEmpty()) {
     events.clear();
     streamClient.getEvents(streamId, lastTimestamp + 1, Long.MAX_VALUE, msgCount, events);
   }
   //
-  // End w	rite asynchronously  
+  // End write asynchronously  
   //
 
 
