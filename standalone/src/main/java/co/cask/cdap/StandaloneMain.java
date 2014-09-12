@@ -366,6 +366,9 @@ public class StandaloneMain {
               return client;
             }
           });
+          if (webAppPath != null) {
+            bindConstant().annotatedWith(Names.named("web-app-path")).to(webAppPath);
+          }
         }
       },
       new ConfigModule(configuration, hConf),
@@ -387,13 +390,7 @@ public class StandaloneMain {
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModule(),
-      new ExploreClientModule(),
-      new AbstractModule() {
-        @Override
-        public void configure() {
-          bindConstant().annotatedWith(Names.named("web-app-path")).to(webAppPath);
-        }
-      }
+      new ExploreClientModule()
     );
   }
 }
