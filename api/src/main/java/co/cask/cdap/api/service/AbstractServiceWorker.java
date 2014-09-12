@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.ResourceSpecification;
 
@@ -24,6 +25,7 @@ import java.util.Map;
 /**
  * Extend this class to add workers to a custom Service.
  */
+@Beta
 public abstract class AbstractServiceWorker implements ServiceWorker {
   private ServiceWorkerContext context;
 

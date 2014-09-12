@@ -17,10 +17,12 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.annotation.Beta;
 
 /**
  * Workers for user services must implement this interface.
  */
+@Beta
 public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerContext> {
 
   /**
