@@ -31,6 +31,7 @@ default['cdap']['cdap_site']['kafka.default.replication.factor'] = '1'
 default['cdap']['cdap_site']['log.retention.duration.days'] = '7'
 default['cdap']['cdap_site']['zookeeper.quorum'] = "#{node['fqdn']}:2181/#{node['cdap']['cdap_site']['root.namespace']}"
 default['cdap']['cdap_site']['router.bind.address'] = node['fqdn']
+default['cdap']['cdap_site']['router.server.address'] = node['fqdn']
 default['cdap']['cdap_site']['app.bind.address'] = node['fqdn']
 default['cdap']['cdap_site']['data.tx.bind.address'] = node['fqdn']
 default['cdap']['cdap_site']['metrics.query.bind.address'] = node['fqdn']
