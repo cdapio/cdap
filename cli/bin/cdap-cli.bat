@@ -18,4 +18,5 @@ REM ## the License.
 REM ##
 REM #################################################################################
 
-java -jar %~dp0\cdap-cli.jar
+cd %~dp0\..\lib
+java -cp .:* co.cask.cdap.shell.CLIMain

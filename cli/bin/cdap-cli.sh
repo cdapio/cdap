@@ -17,4 +17,5 @@
 #
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-java -jar $SCRIPT_DIR/cdap-cli.jar
+cd $SCRIPT_DIR/../lib
+java -cp .:* co.cask.cdap.shell.CLIMain
