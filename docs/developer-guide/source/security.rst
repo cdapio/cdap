@@ -45,7 +45,7 @@ security.auth.server.address                  <hostname>
 Running SSL
 =============
 
-To enable Running Servers in SSL in CDAP, add these properties to ``cdap-site.xml``:
+To enable running servers in SSL in CDAP, add this property to ``cdap-site.xml``:
 
 ==========================================  ==============
    Property                                   Value
@@ -53,8 +53,8 @@ To enable Running Servers in SSL in CDAP, add these properties to ``cdap-site.xm
 ssl.enabled                                   true
 ==========================================  ==============
 
-Default Port Information
-=========================
+Default Ports
+===============
 Without SSL:
 
 =======================================   =================
@@ -83,9 +83,9 @@ To configure the granting of ``AccessToken``\s via SSL, add these properties to 
 =============================================     =====================     =======================================
    Property                                        Default Value                Description
 =============================================     =====================     =======================================
-security.auth.server.ssl.keystore.path              None                      Keystore file location. CDAP user
-                                                                              should own this file and the file
-                                                                              should be readable only by the owner
+security.auth.server.ssl.keystore.path              None                      Keystore file location. The file should
+                                                                              be owned and readable only by, the
+                                                                              CDAP user
 security.auth.server.ssl.keystore.password          None                      Keystore password
 security.auth.server.ssl.keystore.keypassword       None                      Keystore key password
 security.auth.server.ssl.keystore.type              JKS                       Keystore file type
@@ -99,9 +99,9 @@ To configure SSL for the Router, add these properties to ``cdap-security.xml``:
 ================================    =======================      ================================================
    Property                           Default Value                Description
 ================================    =======================      ================================================
-router.ssl.keystore.path              None                         Keystore file location. CDAP user should own
-                                                                   this file and the file should be readable only
-                                                                   by the owner
+router.ssl.keystore.path              None                         Keystore file location. The file should
+                                                                   be owned and readable only by, the
+                                                                   CDAP user
 router.ssl.keystore.password          None                         Keystore password
 router.ssl.keystore.keypassword       None                         Keystore key password
 router.ssl.keystore.type              JKS                          Keystore file type
@@ -109,14 +109,14 @@ router.ssl.keystore.type              JKS                          Keystore file
 
 Configuring SSL for UI
 =============================================
-To configure SSL for the Web-UI, add these properties to ``cdap-security.xml``:
+To enable SSL for the Web-UI, add these properties to ``cdap-security.xml``:
 
 =======================================          =======================
    Property                                        Value
 =======================================          =======================
 dashboard.ssl.cert                                  <path>
 dashboard.ssl.key                                   <path>
-dashboard.ssl.disable.cert.check                    true/false
+dashboard.ssl.disable.cert.check                    true
 =======================================          =======================
 
 Configuring Kerberos (required)
