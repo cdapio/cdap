@@ -50,7 +50,7 @@ public class QueryClientTestRun extends ClientTestBase {
   public void testAll() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
 
-    QueryHandle queryHandle = queryClient.execute("select * from continuuity_user_" + FakeApp.DS_NAME);
+    QueryHandle queryHandle = queryClient.execute("select * from cdap_user_" + FakeApp.DS_NAME);
     QueryStatus status = new QueryStatus(null, false);
 
     long startTime = System.currentTimeMillis();
