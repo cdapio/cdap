@@ -146,6 +146,7 @@
     <module>cli</module>
     <module>standalone</module>
     <module>distributions</module>
+    <module>archetypes</module>
   </modules>
 
   <dependencyManagement>
