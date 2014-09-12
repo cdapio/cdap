@@ -36,6 +36,7 @@ import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
+import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.continuuity.tephra.TransactionSystemClient;
@@ -44,6 +45,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -126,7 +128,12 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     this.serviceName = serviceName;
     this.handlers = ImmutableList.copyOf(handlers);
     this.appName = appName;
-    this.datasets = datasets;
+    // Allow datasets only specified by the @UseDataSet annotation.
+    for (HttpServiceHandler httpServiceHandler : handlers) {
+      Reflections.visit(httpServiceHandler, TypeToken.of(httpServiceHandler.getClass()),
+                        new DataSetFieldExtractor(datasets));
+    }
+    this.datasets = ImmutableSet.copyOf(datasets);
   }
 
   /**

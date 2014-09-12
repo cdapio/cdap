@@ -88,7 +88,6 @@ public class AppWithServices extends AbstractApplication {
     protected void configure() {
       setName(TRANSACTIONS_SERVICE_NAME);
       addHandler(new TransactionsHandler());
-      useDataset(TRANSACTIONS_DATASET_NAME);
     }
 
     public static final class TransactionsHandler extends AbstractHttpServiceHandler {
