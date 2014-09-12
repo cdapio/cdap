@@ -14,15 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client;
+package co.cask.cdap.client;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.StreamNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;

@@ -14,16 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client;
+package co.cask.cdap.client;
 
-import co.cask.cdap.client.DatasetClient;
-import co.cask.cdap.client.DatasetModuleClient;
-import co.cask.cdap.client.DatasetTypeClient;
+import co.cask.cdap.client.app.StandaloneDataset;
+import co.cask.cdap.client.app.StandaloneDatasetModule;
+import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.reactor.client.app.StandaloneDataset;
-import co.cask.cdap.reactor.client.app.StandaloneDatasetModule;
-import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;

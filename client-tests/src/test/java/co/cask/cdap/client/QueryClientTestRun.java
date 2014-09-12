@@ -14,16 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client;
+package co.cask.cdap.client;
 
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.QueryClient;
+import co.cask.cdap.client.app.FakeApp;
+import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.reactor.client.app.FakeApp;
-import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
@@ -52,7 +50,7 @@ public class QueryClientTestRun extends ClientTestBase {
   public void testAll() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
 
-    QueryHandle queryHandle = queryClient.execute("select * from continuuity_user_" + FakeApp.DS_NAME);
+    QueryHandle queryHandle = queryClient.execute("select * from cdap_user_" + FakeApp.DS_NAME);
     QueryStatus status = new QueryStatus(null, false);
 
     long startTime = System.currentTimeMillis();
