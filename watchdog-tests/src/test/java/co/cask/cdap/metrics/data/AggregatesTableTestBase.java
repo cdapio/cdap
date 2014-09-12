@@ -16,55 +16,29 @@
 
 package co.cask.cdap.metrics.data;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
-import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Test base for AggregatesTable tests for different mode.
  */
-@Category(SlowTests.class)
-public class AggregatesTableTest {
+public abstract class AggregatesTableTestBase {
 
-  private static MetricsTableFactory tableFactory;
-  private static HBaseTestBase testHBase;
+  protected abstract MetricsTableFactory getTableFactory();
 
   @Test
   public void testSimpleAggregates() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
 
     try {
       // Insert 10 metrics.
@@ -102,7 +76,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testScanAllTags() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("aggScanAllTags");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("aggScanAllTags");
     try {
       aggregatesTable.update(ImmutableList.of(
         new MetricsRecord("app1.f.flow1.flowlet1", "0", "metric", ImmutableList.of(
@@ -132,8 +106,47 @@ public class AggregatesTableTest {
   }
 
   @Test
+  public void testScanTagPrefix() throws OperationException {
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("aggScanTagPrefix");
+    try {
+      aggregatesTable.update(ImmutableList.of(
+        new MetricsRecord("app1.f.flow1.flowlet1", "0", "metric", ImmutableList.of(
+          new TagMetric("tag.1", 1), new TagMetric("tag.2", 2), new TagMetric("tag3", 3)), 0L, 6)
+      ));
+
+      // Scan with "tag" as prefix. It should includes "tag.1" and "tag.2", but not "tag3"
+      Map<String, Long> tagValues = Maps.newHashMap();
+      AggregatesScanner scanner = aggregatesTable.scan("app1.f.flow1.flowlet1", "metric", "0", "tag");
+      while (scanner.hasNext()) {
+        AggregatesScanResult result = scanner.next();
+        String tag = result.getTag();
+        Assert.assertTrue(tag.startsWith("tag."));
+        Assert.assertFalse(tagValues.containsKey(tag));
+        tagValues.put(tag, result.getValue());
+      }
+      scanner.close();
+
+      Assert.assertEquals(2, tagValues.size());
+      Assert.assertEquals(1L, (long) tagValues.get("tag.1"));
+      Assert.assertEquals(2L, (long) tagValues.get("tag.2"));
+
+      // Scan for "tag3" only
+      scanner = aggregatesTable.scan("app1.f.flow1.flowlet1", "metric", "0", "tag3");
+      while (scanner.hasNext()) {
+        AggregatesScanResult result = scanner.next();
+        String tag = result.getTag();
+        Assert.assertEquals("tag3", tag);
+        Assert.assertEquals(3L, result.getValue());
+      }
+      scanner.close();
+    } finally {
+      aggregatesTable.clear();
+    }
+  }
+
+  @Test
   public void testClear() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("aggDelete");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("aggDelete");
 
     for (int i = 1; i <= 10; i++) {
       MetricsRecord metric = new MetricsRecord("simple." + i, "runId", "metric",
@@ -169,7 +182,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testRowFilter() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
 
     try {
       // Insert 20 different metrics from the same context.
@@ -198,7 +211,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testTags() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
 
     try {
       // Insert 10 metrics, each with 20 tags.
@@ -230,7 +243,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testDeleteContext() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
 
     try {
       List<TagMetric> tags = Lists.newArrayList();
@@ -281,7 +294,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testDeleteContextAndMetric() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
 
     try {
       List<TagMetric> tags = Lists.newArrayList();
@@ -350,7 +363,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testDeletes() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("agg");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("agg");
 
     try {
       String metric = "metric";
@@ -409,7 +422,7 @@ public class AggregatesTableTest {
 
   @Test
   public void testSwap() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("aggSave");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("aggSave");
     try {
       checkSwapForTag(aggregatesTable, null);
       checkSwapForTag(aggregatesTable, "tag");
@@ -448,39 +461,5 @@ public class AggregatesTableTest {
       value += result.getValue();
     }
     return value;
-  }
-
-  @BeforeClass
-  public static void init() throws Exception {
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
-    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
-    Injector injector = Guice.createInjector(new ConfigModule(cConf, testHBase.getConfiguration()),
-                                             new DiscoveryRuntimeModule().getDistributedModules(),
-                                             new ZKClientModule(),
-                                             new DataFabricDistributedModule(),
-                                             new LocationRuntimeModule().getDistributedModules(),
-                                             new TransactionMetricsModule(),
-                                             new AbstractModule() {
-                                               @Override
-                                               protected void configure() {
-                                                 install(new FactoryModuleBuilder()
-                                                           .implement(DatasetDefinitionRegistry.class,
-                                                                      DefaultDatasetDefinitionRegistry.class)
-                                                           .build(DatasetDefinitionRegistryFactory.class));
-                                               }
-                                             });
-
-    DatasetFramework dsFramework =
-      new InMemoryDatasetFramework(injector.getInstance(DatasetDefinitionRegistryFactory.class));
-    dsFramework.addModule("metrics-hbase", new HBaseMetricsTableModule());
-    tableFactory = new DefaultMetricsTableFactory(cConf, dsFramework);
-  }
-
-  @AfterClass
-  public static void finish() throws Exception {
-    testHBase.stopHBase();
   }
 }
