@@ -41,11 +41,11 @@ security.enabled                              true
 security.auth.server.address                  <hostname>
 ==========================================  ==============
 
-=============
-Running SSL
-=============
+=========================
+Running Servers with SSL
+=========================
 
-To enable running servers in SSL in CDAP, add this property to ``cdap-site.xml``:
+To enable running servers with SSL in CDAP, add this property to ``cdap-site.xml``:
 
 ==========================================  ==============
    Property                                   Value
@@ -84,7 +84,7 @@ To configure the granting of ``AccessToken``\s via SSL, add these properties to 
    Property                                        Default Value                Description
 =============================================     =====================     =======================================
 security.auth.server.ssl.keystore.path              None                      Keystore file location. The file should
-                                                                              be owned and readable only by, the
+                                                                              be owned and readable only by the
                                                                               CDAP user
 security.auth.server.ssl.keystore.password          None                      Keystore password
 security.auth.server.ssl.keystore.keypassword       None                      Keystore key password
@@ -100,7 +100,7 @@ To configure SSL for the Router, add these properties to ``cdap-security.xml``:
    Property                           Default Value                Description
 ================================    =======================      ================================================
 router.ssl.keystore.path              None                         Keystore file location. The file should
-                                                                   be owned and readable only by, the
+                                                                   be owned and readable only by the
                                                                    CDAP user
 router.ssl.keystore.password          None                         Keystore password
 router.ssl.keystore.keypassword       None                         Keystore key password
@@ -116,8 +116,9 @@ To enable SSL for the Web-UI, add these properties to ``cdap-security.xml``:
 =======================================          =======================
 dashboard.ssl.cert                                  <path>
 dashboard.ssl.key                                   <path>
-dashboard.ssl.disable.cert.check                    true
 =======================================          =======================
+
+**Note:** To allow self signed certificates, set dashboard.ssl.disable.cert.check field to true in cdap-site.xml
 
 Configuring Kerberos (required)
 ================================
