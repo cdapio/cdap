@@ -293,6 +293,28 @@ Continuing the * MyDataset*`example used above <scanning-records>`_, which showe
 
 Note that a Dataset can implement either ``RecordScannable``, ``RecordWritable``, or both.
 
+Connecting to CDAP Datasets using CDAP JDBC driver
+==================================================
+Now that CDAP exposes a SQL interface, we have made available a JDBC driver that you can use in your code
+or in third party tools to connect to CDAP Datasets and execute SQL queries over them.
+
+The JDBC driver is a JAR that is bundled with CDAP SDK. You can find it at the root of your SDK, at
+``drivers/cdap-jdbc-drivers.jar``.
+
+ // NOTE: we may want to tell users to download the jar from our website - figure this out
+
+If you don't have a CDAP SDK and only want to connect to an existing instance of CDAP, you can download the CDAP JDBC
+driver using this `link <https://repository.continuuity.com/content/repositories/releases-public/co/cask/cdap/explore-jdbc/>`__.
+Go to the directory matching the version of your running CDAP instance, and download the file named ``explore-jdbc-<version>.jar``.
+
+Using the CDAP JDBC driver in your Java code
+--------------------------------------------
+
+
+Integration of CDAP Datasets with Business Intelligence tools
+-------------------------------------------------------------
+
+
 Formulating Queries
 ===================
 When creating your queries, keep these limitations in mind:

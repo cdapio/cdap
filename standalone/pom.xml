@@ -103,6 +103,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>explore-jdbc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.continuuity.tephra</groupId>
       <artifactId>tephra-core</artifactId>
     </dependency>
@@ -295,6 +300,14 @@
                         <include>cdap-cli.bat</include>
                       </includes>
                     </resource>
+                    <!-- Copy Explore JDBC driver -->
+                    <resource>
+                      <directory>${project.parent.basedir}/explore-jdbc/target</directory>
+                      <targetPath>drivers</targetPath>
+                      <includes>
+                        <include>explore-jdbc-${project.version}.jar</include>
+                      </includes>
+                    </resource>
                     <!-- Copy examples. The assume the example is already built -->
                     <resource>
                       <directory>${project.parent.basedir}/examples</directory>
@@ -356,6 +369,19 @@
                     <copy file="${stage.opt.dir}/bin/cli-${project.version}.jar" tofile="${stage.opt.dir}/bin/cdap-cli.jar" />
                     <chmod file="${stage.opt.dir}/bin/cdap-cli.sh" perm="755"/>
                     <chmod file="${stage.opt.dir}/bin/cdap-cli.bat" perm="755"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+              <!-- Rename Explore JDBC driver -->
+              <execution>
+                <id>copy-explore-jdbc</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target>
+                    <copy file="${stage.opt.dir}/drivers/explore-jdbc-${project.version}.jar" tofile="${stage.opt.dir}/drivers/cdap-jdbc-driver.jar" />
                   </target>
                 </configuration>
                 <goals>
