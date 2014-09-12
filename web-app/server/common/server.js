@@ -927,9 +927,8 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.get('/version', function (req, res) {
     var options = {
-      host: 'www.continuuity.com',
-      path: '/version',
-      port: '80'
+      host: 's3.amazonaws.com',
+      path: '/cdap-docs/VERSION'
     };
 
     var request = self.lib.request(options, function(response) {
