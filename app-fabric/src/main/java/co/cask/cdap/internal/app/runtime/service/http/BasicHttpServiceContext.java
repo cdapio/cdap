@@ -40,8 +40,7 @@ import java.util.Set;
  * Default implementation of HttpServiceContext which simply stores and retrieves the
  * spec provided when this class is instantiated
  */
-public class BasicHttpServiceContext extends AbstractContext implements HttpServiceContext,
-                                                                        TransactionalHttpServiceContext {
+public class BasicHttpServiceContext extends AbstractContext implements TransactionalHttpServiceContext {
 
   private final HttpServiceSpecification spec;
   private final Map<String, String> runtimeArgs;

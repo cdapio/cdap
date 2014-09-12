@@ -25,9 +25,9 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
-import com.continuuity.tephra.TransactionAware;
-import com.continuuity.tephra.TransactionContext;
-import com.continuuity.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionContext;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
@@ -169,7 +169,7 @@ public class HttpHandlerGeneratorTest {
   /**
    * An no-op implementation of {@link HttpServiceContext} that implements no-op transactional operations.
    */
-  private static class NoOpHttpServiceContext implements HttpServiceContext, TransactionalHttpServiceContext {
+  private static class NoOpHttpServiceContext implements TransactionalHttpServiceContext {
 
     @Override
     public HttpServiceSpecification getSpecification() {

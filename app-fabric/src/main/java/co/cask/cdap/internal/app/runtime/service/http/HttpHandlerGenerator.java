@@ -444,6 +444,7 @@ final class HttpHandlerGenerator {
      *       txContext.start();
      *       try {
      *          delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
+     *          txContext.finish();
      *       } catch (Throwable t) {
      *         LOG.error("User handler exception", e);
      *         txContext.abort(new TransactionFailureException("User handler exception", e));
