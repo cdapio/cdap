@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>hbase-compat-0.94</artifactId>
-  <name>Cask CDAP HBase 0.94 Compatibility</name>
+  <name>CDAP HBase 0.94 Compatibility</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -43,7 +43,7 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity.tephra</groupId>
+      <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-hbase-compat-0.94</artifactId>
     </dependency>
     <dependency>

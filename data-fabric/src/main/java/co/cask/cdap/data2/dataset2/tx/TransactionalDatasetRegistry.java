@@ -18,11 +18,11 @@ package co.cask.cdap.data2.dataset2.tx;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import com.continuuity.tephra.DefaultTransactionExecutor;
-import com.continuuity.tephra.TransactionAware;
-import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.TransactionFailureException;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.DefaultTransactionExecutor;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;

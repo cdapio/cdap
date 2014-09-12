@@ -23,7 +23,7 @@ import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.PutValue;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;

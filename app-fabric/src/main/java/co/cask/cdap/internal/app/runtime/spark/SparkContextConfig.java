@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;

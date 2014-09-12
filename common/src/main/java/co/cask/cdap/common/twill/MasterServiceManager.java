@@ -17,7 +17,7 @@
 package co.cask.cdap.common.twill;
 
 /**
- * Interface that defines a set of methods that will be used for management of Reactor Services.
+ * Interface that defines a set of methods that will be used for management of CDAP Services.
  * Each individual service must provide an implementation.
  */
 public interface MasterServiceManager {
@@ -33,13 +33,15 @@ public interface MasterServiceManager {
   public String getDescription();
 
   /**
-   * Used to get the count of the instances of the Reactor Service that are currently running.
-   * @return the number of instances of the Reactor Service instances alive.
+   * Used to get the count of the instances of the CDAP Service that are currently running.
+   *
+   * @return the number of instances of the CDAP Service instances alive.
    */
   public int getInstances();
 
   /**
-   * Set the number of instances of the reactor service.
+   * Set the number of instances of the CDAP service.
+   *
    * @param instanceCount number of instances (should be greater than 0)
    * @return was the operation successful
    */
@@ -47,30 +49,35 @@ public interface MasterServiceManager {
 
   /**
    * Get the minimum instance count for the service.
-   * @return the required minimum number of instances of the Reactor Service.
+   *
+   * @return the required minimum number of instances of the CDAP Service.
    */
   public int getMinInstances();
 
   /**
    * Get the maximum instance count for the service.
-   * @return the allowed maximum number of instances of the Reactor Service.
+   *
+   * @return the allowed maximum number of instances of the CDAP Service.
    */
   public int getMaxInstances();
 
   /**
    * Logging availability.
+   *
    * @return true if logs are available.
    */
   public boolean isLogAvailable();
 
   /**
    * Possible to check the status of the service.
+   *
    * @return true if the status of the service can be checked.
    */
   public boolean canCheckStatus();
 
   /**
    * Service's availability.
+   *
    * @return true if service is available.
    */
   public boolean isServiceAvailable();

@@ -17,7 +17,7 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.api.data.batch.RecordWritable;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.TransactionAware;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.Text;

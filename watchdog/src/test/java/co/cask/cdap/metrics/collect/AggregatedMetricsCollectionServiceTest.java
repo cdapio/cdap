@@ -57,11 +57,10 @@ public class AggregatedMetricsCollectionServiceTest {
     service.startAndWait();
     try {
       // Publish couple metrics, they should be aggregated.
-      // note: verifying that int overflow is fine as it should be stored as long
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", Integer.MAX_VALUE);
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 2);
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 3);
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 4);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", Integer.MAX_VALUE);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 2);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 3);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 4);
 
       MetricsRecord record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
@@ -71,12 +70,12 @@ public class AggregatedMetricsCollectionServiceTest {
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 1);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 1);
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish metrics with tags
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 3, "tag1", "tag2");
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 4, "tag2", "tag3");
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 3, "tag1", "tag2");
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 4, "tag2", "tag3");
 
       record = published.poll(3, TimeUnit.SECONDS);
       Assert.assertNotNull(record);

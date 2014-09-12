@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>watchdog-api</artifactId>
-  <name>Cask CDAP Watchdog API</name>
+  <name>CDAP Watchdog API</name>
   <packaging>jar</packaging>
 
   <dependencies>

@@ -18,7 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import com.continuuity.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
