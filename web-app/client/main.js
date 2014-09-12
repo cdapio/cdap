@@ -609,7 +609,7 @@ define(['core/application', 'helpers/localstorage-adapter'], function (Applicati
 
         ProceduresRoute: Em.Route.extend(getListHandler(['Procedure'])),
 
-        DatasetsRoute: Em.Route.extend(datasetListHandler),
+        DatasetsRoute: Em.Route.extend(datasetListHandler)
 
     });
 
