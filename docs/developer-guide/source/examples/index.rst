@@ -65,8 +65,7 @@ and write to another.
 
 `SparkPageRank <sparkPageRank.html>`_
 =======================================================================
-This example shows another application of streaming analysis, but this time it
-computes the page rank based on information about neighbor URLs.
+This example shows another application of streaming analysis, computing the page rank based on information about backlink URLs.
 
 The application show how to use a **Spark** Program.
 

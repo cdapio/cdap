@@ -1,34 +1,30 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform SparkPageRank Application
-
-============================
+   :Copyright: Copyright © 2014 Cask Data, Inc.
+=================================
 SparkPageRank Application Example
-============================
+=================================
 
-**A Cask Data Application Platform (CDAP) Example demonstrating Spark**
+**A Cask Data Application Platform (CDAP) Example Demonstrating Spark**
 
 Overview
 ========
-This example demonstrates use of each of the CDAP elements: Streams, Flows, Flowlets,
-Datasets, Procedures and Spark in a single Application.
-
-This example demonstrates an application of streaming log analysis.
-It computes the page rank based on information about neighbor URLs.
+This example demonstrates a Spark application performing streaming log analysis, computing the page rank based on information about backlink URLs.
 
 Data from a sample file will be sent to the CDAP by an external script *inject-data*
-to the *neighborURLStream*. The data are processed by the
-``URLPairFlow``, which stores the url pair event in its entirety in *neighborURLs*, an ObjectStore Dataset.
+to the *backlinkURLStream*. This data is processed by the
+``BackLinkFlow``, which stores the URL pair event in its entirety in *backlinkURLs*, an ObjectStore Dataset.
 
-As these entries are created, they are taken up by the *SparkPageRankProgram* Spark job, which
+As these entries are created, they are taken up by the *SparkPageRankProgram*, which
 goes through the entries, calculates page rank and tabulates results in another ObjectStore Dataset, *ranks*.
 
-Finally, you can query the *ranks* Dataset by using the ``rank`` method of the *RanksProcedure*. It will
+Once the application completes, you can query the *ranks* Dataset by using the ``rank`` method of the *RanksProcedure*. It will
 send back a JSON-formatted result with page rank based on ``url`` parameter.
 
 Let's look at some of these elements, and then run the Application and see the results.
 
 The SparkPageRank Application
-------------------------
+--------------------------------
 As in the other `examples <index.html>`__, the components
 of the Application are tied together by the class ``SparkPageRankApp``::
 
@@ -41,11 +37,11 @@ of the Application are tied together by the class ``SparkPageRankApp``::
       setName("SparkPageRank");
       setDescription("Spark page rank app");
 
-      // Ingest data into the Application via Streams
-      addStream(new Stream("neighborURLStream"));
+      // Ingest data into the Application via a Stream
+      addStream(new Stream("backlinkURLStream"));
 
-      // Process url pairs in real-time using Flows
-      addFlow(new URLPairFlow());
+      // Process URL pairs in real-time using a Flow
+      addFlow(new BackLinkFlow());
 
       // Run a Spark program on the acquired data
       addSpark(new SparkPageRankSpecification());
@@ -55,7 +51,7 @@ of the Application are tied together by the class ``SparkPageRankApp``::
 
       // Store input and processed data in ObjectStore Datasets
       try {
-        ObjectStores.createObjectStore(getConfigurer(), "neighborURLs", String.class);
+        ObjectStores.createObjectStore(getConfigurer(), "backlinkURLs", String.class);
         ObjectStores.createObjectStore(getConfigurer(), "ranks", Double.class);
       } catch (UnsupportedTypeException e) {
         // This exception is thrown by ObjectStore if its parameter type cannot be
@@ -67,14 +63,14 @@ of the Application are tied together by the class ``SparkPageRankApp``::
     }
   }
 
-``neighborURLs`` and ``ranks``: ObjectStore Data Storage
+``backlinkURLs`` and ``ranks``: ObjectStore Data Storage
 --------------------------------------------------------------
-The raw url pair data is stored in an ObjectStore Dataset, *neighborURLs*.
+The raw URL pair data is stored in an ObjectStore Dataset, *backlinkURLs*.
 The calculated page rank data is stored in an ObjectStore Dataset, *ranks*.
 
 ``RanksProcedure``: Procedure
 --------------------------------
-This procedure has a ``rank`` method to obtain the page rank of a given url.
+This procedure has a ``rank`` method to obtain the page rank of a given URL.
 
 
 Building and Running the Application and Example
@@ -82,19 +78,19 @@ Building and Running the Application and Example
 
 .. highlight:: console
 
-In this remainder of this document, we refer to the CDAP runtime as "CDAP", and the
+In the remainder of this document, we refer to the CDAP runtime as "CDAP", and the
 example code that is running on it as an "Application".
 
 We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
 In this example, you need to build the app from source and then deploy the compiled JAR file.
 You start the CDAP, deploy the app, start the Flow and then run the example by
-injecting sentence entries into the stream.
+injecting URL pairs into the Stream.
 
 When finished, stop the Application as described below.
 
 Building the SparkPageRank Application
-----------------------------------
+-----------------------------------------
 From the project root, build ``SparkPageRank`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
@@ -111,9 +107,11 @@ Deploying and Starting the Application
 Make sure an instance of the CDAP is running and available.
 From within the SDK root directory, this command will start CDAP in local mode::
 
+  On UNIX::
+
 	$ ./bin/cdap.sh start
 
-On Windows::
+  On Windows::
 
 	~SDK> bin\cdap.bat start
 
@@ -132,23 +130,62 @@ On Windows:
    (Currently, the *Load App* button does not work under Windows.)
 #. To start the App, run ``~SDK> bin\app-manager.bat start``
 
+On UNIX:
+
+#. To deploy the App JAR file, run ``~SDK> bin\app-manager.sh --action deploy`` or drag and drop the
+   Application .JAR file (``target/SparkPageRank-<version>.jar`` onto your browser window.
+   (Currently, the *Load App* button does not work under Windows.)
+#. To start the App, run ``~SDK> bin\app-manager.sh --action start``
+
 Running the Example
 -------------------
 
-Injecting Sentences
+Injecting URL Pairs
 ............................
 
-Run this script to inject sentences 
-to the Stream named *neighborURLStream* in the ``SparkPageRank`` application::
+Run this script to inject URL pairs
+to the Stream named *backlinkURLStream* in the ``SparkPageRank`` application::
+
+  On UNIX::
 
 	$ ./bin/inject-data.sh [--host <hostname>]
 
 :Note:	``[--host <hostname>]`` is not available for a *Local CDAP*.
 
-On Windows::
+  On Windows::
 
 	~SDK> bin\inject-data.bat
 
+Running Spark program
+.............................
+
+There are three ways to start Spark program:
+
+1. Click on the ``SparkPageRankProgram`` in the Application page of the CDAP Console to get to the
+   Spark dialogue, then click the *Start* button.
+
+2. Send a query via an HTTP request using the ``curl`` command::
+
+  On UNIX::
+
+  curl -v -d '{args="3"}' \
+    	  -X POST 'http://localhost:10000/v2/apps/SparkPageRank/spark/SparkPageRankProgram/start'
+
+  On Windows:
+
+  Copy of ``curl`` is located in the ``libexec`` directory of the example::
+
+	  libexec\curl...
+
+3. Use command:
+
+  On UNIX::
+
+  $ ./bin/app-manager.sh --action run
+
+  On Windows::
+
+	~SDK> bin\app-manager.bat run
 
 Querying the Results
 ....................
@@ -161,26 +198,30 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
+  On UNIX::
+
 	curl -v -d '{"url": "http://example.com/page1"}' \
 	  -X POST 'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/methods/rank'
 
-  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
+  On Windows:
+
+  Copy of ``curl`` is located in the ``libexec`` directory of the example::
 
 	  libexec\curl...
 
 2. Click on the ``RanksProcedure`` in the Application page of the Console to get to the
-   Procedure dialogue. Type in the method name ``rank``, and enter the url in the parameters
+   Procedure dialogue. Type in the method name ``rank``, and enter the URL in the parameters
    field, such as::
 
 	{ "url" : "http://example.com/page1" }
 
-   Then click the *Execute* button. The rank for that url will be displayed in the
-   Console in JSON format, for example [reformatted to fit]::
+   Then click the *Execute* button. The rank for that URL will be displayed in the
+   Console in JSON format, for example::
 
-	"1.7555683262150241"
+	"0.9988696312751688"
 
 Stopping the Application
-------------------------
+---------------------------
 Either:
 
 - On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; 
