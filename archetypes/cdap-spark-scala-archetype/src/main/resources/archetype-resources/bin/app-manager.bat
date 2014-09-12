@@ -54,7 +54,7 @@ GOTO USAGE
 :USAGE
 echo Application lifecycle management tool
 echo Usage: %0 {deploy^|start^|run^||stop^|status}
-echo Use run option to run spark job
+echo Use run option to run spark program
 GOTO :EOF
 
 :DEPLOY

@@ -38,7 +38,7 @@ function usage() {
   echo "Usage: $script --action <deploy|start|run|stop|status> [--host <hostname>]"
   echo ""
   echo "  Options"
-  echo "    --action    Specifies the action to be taken on the application. Use 'run' to run the spark job."
+  echo "    --action    Specifies the action to be taken on the application. Use 'run' to run the spark program."
   echo "    --host      Specifies the host that CDAP is running on. (Default: localhost)"
   echo "    --help      This help message"
   echo ""

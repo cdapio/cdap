@@ -64,13 +64,13 @@ public class SparkKMeansApp extends AbstractApplication {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
-      // because String are actual classes.
+      // because String is an actual classes.
       throw new RuntimeException(e);
     }
   }
 
   /**
-   * A Spark job that uses KMeans algorithm.
+   * A Spark Program that uses KMeans algorithm.
    */
   public static class SparkKMeansSpecification extends AbstractSpark {
     @Override
@@ -133,7 +133,7 @@ public class SparkKMeansApp extends AbstractApplication {
 
     private static final Logger LOG = LoggerFactory.getLogger(CentersProcedure.class);
 
-    // Annotation indicates that ranks dataset is used in the procedure.
+    // Annotation indicates that centers dataset is used in the procedure.
     @UseDataSet("centers")
     private ObjectStore<String> centers;
 

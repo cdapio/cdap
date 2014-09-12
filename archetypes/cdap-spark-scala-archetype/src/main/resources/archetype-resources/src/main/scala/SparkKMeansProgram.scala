@@ -27,7 +27,7 @@ import org.apache.spark.rdd.NewHadoopRDD
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
- * Implementation of KMeans Clustering Spark job.
+ * Implementation of KMeans Clustering Spark Program.
  */
 class SparkKMeansProgram extends ScalaSparkProgram {
   private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkKMeansProgram])
@@ -49,7 +49,14 @@ class SparkKMeansProgram extends ScalaSparkProgram {
     bestIndex
   }
 
-  def run(args: Array[String], sc: SparkContext) {
+  override def run(sc: SparkContext) {
+
+    val args: Array[String] = sc.getRuntimeArguments("args")
+    LOG.info("Running with arguments {}", args)
+    // Amount of centers to calculate
+    val K = if (args.length > 0) args(0).toInt else "2".toInt
+    val convergeDist = if (args.length > 1) args(1).toDouble else "0.5".toDouble
+
 
     LOG.info("Processing points data")
 
@@ -58,11 +65,7 @@ class SparkKMeansProgram extends ScalaSparkProgram {
     val lines = linesDataset.values
     val data = lines.map(parseVector).cache()
 
-    // Amount of centers to calculate
-    val K = "2".toInt
-    val convergeDist = "0.5".toDouble
-
-    LOG.info("Calculating canters")
+    LOG.info("Calculating centers")
 
     val kPoints = data.takeSample(withReplacement = false, K, 42).toArray
     var tempDist = 1.0
