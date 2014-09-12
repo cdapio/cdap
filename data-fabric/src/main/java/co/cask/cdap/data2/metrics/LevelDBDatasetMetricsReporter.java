@@ -93,7 +93,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat) {
     // we use "0" as runId: it is required by metrics system to provide something at this point
     MetricsCollector collector =
-      metricsService.getCollector(MetricsScope.REACTOR, Constants.Metrics.DATASET_CONTEXT, "0");
+      metricsService.getCollector(MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0");
     for (Map.Entry<String, LevelDBOrderedTableService.TableStats> statEntry : datasetStat.entrySet()) {
       String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
       if (datasetName == null) {
