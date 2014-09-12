@@ -105,14 +105,14 @@ DatasetModuleClient
   // Construct the client used to interact with CDAP
   DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
 
-  // Adding a Dataset module
+  // Add a Dataset module
   File moduleJarFile = createAppJarFile(someDatasetModule.class);
   datasetModuleClient("someDatasetModule", SomeDatasetModule.class.getName(), moduleJarFile);
 
   // Fetch the Dataset module information
   DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get("someDatasetModule");
 
-  // Deleting all Dataset modules
+  // Delete all Dataset modules
   datasetModuleClient.deleteAll();
 
 
@@ -195,7 +195,7 @@ ProgramClient
   // Construct the client used to interact with CDAP
   ProgramClient programClient = new ProgramClient(clientConfig);
 
-  // Starting a Procedure in the PageViewAnalytics example
+  // Start a Procedure in the PageViewAnalytics example
   programClient.start("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure");
 
   // Fetch live information from the HelloWorld example
@@ -237,7 +237,7 @@ QueryClient
   QueryClient queryClient = new QueryClient(clientConfig);
 
   //
-  // Performing an ad-hoc query using the Purchase example
+  // Perform an ad-hoc query using the Purchase example
   //
   String query = "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
   QueryHandle queryHandle = queryClient.execute(query);
@@ -269,7 +269,7 @@ QueryClient
 
   queryClient.delete(queryHandle);
   //
-  // End performing an ad-hoc query
+  // End perform an ad-hoc query
   //
 
 ServiceClient
@@ -282,7 +282,7 @@ ServiceClient
   // Construct the client used to interact with CDAP
   ServiceClient serviceClient = new ServiceClient(clientConfig);
 
-  // Fetching Service information using the Service in the PurchaseApp example
+  // Fetch Service information using the Service in the PurchaseApp example
   ServiceMeta serviceMeta = serviceClient.get("PurchaseApp", "CatalogLookup");
 
 
@@ -305,7 +305,7 @@ StreamClient
   // Fetch a Stream's properties, using the ResponseCodeAnalyticsApp example
   StreamProperties config = streamClient.getConfig("logEventStream");
 
-  // Sending events to a Stream, using the Purchase example
+  // Send events to a Stream, using the Purchase example
   streamClient.sendEvent("purchaseStream", "Tom bought 5 apples for $10");
 
   // Read all events from a Stream (results in events)
@@ -323,7 +323,7 @@ StreamClient
   streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
 
   //
-  // Demonstrating asynchronous writing to a Stream
+  // Write asynchronously to a Stream
   //
   String streamId = "testAsync";
   List<StreamEvent> events = Lists.newArrayList();
@@ -336,7 +336,7 @@ StreamClient
     streamClient.asyncSendEvent(streamId, "Testing " + i);
   }
 
-  // Read them back; need to read it multiple times as the writes happen async
+  // Read them back; need to read it multiple times as the writes happen asynchronously
   Stopwatch stopwatch = new Stopwatch();
   stopwatch.start();
   while (events.size() != msgCount && stopwatch.elapsedTime(TimeUnit.SECONDS) < 10L) {
@@ -353,7 +353,7 @@ StreamClient
     streamClient.getEvents(streamId, lastTimestamp + 1, Long.MAX_VALUE, msgCount, events);
   }
   //
-  // End asynchronous writing 
+  // End w	rite asynchronously  
   //
 
 
