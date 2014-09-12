@@ -95,7 +95,7 @@ public final class CatalogLookupWorker extends AbstractServiceWorker {
       }
       LOG.warn("Unexpected response from Catalog Service: {} {}", conn.getResponseCode(), conn.getResponseMessage());
     } catch (Throwable th) {
-      LOG.warn("Error while callling Catalog Service", th);
+      LOG.warn("Error while calling Catalog Service", th);
     }
     return null;
   }
