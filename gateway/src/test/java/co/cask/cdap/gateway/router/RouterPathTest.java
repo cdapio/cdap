@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,7 @@ public class RouterPathTest {
   @Test
   public void testMetricsPath() throws Exception {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v2///metrics/reactor/apps/InvalidApp//";
+    String flowPath = "/v2///metrics/system/apps/InvalidApp//";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);

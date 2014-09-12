@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright 2014 Cask Data, Inc.
+  Copyright © 2014 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -103,7 +103,7 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity.tephra</groupId>
+      <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-core</artifactId>
     </dependency>
     <dependency>
@@ -169,7 +169,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
                   <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>

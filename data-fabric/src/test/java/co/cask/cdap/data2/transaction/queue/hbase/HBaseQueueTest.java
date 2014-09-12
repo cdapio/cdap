@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,12 +37,12 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import com.continuuity.tephra.TransactionExecutorFactory;
-import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.distributed.TransactionService;
-import com.continuuity.tephra.persist.NoOpTransactionStateStorage;
-import com.continuuity.tephra.persist.TransactionStateStorage;
+import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.distributed.TransactionService;
+import co.cask.tephra.persist.NoOpTransactionStateStorage;
+import co.cask.tephra.persist.TransactionStateStorage;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;

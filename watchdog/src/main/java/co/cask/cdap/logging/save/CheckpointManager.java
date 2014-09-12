@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,11 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.data2.dataset2.tx.DatasetContext;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
-import com.continuuity.tephra.DefaultTransactionExecutor;
-import com.continuuity.tephra.TransactionAware;
-import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.TransactionExecutorFactory;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.DefaultTransactionExecutor;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 

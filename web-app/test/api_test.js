@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Cask Data, Inc.
+ * Copyright © 2013 Cask Data, Inc.
  *
  * Tests for api.js.
  */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Abstract class that can be extended by individual Reactor Services to implement their management methods.
+ * Abstract class that can be extended by individual CDAP Services to implement their management methods.
  */
 public abstract class AbstractDistributedMasterServiceManager implements MasterServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedMasterServiceManager.class);

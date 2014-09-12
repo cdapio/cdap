@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -136,7 +136,7 @@ public class DataSetInstantiator implements DataSetContext {
   }
 
   /**
-   * Returns an immutable life Iterable of {@link com.continuuity.tephra.TransactionAware} objects.
+   * Returns an immutable life Iterable of {@link co.cask.tephra.TransactionAware} objects.
    */
   // NOTE: this is needed for now to minimize destruction of early integration of txds2
   public Iterable<TransactionAware> getTransactionAware() {

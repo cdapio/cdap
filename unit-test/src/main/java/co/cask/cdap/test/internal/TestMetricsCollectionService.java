@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ public final class TestMetricsCollectionService extends AggregatedMetricsCollect
   @Override
   protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
     // Currently the test framework only supports REACTOR metrics.
-    if (scope != MetricsScope.REACTOR) {
+    if (scope != MetricsScope.SYSTEM) {
       return;
     }
     while (metrics.hasNext()) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright 2014 Cask Data, Inc.
+# Copyright © 2014 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,12 @@
 # the License.
 #
 
+# We need a larger PermSize for SparkProgramRunner to call SparkSubmit
 if [ -d /opt/cdap ]; then
  CDAP_HOME=/opt/cdap; export CDAP_HOME
- DEFAULT_JVM_OPTS="-Xmx3072m"
+ DEFAULT_JVM_OPTS="-Xmx3072m -XX:MaxPermSize=128m"
 else
- DEFAULT_JVM_OPTS="-Xmx1024m"
+ DEFAULT_JVM_OPTS="-Xmx1024m -XX:MaxPermSize=128m"
 fi
 
 # Add default JVM options here. You can also use JAVA_OPTS and CDAP_OPTS to pass JVM options to this script.
