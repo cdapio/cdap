@@ -31,7 +31,7 @@ public class ConfigurationJsonTool {
   private static final String SECURITY_CONFIG = "--security";
 
 
-  public static void exportToJson(String configParam, Appendable output) {
+  private static void exportToJson(String configParam, Appendable output) {
     Configuration config;
     if (configParam.equals(CDAP_CONFIG)) {
       config = CConfiguration.create();
