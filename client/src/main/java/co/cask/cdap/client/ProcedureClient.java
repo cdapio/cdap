@@ -38,7 +38,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 /**
- * Provides ways to interact with Reactor Procedures.
+ * Provides ways to interact with CDAP Procedures.
  */
 public class ProcedureClient {
 

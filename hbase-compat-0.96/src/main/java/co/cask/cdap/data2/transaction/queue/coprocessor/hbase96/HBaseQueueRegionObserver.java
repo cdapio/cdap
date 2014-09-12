@@ -43,7 +43,7 @@ import java.util.List;
 
 /**
  * RegionObserver for queue table. This class should only have JSE and HBase classes dependencies only.
- * It can also has dependencies on continuuity classes provided that all the transitive dependencies stay within
+ * It can also has dependencies on CDAP classes provided that all the transitive dependencies stay within
  * the mentioned scope.
  *
  * This region observer does queue eviction during flush time and compact time by using queue consumer state

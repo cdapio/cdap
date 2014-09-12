@@ -19,7 +19,7 @@ package co.cask.cdap.proto;
 import com.google.gson.annotations.SerializedName;
 
 /**
- * Metadata about a Reactor system service.
+ * Metadata about a CDAP system service.
  */
 public class SystemServiceMeta {
 

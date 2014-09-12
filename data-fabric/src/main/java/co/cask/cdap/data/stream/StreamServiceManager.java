@@ -24,7 +24,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * Stream Reactor Service management in distributed mode.
+ * CDAP Stream Service management in distributed mode.
  */
 public class StreamServiceManager extends AbstractDistributedMasterServiceManager {
 

@@ -1,5 +1,6 @@
 /**
- * Copyright (c) 2013 Continuuity, Inc.
+ * Copyright © 2013 Cask Data, Inc.
+ *
  * Base server used for developer and enterprise editions. This provides common functionality to
  * set up a node js server and define routes. All custom functionality to an edition
  * must be placed under the server file inside the edition folder.
@@ -156,7 +157,7 @@ WebAppServer.prototype.getGatewayPort = function() {
 
 /**
  * Determines security status. Continues until it is able to determine if security is enabled if
- * reactor is down.
+ * CDAP is down.
  * @param  {Function} callback to call after security status is determined.
  * TODO: https://jira.continuuity.com/browse/REACTOR-531
  */
@@ -175,8 +176,8 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
       requestCert: true,
       agent: false
     }, function (err, response, body) {
-      // If the response is a 401 and contains "auth_uri" as part of the body, Reactor security is enabled.
-      // On other response codes, and when "auth_uri" is not part of the body, Reactor security is disabled.
+      // If the response is a 401 and contains "auth_uri" as part of the body, CDAP security is enabled.
+      // On other response codes, and when "auth_uri" is not part of the body, CDAP security is disabled.
       if (!err && response) {
         clearInterval(interval);
         if (body) {

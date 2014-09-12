@@ -55,7 +55,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
- * TODO: remove it, see REACTOR-676
+ * TODO: remove it, see https://jira.continuuity.com/browse/REACTOR-676
+ * 
  */
 public class AppFabricTestHelper {
   public static final TempFolder TEMP_FOLDER = new TempFolder();

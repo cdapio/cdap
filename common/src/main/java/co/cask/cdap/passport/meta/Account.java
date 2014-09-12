@@ -23,7 +23,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 /**
- * Representation of Account entity in the continuuity system.
+ * Representation of Account entity in CDAP.
  */
 public class Account {
 

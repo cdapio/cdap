@@ -566,7 +566,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Get workflow name from mapreduceId.
    * Format of mapreduceId: WorkflowName_mapreduceName, if the mapreduce is a part of workflow.
    *
-   * @param mapreduceId id of the mapreduce job in reactor.
+   * @param mapreduceId id of the mapreduce job in CDAP
    * @return workflow name if exists null otherwise
    */
   private String getWorkflowName(String mapreduceId) {
@@ -1831,7 +1831,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
 
   /**
-   * Promote an application another reactor.
+   * Promote an application to another CDAP instance.
    */
   @POST
   @Path("/apps/{app-id}/promote")
@@ -2006,7 +2006,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Deletes all applications in the reactor.
+   * Deletes all applications in CDAP.
    */
   @DELETE
   @Path("/apps")
