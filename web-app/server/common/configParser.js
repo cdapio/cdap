@@ -30,7 +30,7 @@ function extractConfig(mode, configParam) {
     configReader.stdout.on('end', partialConfigRead.bind(this));
   } else {
     this.config = require("../../cdap-config.json");
-    if (this.config["dashboard.https.enabled"] === "true") {
+    if (this.config["ssl.enabled"] === "true") {
       this.config = lodash.extend(this.config, require("../../cdap-security-config.json"));
       if (this.config["dashboard.selfsignedcertificate.enabled"] === "true") {
         /*
@@ -54,7 +54,7 @@ function extractConfig(mode, configParam) {
 
 function onConfigReadEnd(deferred, data) {
   this.config = lodash.extend(this.config, JSON.parse(configString));
-  if (this.config["dashboard.https.enabled"] === "true" && !this.configSet) {
+  if (this.config["ssl.enabled"] === "true" && !this.configSet) {
     this.configSet = true;
     configString = "";
     this.extractConfig("enterprise", "security")

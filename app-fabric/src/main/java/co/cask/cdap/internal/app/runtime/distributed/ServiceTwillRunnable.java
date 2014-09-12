@@ -195,6 +195,11 @@ public class ServiceTwillRunnable implements TwillRunnable {
       programOpts = new SimpleProgramOptions(name, createProgramArguments(context, configs), runtimeArguments);
       resourceReporter = new ProgramRunnableResourceReporter(program, metricsCollectionService, context);
 
+      // These services need to be starting before initializing the delegate since they are used in
+      // AbstractContext's constructor to create datasets.
+      Futures.getUnchecked(
+        Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
+
       ApplicationSpecification appSpec = program.getSpecification();
       String processorName = program.getName();
       runnableName = programOpts.getName();
@@ -290,9 +295,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
   @Override
   public void run() {
-    Futures.getUnchecked(
-      Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, resourceReporter));
-
     LOG.info("Starting runnable: {}", name);
     try {
       delegate.run();

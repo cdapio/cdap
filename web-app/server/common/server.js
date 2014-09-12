@@ -44,7 +44,6 @@ var WebAppServer = function(dirPath, logLevel, loggerType, mode) {
       }.bind(this));
 };
 
-
 WebAppServer.prototype.extractConfig = configParser.extractConfig;
 
 /**
@@ -94,7 +93,7 @@ WebAppServer.prototype.setUpServer = function setUpServer(configuration) {
 }
 
 WebAppServer.prototype.setAttributes = function setCommonAttributes() {
-  if (this.config['dashboard.https.enabled'] === "true") {
+  if (this.config['ssl.enabled'] === "true") {
       this.lib = https;
     } else {
       this.lib = http;
@@ -116,7 +115,7 @@ WebAppServer.prototype.launchServer = function() {
 
 WebAppServer.prototype.configureSSL = function () {
   var options = {};
-  if (this.config['dashboard.https.enabled'] === "true") {
+  if (this.config['ssl.enabled'] === "true") {
     key = this.config['dashboard.ssl.key'],
     cert = this.config['dashboard.ssl.cert'];
     try {
@@ -147,7 +146,7 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
   var path = '/' + this.API_VERSION + '/ping',
       url;
   this.routerBindAddress = this.config['gateway.server.address'];
-  if (this.config['dashboard.https.enabled'] === "true") {
+  if (this.config['ssl.enabled'] === "true") {
     this.routerBindPort = this.config['router.ssl.bind.port'];
     this.transferProtocol = "https://";
     url = 'https://' + this.config['gateway.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
@@ -160,7 +159,10 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
     self.logger.info('Calling security endpoint: ', url);
     request({
       method: 'GET',
-      url: url
+      url: url,
+      rejectUnauthorized: false,
+      requestCert: true,
+      agent: false
     }, function (err, response, body) {
       // If the response is a 401 and contains "auth_uri" as part of the body, Reactor security is enabled.
       // On other response codes, and when "auth_uri" is not part of the body, Reactor security is disabled.
@@ -897,7 +899,7 @@ WebAppServer.prototype.bindRoutes = function() {
              password: post.password
            },
            rejectUnauthorized: false,
-           requestCert: false,
+           requestCert: true,
            agent: false
          }
 

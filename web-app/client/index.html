@@ -123,13 +123,6 @@
         {{view C.Embed.Breadcrumb}}
         <div style="clear:both"></div>
       </div> --}}
-      {{#if C.showLoadingIcon}}
-      <div class="loading-icon">
-          <div class="overlay-background">
-              <img src="/assets/img/loading_new.gif" />
-          </div>
-      </div>
-      {{/if}}
       {{outlet}}
 
     </div>
@@ -595,12 +588,20 @@
       </div>
 
   {{ else }}
-    <div class="object-list-empty" style="height:500px;padding-top:20px;">
-        <div class="object-list-empty-content">
-          <div>No discoverable dataset.</div>
-          <span>Please add a discoverable dataset before using this feature.</span>
-        </div>
+    <div class="object-list-empty dataexplore-nodataset">
+      {{#if C.showLoadingIcon}}
+      <div class="loading-icon">
+          <div class="overlay-background">
+              <img src="/assets/img/loading_new.gif" />
+          </div>
       </div>
+      {{ else }}
+      <div class="object-list-empty-content">
+        <div>No discoverable dataset.</div>
+        <span>Please add a discoverable dataset before using this feature.</span>
+      </div>
+      {{/if}}
+    </div>
   {{/if}}
   </script>
 

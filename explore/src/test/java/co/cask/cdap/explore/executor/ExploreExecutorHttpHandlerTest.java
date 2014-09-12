@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.client;
+package co.cask.cdap.explore.executor;
 
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
@@ -29,9 +29,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Test DatasetExploreFacade.
+ *
  */
-public class DatasetExploreFacadeTest {
+public class ExploreExecutorHttpHandlerTest {
+  @SuppressWarnings("unused")
   enum Enum { FOO, BAR }
 
   @SuppressWarnings("unused")
@@ -138,6 +139,7 @@ public class DatasetExploreFacadeTest {
     }
   }
 
+  @SuppressWarnings("unused")
   public class Recursive {
     private final int a;
     private final Recursive b;
@@ -150,6 +152,7 @@ public class DatasetExploreFacadeTest {
     }
   }
 
+  @SuppressWarnings("unused")
   public class TransitiveRecursive {
     private final boolean empty;
     private final List<TransitiveRecursive> children;
@@ -160,10 +163,12 @@ public class DatasetExploreFacadeTest {
     }
   }
 
+  @SuppressWarnings("unused")
   public class Value {
     private int a;
   }
 
+  @SuppressWarnings("unused")
   public class NotRecursive {
     private final Value a;
     private final Value b;
@@ -177,24 +182,24 @@ public class DatasetExploreFacadeTest {
   @Test
   public void testHiveSchemaFor() throws Exception {
 
-    Assert.assertEquals("(value INT)", DatasetExploreFacade.hiveSchemaFor(Int.class));
-    Assert.assertEquals("(value BIGINT)", DatasetExploreFacade.hiveSchemaFor(Longg.class));
-    Assert.assertEquals("(first INT, second STRING)",
-                        DatasetExploreFacade.hiveSchemaFor(new TypeToken<ImmutablePair<Integer, String>>() {
+    Assert.assertEquals("(value int)", ExploreExecutorHttpHandler.hiveSchemaFor(Int.class));
+    Assert.assertEquals("(value bigint)", ExploreExecutorHttpHandler.hiveSchemaFor(Longg.class));
+    Assert.assertEquals("(first int, second string)",
+                        ExploreExecutorHttpHandler.hiveSchemaFor(new TypeToken<ImmutablePair<Integer, String>>() {
                         }.getType()));
-    Assert.assertEquals("(a INT, b BIGINT, c BOOLEAN, d FLOAT, e DOUBLE, f STRING, g BINARY, " +
-                          "h ARRAY<STRING>, i ARRAY<BOOLEAN>, j MAP<INT,STRING>)",
-                        DatasetExploreFacade.hiveSchemaFor(Record.class));
+    Assert.assertEquals("(a int, b bigint, c boolean, d float, e double, f string, g binary, " +
+                          "h array<string>, i array<boolean>, j map<int,string>)",
+                        ExploreExecutorHttpHandler.hiveSchemaFor(Record.class));
 
-    Assert.assertEquals("(key STRING, value STRUCT<ints:ARRAY<INT>, name:STRING>)",
-                        DatasetExploreFacade.hiveSchemaFor(KeyValue.class));
+    Assert.assertEquals("(key string, value struct<name:string,ints:array<int>>)",
+                        ExploreExecutorHttpHandler.hiveSchemaFor(KeyValue.class));
   }
 
 
   private void verifyUnsupportedSchema(Type type) {
     String schema;
     try {
-      schema = DatasetExploreFacade.hiveSchemaFor(type);
+      schema = ExploreExecutorHttpHandler.hiveSchemaFor(type);
     } catch (UnsupportedTypeException e) {
       // expected
       return;
@@ -215,7 +220,6 @@ public class DatasetExploreFacadeTest {
   @Test
   public void testSupportedTypes() throws Exception {
     // Should not throw an exception
-    DatasetExploreFacade.hiveSchemaFor(NotRecursive.class);
+    ExploreExecutorHttpHandler.hiveSchemaFor(NotRecursive.class);
   }
-
 }
