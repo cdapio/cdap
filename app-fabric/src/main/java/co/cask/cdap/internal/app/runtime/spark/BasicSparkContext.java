@@ -31,7 +31,7 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.ProgramType;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.TransactionAware;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;

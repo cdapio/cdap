@@ -34,7 +34,7 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.test.SlowTests;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;

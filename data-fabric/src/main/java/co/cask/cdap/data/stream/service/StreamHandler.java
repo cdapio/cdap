@@ -97,7 +97,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
 
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, getMetricsContext(), "0");
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS), metricsCollector);
   }

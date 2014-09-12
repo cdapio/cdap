@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.queue.coprocessor.hbase96;
 
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.hbase.DequeueScanAttributes;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;

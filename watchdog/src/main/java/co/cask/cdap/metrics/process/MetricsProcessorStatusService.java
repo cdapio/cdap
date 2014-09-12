@@ -39,7 +39,7 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
- * MetricsProcessorStatusService with PingHandler used for discovery during reactor-services startup
+ * MetricsProcessorStatusService with PingHandler used for discovery during CDAP-services startup.
  */
 public class MetricsProcessorStatusService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorStatusService.class);

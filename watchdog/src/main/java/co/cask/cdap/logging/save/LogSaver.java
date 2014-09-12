@@ -26,7 +26,7 @@ import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogCleanup;
 import co.cask.cdap.logging.write.LogFileWriter;
 import co.cask.cdap.watchdog.election.PartitionChangeHandler;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;

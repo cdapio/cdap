@@ -1693,7 +1693,7 @@ Examples
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/metrics/cdap/apps/HelloWorld/flows/``
+     - ``GET <base-url>/metrics/system/apps/HelloWorld/flows/``
        ``WhoFlow/flowlets/saver/process.bytes?aggregate=true``
    * - Description
      - Using a *System* metric, *process.bytes*
@@ -1724,7 +1724,7 @@ User metrics are always in the Application context.
 
 For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
 
-  GET <base-url>/metrics/cdap/apps/CountRandom/flows/CountRandomFlow/flowlets/
+  GET <base-url>/metrics/system/apps/CountRandom/flows/CountRandomFlow/flowlets/
           splitter/process.events?start=now-5s&count=5
 
 This returns a JSON response that has one entry for every second in the requested time interval. It will have values only for the times where the metric was actually emitted (shown here "pretty-printed", unlike the actual responses)::
@@ -1740,16 +1740,16 @@ This returns a JSON response that has one entry for every second in the requeste
 
 If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics API at the Flow context::
 
-  GET <base-url>/metrics/cdap/apps/CountRandom/flows/
+  GET <base-url>/metrics/system/apps/CountRandom/flows/
     CountRandomFlow/process.events?start=now-5s&count=5
 
 Similarly, you can address the context of all flows of an Application, an entire Application, or the entire CDAP::
 
-  GET <base-url>/metrics/cdap/apps/CountRandom/
+  GET <base-url>/metrics/system/apps/CountRandom/
     flows/process.events?start=now-5s&count=5
-  GET <base-url>/metrics/cdap/apps/CountRandom/
+  GET <base-url>/metrics/system/apps/CountRandom/
     process.events?start=now-5s&count=5
-  GET <base-url>/metrics/cdap/process.events?start=now-5s&count=5
+  GET <base-url>/metrics/system/process.events?start=now-5s&count=5
 
 To request user-defined metrics instead of system metrics, specify ``user`` instead of ``cdap`` in the URL
 and specify the user-defined metric at the end of the request.
@@ -1766,8 +1766,8 @@ To retrieve multiple metrics at once, instead of a GET, issue an HTTP POST, with
 with the arguments as a JSON string in the body::
 
   Content-Type: application/json
-  [ "/cdap/collect.events?aggregate=true",
-  "/cdap/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
+  [ "/system/collect.events?aggregate=true",
+  "/system/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
 
 If the context of the requested metric or metric itself doesn't exist the system returns status 200 (OK) with JSON formed as per above description and with values being zeroes.
 
@@ -1797,7 +1797,7 @@ The time range of a metric query can be specified in various ways:
 Instead of getting the values for each second of a time range, you can also retrieve the
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
-  GET <base-url>/metrics/cdap/apps/CountRandom/process.events?aggregate=true
+  GET <base-url>/metrics/system/apps/CountRandom/process.events?aggregate=true
 
 .. rst2pdf: PageBreak
 

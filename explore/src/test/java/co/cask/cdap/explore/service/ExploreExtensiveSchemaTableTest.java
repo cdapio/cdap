@@ -23,7 +23,7 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.test.SlowTests;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;

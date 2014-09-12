@@ -33,7 +33,7 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Abstract class that can be extended by individual Reactor Services to implement their management methods.
+ * Abstract class that can be extended by individual CDAP Services to implement their management methods.
  */
 public abstract class AbstractDistributedMasterServiceManager implements MasterServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractDistributedMasterServiceManager.class);

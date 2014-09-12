@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data2.transaction.queue;
 
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
