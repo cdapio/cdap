@@ -25,6 +25,9 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionContext;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
@@ -157,30 +160,67 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public final HttpServiceContext getServiceContext() {
-      return new HttpServiceContext() {
-        @Override
-        public HttpServiceSpecification getSpecification() {
-          return null;
-        }
-
-        @Override
-        public Map<String, String> getRuntimeArguments() {
-          return null;
-        }
-
-        @Override
-        public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-          return null;
-        }
-
-        @Override
-        public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
-          throws DataSetInstantiationException {
-          return null;
-        }
-      };
+      return new NoOpHttpServiceContext();
     }
 
     protected abstract T createHandler();
+  }
+
+  /**
+   * An no-op implementation of {@link HttpServiceContext} that implements no-op transactional operations.
+   */
+  private static class NoOpHttpServiceContext implements TransactionalHttpServiceContext {
+
+    @Override
+    public HttpServiceSpecification getSpecification() {
+      return null;
+    }
+
+    @Override
+    public Map<String, String> getRuntimeArguments() {
+      return null;
+    }
+
+    @Override
+    public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
+      return null;
+    }
+
+    @Override
+    public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
+      throws DataSetInstantiationException {
+      return null;
+    }
+
+    @Override
+    public TransactionContext getTransactionContext() {
+      return new TransactionContext(null, ImmutableList.<TransactionAware>of()) {
+
+        @Override
+        public void addTransactionAware(TransactionAware txAware) {
+          return;
+        }
+
+        @Override
+        public void start() throws TransactionFailureException {
+          return;
+        }
+
+        @Override
+        public void finish() throws TransactionFailureException {
+          return;
+        }
+
+        @Override
+        public void abort() throws TransactionFailureException {
+          return;
+        }
+
+        @Override
+        public void abort(TransactionFailureException cause) throws TransactionFailureException {
+          return;
+        }
+      };
+    }
   }
 }

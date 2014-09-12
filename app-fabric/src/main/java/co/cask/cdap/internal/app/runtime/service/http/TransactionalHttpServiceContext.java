@@ -1,4 +1,3 @@
-
 /*
  * Copyright © 2014 Cask Data, Inc.
  *
@@ -15,18 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.api.annotation;
+package co.cask.cdap.internal.app.runtime.service.http;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import co.cask.cdap.api.service.http.HttpServiceContext;
+import co.cask.tephra.TransactionContext;
 
 /**
- * Annotates a method in to enable transaction support.
+ * Defines a {@link HttpServiceContext} that supports transactions.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
-public @interface Transactional {
+public interface TransactionalHttpServiceContext extends HttpServiceContext {
+
+  /**
+   * Get a {@link TransactionContext} for a HttpServiceHandler.
+   * @return
+   */
+  TransactionContext getTransactionContext();
 
 }
