@@ -16,8 +16,8 @@
 package co.cask.cdap.data2.queue;
 
 import co.cask.cdap.common.queue.QueueName;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionAware;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;

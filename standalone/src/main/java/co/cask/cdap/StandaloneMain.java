@@ -54,7 +54,7 @@ import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.security.authorization.ACLService;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
-import com.continuuity.tephra.inmemory.InMemoryTransactionService;
+import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;

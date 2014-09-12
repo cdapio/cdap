@@ -21,7 +21,7 @@ import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
-import com.continuuity.tephra.TransactionContext;
+import co.cask.tephra.TransactionContext;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

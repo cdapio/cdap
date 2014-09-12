@@ -30,7 +30,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
-import com.continuuity.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionFailureException;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
