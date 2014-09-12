@@ -4275,3 +4275,7 @@ div.tooltip-inner {
   margin: 0px auto;
   display: block;
 }
+
+.panel-title.center-align.beta-info-font {
+  font-size: 14px;
+}
