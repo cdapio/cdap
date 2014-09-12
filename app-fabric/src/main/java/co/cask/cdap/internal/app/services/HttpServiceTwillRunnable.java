@@ -48,6 +48,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -128,12 +129,13 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     this.serviceName = serviceName;
     this.handlers = ImmutableList.copyOf(handlers);
     this.appName = appName;
-    // Allow datasets only specified by the @UseDataSet annotation.
+    Set<String> useDatasets = Sets.newHashSet(datasets);
+    // Allow datasets that have only been used via the @UseDataSet annotation.
     for (HttpServiceHandler httpServiceHandler : handlers) {
       Reflections.visit(httpServiceHandler, TypeToken.of(httpServiceHandler.getClass()),
-                        new DataSetFieldExtractor(datasets));
+                        new DataSetFieldExtractor(useDatasets));
     }
-    this.datasets = ImmutableSet.copyOf(datasets);
+    this.datasets = ImmutableSet.copyOf(useDatasets);
   }
 
   /**
