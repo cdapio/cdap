@@ -82,8 +82,8 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
     MetricsCollector datasetMetrics;
     if (metricsCollectionService != null) {
       // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
-      this.programMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR, metricsContext, "0");
-      datasetMetrics = metricsCollectionService.getCollector(MetricsScope.REACTOR,
+      this.programMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM, metricsContext, "0");
+      datasetMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM,
                                                              Constants.Metrics.DATASET_CONTEXT, "0");
     } else {
       this.programMetrics = null;

@@ -42,7 +42,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
-import com.continuuity.tephra.TransactionManager;
+import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -263,40 +263,40 @@ public abstract class MetricsSuiteTestBase {
   // write WordCount app to metadata store
   public static void setupMeta() throws OperationException {
     validResources = ImmutableList.of(
-      "/reactor/reads?aggregate=true",
-      "/reactor/apps/WordCount/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/reactor/datasets/wordStats/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/reactor/streams/wordStream/collect.events?aggregate=true",
-      "/reactor/cluster/resources.total.storage?aggregate=true"
+      "/system/reads?aggregate=true",
+      "/system/apps/WordCount/reads?aggregate=true",
+      "/system/apps/WordCount/flows/reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCounter/reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
+      "/system/datasets/wordStats/reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
+      "/system/streams/wordStream/collect.events?aggregate=true",
+      "/system/cluster/resources.total.storage?aggregate=true"
     );
 
     malformedResources = ImmutableList.of(
-      "/reacto/reads?aggregate=true",
-      "/reactor/app/WordCount/reads?aggregate=true",
-      "/reactor/apps/WordCount/flow/WordCounter/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/flowlets/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
-      "/reactor/dataset/wordStats/reads?aggregate=true",
-      "/reactor/datasets/wordStats/app/WordCount/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
-      "/reactor/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true"
+      "/syste/reads?aggregate=true",
+      "/system/app/WordCount/reads?aggregate=true",
+      "/system/apps/WordCount/flow/WordCounter/reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCounter/flowlets/reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true",
+      "/system/dataset/wordStats/reads?aggregate=true",
+      "/system/datasets/wordStats/app/WordCount/reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/flow/counter/reads?aggregate=true",
+      "/system/datasets/wordStats/apps/WordCount/flows/WordCounter/flowlet/counter/reads?aggregate=true"
     );
 
     nonExistingResources = ImmutableList.of(
-      "/reactor/apps/WordCont/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCouner/reads?aggregate=true",
-      "/reactor/apps/WordCount/flows/WordCounter/flowlets/couter/reads?aggregate=true",
-      "/reactor/datasets/wordStat/reads?aggregate=true",
-      "/reactor/datasets/wordStat/apps/WordCount/reads?aggregate=true",
-      "/reactor/datasets/wordStas/apps/WordCount/flows/WordCounter/reads?aggregate=true",
-      "/reactor/datasets/wordStts/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
-      "/reactor/streams/wordStrea/collect.events?aggregate=true"
+      "/system/apps/WordCont/reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCouner/reads?aggregate=true",
+      "/system/apps/WordCount/flows/WordCounter/flowlets/couter/reads?aggregate=true",
+      "/system/datasets/wordStat/reads?aggregate=true",
+      "/system/datasets/wordStat/apps/WordCount/reads?aggregate=true",
+      "/system/datasets/wordStas/apps/WordCount/flows/WordCounter/reads?aggregate=true",
+      "/system/datasets/wordStts/apps/WordCount/flows/WordCounter/flowlets/counter/reads?aggregate=true",
+      "/system/streams/wordStrea/collect.events?aggregate=true"
     );
   }
 

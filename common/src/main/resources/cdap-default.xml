@@ -655,7 +655,7 @@
 
     <property>
         <name>router.ssl.bind.port</name>
-        <value>9443</value>
+        <value>10443</value>
         <description>Secure router listening port for gateway</description>
     </property>
 
@@ -1041,17 +1041,25 @@
   </property>
 
   <property>
+    <name>kerberos.auth.enabled</name>
+    <value>${security.enabled}</value>
+    <description>If true, Kerberos authentication will be enabled</description>
+  </property>
+
+  <property>
       <name>security.realm</name>
       <value>cdap</value>
       <description>Security realm used for authentication</description>
   </property>
 
-  <!-- Security configuration for the external authentication server -->
+  <!-- Configuration for enabling SSL -->
 
   <property>
-    <name>security.auth.server.ssl.enabled</name>
+    <name>ssl.enabled</name>
     <value>false</value>
   </property>
+
+  <!-- Security configuration for the external authentication server -->
 
   <property>
     <name>security.auth.server.ssl.bind.port</name>
@@ -1063,25 +1071,28 @@
     <value>JKS</value>
   </property>
 
-  <!-- Front Configuration-->
-  <property>
-    <name>router.ssl.enabled</name>
-    <value>false</value>
-  </property>
-
-  <property>
-    <name>router.ssl.bind.port</name>
-    <value>9443</value>
-  </property>
-
-  <property>
-    <name>dashboard.https.enabled</name>
-    <value>false</value>
-  </property>
+  <!-- Router configuration-->
 
   <property>
     <name>router.server.address</name>
     <value>localhost</value>
+  </property>
+
+  <!-- Frontend configuration -->
+
+  <property>
+    <name>dashboard.bind.port</name>
+    <value>9999</value>
+  </property>
+
+  <property>
+    <name>dashboard.ssl.bind.port</name>
+    <value>9443</value>
+  </property>
+
+  <property>
+    <name>dashboard.ssl.cert.allow.unauthorized</name>
+    <value>false</value>
   </property>
 
 </configuration>

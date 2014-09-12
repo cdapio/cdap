@@ -35,8 +35,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Server for authenticating clients accessing Reactor.  When a client authenticates successfully, it is issued
- * an access token containing a verifiable representation of the client's identity.  Other Reactor services
+ * Server for authenticating clients accessing CDAP.  When a client authenticates successfully, it is issued
+ * an access token containing a verifiable representation of the client's identity.  Other CDAP services
  * (such as the router) can independently verify client identities based on the token contents.
  */
 public class AuthenticationServerMain extends DaemonMain {

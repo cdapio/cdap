@@ -31,15 +31,18 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.ProgramType;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.TransactionAware;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Spark job runtime context. This context serves as the bridge between CDAP {@link SparkProgramRunner} and Spark
@@ -50,6 +53,10 @@ import java.util.Set;
  * start time and other stuff.
  */
 public class BasicSparkContext extends AbstractContext implements SparkContext {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BasicSparkContext.class);
+  private static final Pattern SPACES = Pattern.compile("\\s+");
+  private static final String[] NO_ARGS = {};
 
   // todo: REACTOR-937: "InstanceId is not supported in Spark jobs"
   public static final String INSTANCE_ID = "0";
@@ -116,6 +123,22 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   @Override
   public <T> T getOriginalSparkContext() {
     throw new IllegalStateException("Getting base Spark Context is not supported here");
+  }
+
+  /**
+   * Returns value of the given argument key as a String[]
+   *
+   * @param argsKey {@link String} which is the key for the argument
+   * @return String[] containing all the arguments which is indexed by their position as they were supplied
+   */
+  @Override
+  public String[] getRuntimeArguments(String argsKey) {
+    if (runtimeArguments.hasOption(argsKey)) {
+      return SPACES.split(runtimeArguments.getOption(argsKey).trim());
+    } else {
+      LOG.warn("Argument with key {} not found in Runtime Arguments", argsKey);
+      return NO_ARGS;
+    }
   }
 
   @Override

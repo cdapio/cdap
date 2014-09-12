@@ -39,7 +39,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 /**
- * Provides ways to monitor Reactor.
+ * Provides ways to monitor CDAP.
  */
 public class MonitorClient {
 

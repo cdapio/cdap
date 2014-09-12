@@ -29,8 +29,7 @@ public interface JavaSparkProgram extends Serializable {
   /**
    * User Spark job which will be executed
    *
-   * @param args    the command line arguments
    * @param context {@link SparkContext} for this job
    */
-  public void run(String[] args, SparkContext context);
+  public void run(SparkContext context);
 }

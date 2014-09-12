@@ -27,7 +27,7 @@ define([], function () {
 			/*
 			 * Track container metric.
 			 */
-			model.trackMetric('/reactor/' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
+			model.trackMetric('/system/' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
 
 			this.interval = setInterval(function () {
 				self.updateStats();

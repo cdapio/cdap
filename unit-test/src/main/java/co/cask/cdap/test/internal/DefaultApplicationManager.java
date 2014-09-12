@@ -25,6 +25,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -37,9 +38,9 @@ import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.WorkflowManager;
-import com.continuuity.tephra.TransactionContext;
-import com.continuuity.tephra.TransactionFailureException;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionContext;
+import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -74,6 +75,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
   private final AppFabricClient appFabricClient;
+  private final ServiceHttpHandler serviceHttpHandler;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
@@ -85,6 +87,7 @@ public class DefaultApplicationManager implements ApplicationManager {
                                    CConfiguration configuration,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    AppFabricHttpHandler httpHandler,
+                                   ServiceHttpHandler serviceHttpHandler,
                                    TemporaryFolder tempFolder,
                                    @Assisted("accountId") String accountId,
                                    @Assisted("applicationId") String applicationId,
@@ -95,7 +98,9 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.procedureClientFactory = procedureClientFactory;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
-    this.appFabricClient = new AppFabricClient(httpHandler, locationFactory);
+    this.appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
+    this.serviceHttpHandler = serviceHttpHandler;
+
     try {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
@@ -317,6 +322,25 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
 
       return new ServiceManager() {
+        @Override
+        public void setRunnableInstances(String runnableName, int instances) {
+          Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
+          try {
+            appFabricClient.setRunnableInstances(applicationId, serviceName, runnableName, instances);
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
+        @Override
+        public int getRunnableInstances(String runnableName) {
+          try {
+            return appFabricClient.getRunnableInstances(applicationId, serviceName, runnableName);
+          } catch (Exception e) {
+            throw Throwables.propagate(e);
+          }
+        }
+
         @Override
         public void stop() {
           try {

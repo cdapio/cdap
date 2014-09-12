@@ -75,7 +75,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * A helper class for managing the distributed cache for {@link LocalJobRunner}.
  *
- * Continuuity fix is applied on the ClassLoader so that it doesn't keep opened file when the ClassLoader
+ * CDAP fix is applied on the ClassLoader so that it doesn't keep opened file when the ClassLoader
  * is pending for GC.
  */
 @SuppressWarnings("deprecation")

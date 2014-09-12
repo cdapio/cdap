@@ -33,10 +33,10 @@ import java.util.Map;
  * </ul>
  *
  * An access token is issued following successful authentication of a client by an external mechanism (such as LDAP,
- * Kerberos, etc).  The token is then provided by the client on subsequent requests to Reactor.  In order to validate
- * the token, Reactor components recompute the digest for the token identifier, based on their own knowledge of the
+ * Kerberos, etc).  The token is then provided by the client on subsequent requests to CDAP.  In order to validate
+ * the token, CDAP components recompute the digest for the token identifier, based on their own knowledge of the
  * secret key.  If the recomputed digest matches that provided by the client, we know that, barring compromise of the
- * secret keys or exposure of the token itself, the token was issued by Reactor for this client.
+ * secret keys or exposure of the token itself, the token was issued by CDAP for this client.
  */
 public class AccessToken implements Signed<AccessTokenIdentifier> {
   static final class Schemas {

@@ -19,7 +19,7 @@ package co.cask.cdap.data2.transaction.metrics;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
-import com.continuuity.tephra.metrics.TxMetricsCollector;
+import co.cask.tephra.metrics.TxMetricsCollector;
 import com.google.inject.Inject;
 
 /**
@@ -30,7 +30,7 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
 
   @Inject
   public TransactionManagerMetricsCollector(MetricsCollectionService metricsCollectionService) {
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, "transactions", "0");
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, "transactions", "0");
   }
 
   @Override

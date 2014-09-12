@@ -41,6 +41,18 @@ security.enabled                              true
 security.auth.server.address                  <hostname>
 ==========================================  ==============
 
+=============
+Running SSL
+=============
+
+To enable Running Servers in SSL in CDAP, add these properties to ``cdap-site.xml``:
+
+==========================================  ==============
+   Property                                   Value
+==========================================  ==============
+ssl.enabled                                   true
+==========================================  ==============
+
 Default Port Information
 =========================
 Without SSL:
@@ -68,16 +80,17 @@ Configuring SSL for the Authentication Server
 ==============================================
 To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-security.xml``:
 
-=============================================     =====================     ====================================
+=============================================     =====================     =======================================
    Property                                        Default Value                Description
-=============================================     =====================     ====================================
+=============================================     =====================     =======================================
 security.auth.server.ssl.keystore.path              None                      Keystore file location. CDAP user
-                                                                              should own this file and the file should
-                                                                              be readable only by the owner
+                                                                              should own this file and the file
+                                                                              should be readable only by the owner
 security.auth.server.ssl.keystore.password          None                      Keystore password
 security.auth.server.ssl.keystore.keypassword       None                      Keystore key password
 security.auth.server.ssl.keystore.type              JKS                       Keystore file type
-=============================================     =====================     ====================================
+=============================================     =====================     =======================================
+
 
 Configuring SSL for the Router
 ==============================================

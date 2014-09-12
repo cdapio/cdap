@@ -1,5 +1,5 @@
 /*
- * Main entry point for Reactor UI
+ * Main entry point for CDAP UI
  */
 
 define(['core/application', 'helpers/localstorage-adapter'], function (Application, SSAdapter) {

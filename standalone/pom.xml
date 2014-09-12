@@ -29,7 +29,7 @@
 
 
   <artifactId>standalone</artifactId>
-  <name>Cask CDAP Standalone</name>
+  <name>CDAP Standalone</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -55,6 +55,11 @@
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cli</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -98,7 +103,7 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.continuuity.tephra</groupId>
+      <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-core</artifactId>
     </dependency>
     <dependency>
@@ -164,7 +169,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka,org.scala-lang</excludeGroupIds>
+                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
                   <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>

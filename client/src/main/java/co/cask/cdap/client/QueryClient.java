@@ -40,7 +40,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 /**
- * Provides ways to query Reactor Datasets.
+ * Provides ways to query CDAP Datasets.
  */
 public class QueryClient {
 

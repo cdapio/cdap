@@ -106,20 +106,6 @@ public class SparkProgramWrapper {
   }
 
   /**
-   * Extracts arguments belonging to the user's program class
-   *
-   * @return String[] of arguments with which user's program class should be called
-   */
-  private String[] extractUserArgs() {
-    //TODO: The arguments should not be constructed in this way. We are getting it from hconf and we will just create
-    // a string out of it. This will be fixed after we fix standalone distribution bug as its dependent on it.
-    String[] userProgramArgs = new String[(arguments.length - PROGRAM_WRAPPER_ARGUMENTS_SIZE)];
-    System.arraycopy(arguments, PROGRAM_WRAPPER_ARGUMENTS_SIZE, userProgramArgs, 0,
-                     (arguments.length - PROGRAM_WRAPPER_ARGUMENTS_SIZE));
-    return userProgramArgs;
-  }
-
-  /**
    * Instantiate an object of user's program class and call {@link #runUserProgram(Object)} to run it
    *
    * @throws RuntimeException if failed to instantiate an object of user's program class
@@ -161,10 +147,9 @@ public class SparkProgramWrapper {
    * @throws RuntimeException if failed to invokeUserProgram main function on the user's program object
    */
   private void runUserProgram(Object userProgramObject) {
-    String[] userprogramArgs = extractUserArgs();
     try {
-      Method userProgramMain = userProgramClass.getMethod("run", String[].class, SparkContext.class);
-      userProgramMain.invoke(userProgramObject, userprogramArgs, sparkContext);
+      Method userProgramMain = userProgramClass.getMethod("run", SparkContext.class);
+      userProgramMain.invoke(userProgramObject, sparkContext);
     } catch (NoSuchMethodException nsme) {
       LOG.warn("Unable to find run method in program class: {}", userProgramObject.getClass().getName(), nsme);
       throw Throwables.propagate(nsme);
