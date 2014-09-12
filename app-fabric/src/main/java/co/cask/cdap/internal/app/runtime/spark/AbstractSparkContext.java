@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * An abstract class which implements {@link SparkContext} and provide a concrete implementation for the common
@@ -47,6 +48,8 @@ import java.util.Map;
 abstract class AbstractSparkContext implements SparkContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkContext.class);
+  private static final Pattern SPACES = Pattern.compile("\\s+");
+  private static final String[] NO_ARGS = {};
 
   private final Configuration hConf;
   private final long logicalStartTime;
@@ -144,6 +147,22 @@ abstract class AbstractSparkContext implements SparkContext {
     hConf.set(SparkDatasetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
     hConf.setClass(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, SparkDatasetOutputFormat.class, OutputFormat.class);
     return hConf;
+  }
+
+  /**
+   * Returns value of the given argument key as a String[]
+   *
+   * @param argsKey {@link String} which is the key for the argument
+   * @return String[] containing all the arguments which is indexed by their position as they were supplied
+   */
+  @Override
+  public String[] getRuntimeArguments(String argsKey) {
+    if (runtimeArguments.hasOption(argsKey)) {
+      return SPACES.split(runtimeArguments.getOption(argsKey).trim());
+    } else {
+      LOG.warn("Argument with key {} not found in Runtime Arguments", argsKey);
+      return NO_ARGS;
+    }
   }
 
   @Override

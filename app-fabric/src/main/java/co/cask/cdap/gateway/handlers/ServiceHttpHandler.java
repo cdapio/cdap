@@ -271,9 +271,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private int getRunnableCount(String accountId, String appId, String serviceName, String runnable) {
-    ProgramLiveInfo info = runtimeService.getLiveInfo(Id.Program.from(accountId, appId, serviceName),
-                                                      ProgramType.SERVICE);
+  private int getRunnableCount(String accountId, String appId, String serviceName, String runnable) throws Exception {
+    Id.Program programID = Id.Program.from(accountId, appId, serviceName);
+    ProgramLiveInfo info = runtimeService.getLiveInfo(programID, ProgramType.SERVICE);
     int count = 0;
     if (info instanceof NotRunningProgramLiveInfo) {
       return count;
@@ -286,8 +286,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       }
       return count;
     } else {
-      //Not running on YARN default 1
-      return 1;
+      //Not running on YARN
+      return store.getServiceRunnableInstances(programID, runnable);
     }
   }
 

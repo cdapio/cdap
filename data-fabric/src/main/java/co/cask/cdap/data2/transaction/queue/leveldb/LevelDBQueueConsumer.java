@@ -26,7 +26,7 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.AbstractQueueConsumer;
 import co.cask.cdap.data2.transaction.queue.QueueEvictor;
 import co.cask.cdap.data2.transaction.queue.QueueScanner;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;

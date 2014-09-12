@@ -36,7 +36,8 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
   }
 
   /**
-   * Returns the reactor service which will handle the HttpRequest
+   * Returns the CDAP service which will handle the HttpRequest
+   *
    * @param fallbackService service to which we fall back to if we can't determine the destination from the URI path
    * @param requestPath Normalized (and query string removed) URI path
    * @param httpRequest HttpRequest used to get the Http method and account id
@@ -51,7 +52,7 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       //Check if the call should go to webapp
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
       //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
-      //But procedure/stream calls issued by the UI should be routed to the appropriate reactor service
+      //But procedure/stream calls issued by the UI should be routed to the appropriate CDAP service
       if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
                                             && (!(("/" + uriParts[0]).equals(Constants.Gateway.GATEWAY_VERSION)))) {
         return fallbackService;

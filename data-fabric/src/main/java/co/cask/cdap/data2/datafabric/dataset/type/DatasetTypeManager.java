@@ -31,7 +31,7 @@ import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.data2.dataset2.tx.TxCallable;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import com.continuuity.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;

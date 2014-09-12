@@ -37,7 +37,7 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
- * LogSaver Service, Currently only used for PingHandler, so this service can be discovered during reactor-startup
+ * LogSaver Service; currently only used for PingHandler, so that service can be discovered during CDAP-startup.
  */
 public class LogSaverStatusService extends AbstractIdleService {
   private final DiscoveryService discoveryService;

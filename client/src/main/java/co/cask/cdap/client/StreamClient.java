@@ -49,7 +49,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.HttpHeaders;
 
 /**
- * Provides ways to interact with Reactor Streams.
+ * Provides ways to interact with CDAP Streams.
  */
 public class StreamClient {
 

@@ -40,7 +40,7 @@ import javax.inject.Inject;
 import javax.management.ServiceNotFoundException;
 
 /**
- * Provides ways to interact with Reactor User Services.
+ * Provides ways to interact with CDAP User Services.
  */
 public class ServiceClient {
 

@@ -17,7 +17,7 @@
 package co.cask.cdap.client.exception;
 
 /**
- * Thrown when an application is not found in Reactor.
+ * Thrown when an application is not found in CDAP.
  */
 public class ApplicationNotFoundException extends NotFoundException {
 

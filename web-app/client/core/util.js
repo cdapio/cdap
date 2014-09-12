@@ -39,23 +39,23 @@ define([], function () {
 
     METRICS_ENDPOINTS: {
       metrics: {
-        location: '/reactor/services/metrics/request.received?aggregate=true',
+        location: '/system/services/metrics/request.received?aggregate=true',
         name: 'Requests received'
       },
       streams: {
-        location: '/reactor/services/stream.handler/request.received?aggregate=true',
+        location: '/system/services/stream.handler/request.received?aggregate=true',
         name: 'Requests received'
       },
       transaction: {
-        location: '/reactor/transactions/inprogress?aggregate=true',
+        location: '/system/transactions/inprogress?aggregate=true',
         name: 'Inprogress'
       },
       appfabric: {
-        location: '/reactor/services/appfabric/request.received?aggregate=true',
+        location: '/system/services/appfabric/request.received?aggregate=true',
         name: 'Requests received'
       },
       datasets: {
-        location: '/reactor/services/dataset.manager/request.recieved?aggregate=true',
+        location: '/system/services/dataset.manager/request.recieved?aggregate=true',
         name: 'Requests received'
       }
     },

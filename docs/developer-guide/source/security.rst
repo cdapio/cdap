@@ -41,14 +41,24 @@ security.enabled                              true
 security.auth.server.address                  <hostname>
 ==========================================  ==============
 
+Enabling SSL
+=============
+
+To enable security in CDAP, add these properties to ``cdap-site.xml``:
+
+==========================================  ==============
+   Property                                   Value
+==========================================  ==============
+ssl.enabled                                   true
+==========================================  ==============
+
 Configuring SSL for the Authentication Server
 ==============================================
-To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-site.xml``:
+To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-security.xml``:
 
 =============================================  =======================
    Property                                      Value
 =============================================  =======================
-security.auth.server.ssl.enabled                  true
 security.auth.server.ssl.keystore.path            <path>
 security.auth.server.ssl.keystore.password        <password>
 security.auth.server.ssl.keystore.keypassword     <password>
@@ -57,12 +67,11 @@ security.auth.server.ssl.keystore.type            <keystore-file-type>
 
 Configuring SSL for the Router
 ==============================================
-To configure SSL for the Router, add these properties to ``cdap-site.xml``:
+To configure SSL for the Router, add these properties to ``cdap-security.xml``:
 
 ================================    =======================
    Property                           Value
 ================================    =======================
-router.ssl.enabled                    true
 router.ssl.keystore.path              <path>
 router.ssl.keystore.password          <password>
 router.ssl.keystore.keypassword       <password>

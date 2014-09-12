@@ -27,8 +27,8 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.NullJobConfException;
 import co.cask.cdap.hive.context.TxnCodec;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 

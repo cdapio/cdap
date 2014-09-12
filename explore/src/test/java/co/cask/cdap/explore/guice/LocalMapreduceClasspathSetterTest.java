@@ -143,8 +143,7 @@ public class LocalMapreduceClasspathSetterTest {
   private static final String generatedHadoopBinMulti =
     "#!/usr/bin/env bash\n" +
       "# This file is a hack to set HADOOP_CLASSPATH for Hive local mapreduce tasks.\n" +
-      "# This hack should go away when Twill supports setting of environmental variables for a TwillRunnable" +
-      " - REACTOR-325.\n" +
+      "# This hack should go away when Twill supports setting of environmental variables for a TwillRunnable.\n" +
       "\n" +
       "function join { local IFS=\"$1\"; shift; echo \"$*\"; }\n" +
       "if [ $# -ge 1 -a \"$1\" = \"jar\" ]; then\n" +
@@ -167,8 +166,7 @@ public class LocalMapreduceClasspathSetterTest {
   private static final String generatedHadoopBinSingle =
     "#!/usr/bin/env bash\n" +
       "# This file is a hack to set HADOOP_CLASSPATH for Hive local mapreduce tasks.\n" +
-      "# This hack should go away when Twill supports setting of environmental variables for a TwillRunnable" +
-      " - REACTOR-325.\n" +
+      "# This hack should go away when Twill supports setting of environmental variables for a TwillRunnable.\n" +
       "\n" +
       "function join { local IFS=\"$1\"; shift; echo \"$*\"; }\n" +
       "if [ $# -ge 1 -a \"$1\" = \"jar\" ]; then\n" +
