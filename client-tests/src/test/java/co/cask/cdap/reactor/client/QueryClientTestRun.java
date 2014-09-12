@@ -27,6 +27,7 @@ import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.util.List;
@@ -47,16 +48,13 @@ public class QueryClientTestRun extends ClientTestBase {
     queryClient = new QueryClient(clientConfig);
   }
 
-  // TODO: explore query in standalone?
-//  @Test
+  @Test
   public void testAll() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
 
-    QueryHandle queryHandle = queryClient.execute("select * from continuuity_user_" + FakeApp.DS_NAME);
+    QueryHandle queryHandle = queryClient.execute("select * from cdap_user_" + FakeApp.DS_NAME);
     QueryStatus status = new QueryStatus(null, false);
 
-    long startTime = System.currentTimeMillis();
-    // TODO: refactor
     while (QueryStatus.OpStatus.RUNNING == status.getStatus() ||
       QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
       QueryStatus.OpStatus.PENDING == status.getStatus()) {
@@ -65,18 +63,9 @@ public class QueryClientTestRun extends ClientTestBase {
       status = queryClient.getStatus(queryHandle);
     }
 
-    Assert.assertTrue(status.hasResults());
-
-    List<ColumnDesc> schema = queryClient.getSchema(queryHandle);
-    String[] header = new String[schema.size()];
-    for (int i = 0; i < header.length; i++) {
-      ColumnDesc column = schema.get(i);
-      // Hive columns start at 1
-      int index = column.getPosition() - 1;
-      header[index] = column.getName() + ": " + column.getType();
-    }
-    List<QueryResult> results = queryClient.getResults(queryHandle, 20);
-
+    Assert.assertFalse(status.hasResults());
+    Assert.assertNotNull(queryClient.getSchema(queryHandle));
+    Assert.assertNotNull(queryClient.getResults(queryHandle, 20));
     queryClient.delete(queryHandle);
   }
 }
