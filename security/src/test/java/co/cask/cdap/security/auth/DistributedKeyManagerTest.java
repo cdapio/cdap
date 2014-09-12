@@ -118,6 +118,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   @Test
   public void testGetACLs() throws Exception {
     CConfiguration kerbConf = CConfiguration.create();
+    kerbConf.set(Constants.Security.KERBEROS_ENABLED, "true");
     kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "prinicpal@REALM.NET");
     kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, "/path/to/keytab");
     Assert.assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, DistributedKeyManager.getACLs(kerbConf));
