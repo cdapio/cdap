@@ -53,13 +53,13 @@ public class SparkPageRankApp extends AbstractApplication {
   public void configure() {
     setName("SparkPageRank");
     setDescription("Spark page rank app");
-    addStream(new Stream("neighborURLStream"));
-    addFlow(new URLPairFlow());
+    addStream(new Stream("backlinkURLStream"));
+    addFlow(new BackLinkFlow());
     addSpark(new SparkPageRankSpecification());
     addProcedure(new RanksProcedure());
 
     try {
-      ObjectStores.createObjectStore(getConfigurer(), "neighborURLs", String.class);
+      ObjectStores.createObjectStore(getConfigurer(), "backlinkURLs", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "ranks", Double.class);
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectStore if its parameter type cannot be
@@ -71,7 +71,7 @@ public class SparkPageRankApp extends AbstractApplication {
   }
 
   /**
-   * A Spark job that calculates page rank.
+   * A Spark program that calculates page rank.
    */
   public static class SparkPageRankSpecification extends AbstractSpark {
     @Override
@@ -87,17 +87,17 @@ public class SparkPageRankApp extends AbstractApplication {
   /**
    * This is a simple Flow that consumes URL pair events from a Stream and stores them in a dataset.
    */
-  public static class URLPairFlow implements Flow {
+  public static class BackLinkFlow implements Flow {
 
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with()
-        .setName("URLPairFlow")
+        .setName("BackLinkFlow")
         .setDescription("Reads URL pair and stores in dataset")
         .withFlowlets()
-          .add("reader", new NeighborURLsReader())
+          .add("reader", new BacklinkURLsReader())
         .connect()
-          .fromStream("neighborURLStream").to("reader")
+          .fromStream("backlinkURLStream").to("reader")
         .build();
     }
   }
@@ -105,28 +105,28 @@ public class SparkPageRankApp extends AbstractApplication {
   /**
    * This Flowlet reads events from a Stream and saves them to a datastore.
    */
-  public static class NeighborURLsReader extends AbstractFlowlet {
+  public static class BacklinkURLsReader extends AbstractFlowlet {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NeighborURLsReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BacklinkURLsReader.class);
 
-    // Annotation indicates that neighborURLs dataset is used in the Flowlet.
-    @UseDataSet("neighborURLs")
-    private ObjectStore<String> neighborStore;
+    // Annotation indicates that backlinkURLs dataset is used in the Flowlet.
+    @UseDataSet("backlinkURLs")
+    private ObjectStore<String> backlinkStore;
 
     /**
-     * Input file should be in format of:
-     * URL neighbor-URL
-     * URL neighbor-URL
-     * URL neighbor-URL
+     * Input file format should be pairs of an URL and a backlink URL:
+     * URL backlink-URL
+     * URL backlink-URL
+     * URL backlink-URL
      * ...
-     * where URL and its neighbor are separated by a space.
+     * where URL and its backlink URL are separated by a space.
      */
     @ProcessInput
     public void process(StreamEvent event) {
       String body = new String(event.getBody().array());
-      LOG.trace("Neighbor info: {}", body);
+      LOG.trace("Backlink info: {}", body);
       // Store the URL pairs in one row. One pair is kept in the value of an table entry.
-      neighborStore.write(getIdAsByte(UUID.randomUUID()), body);
+      backlinkStore.write(getIdAsByte(UUID.randomUUID()), body);
     }
 
     private static byte[] getIdAsByte(UUID uuid) {

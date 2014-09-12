@@ -59,13 +59,13 @@ public class SparkPageRankProgram implements JavaSparkJob {
 
   @Override
   public void run(String[] args, SparkContext sc) {
-    LOG.info("Processing neighborURLs data");
-    JavaPairRDD<byte[], String> neighborURLs = sc.readFromDataset("neighborURLs", byte[].class, String.class);
+    LOG.info("Processing backlinkURLs data");
+    JavaPairRDD<byte[], String> backlinkURLs = sc.readFromDataset("backlinkURLs", byte[].class, String.class);
 
     LOG.info("Grouping data by key");
-    // Grouping neighbors by unique URL in key
+    // Grouping backlinks by unique URL in key
     JavaPairRDD<String, Iterable<String>> links =
-      neighborURLs.values().mapToPair(new PairFunction<String, String, String>() {
+      backlinkURLs.values().mapToPair(new PairFunction<String, String, String>() {
       @Override
       public Tuple2<String, String> call(String s) {
         String[] parts = SPACES.split(s);
@@ -97,7 +97,7 @@ public class SparkPageRankProgram implements JavaSparkJob {
             return results;
           }
         });
-      // Re-calculates URL ranks based on neighbor contributions.
+      // Re-calculates URL ranks based on backlink contributions.
       ranks = contribs.reduceByKey(new Sum()).mapValues(new Function<Double, Double>() {
         @Override
         public Double call(Double sum) {
@@ -119,7 +119,7 @@ public class SparkPageRankProgram implements JavaSparkJob {
 
     // Store calculated results in output Dataset.
     // All calculated results are stored in one row.
-    // Each result, the calculated URL rank based on neighbor contributions, is an entry of the row.
+    // Each result, the calculated URL rank based on backlink contributions, is an entry of the row.
     // The value of the entry is the URL rank.
     sc.writeToDataset(ranksRaw, "ranks", byte[].class, Double.class);
 

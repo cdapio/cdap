@@ -119,7 +119,7 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 ## SparkPageRank
 
-- An application that demonstrates streaming text analysis using a Spark job.
+- An application that demonstrates streaming text analysis using a Spark program.
 - It computes the page rank of URLs from an input stream.
 
 ## Ticker

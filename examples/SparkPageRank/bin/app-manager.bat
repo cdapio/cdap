@@ -22,7 +22,7 @@ REM Application Manager for managing application lifecycle for SparkPageRank
 SET APP_JAR_PREFIX=SparkPageRank
 
 SET APP_NAME=SparkPageRank
-SET FLOW_NAME=URLPairFlow
+SET FLOW_NAME=BackLinkFlow
 SET PROCEDURE_NAME=RanksProcedure
 SET SPARK_NAME=SparkPageRankProgram
 

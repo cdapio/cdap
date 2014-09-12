@@ -146,10 +146,10 @@ if [ "x$action" == "xdeploy" ]; then
 elif [ "x$action" == "xrun" ]; then
   program_action $app "SparkPageRankProgram" "spark" "start" $host
 else
-  program_action $app "URLPairFlow" "flow" $action $host
+  program_action $app "BackLinkFlow" "flow" $action $host
   program_action $app "RanksProcedure" "procedure" $action $host
 #  dont start and stop mapreduce if start/stop is specified
-  if [ "x$action" == "xstatus" ]; then
+  if [ "x$action" == "xstatus" ] || [ "x$action" == "xstop" ]; then
     program_action $app "SparkPageRankProgram" "spark" $action $host
   fi
 fi

@@ -40,7 +40,7 @@ function usage() {
 }
 
 gateway="localhost"
-stream="neighborURLStream"
+stream="backlinkURLStream"
 while [ $# -gt 0 ]
 do
   case "$1" in

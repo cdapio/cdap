@@ -25,7 +25,7 @@ for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
 
 REM Set path for curl.exe
 SET PATH=%PATH%;%APP_HOME%\libexec
-SET STREAM=neighborURLStream
+SET STREAM=backlinkURLStream
 
 REM enable delayed expansion so that variables are expanded in the for loop
 SETLOCAL ENABLEDELAYEDEXPANSION
