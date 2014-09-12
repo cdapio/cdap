@@ -119,7 +119,8 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 ## SparkKMeans
 
-- An example of usage K-Means clustering algorithm 
+- An application that demonstrates the streaming text analysis using a Spark program.
+  It calculates centers of points from an input stream using KMeans Clustering method.
 
 ## Ticker
 

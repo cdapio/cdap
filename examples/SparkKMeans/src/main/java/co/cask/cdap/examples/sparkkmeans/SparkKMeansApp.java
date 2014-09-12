@@ -70,7 +70,7 @@ public class SparkKMeansApp extends AbstractApplication {
   }
 
   /**
-   * A Spark job that uses KMeans algorithm.
+   * A Spark Program that uses KMeans algorithm.
    */
   public static class SparkKMeansSpecification extends AbstractSpark {
     @Override
@@ -133,7 +133,7 @@ public class SparkKMeansApp extends AbstractApplication {
 
     private static final Logger LOG = LoggerFactory.getLogger(CentersProcedure.class);
 
-    // Annotation indicates that ranks dataset is used in the procedure.
+    // Annotation indicates that centers dataset is used in the procedure.
     @UseDataSet("centers")
     private ObjectStore<String> centers;
 

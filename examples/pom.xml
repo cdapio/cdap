@@ -59,7 +59,6 @@
 
   <properties>
     <hadoop.version>2.3.0</hadoop.version>
-    <hadoop.client.version>2.2.0</hadoop.client.version>
     <spark.core.version>1.0.1</spark.core.version>
     <power.pack.version>[2.0.0,)</power.pack.version>
   </properties>
@@ -200,18 +199,6 @@
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_2.10</artifactId>
         <version>${spark.core.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.hadoop</groupId>
-        <artifactId>hadoop-client</artifactId>
-        <version>${hadoop.client.version}</version>
         <scope>provided</scope>
         <exclusions>
           <exclusion>
