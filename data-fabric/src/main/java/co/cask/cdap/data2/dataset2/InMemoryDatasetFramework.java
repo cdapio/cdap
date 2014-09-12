@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -32,7 +31,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,8 +111,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceName);
     }
 
+    Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered", datasetType);
     DatasetDefinition def = registry.get(datasetType);
-    Preconditions.checkNotNull(def, "Dataset type '%s' is not registered", datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);
     def.getAdmin(spec, null).create();
@@ -130,8 +128,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       throw new InstanceConflictException("Dataset instance with name does not exist: " + datasetInstanceName);
     }
     String datasetType = oldSpec.getType();
+    Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered", datasetType);
     DatasetDefinition def = registry.get(datasetType);
-    Preconditions.checkNotNull(def, "Dataset type '%s' is not registered", datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);
     def.getAdmin(spec, null).upgrade();
@@ -155,7 +153,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public synchronized boolean hasType(String typeName) throws DatasetManagementException {
-    return registry.get(typeName) != null;
+    return registry.hasType(typeName);
   }
 
   @Override
@@ -232,7 +230,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   private void add(String moduleName, DatasetModule module, boolean defaultModule) {
-    DependencyTrackingRegistry trackingRegistry = new DependencyTrackingRegistry(registry);
+    TypesTrackingRegistry trackingRegistry = new TypesTrackingRegistry(registry);
     module.register(trackingRegistry);
     if (defaultModule) {
       defaultTypes.addAll(trackingRegistry.getTypes());
@@ -252,13 +250,13 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     }
   }
 
-  private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {
+  // NOTE: this class is needed to collect all types added by a module
+  private class TypesTrackingRegistry implements DatasetDefinitionRegistry {
     private final DatasetDefinitionRegistry delegate;
 
     private final List<String> types = Lists.newArrayList();
-    private final List<String> usedTypes = Lists.newArrayList();
 
-    public DependencyTrackingRegistry(DatasetDefinitionRegistry delegate) {
+    public TypesTrackingRegistry(DatasetDefinitionRegistry delegate) {
       this.delegate = delegate;
     }
 
@@ -266,30 +264,20 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       return types;
     }
 
-    public List<String> getUsedTypes() {
-      return usedTypes;
-    }
-
     @Override
     public void add(DatasetDefinition def) {
-      String typeName = def.getName();
-      if (delegate.get(typeName) != null) {
-        throw new RuntimeException(
-          new DatasetModuleConflictException("Cannot add dataset type: it already exists: " + typeName));
-      }
-      types.add(typeName);
       delegate.add(def);
+      types.add(def.getName());
     }
 
     @Override
     public <T extends DatasetDefinition> T get(String datasetTypeName) {
-      T def = delegate.get(datasetTypeName);
-      if (def == null) {
-        throw new RuntimeException(
-          new IllegalArgumentException("Requested dataset type is not available: " + datasetTypeName));
-      }
-      usedTypes.add(datasetTypeName);
-      return def;
+      return delegate.get(datasetTypeName);
+    }
+
+    @Override
+    public boolean hasType(String datasetTypeName) {
+      return delegate.hasType(datasetTypeName);
     }
   }
 }

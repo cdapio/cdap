@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -81,4 +81,12 @@ public interface SparkContext extends RuntimeContext {
    * @return the Spark Context
    */
   <T> T getOriginalSparkContext();
+
+  /**
+   * Returns value of the given argument key as a String[]
+   *
+   * @param argsKey {@link String} which is the key for the argument
+   * @return String[] containing all the arguments which is indexed by their position as they were supplied
+   */
+  public String[] getRuntimeArguments(String argsKey);
 }

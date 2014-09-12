@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -143,8 +143,7 @@ public class LocalMapreduceClasspathSetterTest {
   private static final String generatedHadoopBinMulti =
     "#!/usr/bin/env bash\n" +
       "# This file is a hack to set HADOOP_CLASSPATH for Hive local mapreduce tasks.\n" +
-      "# This hack should go away when Twill supports setting of environmental variables for a TwillRunnable" +
-      " - REACTOR-325.\n" +
+      "# This hack should go away when Twill supports setting of environmental variables for a TwillRunnable.\n" +
       "\n" +
       "function join { local IFS=\"$1\"; shift; echo \"$*\"; }\n" +
       "if [ $# -ge 1 -a \"$1\" = \"jar\" ]; then\n" +
@@ -167,8 +166,7 @@ public class LocalMapreduceClasspathSetterTest {
   private static final String generatedHadoopBinSingle =
     "#!/usr/bin/env bash\n" +
       "# This file is a hack to set HADOOP_CLASSPATH for Hive local mapreduce tasks.\n" +
-      "# This hack should go away when Twill supports setting of environmental variables for a TwillRunnable" +
-      " - REACTOR-325.\n" +
+      "# This hack should go away when Twill supports setting of environmental variables for a TwillRunnable.\n" +
       "\n" +
       "function join { local IFS=\"$1\"; shift; echo \"$*\"; }\n" +
       "if [ $# -ge 1 -a \"$1\" = \"jar\" ]; then\n" +
