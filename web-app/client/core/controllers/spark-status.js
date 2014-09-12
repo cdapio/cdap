@@ -60,7 +60,13 @@ define([], function () {
 
             this.transitionToRoute('SparkStatus.Config');
 
-        }
+        },
+
+        onCurrentStatusChanged: function() {
+          if (this.get("model").get("currentState") === "RUNNING") {
+            this.transitionToRoute("Spark.Log");
+          }
+        }.observes("model.currentState")
 
     });
 
