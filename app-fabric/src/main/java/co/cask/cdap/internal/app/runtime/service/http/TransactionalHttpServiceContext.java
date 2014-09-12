@@ -14,13 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client.app;
+package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceContext;
+import co.cask.tephra.TransactionContext;
 
 /**
- * Fake no-op Service.
+ * Defines a {@link HttpServiceContext} that supports transactions.
  */
-public final class FakeService extends AbstractHttpServiceHandler {
-  public static final String NAME = "fakeService";
+public interface TransactionalHttpServiceContext extends HttpServiceContext {
+
+  /**
+   * Get a {@link TransactionContext} for a HttpServiceHandler.
+   * @return
+   */
+  TransactionContext getTransactionContext();
+
 }

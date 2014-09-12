@@ -14,16 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client;
+package co.cask.cdap.client;
 
-import co.cask.cdap.client.ApplicationClient;
-import co.cask.cdap.client.ProcedureClient;
-import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.app.FakeApp;
+import co.cask.cdap.client.app.FakeFlow;
+import co.cask.cdap.client.app.FakeProcedure;
+import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.reactor.client.app.FakeApp;
-import co.cask.cdap.reactor.client.app.FakeFlow;
-import co.cask.cdap.reactor.client.app.FakeProcedure;
-import co.cask.cdap.reactor.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;

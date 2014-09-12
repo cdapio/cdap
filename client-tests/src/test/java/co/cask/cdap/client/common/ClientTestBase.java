@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client.common;
+package co.cask.cdap.client.common;
 
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;

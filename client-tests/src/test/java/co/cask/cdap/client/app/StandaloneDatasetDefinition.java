@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.reactor.client.app;
+package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -30,11 +30,11 @@ import java.util.Map;
 /**
  *
  */
-public class FakeDatasetDefinition extends AbstractDatasetDefinition<FakeDataset, DatasetAdmin> {
+public class StandaloneDatasetDefinition extends AbstractDatasetDefinition<StandaloneDataset, DatasetAdmin> {
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public FakeDatasetDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
+  public StandaloneDatasetDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
     super(name);
     Preconditions.checkArgument(keyValueDef != null, "KeyValueTable definition is required");
     this.tableDef = keyValueDef;
@@ -54,11 +54,11 @@ public class FakeDatasetDefinition extends AbstractDatasetDefinition<FakeDataset
   }
 
   @Override
-  public FakeDataset getDataset(DatasetSpecification spec, Map<String, String> arguments,
+  public StandaloneDataset getDataset(DatasetSpecification spec, Map<String, String> arguments,
                                 ClassLoader classLoader) throws IOException {
     DatasetSpecification kvTableSpec = spec.getSpecification("objects");
     KeyValueTable table = tableDef.getDataset(kvTableSpec, arguments, classLoader);
 
-    return new FakeDataset(spec.getName(), table);
+    return new StandaloneDataset(spec.getName(), table);
   }
 }

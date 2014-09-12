@@ -1,4 +1,3 @@
-
 /*
  * Copyright © 2014 Cask Data, Inc.
  *
@@ -15,18 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.api.annotation;
+package co.cask.cdap.client.app;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 
 /**
- * Annotates a method in to enable transaction support.
+ * Fake no-op Service.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
-public @interface Transactional {
-
+public final class FakeService extends AbstractHttpServiceHandler {
+  public static final String NAME = "fakeService";
 }
