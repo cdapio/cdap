@@ -146,15 +146,15 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
 
   var path = '/' + this.API_VERSION + '/ping',
       url;
-  this.routerBindAddress = this.config['gateway.server.address'];
+  this.routerBindAddress = this.config['router.server.address'];
   if (this.config['ssl.enabled'] === "true") {
-    this.routerBindPort = this.config['router.ssl.bind.port'];
+    this.routerBindPort = this.config['router.ssl.server.port'];
     this.transferProtocol = "https://";
-    url = 'https://' + this.config['gateway.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
+    url = 'https://' + this.config['router.server.address'] + ':' + this.config['router.ssl.server.port'] + path;
   } else {
-    this.routerBindPort = this.config['router.bind.port'];
+    this.routerBindPort = this.config['router.server.port'];
     this.transferProtocol = "http://";
-    url = 'http://' + this.config['gateway.server.address'] + ':' + this.config['router.bind.port'] + path;
+    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.server.port'] + path;
   }
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
