@@ -299,7 +299,7 @@ Now that CDAP exposes a SQL interface, we have made available a JDBC driver that
 or in third party tools to connect to CDAP Datasets and execute SQL queries over them.
 
 The JDBC driver is a JAR that is bundled with CDAP SDK. You can find it at the root of your SDK, at
-``drivers/cdap-jdbc-drivers.jar``.
+``drivers/cdap-jdbc-driver.jar``.
 
  // NOTE: we may want to tell users to download the jar from our website - figure this out
 
@@ -309,7 +309,20 @@ Go to the directory matching the version of your running CDAP instance, and down
 
 Using the CDAP JDBC driver in your Java code
 --------------------------------------------
+To use CDAP JDBC driver in your code, you need to put ``cdap-jdbc-driver.jar`` in the classpath of your application.
+If you are using Maven, you can simply add a dependency in your file ``pom.xml``::
 
+  <dependencies>
+    ...
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>explore-jdbc</artifactId>
+      <version><!-- Version of CDAP you want the JDBC driver to query --></version>
+    </dependency>
+    ...
+  </dependencies>
+
+JDBC drivers are standard in Java ecosystem, and you can find
 
 Integration of CDAP Datasets with Business Intelligence tools
 -------------------------------------------------------------
