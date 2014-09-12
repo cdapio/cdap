@@ -18,9 +18,9 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionAware;
-import com.continuuity.tephra.TransactionAwares;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionAwares;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 

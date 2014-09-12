@@ -23,7 +23,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.continuuity.tephra.TransactionContext;
+import co.cask.tephra.TransactionContext;
 import com.google.common.base.Preconditions;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 

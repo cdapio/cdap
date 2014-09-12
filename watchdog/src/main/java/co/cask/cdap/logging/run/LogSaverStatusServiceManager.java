@@ -24,7 +24,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * Log Saver Reactor Service Management in Distributed Mode.
+ * CDAP Log Saver Service Management in Distributed Mode.
  */
 public class LogSaverStatusServiceManager extends AbstractDistributedMasterServiceManager {
 

@@ -17,11 +17,11 @@
 package co.cask.cdap.data2.transaction.snapshot;
 
 import co.cask.cdap.api.common.Bytes;
-import com.continuuity.tephra.ChangeId;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.persist.TransactionSnapshot;
-import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
+import co.cask.tephra.ChangeId;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.snapshot.SnapshotCodecProvider;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;

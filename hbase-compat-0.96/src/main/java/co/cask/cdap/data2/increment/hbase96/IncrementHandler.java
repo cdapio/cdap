@@ -18,9 +18,9 @@ package co.cask.cdap.data2.increment.hbase96;
 
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTable;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import com.continuuity.tephra.coprocessor.TransactionStateCache;
-import com.continuuity.tephra.hbase96.Filters;
-import com.continuuity.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.hbase96.Filters;
+import co.cask.tephra.persist.TransactionSnapshot;
 import com.google.common.base.Supplier;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

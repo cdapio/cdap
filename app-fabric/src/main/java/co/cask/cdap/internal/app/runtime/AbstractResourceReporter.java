@@ -79,13 +79,13 @@ public abstract class AbstractResourceReporter extends AbstractScheduledService 
   protected void sendMetrics(String context, int containers, int memory, int vcores) {
     LOG.trace("Reporting resources in context {}: (containers, memory, vcores) = ({}, {}, {})",
               context, containers, memory, vcores);
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.REACTOR, context, "0");
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM, context, "0");
     collector.increment(METRIC_CONTAINERS, containers);
     collector.increment(METRIC_MEMORY_USAGE, memory);
     collector.increment(METRIC_VIRTUAL_CORE_USAGE, vcores);
   }
 
   protected MetricsCollector getCollector(String context) {
-    return collectionService.getCollector(MetricsScope.REACTOR, context, "0");
+    return collectionService.getCollector(MetricsScope.SYSTEM, context, "0");
   }
 }

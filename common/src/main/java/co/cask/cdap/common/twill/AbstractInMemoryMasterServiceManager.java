@@ -17,7 +17,7 @@
 package co.cask.cdap.common.twill;
 
 /**
- * InMemory Reactor Service Management class.
+ * InMemory CDAP Service Management class.
  */
 public abstract class AbstractInMemoryMasterServiceManager implements MasterServiceManager {
 

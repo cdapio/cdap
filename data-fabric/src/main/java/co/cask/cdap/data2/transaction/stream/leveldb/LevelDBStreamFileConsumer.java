@@ -30,7 +30,7 @@ import co.cask.cdap.data2.transaction.stream.AbstractStreamFileConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerState;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;

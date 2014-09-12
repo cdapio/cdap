@@ -24,7 +24,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * Dataset Reactor Service management in distributed mode.
+ * CDAP Dataset Service management in distributed mode.
  */
 public class DatasetExecutorServiceManager extends AbstractDistributedMasterServiceManager {
 

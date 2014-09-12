@@ -19,7 +19,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueResult;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 
 import java.io.IOException;
 import java.util.Collection;

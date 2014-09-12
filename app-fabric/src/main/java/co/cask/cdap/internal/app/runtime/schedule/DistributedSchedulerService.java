@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Scheduler service to run in distributed reactor. Waits for dataset service to be available.
+ * Scheduler service to run in Distributed CDAP. Waits for Dataset service to be available.
  */
 public final class DistributedSchedulerService extends AbstractSchedulerService {
 

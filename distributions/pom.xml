@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>distributions</artifactId>
-  <name>Cask DAP Distributions</name>
+  <name>CDAP Distributions</name>
   <packaging>jar</packaging>
 
   <profiles>

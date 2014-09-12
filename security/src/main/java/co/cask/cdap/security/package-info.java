@@ -15,6 +15,6 @@
  */
 
 /**
- * Classes to secure Reactor.
+ * Classes to secure CDAP.
  */
 package co.cask.cdap.security;

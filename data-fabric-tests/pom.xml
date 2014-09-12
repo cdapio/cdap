@@ -28,7 +28,7 @@
   </parent>
 
   <artifactId>data-fabric-tests</artifactId>
-  <name>Cask CDAP Data-Fabric Tests</name>
+  <name>CDAP Data-Fabric Tests</name>
   <packaging>jar</packaging>
 
   <dependencies>
@@ -89,7 +89,7 @@
       <artifactId>hbase-testing-util</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.continuuity.tephra</groupId>
+      <groupId>co.cask.tephra</groupId>
       <artifactId>tephra-core</artifactId>
       <type>test-jar</type>
     </dependency>
