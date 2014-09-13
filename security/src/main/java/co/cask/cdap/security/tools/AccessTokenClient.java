@@ -320,7 +320,11 @@ public class AccessTokenClient {
     System.out.println(String.format("Authentication server address is: %s", baseUrl));
     System.out.println(String.format("Authenticating as: %s", username));
 
-    HttpClient client = getHTTPClient();
+    HttpClient client = new DefaultHttpClient();
+    if (useSsl && disableCertCheck) {
+      client = getHTTPClient();
+    }
+
     HttpResponse response;
 
     // construct the full URL and verify its well-formedness
