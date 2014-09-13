@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,8 +68,8 @@ public class AccessTokenClient {
     Logger.getRootLogger().setLevel(Level.OFF);
   }
 
-  private static final String LOCALHOST = "localhost";
-  private static final String LOCALHOST_NUM = "127.0.0.1";
+  private static final String LOCALHOST_ADDRESS = "localhost";
+  private static final String LOCALHOST_IP = "127.0.0.1";
   /**
    * for debugging. should only be set to true in unit tests.
    * when true, program will print the stack trace after the usage.
@@ -240,8 +240,8 @@ public class AccessTokenClient {
       response = client.execute(get);
     } catch (SSLException e) {
       // localhost doesn't work with SSL enabled
-      if (host.equals(LOCALHOST)) {
-        get = new HttpGet(String.format("%s://%s:%d", baseUrl, LOCALHOST_NUM, port));
+      if (host.equals(LOCALHOST_ADDRESS)) {
+        get = new HttpGet(String.format("%s://%s:%d", baseUrl, LOCALHOST_IP, port));
         response = client.execute(get);
       } else {
         throw e;
@@ -333,8 +333,8 @@ public class AccessTokenClient {
     }
 
     // for some reason with ssl, localhost does not work
-    if (baseUri.getHost().equals(LOCALHOST) && useSsl) {
-      baseUri = UriBuilder.fromUri(baseUri).host(LOCALHOST_NUM).build();
+    if (baseUri.getHost().equals(LOCALHOST_ADDRESS) && useSsl) {
+      baseUri = UriBuilder.fromUri(baseUri).host(LOCALHOST_IP).build();
       baseUrl = baseUri.toString();
     }
 
