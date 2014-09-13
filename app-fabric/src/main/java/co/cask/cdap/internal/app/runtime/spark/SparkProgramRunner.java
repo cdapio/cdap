@@ -166,8 +166,6 @@ public class SparkProgramRunner implements ProgramRunner {
     controller.addListener(new AbstractListener() {
       @Override
       public void stopping() {
-        // TODO: This does not work as Spark goes into deadlock while closing the context in local mode
-        // Jira: REACTOR-951
         LOG.info("Stopping Spark Job: {}", context);
         try {
           if (SparkProgramWrapper.isSparkProgramRunning()) {
