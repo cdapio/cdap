@@ -96,6 +96,20 @@ WebAppServer.prototype.setUpServer = function setUpServer(configuration) {
 WebAppServer.prototype.setAttributes = function setCommonAttributes() {
   if (this.config['ssl.enabled'] === "true") {
       this.lib = https;
+      this.config = lodash.extend(this.config, require("../../cdap-security-config.json"));
+      if (this.config["dashboard.ssl.cert.allow.unauthorized"] === "true") {
+        /*
+          We use mikeal/request library to make xhr request to cdap server.
+          In a ssl enabled environment where cdap server uses a self-signed certificate
+          node server will fail to connect to cdap server as it is self-signed.
+          This environment variable enables that.
+
+          The github issue in relation to this is : https://github.com/mikeal/request/issues/418
+
+          Could not find nodejs doc that discusses about this variable.
+        */
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      }
     } else {
       this.lib = http;
     }
