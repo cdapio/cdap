@@ -54,10 +54,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.core.UriBuilder;
 
 /**
  * Client to get an AccessToken using username:password authentication.
@@ -68,8 +66,6 @@ public class AccessTokenClient {
     Logger.getRootLogger().setLevel(Level.OFF);
   }
 
-  private static final String LOCALHOST_ADDRESS = "localhost";
-  private static final String LOCALHOST_IP = "127.0.0.1";
   /**
    * for debugging. should only be set to true in unit tests.
    * when true, program will print the stack trace after the usage.
@@ -229,25 +225,13 @@ public class AccessTokenClient {
         try {
           client = getHTTPClient();
         } catch (Exception e) {
-          e.printStackTrace();
+          errorDebugExit("Could not create HTTP Client with SSL enabled", e);
           System.exit(1);
         }
       }
     }
     HttpGet get = new HttpGet(String.format("%s://%s:%d", baseUrl, host, port));
-    HttpResponse response;
-    try {
-      response = client.execute(get);
-    } catch (SSLException e) {
-      // localhost doesn't work with SSL enabled
-      if (host.equals(LOCALHOST_ADDRESS)) {
-        get = new HttpGet(String.format("%s://%s:%d", baseUrl, LOCALHOST_IP, port));
-        response = client.execute(get);
-      } else {
-        throw e;
-      }
-    }
-
+    HttpResponse response = client.execute(get);
 
     if (response.getStatusLine().getStatusCode() == 200) {
       System.out.println("Security is not enabled. No Access Token may be acquired");
@@ -301,7 +285,7 @@ public class AccessTokenClient {
     return new DefaultHttpClient(cm);
   }
 
-  public String execute0(String[] args) throws Exception {
+  public String execute0(String[] args) {
     buildOptions();
     parseArguments(args);
     if (help) {
@@ -312,7 +296,7 @@ public class AccessTokenClient {
     try {
       baseUrl = getAuthenticationServerAddress();
     } catch (IOException e) {
-      System.err.println("Could not find Authentication service to connect to.");
+      errorDebugExit("Could not find Authentication service to connect to.", e);
       return null;
     }
 
@@ -321,36 +305,31 @@ public class AccessTokenClient {
 
     HttpClient client = new DefaultHttpClient();
     if (useSsl && disableCertCheck) {
-      client = getHTTPClient();
+      try {
+        client = getHTTPClient();
+      } catch (Exception e) {
+        errorDebugExit("Could not create HTTP Client with SSL enabled", e);
+        return null;
+      }
     }
 
-    HttpResponse response;
-
     // construct the full URL and verify its well-formedness
-    URI baseUri;
     try {
-      baseUri = URI.create(baseUrl);
+      URI.create(baseUrl);
     } catch (IllegalArgumentException e) {
       System.err.println("Invalid base URL '" + baseUrl + "'. Check the validity of --host or --port arguments.");
       return null;
-    }
-
-    // for some reason with ssl, localhost does not work
-    if (baseUri.getHost().equals(LOCALHOST_ADDRESS) && useSsl) {
-      baseUri = UriBuilder.fromUri(baseUri).host(LOCALHOST_IP).build();
-      baseUrl = baseUri.toString();
     }
 
     HttpGet get = new HttpGet(baseUrl);
     String auth = Base64.encodeBase64String(String.format("%s:%s", username, password).getBytes());
     auth = auth.replaceAll("(\r|\n)", "");
     get.addHeader("Authorization", String.format("Basic %s", auth));
+    HttpResponse response;
     try {
       response = client.execute(get);
     } catch (IOException e) {
-      // for some reason can't use localhost and 127.0.0.1 interchangeably so try the other one
-      System.err.println("Error sending HTTP request: " + e.getMessage());
-      e.printStackTrace();
+      errorDebugExit("Error sending HTTP request: " + e.getMessage(), e);
       return null;
     }
     if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
@@ -381,7 +360,20 @@ public class AccessTokenClient {
     return "OK.";
   }
 
-  public String execute(String[] args) throws Exception {
+  /**
+   * Prints the message, if debug is enabled, prints the error message stacktrace, then exits
+   * @param message
+   * @param e
+   */
+  private void errorDebugExit(String message, Exception e) {
+    System.out.println(message);
+    if (debug) {
+      e.printStackTrace();
+    }
+    System.exit(1);
+  }
+
+  public String execute(String[] args) {
     try {
       return execute0(args);
     } catch (UsageException e) {
@@ -393,7 +385,7 @@ public class AccessTokenClient {
     return null;
   }
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     AccessTokenClient accessTokenClient = new AccessTokenClient();
     String value = accessTokenClient.execute(args);
     if (value == null) {
