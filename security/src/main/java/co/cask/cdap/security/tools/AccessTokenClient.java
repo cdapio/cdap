@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.BasicClientConnectionManager;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -43,9 +48,16 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.URI;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.core.UriBuilder;
 
 /**
  * Client to get an AccessToken using username:password authentication.
@@ -56,6 +68,8 @@ public class AccessTokenClient {
     Logger.getRootLogger().setLevel(Level.OFF);
   }
 
+  private static final String LOCALHOST = "localhost";
+  private static final String LOCALHOST_NUM = "127.0.0.1";
   /**
    * for debugging. should only be set to true in unit tests.
    * when true, program will print the stack trace after the usage.
@@ -66,6 +80,8 @@ public class AccessTokenClient {
 
   private String host;
   private int port = 10000;
+  private boolean useSsl = false;
+  private boolean disableCertCheck = false;
 
   private String username;
   private String password;
@@ -74,10 +90,13 @@ public class AccessTokenClient {
 
   private static final class ConfigurableOptions {
     private static final String HOST = "host";
+    private static final String PORT = "port";
     private static final String USER_NAME = "username";
     private static final String PASSWORD = "password";
     private static final String FILE = "file";
     private static final String HELP = "help";
+    private static final String SSL = "ssl";
+    private static final String DISABLE_CERT_CHECK = "disable-cert-check";
   }
 
   /**
@@ -115,10 +134,15 @@ public class AccessTokenClient {
   private void buildOptions() {
     options = new Options();
     options.addOption(null, ConfigurableOptions.HOST, true, "To specify the host of gateway");
+    options.addOption(null, ConfigurableOptions.PORT, true, "To specify the port of gateway");
     options.addOption(null, ConfigurableOptions.USER_NAME, true, "To specify the user to login as");
     options.addOption(null, ConfigurableOptions.PASSWORD, true, "To specify the user password");
     options.addOption(null, ConfigurableOptions.FILE, true, "To specify the access token file");
     options.addOption(null, ConfigurableOptions.HELP, false, "To print this message");
+    options.addOption(null, ConfigurableOptions.SSL, false, "To specify that SSL is enabled");
+    options.addOption(null, ConfigurableOptions.DISABLE_CERT_CHECK, false,
+                      "To specify whether to check for properly signed certificates");
+
   }
 
   /**
@@ -156,6 +180,14 @@ public class AccessTokenClient {
       host = commandLine.getOptionValue(ConfigurableOptions.HOST, "localhost");
     }
 
+    if (commandLine.hasOption(ConfigurableOptions.PORT)) {
+      try {
+        port = Integer.parseInt(commandLine.getOptionValue(ConfigurableOptions.PORT));
+      } catch (NumberFormatException e) {
+        usage("--port must be an integer value");
+      }
+    }
+
     if (commandLine.hasOption(ConfigurableOptions.USER_NAME)) {
       username = commandLine.getOptionValue(ConfigurableOptions.USER_NAME, System.getProperty("user.name"));
       if (username == null) {
@@ -179,6 +211,9 @@ public class AccessTokenClient {
       }
     }
 
+    useSsl = commandLine.hasOption(ConfigurableOptions.SSL);
+    disableCertCheck = commandLine.hasOption(ConfigurableOptions.DISABLE_CERT_CHECK);
+
     if (commandLine.getArgs().length > 0) {
       usage(true);
     }
@@ -186,11 +221,36 @@ public class AccessTokenClient {
 
   private String getAuthenticationServerAddress() throws IOException {
     HttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(String.format("http://%s:%d", host, port));
-    HttpResponse response = client.execute(get);
+    String baseUrl = "http";
+    // ssl settings
+    if (useSsl) {
+      baseUrl = "https";
+      if (disableCertCheck) {
+        try {
+          client = getHTTPClient();
+        } catch (Exception e) {
+          e.printStackTrace();
+          System.exit(1);
+        }
+      }
+    }
+    HttpGet get = new HttpGet(String.format("%s://%s:%d", baseUrl, host, port));
+    HttpResponse response;
+    try {
+      response = client.execute(get);
+    } catch (SSLException e) {
+      // localhost doesn't work with SSL enabled
+      if (host.equals(LOCALHOST)) {
+        get = new HttpGet(String.format("%s://%s:%d", baseUrl, LOCALHOST_NUM, port));
+        response = client.execute(get);
+      } else {
+        throw e;
+      }
+    }
+
 
     if (response.getStatusLine().getStatusCode() == 200) {
-      System.out.println("Security is not enabled for Reactor. No Access Token may be acquired");
+      System.out.println("Security is not enabled. No Access Token may be acquired");
       System.exit(0);
     }
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -207,7 +267,41 @@ public class AccessTokenClient {
     return list.get(new Random().nextInt(list.size()));
   }
 
-  public String execute0(String[] args) {
+  protected DefaultHttpClient getHTTPClient() throws Exception {
+    SSLContext sslContext = SSLContext.getInstance("SSL");
+
+    // set up a TrustManager that trusts everything
+    sslContext.init(null, new TrustManager[] { new X509TrustManager() {
+      @Override
+      public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+        return null;
+      }
+
+      @Override
+      public void checkClientTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
+        throws CertificateException {
+        //
+      }
+
+      @Override
+      public void checkServerTrusted(java.security.cert.X509Certificate[] x509Certificates, String s)
+        throws CertificateException {
+        //
+      }
+
+    } }, new SecureRandom());
+
+    SSLSocketFactory sf = new SSLSocketFactory(sslContext);
+    Scheme httpsScheme = new Scheme("https", 10101, sf);
+    SchemeRegistry schemeRegistry = new SchemeRegistry();
+    schemeRegistry.register(httpsScheme);
+
+    // apache HttpClient version >4.2 should use BasicClientConnectionManager
+    ClientConnectionManager cm = new BasicClientConnectionManager(schemeRegistry);
+    return new DefaultHttpClient(cm);
+  }
+
+  public String execute0(String[] args) throws Exception {
     buildOptions();
     parseArguments(args);
     if (help) {
@@ -219,21 +313,29 @@ public class AccessTokenClient {
       baseUrl = getAuthenticationServerAddress();
     } catch (IOException e) {
       System.err.println("Could not find Authentication service to connect to.");
+      e.printStackTrace();
       return null;
     }
 
     System.out.println(String.format("Authentication server address is: %s", baseUrl));
     System.out.println(String.format("Authenticating as: %s", username));
 
-    HttpClient client = new DefaultHttpClient();
+    HttpClient client = getHTTPClient();
     HttpResponse response;
 
     // construct the full URL and verify its well-formedness
+    URI baseUri;
     try {
-      URI.create(baseUrl);
+      baseUri = URI.create(baseUrl);
     } catch (IllegalArgumentException e) {
       System.err.println("Invalid base URL '" + baseUrl + "'. Check the validity of --host or --port arguments.");
       return null;
+    }
+
+    // for some reason with ssl, localhost does not work
+    if (baseUri.getHost().equals(LOCALHOST) && useSsl) {
+      baseUri = UriBuilder.fromUri(baseUri).host(LOCALHOST_NUM).build();
+      baseUrl = baseUri.toString();
     }
 
     HttpGet get = new HttpGet(baseUrl);
@@ -243,7 +345,9 @@ public class AccessTokenClient {
     try {
       response = client.execute(get);
     } catch (IOException e) {
+      // for some reason can't use localhost and 127.0.0.1 interchangeably so try the other one
       System.err.println("Error sending HTTP request: " + e.getMessage());
+      e.printStackTrace();
       return null;
     }
     if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
@@ -274,7 +378,7 @@ public class AccessTokenClient {
     return "OK.";
   }
 
-  public String execute(String[] args) {
+  public String execute(String[] args) throws Exception {
     try {
       return execute0(args);
     } catch (UsageException e) {
@@ -286,7 +390,7 @@ public class AccessTokenClient {
     return null;
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     AccessTokenClient accessTokenClient = new AccessTokenClient();
     String value = accessTokenClient.execute(args);
     if (value == null) {
