@@ -96,7 +96,7 @@ WebAppServer.prototype.setUpServer = function setUpServer(configuration) {
 WebAppServer.prototype.setAttributes = function setCommonAttributes() {
   if (this.config['ssl.enabled'] === "true") {
       this.lib = https;
-      this.config = lodash.extend(this.config, require("../../cdap-security-config.json"));
+      this.securityConfig = require("../../cdap-security-config.json");
       if (this.config["dashboard.ssl.disable.cert.check"] === "true") {
         /*
           We use mikeal/request library to make xhr request to cdap server.
@@ -131,8 +131,8 @@ WebAppServer.prototype.launchServer = function() {
 WebAppServer.prototype.configureSSL = function () {
   var options = {};
   if (this.config['ssl.enabled'] === "true") {
-    key = this.config['dashboard.ssl.key'],
-    cert = this.config['dashboard.ssl.cert'];
+    key = this.securityConfig['dashboard.ssl.key'],
+    cert = this.securityConfig['dashboard.ssl.cert'];
     try {
       options = {
         key: fs.readFileSync(key),
