@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.data.batch.BatchReadable;
@@ -177,47 +176,45 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     //       in distributed mode this returns program path on HDFS, not localized, which may cause race conditions
     //       if we allow deploying new program while existing is running. To prevent races we submit a temp copy
 
-    final Location jobJar = buildJobJar(context);
-    LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI());
-    final Location programJarCopy = copyProgramJar();
-    LOG.info("Copied Program Jar to {}, source: {}", programJarCopy.toURI(), programJarLocation.toURI());
-    job.setJar(jobJar.toURI().toString());
-    job.addFileToClassPath(new Path(programJarCopy.toURI()));
-
-    MapReduceContextConfig contextConfig = new MapReduceContextConfig(job);
-    // We start long-running tx to be used by mapreduce job tasks.
-    Transaction tx = txClient.startLong();
-    // We remember tx, so that we can re-use it in mapreduce tasks
-    contextConfig.set(context, cConf, tx, programJarCopy.getName());
-
-    LOG.info("Submitting MapReduce Job: {}", context);
-    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-    Thread.currentThread().setContextClassLoader(job.getConfiguration().getClassLoader());
+    Location jobJar = buildJobJar(context);
     try {
-      // submits job and returns immediately
-      job.submit();
-    } finally {
-      Thread.currentThread().setContextClassLoader(oldClassLoader);
-    }
-
-    this.job = job;
-    this.transaction = tx;
-    this.cleanupTask = new Runnable() {
-      @Override
-      public void run() {
+      try {
+        Location programJarCopy = copyProgramJar();
         try {
-          jobJar.delete();
-        } catch (IOException e) {
-          LOG.warn("Failed to delete job jar at {}", jobJar.toURI(), e);
-        }
+          job.setJar(jobJar.toURI().toString());
+          job.addFileToClassPath(new Path(programJarCopy.toURI()));
 
-        try {
+          MapReduceContextConfig contextConfig = new MapReduceContextConfig(job);
+          // We start long-running tx to be used by mapreduce job tasks.
+          Transaction tx = txClient.startLong();
+          // We remember tx, so that we can re-use it in mapreduce tasks
+          contextConfig.set(context, cConf, tx, programJarCopy.getName());
+
+          LOG.info("Submitting MapReduce Job: {}", context);
+          ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+          Thread.currentThread().setContextClassLoader(job.getConfiguration().getClassLoader());
+          try {
+            // submits job and returns immediately
+            job.submit();
+          } finally {
+            Thread.currentThread().setContextClassLoader(oldClassLoader);
+          }
+
+          this.job = job;
+          this.transaction = tx;
+          this.cleanupTask = createCleanupTask(jobJar, programJarCopy);
+        } catch (Throwable t) {
           programJarCopy.delete();
-        } catch (IOException e) {
-          LOG.warn("Failed to delete program jar copy at {}", programJarCopy.toURI(), e);
+          throw Throwables.propagate(t);
         }
+      } catch (Throwable t) {
+        jobJar.delete();
+        throw Throwables.propagate(t);
       }
-    };
+    } catch (Throwable t) {
+      LOG.error("Exception when submitting MapReduce Job: {}", context, t);
+      throw Throwables.propagate(t);
+    }
   }
 
   @Override
@@ -489,6 +486,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     appBundler.createBundle(jobJar, classes);
     Thread.currentThread().setContextClassLoader(oldCLassLoader);
 
+    LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI());
     return jobJar;
   }
 
@@ -506,6 +504,23 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                     programId.getId(), context.getRunId().getId()));
 
     ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));
+    LOG.info("Copied Program Jar to {}, source: {}", programJarCopy.toURI(), programJarLocation.toURI());
     return programJarCopy;
+  }
+
+  private Runnable createCleanupTask(final Location... locations) {
+    return new Runnable() {
+
+      @Override
+      public void run() {
+        for (Location location : locations) {
+          try {
+            location.delete();
+          } catch (IOException e) {
+            LOG.warn("Failed to delete file at {}", location.toURI(), e);
+          }
+        }
+      }
+    };
   }
 }

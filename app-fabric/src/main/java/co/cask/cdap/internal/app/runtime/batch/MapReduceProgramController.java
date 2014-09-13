@@ -38,7 +38,7 @@ public final class MapReduceProgramController extends AbstractProgramController 
     super(context.getProgramName(), context.getRunId());
     this.mapReduceRuntimeService = mapReduceRuntimeService;
     this.context = context;
-    listenRuntimeState(mapReduceRuntimeService);
+    listenToRuntimeState(mapReduceRuntimeService);
   }
 
   @Override
@@ -71,7 +71,7 @@ public final class MapReduceProgramController extends AbstractProgramController 
     return context;
   }
 
-  private void listenRuntimeState(Service service) {
+  private void listenToRuntimeState(Service service) {
     service.addListener(new ServiceListenerAdapter() {
       @Override
       public void running() {
