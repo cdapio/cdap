@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,6 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.ImmutableMap;
@@ -78,14 +77,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MapReduceSpecification spec,
                                long logicalStartTime,
                                String workflowBatch,
-                               ProgramServiceDiscovery serviceDiscovery,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
                                CConfiguration conf) {
     super(program, runId, datasets,
           getMetricContext(program, type), metricsCollectionService,
-          dsFramework, conf, serviceDiscovery, discoveryServiceClient);
+          dsFramework, conf, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;

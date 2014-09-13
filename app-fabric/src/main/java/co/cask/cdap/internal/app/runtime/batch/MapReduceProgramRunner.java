@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
@@ -68,7 +67,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
   private final DatasetFramework datasetFramework;
 
   private final TransactionSystemClient txSystemClient;
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
@@ -78,7 +76,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                ProgramServiceDiscovery serviceDiscovery,
                                 DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.hConf = hConf;
@@ -87,7 +84,6 @@ public class MapReduceProgramRunner implements ProgramRunner {
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
@@ -135,7 +131,7 @@ public class MapReduceProgramRunner implements ProgramRunner {
       new BasicMapReduceContext(program, null, runId, options.getUserArguments(),
                                 program.getSpecification().getDatasets().keySet(), spec,
                                 logicalStartTime,
-                                workflowBatch, serviceDiscovery, discoveryServiceClient, metricsCollectionService,
+                                workflowBatch, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, cConf);
 
 

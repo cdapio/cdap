@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,7 +50,8 @@ public class LogFileReader implements LogReader {
    * Recursive method to tail the log. Reads from the current log file
    * instance (i), and if that does not have sufficient size, recurses to the
    * next older instance (i+1). If the caller knows the size of the current
-   * file (i), he can pass it via the fileSize parameter.
+   * file (i), the caller can pass it via the fileSize parameter.
+   *
    * @param lines A list of log lines to append read lines to
    * @param i The current log file instance to start reading from
    * @param size number of bytes to read at most

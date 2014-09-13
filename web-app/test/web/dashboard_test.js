@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013 Cask Data, Inc.
+ * Copyright © 2013 Cask Data, Inc.
  *
  * Browser testing for main page and streams page.
  * Uses Selenium + Firefox. Must start a remote instance of selenium available for download:

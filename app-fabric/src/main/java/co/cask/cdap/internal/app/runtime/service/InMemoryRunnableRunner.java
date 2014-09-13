@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,6 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
 import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
 import co.cask.cdap.internal.lang.Reflections;
@@ -50,7 +49,6 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +65,6 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryRunnableRunner.class);
 
   private final MetricsCollectionService metricsCollectionService;
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryService dsService;
   private final InMemoryElectionRegistry electionRegistry;
   private final ConcurrentLinkedQueue<Discoverable> discoverables;
@@ -77,13 +74,12 @@ public class InMemoryRunnableRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
-  public InMemoryRunnableRunner(CConfiguration cConfiguration, ProgramServiceDiscovery serviceDiscovery,
+  public InMemoryRunnableRunner(CConfiguration cConfiguration,
                                 DiscoveryServiceClient discoveryServiceClient,
                                 DiscoveryService dsService, InMemoryElectionRegistry electionRegistry,
                                 MetricsCollectionService metricsCollectionService,
                                 TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework) {
     this.metricsCollectionService = metricsCollectionService;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
     this.dsService = dsService;
     this.electionRegistry = electionRegistry;
@@ -162,18 +158,11 @@ public class InMemoryRunnableRunner implements ProgramRunner {
         }
       };
 
-      DiscoveryServiceClient dClient = new DiscoveryServiceClient() {
-        @Override
-        public ServiceDiscovered discover(String s) {
-          return serviceDiscovery.discover(program.getAccountId(), program.getApplicationId(),
-                                           program.getName(), s);
-        }
-      };
       twillContext = new InMemoryTwillContext(twillRunId, runId, InetAddress.getLocalHost(), new String[0], argArray,
                                               runnableSpec.getRunnableSpecification(), instanceId,
                                               runnableSpec.getResourceSpecification().getVirtualCores(),
                                               runnableSpec.getResourceSpecification().getMemorySize(),
-                                              dClient, dService, instanceCount, electionRegistry);
+                                              discoveryServiceClient, dService, instanceCount, electionRegistry);
 
       TypeToken<? extends  TwillRunnable> runnableType = TypeToken.of(runnableClass);
       TwillRunnable runnable = null;
@@ -181,12 +170,12 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       if (runnableClass.isAssignableFrom(HttpServiceTwillRunnable.class)) {
         // Special case for running HTTP services
         runnable = new HttpServiceTwillRunnable(program, runId, cConfiguration, runnableName, metricsCollectionService,
-                                                serviceDiscovery, discoveryServiceClient, datasetFramework,
+                                                discoveryServiceClient, datasetFramework,
                                                 transactionSystemClient);
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         runnable = new ServiceWorkerTwillRunnable(program, runId, runnableName, program.getClassLoader(),
                                                   cConfiguration, metricsCollectionService, datasetFramework,
-                                                  transactionSystemClient, serviceDiscovery, discoveryServiceClient);
+                                                  transactionSystemClient, discoveryServiceClient);
       } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }

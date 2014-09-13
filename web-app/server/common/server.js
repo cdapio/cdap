@@ -39,7 +39,7 @@ var WebAppServer = function(dirPath, logLevel, loggerType, mode) {
   process.on('uncaughtException', function (err) {
     this.logger.info('Uncaught Exception', err);
   }.bind(this));
-  this.extractConfig(mode)
+  this.extractConfig(mode, "cdap")
       .then(function () {
         this.setUpServer();
       }.bind(this));
@@ -134,26 +134,6 @@ WebAppServer.prototype.configureSSL = function () {
   return options;
 }
 
-WebAppServer.prototype.getGatewayUrl = function() {
-  if (this.config['ssl.enabled'] === "true") {
-    return 'https://' + this.config['gateway.server.address'] + ':' + this.config['router.ssl.bind.port'];
-  } else {
-    return 'http://' + this.config['gateway.server.address'] + ':' + this.config['router.bind.port'];
-  }
-};
-
-WebAppServer.prototype.getGatewayHost = function() {
-  return this.config['gateway.server.address'];
-};
-
-WebAppServer.prototype.getGatewayPort = function() {
-  if (this.config['ssl.enabled'] === "true") {
-    return this.config['router.ssl.bind.port'];
-  } else {
-    return this.config['router.bind.port'];
-  }
-};
-
 
 /**
  * Determines security status. Continues until it is able to determine if security is enabled if
@@ -164,9 +144,18 @@ WebAppServer.prototype.getGatewayPort = function() {
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
 
-  var path = '/' + this.API_VERSION + '/ping';
-  var url = self.getGatewayUrl() + path;
-
+  var path = '/' + this.API_VERSION + '/ping',
+      url;
+  this.routerBindAddress = this.config['gateway.server.address'];
+  if (this.config['ssl.enabled'] === "true") {
+    this.routerBindPort = this.config['router.ssl.bind.port'];
+    this.transferProtocol = "https://";
+    url = 'https://' + this.config['gateway.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
+  } else {
+    this.routerBindPort = this.config['router.bind.port'];
+    this.transferProtocol = "http://";
+    url = 'http://' + this.config['gateway.server.address'] + ':' + this.config['router.bind.port'] + path;
+  }
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
     request({
@@ -365,8 +354,8 @@ WebAppServer.prototype.bindRoutes = function() {
     self.logger.trace('User Metrics', path);
 
     var options = {
-      host: self.getGatewayHost(),
-      port: self.getGatewayPort(),
+      host: self.routerBindAddress,
+      port: self.routerBindPort,
       method: 'GET',
       path: '/' + self.API_VERSION + '/metrics/available' + path,
       headers: {
@@ -420,11 +409,13 @@ WebAppServer.prototype.bindRoutes = function() {
    * REST DELETE handler.
    */
   this.app.del('/rest/*', this.checkAuth, function (req, res) {
-    var url = self.getGatewayUrl() + req.url.replace('/rest', '/' + self.API_VERSION);
+
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
     request({
       method: 'DELETE',
-      url: url,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -450,10 +441,11 @@ WebAppServer.prototype.bindRoutes = function() {
    * REST PUT handler.
    */
   this.app.put('/rest/*', this.checkAuth, function (req, res) {
-    var url = self.getGatewayUrl() + req.url.replace('/rest', '/' + self.API_VERSION);
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'PUT',
-      url: url,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -486,10 +478,11 @@ WebAppServer.prototype.bindRoutes = function() {
    * Promote handler.
    */
   this.app.post('/rest/apps/:appId/promote', this.checkAuth, function (req, res) {
-    var url = self.getGatewayUrl() + req.url.replace('/rest', '/' + self.API_VERSION);
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
-      url: url,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -526,10 +519,11 @@ WebAppServer.prototype.bindRoutes = function() {
    * REST POST handler.
    */
   this.app.post('/rest/*', this.checkAuth, function (req, res) {
-    var url = self.getGatewayUrl() + req.url.replace('/rest', '/' + self.API_VERSION);
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
     var opts = {
       method: 'POST',
-      url: url,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -562,11 +556,13 @@ WebAppServer.prototype.bindRoutes = function() {
    * REST GET handler.
    */
   this.app.get('/rest/*', this.checkAuth, function (req, res) {
-    var url = self.getGatewayUrl() + req.url.replace('/rest', '/' + self.API_VERSION);
+
+    var url = self.routerBindAddress + ':' + self.routerBindPort;
+    var path = url + req.url.replace('/rest', '/' + self.API_VERSION);
 
     var opts = {
       method: 'GET',
-      url: url,
+      url: self.transferProtocol + path,
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -612,8 +608,8 @@ WebAppServer.prototype.bindRoutes = function() {
     var content = JSON.stringify(pathList);
 
     var options = {
-      host: self.getGatewayHost(),
-      port: self.getGatewayPort(),
+      host: self.routerBindAddress,
+      port: self.routerBindPort,
       path: '/' + self.API_VERSION + '/metrics',
       method: 'POST',
       headers: {
@@ -663,7 +659,8 @@ WebAppServer.prototype.bindRoutes = function() {
    * Upload an Application archive.
    */
   this.app.post('/upload/:file', this.checkAuth, function (req, res) {
-    var url = self.getGatewayUrl() + '/' + self.API_VERSION + '/apps';
+    var url = self.transferProtocol + self.routerBindAddress + ':' +
+      self.routerBindPort + '/' + self.API_VERSION + '/apps';
 
     var opts = {
       method: 'POST',
@@ -682,8 +679,8 @@ WebAppServer.prototype.bindRoutes = function() {
   this.app.get('/upload/status', function (req, res) {
 
     var options = {
-      host: self.getGatewayHost(),
-      port: self.getGatewayPort(),
+      host: self.routerBindAddress,
+      port: self.routerBindPort,
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
       headers: {
@@ -717,9 +714,12 @@ WebAppServer.prototype.bindRoutes = function() {
   });
 
   this.app.post('/unrecoverable/reset', this.checkAuth, function (req, res) {
+
+    var host = self.routerBindAddress + ':' + self.routerBindPort;
+
     var opts = {
       method: 'POST',
-      url: self.getGatewayUrl() + '/' + self.API_VERSION + '/unrecoverable/reset',
+      url: self.transferProtocol + host + '/' + self.API_VERSION + '/unrecoverable/reset',
       headers: {
         'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
@@ -793,8 +793,8 @@ WebAppServer.prototype.bindRoutes = function() {
     }
 
     var options = {
-      host: self.getGatewayHost(),
-      port: self.getGatewayPort(),
+      host: self.routerBindAddress,
+      port: self.routerBindPort,
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
       headers: headerOpts

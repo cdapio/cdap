@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.annotation.Transactional;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -299,8 +298,6 @@ final class HttpHandlerGenerator {
     private final Type classType;
     private final ClassWriter classWriter;
 
-    private boolean transactionsEnabled;
-
     /**
      * Constructs a {@link HandlerMethodVisitor}.
      *
@@ -335,9 +332,6 @@ final class HttpHandlerGenerator {
       if (visible) {
         AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
         annotations.add(annotationNode);
-        if (desc.equals(Type.getType(Transactional.class).getDescriptor())) {
-          transactionsEnabled = true;
-        }
         return annotationNode;
       }
       return super.visitAnnotation(desc, visible);
@@ -400,11 +394,8 @@ final class HttpHandlerGenerator {
         annotation.accept(mg.visitParameterAnnotation(entry.getKey(), annotation.desc, true));
       }
 
-      if (transactionsEnabled) {
-        generateTransactionalDelegateBody(mg, new Method(name, desc));
-      } else {
-        generateNonTransactionalDelegateBody(mg, new Method(name, desc));
-      }
+      // Each request method is wrapped by a transaction lifecycle.
+      generateTransactionalDelegateBody(mg, new Method(name, desc));
 
       super.visitEnd();
     }
@@ -443,6 +434,27 @@ final class HttpHandlerGenerator {
      * Wrap the user written Handler method in a transaction.
      * The transaction begins before the request is delegated, and ends after the response.
      * On errors the transaction is aborted and rolledback.
+     *
+     * The generated handler method body has the form:
+     *
+     * <pre>{@code
+     *   public void handle(HttpRequest request, HttpResponder responder, ...) {
+     *     TransactionContext txContext = getTransactionContext();
+     *     try {
+     *       txContext.start();
+     *       try {
+     *          delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
+     *          txContext.finish();
+     *       } catch (Throwable t) {
+     *         LOG.error("User handler exception", e);
+     *         txContext.abort(new TransactionFailureException("User handler exception", e));
+     *       }
+     *     } catch (TransactionFailureException e) {
+     *        LOG.error("Transaction failure: ", e);
+     *     }
+     *   }
+     * }
+     * </pre>
      */
     private void generateTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
       Type txContextType = Type.getType(TransactionContext.class);
@@ -532,22 +544,6 @@ final class HttpHandlerGenerator {
 
       mg.mark(txFinish);
 
-      mg.returnValue();
-      mg.endMethod();
-    }
-
-    /**
-     * Generates the handler method body. It has the form:
-     *
-     * <pre>{@code
-     *   public void handle(HttpRequest request, HttpResponder responder, ...) {
-     *     delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
-     *   }
-     * }
-     * </pre>
-     */
-    private void generateNonTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
-      generateInvokeDelegate(mg, method);
       mg.returnValue();
       mg.endMethod();
     }

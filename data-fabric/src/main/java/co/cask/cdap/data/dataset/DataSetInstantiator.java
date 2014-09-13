@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,9 +47,9 @@ import javax.annotation.Nullable;
  * into its base tables (and other built-in data sets).
  *
  * The instantiation and injection uses Java reflection a lot. This may look
- * unclean, but it helps us keep the DataSet API clean and simple (no need
- * to pass in data fabric runtime, no exposure of the developer to the raw
- * data fabric, he only interacts with data sets).
+ * unclean, but it helps us keep the DataSet API clean and simple: no need
+ * to pass in data fabric runtime; no exposure of developers to the raw
+ * data fabric; and developers only interact with Datasets.
  */
 public class DataSetInstantiator implements DataSetContext {
 

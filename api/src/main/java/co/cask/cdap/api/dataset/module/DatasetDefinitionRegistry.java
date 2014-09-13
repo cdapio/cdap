@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ public interface DatasetDefinitionRegistry {
    * After it was added it is available thru {@link #get(String)} method.
    *
    * @param def definition to add
+   * @throws IllegalArgumentException if registry already contains dataset type of the same name as given definition
    */
   void add(DatasetDefinition def);
 
@@ -41,6 +42,13 @@ public interface DatasetDefinitionRegistry {
    *                        {@link co.cask.cdap.api.dataset.DatasetDefinition#getName()}
    * @param <T> type of the returned {@link DatasetDefinition}
    * @return instance of {@link DatasetDefinition}
+   * @throws IllegalArgumentException if registry does not contain dataset type of a given name
    */
   <T extends DatasetDefinition> T get(String datasetTypeName);
+
+  /**
+   * @param datasetTypeName name of the dataset type
+   * @return true if registry contains dataset type of the given name, false otherwise
+   */
+  boolean hasType(String datasetTypeName);
 }
