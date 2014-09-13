@@ -313,7 +313,6 @@ public class AccessTokenClient {
       baseUrl = getAuthenticationServerAddress();
     } catch (IOException e) {
       System.err.println("Could not find Authentication service to connect to.");
-      e.printStackTrace();
       return null;
     }
 
