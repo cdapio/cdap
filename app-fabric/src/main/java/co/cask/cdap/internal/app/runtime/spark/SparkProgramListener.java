@@ -24,6 +24,7 @@ import org.apache.spark.scheduler.SparkListenerApplicationStart;
 import org.apache.spark.scheduler.SparkListenerBlockManagerAdded;
 import org.apache.spark.scheduler.SparkListenerBlockManagerRemoved;
 import org.apache.spark.scheduler.SparkListenerEnvironmentUpdate;
+import org.apache.spark.scheduler.SparkListenerExecutorMetricsUpdate;
 import org.apache.spark.scheduler.SparkListenerJobEnd;
 import org.apache.spark.scheduler.SparkListenerJobStart;
 import org.apache.spark.scheduler.SparkListenerStageCompleted;
@@ -173,6 +174,16 @@ class SparkProgramListener implements SparkListener {
    */
   @Override
   public void onApplicationEnd(SparkListenerApplicationEnd applicationEnd) {
+    //no-op
+  }
+
+  /**
+   * Called when the driver receives task metrics from an executor in a heartbeat.
+   *
+   * @param executorMetricsUpdate
+   */
+  @Override
+  public void onExecutorMetricsUpdate(SparkListenerExecutorMetricsUpdate executorMetricsUpdate) {
     //no-op
   }
 }

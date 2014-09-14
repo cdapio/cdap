@@ -73,6 +73,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -165,8 +166,6 @@ public class SparkProgramRunner implements ProgramRunner {
     controller.addListener(new AbstractListener() {
       @Override
       public void stopping() {
-        // TODO: This does not work as Spark goes into deadlock while closing the context in local mode
-        // Jira: REACTOR-951
         LOG.info("Stopping Spark Job: {}", context);
         try {
           if (SparkProgramWrapper.isSparkProgramRunning()) {
@@ -219,7 +218,8 @@ public class SparkProgramRunner implements ProgramRunner {
         try {
           LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-          LOG.info("Submitting Spark program: {}", context.toString());
+          LOG.info("Submitting Spark program: {} with arguments {}", context.toString(),
+                   Arrays.toString(sparkSubmitArgs));
 
           ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
           Thread.currentThread().setContextClassLoader(conf.getClassLoader());
@@ -266,8 +266,8 @@ public class SparkProgramRunner implements ProgramRunner {
    */
   private String[] prepareSparkSubmitArgs(SparkSpecification sparkSpec, Configuration conf, Location jobJarCopy,
                                           Location dependencyJar) {
-    return new String[]{"--class", SparkProgramWrapper.class.getCanonicalName(), "--master",
-      conf.get(MRConfig.FRAMEWORK_NAME), jobJarCopy.toURI().getPath(), "--jars", dependencyJar.toURI().getPath(),
+    return new String[]{"--class", SparkProgramWrapper.class.getCanonicalName(), "--jars",
+      dependencyJar.toURI().getPath(), "--master", conf.get(MRConfig.FRAMEWORK_NAME), jobJarCopy.toURI().getPath(),
       sparkSpec.getMainClassName()};
   }
 
