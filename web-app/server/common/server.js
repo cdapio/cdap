@@ -121,15 +121,15 @@ WebAppServer.prototype.setAttributes = function setCommonAttributes() {
 }
 
 WebAppServer.prototype.launchServer = function() {
-  var key,
-      cert,
-      options = this.configureSSL() || {};
+  var options = this.configureSSL() || {};
   this.server = this.getServerInstance(options, this.app);
   this.setEnvironment(this.productId, this.productName, this.version, this.startServer.bind(this));
 }
 
 WebAppServer.prototype.configureSSL = function () {
-  var options = {};
+  var options = {},
+      key,
+      cert;
   if (this.config['ssl.enabled'] === "true") {
     key = this.securityConfig['dashboard.ssl.key'],
     cert = this.securityConfig['dashboard.ssl.cert'];
