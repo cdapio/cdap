@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -99,7 +99,7 @@ final class MetricsRequestParser {
   }
 
   /**
-   * Given a full metrics path like '/v2/metrics/reactor/apps/collect.events', strip the preceding version and
+   * Given a full metrics path like '/v2/metrics/system/apps/collect.events', strip the preceding version and
    * metrics to return 'reactor/apps/collect.events', representing the context and metric, which can then be
    * parsed by this parser.
    *
@@ -129,13 +129,13 @@ final class MetricsRequestParser {
     String strippedPath = uriPath.substring(0, index);
 
     MetricsRequestContext metricsRequestContext;
-    if (strippedPath.startsWith("/reactor/cluster")) {
+    if (strippedPath.startsWith("/system/cluster")) {
       builder.setContextPrefix(CLUSTER_METRICS_CONTEXT);
-      builder.setScope(MetricsScope.REACTOR);
+      builder.setScope(MetricsScope.SYSTEM);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
-    } else if (strippedPath.startsWith("/reactor/transactions")) {
+    } else if (strippedPath.startsWith("/system/transactions")) {
       builder.setContextPrefix(TRANSACTION_METRICS_CONTEXT);
-      builder.setScope(MetricsScope.REACTOR);
+      builder.setScope(MetricsScope.SYSTEM);
       metricsRequestContext = new MetricsRequestContext.Builder().build();
     } else {
       metricsRequestContext = parseContext(strippedPath, builder);

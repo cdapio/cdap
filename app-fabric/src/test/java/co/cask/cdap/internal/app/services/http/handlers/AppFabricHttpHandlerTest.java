@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,14 +38,14 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionAware;
-import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.TransactionExecutorFactory;
-import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.persist.TransactionSnapshot;
-import com.continuuity.tephra.snapshot.SnapshotCodec;
-import com.continuuity.tephra.snapshot.SnapshotCodecProvider;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.snapshot.SnapshotCodec;
+import co.cask.tephra.snapshot.SnapshotCodecProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -129,9 +129,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
       waitState(runnableType, appId, runnableId, "STOPPED");
 
-      // Sleep to let stop states settle down (for MapReduce).
-      TimeUnit.SECONDS.sleep(5);
-
       // second run
       Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "start"));
       waitState(runnableType, appId, runnableId, "RUNNING");
@@ -140,8 +137,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
       String url = String.format("/v2/apps/%s/%s/%s/history", appId, runnableType, runnableId);
       historyStatusWithRetry(url, 2);
-
-      } finally {
+    } finally {
       Assert.assertEquals(200, doDelete("/v2/apps/" + appId).getStatusLine().getStatusCode());
     }
   }
@@ -1199,7 +1195,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   private void waitState(String runnableType, String appId, String runnableId, String state) throws Exception {
     int trials = 0;
     // it may take a while for workflow/mr to start...
-    while (trials++ < 20) {
+    int maxTrials = 120;
+    while (trials++ < maxTrials) {
       HttpResponse response = doGet(String.format("/v2/apps/%s/%s/%s/status", appId, runnableType, runnableId));
       JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
       if (status != null && status.has("status") && state.equals(status.get("status").getAsString())) {
@@ -1207,7 +1204,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       }
       TimeUnit.SECONDS.sleep(1);
     }
-    Assert.assertTrue(trials < 20);
+    Assert.assertTrue(trials < maxTrials);
   }
 
   @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,20 +33,24 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
-import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.TransactionExecutorFactory;
-import com.continuuity.tephra.TransactionFailureException;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.TxConstants;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TxConstants;
+import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.inject.Injector;
+import org.apache.twill.common.Threads;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -56,15 +60,14 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -190,19 +193,7 @@ public class MapReduceProgramRunnerTest {
     Assert.assertNotNull("no output files found", outputFiles);
     Assert.assertTrue("no output files found", outputFiles.length > 0);
     File outputFile = outputFiles[0];
-    int lines = 0;
-    BufferedReader reader = new BufferedReader(new FileReader(outputFile));
-    try {
-      while (true) {
-        String line = reader.readLine();
-        if (line == null) {
-          break;
-        }
-        lines++;
-      }
-    } finally {
-      reader.close();
-    }
+    int lines = Files.readLines(outputFile, Charsets.UTF_8).size();
     // dummy check that output file is not empty
     Assert.assertTrue(lines > 0);
   }
@@ -365,9 +356,28 @@ public class MapReduceProgramRunnerTest {
   }
 
   private void waitForCompletion(ProgramController controller) throws InterruptedException {
-    while (controller.getState() == ProgramController.State.ALIVE) {
-      TimeUnit.SECONDS.sleep(1);
-    }
+    final CountDownLatch completion = new CountDownLatch(1);
+    controller.addListener(new AbstractListener() {
+      @Override
+      public void init(ProgramController.State currentState) {
+        if (currentState == ProgramController.State.STOPPED || currentState == ProgramController.State.ERROR) {
+          completion.countDown();
+        }
+      }
+
+      @Override
+      public void stopped() {
+        completion.countDown();
+      }
+
+      @Override
+      public void error(Throwable cause) {
+        completion.countDown();
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+
+    // MR tests can run for long time.
+    completion.await(5, TimeUnit.MINUTES);
   }
 
   private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing)

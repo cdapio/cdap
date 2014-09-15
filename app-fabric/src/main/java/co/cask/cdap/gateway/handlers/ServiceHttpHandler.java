@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
@@ -71,7 +70,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Store store;
   private final ProgramRuntimeService runtimeService;
-  private final ProgramServiceDiscovery programServiceDiscovery;
   private static final Gson GSON = new GsonBuilder()
                                       .registerTypeAdapter(new TypeToken<ServiceDiscovered>() { }.getType(),
                                                             new ServiceDiscoveredCodec())
@@ -81,11 +79,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                            ProgramRuntimeService runtimeService, ProgramServiceDiscovery programServiceDiscovery) {
+                            ProgramRuntimeService runtimeService) {
     super(authenticator);
     this.store = storeFactory.create();
     this.runtimeService = runtimeService;
-    this.programServiceDiscovery = programServiceDiscovery;
   }
 
   /**
@@ -274,9 +271,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private int getRunnableCount(String accountId, String appId, String serviceName, String runnable) {
-    ProgramLiveInfo info = runtimeService.getLiveInfo(Id.Program.from(accountId, appId, serviceName),
-                                                      ProgramType.SERVICE);
+  private int getRunnableCount(String accountId, String appId, String serviceName, String runnable) throws Exception {
+    Id.Program programID = Id.Program.from(accountId, appId, serviceName);
+    ProgramLiveInfo info = runtimeService.getLiveInfo(programID, ProgramType.SERVICE);
     int count = 0;
     if (info instanceof NotRunningProgramLiveInfo) {
       return count;
@@ -289,8 +286,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       }
       return count;
     } else {
-      //Not running on YARN default 1
-      return 1;
+      //Not running on YARN
+      return store.getServiceRunnableInstances(programID, runnable);
     }
   }
 

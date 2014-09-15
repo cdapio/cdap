@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,6 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.services.HttpServiceTwillRunnable;
 import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
@@ -53,7 +52,7 @@ import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.ProgramType;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -125,7 +124,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
   private ProgramResourceReporter resourceReporter;
   private LogAppenderInitializer logAppenderInitializer;
   private TransactionSystemClient transactionSystemClient;
-  private ProgramServiceDiscovery programServiceDiscovery;
   private DiscoveryServiceClient discoveryServiceClient;
   private DatasetFramework datasetFramework;
   private TwillRunnable delegate;
@@ -180,7 +178,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
 
       transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
       datasetFramework = injector.getInstance(DatasetFramework.class);
-      programServiceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
       discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
       try {
@@ -220,12 +217,12 @@ public class ServiceTwillRunnable implements TwillRunnable {
         // Special case for running http services since we need to instantiate the http service
         // using the program classloader.
         delegate = new HttpServiceTwillRunnable(program, runId, cConf, runnableName, metricsCollectionService,
-                                                programServiceDiscovery, discoveryServiceClient, datasetFramework,
+                                                discoveryServiceClient, datasetFramework,
                                                 transactionSystemClient);
       } else if (clz.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
         delegate = new ServiceWorkerTwillRunnable(program, runId, runnableName, program.getClassLoader(), cConf,
                                                   metricsCollectionService, datasetFramework,
-                                                  transactionSystemClient, programServiceDiscovery,
+                                                  transactionSystemClient,
                                                   discoveryServiceClient);
       } else {
         delegate = (TwillRunnable) new InstantiatorFactory(false).get(TypeToken.of(clz)).create();
@@ -367,7 +364,6 @@ public class ServiceTwillRunnable implements TwillRunnable {
           // For program loading
           install(createProgramFactoryModule());
 
-          bind(ProgramServiceDiscovery.class).to(DistributedProgramServiceDiscovery.class).in(Scopes.SINGLETON);
         }
       }
     );

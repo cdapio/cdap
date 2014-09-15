@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -193,11 +193,11 @@ public class MapReduceMetricsWriter {
   }
 
   private int calcDiffAndSetMapStat(String key, long value) {
-    return calcDiffAndSetTableValue(previousMapStats, MetricsScope.REACTOR, key, value);
+    return calcDiffAndSetTableValue(previousMapStats, MetricsScope.SYSTEM, key, value);
   }
 
   private int calcDiffAndSetReduceStat(String key, long value) {
-    return calcDiffAndSetTableValue(previousReduceStats, MetricsScope.REACTOR, key, value);
+    return calcDiffAndSetTableValue(previousReduceStats, MetricsScope.SYSTEM, key, value);
   }
 
   // convenience function to set the table value to the given value and return the difference between the given value

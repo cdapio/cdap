@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,9 +29,9 @@ import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrederedTableTest;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.test.SlowTests;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.inmemory.DetachedTxSystemClient;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.inmemory.DetachedTxSystemClient;
 import com.google.gson.Gson;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.client.HBaseAdmin;

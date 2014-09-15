@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,13 +27,14 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
-import com.continuuity.tephra.TransactionManager;
+import co.cask.tephra.TransactionManager;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -54,7 +55,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
- * TODO: remove it, see REACTOR-676
+ * TODO: remove it, see https://jira.continuuity.com/browse/REACTOR-676
+ * 
  */
 public class AppFabricTestHelper {
   public static final TempFolder TEMP_FOLDER = new TempFolder();
@@ -107,6 +109,7 @@ public class AppFabricTestHelper {
    */
   public static void deployApplication(Class<?> applicationClz, String fileName) throws Exception {
     AppFabricClient appFabricClient = new AppFabricClient(getInjector().getInstance(AppFabricHttpHandler.class),
+                                                          getInjector().getInstance(ServiceHttpHandler.class),
                                                           getInjector().getInstance(LocationFactory.class));
     Location deployedJar = appFabricClient.deployApplication(fileName, applicationClz);
     deployedJar.delete(true);

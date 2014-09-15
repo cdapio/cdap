@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,8 +27,8 @@ import co.cask.cdap.data2.queue.DequeueResult;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.internal.io.ByteBufferInputStream;
 import co.cask.cdap.internal.io.SchemaHash;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionAware;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;

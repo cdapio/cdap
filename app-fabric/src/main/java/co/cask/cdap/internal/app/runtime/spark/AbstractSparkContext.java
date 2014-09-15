@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *  
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,13 +33,13 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkConf;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * An abstract class which implements {@link SparkContext} and provide a concrete implementation for the common
@@ -48,6 +48,8 @@ import java.util.Map;
 abstract class AbstractSparkContext implements SparkContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkContext.class);
+  private static final Pattern SPACES = Pattern.compile("\\s+");
+  private static final String[] NO_ARGS = {};
 
   private final Configuration hConf;
   private final long logicalStartTime;
@@ -147,6 +149,22 @@ abstract class AbstractSparkContext implements SparkContext {
     return hConf;
   }
 
+  /**
+   * Returns value of the given argument key as a String[]
+   *
+   * @param argsKey {@link String} which is the key for the argument
+   * @return String[] containing all the arguments which is indexed by their position as they were supplied
+   */
+  @Override
+  public String[] getRuntimeArguments(String argsKey) {
+    if (runtimeArguments.hasOption(argsKey)) {
+      return SPACES.split(runtimeArguments.getOption(argsKey).trim());
+    } else {
+      LOG.warn("Argument with key {} not found in Runtime Arguments", argsKey);
+      return NO_ARGS;
+    }
+  }
+
   @Override
   public SparkSpecification getSpecification() {
     return spec;
@@ -166,9 +184,4 @@ abstract class AbstractSparkContext implements SparkContext {
     return arguments.build();
   }
 
-  @Override
-  public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-    //TODO: Change this once we start supporting services in Spark.
-    throw new UnsupportedOperationException("Service Discovery not supported");
-  }
 }

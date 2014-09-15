@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 /**
@@ -68,6 +69,7 @@ public abstract class AbstractService implements Service {
    * Add a worker to the Service.
    * @param worker for the service.
    */
+  @Beta
   protected void addWorker(ServiceWorker worker) {
     configurer.addWorker(worker);
   }
@@ -76,6 +78,7 @@ public abstract class AbstractService implements Service {
    * Add a list of workers to the Service.
    * @param workers for the service.
    */
+  @Beta
   protected void addWorkers(Iterable<? extends ServiceWorker> workers) {
     configurer.addWorkers(workers);
   }

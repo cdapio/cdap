@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,7 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
- * LogSaver Service, Currently only used for PingHandler, so this service can be discovered during reactor-startup
+ * LogSaver Service; currently only used for PingHandler, so that service can be discovered during CDAP-startup.
  */
 public class LogSaverStatusService extends AbstractIdleService {
   private final DiscoveryService discoveryService;

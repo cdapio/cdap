@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,10 +41,9 @@ public class TestBatchStreamIntegration extends TestBase {
       }
 
       MapReduceManager mapReduceManager = applicationManager.startMapReduce("StreamTestBatch");
-      mapReduceManager.waitForFinish(60, TimeUnit.SECONDS);
+      mapReduceManager.waitForFinish(2, TimeUnit.MINUTES);
 
       // TODO: verify results
-
     } finally {
       applicationManager.stopAll();
       TimeUnit.SECONDS.sleep(1);

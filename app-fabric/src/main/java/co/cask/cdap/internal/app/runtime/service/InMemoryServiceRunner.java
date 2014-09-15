@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.Futures;
@@ -49,6 +50,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * For Running Services in standalone mode.
@@ -136,11 +139,14 @@ public class InMemoryServiceRunner implements ProgramRunner {
 
   class ServiceProgramController extends AbstractProgramController {
     private final Table<String, Integer, ProgramController> runnables;
+    private final Program program;
     private final ServiceSpecification serviceSpec;
+    private final Lock lock = new ReentrantLock();
 
     ServiceProgramController(Table<String, Integer, ProgramController> runnables,
                              RunId runId, Program program, ServiceSpecification serviceSpec) {
       super(program.getName(), runId);
+      this.program = program;
       this.runnables = runnables;
       this.serviceSpec = serviceSpec;
       started();
@@ -163,23 +169,70 @@ public class InMemoryServiceRunner implements ProgramRunner {
     @Override
     protected void doStop() throws Exception {
       LOG.info("Stopping Service : " + serviceSpec.getName());
-      Futures.successfulAsList
-        (Iterables.transform(runnables.values(), new Function<ProgramController,
-                               ListenableFuture<ProgramController>>() {
-                               @Override
-                               public ListenableFuture<ProgramController> apply(ProgramController input) {
-                                 return input.stop();
+      lock.lock();
+      try {
+        Futures.successfulAsList
+          (Iterables.transform(runnables.values(), new Function<ProgramController,
+                                 ListenableFuture<ProgramController>>() {
+                                 @Override
+                                 public ListenableFuture<ProgramController> apply(ProgramController input) {
+                                   return input.stop();
+                                 }
                                }
-                             }
-         )
-        ).get();
+           )
+          ).get();
+      } finally {
+        lock.unlock();
+      }
       LOG.info("Service stopped: " + serviceSpec.getName());
     }
 
     @Override
     @SuppressWarnings("unchecked")
     protected void doCommand(String name, Object value) throws Exception {
+      if (!ProgramOptionConstants.RUNNABLE_INSTANCES.equals(name) || !(value instanceof Map)) {
+        return;
+      }
+      Map<String, String> command = (Map<String, String>) value;
+      lock.lock();
+      try {
+        changeInstances(command.get("runnable"), Integer.valueOf(command.get("newInstances")));
+      } catch (Throwable t) {
+        LOG.error(String.format("Fail to change instances: %s", command), t);
+      } finally {
+        lock.unlock();
+      }
+    }
 
+    /**
+     * Change the number of instances of the running runnable.
+     * @param runnableName Name of the runnable
+     * @param newCount New instance count
+     * @throws java.util.concurrent.ExecutionException
+     * @throws InterruptedException
+     */
+    private void changeInstances(String runnableName, final int newCount) throws Exception {
+      Map<Integer, ProgramController> liveRunnables = runnables.row(runnableName);
+      int liveCount = liveRunnables.size();
+      if (liveCount == newCount) {
+        return;
+      }
+
+      // stop any extra runnables
+      if (liveCount > newCount) {
+        List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newCount);
+        for (int instanceId = liveCount - 1; instanceId >= newCount; instanceId--) {
+          futures.add(runnables.remove(runnableName, instanceId).stop());
+        }
+        Futures.allAsList(futures).get();
+      }
+
+      // create more runnable instances, if necessary.
+      for (int instanceId = liveCount; instanceId < newCount; instanceId++) {
+        ProgramOptions newProgramOpts = createRunnableOptions(runnableName, instanceId, newCount, getRunId());
+        ProgramController programController = startRunnable(program, newProgramOpts);
+        runnables.put(runnableName, instanceId, programController);
+      }
     }
   }
 }

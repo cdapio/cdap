@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,10 +26,9 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.service.BasicServiceWorkerContext;
 import co.cask.cdap.internal.lang.Reflections;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -62,7 +61,6 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
   private MetricsCollectionService metricsCollectionService;
   private DatasetFramework datasetFramework;
   private CConfiguration cConfiguration;
-  private ProgramServiceDiscovery serviceDiscovery;
   private DiscoveryServiceClient discoveryServiceClient;
   private Set<String> datasets;
   private Metrics metrics;
@@ -85,7 +83,6 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
                                     MetricsCollectionService metricsCollectionService,
                                     DatasetFramework datasetFramework,
                                     TransactionSystemClient transactionSystemClient,
-                                    ProgramServiceDiscovery serviceDiscovery,
                                     DiscoveryServiceClient discoveryServiceClient) {
     this.program = program;
     this.runId = runId;
@@ -95,7 +92,6 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.cConfiguration = cConfiguration;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
@@ -138,7 +134,7 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
       worker.initialize(new BasicServiceWorkerContext(program, runId, instanceId, runnableName, programClassLoader,
                                                       cConfiguration, context.getSpecification().getConfigs(), datasets,
                                                       metricsCollectionService, datasetFramework,
-                                                      transactionSystemClient, serviceDiscovery,
+                                                      transactionSystemClient,
                                                       discoveryServiceClient));
     } catch (Exception e) {
       LOG.error("Could not instantiate service " + serviceClassName);

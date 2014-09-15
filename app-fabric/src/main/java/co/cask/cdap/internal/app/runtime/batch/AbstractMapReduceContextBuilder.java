@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,10 +26,9 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionAware;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Injector;
@@ -108,7 +107,6 @@ public abstract class AbstractMapReduceContextBuilder {
     MetricsCollectionService metricsCollectionService =
       (type == null) ? null : injector.getInstance(MetricsCollectionService.class);
 
-    ProgramServiceDiscovery serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
     // Creating mapreduce job context
@@ -116,7 +114,7 @@ public abstract class AbstractMapReduceContextBuilder {
     BasicMapReduceContext context =
       new BasicMapReduceContext(program, type, RunIds.fromString(runId),
                                 runtimeArguments, programSpec.getDatasets().keySet(), spec, logicalStartTime,
-                                workflowBatch, serviceDiscovery, discoveryServiceClient, metricsCollectionService,
+                                workflowBatch, discoveryServiceClient, metricsCollectionService,
                                 datasetFramework, configuration);
 
     // propagating tx to all txAware guys

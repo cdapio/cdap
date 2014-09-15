@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,8 +38,8 @@ import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.http.HttpHandler;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;

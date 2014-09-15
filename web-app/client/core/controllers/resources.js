@@ -47,8 +47,8 @@ define([], function () {
       start = Math.floor(start / 1000);
 
       this.HTTP.post('metrics', [
-        '/reactor/cluster/resources.total.memory?start=' + start + '&count=1&interpolate=step',
-        '/reactor/cluster/resources.total.storage?start=' + start + '&count=1&interpolate=step'
+        '/system/cluster/resources.total.memory?start=' + start + '&count=1&interpolate=step',
+        '/system/cluster/resources.total.storage?start=' + start + '&count=1&interpolate=step'
         ], function (response) {
 
         if (response.result && response.result[0].result.data.length) {
@@ -103,7 +103,7 @@ define([], function () {
                   for (var i = 0; i < programs[type].length; i ++) {
 
                     program = programs[type][i];
-                    context = '/reactor/' + program.get('context') + '/';
+                    context = '/system/' + program.get('context') + '/';
 
                     program.trackMetric(context + 'resources.used.memory', 'timeseries', null, true);
                     program.trackMetric(context + 'resources.used.containers', 'currents', 'containers');
@@ -205,13 +205,13 @@ define([], function () {
 
       // Hax. Count is timerange because server treats end = start + count (no downsample yet)
       var queries = [
-        '/reactor/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&end=' +
+        '/system/resources.used.memory?count=' + C.__timeRange + '&start=' + start + '&end=' +
           end + '&interpolate=step',
-        '/reactor/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&end=' +
+        '/system/resources.used.containers?count=' + C.__timeRange + '&start=' + start + '&end=' +
           end +'&interpolate=step',
-        '/reactor/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&end=' +
+        '/system/resources.used.vcores?count=' + C.__timeRange + '&start=' + start + '&end=' +
           end + '&interpolate=step',
-        '/reactor/resources.used.storage?count=' + C.__timeRange + '&start=' + start + '&end=' +
+        '/system/resources.used.storage?count=' + C.__timeRange + '&start=' + start + '&end=' +
           end + '&interpolate=step'
       ], self = this;
 

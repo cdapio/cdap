@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,12 +27,10 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Map;
 import java.util.Set;
@@ -58,14 +56,13 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       int instanceCount, Set<String> datasets,
                       Arguments runtimeArguments, FlowletSpecification flowletSpec,
                       MetricsCollectionService metricsCollectionService,
-                      ProgramServiceDiscovery serviceDiscovery,
                       DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework dsFramework,
                       CConfiguration conf) {
     super(program, runId, datasets,
           getMetricContext(program, flowletId, instanceId),
           metricsCollectionService,
-          dsFramework, conf, serviceDiscovery, discoveryServiceClient);
+          dsFramework, conf, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.flowId = program.getName();
     this.flowletId = flowletId;

@@ -687,7 +687,7 @@ depending upon the language (Java or Scala) in which the program is written. You
 
      public class MyJavaSparkProgram implements JavaSparkProgram {
        @Override
-       public void run(String[] args, SparkContext sparkContext) {
+       public void run(SparkContext sparkContext) {
          JavaSparkContext originalSparkContext = sparkContext.originalSparkContext();
            ...
        }
@@ -696,7 +696,7 @@ depending upon the language (Java or Scala) in which the program is written. You
 - Scala::
 
     class MyScalaSparkProgram implements ScalaSparkProgram {
-      override def run(args: Array[String], sparkContext: SparkContext) {
+      override def run(sparkContext: SparkContext) {
         val originalSparkContext = sparkContext.originalSparkContext();
           ...
         }
