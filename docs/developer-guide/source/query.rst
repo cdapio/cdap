@@ -299,7 +299,7 @@ Now that CDAP exposes a SQL interface, we have made available a JDBC driver that
 or in third party tools to connect to CDAP Datasets and execute SQL queries over them.
 
 The JDBC driver is a JAR that is bundled with CDAP SDK. You can find it at the root of your SDK, at
-``drivers/cdap-jdbc-driver.jar``.
+``lib/co.cask.cdap.explore-jdbc-<version>.jar``.
 
  // NOTE: we may want to tell users to download the jar from our website - figure this out
 
@@ -322,10 +322,63 @@ If you are using Maven, you can simply add a dependency in your file ``pom.xml``
     ...
   </dependencies>
 
-JDBC drivers are standard in Java ecosystem, and you can find
+Here is a snippet of Java code that uses the CDAP JDBC driver to connect to a running instance of CDAP,
+and executes a query over CDAP Datasets::
 
-Integration of CDAP Datasets with Business Intelligence tools
--------------------------------------------------------------
+  Class.forName("co.cask.cdap.explore.jdbc.ExploreDriver");  // First, register the driver once in your application
+
+  String connectionUrl = "jdbc:cdap://<cdap-host>:10000" +
+    "?auth.token=<authorization_token>";  // If your CDAP instance requires a authorization token for connection,
+                                          // you have to specify it here
+
+  Connection connection = DriverManager.getConnection(connectionUrl); // Connect to CDAP instance
+
+  // Execute a query over CDAP Datasets and retrieve the results
+  ResultSet resultSet = connection.prepareStatement("select * from cdap_user_mydataset").executeQuery();
+  // ...
+
+JDBC drivers are a standard in the Java ecosystem, and you can find more about how to use them at
+`this page <http://docs.oracle.com/javase/tutorial/jdbc/>`__.
+
+Access CDAP Datasets through Business Intelligence tools
+--------------------------------------------------------
+Most Business Intelligence tools have a way to integrate with relational databases using JDBC drivers. They already
+make available a variety of drivers to connect to standard databases, like MySQL or PostgreSQL. They also allow
+to add non-standard JDBC drivers. This is what is being detailed in this section for two Business Intelligence
+tools - *SquirrelSQL* and *Pentaho Data Integration*. Let's see how it is possible to connect to a running CDAP instance
+and interact with CDAP Datasets using CDAP JDBC driver inside those tools.
+
+CDAP JDBC driver integration with SquirrelSQL
+.............................................
+*SquirrelSQL* is a simple JDBC client which allows to execute SQL queries over a variety of relational databases.
+Here is how we can add the CDAP JDBC driver inside *SquirrelSQL*:
+
+#. Open the ``Drivers`` pane, located on the far left corner of *SquirrelSQL*.
+#. Click the ``+`` icon of the ``Drivers`` pane.
+
+   .. image:: _images/jdbc/squirrel_drivers.png
+
+#. Add a new Driver by entering a ``Name``, for example ``Cask CDAP Driver``. The ``Example URL`` is of the form
+   ``jdbc:cdap://<host>:10000?auth.token=<token>``. The ``Website URL`` can be left blank. In the ``Class Name``
+   field, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
+   Click on the ``Extra Class Path`` tab, then on ``Add``, and put the path to ``co.casl.cdap.explore-jdbc-<version>.jar``.
+
+   .. image:: _images/jdbc/squirrel_add_driver.png
+
+#. Click on ``OK``. You should now see ``Cask CDAP Driver`` in the list of drivers from the ``Drivers`` pane of
+   *SquirrelSQL*.
+#. We can now create an alias to connect to a running instance of CDAP. Open the ``Aliases`` pane, and click on
+   the ``+`` icon to create a new alias.
+#. In the ``Add Alias`` popup, choose a name. In this example, we are going to connect to a standalone CDAP
+   which we got running from the SDK. Our name will be ``CDAP Standalone``. Select the ``Cask CDAP Driver`` in
+   the list of available drivers. Our ``URL`` will be ``jdbc:cdap://localhost:10000``. Our standalone instance
+   does not require an authorization token, but if yours requires one, be sure to HTML encode your token
+   and pass it as a parameter of the ``URL``. ``User Name`` and ``Password`` are left blank.
+
+   .. image:: _images/jdbc/squirrel_add_alias.png
+
+#. Click on ``OK``. ``CDAP Standalone`` is now added to the list of aliases.
+#. A popup asks you to connect to your newly added alias.
 
 
 Formulating Queries
