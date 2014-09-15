@@ -19,13 +19,18 @@
  * Copyright 2014 The Apache Software Foundation. Licensed under the Apache License, Version 2.0.
  *
  */
+
 package co.cask.cdap.examples.sparkkmeans
 
-import breeze.linalg.{DenseVector, Vector, squaredDistance}
-import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
+import breeze.linalg.DenseVector
+import breeze.linalg.squaredDistance
+import breeze.linalg.Vector
+import co.cask.cdap.api.spark.ScalaSparkProgram
+import co.cask.cdap.api.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.NewHadoopRDD
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Implementation of KMeans Clustering Spark Program.
