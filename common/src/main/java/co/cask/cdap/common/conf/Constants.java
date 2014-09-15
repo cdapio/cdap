@@ -293,7 +293,7 @@ public final class Constants {
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
-    public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
+    public static final String API_KEY = "X-ApiKey";
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
   }
 
