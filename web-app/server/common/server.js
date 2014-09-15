@@ -114,7 +114,6 @@ WebAppServer.prototype.setAttributes = function setCommonAttributes() {
     }
     this.apiKey = this.config.apiKey;
     this.version = this.config.version;
-    this.configSet = this.configSet;
     this.configureExpress();
     this.setCookieSession(this.cookieName, this.secret);
 }
@@ -165,9 +164,9 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
     this.transferProtocol = "https://";
     url = 'https://' + this.config['router.server.address'] + ':' + this.config['router.ssl.server.port'] + path;
   } else {
-    this.routerBindPort = this.config['router.server.port'];
+    this.routerBindPort = this.config['router.bind.port'];
     this.transferProtocol = "http://";
-    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.server.port'] + path;
+    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.bind.port'] + path;
   }
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
