@@ -79,7 +79,7 @@ public class AccessTokenClient {
 
   private String host;
   // default will be set in parsing arguments
-  private int port = Integer.MIN_VALUE;
+  private int port = NO_SSL_PORT;
   private boolean useSsl = false;
   private boolean disableCertCheck = false;
 
@@ -177,6 +177,9 @@ public class AccessTokenClient {
       return;
     }
 
+    useSsl = commandLine.hasOption(ConfigurableOptions.SSL);
+    disableCertCheck = commandLine.hasOption(ConfigurableOptions.DISABLE_CERT_CHECK);
+
     if (commandLine.hasOption(ConfigurableOptions.HOST)) {
       host = commandLine.getOptionValue(ConfigurableOptions.HOST, "localhost");
     }
@@ -187,6 +190,8 @@ public class AccessTokenClient {
       } catch (NumberFormatException e) {
         usage("--port must be an integer value");
       }
+    } else {
+      port = (useSsl) ? SSL_PORT : NO_SSL_PORT;
     }
 
     if (commandLine.hasOption(ConfigurableOptions.USER_NAME)) {
@@ -201,13 +206,7 @@ public class AccessTokenClient {
     } else {
       if (password == null) {
         Console console = System.console();
-        try {
-          password = String.valueOf(console.readPassword("Password: "));
-        } catch (Exception e) {
-          // if main method is not called through a console, then this throws an error
-          // this would mean that password was not provided.
-          usage("Must provide a password");
-        }
+        password = String.valueOf(console.readPassword("Password: "));
       }
     }
 
@@ -216,14 +215,6 @@ public class AccessTokenClient {
       if (filePath == null) {
         usage("Specify --file to save to file");
       }
-    }
-
-    useSsl = commandLine.hasOption(ConfigurableOptions.SSL);
-    disableCertCheck = commandLine.hasOption(ConfigurableOptions.DISABLE_CERT_CHECK);
-
-    // port was not set by user so set to default based on if SSL is enabled
-    if (port == Integer.MIN_VALUE) {
-      port = (useSsl) ? SSL_PORT : NO_SSL_PORT;
     }
 
     if (commandLine.getArgs().length > 0) {
