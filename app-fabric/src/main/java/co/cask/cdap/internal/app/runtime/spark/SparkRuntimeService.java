@@ -129,28 +129,32 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     try {
       Location programJarCopy = copyProgramJar(programJarLocation, context);
-      // We remember tx, so that we can re-use it in Spark tasks
-      final Transaction tx = txClient.startLong();
       try {
-        SparkContextConfig.set(sparkHConf, context, cConf, tx, programJarCopy);
-        Location dependencyJar = buildDependencyJar(context, SparkContextConfig.getHConf());
+        // We remember tx, so that we can re-use it in Spark tasks
+        final Transaction tx = txClient.startLong();
         try {
-          sparkSubmitArgs = prepareSparkSubmitArgs(sparkSpecification, sparkHConf, programJarCopy, dependencyJar);
-          LOG.info("Submitting Spark program: {} with arguments {}", context, Arrays.toString(sparkSubmitArgs));
-          this.transaction = tx;
-          this.cleanupTask = createCleanupTask(dependencyJar, programJarCopy);
-        } catch (Exception e) {
-          dependencyJar.delete();
-          throw Throwables.propagate(e);
+          SparkContextConfig.set(sparkHConf, context, cConf, tx, programJarCopy);
+          Location dependencyJar = buildDependencyJar(context, SparkContextConfig.getHConf());
+          try {
+            sparkSubmitArgs = prepareSparkSubmitArgs(sparkSpecification, sparkHConf, programJarCopy, dependencyJar);
+            LOG.info("Submitting Spark program: {} with arguments {}", context, Arrays.toString(sparkSubmitArgs));
+            this.transaction = tx;
+            this.cleanupTask = createCleanupTask(dependencyJar, programJarCopy);
+          } catch (Throwable t) {
+            Locations.deleteQuietly(dependencyJar);
+            throw Throwables.propagate(t);
+          }
+        } catch (Throwable t) {
+          txClient.invalidate(tx.getWritePointer());
+          throw Throwables.propagate(t);
         }
-      } catch (Exception e) {
-        programJarCopy.delete();
-        txClient.abort(tx);
-        throw Throwables.propagate(e);
+      } catch (Throwable t) {
+        Locations.deleteQuietly(programJarCopy);
+        throw Throwables.propagate(t);
       }
-    } catch (Exception e) {
-      LOG.error("Exception while preparing for submitting Spark Job: {}", context, e);
-      throw Throwables.propagate(e);
+    } catch (Throwable t) {
+      LOG.error("Exception while preparing for submitting Spark Job: {}", context, t);
+      throw Throwables.propagate(t);
     }
   }
 
@@ -414,7 +418,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         }
       } finally {
         jarInput.close();
-        dependencyJar.delete();
+        Locations.deleteQuietly(dependencyJar);
       }
     } finally {
       jarOutput.close();
@@ -500,11 +504,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       @Override
       public void run() {
         for (Location location : locations) {
-          try {
-            location.delete();
-          } catch (IOException e) {
-            LOG.warn("Failed to delete file at {}", location.toURI(), e);
-          }
+          Locations.deleteQuietly(location);
         }
       }
     };
