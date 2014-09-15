@@ -16,8 +16,6 @@
 
 package co.cask.cdap.shell;
 
-import co.cask.cdap.shell.Command;
-
 /**
  * Base interface for {@link Command} and {@link CommandSet}.
  */
