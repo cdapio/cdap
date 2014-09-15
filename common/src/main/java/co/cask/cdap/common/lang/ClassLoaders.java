@@ -51,7 +51,7 @@ import javax.annotation.Nullable;
 public final class ClassLoaders {
 
   private static final List<String> HADOOP_PACKAGES = Lists.newArrayList("org.apache.hadoop");
-  private static final List<String> CONTINUUITY_API_PACKAGES = Lists.newArrayList("co.cask.cdap.api");
+  private static final List<String> CDAP_API_PACKAGES = Lists.newArrayList("co.cask.cdap.api");
   private static final Predicate<URI> JAR_ONLY_URI = new Predicate<URI>() {
     @Override
     public boolean apply(URI input) {
@@ -84,7 +84,7 @@ public final class ClassLoaders {
       }
     }
 
-    Set<String> resources = getResources(classLoader, getAPIClassPath(), CONTINUUITY_API_PACKAGES,
+    Set<String> resources = getResources(classLoader, getAPIClassPath(), CDAP_API_PACKAGES,
                                          true, bootstrapPaths, Sets.<String>newHashSet());
 
     return getResources(classLoader, ClassPath.from(classLoader, JAR_ONLY_URI),
