@@ -26,6 +26,7 @@ import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.TextStreamInputFormat;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -205,15 +206,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
             this.transaction = tx;
             this.cleanupTask = createCleanupTask(jobJar, programJarCopy);
           } catch (Throwable t) {
-            txClient.abort(tx);   // Can just abort as no data operation has been done since the job submission failed
+            Transactions.invalidateQuietly(txClient, tx);
             throw Throwables.propagate(t);
           }
         } catch (Throwable t) {
-          programJarCopy.delete();
+          Locations.deleteQuietly(programJarCopy);
           throw Throwables.propagate(t);
         }
       } catch (Throwable t) {
-        jobJar.delete();
+        Locations.deleteQuietly(jobJar);
         throw Throwables.propagate(t);
       }
     } catch (Throwable t) {
@@ -519,11 +520,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       @Override
       public void run() {
         for (Location location : locations) {
-          try {
-            location.delete();
-          } catch (IOException e) {
-            LOG.warn("Failed to delete file at {}", location.toURI(), e);
-          }
+          Locations.deleteQuietly(location);
         }
       }
     };
