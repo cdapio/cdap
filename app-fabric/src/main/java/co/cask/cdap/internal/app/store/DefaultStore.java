@@ -465,7 +465,7 @@ public class DefaultStore implements Store {
         mds.apps.deleteApplications(id.getId());
         mds.apps.deleteProgramArgs(id.getId());
         mds.apps.deleteAllStreams(id.getId());
-        // todo: delete program history?
+        mds.apps.deleteProgramHistory(id.getId());
         return null;
       }
     });
