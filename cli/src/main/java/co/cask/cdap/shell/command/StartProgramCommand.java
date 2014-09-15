@@ -49,7 +49,7 @@ public class StartProgramCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("start %s <%s>", elementType.getName(), ArgumentName.PROGRAM);
+    return String.format("start %s <%s>", elementType.getName(), elementType.getArgumentName());
   }
 
   @Override

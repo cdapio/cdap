@@ -61,7 +61,7 @@ public class GetProgramLogsCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s logs <%s> [%s] [%s]", elementType.getName(), ArgumentName.PROGRAM,
+    return String.format("get %s logs <%s> [%s] [%s]", elementType.getName(), elementType.getArgumentName(),
                          ArgumentName.START_TIME, ArgumentName.END_TIME);
   }
 

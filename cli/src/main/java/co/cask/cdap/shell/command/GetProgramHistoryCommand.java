@@ -72,7 +72,7 @@ public class GetProgramHistoryCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s history <%s>", elementType.getName(), ArgumentName.PROGRAM);
+    return String.format("get %s history <%s>", elementType.getName(), elementType.getArgumentName());
   }
 
   @Override

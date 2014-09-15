@@ -33,12 +33,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Completer for program IDs.
  */
-public abstract class ProgramIdCompleter extends StringsCompleter {
+public class ProgramIdCompleter extends StringsCompleter {
 
   private final ApplicationClient appClient;
+  private final ProgramType programType;
 
-  public ProgramIdCompleter(final ApplicationClient appClient) {
+  public ProgramIdCompleter(final ApplicationClient appClient, final ProgramType programType) {
     this.appClient = appClient;
+    this.programType = programType;
   }
 
   @Override
@@ -47,7 +49,7 @@ public abstract class ProgramIdCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<ProgramRecord> programs = appClient.listAllPrograms(getProgramType());
+          List<ProgramRecord> programs = appClient.listAllPrograms(programType);
           List<String> programIds = Lists.newArrayList();
           for (ProgramRecord programRecord : programs) {
             programIds.add(programRecord.getApp() + "." + programRecord.getId());
@@ -61,6 +63,4 @@ public abstract class ProgramIdCompleter extends StringsCompleter {
       }
     }, 3, TimeUnit.SECONDS);
   }
-
-  public abstract ProgramType getProgramType();
 }

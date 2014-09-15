@@ -79,7 +79,7 @@ public class GetProgramLiveInfoCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s live <%s>", elementType.getName(), ArgumentName.PROGRAM);
+    return String.format("get %s live <%s>", elementType.getName(), elementType.getArgumentName());
   }
 
   @Override

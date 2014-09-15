@@ -49,7 +49,7 @@ public class GetProgramStatusCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s status <%s>", elementType.getName(), ArgumentName.PROGRAM);
+    return String.format("get %s status <%s>", elementType.getName(), elementType.getArgumentName());
   }
 
   @Override

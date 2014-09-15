@@ -21,6 +21,15 @@ package co.cask.cdap.shell;
  */
 public enum ArgumentName {
   PROGRAM("program-id"),
+  STREAM("stream-id"),
+  PROCEDURE("procedure-id"),
+  METHOD("method-id"),
+  FLOW("flow-id"),
+  FLOWLET("flowlet-id"),
+  WORKFLOW("workflow-id"),
+  SERVICE("service-id"),
+  RUNNABLE("runnable-id"),
+  MAPREDUCE("mapreduce-id"),
 
   HOSTNAME("hostname"),
   DATASET_TYPE("dataset-type"),
@@ -28,26 +37,17 @@ public enum ArgumentName {
   NEW_DATASET_MODULE("new-dataset-module"),
   DATASET("dataset-name"),
   NEW_DATASET("new-dataset-name"),
-  STREAM("stream-id"),
   STREAM_EVENT("stream-event"),
   NEW_STREAM("new-stream-id"),
-  /** Procedure method */
-  METHOD("method-id"),
-  PROCEDURE("procedure-id"),
-
   PARAMETER_MAP("parameter-map"),
-
   TTL_IN_SECONDS("ttl-in-seconds"),
   NUM_INSTANCES("num-instances"),
-
   START_TIME("start-time"),
   END_TIME("end-time"),
   LIMIT("limit"),
-
   APP_JAR_FILE("app-jar-file"),
   DATASET_MODULE_JAR_FILE("module-jar-file"),
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
-
   QUERY("TODO:query"),
   APP("app-id");
 

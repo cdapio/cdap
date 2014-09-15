@@ -26,35 +26,69 @@ import java.util.Set;
  */
 public enum ElementType {
 
-  APP("application", "applications", "app", "apps", null, null),
-  DATASET("Dataset", "Datasets", "dataset", "datasets", null, null),
-  DATASET_MODULE("Dataset module", "Dataset modules", "dataset module", "dataset modules", null, null),
-  DATASET_TYPE("Dataset type", "Dataset types", "dataset type", "dataset types", null, null),
-  QUERY("Dataset query", "Dataset queries", "dataset query", "dataset queries", null, null),
-  STREAM("Stream", "Streams", "stream", "streams", null, null),
-  PROGRAM("program", "programs", "program", "programs", null, null),
+  APP("application", "applications", "app", "apps",
+      null, null, ArgumentName.APP,
+      Capability.LIST),
 
-  FLOW("Flow", "Flows", "flow", "flows", ProgramType.FLOW, null,
-       Capability.HISTORY, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS, Capability.START_STOP),
+  DATASET("Dataset", "Datasets", "dataset", "datasets",
+          null, null, ArgumentName.DATASET,
+          Capability.LIST),
 
-  WORKFLOW("Workflow", "Workflows", "workflow", "workflows", ProgramType.WORKFLOW, null,
-           Capability.HISTORY, Capability.STATUS, Capability.START_STOP),
+  DATASET_MODULE("Dataset module", "Dataset modules", "dataset module", "dataset modules",
+                 null, null, ArgumentName.DATASET_MODULE,
+                 Capability.LIST),
 
-  FLOWLET("Flowlet", "Flowlets", "flowlet", "flowlets", null, ProgramType.FLOW,
+  DATASET_TYPE("Dataset type", "Dataset types", "dataset type", "dataset types",
+               null, null, ArgumentName.DATASET_TYPE,
+               Capability.LIST),
+
+  QUERY("Dataset query", "Dataset queries", "dataset query", "dataset queries",
+        null, null, ArgumentName.QUERY),
+
+  STREAM("Stream", "Streams", "stream", "streams",
+         null, null, ArgumentName.STREAM,
+         Capability.LIST),
+
+  PROGRAM("program", "programs", "program", "programs",
+          null, null, ArgumentName.PROGRAM),
+
+  FLOW("Flow", "Flows", "flow", "flows",
+       ProgramType.FLOW, null,
+       ArgumentName.FLOW,
+       Capability.HISTORY, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS, Capability.START_STOP,
+       Capability.LIST),
+
+  WORKFLOW("Workflow", "Workflows", "workflow", "workflows",
+           ProgramType.WORKFLOW, null,
+           ArgumentName.WORKFLOW,
+           Capability.HISTORY, Capability.STATUS, Capability.START_STOP,
+           Capability.LIST),
+
+  FLOWLET("Flowlet", "Flowlets", "flowlet", "flowlets",
+          null, ProgramType.FLOW,
+          ArgumentName.FLOWLET,
           Capability.SCALE),
 
-  PROCEDURE("Procedure", "Procedures", "procedure", "procedures", ProgramType.PROCEDURE, null,
+  PROCEDURE("Procedure", "Procedures", "procedure", "procedures",
+            ProgramType.PROCEDURE, null,
+            ArgumentName.PROCEDURE,
             Capability.HISTORY, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
-            Capability.START_STOP),
+            Capability.START_STOP, Capability.LIST),
 
-  SERVICE("Service", "Services", "service", "services", ProgramType.SERVICE, null,
+  SERVICE("Service", "Services", "service", "services",
+          ProgramType.SERVICE, null,
+          ArgumentName.SERVICE,
           Capability.START_STOP, Capability.STATUS),
 
-  RUNNABLE("Runnable", "Runnables", "runnable", "runnables", null, ProgramType.SERVICE,
+  RUNNABLE("Runnable", "Runnables", "runnable", "runnables",
+           null, ProgramType.SERVICE,
+           ArgumentName.RUNNABLE,
            Capability.SCALE, Capability.HISTORY, Capability.LOGS),
 
-  MAPREDUCE("MapReduce job", "MapReduce jobs", "mapreduce", "mapreduce", ProgramType.MAPREDUCE, null,
-            Capability.LOGS, Capability.HISTORY, Capability.STATUS, Capability.START_STOP);
+  MAPREDUCE("MapReduce job", "MapReduce jobs", "mapreduce", "mapreduce",
+            ProgramType.MAPREDUCE, null,
+            ArgumentName.MAPREDUCE,
+            Capability.LOGS, Capability.HISTORY, Capability.STATUS, Capability.START_STOP, Capability.LIST);
 
   private final String pluralName;
   private final String pluralPrettyName;
@@ -63,10 +97,12 @@ public enum ElementType {
   private final ProgramType parentType;
   private final Set<Capability> capabilities;
   private final String prettyName;
+  private final ArgumentName argumentName;
 
   ElementType(String prettyName, String pluralPrettyName,
               String name, String pluralName,
               ProgramType programType, ProgramType parentType,
+              ArgumentName argumentName,
               Capability... capabilities) {
     this.prettyName = prettyName;
     this.pluralPrettyName = pluralPrettyName;
@@ -74,6 +110,7 @@ public enum ElementType {
     this.pluralName = pluralName;
     this.programType = programType;
     this.parentType = parentType;
+    this.argumentName = argumentName;
     this.capabilities = Sets.newHashSet(capabilities);
   }
 
@@ -87,6 +124,10 @@ public enum ElementType {
 
   public String getName() {
     return name;
+  }
+
+  public ArgumentName getArgumentName() {
+    return argumentName;
   }
 
   public String getPluralName() {
@@ -138,7 +179,11 @@ public enum ElementType {
     throw new IllegalArgumentException("Invalid ElementType from ProgramType " + programType);
   }
 
+  public boolean isListable() {
+    return capabilities.contains(Capability.LIST);
+  }
+
   private enum Capability {
-    SCALE, HISTORY, LOGS, LIVE_INFO, STATUS, START_STOP
+    SCALE, HISTORY, LOGS, LIVE_INFO, STATUS, START_STOP, LIST
   }
 }

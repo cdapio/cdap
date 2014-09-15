@@ -49,7 +49,7 @@ public class StopProgramCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("stop %s <%s>", elementType.getName(), ArgumentName.PROGRAM);
+    return String.format("stop %s <%s>", elementType.getName(), elementType.getArgumentName());
   }
 
   @Override

@@ -73,7 +73,7 @@ public class SetProgramInstancesCommand extends AbstractCommand {
   @Override
   public String getPattern() {
     return String.format("set %s instances <%s> <%s>", elementType.getName(),
-                         ArgumentName.PROGRAM, ArgumentName.NUM_INSTANCES);
+                         elementType.getArgumentName(), ArgumentName.NUM_INSTANCES);
   }
 
   @Override

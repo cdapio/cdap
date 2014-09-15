@@ -68,7 +68,7 @@ public class GetProgramInstancesCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get %s instances <%s>", elementType.getName(), ArgumentName.PROGRAM);
+    return String.format("get %s instances <%s>", elementType.getName(), elementType.getArgumentName());
   }
 
   @Override

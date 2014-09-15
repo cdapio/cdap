@@ -16,16 +16,20 @@
 
 package co.cask.cdap.shell;
 
+import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.shell.completer.element.AppIdCompleter;
 import co.cask.cdap.shell.completer.element.DatasetModuleNameCompleter;
 import co.cask.cdap.shell.completer.element.DatasetNameCompleter;
 import co.cask.cdap.shell.completer.element.DatasetTypeNameCompleter;
+import co.cask.cdap.shell.completer.element.ProgramIdCompleter;
 import co.cask.cdap.shell.completer.element.StreamIdCompleter;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import jline.console.completer.Completer;
 import jline.console.completer.FileNameCompleter;
 
+import java.util.Map;
 import javax.inject.Inject;
 
 /**
@@ -41,11 +45,22 @@ public class DefaultCompleters extends CompleterSet {
         .put(ArgumentName.DATASET_MODULE.getName(), injector.getInstance(DatasetModuleNameCompleter.class))
         .put(ArgumentName.DATASET.getName(), injector.getInstance(DatasetNameCompleter.class))
         .put(ArgumentName.DATASET_TYPE.getName(), injector.getInstance(DatasetTypeNameCompleter.class))
-        // TODO: program id completer per program type
-//        .put(ArgumentName.PROGRAM.getName(), injector.getInstance(AllProgramIdCompleter.class))
         .put(ArgumentName.STREAM.getName(), injector.getInstance(StreamIdCompleter.class))
         .put(ArgumentName.APP_JAR_FILE.getName(), new FileNameCompleter())
         .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleter())
+        .putAll(generateProgramIdCompleters(injector))
         .build());
   }
+
+  private static Map<? extends String, ? extends Completer> generateProgramIdCompleters(Injector injector) {
+    ImmutableMap.Builder<String, Completer> result = ImmutableMap.builder();
+    for (ElementType elementType : ElementType.values()) {
+      if (elementType.getProgramType() != null && elementType.isListable()) {
+        result.put(elementType.getArgumentName().getName(),
+                   new ProgramIdCompleter(injector.getInstance(ApplicationClient.class), elementType.getProgramType()));
+      }
+    }
+    return result.build();
+  }
+
 }
