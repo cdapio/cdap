@@ -47,7 +47,7 @@ public final class MetricsScanner implements Iterator<MetricsScanResult> {
    * @param scanner The table scanner of a query.
    */
   MetricsScanner(MetricsScanQuery query, Scanner scanner, MetricsEntityCodec entityCodec, int resolution) {
-    this.query = query;
+    this.query = new SuffixedMetricsScanQuery(query);
     this.scanner = scanner;
     this.entityCodec = entityCodec;
     this.resolution = resolution;
@@ -90,13 +90,15 @@ public final class MetricsScanner implements Iterator<MetricsScanResult> {
           // Decode context and metric from key
           int offset = 0;
           String context = entityCodec.decode(MetricsEntityType.CONTEXT, rowKey, offset);
-          if (query.getContextPrefix() != null && !context.startsWith(query.getContextPrefix())) {
+          // Always have a "." suffix for unique matching
+          if (query.getContextPrefix() != null && !(context + ".").startsWith(query.getContextPrefix())) {
             continue;
           }
 
           offset += entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
           String metric = entityCodec.decode(MetricsEntityType.METRIC, rowKey, offset);
-          if (!metric.startsWith(query.getMetricPrefix())) {
+          // Always have a "." suffix for unique matching
+          if (!(metric + ".").startsWith(query.getMetricPrefix())) {
             continue;
           }
 
@@ -108,7 +110,7 @@ public final class MetricsScanner implements Iterator<MetricsScanResult> {
             continue;
           }
           // If there is tag in the query, it must match with the row key.
-          if (query.getTagPrefix() != null && !tag.startsWith(query.getTagPrefix())) {
+          if (query.getTagPrefix() != null && !(tag + ".").startsWith(query.getTagPrefix())) {
             continue;
           }
 
@@ -135,5 +137,50 @@ public final class MetricsScanner implements Iterator<MetricsScanResult> {
         return endOfData();
       }
     };
+  }
+
+  private static final class SuffixedMetricsScanQuery implements MetricsScanQuery {
+
+    private final MetricsScanQuery delegate;
+    private final String contextPrefix;
+    private final String metricsPrefix;
+    private final String tagPrefix;
+
+    private SuffixedMetricsScanQuery(MetricsScanQuery delegate) {
+      this.delegate = delegate;
+      this.contextPrefix = delegate.getContextPrefix() == null ? null : delegate.getContextPrefix() + ".";
+      this.metricsPrefix = delegate.getMetricPrefix() == null ? null : delegate.getMetricPrefix() + ".";
+      this.tagPrefix = delegate.getTagPrefix() == null ? null : delegate.getTagPrefix() + ".";
+    }
+
+    @Override
+    public long getStartTime() {
+      return delegate.getStartTime();
+    }
+
+    @Override
+    public long getEndTime() {
+      return delegate.getEndTime();
+    }
+
+    @Override
+    public String getContextPrefix() {
+      return contextPrefix;
+    }
+
+    @Override
+    public String getRunId() {
+      return delegate.getRunId();
+    }
+
+    @Override
+    public String getMetricPrefix() {
+      return metricsPrefix;
+    }
+
+    @Override
+    public String getTagPrefix() {
+      return tagPrefix;
+    }
   }
 }
