@@ -74,8 +74,4 @@ public class CommandSet implements HasCommand {
 
     return null;
   }
-
-  public String getHelperText() {
-    throw new UnsupportedOperationException("TODO");
-  }
 }
