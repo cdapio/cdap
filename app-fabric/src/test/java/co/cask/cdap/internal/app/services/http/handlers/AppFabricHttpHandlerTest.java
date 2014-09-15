@@ -1167,8 +1167,13 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     try {
       HttpResponse response = deploy(WordCountApp.class);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      // Run map-reduce job verify that the history is not empty
+      testHistory(WordCountApp.class, "WordCountApp", "mapreduce", "VoidMapReduceJob");
       response = doPost("/v2/unrecoverable/reset");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      String url = String.format("/v2/apps/%s/%s/%s/history", "WordCountApp", "mapreduce", "VoidMapReduceJob");
+      // Verify that the unrecoverable reset deletes the history
+      historyStatusWithRetry(url, 0);
     } finally {
       Assert.assertEquals(200, doDelete("/v2/apps").getStatusLine().getStatusCode());
     }

@@ -434,7 +434,7 @@ public class DefaultStore implements Store {
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteApplication(id.getAccountId(), id.getId());
         mds.apps.deleteProgramArgs(id.getAccountId(), id.getId());
-        // todo: delete program history?
+        mds.apps.deleteProgramHistory(id.getAccountId(), id.getId());
         return null;
       }
     });
@@ -449,7 +449,7 @@ public class DefaultStore implements Store {
       public Void apply(AppMds mds) throws Exception {
         mds.apps.deleteApplications(id.getId());
         mds.apps.deleteProgramArgs(id.getId());
-        // todo: delete program history?
+        mds.apps.deleteProgramHistory(id.getId());
         return null;
       }
     });
