@@ -23,7 +23,7 @@ user=$USER
 epoch=`date +%s`
 
 auth_token=
-auth_file="$HOME/.continuuity.accesstoken"
+auth_file="$HOME/.cdap.accesstoken"
 
 function get_auth_token() {
   if [ -f $auth_file ]; then

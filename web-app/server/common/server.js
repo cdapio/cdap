@@ -918,7 +918,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
   this.app.get('/download-access-token/*', function (req, res) {
     var accessToken = req.params[0];
-    res.attachment('.continuuity.accesstoken');
+    res.attachment('.cdap.accesstoken');
     res.end(accessToken, 'utf-8');
   });
 
