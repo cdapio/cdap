@@ -428,7 +428,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         long totalFiles = summary.getFileCount();
         long totalDirectories = summary.getDirectoryCount();
 
-        // continuuity hbase tables
+        // cdap hbase tables
         for (FileStatus fileStatus : hdfs.listStatus(hbasePath, continuuityFilter)) {
           summary = hdfs.getContentSummary(fileStatus.getPath());
           totalUsed += summary.getSpaceConsumed();

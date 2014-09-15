@@ -170,7 +170,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     setInputDataSetIfNeeded(job);
     setOutputDataSetIfNeeded(job);
 
-    // packaging job jar which includes continuuity classes with dependencies
+    // packaging job jar which includes cdap classes with dependencies
     // NOTE: user's jar is added to classpath separately to leave the flexibility in future to create and use separate
     //       classloader when executing user code. We need to submit a copy of the program jar because
     //       in distributed mode this returns program path on HDFS, not localized, which may cause race conditions

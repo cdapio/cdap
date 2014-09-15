@@ -44,7 +44,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
   private static final Gson GSON = new Gson();
 
   private final DatasetSpecification spec;
-  // todo: datasets should not depend on continuuity configuration!
+  // todo: datasets should not depend on cdap configuration!
   private final CConfiguration conf;
 
   private final LocationFactory locationFactory;
