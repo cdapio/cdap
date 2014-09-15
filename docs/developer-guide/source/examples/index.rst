@@ -63,6 +63,12 @@ in a single Application.
 The application uses a scheduled MapReduce job and Workflow to read from one ObjectStore dataset
 and write to another.
 
+`SparkKMeans <sparkKMeans.html>`_
+=======================================================================
+This example shows another application of streaming analysis, computing the centers of points from an input stream using KMeans Clustering method.
+
+The application show how to use a **Spark** Program.
+
 Where to Go Next
 ================
 Now that you've seen some examples using CDAP, take a look at:
