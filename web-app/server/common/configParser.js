@@ -47,7 +47,7 @@ function onConfigReadEnd(deferred, isSecure, data) {
   if (this.config["ssl.enabled"] === "true" && !this.configSet) {
     this.configSet = true;
     configString = "";
-    this.extractConfig("enterprise", "sConfig", true)
+    this.extractConfig("enterprise", "security", true)
         .then(function onSecureConfigComplete() {
           deferred.resolve();
         }.bind(this));
