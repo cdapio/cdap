@@ -298,10 +298,9 @@ Connecting to CDAP Datasets using CDAP JDBC driver
 Now that CDAP exposes a SQL interface, we have made available a JDBC driver that you can use in your code
 or in third party tools to connect to CDAP Datasets and execute SQL queries over them.
 
-The JDBC driver is a JAR that is bundled with CDAP SDK. You can find it at the root of your SDK, at
-``lib/co.cask.cdap.explore-jdbc-<version>.jar``.
+The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``lib``
+directory of your SDK installation at ``lib/co.cask.cdap.explore-jdbc-<version>.jar``.
 
- // NOTE: for the section below, we may want to tell users to download the jar from our website - figure this out
 If you don't have a CDAP SDK and only want to connect to an existing instance of CDAP, you can download the CDAP JDBC
 driver using this `link <https://repository.continuuity.com/content/repositories/releases-public/co/cask/cdap/explore-jdbc/>`__.
 Go to the directory matching the version of your running CDAP instance, and download the file named ``explore-jdbc-<version>.jar``.
@@ -324,40 +323,46 @@ If you are using Maven, you can simply add a dependency in your file ``pom.xml``
 Here is a snippet of Java code that uses the CDAP JDBC driver to connect to a running instance of CDAP,
 and executes a query over CDAP Datasets::
 
-  Class.forName("co.cask.cdap.explore.jdbc.ExploreDriver");  // First, register the driver once in your application
+  // First, register the driver once in your application
+  Class.forName("co.cask.cdap.explore.jdbc.ExploreDriver");
 
+  // If your CDAP instance requires a authorization token for connection,
+  // you have to specify it here.
+  // Replace <cdap-host> and <authorization_token> as appropriate to your installation.
   String connectionUrl = "jdbc:cdap://<cdap-host>:10000" +
-    "?auth.token=<authorization_token>";  // If your CDAP instance requires a authorization token for connection,
-                                          // you have to specify it here
+    "?auth.token=<authorization_token>";
 
-  Connection connection = DriverManager.getConnection(connectionUrl); // Connect to CDAP instance
+  // Connect to CDAP instance
+  Connection connection = DriverManager.getConnection(connectionUrl);
 
   // Execute a query over CDAP Datasets and retrieve the results
   ResultSet resultSet = connection.prepareStatement("select * from cdap_user_mydataset").executeQuery();
-  // ...
+  ...
 
-JDBC drivers are a standard in the Java ecosystem, and you can find more about how to use them at
-`this page <http://docs.oracle.com/javase/tutorial/jdbc/>`__.
+JDBC drivers are a standard in the Java ecosystem, with many `resources about them available
+<http://docs.oracle.com/javase/tutorial/jdbc/>`__.
 
-Access CDAP Datasets through Business Intelligence tools
---------------------------------------------------------
-Most Business Intelligence tools have a way to integrate with relational databases using JDBC drivers. They already
-make available a variety of drivers to connect to standard databases, like MySQL or PostgreSQL. They also allow
-to add non-standard JDBC drivers. This is what is being detailed in this section for two Business Intelligence
-tools - *SquirrelSQL* and *Pentaho Data Integration*. Let's see how it is possible to connect to a running CDAP instance
-and interact with CDAP Datasets using CDAP JDBC driver inside those tools.
+Accessing CDAP Datasets through Business Intelligence Tools
+-----------------------------------------------------------
+Most Business Intelligence tools can integrate with relational databases using JDBC drivers. They often include
+drivers to connect to standard databases such as MySQL or PostgreSQL.
+Most tools allow the addition of non-standard JDBC drivers.
+
+We'll look at two business intelligence tools — *SquirrelSQL* and *Pentaho Data Integration* —
+and see how it is possible to connect to a running CDAP instance and interact with
+CDAP Datasets using the CDAP JDBC driver.
 
 CDAP JDBC driver integration with SquirrelSQL
 .............................................
-*SquirrelSQL* is a simple JDBC client which allows to execute SQL queries over a variety of relational databases.
-Here is how we can add the CDAP JDBC driver inside *SquirrelSQL*.
+*SquirrelSQL* is a simple JDBC client which executes SQL queries against many different relational databases.
+Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
 
 #. Open the ``Drivers`` pane, located on the far left corner of *SquirrelSQL*.
 #. Click the ``+`` icon of the ``Drivers`` pane.
 
    .. image:: _images/jdbc/squirrel_drivers.png
 
-#. Add a new Driver by entering a ``Name``, for example ``Cask CDAP Driver``. The ``Example URL`` is of the form
+#. Add a new Driver by entering a ``Name``, such as ``CDAP Driver``. The ``Example URL`` is of the form
    ``jdbc:cdap://<host>:10000?auth.token=<token>``. The ``Website URL`` can be left blank. In the ``Class Name``
    field, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
    Click on the ``Extra Class Path`` tab, then on ``Add``, and put the path to ``co.cask.cdap.explore-jdbc-<version>.jar``.
@@ -368,35 +373,35 @@ Here is how we can add the CDAP JDBC driver inside *SquirrelSQL*.
    *SquirrelSQL*.
 #. We can now create an alias to connect to a running instance of CDAP. Open the ``Aliases`` pane, and click on
    the ``+`` icon to create a new alias.
-#. In the ``Add Alias`` popup, choose a name. In this example, we are going to connect to a standalone CDAP
-   which we got running from the SDK. Our name will be ``CDAP Standalone``. Select the ``Cask CDAP Driver`` in
-   the list of available drivers. Our ``URL`` will be ``jdbc:cdap://localhost:10000``. Our standalone instance
-   does not require an authorization token, but if yours requires one, be sure to HTML encode your token
+#. In this example, we are going to connect to a standalone CDAP which we started running from the SDK.
+   The name for our alias will be ``CDAP Standalone``. Select the ``CDAP Driver`` in
+   the list of available drivers. Our URL will be ``jdbc:cdap://localhost:10000``. Our standalone instance
+   does not require an authorization token, but if yours requires one, HTML-encode your token
    and pass it as a parameter of the ``URL``. ``User Name`` and ``Password`` are left blank.
 
    .. image:: _images/jdbc/squirrel_add_alias.png
 
 #. Click on ``OK``. ``CDAP Standalone`` is now added to the list of aliases.
-#. A popup asks you to connect to your newly added alias. Click on ``Connect``, and *SquirrelSQL* will retrieve
-   information about your running CDAP instance Datasets.
+#. A popup asks you to connect to your newly-added alias. Click on ``Connect``, and *SquirrelSQL* will retrieve
+   information about your running CDAP Datasets.
 #. To execute a SQL query on your CDAP Datasets, go to the ``SQL`` tab, enter a query in the center field, and click
-   on the running man icon on top of the tab. Your results will show in the bottom half of *SquirrelSQL* main view.
+   on the "running man" icon on top of the tab. Your results will show in the bottom half of the *SquirrelSQL* main view.
 
    .. image:: _images/jdbc/squirrel_sql_query.png
 
 CDAP JDBC driver integration with Pentaho Data Integration
 ..........................................................
-*Pentaho Data Integration* is a more advanced open source Business Intelligence tool that allows to execute
-transformations of data coming from various sources. Let's see how it is possible to make it connect to
+*Pentaho Data Integration* is an advanced, open source business intelligence tool that can execute
+transformations of data coming from various sources. Let's see how to connect it to
 CDAP Datasets using the CDAP JDBC driver.
 
 #. Before opening the *Pentaho Data Integration* application, copy the ``co.cask.cdap.explore-jdbc-<version>.jar``
-   file in the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application directory.
+   file in the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
 #. Open *Pentaho Data Integration*.
 #. In the toolbar, select ``File -> New -> Database Connection...``.
 #. In the ``General`` section, select a ``Connection Name``, like ``CDAP Standalone``. For the ``Connection Type``, select
-   ``Generic database``. Select ``Native (JDBC)`` for the ``Access`` field. In this example, we connect to a
-   standalone instance of CDAP, our ``Custom Connection URL`` will then be ``jdbc:cdap://localhost:10000``.
+   ``Generic database``. Select ``Native (JDBC)`` for the ``Access`` field. In this example, where we connect to
+   a standalone instance of CDAP, our ``Custom Connection URL`` will then be ``jdbc:cdap://localhost:10000``.
    In the field ``Custom Driver Class Name``, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
 
    .. image:: _images/jdbc/pentaho_add_connection.png
@@ -407,17 +412,17 @@ CDAP Datasets using the CDAP JDBC driver.
 
    .. image:: _images/jdbc/pentaho_table_input.png
 
-#. Right click on the ``Table input`` in your transformation and select ``Edit step``. You can select a better name
-   for this input, like ``CDAP Datasets query``. Under ``Connection``, select the newly created database connection.
-   In this example, ``CDAP Standalone``. Enter a valid SQL query in the main ``SQL`` field. This will define the data
+#. Right-click on ``Table input`` in your transformation and select ``Edit step``. You can specify an appropriate name
+   for this input such as ``CDAP Datasets query``. Under ``Connection``, select the newly created database connection;
+   in this example, ``CDAP Standalone``. Enter a valid SQL query in the main ``SQL`` field. This will define the data
    available to your transformation.
 
    .. image:: _images/jdbc/pentaho_modify_input.png
 
 #. Click on ``OK``. Your input is now ready to be used in your transformation, and it will contain data coming
-   from the results of a SQL query on CDAP Datasets.
-#. For more information on how to add components to a transformation and link them together, see
-   `Pentaho Data Integration page <http://community.pentaho.com/projects/data-integration/>`__.
+   from the results of the SQL query on the CDAP Datasets.
+#. For more information on how to add components to a transformation and link them together, see the
+   `Pentaho Data Integration page \<http://community.pentaho.com/projects/data-integration/>`__.
 
 
 Formulating Queries
