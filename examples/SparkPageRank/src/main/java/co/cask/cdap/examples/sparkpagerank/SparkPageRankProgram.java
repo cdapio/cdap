@@ -83,7 +83,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
     });
     // Calculates and updates URL ranks continuously using PageRank algorithm.
     for (int current = 0; current < iterationCount; current++) {
-      LOG.debug("Processing data with PageRank algorithm. Iteration {}/{}", current, (iterationCount - 1));
+      LOG.debug("Processing data with PageRank algorithm. Iteration {}/{}", current + 1, (iterationCount));
       // Calculates URL contributions to the rank of other URLs.
       JavaPairRDD<String, Double> contribs = links.join(ranks).values()
         .flatMapToPair(new PairFlatMapFunction<Tuple2<Iterable<String>, Double>, String, Double>() {
@@ -108,7 +108,6 @@ public class SparkPageRankProgram implements JavaSparkProgram {
     }
 
     LOG.info("Writing ranks data");
-
 
     JavaPairRDD<byte[], Double> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>, byte[], Double>() {
       @Override

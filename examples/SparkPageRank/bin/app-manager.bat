@@ -54,7 +54,7 @@ GOTO USAGE
 :USAGE
 echo Application lifecycle management tool
 echo Usage: %0 {deploy^|start^|run^||stop^|status}
-echo Use run option to run spark job
+echo Use run option to run Spark program
 GOTO :EOF
 
 :DEPLOY
@@ -78,6 +78,7 @@ GOTO :EOF
 :STOP
 CALL :POST %APP_NAME% flows %FLOW_NAME% stop
 CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% stop
+CALL :POST %APP_NAME% spark %SPARK_NAME% stop
 GOTO :EOF
 
 :STATUS

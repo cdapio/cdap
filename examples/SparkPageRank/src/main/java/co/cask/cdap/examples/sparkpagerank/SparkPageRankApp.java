@@ -30,6 +30,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
@@ -95,9 +96,9 @@ public class SparkPageRankApp extends AbstractApplication {
         .setName("BackLinkFlow")
         .setDescription("Reads URL pair and stores in dataset")
         .withFlowlets()
-          .add("reader", new BacklinkURLsReader())
+        .add("reader", new BacklinkURLsReader())
         .connect()
-          .fromStream("backlinkURLStream").to("reader")
+        .fromStream("backlinkURLStream").to("reader")
         .build();
     }
   }
@@ -153,9 +154,23 @@ public class SparkPageRankApp extends AbstractApplication {
       throws IOException, InterruptedException {
 
       // Get the url from the query parameters.
-      byte[] url = request.getArgument("url").getBytes(UTF8);
+      String urlParam = "";
+      for (String key : request.getArguments().keySet()) {
+        if (key.equalsIgnoreCase("url")) {
+          urlParam = request.getArgument(key);
+        }
+      }
+      if (urlParam.isEmpty()) {
+        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "URL must be given as argument");
+      }
+      byte[] url = urlParam.getBytes(UTF8);
+
       // Get the rank from the ranks dataset.
       Double rank = ranks.read(url);
+      if (rank == null) {
+        responder.error(ProcedureResponse.Code.NOT_FOUND, "No rank found for " + urlParam);
+        return;
+      }
 
       LOG.trace("Key: {}, Data: {}", Arrays.toString(url), rank);
 
