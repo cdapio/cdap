@@ -1176,6 +1176,30 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, doGet("/v2/apps").getStatusLine().getStatusCode());
   }
 
+  @Test
+  public void testHistoryDeleteAfterUnrecoverableReset() throws Exception {
+
+    String appId = "dummy";
+    String runnableType = "mapreduce";
+    String runnableId = "dummy-batch";
+
+    deploy(DummyAppWithTrackingTable.class);
+    // first run
+    Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "start"));
+    waitState(runnableType, appId, runnableId, "RUNNING");
+    Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
+    waitState(runnableType, appId, runnableId, "STOPPED");
+    String url = String.format("/v2/apps/%s/%s/%s/history", appId, runnableType, runnableId);
+    // verify the run by checking if history has one entry
+    historyStatusWithRetry(url, 1);
+
+    HttpResponse response = doPost("/v2/unrecoverable/reset");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // Verify that the unrecoverable reset deletes the history
+    historyStatusWithRetry(url, 0);
+  }
+
 
   /**
    * Test for resetting app.
