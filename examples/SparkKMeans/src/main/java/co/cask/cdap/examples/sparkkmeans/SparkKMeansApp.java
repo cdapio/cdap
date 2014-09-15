@@ -30,6 +30,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
@@ -64,7 +65,7 @@ public class SparkKMeansApp extends AbstractApplication {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
-      // because String are actual classes.
+      // because String is an actual classes.
       throw new RuntimeException(e);
     }
   }
@@ -141,6 +142,10 @@ public class SparkKMeansApp extends AbstractApplication {
     public void getCenters(ProcedureRequest request, ProcedureResponder responder)
       throws IOException, InterruptedException {
       String index = request.getArgument("index");
+      if (index == null) {
+        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Index must be given as argument");
+        return;
+      }
       LOG.debug("get center for index {}", index);
       // Send response with JSON format.
       responder.sendJson(centers.read(index.getBytes()));
