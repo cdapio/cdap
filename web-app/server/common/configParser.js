@@ -3,7 +3,7 @@ module.exports = {
 };
 
 var promise = require('q'),
-    fs = requrie('fs'),
+    fs = require('fs'),
     lodash = require('lodash'),
     spawn = require('child_process').spawn,
     xml2js = require('xml2js'),
@@ -31,15 +31,15 @@ function extractConfig(mode, configParam) {
     configReader.stdout.on('end', partialConfigRead.bind(this));
   } else {
     this.config = require("../../cdap-config.json");
-    try {
-      fs.readFile(__dirname + '/../VERSION', "utf-8", function(error, version) {
+    fs.readFile(__dirname + '/../VERSION', "utf-8", function(error, version) {
+      if (error) {
+        this.logger.info(error);
+        this.logger.info("Unable to open VERSION file");
+      } else {
         this.config.version = version;
-        deferred.resolve();
-      }.bind(this));
-    } catch (e) {
-      this.logger.info("Unable to read the VERSION file.", e);
+      }
       deferred.resolve();
-    }
+    }.bind(this));
     if (this.config["ssl.enabled"] === "true") {
       this.config = lodash.extend(this.config, require("../../cdap-security-config.json"));
       if (this.config["dashboard.selfsignedcertificate.enabled"] === "true") {
