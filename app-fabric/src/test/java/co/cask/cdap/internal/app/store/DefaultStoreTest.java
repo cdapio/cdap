@@ -519,7 +519,7 @@ public class DefaultStoreTest {
   @Test
   public void testHistoryDeletion() throws Exception {
 
-    // Deploy Two Apps
+    // Deploy two apps, write some history for programs
     // Remove application using accountId, AppId and verify
     // Remove all from accountId and verify
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
