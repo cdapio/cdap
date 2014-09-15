@@ -13,6 +13,7 @@ Cask Data Application Platform Documentation
    Examples </examples/index>
    Programming Guide </programming>
    Advanced Features </advanced>
+   Ingesting Data </ingest>
    Querying Datasets with SQL </query>
    Testing and Debugging </debugging>
    Security </security>

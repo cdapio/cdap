@@ -831,5 +831,5 @@ Where to Go Next
 ================
 Now that you've looked at the advanced features of CDAP, take a look at:
 
-- `Querying Datasets with SQL <query.html>`__,
-  which covers ad-hoc querying of CDAP Datasets using SQL.
+- `Ingesting Data <ingest.html>`__,
+  which covers tools and applications for getting your data into CDAP.
