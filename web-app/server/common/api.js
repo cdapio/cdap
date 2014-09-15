@@ -389,7 +389,7 @@ setInterval(function () {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
-				'X-Continuuity-ApiKey': apiKey
+				'X-ApiKey': apiKey
 			}
 		};
 

@@ -359,7 +359,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'GET',
       path: '/' + self.API_VERSION + '/metrics/available' + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -417,7 +417,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'DELETE',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     }, function (error, response, body) {
@@ -447,7 +447,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'PUT',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -484,7 +484,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -495,7 +495,7 @@ WebAppServer.prototype.bindRoutes = function() {
       };
       opts.body = JSON.stringify(opts.body) || '';
       opts.headers = {
-        'X-Continuuity-ApiKey': req.body.apiKey,
+        'X-ApiKey': req.body.apiKey,
         'Authorization': 'Bearer ' + req.cookies.token
       };
     }
@@ -525,7 +525,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -564,7 +564,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'GET',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -615,7 +615,7 @@ WebAppServer.prototype.bindRoutes = function() {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': content.length,
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -666,7 +666,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: url,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -684,7 +684,7 @@ WebAppServer.prototype.bindRoutes = function() {
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -721,7 +721,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: self.transferProtocol + host + '/' + self.API_VERSION + '/unrecoverable/reset',
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
