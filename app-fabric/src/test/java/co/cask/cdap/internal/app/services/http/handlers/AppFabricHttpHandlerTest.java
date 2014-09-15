@@ -1167,6 +1167,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     try {
       HttpResponse response = deploy(WordCountApp.class);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+      response = doPost("/v2/unrecoverable/reset");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     } finally {
       Assert.assertEquals(200, doDelete("/v2/apps").getStatusLine().getStatusCode());
     }
