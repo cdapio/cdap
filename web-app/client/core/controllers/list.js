@@ -41,17 +41,19 @@ define([], function () {
             this.clearTriggers(true);
             var self = this;
             this.set('entityType', type);
-            if (type.toLowerCase() == 'stream') {
-                $('#nav-collect').addClass('active');
-            }
-            if (type.toLowerCase() == 'flow') {
-                $('#nav-process').addClass('active');
-            }
-            if (type.toLowerCase() == 'dataset') {
-                $('#nav-store').addClass('active');
-            }
-            if (type.toLowerCase() == 'procedure') {
-                $('#nav-queries').addClass('active');
+            switch (type.toLowerCase()) {
+                case 'stream':
+                    $('#nav-collect').addClass('active');
+                    break;
+                case 'flow':
+                    $('#nav-process').addClass('active');
+                    break;
+                case 'dataset':
+                    $('#nav-store').addClass('active');
+                    break;
+                case 'procedure':
+                    $('#nav-queries').addClass('active');
+                    break;
             }
             this.entityTypes.add(type);
 
