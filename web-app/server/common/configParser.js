@@ -17,47 +17,37 @@ var promise = require('q'),
  *  @returns {promise} Returns a promise that gets resolved once the the configs are fetched.
  */
 
-function extractConfig(mode, configParam) {
+function extractConfig(mode, configParam, isSecure) {
   var deferred = promise.defer(),
       decoder = new StringDecoder('utf8'),
       partialConfigRead,
       configReader;
+  isSecure = isSecure || false;
   if (mode === "enterprise") {
     configReader = spawn(__dirname + "/../bin/config-tool", ["--" + configParam]);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('data', configRead.bind(this));
-    partialConfigRead = lodash.partial(onConfigReadEnd, deferred);
+    partialConfigRead = lodash.partial(onConfigReadEnd, deferred, isSecure);
     configReader.stdout.on('end', partialConfigRead.bind(this));
   } else {
     this.config = require("../../cdap-config.json");
-    if (this.config["ssl.enabled"] === "true") {
-      this.config = lodash.extend(this.config, require("../../cdap-security-config.json"));
-      if (this.config["dashboard.selfsignedcertificate.enabled"] === "true") {
-        /*
-          We use mikeal/request library to make xhr request to cdap server.
-          In a ssl enabled environment where cdap server uses a self-signed certificate
-          node server will fail to connect to cdap server as it is self-signed.
-          This environment variable enables that.
-
-          The github issue in relation to this is : https://github.com/mikeal/request/issues/418
-
-          Could not find nodejs doc that discusses about this variable.
-        */
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-      }
-    }
+    this.securityConfig = require("../../cdap-security-config.json");
     this.configSet = true;
     deferred.resolve();
   }
   return deferred.promise;
 }
 
-function onConfigReadEnd(deferred, data) {
-  this.config = lodash.extend(this.config, JSON.parse(configString));
+function onConfigReadEnd(deferred, isSecure, data) {
+  if (isSecure) {
+    this.securityConfig = JSON.parse(configString);
+  } else {
+    this.config = JSON.parse(configString);
+  }
   if (this.config["ssl.enabled"] === "true" && !this.configSet) {
     this.configSet = true;
     configString = "";
-    this.extractConfig("enterprise", "security")
+    this.extractConfig("enterprise", "security", true)
         .then(function onSecureConfigComplete() {
           deferred.resolve();
         }.bind(this));
