@@ -187,22 +187,27 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           MapReduceContextConfig contextConfig = new MapReduceContextConfig(job);
           // We start long-running tx to be used by mapreduce job tasks.
           Transaction tx = txClient.startLong();
-          // We remember tx, so that we can re-use it in mapreduce tasks
-          contextConfig.set(context, cConf, tx, programJarCopy.getName());
-
-          LOG.info("Submitting MapReduce Job: {}", context);
-          ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
-          Thread.currentThread().setContextClassLoader(job.getConfiguration().getClassLoader());
           try {
-            // submits job and returns immediately
-            job.submit();
-          } finally {
-            Thread.currentThread().setContextClassLoader(oldClassLoader);
-          }
+            // We remember tx, so that we can re-use it in mapreduce tasks
+            contextConfig.set(context, cConf, tx, programJarCopy.getName());
 
-          this.job = job;
-          this.transaction = tx;
-          this.cleanupTask = createCleanupTask(jobJar, programJarCopy);
+            LOG.info("Submitting MapReduce Job: {}", context);
+            ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(job.getConfiguration().getClassLoader());
+            try {
+              // submits job and returns immediately
+              job.submit();
+            } finally {
+              Thread.currentThread().setContextClassLoader(oldClassLoader);
+            }
+
+            this.job = job;
+            this.transaction = tx;
+            this.cleanupTask = createCleanupTask(jobJar, programJarCopy);
+          } catch (Throwable t) {
+            txClient.abort(tx);   // Can just abort as no data operation has been done since the job submission failed
+            throw Throwables.propagate(t);
+          }
         } catch (Throwable t) {
           programJarCopy.delete();
           throw Throwables.propagate(t);
@@ -259,8 +264,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           throw new TransactionFailureException("Failed to commit transaction for MapReduce " + context.toString());
         }
       } else {
-        // aborting long running tx: no need to do rollbacks, etc.
-        txClient.abort(transaction);
+        // invalids long running tx. All writes done by MR cannot be undone at this point.
+        txClient.invalidate(transaction.getWritePointer());
       }
     } finally {
       // whatever happens we want to call this
