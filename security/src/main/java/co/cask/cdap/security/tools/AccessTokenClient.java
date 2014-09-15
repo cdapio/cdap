@@ -73,9 +73,13 @@ public class AccessTokenClient {
   public static boolean debug = false;
 
   private boolean help = false;
+  // Default por numbers
+  private static final int SSL_PORT = 10443;
+  private static final int NO_SSL_PORT = 10000;
 
   private String host;
-  private int port = 10000;
+  // default will be set in parsing arguments
+  private int port = Integer.MIN_VALUE;
   private boolean useSsl = false;
   private boolean disableCertCheck = false;
 
@@ -130,7 +134,8 @@ public class AccessTokenClient {
   private void buildOptions() {
     options = new Options();
     options.addOption(null, ConfigurableOptions.HOST, true, "To specify the host of gateway");
-    options.addOption(null, ConfigurableOptions.PORT, true, "To specify the port of gateway");
+    options.addOption(null, ConfigurableOptions.PORT, true, "To specify the port of gateway. " +
+      String.format("Defaults to %d if router is not SSL enabled and %d if it is.", NO_SSL_PORT, SSL_PORT));
     options.addOption(null, ConfigurableOptions.USER_NAME, true, "To specify the user to login as");
     options.addOption(null, ConfigurableOptions.PASSWORD, true, "To specify the user password");
     options.addOption(null, ConfigurableOptions.FILE, true, "To specify the access token file");
@@ -196,7 +201,13 @@ public class AccessTokenClient {
     } else {
       if (password == null) {
         Console console = System.console();
-        password = String.valueOf(console.readPassword("Password: "));
+        try {
+          password = String.valueOf(console.readPassword("Password: "));
+        } catch (Exception e) {
+          // if main method is not called through a console, then this throws an error
+          // this would mean that password was not provided.
+          usage("Must provide a password");
+        }
       }
     }
 
@@ -209,6 +220,11 @@ public class AccessTokenClient {
 
     useSsl = commandLine.hasOption(ConfigurableOptions.SSL);
     disableCertCheck = commandLine.hasOption(ConfigurableOptions.DISABLE_CERT_CHECK);
+
+    // port was not set by user so set to default based on if SSL is enabled
+    if (port == Integer.MIN_VALUE) {
+      port = (useSsl) ? SSL_PORT : NO_SSL_PORT;
+    }
 
     if (commandLine.getArgs().length > 0) {
       usage(true);
@@ -366,7 +382,7 @@ public class AccessTokenClient {
    * @param e
    */
   private void errorDebugExit(String message, Exception e) {
-    System.out.println(message);
+    System.err.println(message);
     if (debug) {
       e.printStackTrace();
     }
