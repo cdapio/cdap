@@ -20,6 +20,7 @@ import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -55,7 +56,6 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Arrays;
@@ -76,7 +76,7 @@ import java.util.jar.Manifest;
  */
 final class SparkRuntimeService extends AbstractExecutionThreadService {
 
-  public static final String SPARK_HCONF_FILENAME = "spark_hconf.xml";
+  static final String SPARK_HCONF_FILENAME = "spark_hconf.xml";
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeService.class);
 
   private final CConfiguration cConf;
@@ -129,15 +129,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     try {
       Location programJarCopy = copyProgramJar(programJarLocation, context);
+      // We remember tx, so that we can re-use it in Spark tasks
+      final Transaction tx = txClient.startLong();
       try {
-        final Transaction tx = txClient.startLong();
-        // We remember tx, so that we can re-use it in Spark tasks
         SparkContextConfig.set(sparkHConf, context, cConf, tx, programJarCopy);
         Location dependencyJar = buildDependencyJar(context, SparkContextConfig.getHConf());
         try {
           sparkSubmitArgs = prepareSparkSubmitArgs(sparkSpecification, sparkHConf, programJarCopy, dependencyJar);
-          LOG.info("Submitting Spark program: {} with arguments {}", context.toString(),
-                   Arrays.toString(sparkSubmitArgs));
+          LOG.info("Submitting Spark program: {} with arguments {}", context, Arrays.toString(sparkSubmitArgs));
           this.transaction = tx;
           this.cleanupTask = createCleanupTask(dependencyJar, programJarCopy);
         } catch (Exception e) {
@@ -146,6 +145,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         }
       } catch (Exception e) {
         programJarCopy.delete();
+        txClient.abort(tx);
         throw Throwables.propagate(e);
       }
     } catch (Exception e) {
@@ -163,7 +163,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         SparkProgramWrapper.setSparkProgramRunning(true);
         SparkSubmit.main(sparkSubmitArgs);
       } catch (Exception e) {
-        LOG.error("Failed to submit Spark program {}", context.toString(), e);
+        LOG.error("Failed to submit Spark program {}", context, e);
       } finally {
         // job completed so update running status and get the success status
         SparkProgramWrapper.setSparkProgramRunning(false);
@@ -310,7 +310,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   private Location buildDependencyJar(BasicSparkContext context, Configuration conf)
     throws IOException {
-    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop"),
+    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop", "org.apache.spark"),
                                                            Lists.newArrayList("org.apache.hadoop.hbase",
                                                                               "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();
@@ -323,30 +323,30 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     LOG.debug("Creating Spark Job Dependency jar: {}", appFabricDependenciesJarLocation.toURI());
 
-    URI hConfLocation = writeHConfLocally(context, conf);
-
-    Set<Class<?>> classes = Sets.newHashSet();
-    Set<URI> resources = Sets.newHashSet();
-
-    classes.add(Spark.class);
-    classes.add(SparkDatasetInputFormat.class);
-    classes.add(SparkDatasetOutputFormat.class);
-    classes.add(SparkProgramWrapper.class);
-    classes.add(JavaSparkContext.class);
-    classes.add(ScalaSparkContext.class);
-
-    // We have to add this Hadoop Configuration to the dependency jar so that when the Spark job runs outside
-    // CDAP it can create the BasicMapReduceContext to have access to our datasets, transactions etc.
-    resources.add(hConfLocation);
-
+    URI hConfLocation = writeHConf(context, conf);
     try {
-      Class<?> hbaseTableUtilClass = new HBaseTableUtilFactory().get().getClass();
-      classes.add(hbaseTableUtilClass);
-    } catch (ProvisionException e) {
-      LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
-    }
+      Set<Class<?>> classes = Sets.newHashSet();
+      Set<URI> resources = Sets.newHashSet();
 
-    try {
+      classes.add(Spark.class);
+      classes.add(SparkDatasetInputFormat.class);
+      classes.add(SparkDatasetOutputFormat.class);
+      classes.add(SparkProgramWrapper.class);
+      classes.add(JavaSparkContext.class);
+      classes.add(ScalaSparkContext.class);
+
+      // We have to add this Hadoop Configuration to the dependency jar so that when the Spark job runs outside
+      // CDAP it can create the BasicMapReduceContext to have access to our datasets, transactions etc.
+      resources.add(hConfLocation);
+
+      try {
+        Class<?> hbaseTableUtilClass = new HBaseTableUtilFactory().get().getClass();
+        classes.add(hbaseTableUtilClass);
+      } catch (ProvisionException e) {
+        LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
+      }
+
+
       ClassLoader oldCLassLoader = Thread.currentThread().getContextClassLoader();
       Thread.currentThread().setContextClassLoader(conf.getClassLoader());
       appBundler.createBundle(appFabricDependenciesJarLocation, classes, resources);
@@ -354,7 +354,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {
-      deleteLocalHConf(hConfLocation);
+      deleteHConfDir(hConfLocation);
     }
 
     // ApplicationBundler currently packages classes, jars and resources under classes, lib,
@@ -423,7 +423,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Stores the Hadoop {@link Configuration} locally which is then packaged with the dependency jar so that this
+   * Stores the Hadoop {@link Configuration} which is then packaged with the dependency jar so that this
    * {@link Configuration} is available to Spark jobs.
    *
    * @param context {@link BasicSparkContext} created for this job
@@ -431,7 +431,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * @return {@link URI} the URI of the file to which {@link Configuration} is written
    * @throws {@link RuntimeException} if failed to get an output stream through {@link Location#getOutputStream()}
    */
-  private URI writeHConfLocally(BasicSparkContext context, Configuration conf) {
+  private URI writeHConf(BasicSparkContext context, Configuration conf) {
     Id.Program programId = context.getProgram().getId();
     // There can be more than one Spark job running simultaneously so store their Hadoop Configuration file under
     // different directories uniquely identified by their run id. We cannot add the run id to filename itself to
@@ -446,7 +446,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     try {
       hConfOS = new BufferedOutputStream(hConfLocation.getOutputStream());
       conf.writeXml(hConfOS);
-      hConfOS.flush();
     } catch (IOException ioe) {
       LOG.error("Failed to write Hadoop Configuration file locally at {}", hConfLocation.toURI(), ioe);
       throw Throwables.propagate(ioe);
@@ -459,11 +458,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Deletes the local copy of Hadoop Configuration file created earlier.
+   * Deletes the directory containing the local copy of Hadoop Configuration file created earlier.
    *
    * @param hConfLocation the {@link URI} to the Hadoop Configuration file to be deleted
    */
-  private void deleteLocalHConf(URI hConfLocation) {
+  private void deleteHConfDir(URI hConfLocation) {
     // get the path to the folder containing this file
     String hConfLocationFolder = hConfLocation.toString().substring(0, hConfLocation.toString().lastIndexOf("/"));
     try {
@@ -490,17 +489,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                                                    programId.getAccountId(),
                                                                    programId.getApplicationId(), programId.getId(),
                                                                    context.getRunId().getId()));
-    InputStream src = jobJarLocation.getInputStream();
-    try {
-      OutputStream dest = programJarCopy.getOutputStream();
-      try {
-        ByteStreams.copy(src, dest);
-      } finally {
-        dest.close();
-      }
-    } finally {
-      src.close();
-    }
+
+    ByteStreams.copy(Locations.newInputSupplier(jobJarLocation), Locations.newOutputSupplier(programJarCopy));
     return programJarCopy;
   }
 
