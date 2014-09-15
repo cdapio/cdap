@@ -16,6 +16,11 @@
 
 package co.cask.cdap.shell.command;
 
+import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.Arguments;
+import co.cask.cdap.shell.Command;
+import co.cask.cdap.shell.CommandMatch;
+import co.cask.cdap.shell.CommandSet;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import org.junit.Assert;
@@ -25,7 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
 /**
- * Test for {@link co.cask.cdap.shell.command.CommandSet}.
+ * Test for {@link CommandSet}.
  */
 public class CommandSetTest {
 

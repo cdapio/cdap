@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,10 +33,10 @@ import java.util.Map;
  * </ul>
  *
  * An access token is issued following successful authentication of a client by an external mechanism (such as LDAP,
- * Kerberos, etc).  The token is then provided by the client on subsequent requests to Reactor.  In order to validate
- * the token, Reactor components recompute the digest for the token identifier, based on their own knowledge of the
+ * Kerberos, etc).  The token is then provided by the client on subsequent requests to CDAP.  In order to validate
+ * the token, CDAP components recompute the digest for the token identifier, based on their own knowledge of the
  * secret key.  If the recomputed digest matches that provided by the client, we know that, barring compromise of the
- * secret keys or exposure of the token itself, the token was issued by Reactor for this client.
+ * secret keys or exposure of the token itself, the token was issued by CDAP for this client.
  */
 public class AccessToken implements Signed<AccessTokenIdentifier> {
   static final class Schemas {

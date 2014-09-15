@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 Cask Data, Inc.
+ * Copyright © 2012-2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,7 @@
 package co.cask.cdap.shell;
 
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.shell.command.Arguments;
-import co.cask.cdap.shell.command.Command;
-import co.cask.cdap.shell.command.CommandMatch;
-import co.cask.cdap.shell.command.CommandSet;
-import co.cask.cdap.shell.command.CompleterSet;
-import co.cask.cdap.shell.command.DefaultCommands;
-import co.cask.cdap.shell.command.DefaultCompleters;
-import co.cask.cdap.shell.command.common.HelpCommand;
+import co.cask.cdap.shell.command.HelpCommand;
 import co.cask.cdap.shell.completer.DefaultStringsCompleter;
 import co.cask.cdap.shell.completer.PrefixCompleter;
 import co.cask.cdap.shell.exception.InvalidCommandException;
@@ -33,7 +26,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -87,7 +79,7 @@ public class CLIMain {
     );
 
     this.completers = new DefaultCompleters(injector);
-    this.commands = new DefaultCommands(injector);
+    this.commands = new CommandSet(new DefaultCommands(injector), helpCommand);
   }
 
   public CommandSet getCommands() {
@@ -105,6 +97,7 @@ public class CLIMain {
     this.reader.setHandleUserInterrupt(true);
 
     TreeNode<String> commandTokenTree = new TreeNode<String>();
+
     for (Command command : commands.getCommands()) {
       String pattern = command.getPattern();
       String[] tokens = pattern.split(" ");

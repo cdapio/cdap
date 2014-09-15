@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -419,6 +419,8 @@ public final class Constants {
    * Security configuration.
    */
   public static final class Security {
+    /** Enables Kerberos authentication */
+    public static final String KERBEROS_ENABLED = "kerberos.auth.enabled";
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
     /** Key length for secret key used by token digest algorithm. */
@@ -450,13 +452,13 @@ public final class Constants {
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
+    /** Enables SSL */
+    public static final String SSL_ENABLED = "ssl.enabled";
 
     /**
      * Security configuration for Router.
      */
     public static final class Router {
-      /** Enables SSL */
-      public static final String SSL_ENABLED = "router.ssl.enabled";
       /** SSL keystore location */
       public static final String SSL_KEYSTORE_PATH = "router.ssl.keystore.path";
       /** SSL keystore type */
@@ -471,8 +473,6 @@ public final class Constants {
      * Security configuration for ExternalAuthenticationServer.
      */
     public static final class AuthenticationServer {
-      /** Enables SSL */
-      public static final String SSL_ENABLED = "security.auth.server.ssl.enabled";
       /** SSL port */
       public static final String SSL_PORT = "security.auth.server.ssl.bind.port";
       /** SSL keystore location */
@@ -620,5 +620,25 @@ public final class Constants {
       public static final String ENV_AUTH_PROVIDER_1 = "zookeeper.authProvider.1";
       public static final String ENV_ALLOW_SASL_FAILED_CLIENTS = "zookeeper.allowSaslFailedClients";
     }
+  }
+
+  /**
+   * Constants for the dashboard/frontend.
+   */
+  public static final class Dashboard {
+    /**
+     * Port for the dashboard to bind to in non-SSL mode.
+     */
+    public static final String BIND_PORT = "dashboard.bind.port";
+
+    /**
+     * Port for the dashboard to bind to in SSL mode.
+     */
+    public static final String SSL_BIND_PORT = "dashboard.ssl.bind.port";
+
+    /**
+     * True to allow self-signed SSL certificates for endpoints accessed by the dashboard.
+     */
+    public static final String SSL_ALLOW_SELFSIGNEDCERT = "dashboard.selfsignedcertificate.enabled";
   }
 }

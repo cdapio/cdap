@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,36 +57,36 @@ public class AggregatedMetricsCollectionServiceTest {
     service.startAndWait();
     try {
       // Publish couple metrics, they should be aggregated.
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 1);
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 2);
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 3);
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 4);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", Integer.MAX_VALUE);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 2);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 3);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 4);
 
       MetricsRecord record = published.poll(10, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
-      Assert.assertEquals(10, record.getValue());
+      Assert.assertEquals(((long) Integer.MAX_VALUE) + 9L, record.getValue());
 
       // No publishing for 0 value metrics
       Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish a metric and wait for it so that we know there is around 1 second to publish more metrics to test.
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 1);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 1);
       Assert.assertNotNull(published.poll(3, TimeUnit.SECONDS));
 
       // Publish metrics with tags
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 3, "tag1", "tag2");
-      service.getCollector(MetricsScope.REACTOR, "context", "runId").increment("metric", 4, "tag2", "tag3");
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 3, "tag1", "tag2");
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").increment("metric", 4, "tag2", "tag3");
 
       record = published.poll(3, TimeUnit.SECONDS);
       Assert.assertNotNull(record);
       Assert.assertEquals(7, record.getValue());
 
       // Verify tags are aggregated individually.
-      Map<String, Integer> tagMetrics = Maps.newHashMap();
+      Map<String, Long> tagMetrics = Maps.newHashMap();
       for (TagMetric tagMetric : record.getTags()) {
         tagMetrics.put(tagMetric.getTag(), tagMetric.getValue());
       }
-      Assert.assertEquals(ImmutableMap.of("tag1", 3, "tag2", 7, "tag3", 4), tagMetrics);
+      Assert.assertEquals(ImmutableMap.of("tag1", 3L, "tag2", 7L, "tag3", 4L), tagMetrics);
 
     } finally {
       service.stopAndWait();

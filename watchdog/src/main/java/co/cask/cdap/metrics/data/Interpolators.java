@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,7 @@ public final class Interpolators {
     }
 
     @Override
-    public int interpolate(TimeValue start, TimeValue end, long ts) {
+    public long interpolate(TimeValue start, TimeValue end, long ts) {
       Preconditions.checkNotNull(start);
       Preconditions.checkNotNull(end);
       Preconditions.checkArgument((ts <= end.getTime()) && (ts >= start.getTime()));
@@ -55,7 +55,7 @@ public final class Interpolators {
       return maxAllowedGap;
     }
 
-    protected abstract int limitedInterpolate(TimeValue start, TimeValue end, long ts);
+    protected abstract long limitedInterpolate(TimeValue start, TimeValue end, long ts);
   }
 
   /**
@@ -74,7 +74,7 @@ public final class Interpolators {
     }
 
     @Override
-    protected int limitedInterpolate(TimeValue start, TimeValue end, long ts) {
+    protected long limitedInterpolate(TimeValue start, TimeValue end, long ts) {
       return (ts < end.getTime()) ? start.getValue() : end.getValue();
     }
   }
@@ -94,11 +94,11 @@ public final class Interpolators {
     }
 
     @Override
-    protected int limitedInterpolate(TimeValue start, TimeValue end, long ts) {
+    protected long limitedInterpolate(TimeValue start, TimeValue end, long ts) {
       long deltaX = ts - start.getTime();
       long totalX = end.getTime() - start.getTime();
-      int totalY = end.getValue() - start.getValue();
-      int deltaY = (int) (totalY * deltaX / totalX);
+      long totalY = end.getValue() - start.getValue();
+      long deltaY = (int) (totalY * deltaX / totalX);
       return start.getValue() + deltaY;
     }
   }

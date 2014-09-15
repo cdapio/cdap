@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,7 +38,7 @@ import co.cask.cdap.internal.app.services.ServiceWorkerTwillRunnable;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.ProgramType;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -78,19 +78,19 @@ public class InMemoryRunnableRunner implements ProgramRunner {
 
   @Inject
   public InMemoryRunnableRunner(CConfiguration cConfiguration, ProgramServiceDiscovery serviceDiscovery,
+                                DiscoveryServiceClient discoveryServiceClient,
                                 DiscoveryService dsService, InMemoryElectionRegistry electionRegistry,
                                 MetricsCollectionService metricsCollectionService,
-                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework,
-                                DiscoveryServiceClient discoveryServiceClient) {
+                                TransactionSystemClient transactionSystemClient, DatasetFramework datasetFramework) {
     this.metricsCollectionService = metricsCollectionService;
     this.serviceDiscovery = serviceDiscovery;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.dsService = dsService;
     this.electionRegistry = electionRegistry;
     this.discoverables = new ConcurrentLinkedQueue<Discoverable>();
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = datasetFramework;
     this.cConfiguration = cConfiguration;
-    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @SuppressWarnings("unchecked")
@@ -184,8 +184,9 @@ public class InMemoryRunnableRunner implements ProgramRunner {
                                                 serviceDiscovery, discoveryServiceClient, datasetFramework,
                                                 transactionSystemClient);
       } else if (runnableClass.isAssignableFrom(ServiceWorkerTwillRunnable.class)) {
-        runnable = new ServiceWorkerTwillRunnable(program.getClassLoader(), cConfiguration,
-                                                  datasetFramework, transactionSystemClient);
+        runnable = new ServiceWorkerTwillRunnable(program, runId, runnableName, program.getClassLoader(),
+                                                  cConfiguration, metricsCollectionService, datasetFramework,
+                                                  transactionSystemClient, serviceDiscovery, discoveryServiceClient);
       } else {
         runnable = new InstantiatorFactory(false).get(runnableType).create();
       }

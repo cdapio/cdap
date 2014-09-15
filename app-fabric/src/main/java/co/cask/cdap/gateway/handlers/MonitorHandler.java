@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,7 +62,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the number of instances of Reactor Services
+   * Returns the number of instances of CDAP Services
    */
   @Path("/system/services/{service-name}/instances")
   @GET
@@ -85,7 +85,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Sets the number of instances of Reactor Services
+   * Sets the number of instances of CDAP Services
    */
   @Path("/system/services/{service-name}/instances")
   @PUT
@@ -127,7 +127,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  //Return the status of reactor services in JSON format
+  // Return the status of CDAP services in JSON format
   @Path("/system/services/status")
   @GET
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
@@ -192,7 +192,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private int getSystemServiceInstanceCount(String serviceName) throws Exception {
     Integer count = serviceStore.getServiceInstance(serviceName);
 
-    //In SingleNode, this count will be null. And thus we just return the actual instance count.
+    //In standalone mode, this count will be null. And thus we just return the actual instance count.
     if (count == null) {
       return reactorServiceManagementMap.get(serviceName).getInstances();
     } else {

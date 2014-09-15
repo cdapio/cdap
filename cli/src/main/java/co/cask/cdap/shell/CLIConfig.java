@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.shell;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
-import co.cask.cdap.shell.command.common.VersionCommand;
+import co.cask.cdap.shell.command.VersionCommand;
 import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;

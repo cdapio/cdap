@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,9 +44,9 @@ import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.SingleNodeLogReader;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.cdap.logging.read.StandaloneLogReader;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -180,8 +180,8 @@ public class TestResilientLogging {
 
     // Verify - we should have at least 5 events.
     LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "");
-    SingleNodeLogReader logTail =
-      new SingleNodeLogReader(cConf, dsFramework, txSystemClient, new LocalLocationFactory());
+    StandaloneLogReader logTail =
+      new StandaloneLogReader(cConf, dsFramework, txSystemClient, new LocalLocationFactory());
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, -1, 10, Filter.EMPTY_FILTER,
                        logCallback1);

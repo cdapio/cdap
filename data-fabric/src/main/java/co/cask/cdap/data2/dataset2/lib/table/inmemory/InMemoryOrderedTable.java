@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;

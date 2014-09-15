@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -103,7 +103,7 @@ public class TimeValueAggregator implements Iterable<TimeValue> {
 
       // Aggregates values from the same timestamp, using interpolated values if there is not data at the timestamp.
       boolean atEnd = true;
-      int currentTsValue = 0;
+      long currentTsValue = 0;
       Iterator<BiDirectionalPeekingIterator> timeseriesIter = timeseriesList.iterator();
       while (timeseriesIter.hasNext()) {
         BiDirectionalPeekingIterator timeseries = timeseriesIter.next();

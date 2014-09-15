@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -312,7 +312,11 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       }
     } catch (HandleNotFoundException e) {
       if (!responseStarted) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        if (e.isInactive()) {
+          responder.sendString(HttpResponseStatus.CONFLICT, "Query is inactive");
+        } else {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        }
       }
     } catch (Throwable e) {
       LOG.error("Got exception:", e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
-import com.continuuity.tephra.TransactionManager;
+import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -160,7 +160,7 @@ public abstract class GatewayTestBase {
         new InMemorySecurityModule(),
         new GatewayModule().getInMemoryModules(),
         new AppFabricTestModule(conf),
-        new StreamServiceRuntimeModule().getSingleNodeModules()
+        new StreamServiceRuntimeModule().getStandaloneModules()
       ).with(new AbstractModule() {
         @Override
         protected void configure() {

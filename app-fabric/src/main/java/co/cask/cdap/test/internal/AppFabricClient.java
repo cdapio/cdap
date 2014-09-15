@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.test.internal;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.http.BodyConsumer;
@@ -59,10 +60,13 @@ public class AppFabricClient {
   private static final Gson GSON = new Gson();
 
   private final AppFabricHttpHandler httpHandler;
+  private final ServiceHttpHandler serviceHttpHandler;
   private final LocationFactory locationFactory;
 
-  public AppFabricClient(AppFabricHttpHandler httpHandler, LocationFactory locationFactory) {
+  public AppFabricClient(AppFabricHttpHandler httpHandler, ServiceHttpHandler serviceHttpHandler,
+                         LocationFactory locationFactory) {
     this.httpHandler = httpHandler;
+    this.serviceHttpHandler = serviceHttpHandler;
     this.locationFactory = locationFactory;
   }
 
@@ -105,6 +109,30 @@ public class AppFabricClient {
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get status " + type + " failed");
     Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return json.get("status");
+  }
+
+  public void setRunnableInstances(String applicationId, String serviceName, String runnableName, int instances) {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
+                               applicationId, serviceName, runnableName);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    JsonObject json = new JsonObject();
+    json.addProperty("instances", instances);
+    request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
+    serviceHttpHandler.setInstances(request, responder, applicationId, serviceName, runnableName);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set runnable instances failed");
+  }
+
+  public int getRunnableInstances(String applicationId, String serviceName, String runnableName) {
+
+    MockResponder responder = new MockResponder();
+    String uri = String.format("/v2/apps/%s/services/%s/runnables/%s/instances",
+                               applicationId, serviceName, runnableName);
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
+    serviceHttpHandler.getInstances(request, responder, applicationId, serviceName, runnableName);
+    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get runnable instances failed");
+    Map<String, String> instances = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
+    return Integer.parseInt(instances.get("provisioned"));
   }
 
   public void setFlowletInstances(String applicationId, String flowId, String flowletName, int instances) {

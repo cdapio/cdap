@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,13 +16,22 @@
 
 package co.cask.cdap.api.dataset.table;
 
+import javax.annotation.Nullable;
+
 /**
  * Interface for table scan operation.
  */
 public interface Scanner {
 
+  /**
+   * Returns the next row or {@code null} if the scanner is exhausted.
+   */
+  @Nullable
   public Row next();
 
+  /**
+   * Closes the scanner and releases any resources.
+   */
   public void close();
 
 }

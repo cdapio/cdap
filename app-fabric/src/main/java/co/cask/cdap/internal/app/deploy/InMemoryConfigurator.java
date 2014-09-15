@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -71,7 +71,7 @@ public final class InMemoryConfigurator implements Configurator {
   /**
    * Executes the <code>Application.configure</code> within the same JVM.
    * <p>
-   * This method could be dangerous and should be used only in singlenode.
+   * This method could be dangerous and should be used only in standalone mode.
    * </p>
    *
    * @return A instance of {@link ListenableFuture}.

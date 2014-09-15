@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright 2014 Cask Data, Inc.
+# Copyright © 2014 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ bin=`dirname "${BASH_SOURCE-$0}"`
 bin=`cd "$bin"; pwd`
 lib="$bin"/../lib
 conf="$bin"/../conf
+CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
 script=`basename $0`
 
 # Need this for relative symlinks.
@@ -49,8 +50,10 @@ else
 fi
 
 # Load the configuration too.
-if [ -d "$conf" ]; then
-  CLASSPATH=$CLASSPATH:"$conf"/:/etc/cdap/conf
+if [ -d "$CDAP_CONF" ]; then
+  CLASSPATH=$CLASSPATH:"$CDAP_CONF"
+elif [ -d "$conf" ]; then
+  CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
 auth_file="$HOME/.cdap.accesstoken"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -97,7 +97,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
     this.streamAdmin = streamAdmin;
     this.streamMetaStore = streamMetaStore;
 
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.REACTOR, getMetricsContext(), "0");
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, getMetricsContext(), "0");
     this.streamWriter = new ConcurrentStreamWriter(streamCoordinator, streamAdmin, streamMetaStore, writerFactory,
                                                    cConf.getInt(Constants.Stream.WORKER_THREADS), metricsCollector);
   }
@@ -188,8 +188,10 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   public void asyncEnqueue(HttpRequest request, HttpResponder responder,
                            @PathParam("stream") final String stream) throws Exception {
     String accountId = getAuthenticatedAccountId(request);
+    // No need to copy the content buffer as we always uses a ChannelBufferFactory that won't reuse buffer.
+    // See StreamHttpService
     streamWriter.asyncEnqueue(accountId, stream,
-                              getHeaders(request, stream), request.getContent().copy().toByteBuffer(), asyncExecutor);
+                              getHeaders(request, stream), request.getContent().toByteBuffer(), asyncExecutor);
     responder.sendStatus(HttpResponseStatus.ACCEPTED);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -132,7 +132,7 @@ public class NettyRouter extends AbstractIdleService {
     this.configuration = cConf;
     this.sConfiguration = sConf;
 
-    this.sslEnabled = cConf.getBoolean(Constants.Security.Router.SSL_ENABLED);
+    this.sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
     this.webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
     if (isSSLEnabled()) {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,

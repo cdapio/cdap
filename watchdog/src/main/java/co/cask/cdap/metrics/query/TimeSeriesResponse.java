@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ final class TimeSeriesResponse {
 
     return new Builder() {
       @Override
-      public Builder addData(long timestamp, int value) {
+      public Builder addData(long timestamp, long value) {
         return addData(new TimeValue(timestamp, value));
       }
 
@@ -59,7 +59,7 @@ final class TimeSeriesResponse {
   }
 
   public interface Builder {
-    Builder addData(long timestamp, int value);
+    Builder addData(long timestamp, long value);
 
     Builder addData(TimeValue timeValue);
 

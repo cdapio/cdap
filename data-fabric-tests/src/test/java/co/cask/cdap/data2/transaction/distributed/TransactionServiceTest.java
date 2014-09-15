@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,13 +30,13 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableService;
-import com.continuuity.tephra.DefaultTransactionExecutor;
-import com.continuuity.tephra.TransactionAware;
-import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.TransactionFailureException;
-import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.TxConstants;
-import com.continuuity.tephra.distributed.TransactionService;
+import co.cask.tephra.DefaultTransactionExecutor;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.TxConstants;
+import co.cask.tephra.distributed.TransactionService;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;

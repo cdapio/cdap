@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,10 +32,10 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueProducer;
 import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueProducer;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import com.continuuity.tephra.TransactionExecutorFactory;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.TransactionSystemClient;
-import com.continuuity.tephra.TxConstants;
+import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.TxConstants;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -63,8 +63,8 @@ public class LocalQueueTest extends QueueTest {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
-      new LocationRuntimeModule().getSingleNodeModules(),
-      new DiscoveryRuntimeModule().getSingleNodeModules(),
+      new LocationRuntimeModule().getStandaloneModules(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
       new DataFabricLocalModule());
     // transaction manager is a "service" and must be started
@@ -82,10 +82,10 @@ public class LocalQueueTest extends QueueTest {
   public void testInjection() throws IOException {
     Injector injector = Guice.createInjector(
       new ConfigModule(conf),
-      new LocationRuntimeModule().getSingleNodeModules(),
-      new DiscoveryRuntimeModule().getSingleNodeModules(),
+      new LocationRuntimeModule().getStandaloneModules(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
       new TransactionMetricsModule(),
-      new DataFabricModules().getSingleNodeModules(),
+      new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule());
     QueueClientFactory factory = injector.getInstance(QueueClientFactory.class);
     QueueProducer producer = factory.createProducer(QueueName.fromStream("bigriver"));

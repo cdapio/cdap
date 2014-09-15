@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,6 +98,27 @@ public class AggregatesTableTest {
     } finally {
       aggregatesTable.clear();
     }
+  }
+
+  @Test
+  public void testIntOverflow() throws OperationException {
+    AggregatesTable aggregatesTable = tableFactory.createAggregates("intOverflow");
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // checking that we can store more than just int
+    long value = Integer.MAX_VALUE * 2L;
+    aggregatesTable.update(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                              ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                              time, value)));
+    aggregatesTable.update(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                              ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                              time, value)));
+
+    AggregatesScanner scanner = aggregatesTable.scan("context", "bigmetric");
+    Assert.assertTrue(scanner.hasNext());
+    Assert.assertEquals(value * 2, scanner.next().getValue());
   }
 
   @Test

@@ -1,0 +1,68 @@
+/*
+ * Copyright 2012-2014 Cask, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package co.cask.cdap.shell;
+
+/**
+ * Argument names.
+ */
+public enum ArgumentName {
+  PROGRAM("program-id"),
+
+  HOSTNAME("hostname"),
+  DATASET_TYPE("dataset-type"),
+  DATASET_MODULE("dataset-module"),
+  NEW_DATASET_MODULE("new-dataset-module"),
+  DATASET("dataset-name"),
+  NEW_DATASET("new-dataset-name"),
+  STREAM("stream-id"),
+  STREAM_EVENT("stream-event"),
+  NEW_STREAM("new-stream-id"),
+  /** Procedure method */
+  METHOD("method-id"),
+  PROCEDURE("procedure-id"),
+
+  PARAMETER_MAP("parameter-map"),
+
+  TTL_IN_SECONDS("ttl-in-seconds"),
+  NUM_INSTANCES("num-instances"),
+
+  START_TIME("start-time"),
+  END_TIME("end-time"),
+  LIMIT("limit"),
+
+  APP_JAR_FILE("app-jar-file"),
+  DATASET_MODULE_JAR_FILE("module-jar-file"),
+  DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
+
+  QUERY("TODO:query"),
+  APP("app-id");
+
+  private final String name;
+
+  ArgumentName(String name) {
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String toString() {
+    return name;
+  }
+}

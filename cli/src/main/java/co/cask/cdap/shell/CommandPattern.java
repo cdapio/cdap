@@ -16,7 +16,6 @@
 
 package co.cask.cdap.shell;
 
-import co.cask.cdap.shell.command.Arguments;
 import com.google.common.collect.ImmutableMap;
 
 /**

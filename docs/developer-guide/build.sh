@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2014 Cask Data, Inc.
+# Copyright © 2014 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -161,7 +161,7 @@ function build_rest_pdf() {
 
 function build_standalone() {
   cd $PROJECT_PATH
-  mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
+  mvn clean package -DskipTests -P examples && mvn package -pl standalone -am -DskipTests -P dist,release
 }
 
 function build_sdk() {

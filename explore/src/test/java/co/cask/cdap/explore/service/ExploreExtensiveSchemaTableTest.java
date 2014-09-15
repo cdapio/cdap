@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,9 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.test.SlowTests;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -201,5 +202,45 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
                    "[{\"s\":\"foobar2\",\"i\":3}]", "{\"key\":{\"s\":\"foobar3\",\"i\":9}}"
                  )))
     );
+
+    // Make sure the whole schema has been persisted in the metastore, and with the right order
+    Assert.assertEquals(ImmutableList.of(new TableInfo.ColumnInfo("s", "string", null),
+                                         new TableInfo.ColumnInfo("i", "int", null),
+                                         new TableInfo.ColumnInfo("f", "float", null),
+                                         new TableInfo.ColumnInfo("d", "double", null),
+                                         new TableInfo.ColumnInfo("l", "bigint", null),
+                                         new TableInfo.ColumnInfo("b", "tinyint", null),
+                                         new TableInfo.ColumnInfo("bo", "boolean", null),
+                                         new TableInfo.ColumnInfo("sh", "smallint", null),
+                                         // Arrays
+                                         new TableInfo.ColumnInfo("iarr", "array<int>", null),
+                                         new TableInfo.ColumnInfo("farr", "array<float>", null),
+                                         new TableInfo.ColumnInfo("darr", "array<double>", null),
+                                         new TableInfo.ColumnInfo("larr", "array<bigint>", null),
+                                         new TableInfo.ColumnInfo("barr", "binary", null),
+                                         new TableInfo.ColumnInfo("boarr", "array<boolean>", null),
+                                         new TableInfo.ColumnInfo("sharr", "array<smallint>", null),
+                                         new TableInfo.ColumnInfo("sarr", "array<string>", null),
+                                         // Lists
+                                         new TableInfo.ColumnInfo("ilist", "array<int>", null),
+                                         new TableInfo.ColumnInfo("flist", "array<float>", null),
+                                         new TableInfo.ColumnInfo("dlist", "array<double>", null),
+                                         new TableInfo.ColumnInfo("llist", "array<bigint>", null),
+                                         new TableInfo.ColumnInfo("blist", "array<tinyint>", null),
+                                         new TableInfo.ColumnInfo("bolist", "array<boolean>", null),
+                                         new TableInfo.ColumnInfo("shlist", "array<smallint>", null),
+                                         new TableInfo.ColumnInfo("slist", "array<string>", null),
+                                         // Maps
+                                         new TableInfo.ColumnInfo("stoimap", "map<string,int>", null),
+                                         new TableInfo.ColumnInfo("ftodmap", "map<float,double>", null),
+                                         new TableInfo.ColumnInfo("ltobmap", "map<bigint,tinyint>", null),
+                                         new TableInfo.ColumnInfo("botoshmap", "map<boolean,smallint>", null),
+                                         // Custom type
+                                         new TableInfo.ColumnInfo("v", "struct<s:string,i:int>", null),
+                                         new TableInfo.ColumnInfo("varr", "array<struct<s:string,i:int>>", null),
+                                         new TableInfo.ColumnInfo("vlist", "array<struct<s:string,i:int>>", null),
+                                         new TableInfo.ColumnInfo("stovmap", "map<string,struct<s:string,i:int>>", null)
+                        ),
+                        exploreService.getTableInfo("default", "my_table").getSchema());
   }
 }

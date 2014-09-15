@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,7 @@ import java.net.InetSocketAddress;
 import java.util.Set;
 
 /**
- * MetricsProcessorStatusService with PingHandler used for discovery during reactor-services startup
+ * MetricsProcessorStatusService with PingHandler used for discovery during CDAP-services startup.
  */
 public class MetricsProcessorStatusService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorStatusService.class);

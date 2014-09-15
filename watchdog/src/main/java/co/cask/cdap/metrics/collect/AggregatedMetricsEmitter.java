@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A {@link co.cask.cdap.common.metrics.MetricsCollector} and {@link MetricsEmitter} that aggregates metric values
@@ -39,20 +40,20 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   private final String context;
   private final String runId;
   private final String name;
-  private final AtomicInteger value;
-  private final LoadingCache<String, AtomicInteger> tagValues;
+  private final AtomicLong value;
+  private final LoadingCache<String, AtomicLong> tagValues;
 
   AggregatedMetricsEmitter(String context, String runId, String name) {
     this.context = context;
     this.runId = runId;
     this.name = name;
-    this.value = new AtomicInteger();
+    this.value = new AtomicLong();
     this.tagValues = CacheBuilder.newBuilder()
                                  .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
-                                 .build(new CacheLoader<String, AtomicInteger>() {
+                                 .build(new CacheLoader<String, AtomicLong>() {
                                    @Override
-                                   public AtomicInteger load(String key) throws Exception {
-                                     return new AtomicInteger();
+                                   public AtomicLong load(String key) throws Exception {
+                                     return new AtomicLong();
                                    }
                                  });
     if (name == null || name.isEmpty()) {
@@ -71,8 +72,8 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   @Override
   public MetricsRecord emit(long timestamp) {
     ImmutableList.Builder<TagMetric> builder = ImmutableList.builder();
-    int value = this.value.getAndSet(0);
-    for (Map.Entry<String, AtomicInteger> entry : tagValues.asMap().entrySet()) {
+    long value = this.value.getAndSet(0);
+    for (Map.Entry<String, AtomicLong> entry : tagValues.asMap().entrySet()) {
       builder.add(new TagMetric(entry.getKey(), entry.getValue().getAndSet(0)));
     }
     return new MetricsRecord(context, runId, name, builder.build(), timestamp, value);

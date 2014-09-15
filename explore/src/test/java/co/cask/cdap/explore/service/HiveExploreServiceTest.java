@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,7 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.test.SlowTests;
-import com.continuuity.tephra.Transaction;
+import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -341,7 +341,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                           tableInfo.getParameters(),
                           "EXTERNAL_TABLE",
                           ImmutableList.of(new TableInfo.ColumnInfo("key", "string", null),
-                                           new TableInfo.ColumnInfo("value", "struct<ints:array<int>,name:string>",
+                                           new TableInfo.ColumnInfo("value", "struct<name:string,ints:array<int>>",
                                                                     null)),
                           tableInfo.getLocation(), DatasetInputFormat.class.getName(),
                           "org.apache.hadoop.hive.ql.io.HivePassThroughOutputFormat", false, -1,
@@ -359,7 +359,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                           tableInfo.getParameters(),
                           "EXTERNAL_TABLE",
                           ImmutableList.of(new TableInfo.ColumnInfo("key", "string", null),
-                                           new TableInfo.ColumnInfo("value", "struct<ints:array<int>,name:string>",
+                                           new TableInfo.ColumnInfo("value", "struct<name:string,ints:array<int>>",
                                                                     null)),
                           tableInfo.getLocation(), DatasetInputFormat.class.getName(),
                           "org.apache.hadoop.hive.ql.io.HivePassThroughOutputFormat", false, -1,

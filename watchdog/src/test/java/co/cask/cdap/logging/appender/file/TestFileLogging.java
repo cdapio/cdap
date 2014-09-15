@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,9 +33,9 @@ import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.cdap.logging.read.SingleNodeLogReader;
-import com.continuuity.tephra.TransactionManager;
-import com.continuuity.tephra.inmemory.InMemoryTxSystemClient;
+import co.cask.cdap.logging.read.StandaloneLogReader;
+import co.cask.tephra.TransactionManager;
+import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -112,8 +112,8 @@ public class TestFileLogging {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
-    SingleNodeLogReader logReader =
-      new SingleNodeLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
+    StandaloneLogReader logReader =
+      new StandaloneLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
     logReader.close();
@@ -125,8 +125,8 @@ public class TestFileLogging {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
-    SingleNodeLogReader logReader =
-      new SingleNodeLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
+    StandaloneLogReader logReader =
+      new StandaloneLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
     logReader.close();
@@ -138,8 +138,8 @@ public class TestFileLogging {
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
 
     LoggingContext loggingContext = new FlowletLoggingContext("TFL_ACCT_1", "APP_1", "FLOW_1", "");
-    SingleNodeLogReader logTail =
-      new SingleNodeLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
+    StandaloneLogReader logTail =
+      new StandaloneLogReader(cConf, dsFramework, txClient, new LocalLocationFactory());
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, -1, 60, Filter.EMPTY_FILTER,
                        logCallback1);

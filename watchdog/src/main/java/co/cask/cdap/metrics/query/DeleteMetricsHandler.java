@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -154,44 +154,44 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
     }
   }
 
-  // ex: /reactor/apps/appX, /reactor/streams/streamX, /reactor/dataset/datasetX
+  // ex: /system/apps/appX, /system/streams/streamX, /system/dataset/datasetX
   @DELETE
   @Path("/{scope}/{type}/{type-id}")
   public void deleteType(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows
+  // ex: /system/apps/appX/flows
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}")
   public void deleteProgramType(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/flowY
+  // ex: /system/apps/appX/flows/flowY
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}")
   public void deleteProgram(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
-  // ex: /reactor/apps/appX/mapreduce/jobId/mappers
+  // ex: /system/apps/appX/mapreduce/jobId/mappers
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}")
   public void handleComponentType(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
-  // ex: /reactor/apps/appX/flows/flowY/flowlets/flowletZ
+  // ex: /system/apps/appX/flows/flowY/flowlets/flowletZ
   @DELETE
   @Path("/{scope}/{type}/{type-id}/{program-type}/{program-id}/{component-type}/{component-id}")
   public void deleteComponent(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }
 
-  // ex: /reactor/datasets/tickTimeseries/apps/Ticker/flows/TickerTimeseriesFlow/flowlets/saver
+  // ex: /system/datasets/tickTimeseries/apps/Ticker/flows/TickerTimeseriesFlow/flowlets/saver
   @DELETE
-  @Path("/reactor/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}")
+  @Path("/system/datasets/{dataset-id}/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}")
   public void deleteFlowletDatasetMetrics(HttpRequest request, HttpResponder responder) throws IOException {
     handleDelete(request, responder);
   }

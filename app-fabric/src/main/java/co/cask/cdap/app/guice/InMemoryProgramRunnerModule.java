@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,7 +90,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WORKFLOW).to(WorkflowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.WEBAPP).to(WebappProgramRunner.class);
 
-    //twill support in singlenode
+    //twill support in standalone
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.SERVICE).to(InMemoryServiceRunner.class);
     runnerFactoryBinder.addBinding(ProgramRunnerFactory.Type.RUNNABLE).to(InMemoryRunnableRunner.class);
 

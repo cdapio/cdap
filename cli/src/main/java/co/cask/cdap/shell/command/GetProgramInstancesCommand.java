@@ -1,0 +1,78 @@
+/*
+ * Copyright © 2014 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package co.cask.cdap.shell.command;
+
+import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.ArgumentName;
+import co.cask.cdap.shell.Arguments;
+import co.cask.cdap.shell.ElementType;
+
+import java.io.PrintStream;
+
+/**
+ * Gets the instances of a program.
+ */
+public class GetProgramInstancesCommand extends AbstractCommand {
+
+  private final ProgramClient programClient;
+  private final ElementType elementType;
+
+  protected GetProgramInstancesCommand(ElementType elementType, ProgramClient programClient) {
+    this.elementType = elementType;
+    this.programClient = programClient;
+  }
+
+  @Override
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String[] programIdParts = arguments.get(ArgumentName.PROGRAM).split("\\.");
+    String appId = programIdParts[0];
+
+    int instances;
+    switch (elementType) {
+      case FLOWLET:
+        String flowId = programIdParts[1];
+        String flowletId = programIdParts[2];
+        instances = programClient.getFlowletInstances(appId, flowId, flowletId);
+        break;
+      case PROCEDURE:
+        String procedureId = programIdParts[1];
+        instances = programClient.getProcedureInstances(appId, procedureId);
+        break;
+      case RUNNABLE:
+        String serviceId = programIdParts[1];
+        String runnableId = programIdParts[2];
+        instances = programClient.getServiceRunnableInstances(appId, serviceId, runnableId);
+        break;
+      default:
+        // TODO: remove this
+        throw new IllegalArgumentException("Unrecognized program element type for scaling: " + elementType);
+    }
+
+    output.println(instances);
+  }
+
+  @Override
+  public String getPattern() {
+    return String.format("get %s instances <%s>", elementType.getName(), ArgumentName.PROGRAM);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Gets the instances of a " + elementType.getPrettyName();
+  }
+}

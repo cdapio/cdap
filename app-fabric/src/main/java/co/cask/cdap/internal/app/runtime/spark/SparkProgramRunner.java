@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,11 +39,11 @@ import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import com.continuuity.tephra.Transaction;
-import com.continuuity.tephra.TransactionExecutor;
-import com.continuuity.tephra.TransactionExecutorFactory;
-import com.continuuity.tephra.TransactionFailureException;
-import com.continuuity.tephra.TransactionSystemClient;
+import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -86,7 +86,6 @@ import java.util.jar.Manifest;
 public class SparkProgramRunner implements ProgramRunner {
 
   public static final String SPARK_HCONF_FILENAME = "spark_hconf.xml";
-
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
 
   private final DatasetFramework datasetFramework;
@@ -169,9 +168,13 @@ public class SparkProgramRunner implements ProgramRunner {
     controller.addListener(new AbstractListener() {
       @Override
       public void stopping() {
+        // TODO: This does not work as Spark goes into deadlock while closing the context in local mode
+        // Jira: REACTOR-951
         LOG.info("Stopping Spark Job: {}", context);
         try {
-          SparkJobWrapper.stopJob();
+          if (SparkProgramWrapper.isSparkProgramRunning()) {
+            SparkProgramWrapper.stopSparkProgram();
+          }
         } catch (Exception e) {
           LOG.error("Failed to stop Spark job {}", spec.getName(), e);
           throw Throwables.propagate(e);
@@ -219,25 +222,26 @@ public class SparkProgramRunner implements ProgramRunner {
         try {
           LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
-          LOG.info("Submitting Spark Job: {}", context.toString());
+          LOG.info("Submitting Spark program: {}", context.toString());
 
           ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
           Thread.currentThread().setContextClassLoader(conf.getClassLoader());
           try {
-            // submits job and returns immediately
+            SparkProgramWrapper.setSparkProgramRunning(true);
             SparkSubmit.main(sparkSubmitArgs);
-
+          } catch (Exception e) {
+            LOG.error("Failed to submit Spark program {}", context.toString(), e);
           } finally {
+            // job completed so update running status and get the success status
+            success = SparkProgramWrapper.isSparkProgramSuccessful();
+            SparkProgramWrapper.setSparkProgramRunning(false);
             Thread.currentThread().setContextClassLoader(oldClassLoader);
           }
         } catch (Exception e) {
-          LOG.warn("Received Exception after submitting Spark Job", e);
+          LOG.warn("Exception while setting classloader for the current thread", e);
           throw Throwables.propagate(e);
         } finally {
-          //TODO: This should not have true. We have to find a way to know the Spark job success or failure and pass
-          // that. Working on it now. REACTOR-936
-          // stopping controller when Spark job is finished
-          stopController(true, context, job, tx);
+          stopController(success, context, job, tx);
           try {
             dependencyJar.delete();
           } catch (IOException e) {
@@ -254,18 +258,18 @@ public class SparkProgramRunner implements ProgramRunner {
   }
 
   /**
-   * Prepares arguments which {@link SparkJobWrapper} is submitted to {@link SparkSubmit} to run.
+   * Prepares arguments which {@link SparkProgramWrapper} is submitted to {@link SparkSubmit} to run.
    *
    * @param sparkSpec     {@link SparkSpecification} of this job
    * @param conf          {@link Configuration} of the job whose {@link MRConfig#FRAMEWORK_NAME} specifies the mode in
    *                      which spark runs
    * @param jobJarCopy    {@link Location} copy of user program
    * @param dependencyJar {@link Location} jar containing the dependencies of this job
-   * @return String[] of arguments with which {@link SparkJobWrapper} will be submitted
+   * @return String[] of arguments with which {@link SparkProgramWrapper} will be submitted
    */
   private String[] prepareSparkSubmitArgs(SparkSpecification sparkSpec, Configuration conf, Location jobJarCopy,
                                           Location dependencyJar) {
-    return new String[]{"--class", SparkJobWrapper.class.getCanonicalName(), "--master",
+    return new String[]{"--class", SparkProgramWrapper.class.getCanonicalName(), "--master",
       conf.get(MRConfig.FRAMEWORK_NAME), jobJarCopy.toURI().getPath(), "--jars", dependencyJar.toURI().getPath(),
       sparkSpec.getMainClassName()};
   }
@@ -302,7 +306,7 @@ public class SparkProgramRunner implements ProgramRunner {
     classes.add(Spark.class);
     classes.add(SparkDatasetInputFormat.class);
     classes.add(SparkDatasetOutputFormat.class);
-    classes.add(SparkJobWrapper.class);
+    classes.add(SparkProgramWrapper.class);
     classes.add(JavaSparkContext.class);
     classes.add(ScalaSparkContext.class);
 

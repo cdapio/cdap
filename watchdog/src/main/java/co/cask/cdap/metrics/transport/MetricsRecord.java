@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,9 +33,11 @@ public final class MetricsRecord {
   private final String name;                // Name of the metric
   private final List<TagMetric> tags;       // List of TagMetric
   private final long timestamp;             // Timestamp in second of when the metric happened.
-  private final int value;                  // Value of the metric, regardless of tags
+  private final long value;                  // Value of the metric, regardless of tags
 
-  public MetricsRecord(String context, String runId, String name, Iterable<TagMetric> tags, long timestamp, int value) {
+  public MetricsRecord(String context, String runId,
+                       String name, Iterable<TagMetric> tags,
+                       long timestamp, long value) {
     this.context = context;
     this.runId = runId;
     this.timestamp = timestamp;
@@ -64,7 +66,7 @@ public final class MetricsRecord {
     return timestamp;
   }
 
-  public int getValue() {
+  public long getValue() {
     return value;
   }
 
