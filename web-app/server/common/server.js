@@ -39,7 +39,7 @@ var WebAppServer = function(dirPath, logLevel, loggerType, mode) {
   process.on('uncaughtException', function (err) {
     this.logger.info('Uncaught Exception', err);
   }.bind(this));
-  this.extractConfig(mode, "cdap")
+  this.extractConfig(mode, "cConfig", false)
       .then(function () {
         this.setUpServer();
       }.bind(this));
@@ -96,7 +96,6 @@ WebAppServer.prototype.setUpServer = function setUpServer(configuration) {
 WebAppServer.prototype.setAttributes = function setCommonAttributes() {
   if (this.config['ssl.enabled'] === "true") {
       this.lib = https;
-      this.securityConfig = require("../../cdap-security-config.json");
       if (this.config["dashboard.ssl.disable.cert.check"] === "true") {
         /*
           We use mikeal/request library to make xhr request to cdap server.
