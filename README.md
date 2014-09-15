@@ -13,7 +13,7 @@ Out-of-the-box, its features include transaction management, dataset abstraction
 performance, scalability, security, metrics and log collection, service discovery and a 
 web-based management dashboard.
 
-CDAP provides data virtualization and application containerization for you data and application
+CDAP provides data virtualization and application containerization for your data and application
 needs. With CDAP you do not require understanding the implementation or the complexity of Apache 
 Hadoop&trade;, HBase or Zookeeper. It provides independence of Hadoop versions and runs on any 
 distribution of Hadoop. CDAP's container model allows for the integration of different processing 
