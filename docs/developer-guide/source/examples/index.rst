@@ -65,7 +65,7 @@ and write to another.
 
 `SparkKMeans <sparkKMeans.html>`_
 =======================================================================
-This example shows another application of streaming analysis, computing the centers of points from an input stream using KMeans Clustering method.
+This example shows another application of streaming analysis, computing the centers of points from an input stream using the KMeans Clustering method.
 
 The application show how to use a **Spark** Program.
 
