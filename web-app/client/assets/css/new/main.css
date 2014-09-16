@@ -4195,7 +4195,8 @@ div.tooltip-inner {
 }
 
 .query-table-entry .bolder-font {
-    color: #5A5D6E;
+  word-break: break-all;
+  color: #5A5D6E;
 }
 
 .query-table-entry:hover .lighter-color, .query-table-entry:hover .bolder-font {
@@ -4243,7 +4244,7 @@ div.tooltip-inner {
 }
 
 .download-query-results-btn {
-    width: 32px;
+    width: 64px;
     height: 32px;
     background-image: url('/assets/img/v2/download_inactive.png');
     background-repeat: no-repeat;

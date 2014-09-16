@@ -396,10 +396,10 @@
         <th class="query-status">Status</th>
         <th class="result-icons">Results</th>
         <th class="sql-statements">Query</th>
-        <th style="width: 43%">{{!-- Panel can potentially be here--}}</th>
       </thead>
     </table>
     {{#each objArr}}
+    <div style="overflow: auto;">
     <table {{bindAttr id="query_handle_hashed"}} data-toggle="tooltip" data-placement="top" title="No results" data-trigger="manual" {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action tableClicked this }}>
       <tbody>
         <tr>
@@ -432,13 +432,10 @@
               {{/if}}
           </td>
           <td class="sql-statements"><span class="bolder-font">{{statement}}</span></td>
-{{!-- panel can go here
-          <td style="width: 43%" class="center-align">
---}}
-          </td>
         </tr>
       </tbody>
     </table>
+    </div>
         <div {{bindAttr id="query_handle"}} class="results-table-holder" style="display:none">
           <table class="table query-results-table-entry">
             <thead>
