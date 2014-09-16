@@ -62,7 +62,7 @@ public class MapReduceMetricsWriter {
 
   public void reportStats() throws IOException, InterruptedException {
     reportMapredStats();
-    reportContinuuityStats();
+    reportSystemStats();
   }
 
   // job level stats from counters built in to mapreduce
@@ -119,8 +119,8 @@ public class MapReduceMetricsWriter {
               runningReducers * memoryPerReducer);
   }
 
-  // report continuuity stats coming from user metrics or dataset operations
-  private void reportContinuuityStats() throws IOException, InterruptedException {
+  // report system stats coming from user metrics or dataset operations
+  private void reportSystemStats() throws IOException, InterruptedException {
     Counters counters = jobConf.getCounters();
     for (String group : counters.getGroupNames()) {
       if (group.startsWith("cdap.")) {
@@ -138,21 +138,21 @@ public class MapReduceMetricsWriter {
         //TODO: Refactor to support any context
         String programPart = parts[1];
         if (programPart.equals("mapper")) {
-          reportContinuuityStats(counters.getGroup(group), context.getSystemMapperMetrics(scope), scope,
-                                 previousMapStats);
+          reportSystemStats(counters.getGroup(group), context.getSystemMapperMetrics(scope), scope,
+                  previousMapStats);
         } else if (programPart.equals("reducer")) {
-          reportContinuuityStats(counters.getGroup(group), context.getSystemReducerMetrics(scope), scope,
-                                 previousReduceStats);
+          reportSystemStats(counters.getGroup(group), context.getSystemReducerMetrics(scope), scope,
+                  previousReduceStats);
         } else if (programPart.equals("dataset")) {
-          reportContinuuityStats(counters.getGroup(group), context.getMetricsCollectionService().getCollector(
-            scope, Constants.Metrics.DATASET_CONTEXT, "0"), scope, previousDatasetStats);
+          reportSystemStats(counters.getGroup(group), context.getMetricsCollectionService().getCollector(
+                  scope, Constants.Metrics.DATASET_CONTEXT, "0"), scope, previousDatasetStats);
         }
       }
     }
   }
 
-  private void reportContinuuityStats(Iterable<Counter> counters, MetricsCollector collector, MetricsScope scope,
-                                         Table<MetricsScope, String, Integer> previousStats) {
+  private void reportSystemStats(Iterable<Counter> counters, MetricsCollector collector, MetricsScope scope,
+                                 Table<MetricsScope, String, Integer> previousStats) {
 
     // we don't want to overcount the untagged version of the metric.  For example.  If "metric":"store.bytes"
     // comes in with "tag":"dataset1" and value 10, we will also have another counter for just the metric without the
