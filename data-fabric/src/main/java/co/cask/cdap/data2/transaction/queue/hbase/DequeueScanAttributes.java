@@ -36,9 +36,9 @@ import javax.annotation.Nullable;
  * Deals with dequeue scan attributes.
  */
 public class DequeueScanAttributes {
-  private static final String ATTR_CONSUMER_CONFIG = "continuuity.queue.dequeue.consumerConfig";
-  private static final String ATTR_TX = "continuuity.queue.dequeue.transaction";
-  private static final String ATTR_QUEUE_ROW_PREFIX = "continuuity.queue.dequeue.queueRowPrefix";
+  private static final String ATTR_CONSUMER_CONFIG = "cdap.queue.dequeue.consumerConfig";
+  private static final String ATTR_TX = "cdap.queue.dequeue.transaction";
+  private static final String ATTR_QUEUE_ROW_PREFIX = "cdap.queue.dequeue.queueRowPrefix";
 
   public static void setQueueRowPrefix(Scan scan, QueueName queueName) {
     scan.setAttribute(ATTR_QUEUE_ROW_PREFIX, QueueEntryRow.getQueueRowPrefix(queueName));

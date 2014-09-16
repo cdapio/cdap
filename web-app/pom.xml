@@ -193,6 +193,15 @@
             <directory>server/enterprise</directory>
             <targetPath>${project.build.directory}/enterprise/server</targetPath>
           </resource>
+
+          <resource>
+            <directory>server/common</directory>
+            <includes>
+              <include>VERSION</include>
+            </includes>
+            <filtering>true</filtering>
+            <targetPath>${project.build.directory}/local</targetPath>
+          </resource>
         </resources>
 
         <plugins>

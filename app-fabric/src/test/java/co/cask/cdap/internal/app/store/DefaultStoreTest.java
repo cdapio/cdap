@@ -480,7 +480,7 @@ public class DefaultStoreTest {
     store.storeRunArguments(flowProgramId, ImmutableMap.of("model", "click"));
     store.storeRunArguments(mapreduceProgramId, ImmutableMap.of("path", "/data"));
     store.storeRunArguments(procedureProgramId, ImmutableMap.of("timeoutMs", "1000"));
-    store.storeRunArguments(workflowProgramId, ImmutableMap.of("whitelist", "continuuity"));
+    store.storeRunArguments(workflowProgramId, ImmutableMap.of("whitelist", "cask"));
 
 
     Map<String, String> args = store.getRunArguments(flowProgramId);
@@ -497,7 +497,7 @@ public class DefaultStoreTest {
 
     args = store.getRunArguments(workflowProgramId);
     Assert.assertEquals(1, args.size());
-    Assert.assertEquals("continuuity", args.get("whitelist"));
+    Assert.assertEquals("cask", args.get("whitelist"));
 
     // removing application
     store.removeApplication(appId);

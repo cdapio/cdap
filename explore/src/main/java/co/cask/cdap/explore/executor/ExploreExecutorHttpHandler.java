@@ -177,7 +177,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   public static String getHiveTableName(String datasetName) {
     // TODO: fix namespacing - REACTOR-264
-    // Instnace name is like continuuity.user.my_table.
+    // Instance name is like cdap.user.my_table.
     // For now replace . with _ since Hive tables cannot have . in them.
     return datasetName.replaceAll("\\.", "_").toLowerCase();
   }

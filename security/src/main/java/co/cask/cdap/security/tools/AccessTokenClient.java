@@ -73,9 +73,13 @@ public class AccessTokenClient {
   public static boolean debug = false;
 
   private boolean help = false;
+  // Default por numbers
+  private static final int SSL_PORT = 10443;
+  private static final int NO_SSL_PORT = 10000;
 
   private String host;
-  private int port = 10000;
+  // default will be set in parsing arguments
+  private int port = NO_SSL_PORT;
   private boolean useSsl = false;
   private boolean disableCertCheck = false;
 
@@ -130,7 +134,8 @@ public class AccessTokenClient {
   private void buildOptions() {
     options = new Options();
     options.addOption(null, ConfigurableOptions.HOST, true, "To specify the host of gateway");
-    options.addOption(null, ConfigurableOptions.PORT, true, "To specify the port of gateway");
+    options.addOption(null, ConfigurableOptions.PORT, true, "To specify the port of gateway. " +
+      String.format("Defaults to %d if router is not SSL enabled and %d if it is.", NO_SSL_PORT, SSL_PORT));
     options.addOption(null, ConfigurableOptions.USER_NAME, true, "To specify the user to login as");
     options.addOption(null, ConfigurableOptions.PASSWORD, true, "To specify the user password");
     options.addOption(null, ConfigurableOptions.FILE, true, "To specify the access token file");
@@ -172,6 +177,9 @@ public class AccessTokenClient {
       return;
     }
 
+    useSsl = commandLine.hasOption(ConfigurableOptions.SSL);
+    disableCertCheck = commandLine.hasOption(ConfigurableOptions.DISABLE_CERT_CHECK);
+
     if (commandLine.hasOption(ConfigurableOptions.HOST)) {
       host = commandLine.getOptionValue(ConfigurableOptions.HOST, "localhost");
     }
@@ -182,6 +190,8 @@ public class AccessTokenClient {
       } catch (NumberFormatException e) {
         usage("--port must be an integer value");
       }
+    } else {
+      port = (useSsl) ? SSL_PORT : NO_SSL_PORT;
     }
 
     if (commandLine.hasOption(ConfigurableOptions.USER_NAME)) {
@@ -206,9 +216,6 @@ public class AccessTokenClient {
         usage("Specify --file to save to file");
       }
     }
-
-    useSsl = commandLine.hasOption(ConfigurableOptions.SSL);
-    disableCertCheck = commandLine.hasOption(ConfigurableOptions.DISABLE_CERT_CHECK);
 
     if (commandLine.getArgs().length > 0) {
       usage(true);
@@ -366,7 +373,7 @@ public class AccessTokenClient {
    * @param e
    */
   private void errorDebugExit(String message, Exception e) {
-    System.out.println(message);
+    System.err.println(message);
     if (debug) {
       e.printStackTrace();
     }

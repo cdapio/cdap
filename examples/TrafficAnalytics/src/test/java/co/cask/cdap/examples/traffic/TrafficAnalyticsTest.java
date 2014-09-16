@@ -67,7 +67,7 @@ public class TrafficAnalyticsTest extends TestBase {
 
       // Start a MapReduce job.
       mrManager = appManager.startMapReduce("RequestCountMapReduce");
-      mrManager.waitForFinish(60, TimeUnit.SECONDS);
+      mrManager.waitForFinish(3, TimeUnit.MINUTES);
     } finally {
       flowManager.stop();
     }

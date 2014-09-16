@@ -78,7 +78,7 @@ public class IndexedObjectStoreTest extends AbstractDatasetTest {
         List<String> categories1 = ImmutableList.of("big data", "startup");
         List<String> categories2 = ImmutableList.of("hadoop");
 
-        Feed feed1 =  new Feed("c1", "http://continuuity.com", categories1);
+        Feed feed1 =  new Feed("c1", "http://abc.com", categories1);
         byte[] key1 = Bytes.toBytes(feed1.getId());
 
         indexedFeed.write(key1, feed1, getCategories(categories1));

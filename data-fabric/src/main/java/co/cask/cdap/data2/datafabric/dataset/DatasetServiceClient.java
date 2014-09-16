@@ -176,7 +176,7 @@ class DatasetServiceClient {
     throws DatasetManagementException {
 
     HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
-                           ImmutableMap.of("X-Continuuity-Class-Name", className),
+                           ImmutableMap.of("X-Class-Name", className),
                            Locations.newInputSupplier(jarLocation));
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {

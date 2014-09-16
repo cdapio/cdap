@@ -1863,7 +1863,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
 
       String accountId = getAuthenticatedAccountId(request);
-      String token = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
+      String token = request.getHeader(Constants.Gateway.API_KEY);
 
       final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId, appId));
       if (appArchive == null || !appArchive.exists()) {
@@ -1914,7 +1914,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         .setUrl(url)
         .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
         .setHeader("X-Archive-Name", appArchive.getName())
-        .setHeader("X-Continuuity-ApiKey", authToken)
+        .setHeader(Constants.Gateway.API_KEY, authToken)
         .build();
 
       try {

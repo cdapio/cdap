@@ -50,7 +50,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     URL url = new URL(location);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     urlConn.setRequestMethod(method.getName());
-    urlConn.setRequestProperty(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+    urlConn.setRequestProperty(Constants.Gateway.API_KEY, API_KEY);
 
     return urlConn;
   }

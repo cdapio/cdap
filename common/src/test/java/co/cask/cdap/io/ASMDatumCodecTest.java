@@ -240,7 +240,7 @@ public class ASMDatumCodecTest {
     PipedInputStream is = new PipedInputStream(os);
 
     DatumWriter<List<URI>> writer = getWriter(type);
-    List<URI> writeValue = ImmutableList.of(URI.create("http://www.continuuity.com"));
+    List<URI> writeValue = ImmutableList.of(URI.create("http://www.abc.com"));
     writer.encode(writeValue, new BinaryEncoder(os));
 
     ReflectionDatumReader<List<URI>> reader = new ReflectionDatumReader<List<URI>>(getSchema(type), type);

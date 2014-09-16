@@ -42,7 +42,7 @@ public class HBaseOrderedTableDefinition
   private HBaseTableUtil hBaseTableUtil;
   @Inject
   private LocationFactory locationFactory;
-  // todo: datasets should not depend on continuuity configuration!
+  // todo: datasets should not depend on cdap configuration!
   @Inject
   private CConfiguration conf;
 

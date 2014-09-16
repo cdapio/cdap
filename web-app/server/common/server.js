@@ -114,7 +114,6 @@ WebAppServer.prototype.setAttributes = function setCommonAttributes() {
     }
     this.apiKey = this.config.apiKey;
     this.version = this.config.version;
-    this.configSet = this.configSet;
     this.configureExpress();
     this.setCookieSession(this.cookieName, this.secret);
 }
@@ -165,9 +164,9 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
     this.transferProtocol = "https://";
     url = 'https://' + this.config['router.server.address'] + ':' + this.config['router.ssl.server.port'] + path;
   } else {
-    this.routerBindPort = this.config['router.server.port'];
+    this.routerBindPort = this.config['router.bind.port'];
     this.transferProtocol = "http://";
-    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.server.port'] + path;
+    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.bind.port'] + path;
   }
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
@@ -372,7 +371,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'GET',
       path: '/' + self.API_VERSION + '/metrics/available' + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -430,7 +429,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'DELETE',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     }, function (error, response, body) {
@@ -460,7 +459,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'PUT',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -497,7 +496,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -508,7 +507,7 @@ WebAppServer.prototype.bindRoutes = function() {
       };
       opts.body = JSON.stringify(opts.body) || '';
       opts.headers = {
-        'X-Continuuity-ApiKey': req.body.apiKey,
+        'X-ApiKey': req.body.apiKey,
         'Authorization': 'Bearer ' + req.cookies.token
       };
     }
@@ -538,7 +537,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -577,7 +576,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'GET',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -628,7 +627,7 @@ WebAppServer.prototype.bindRoutes = function() {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': content.length,
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -679,7 +678,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: url,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -697,7 +696,7 @@ WebAppServer.prototype.bindRoutes = function() {
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -734,7 +733,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: self.transferProtocol + host + '/' + self.API_VERSION + '/unrecoverable/reset',
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -931,7 +930,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
   this.app.get('/download-access-token/*', function (req, res) {
     var accessToken = req.params[0];
-    res.attachment('.continuuity.accesstoken');
+    res.attachment('.cdap.accesstoken');
     res.end(accessToken, 'utf-8');
   });
 
@@ -941,9 +940,8 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.get('/version', function (req, res) {
     var options = {
-      host: 'www.continuuity.com',
-      path: '/version',
-      port: '80'
+      host: 's3.amazonaws.com',
+      path: '/cdap-docs/VERSION'
     };
 
     var request = self.lib.request(options, function(response) {

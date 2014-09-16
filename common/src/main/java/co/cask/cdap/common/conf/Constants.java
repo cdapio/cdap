@@ -242,7 +242,7 @@ public final class Constants {
      * Contains HTTP headers used by Stream handler.
      */
     public static final class Headers {
-      public static final String CONSUMER_ID = "X-Continuuity-ConsumerId";
+      public static final String CONSUMER_ID = "X-ConsumerId";
     }
 
     //max instances of stream handler service
@@ -292,8 +292,8 @@ public final class Constants {
     public static final String GATEWAY_VERSION = "/v2";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
-    public static final String HEADER_DESTINATION_STREAM = "X-Continuuity-Destination";
-    public static final String CONTINUUITY_API_KEY = "X-Continuuity-ApiKey";
+    public static final String HEADER_DESTINATION_STREAM = "X-Destination";
+    public static final String API_KEY = "X-ApiKey";
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
   }
 

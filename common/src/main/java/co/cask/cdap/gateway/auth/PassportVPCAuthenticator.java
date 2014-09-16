@@ -46,7 +46,7 @@ public class PassportVPCAuthenticator implements Authenticator {
 
   @Override
   public boolean authenticateRequest(HttpRequest request) {
-    String apiKey = request.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
+    String apiKey = request.getHeader(Constants.Gateway.API_KEY);
     if (apiKey == null) {
       return false;
     }
@@ -58,7 +58,7 @@ public class PassportVPCAuthenticator implements Authenticator {
     for (Map.Entry<CharSequence, CharSequence> headerEntry :
       event.getHeaders().entrySet()) {
       String headerKey = headerEntry.getKey().toString();
-      if (headerKey.equals(Constants.Gateway.CONTINUUITY_API_KEY)) {
+      if (headerKey.equals(Constants.Gateway.API_KEY)) {
         return authenticate(headerEntry.getValue().toString());
       }
     }
@@ -68,7 +68,7 @@ public class PassportVPCAuthenticator implements Authenticator {
 
   @Override
   public String getAccountId(HttpRequest httpRequest) {
-    String apiKey = httpRequest.getHeader(Constants.Gateway.CONTINUUITY_API_KEY);
+    String apiKey = httpRequest.getHeader(Constants.Gateway.API_KEY);
     if (apiKey == null) {
       throw new RuntimeException("http request was not authenticated");
     }
@@ -80,7 +80,7 @@ public class PassportVPCAuthenticator implements Authenticator {
     for (Map.Entry<CharSequence, CharSequence> headerEntry :
       event.getHeaders().entrySet()) {
       String headerKey = headerEntry.getKey().toString();
-      if (headerKey.equals(Constants.Gateway.CONTINUUITY_API_KEY)) {
+      if (headerKey.equals(Constants.Gateway.API_KEY)) {
         String apiKey = headerEntry.getValue().toString();
         return this.passportClient.getAccount(apiKey).getAccountId();
       }

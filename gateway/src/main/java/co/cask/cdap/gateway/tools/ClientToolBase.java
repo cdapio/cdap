@@ -276,7 +276,7 @@ public abstract class ClientToolBase {
    */
   protected HttpResponse sendHttpRequest(HttpClient client, HttpRequestBase requestBase, List<Integer> expectedCodes) {
     if (apikey != null) {
-      requestBase.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
+      requestBase.setHeader(Constants.Gateway.API_KEY, apikey);
     }
     if (accessToken != null) {
       requestBase.setHeader("Authorization", "Bearer " + accessToken);
