@@ -1,6 +1,7 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform SparkPageRank Application
    :Copyright: Copyright © 2014 Cask Data, Inc.
+
 =================================
 SparkPageRank Application Example
 =================================
@@ -19,7 +20,7 @@ As these entries are created, they are taken up by the *SparkPageRankProgram*, w
 goes through the entries, calculates page rank and tabulates results in another ObjectStore Dataset, *ranks*.
 
 Once the application completes, you can query the *ranks* Dataset by using the ``rank`` method of the *RanksProcedure*. It will
-send back a JSON-formatted result with page rank based on ``url`` parameter.
+send back a JSON-formatted result with page rank based on the ``url`` parameter.
 
 Let's look at some of these elements, and then run the Application and see the results.
 
@@ -105,7 +106,7 @@ skip the tests by using the command::
 Deploying and Starting the Application
 --------------------------------------
 Make sure an instance of the CDAP is running and available.
-From within the SDK root directory, this command will start CDAP in local mode::
+From within the SDK root directory, this command will start CDAP in standalone mode::
 
 	$ ./bin/cdap.sh start
 
@@ -113,7 +114,7 @@ From within the SDK root directory, this command will start CDAP in local mode::
 
 	~SDK> bin\cdap.bat start
 
-From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
+From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in standalone mode):
 
 #. Drag and drop the Application .JAR file (``target/SparkPageRank-<version>.jar``)
    onto your browser window.
@@ -123,16 +124,12 @@ From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`_
 
 To deploy and start the Application from the command-line:
 
-#. To deploy the App JAR file, run ``$ ./bin/app-manager.sh --action deploy`` or drag and drop the
-   Application .JAR file (``target/SparkPageRank-<version>.jar`` onto your browser window.
-   (Currently, the *Load App* button does not work under Windows.)
-#. To start the App, run `` ./bin/app-manager.sh --action start``
+#. To deploy the App JAR file, run ``$ ./bin/app-manager.sh --action deploy``
+#. To start the App, run ``$ ./bin/app-manager.sh --action start``
 
 On Windows:
 
-#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
-   Application .JAR file (``target/SparkPageRank-<version>.jar`` onto your browser window.
-   (Currently, the *Load App* button does not work under Windows.)
+#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy``
 #. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 Running the Example
@@ -146,7 +143,7 @@ to the Stream named *backlinkURLStream* in the ``SparkPageRank`` application::
 
 	$ ./bin/inject-data.sh [--host <hostname>]
 
-:Note:	``[--host <hostname>]`` is not available for a *Local CDAP*.
+:Note: ``[--host ]`` is not available for a *Standalone CDAP*.
 
 On Windows::
 
@@ -230,7 +227,7 @@ or:
 
 - Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--host <hostname>] is not available for a *Local CDAP*.
+:Note: ``[--host ]`` is not available for a *Standalone CDAP*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 

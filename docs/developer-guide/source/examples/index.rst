@@ -67,7 +67,7 @@ and write to another.
 =======================================================================
 This example shows another application of streaming analysis, computing the page rank based on information about backlink URLs.
 
-The application show how to use a **Spark** Program.
+The application demonstrates using a **Spark** Program.
 
 Where to Go Next
 ================
