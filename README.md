@@ -62,7 +62,7 @@ After the build completes, you will have a distribution of the CDAP standalone u
 
 Take the `cdap-<version>.tar.gz` file and unzip it into a suitable location.
 
-For more build options please refer [here](BUILD.md)
+For more build options, please refer to the [build instructions](BUILD.md).
 
 ## Quick Start
 
