@@ -7,6 +7,7 @@ define([], function () {
     var Controller = Em.Controller.extend({
 
         __STATUS_UPDATE_TIMEOUT: 1000,
+        showLogsMessage: false,
         __updateStatusTimeout: null,
         __updateStatus: function(appName, jobName) {
             var model = this.get('model');
@@ -64,11 +65,13 @@ define([], function () {
 
         onCurrentStatusChanged: function() {
           if (this.get("model").get("currentState") === "RUNNING") {
-            if (C.get("currentPath") === "Spark.SparkStatus.index") {
-              this.transitionToRoute("Spark.Log");
-            }
+            this.set("showLogsMessage", true);
           }
-        }.observes("model.currentState")
+        }.observes("model.currentState"),
+
+        logsLinkHandler: function() {
+          this.transitionToRoute("Spark.Log");
+        }
 
     });
 

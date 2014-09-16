@@ -4279,3 +4279,9 @@ div.tooltip-inner {
 .panel-title.center-align.beta-info-font {
   font-size: 14px;
 }
+
+#panels .panel .panel-head .panel-title .logs-link {
+  cursor: pointer;
+  color: blue;
+  text-decoration: underline;
+}

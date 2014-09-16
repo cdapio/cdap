@@ -1291,7 +1291,11 @@
     <div id="panels">
       <div class="panel">
         <div class="panel-head">
-          <div class="panel-title center-align beta-info-font">Beta Feature: Additional components will be added in a future release. </div>
+          <div class="panel-title center-align beta-info-font">Beta Feature: Additional components will be added in a future release.
+          {{#if showLogsMessage}}
+            <span> This program is running. To see more details, please see the <span class="logs-link" {{action "logsLinkHandler" on="click"}}> logs </span> </span>
+          {{/if}}
+          </div>
         </div>
       </div>
     </div>
