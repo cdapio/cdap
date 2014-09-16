@@ -100,12 +100,12 @@ abstract class AbstractSparkContext implements SparkContext {
     Configuration hConf = new Configuration();
     hConf.clear();
 
-    URL url = Thread.currentThread().getContextClassLoader().getResource(SparkProgramRunner.SPARK_HCONF_FILENAME);
+    URL url = Thread.currentThread().getContextClassLoader().getResource(SparkRuntimeService.SPARK_HCONF_FILENAME);
     if (url == null) {
       LOG.error("Unable to find Hadoop Configuration file {} in the submitted jar.",
-                SparkProgramRunner.SPARK_HCONF_FILENAME);
+                SparkRuntimeService.SPARK_HCONF_FILENAME);
       throw new RuntimeException("Hadoop Configuration file not found in the supplied jar. Please include Hadoop " +
-                                   "Configuration file with name " + SparkProgramRunner.SPARK_HCONF_FILENAME);
+                                   "Configuration file with name " + SparkRuntimeService.SPARK_HCONF_FILENAME);
     }
     hConf.addResource(url);
     return hConf;

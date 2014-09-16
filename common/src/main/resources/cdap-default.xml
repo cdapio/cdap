@@ -1096,7 +1096,7 @@
   </property>
 
   <property>
-    <name>dashboard.ssl.cert.allow.unauthorized</name>
+    <name>dashboard.ssl.disable.cert.check</name>
     <value>false</value>
   </property>
 

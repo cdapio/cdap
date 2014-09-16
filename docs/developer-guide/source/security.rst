@@ -111,26 +111,31 @@ Configuring SSL for UI
 =============================================
 To enable SSL for the Web-UI, add these properties to ``cdap-security.xml``:
 
-=======================================          =======================
-   Property                                        Value
-=======================================          =======================
-dashboard.ssl.cert                                  <path>
-dashboard.ssl.key                                   <path>
-=======================================          =======================
+=======================================          ============================================
+   Property                                        Description
+=======================================          ============================================
+dashboard.ssl.cert                                  SSL cert file location. The file should
+                                                    be owned and readable only by the CDAP
+                                                    user
+dashboard.ssl.key                                   SSL key file location. The file should
+                                                    be owned and readable only by the CDAP
+                                                    user
+=======================================          ============================================
 
 **Note:** To allow self signed certificates, set dashboard.ssl.disable.cert.check field to true in cdap-site.xml
 
 Configuring Kerberos (required)
 ================================
-To configure which Kerberos keytabs and principals are to be used for various CDAP services, add these properties to
-``cdap-site.xml``:
+To configure Kerberos authentication for various CDAP services, add these properties to ``cdap-site.xml``:
 
-==========================================  =============================
-   Property                                   Value
-==========================================  =============================
-cdap.master.kerberos.keytab                  <kerberos-keytab-file-path>
-cdap.master.kerberos.principal               <kerberos-principal>
-==========================================  =============================
+==========================================  ========================  ==========================================
+   Property                                   Default Value            Description
+==========================================  ========================  ==========================================
+kerberos.auth.enabled                         ``security.enabled``     true to enable Kerberos authentication
+cdap.master.kerberos.keytab                   None                     Kerberos keytab file location
+cdap.master.kerberos.principal                None                     Kerberos principal associated with
+                                                                       the keytab
+==========================================  ========================  ==========================================
 
 Configuring Zookeeper (required)
 =================================
@@ -184,9 +189,9 @@ To enable access logging, add the following to ``logback.xml`` (typically under 
     </logger>
 
     <appender name="EXTERNAL_AUTH_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
-      <file>logs/external_auth_access.log</file>
+      <file>external_auth_access.log</file>
       <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-        <fileNamePattern>logs/external_auth_access.log.%d{yyyy-MM-dd}</fileNamePattern>
+        <fileNamePattern>external_auth_access.log.%d{yyyy-MM-dd}</fileNamePattern>
         <maxHistory>30</maxHistory>
       </rollingPolicy>
       <encoder>
