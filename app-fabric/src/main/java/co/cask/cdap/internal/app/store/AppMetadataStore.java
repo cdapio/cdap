@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -192,4 +192,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public void deleteProgramArgs(String accountId) {
     deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, accountId).build());
   }
+
+  public void deleteProgramHistory(String accountId, String appId) {
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId).build());
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId).build());
+  }
+
+  public void deleteProgramHistory(String accountId) {
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId).build());
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId).build());
+  }
+
 }

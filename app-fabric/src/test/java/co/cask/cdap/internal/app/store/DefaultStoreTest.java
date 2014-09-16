@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -516,6 +516,78 @@ public class DefaultStoreTest {
     Assert.assertEquals(0, args.size());
   }
 
+  @Test
+  public void testHistoryDeletion() throws Exception {
+
+    // Deploy two apps, write some history for programs
+    // Remove application using accountId, AppId and verify
+    // Remove all from accountId and verify
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    Id.Account accountId = new Id.Account("testDeleteAll");
+    Id.Application appId1 = new Id.Application(accountId, spec.getName());
+    store.addApplication(appId1, spec, new LocalLocationFactory().create("/allPrograms"));
+
+    spec = Specifications.from(new WordCountApp());
+    Id.Application appId2 = new Id.Application(accountId, spec.getName());
+    store.addApplication(appId2, spec, new LocalLocationFactory().create("/wordCount"));
+
+    Id.Program flowProgramId1 = new Id.Program(appId1, "NoOpFlow");
+    Id.Program mapreduceProgramId1 = new Id.Program(appId1, "NoOpMR");
+    Id.Program procedureProgramId1 = new Id.Program(appId1, "NoOpProcedure");
+    Id.Program workflowProgramId1 = new Id.Program(appId1, "NoOpWorkflow");
+
+    Id.Program flowProgramId2 = new Id.Program(appId2, "WordCountFlow");
+
+    Assert.assertNotNull(store.getApplication(appId1));
+    Assert.assertNotNull(store.getApplication(appId2));
+
+    long now = System.currentTimeMillis();
+
+    store.setStart(flowProgramId1, "flowRun1", now - 1000);
+    store.setStop(flowProgramId1, "flowRun1", now, "SUCCEDED");
+
+    store.setStart(mapreduceProgramId1, "mrRun1", now - 1000);
+    store.setStop(mapreduceProgramId1, "mrRun1", now, "SUCCEDED");
+
+    store.setStart(procedureProgramId1, "procedureRun1", now - 1000);
+    store.setStop(procedureProgramId1, "procedureRun1", now, "SUCCEDED");
+
+    store.setStart(workflowProgramId1, "wfRun1", now - 1000);
+    store.setStop(workflowProgramId1, "wfRun1", now, "SUCCEDED");
+
+    store.setStart(flowProgramId2, "flowRun2", now - 1000);
+    store.setStop(flowProgramId2, "flowRun2", now, "SUCCEDED");
+
+    verifyRunHistory(flowProgramId1, 1);
+    verifyRunHistory(mapreduceProgramId1, 1);
+    verifyRunHistory(procedureProgramId1, 1);
+    verifyRunHistory(workflowProgramId1, 1);
+
+    verifyRunHistory(flowProgramId2, 1);
+
+    // removing application
+    store.removeApplication(appId1);
+
+    Assert.assertNull(store.getApplication(appId1));
+
+    verifyRunHistory(flowProgramId1, 0);
+    verifyRunHistory(mapreduceProgramId1, 0);
+    verifyRunHistory(procedureProgramId1, 0);
+    verifyRunHistory(workflowProgramId1, 0);
+
+    // Check to see if the flow history of second app is not deleted
+    verifyRunHistory(flowProgramId2, 1);
+
+    // remove all
+    store.removeAll(accountId);
+
+    verifyRunHistory(flowProgramId2, 0);
+  }
+
+  private void verifyRunHistory(Id.Program programId, int count) {
+    List<RunRecord> history = store.getRunHistory(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Assert.assertEquals(count, history.size());
+  }
 
   @Test
   public void testCheckDeletedProgramSpecs () throws Exception {

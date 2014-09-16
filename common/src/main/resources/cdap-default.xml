@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright 2014 Cask Data, Inc.
+  Copyright © 2014 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -648,15 +648,25 @@
     </property>
 
     <property>
+        <name>router.server.port</name>
+        <value>${router.bind.port}</value>
+    </property>
+
+    <property>
         <name>router.webapp.bind.port</name>
         <value>20000</value>
         <description>Router listening port for webapp</description>
     </property>
 
     <property>
-        <name>router.ssl.bind.port</name>
-        <value>10443</value>
-        <description>Secure router listening port for gateway</description>
+      <name>router.ssl.bind.port</name>
+      <value>10443</value>
+      <description>Secure router listening port for gateway</description>
+    </property>
+
+    <property>
+        <name>router.ssl.server.port</name>
+        <value>${router.ssl.bind.port}</value>
     </property>
 
     <property>
@@ -907,13 +917,8 @@
     </property>
 
     <property>
-        <name>gateway.server.address</name>
+        <name>router.server.address</name>
         <value>localhost</value>
-    </property>
-
-    <property>
-        <name>gateway.server.port</name>
-        <value>10000</value>
     </property>
 
     <!---
@@ -1091,7 +1096,7 @@
   </property>
 
   <property>
-    <name>dashboard.ssl.cert.allow.unauthorized</name>
+    <name>dashboard.ssl.disable.cert.check</name>
     <value>false</value>
   </property>
 

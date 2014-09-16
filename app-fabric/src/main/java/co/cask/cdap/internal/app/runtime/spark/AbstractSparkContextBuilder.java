@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import co.cask.cdap.internal.app.runtime.spark.inmemory.InMemorySparkContextBuilder;
 import co.cask.tephra.Transaction;
@@ -86,14 +85,13 @@ public abstract class AbstractSparkContextBuilder {
     //TODO: Change this when Spark starts supporting Metrics
     MetricsCollectionService metricsCollectionService = null;
 
-    ProgramServiceDiscovery serviceDiscovery = injector.getInstance(ProgramServiceDiscovery.class);
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
     // Creating Spark job context
     SparkSpecification sparkSpec = program.getSpecification().getSpark().get(program.getName());
     BasicSparkContext context =
       new BasicSparkContext(program, RunIds.fromString(runId), runtimeArguments, appSpec.getDatasets().keySet(),
-                            sparkSpec, logicalStartTime, workflowBatch, serviceDiscovery, metricsCollectionService,
+                            sparkSpec, logicalStartTime, workflowBatch, metricsCollectionService,
                             datasetFramework, configuration, discoveryServiceClient);
 
     // propagating tx to all txAware guys

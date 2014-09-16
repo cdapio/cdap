@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.annotation.Handle;
-import co.cask.cdap.api.annotation.Transactional;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
@@ -88,7 +87,6 @@ public class AppWithServices extends AbstractApplication {
     protected void configure() {
       setName(TRANSACTIONS_SERVICE_NAME);
       addHandler(new TransactionsHandler());
-      useDataset(TRANSACTIONS_DATASET_NAME);
     }
 
     public static final class TransactionsHandler extends AbstractHttpServiceHandler {
@@ -98,7 +96,6 @@ public class AppWithServices extends AbstractApplication {
 
       @Path("/write/{key}/{value}/{sleep}")
       @GET
-      @Transactional
       public void handler(HttpServiceRequest request, HttpServiceResponder responder,
                           @PathParam("key") String key, @PathParam("value") String value, @PathParam("sleep") int sleep)
         throws InterruptedException {
@@ -109,7 +106,6 @@ public class AppWithServices extends AbstractApplication {
 
       @Path("/read/{key}")
       @GET
-      @Transactional
       public void readHandler(HttpServiceRequest request, HttpServiceResponder responder,
                               @PathParam("key") String key) {
         String value = Bytes.toString(table.read(key));

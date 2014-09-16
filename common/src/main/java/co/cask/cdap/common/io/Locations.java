@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,8 @@ import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,6 +33,8 @@ import javax.annotation.Nullable;
  * Utility class to help interaction with {@link Location}.
  */
 public final class Locations {
+
+  private static final Logger LOG = LoggerFactory.getLogger(Locations.class);
 
   public static final Comparator<Location> LOCATION_COMPARATOR = new Comparator<Location>() {
     @Override
@@ -114,6 +118,18 @@ public final class Locations {
     // Need to check && mkdir && check to deal with race condition
     if (!location.isDirectory() && !location.mkdirs() && !location.isDirectory()) {
       throw new IOException("Failed to create directory at " + location.toURI());
+    }
+  }
+
+  public static void deleteQuietly(Location location) {
+    deleteQuietly(location, false);
+  }
+
+  public static void deleteQuietly(Location location, boolean recursive) {
+    try {
+      location.delete(recursive);
+    } catch (IOException e) {
+      LOG.error("IOException while deleting location {}", location.toURI(), e);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,11 @@
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.service.AbstractService;
-import co.cask.cdap.api.service.AbstractServiceWorker;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.internal.app.services.GuavaServiceWorker;
 import com.google.common.base.Charsets;
-import com.google.common.util.concurrent.AbstractScheduledService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -37,53 +31,11 @@ import javax.ws.rs.PathParam;
  */
 public class CatalogLookupService extends AbstractService {
 
-  /**
-   * Example Guava Service which simply writes to LOG once every 3 seconds.
-   */
-  public static final class NoOpGuavaWorker extends AbstractScheduledService {
-    private static final Logger LOG = LoggerFactory.getLogger(NoOpGuavaWorker.class);
-    private int numIterations;
-
-    @Override
-    protected void runOneIteration() throws Exception {
-      numIterations++;
-      LOG.info("{} completed iteration #{}", this.getClass().getSimpleName(), numIterations);
-    }
-
-    @Override
-    protected Scheduler scheduler() {
-      return Scheduler.newFixedDelaySchedule(0, 3, TimeUnit.SECONDS);
-    }
-  }
-
-  /**
-   * Example ServiceWorker which simply writes to LOG once every 3 seconds.
-   */
-  public static final class NoOpServiceWorker extends AbstractServiceWorker {
-    private static final Logger LOG = LoggerFactory.getLogger(NoOpServiceWorker.class);
-    private int numIterations;
-
-    @Override
-    public void run() {
-      while (true) {
-        numIterations++;
-        LOG.info("{} completed iteration #{}", this.getClass().getSimpleName(), numIterations);
-        try {
-          Thread.sleep(3000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-  }
-
   @Override
   protected void configure() {
     setName(PurchaseApp.SERVICE_NAME);
     setDescription("Service to lookup product ids.");
     addHandler(new ProductCatalogLookup());
-    addWorker(new NoOpServiceWorker());
-    addWorker(new GuavaServiceWorker(new NoOpGuavaWorker()));
   }
 
   /**

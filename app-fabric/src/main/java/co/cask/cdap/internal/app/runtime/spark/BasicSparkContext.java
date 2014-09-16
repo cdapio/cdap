@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,6 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
@@ -36,7 +35,6 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,22 +63,20 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   private final long logicalStartTime;
   private final String accountId;
   private final String workflowBatch;
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final MetricsCollectionService metricsCollectionService;
   private final SparkLoggingContext loggingContext;
 
   public BasicSparkContext(Program program, RunId runId, Arguments runtimeArguments, Set<String> datasets,
                            SparkSpecification sparkSpec, long logicalStartTime, String workflowBatch,
-                           ProgramServiceDiscovery serviceDiscovery, MetricsCollectionService metricsCollectionService,
+                           MetricsCollectionService metricsCollectionService,
                            DatasetFramework dsFramework, CConfiguration conf,
                            DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, datasets, getMetricContext(program), metricsCollectionService, dsFramework, conf,
-          serviceDiscovery, discoveryServiceClient);
+          discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
-    this.serviceDiscovery = serviceDiscovery;
     this.metricsCollectionService = metricsCollectionService;
 
     //TODO: Metrics needs to be initialized here properly when implemented.
@@ -148,12 +144,6 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
       arguments.put(runtimeArgument);
     }
     return arguments.build();
-  }
-
-  @Override
-  public ServiceDiscovered discover(String applicationId, String serviceId, String serviceName) {
-    //TODO: Change this once we start supporting services in Spark.
-    throw new UnsupportedOperationException("Service Discovery not supported");
   }
 
   //TODO: Change this once we have metrics is supported

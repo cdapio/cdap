@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.logging.context.ProcedureLoggingContext;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
@@ -55,11 +54,11 @@ final class BasicProcedureContext extends AbstractContext implements ProcedureCo
   BasicProcedureContext(Program program, RunId runId, int instanceId, int instanceCount,
                         Set<String> datasets, Arguments runtimeArguments,
                         ProcedureSpecification procedureSpec, MetricsCollectionService collectionService,
-                        ProgramServiceDiscovery serviceDiscovery, DiscoveryServiceClient discoveryServiceClient,
+                        DiscoveryServiceClient discoveryServiceClient,
                         DatasetFramework dsFramework, CConfiguration conf) {
     super(program, runId, datasets,
           getMetricsContext(program, instanceId), collectionService,
-          dsFramework, conf, serviceDiscovery, discoveryServiceClient);
+          dsFramework, conf, discoveryServiceClient);
     this.accountId = program.getAccountId();
     this.procedureId = program.getName();
     this.instanceId = instanceId;

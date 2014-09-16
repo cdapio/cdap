@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,13 +29,13 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.app.runtime.service.http.DefaultHttpServiceHandlerConfigurer;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
+import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionSystemClient;
@@ -44,8 +44,10 @@ import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -109,7 +111,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private MetricsCollectionService metricsCollectionService;
   private DatasetFramework datasetFramework;
   private CConfiguration cConfiguration;
-  private ProgramServiceDiscovery programServiceDiscovery;
   private DiscoveryServiceClient discoveryServiceClient;
   private TransactionSystemClient transactionSystemClient;
 
@@ -126,7 +127,13 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
     this.serviceName = serviceName;
     this.handlers = ImmutableList.copyOf(handlers);
     this.appName = appName;
-    this.datasets = datasets;
+    Set<String> useDatasets = Sets.newHashSet(datasets);
+    // Allow datasets that have only been used via the @UseDataSet annotation.
+    for (HttpServiceHandler httpServiceHandler : handlers) {
+      Reflections.visit(httpServiceHandler, TypeToken.of(httpServiceHandler.getClass()),
+                        new DataSetFieldExtractor(useDatasets));
+    }
+    this.datasets = ImmutableSet.copyOf(useDatasets);
   }
 
   /**
@@ -136,7 +143,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   public HttpServiceTwillRunnable(Program program, RunId runId,
                                   CConfiguration cConfiguration, String runnableName,
                                   MetricsCollectionService metricsCollectionService,
-                                  ProgramServiceDiscovery programServiceDiscovery,
                                   DiscoveryServiceClient discoveryServiceClient, DatasetFramework datasetFramework,
                                   TransactionSystemClient txClient) {
     this.program = program;
@@ -146,7 +152,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
                                             program.getApplicationId(), TypeId.getMetricContextId(program.getType()),
                                             program.getName(), runnableName);
     this.metricsCollectionService = metricsCollectionService;
-    this.programServiceDiscovery = programServiceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
     this.datasetFramework = datasetFramework;
     this.transactionSystemClient = txClient;
@@ -421,7 +426,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
                                                                                metricsCollectionService,
                                                                                datasetFramework,
                                                                                cConfiguration,
-                                                                               programServiceDiscovery,
                                                                                discoveryServiceClient,
                                                                                transactionSystemClient);
 

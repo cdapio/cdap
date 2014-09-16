@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright 2014 Cask Data, Inc.
+  Copyright © 2014 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -120,13 +120,13 @@
 
   <!-- Substitute the IP of the Router service to which the UI should connect -->
   <property>
-    <name>gateway.server.address</name>
+    <name>router.server.address</name>
     <value>ROUTER-HOST-IP</value>
     <description>Specifies the destination IP where Router service is running</description>
   </property>
 
   <property>
-    <name>gateway.server.port</name>
+    <name>router.server.port</name>
     <value>10000</value>
     <description>Specifies the destination Port where Router service is listening</description>
   </property>

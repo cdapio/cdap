@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,7 +63,6 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
   private final DataSetInstantiator dsInstantiator;
 
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   public AbstractContext(Program program, RunId runId,
@@ -72,11 +71,9 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
                          MetricsCollectionService metricsCollectionService,
                          DatasetFramework dsFramework,
                          CConfiguration conf,
-                         ProgramServiceDiscovery serviceDiscovery,
                          DiscoveryServiceClient discoveryServiceClient) {
     this.program = program;
     this.runId = runId;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
 
     MetricsCollector datasetMetrics;
@@ -151,11 +148,6 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
   public RunId getRunId() {
     return runId;
-  }
-
-  @Override
-  public ServiceDiscovered discover(String appId, String serviceId, String serviceName) {
-    return serviceDiscovery.discover(getAccountId(), appId, serviceId, serviceName);
   }
 
   @Override
