@@ -384,26 +384,36 @@
   {{#if objArr}}
     <table class="table" id="query-list-table">
       <thead>
-        <th style="width: 12%">Time Started</th>
-        <th style="width: 8%">Status</th>
-        <th style="width: 10%" class="center">Results</th>
-        <th style="width: 35%">Query</th>
-        <th style="width: 43%">{{!-- Panel can potentially be here--}}</th>
+        <th class="arrows"><div class="arrowHolder"></div></th>
+        <th class="time-started">Time Started</th>
+        <th class="query-status">Status</th>
+        <th class="result-icons">Results</th>
+        <th class="sql-statements">Query</th>
       </thead>
     </table>
     {{#each objArr}}
+    <div style="overflow: auto;">
     <table {{bindAttr id="query_handle_hashed"}} data-toggle="tooltip" data-placement="top" title="No results" data-trigger="manual" {{bindAttr class=":table :cursor-pointer :query-table-entry this.isSelected:selected:notselected" }} {{ action tableClicked this }}>
       <tbody>
         <tr>
-          <td style="width: 12%">
+          <td class="arrows">
+            <div class="arrowHolder">
+            {{#if this.isSelected}}
+              <div class="arrow-down"> </div>
+            {{ else }}
+              <div class="arrow-right"> </div>
+            {{/if}}
+            </div>
+          </td>
+          <td class="time-started">
             <span class="lighter-color">{{time_started}}</span>
           </td>
-          <td style="width: 10%">
+          <td class="query-status">
             <span {{bindAttr class=":query-status status"}}>
               {{status}}
             </span>
           </td>
-          <td style="width: 8%">
+          <td class="results-icons">
               {{#if has_results}}
                 {{#if is_active}}
                   <a data-toggle="tooltip" data-placement="right" title="Download" trigger="hover" {{action download this bubbles=false}} class="download-query-results-btn"></a>
@@ -414,14 +424,11 @@
                 <a data-toggle="tooltip" data-placement="right" title="No results" trigger="hover" class="download-query-results-disabled-btn"></a>
               {{/if}}
           </td>
-          <td style="min-width: 35%"><span class="bolder-font">{{statement}}</span></td>
-{{!-- panel can go here
-          <td style="width: 43%" class="center-align">
---}}
-          </td>
+          <td class="sql-statements"><span class="bolder-font">{{statement}}</span></td>
         </tr>
       </tbody>
     </table>
+    </div>
         <div {{bindAttr id="query_handle"}} class="results-table-holder" style="display:none">
           <table class="table query-results-table-entry">
             <thead>
