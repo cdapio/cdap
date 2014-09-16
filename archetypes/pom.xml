@@ -31,6 +31,7 @@
 
   <modules>
     <module>cdap-spark-java-archetype</module>
+    <module>cdap-spark-scala-archetype</module>
   </modules>
 
   <build>

@@ -18,19 +18,30 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import com.google.common.util.concurrent.Service;
+import org.apache.twill.common.ServiceListenerAdapter;
+import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Spark Program Controller for {@link Spark} jobs
+ * A {@link ProgramController} for {@link Spark} jobs. This class acts as an adapter for reflecting state changes
+ * happening in {@link SparkRuntimeService}
  */
 public final class SparkProgramController extends AbstractProgramController {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SparkProgramController.class);
+
+  private final Service sparkRuntimeService;
   private final SparkContext context;
 
-  SparkProgramController(BasicSparkContext context) {
+  SparkProgramController(Service sparkRuntimeService, BasicSparkContext context) {
     super(context.getProgramName(), context.getRunId());
+    this.sparkRuntimeService = sparkRuntimeService;
     this.context = context;
-    started();
+    listenToRuntimeState(sparkRuntimeService);
   }
 
   @Override
@@ -45,8 +56,10 @@ public final class SparkProgramController extends AbstractProgramController {
 
   @Override
   protected void doStop() throws Exception {
-    // When job is stopped by controller doStop() method, the stopping() method of listener is also called.
-    // That is where we kill the job, so no need to do any extra job in doStop().
+    if (sparkRuntimeService.state() != Service.State.TERMINATED &&
+      sparkRuntimeService.state() != Service.State.FAILED) {
+      sparkRuntimeService.stopAndWait();
+    }
   }
 
   @Override
@@ -59,5 +72,28 @@ public final class SparkProgramController extends AbstractProgramController {
    */
   public SparkContext getContext() {
     return context;
+  }
+
+  private void listenToRuntimeState(Service service) {
+    service.addListener(new ServiceListenerAdapter() {
+      @Override
+      public void running() {
+        started();
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        LOG.error("Spark terminated with exception", failure);
+        error(failure);
+      }
+
+      @Override
+      public void terminated(Service.State from) {
+        if (getState() != State.STOPPING) {
+          // Spark completed by itself. Simply signal the controller about the state change
+          stop();
+        }
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
   }
 }
