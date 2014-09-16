@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -61,10 +62,11 @@ public class RouterMain extends DaemonMain {
     try {
       // Load configuration
       CConfiguration cConf = CConfiguration.create();
+      SConfiguration sConf = SConfiguration.create();
 
       if (cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
         // Enable Kerberos login
-        SecurityUtil.enableKerberosLogin(cConf);
+        SecurityUtil.enableKerberosLogin(cConf, sConf);
       }
 
       // Initialize ZK client

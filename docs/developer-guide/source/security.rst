@@ -126,12 +126,19 @@ dashboard.ssl.key                                   SSL key file location. The f
 
 Configuring Kerberos (required)
 ================================
-To configure Kerberos authentication for various CDAP services, add these properties to ``cdap-site.xml``:
+To configure Kerberos authentication for various CDAP services, add this property to ``cdap-site.xml``:
 
 ==========================================  ========================  ==========================================
    Property                                   Default Value            Description
 ==========================================  ========================  ==========================================
 kerberos.auth.enabled                         ``security.enabled``     true to enable Kerberos authentication
+==========================================  ========================  ==========================================
+
+and add these properties to ``cdap-security.xml``:
+
+==========================================  ========================  ==========================================
+   Property                                   Default Value            Description
+==========================================  ========================  ==========================================
 cdap.master.kerberos.keytab                   None                     Kerberos keytab file location
 cdap.master.kerberos.principal                None                     Kerberos principal associated with
                                                                        the keytab

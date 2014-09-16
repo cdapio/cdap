@@ -17,7 +17,7 @@
 package co.cask.cdap.common.conf;
 
 /**
- * Used to create Configuration Object for security related properties
+ * Used to create Configuration Object for sensitive security-related properties, like passwords.
  */
 public class SConfiguration extends Configuration {
 
