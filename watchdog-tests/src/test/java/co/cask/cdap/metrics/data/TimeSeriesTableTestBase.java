@@ -15,44 +15,18 @@
  */
 package co.cask.cdap.metrics.data;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
-import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
-import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Test base for {@link TimeSeriesTable}.
@@ -195,7 +169,7 @@ public abstract class TimeSeriesTableTestBase {
 
   @Test
   public void testIntOverflow() throws OperationException {
-    TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries("intOverflow", 1);
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("intOverflow", 1);
     // 2012-10-01T12:00:00
     final long time = 1317470400;
 

@@ -76,7 +76,7 @@ public abstract class AggregatesTableTestBase {
 
   @Test
   public void testIntOverflow() throws OperationException {
-    AggregatesTable aggregatesTable = tableFactory.createAggregates("intOverflow");
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("intOverflow");
 
     // 2012-10-01T12:00:00
     final long time = 1317470400;
