@@ -96,7 +96,7 @@ WebAppServer.prototype.setUpServer = function setUpServer(configuration) {
 WebAppServer.prototype.setAttributes = function setCommonAttributes() {
   if (this.config['ssl.enabled'] === "true") {
       this.lib = https;
-      if (this.config["dashboard.ssl.disable.cert.check"] === "true") {
+      if (this.securityConfig["dashboard.ssl.disable.cert.check"] === "true") {
         /*
           We use mikeal/request library to make xhr request to cdap server.
           In a ssl enabled environment where cdap server uses a self-signed certificate
