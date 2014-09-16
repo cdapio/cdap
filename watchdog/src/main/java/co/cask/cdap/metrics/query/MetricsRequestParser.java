@@ -100,7 +100,7 @@ final class MetricsRequestParser {
 
   /**
    * Given a full metrics path like '/v2/metrics/system/apps/collect.events', strip the preceding version and
-   * metrics to return 'cdap/apps/collect.events', representing the context and metric, which can then be
+   * metrics to return 'system/apps/collect.events', representing the context and metric, which can then be
    * parsed by this parser.
    *
    * @param path request path.
@@ -147,7 +147,7 @@ final class MetricsRequestParser {
   /**
    * Parse the context path, setting the relevant context fields in the builder.
    * Context starts after the scope and looks something like:
-   * cdap/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}
+   * system/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}
    */
   static MetricsRequestContext parseContext(String path, MetricsRequestBuilder builder) throws MetricsPathException {
     Iterator<String> pathParts = Splitter.on('/').omitEmptyStrings().split(path).iterator();

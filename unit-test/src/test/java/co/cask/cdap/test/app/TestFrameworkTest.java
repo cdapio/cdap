@@ -375,7 +375,7 @@ public class TestFrameworkTest extends TestBase {
     serviceStatusCheck(serviceManager, false);
 
     LOG.info("Service Stopped");
-    // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the cdap scope test in
+    // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the system scope test in
     // TestMetricsCollectionService
 
     LOG.info("DatasetUpdateService Started");
