@@ -295,8 +295,7 @@ Note that a Dataset can implement either ``RecordScannable``, ``RecordWritable``
 
 Connecting to CDAP Datasets using CDAP JDBC driver
 ==================================================
-Now that CDAP exposes a SQL interface, we have made available a JDBC driver that you can use in your code
-or in third party tools to connect to CDAP Datasets and execute SQL queries over them.
+CDAP provides a JDBC driver to enable integrations with external programs and third party BI tools easier.
 
 The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``lib``
 directory of your SDK installation at ``lib/co.cask.cdap.explore-jdbc-<version>.jar``.
@@ -307,7 +306,7 @@ Go to the directory matching the version of your running CDAP instance, and down
 
 Using the CDAP JDBC driver in your Java code
 --------------------------------------------
-To use CDAP JDBC driver in your code, you need to put ``cdap-jdbc-driver.jar`` in the classpath of your application.
+To use CDAP JDBC driver in your code, place ``cdap-jdbc-driver.jar`` in the classpath of your application.
 If you are using Maven, you can simply add a dependency in your file ``pom.xml``::
 
   <dependencies>
