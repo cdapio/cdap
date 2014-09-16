@@ -170,11 +170,11 @@ function(Components, Embeddables, HTTP, Util) {
 		},
 
 //    /**
-//     * Determines readiness of Reactor by polling all services and checking status.
+//     * Determines readiness of CDAP by polling all services and checking status.
 //     * @param routeHandler Object Ember route handler.
 //     * @param callback Function to execute.
 //     */
-//    checkReactorReadiness: function (routeHandler, callback) {
+//    checkCDAPReadiness: function (routeHandler, callback) {
 //      HTTP.create().rest('system/services/status', function (statuses, callStatus) {
 //      	if (callStatus !== 200) {
 //      		routeHandler.transitionTo('Loading');
