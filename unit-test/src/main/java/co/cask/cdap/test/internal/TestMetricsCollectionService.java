@@ -29,7 +29,7 @@ public final class TestMetricsCollectionService extends AggregatedMetricsCollect
 
   @Override
   protected void publish(MetricsScope scope, Iterator<MetricsRecord> metrics) throws Exception {
-    // Currently the test framework only supports REACTOR metrics.
+    // Currently the test framework only supports system metrics.
     if (scope != MetricsScope.SYSTEM) {
       return;
     }

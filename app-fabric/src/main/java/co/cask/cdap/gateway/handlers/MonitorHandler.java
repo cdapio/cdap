@@ -46,7 +46,7 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class MonitorHandler extends AbstractAppFabricHttpHandler {
-  private final Map<String, MasterServiceManager> reactorServiceManagementMap;
+  private final Map<String, MasterServiceManager> serviceManagementMap;
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
   private static final String NOTAPPLICABLE = "NA";
@@ -57,7 +57,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public MonitorHandler(Authenticator authenticator, Map<String, MasterServiceManager> serviceMap,
                         ServiceStore serviceStore) throws Exception {
     super(authenticator);
-    this.reactorServiceManagementMap = serviceMap;
+    this.serviceManagementMap = serviceMap;
     this.serviceStore = serviceStore;
   }
 
@@ -69,13 +69,13 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void getServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") String serviceName) throws Exception {
     JsonObject reply = new JsonObject();
-    if (!reactorServiceManagementMap.containsKey(serviceName)) {
+    if (!serviceManagementMap.containsKey(serviceName)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
       return;
     }
-    MasterServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
+    MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
     if (serviceManager.isServiceEnabled()) {
-      int actualInstance = reactorServiceManagementMap.get(serviceName).getInstances();
+      int actualInstance = serviceManagementMap.get(serviceName).getInstances();
       reply.addProperty("provisioned", actualInstance);
       reply.addProperty("requested", getSystemServiceInstanceCount(serviceName));
       responder.sendJson(HttpResponseStatus.OK, reply);
@@ -92,12 +92,12 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   public void setServiceInstance(final HttpRequest request, final HttpResponder responder,
                                  @PathParam("service-name") final String serviceName) {
     try {
-      if (!reactorServiceManagementMap.containsKey(serviceName)) {
+      if (!serviceManagementMap.containsKey(serviceName)) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Invalid Service Name");
         return;
       }
 
-      MasterServiceManager serviceManager = reactorServiceManagementMap.get(serviceName);
+      MasterServiceManager serviceManager = serviceManagementMap.get(serviceName);
       int instance = getInstances(request);
       if (!serviceManager.isServiceEnabled()) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
@@ -132,8 +132,8 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getBootStatus(final HttpRequest request, final HttpResponder responder) {
     Map<String, String> result = new HashMap<String, String>();
-    for (String service : reactorServiceManagementMap.keySet()) {
-      MasterServiceManager masterServiceManager = reactorServiceManagementMap.get(service);
+    for (String service : serviceManagementMap.keySet()) {
+      MasterServiceManager masterServiceManager = serviceManagementMap.get(service);
       if (masterServiceManager.isServiceEnabled() && masterServiceManager.canCheckStatus()) {
         String status = masterServiceManager.isServiceAvailable() ? STATUSOK : STATUSNOTOK;
         result.put(service, status);
@@ -146,11 +146,11 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void monitor(final HttpRequest request, final HttpResponder responder,
                       @PathParam("service-name") final String serviceName) {
-    if (!reactorServiceManagementMap.containsKey(serviceName)) {
+    if (!serviceManagementMap.containsKey(serviceName)) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Invalid service name %s", serviceName));
       return;
     }
-    MasterServiceManager masterServiceManager = reactorServiceManagementMap.get(serviceName);
+    MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
     if (!masterServiceManager.isServiceEnabled()) {
       responder.sendString(HttpResponseStatus.FORBIDDEN, String.format("Service %s is not enabled", serviceName));
       return;
@@ -172,10 +172,10 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getServiceSpec(final HttpRequest request, final HttpResponder responder) throws Exception {
     List<SystemServiceMeta> response = Lists.newArrayList();
-    SortedSet<String> services = new TreeSet<String>(reactorServiceManagementMap.keySet());
+    SortedSet<String> services = new TreeSet<String>(serviceManagementMap.keySet());
     List<String> serviceList = new ArrayList<String>(services);
     for (String service : serviceList) {
-      MasterServiceManager serviceManager = reactorServiceManagementMap.get(service);
+      MasterServiceManager serviceManager = serviceManagementMap.get(service);
       if (serviceManager.isServiceEnabled()) {
         String logs = serviceManager.isLogAvailable() ? Constants.Monitor.STATUS_OK : Constants.Monitor.STATUS_NOTOK;
         String canCheck = serviceManager.canCheckStatus() ? (
@@ -194,7 +194,7 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
 
     //In standalone mode, this count will be null. And thus we just return the actual instance count.
     if (count == null) {
-      return reactorServiceManagementMap.get(serviceName).getInstances();
+      return serviceManagementMap.get(serviceName).getInstances();
     } else {
       return count;
     }

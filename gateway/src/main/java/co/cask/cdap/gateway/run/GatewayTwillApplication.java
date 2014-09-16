@@ -30,7 +30,7 @@ import java.io.File;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class GatewayTwillApplication implements TwillApplication {
-  private static final String name = "reactor.gateway";
+  private static final String name = "master.gateway";
 
   private final CConfiguration cConf;
   private final File cConfFile;

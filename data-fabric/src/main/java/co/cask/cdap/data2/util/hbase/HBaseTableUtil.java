@@ -178,7 +178,7 @@ public abstract class HBaseTableUtil {
 
 
   // This is a workaround for unit-tests which should run even if compression is not supported
-  // todo: this should be addressed on a general level: Reactor may use HBase cluster (or multiple at a time some of)
+  // todo: this should be addressed on a general level: CDAP may use HBase cluster (or multiple at a time some of)
   //       which doesn't support certain compression type
   private void setDefaultConfiguration(HTableDescriptor tableDescriptor, Configuration conf) {
     String compression = conf.get(CFG_HBASE_TABLE_COMPRESSION, DEFAULT_COMPRESSION_TYPE.name());

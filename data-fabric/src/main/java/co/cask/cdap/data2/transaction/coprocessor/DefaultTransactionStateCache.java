@@ -33,7 +33,7 @@ import java.io.IOException;
  * a restart.
  */
 public class DefaultTransactionStateCache extends TransactionStateCache {
-  // Reactor versions of coprocessors must reference snapshot classes so they get included in generated jar file
+  // CDAP versions of coprocessors must reference snapshot classes so they get included in generated jar file
   // DO NOT REMOVE
   private static final SnapshotCodecV1 codecV1 = null;
   private static final SnapshotCodecV2 codecV2 = null;

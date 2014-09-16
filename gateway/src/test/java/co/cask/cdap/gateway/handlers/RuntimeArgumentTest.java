@@ -101,7 +101,7 @@ public class RuntimeArgumentTest extends GatewayTestBase {
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
     checkCount("3");
 
-    //Stop all flows and procedures and reset the state of the reactor
+    //Stop all flows and procedures and reset the state of the system
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), HttpResponseStatus.OK.getCode());
     response = GatewayFastTestsSuite.doPost("/v2/apps/HighPassFilterApp/procedures/Count/stop", null);
