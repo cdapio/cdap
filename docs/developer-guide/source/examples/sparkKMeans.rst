@@ -161,7 +161,7 @@ There are three ways to start the Spark program:
 
 2. Send a query via an HTTP request using the ``curl`` command::
 
-   curl -v -d '{args="3"}' \
+     curl -v -d '{args="3"}' \
     	  -X POST 'http://localhost:10000/v2/apps/SparkKMeansProgram/spark/SparkKMeansProgram/start'
 
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
@@ -170,7 +170,7 @@ There are three ways to start the Spark program:
 
 3. Use the command::
 
-  $ ./bin/app-manager.sh --action run
+    $ ./bin/app-manager.sh --action run
 
   On Windows::
 
@@ -202,20 +202,14 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
    #. Click on the *CentersProcedure* Procedure.
    #. Type ``centers`` in the *Method* text box.
    #. Type the parameters required for this method, a JSON string with the name *index* and
-      value of the index "1":
-
-      ::
+      value of the index "1"::
 
         { "index" : "1" }
-
-      ..
 
    #. Click the *Execute* button.
    #. The center's coordinates will be displayed in the Console in JSON format. For example::
 
-      ::
-
-	     "9.1,9.1,9.1"
+	   "9.1,9.1,9.1"
 
 Stopping the Application
 ---------------------------
