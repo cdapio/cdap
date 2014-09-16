@@ -152,7 +152,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
         accessTokenTransformer.transform(accessToken);
       logEntry.setUserName(accessTokenIdentifierPair.getAccessTokenIdentifierObj().getUsername());
       msg.setHeader(HttpHeaders.Names.AUTHORIZATION,
-                    "Reactor-verified " + accessTokenIdentifierPair.getAccessTokenIdentifierStr());
+                    "CDAP-verified " + accessTokenIdentifierPair.getAccessTokenIdentifierStr());
       return true;
     }
   }

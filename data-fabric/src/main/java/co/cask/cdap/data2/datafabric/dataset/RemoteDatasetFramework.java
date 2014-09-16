@@ -277,7 +277,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
       Class<?> moduleClass;
 
-      // try program class loader then reactor class loader
+      // try program class loader then cdap class loader
       try {
         moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
       } catch (ClassNotFoundException e) {
