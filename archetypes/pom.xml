@@ -30,6 +30,7 @@
   <name>Cask Data Application Platform (CDAP) Application Archetypes</name>
 
   <modules>
+    <module>cdap-spark-java-archetype</module>
     <module>cdap-spark-scala-archetype</module>
   </modules>
 
@@ -50,6 +51,7 @@
               <configuration>
                 <excludes>
                   <exclude>**/resources/**/*.txt</exclude>
+                  <exclude>**/README.md</exclude>
                 </excludes>
               </configuration>
             </execution>

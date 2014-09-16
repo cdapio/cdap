@@ -192,4 +192,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public void deleteProgramArgs(String accountId) {
     deleteAll(new Key.Builder().add(TYPE_PROGRAM_ARGS, accountId).build());
   }
+
+  public void deleteProgramHistory(String accountId, String appId) {
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId).build());
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId).build());
+  }
+
+  public void deleteProgramHistory(String accountId) {
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId).build());
+    deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId).build());
+  }
+
 }
