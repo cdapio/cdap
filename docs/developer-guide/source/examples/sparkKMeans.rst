@@ -1,6 +1,7 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform SparkKMeans Application
    :Copyright: Copyright © 2014 Cask Data, Inc.
+
 =================================
 SparkKMeans Application Example
 =================================
@@ -105,7 +106,7 @@ skip the tests by using the command::
 Deploying and Starting the Application
 --------------------------------------
 Make sure an instance of the CDAP is running and available.
-From within the SDK root directory, this command will start CDAP in local mode::
+From within the SDK root directory, this command will start CDAP in standalone mode::
 
 	$ ./bin/cdap.sh start
 
@@ -113,7 +114,7 @@ From within the SDK root directory, this command will start CDAP in local mode::
 
 	~SDK> bin\cdap.bat start
 
-From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
+From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in standalone mode):
 
 #. Drag and drop the Application .JAR file (``target/SparkKMeans-<version>.jar``)
    onto your browser window.
@@ -123,16 +124,12 @@ From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`_
 
 To deploy and start the Application from the command-line:
 
-#. To deploy the App JAR file, run ``$ ./bin/app-manager.sh --action deploy`` or drag and drop the
-   Application .JAR file (``target/SparkKMeans-<version>.jar`` onto your browser window.
-   (Currently, the *Load App* button does not work under Windows.)
+#. To deploy the App JAR file, run ``$ ./bin/app-manager.sh --action deploy``
 #. To start the App, run ``$ ./bin/app-manager.sh --action start``
 
 On Windows:
 
-#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
-   Application .JAR file (``target/SparkKMeans-<version>.jar`` onto your browser window.
-   (Currently, the *Load App* button does not work under Windows.)
+#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy``
 #. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 
@@ -148,7 +145,7 @@ to the Stream named *pointsStream* in the ``SparkKMeans`` application::
 
 	$ ./bin/inject-data.sh [--host <hostname>]
 
-:Note:	``[--host <hostname>]`` is not available for a *Local CDAP*.
+:Note: ``[--host ]`` is not available for a *Standalone CDAP*.
 
 On Windows::
 
@@ -201,10 +198,10 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
 
    In the CDAP Console:
 
-   #. Click the Query button.
+   #. Click the *Query* button.
    #. Click on the *CentersProcedure* Procedure.
-   #. Type centers in the Method text box.
-   #. Type the parameters required for this method, a JSON string with the name index and
+   #. Type ``centers`` in the *Method* text box.
+   #. Type the parameters required for this method, a JSON string with the name *index* and
       value of the index "1":
 
       ::
@@ -213,7 +210,7 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
 
       ..
 
-   #. Click the Execute button.
+   #. Click the *Execute* button.
    #. The center's coordinates will be displayed in the Console in JSON format. For example::
 
       ::
@@ -230,7 +227,7 @@ or:
 
 - Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
 
-  :Note:	[--host <hostname>] is not available for a *Local CDAP*.
+  :Note: ``[--host ]`` is not available for a *Standalone CDAP*.
 
   On Windows, run ``~SDK> bin\app-manager.bat stop``
 
