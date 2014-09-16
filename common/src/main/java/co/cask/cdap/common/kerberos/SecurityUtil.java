@@ -18,6 +18,7 @@ package co.cask.cdap.common.kerberos;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.SConfiguration;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.security.authentication.util.KerberosUtil;
 import org.apache.zookeeper.client.ZooKeeperSaslClient;
@@ -48,7 +49,7 @@ public final class SecurityUtil {
    *
    * @param cConf configuration object.
    */
-  public static void enableKerberosLogin(CConfiguration cConf) throws IOException {
+  public static void enableKerberosLogin(CConfiguration cConf, SConfiguration sConf) throws IOException {
     if (System.getProperty(Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG) != null) {
       LOG.warn("Environment variable '{}' was already set to {}. Not generating JAAS configuration.",
                Constants.External.JavaSecurity.ENV_AUTH_LOGIN_CONFIG,
@@ -63,18 +64,18 @@ public final class SecurityUtil {
       return;
     }
 
-    Preconditions.checkArgument(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL) != null,
+    Preconditions.checkArgument(sConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL) != null,
                                 "Kerberos authentication is enabled, but " +
                                 Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL + " is not configured");
 
-    String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    String principal = sConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     principal = SecurityUtil.expandPrincipal(principal);
 
-    Preconditions.checkArgument(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH) != null,
+    Preconditions.checkArgument(sConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH) != null,
                                 "Kerberos authentication is enabled, but " +
                                 Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH + " is not configured");
 
-    File keyTabFile = new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
+    File keyTabFile = new File(sConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
     Preconditions.checkArgument(keyTabFile.exists(),
                                 "Kerberos keytab file does not exist: " + keyTabFile.getAbsolutePath());
     Preconditions.checkArgument(keyTabFile.isFile(),
