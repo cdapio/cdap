@@ -1068,8 +1068,8 @@ define([], function () {
 		reset: function () {
 
 			C.Modal.show(
-				"Reset Reactor",
-				"You are about to DELETE ALL CONTINUUITY DATA on your Reactor." +
+				"Reset CDAP",
+				"You are about to DELETE ALL DATA on CDAP." +
 					" Are you sure you would like to do this?",
 				function () {
 
