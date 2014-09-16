@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
@@ -131,7 +132,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       Location programJarCopy = copyProgramJar(programJarLocation, context);
       try {
         // We remember tx, so that we can re-use it in Spark tasks
-        final Transaction tx = txClient.startLong();
+        Transaction tx = txClient.startLong();
         try {
           SparkContextConfig.set(sparkHConf, context, cConf, tx, programJarCopy);
           Location dependencyJar = buildDependencyJar(context, SparkContextConfig.getHConf());
@@ -145,7 +146,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
             throw Throwables.propagate(t);
           }
         } catch (Throwable t) {
-          txClient.invalidate(tx.getWritePointer());
+          Transactions.invalidateQuietly(txClient, tx);
           throw Throwables.propagate(t);
         }
       } catch (Throwable t) {
