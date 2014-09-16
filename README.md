@@ -27,14 +27,14 @@ Developers can build and test their applications end-to-end in a full-stack, sin
 installation. CDAP can be run either standalone, deployed within the Enterprise or hosted in the Cloud.
 
 For more information, see our collection of 
-[Developer Guides and other documentation](http://cask.co/docs/cdap/current/en/index.html).
+[Developer Guides and other documentation](http://docs.cask.co/cdap/current/en/index.html).
 
 ## Is It Building?
 
 Build                                                                    | Status / Version
 -------------------------------------------------------------------------|-----------------
 [Travis Continuous Integration Build](https://travis-ci.org/caskco/cdap) | ![travis](https://travis-ci.org/caskco/cdap.svg?branch=develop)
-[GitHub Version](ttps://github.com/caskco/cdap/releases/latest)          | ![github](http://img.shields.io/github/release/caskco/cdap.svg)
+[GitHub Version](https://github.com/caskco/cdap/releases/latest)         | ![github](http://img.shields.io/github/release/caskco/cdap.svg)
 
 
 ## Getting Started
@@ -66,7 +66,7 @@ For more build options please refer [here](BUILD.md)
 
 ## Quick Start
 
-Visit our web site for a [Quick Start](http://cask.co/docs/cdap/current/en/quickstart.html)
+Visit our web site for a [Quick Start](http://docs.cask.co/cdap/current/en/quickstart.html)
 that will guide you through installing CDAP, running an example that counts HTTP status codes and then
 modifying the example’s Java code to include counting client IP addresses.  
 
@@ -76,10 +76,10 @@ modifying the example’s Java code to include counting client IP addresses.
 Now that you've had a look at the CDAP SDK, take a look at:
 
 - Examples, located in the `/examples` directory of the CDAP SDK;
-- [Selected Examples](http://cask.co/docs/cdap/current/en/examples.html) 
+- [Selected Examples](http://docs.cask.co/cdap/current/en/examples.html) 
   (demonstrating basic features of the CDAP) are located on-line; and
 - Developer Guides, located in the source distribution in `/docs/developer-guide/source`
-  or [online](http://cask.co/docs/cdap/current/en/index.html).
+  or [online](http://docs.cask.co/cdap/current/en/index.html).
 
 
 ## How to Contribute
