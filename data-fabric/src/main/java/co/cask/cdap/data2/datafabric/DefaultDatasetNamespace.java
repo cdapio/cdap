@@ -31,8 +31,8 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
   private final Namespace namespace;
 
   public DefaultDatasetNamespace(CConfiguration conf, Namespace namespace) {
-    String systemNamespace = conf.get(Constants.Dataset.TABLE_PREFIX);
-    this.namespacePrefix = systemNamespace + ".";
+    String namespacePrefix = conf.get(Constants.Dataset.TABLE_PREFIX);
+    this.namespacePrefix = namespacePrefix + ".";
     this.namespace = namespace;
   }
 

@@ -3163,7 +3163,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/unrecoverable/reset")
-  public void resetSystem(HttpRequest request, HttpResponder responder) {
+  public void resetCDAP(HttpRequest request, HttpResponder responder) {
 
     try {
       if (!configuration.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,

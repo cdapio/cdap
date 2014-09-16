@@ -161,7 +161,7 @@ public class ConfigurationTable {
     return conf;
   }
 
-  private static String getTableName(String systemNamespace) {
-    return systemNamespace + "." + Namespace.SYSTEM.namespace(TABLE_NAME);
+  private static String getTableName(String namespace) {
+    return namespace + "." + Namespace.SYSTEM.namespace(TABLE_NAME);
   }
 }
