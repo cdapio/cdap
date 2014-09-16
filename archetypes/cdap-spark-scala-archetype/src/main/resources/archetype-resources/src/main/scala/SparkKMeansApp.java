@@ -65,7 +65,7 @@ public class SparkKMeansApp extends AbstractApplication {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
-      // because String is an actual classes.
+      // because String is an actual class.
       throw new RuntimeException(e);
     }
   }
