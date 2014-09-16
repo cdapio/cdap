@@ -5,20 +5,19 @@
 
 **Introduction**
 
-The Cask Data Application Platform (CDAP) is an application server providing such a
-platform for the development, deployment and management of data applications and the
-management of data.
+The Cask Data Application Platform (CDAP) is an application server that provides a
+comprehensive platform for the development, deployment and management of data applications 
+and the management of data.
 
-Out-of-the-box, its features include transaction management, dataset abstractions, QoS,
-performance, scalability, security, metrics and log collection, service discovery and a 
-web-based management dashboard.
+Out-of-the-box, its features include transaction management, dataset abstractions, QoS (quality-of-service),
+performance, scalability, security, metrics and log collection, and a web-based management console.
 
-CDAP provides data virtualization and application containerization for you data and application
-needs. With CDAP you do not require understanding the implementation or the complexity of Apache 
-Hadoop&trade;, HBase or Zookeeper. It provides independence of Hadoop versions and runs on any 
-distribution of Hadoop. CDAP's container model allows for the integration of different processing 
-paradigms with these features. It provides a common environment, the abstraction of a unified API, 
-the lifecycle management and a programming model for data applications and their data. You can package, 
+CDAP provides data virtualization and application containerization for your data and application
+needs. With CDAP, you do not need to understand the implementation or the complexity of Apache 
+Hadoop&trade;, HBase or Zookeeper. CDAP provides independence from Hadoop versions and runs on any 
+distribution of Hadoop. Its container model allows for the integration of different processing 
+paradigms with CDAP's features. It provides a common environment, the abstraction of a unified API, 
+lifecycle management and a programming model for both data applications and their data. You can package, 
 deploy and manage applications as a single unit.
 
 You can run applications ranging from simple MapReduce Jobs through complete ETL (extract, transform, and load) 
