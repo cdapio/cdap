@@ -60,11 +60,11 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
       String contextParts[] = splitPattern.split(context);
       //TODO: Refactor to support any context
       if (context.equals(Constants.Metrics.DATASET_CONTEXT)) {
-        counterGroup = "continuuity.dataset";
+        counterGroup = "cdap.dataset";
       } else if ("m".equals(contextParts[3])) {
-        counterGroup = "continuuity.mapper";
+        counterGroup = "cdap.mapper";
       } else if ("r".equals(contextParts[3])) {
-        counterGroup = "continuuity.reducer";
+        counterGroup = "cdap.reducer";
       } else {
         LOG.error("could not determine if the metric is a map or reduce metric from context {}, skipping...", context);
         continue;

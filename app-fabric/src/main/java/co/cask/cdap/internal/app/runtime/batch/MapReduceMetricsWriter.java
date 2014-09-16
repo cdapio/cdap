@@ -123,7 +123,7 @@ public class MapReduceMetricsWriter {
   private void reportContinuuityStats() throws IOException, InterruptedException {
     Counters counters = jobConf.getCounters();
     for (String group : counters.getGroupNames()) {
-      if (group.startsWith("continuuity.")) {
+      if (group.startsWith("cdap.")) {
         String[] parts = group.split("\\.");
         String scopePart = parts[parts.length - 1];
         // last one should be scope
