@@ -39,7 +39,7 @@ var WebAppServer = function(dirPath, logLevel, loggerType, mode) {
   process.on('uncaughtException', function (err) {
     this.logger.info('Uncaught Exception', err);
   }.bind(this));
-  this.extractConfig(mode, "cdap")
+  this.extractConfig(mode, "cdap", false)
       .then(function () {
         this.setUpServer();
       }.bind(this));
@@ -96,29 +96,41 @@ WebAppServer.prototype.setUpServer = function setUpServer(configuration) {
 WebAppServer.prototype.setAttributes = function setCommonAttributes() {
   if (this.config['ssl.enabled'] === "true") {
       this.lib = https;
+      if (this.config["dashboard.ssl.disable.cert.check"] === "true") {
+        /*
+          We use mikeal/request library to make xhr request to cdap server.
+          In a ssl enabled environment where cdap server uses a self-signed certificate
+          node server will fail to connect to cdap server as it is self-signed.
+          This environment variable enables that.
+
+          The github issue in relation to this is : https://github.com/mikeal/request/issues/418
+
+          Could not find nodejs doc that discusses about this variable.
+        */
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+      }
     } else {
       this.lib = http;
     }
     this.apiKey = this.config.apiKey;
     this.version = this.config.version;
-    this.configSet = this.configSet;
     this.configureExpress();
     this.setCookieSession(this.cookieName, this.secret);
 }
 
 WebAppServer.prototype.launchServer = function() {
-  var key,
-      cert,
-      options = this.configureSSL() || {};
+  var options = this.configureSSL() || {};
   this.server = this.getServerInstance(options, this.app);
   this.setEnvironment(this.productId, this.productName, this.version, this.startServer.bind(this));
 }
 
 WebAppServer.prototype.configureSSL = function () {
-  var options = {};
+  var options = {},
+      key,
+      cert;
   if (this.config['ssl.enabled'] === "true") {
-    key = this.config['dashboard.ssl.key'],
-    cert = this.config['dashboard.ssl.cert'];
+    key = this.securityConfig['dashboard.ssl.key'],
+    cert = this.securityConfig['dashboard.ssl.cert'];
     try {
       options = {
         key: fs.readFileSync(key),
@@ -146,15 +158,15 @@ WebAppServer.prototype.setSecurityStatus = function (callback) {
 
   var path = '/' + this.API_VERSION + '/ping',
       url;
-  this.routerBindAddress = this.config['gateway.server.address'];
+  this.routerBindAddress = this.config['router.server.address'];
   if (this.config['ssl.enabled'] === "true") {
-    this.routerBindPort = this.config['router.ssl.bind.port'];
+    this.routerBindPort = this.config['router.ssl.server.port'];
     this.transferProtocol = "https://";
-    url = 'https://' + this.config['gateway.server.address'] + ':' + this.config['router.ssl.bind.port'] + path;
+    url = 'https://' + this.config['router.server.address'] + ':' + this.config['router.ssl.server.port'] + path;
   } else {
     this.routerBindPort = this.config['router.bind.port'];
     this.transferProtocol = "http://";
-    url = 'http://' + this.config['gateway.server.address'] + ':' + this.config['router.bind.port'] + path;
+    url = 'http://' + this.config['router.server.address'] + ':' + this.config['router.bind.port'] + path;
   }
   var interval = setInterval(function () {
     self.logger.info('Calling security endpoint: ', url);
@@ -928,9 +940,8 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.get('/version', function (req, res) {
     var options = {
-      host: 'www.continuuity.com',
-      path: '/version',
-      port: '80'
+      host: 's3.amazonaws.com',
+      path: '/cdap-docs/VERSION'
     };
 
     var request = self.lib.request(options, function(response) {

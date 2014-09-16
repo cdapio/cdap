@@ -16,18 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.procedure;
 
-import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.procedure.ProcedureContext;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.DataFabricFacade;
-import co.cask.cdap.internal.app.runtime.DataSets;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -43,14 +38,13 @@ final class BasicProcedureContextFactory {
   private final Arguments userArguments;
   private final ProcedureSpecification procedureSpec;
   private final MetricsCollectionService collectionService;
-  private final ProgramServiceDiscovery serviceDiscovery;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
   private final CConfiguration conf;
 
   BasicProcedureContextFactory(Program program, RunId runId, int instanceId, int instanceCount,
                                Arguments userArguments, ProcedureSpecification procedureSpec,
-                               MetricsCollectionService collectionService, ProgramServiceDiscovery serviceDiscovery,
+                               MetricsCollectionService collectionService,
                                DiscoveryServiceClient discoveryServiceClient,
                                DatasetFramework dsFramework, CConfiguration conf) {
     this.program = program;
@@ -60,7 +54,6 @@ final class BasicProcedureContextFactory {
     this.userArguments = userArguments;
     this.procedureSpec = procedureSpec;
     this.collectionService = collectionService;
-    this.serviceDiscovery = serviceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
     this.dsFramework = dsFramework;
     this.conf = conf;
@@ -69,6 +62,6 @@ final class BasicProcedureContextFactory {
   BasicProcedureContext create() {
     return new BasicProcedureContext(program, runId, instanceId, instanceCount,
                                      procedureSpec.getDataSets(), userArguments, procedureSpec,
-                                     collectionService, serviceDiscovery, discoveryServiceClient, dsFramework, conf);
+                                     collectionService, discoveryServiceClient, dsFramework, conf);
   }
 }

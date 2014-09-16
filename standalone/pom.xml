@@ -353,7 +353,6 @@
                 <phase>prepare-package</phase>
                 <configuration>
                   <target>
-                    <copy file="${stage.opt.dir}/bin/cli-${project.version}.jar" tofile="${stage.opt.dir}/bin/cdap-cli.jar" />
                     <chmod file="${stage.opt.dir}/bin/cdap-cli.sh" perm="755"/>
                     <chmod file="${stage.opt.dir}/bin/cdap-cli.bat" perm="755"/>
                   </target>

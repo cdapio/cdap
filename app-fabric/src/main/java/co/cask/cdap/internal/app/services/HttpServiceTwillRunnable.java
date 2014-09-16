@@ -29,7 +29,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
-import co.cask.cdap.internal.app.runtime.ProgramServiceDiscovery;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.app.runtime.service.http.DefaultHttpServiceHandlerConfigurer;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
@@ -112,7 +111,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   private MetricsCollectionService metricsCollectionService;
   private DatasetFramework datasetFramework;
   private CConfiguration cConfiguration;
-  private ProgramServiceDiscovery programServiceDiscovery;
   private DiscoveryServiceClient discoveryServiceClient;
   private TransactionSystemClient transactionSystemClient;
 
@@ -145,7 +143,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
   public HttpServiceTwillRunnable(Program program, RunId runId,
                                   CConfiguration cConfiguration, String runnableName,
                                   MetricsCollectionService metricsCollectionService,
-                                  ProgramServiceDiscovery programServiceDiscovery,
                                   DiscoveryServiceClient discoveryServiceClient, DatasetFramework datasetFramework,
                                   TransactionSystemClient txClient) {
     this.program = program;
@@ -155,7 +152,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
                                             program.getApplicationId(), TypeId.getMetricContextId(program.getType()),
                                             program.getName(), runnableName);
     this.metricsCollectionService = metricsCollectionService;
-    this.programServiceDiscovery = programServiceDiscovery;
     this.discoveryServiceClient = discoveryServiceClient;
     this.datasetFramework = datasetFramework;
     this.transactionSystemClient = txClient;
@@ -430,7 +426,6 @@ public class HttpServiceTwillRunnable extends AbstractTwillRunnable {
                                                                                metricsCollectionService,
                                                                                datasetFramework,
                                                                                cConfiguration,
-                                                                               programServiceDiscovery,
                                                                                discoveryServiceClient,
                                                                                transactionSystemClient);
 
