@@ -1,6 +1,6 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform SparkPageRank Application
-   :Copyright: Copyright © 2014 Cask Data, Inc.
+     :Copyright: Copyright © 2014 Cask Data, Inc.
 
 =================================
 SparkPageRank Application Example
@@ -159,20 +159,20 @@ There are three ways to start the Spark program:
 
 2. Send a query via an HTTP request using the ``curl`` command::
 
-   curl -v -d '{args="3"}' \
+     curl -v -d '{args="3"}' \
     	  -X POST 'http://localhost:10000/v2/apps/SparkPageRank/spark/SparkPageRankProgram/start'
 
    On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the example::
 
-	  libexec\curl...
+     libexec\curl...
 
 3. Use the command::
 
-  $ ./bin/app-manager.sh --action run
+    $ ./bin/app-manager.sh --action run
 
   On Windows::
 
-	~SDK> bin\app-manager.bat run
+    ~SDK> bin\app-manager.bat run
 
 Querying the Results
 ....................
@@ -200,13 +200,11 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 	 #. Click on the *RanksProcedure* Procedure.
 	 #. Type ``rank`` in the *Method* text box.
 	 #. Type the parameters required for this method, a JSON string with the name *url* and
-	   value of a URI, ``"http://example.com/page1"``:
+	    value of a URI, ``"http://example.com/page1"``:
 
 	   ::
 
-		 { "url" : "http://example.com/page1" }
-
-	    ..
+            { "url" : "http://example.com/page1" }
 
 	 #. Click the *Execute* button.
 	 #. The rank for that URL will be displayed in the Console in JSON format.
@@ -214,7 +212,7 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 
 	   ::
 
-		 "0.9988696312751688"
+            "0.9988696312751688"
 
 
 Stopping the Application
