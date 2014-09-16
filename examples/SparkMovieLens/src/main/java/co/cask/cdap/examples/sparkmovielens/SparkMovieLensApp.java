@@ -60,18 +60,18 @@ public class SparkMovieLensApp extends AbstractApplication {
 
     try {
       ObjectStores.createObjectStore(getConfigurer(), "ratings", String.class);
-      ObjectStores.createObjectStore(getConfigurer(), "out", String.class);
+      ObjectStores.createObjectStore(getConfigurer(), "predictions", String.class);
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
       // no auto-magic way deserialize an object.) In this case that will not happen
-      // because String is an actual classes.
+      // because String is an actual class.
       throw new RuntimeException(e);
     }
   }
 
   /**
-   * A Spark Program that uses .... // todo: add description
+   * A Spark Program that demonstrates Alternating Least Sequence example
    */
   public static class SparkMovieLensSpecification extends AbstractSpark {
     @Override
@@ -128,27 +128,36 @@ public class SparkMovieLensApp extends AbstractApplication {
   }
 
   /**
-   * // todo: add description
+   * Procedure that returns prediction based on user and product parameters.
    */
   public static class ALSProcedure extends AbstractProcedure {
 
     private static final Logger LOG = LoggerFactory.getLogger(ALSProcedure.class);
 
-    // Annotation indicates that als dataset is used in the procedure.
-    @UseDataSet("als")
-    private ObjectStore<String> als;
+    // Annotation indicates that predictions dataset is used in the procedure.
+    @UseDataSet("predictions")
+    private ObjectStore<String> predictions;
 
-    @Handle("als")
-    public void getALS(ProcedureRequest request, ProcedureResponder responder)
+    @Handle("prediction")
+    public void getPrediction(ProcedureRequest request, ProcedureResponder responder)
       throws IOException, InterruptedException {
-      String index = request.getArgument("index");
-      if (index == null) {
-        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Index must be given as argument");
+      String user = request.getArgument("user");
+      if (user == null) {
+        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "User must be given as argument");
         return;
       }
-      LOG.debug("get als for index {}", index);
-      // Send response with JSON format.
-      responder.sendJson(als.read(index.getBytes()));
+      String product = request.getArgument("product");
+      if (product == null) {
+        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Product must be given as argument");
+        return;
+      }
+      byte[] key = ("" + user + product).getBytes();
+
+      LOG.debug("get prediction for user {} and product {}", user, product);
+
+      String object = predictions.read(key);
+
+      responder.sendJson(object);
     }
   }
 }

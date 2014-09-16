@@ -21,32 +21,28 @@
  */
 package co.cask.cdap.examples.sparkmovielens
 
-import breeze.linalg.{DenseVector, Vector, squaredDistance}
-import co.cask.cdap.api.spark.{ScalaSparkProgram, SparkContext}
+import co.cask.cdap.api.spark.ScalaSparkProgram
+import co.cask.cdap.api.spark.SparkContext
 import com.esotericsoftware.kryo.Kryo
 
 import scala.collection.mutable
 
 import org.apache.spark.SparkContext._
-import org.apache.spark.mllib.recommendation.{ALS, MatrixFactorizationModel, Rating}
-import org.apache.spark.rdd.{RDD, NewHadoopRDD}
-import org.apache.spark.serializer.{KryoSerializer, KryoRegistrator}
+import org.apache.spark.mllib.recommendation.ALS
+import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
+import org.apache.spark.mllib.recommendation.Rating
+import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.NewHadoopRDD
+import org.apache.spark.serializer.KryoRegistrator
 
-import org.slf4j.{Logger, LoggerFactory}
-
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Implementation of Alternating Least Sequence Spark Program.
  */
 class SparkMovieLensProgram extends ScalaSparkProgram {
   private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkMovieLensProgram])
-
-  def parseLine(line: String): Vector[Double] = {
-    val fields = line.split("::")
-
-    DenseVector(line.split(' ').map(_.toDouble))
-
-  }
 
   class ALSRegistrator extends KryoRegistrator {
     override def registerClasses(kryo: Kryo) {
@@ -67,10 +63,7 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
 
   override def run(sc: SparkContext) {
 
-    // todo: implement analizing arguments
-
-    val defaultParams = Params()
-    val params = defaultParams
+    val params = Params()
 
     LOG.info("Processing ratings data")
 
@@ -78,7 +71,6 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
       sc.readFromDataset("ratings", classOf[Array[Byte]], classOf[String])
     val lines = linesDataset.values
     val data = lines.map { line =>
-      //LOG.info("line:" + line)
       val fields = line.split("::")
       if (params.implicitPrefs) {
         /*
@@ -100,9 +92,6 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
         Rating(fields(0).toInt, fields(1).toInt, fields(2).toDouble)
       }
     }.cache()
-
-    LOG.info("ratings:")
-    for(item <- data) LOG.info(item.toString)
 
     val numRatings = data.count()
     val numUsers = data.map(_.user).distinct().count()
@@ -143,12 +132,31 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
       .run(training)
 
     val rmse = computeRmse(model, test, params.implicitPrefs)
-
     LOG.info(s"Test RMSE = $rmse.")
+
+    LOG.debug("Creating prediction matrix")
+
+    val users = data.map(_.user).distinct().collect()
+    val products = data.map(_.product).distinct().collect()
+
+    var matrix = collection.mutable.Map[Array[Byte], String]()
+
+    for (user <- users) {
+      for (product <- products) {
+        val prediction = model.predict(user, product)
+        val key = ("" + user + product).getBytes
+        matrix += key -> prediction.toString
+      }
+    }
 
     LOG.info("Writing data")
 
-    // todo: implement writing to dataset
+    var result = new Array[(Array[Byte], String)](matrix.size)
+    matrix.zipWithIndex.foreach { case (e, i) => result(i) = new Tuple2(e._1, e._2) }
+
+    val originalContext: org.apache.spark.SparkContext = sc.getOriginalSparkContext()
+    sc.writeToDataset(originalContext.parallelize(result), "predictions", classOf[Array[Byte]], classOf[String])
+
 
     LOG.info("Done!")
   }
@@ -159,7 +167,7 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
     def mapPredictedRating(r: Double) = if (implicitPrefs) math.max(math.min(r, 1.0), 0.0) else r
 
     val predictions: RDD[Rating] = model.predict(data.map(x => (x.user, x.product)))
-    val predictionsAndRatings = predictions.map{ x =>
+    val predictionsAndRatings = predictions.map { x =>
       ((x.user, x.product), mapPredictedRating(x.rating))
     }.join(data.map(x => ((x.user, x.product), x.rating))).values
     math.sqrt(predictionsAndRatings.map(x => (x._1 - x._2) * (x._1 - x._2)).mean())
