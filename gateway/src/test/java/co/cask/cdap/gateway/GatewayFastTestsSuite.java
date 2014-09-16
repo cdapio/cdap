@@ -204,7 +204,7 @@ public class GatewayFastTestsSuite {
     } else {
       request = getPut("/v2/apps/" + appName);
     }
-    request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
     request.setEntity(new ByteArrayEntity(bos.toByteArray()));
     return execute(request);

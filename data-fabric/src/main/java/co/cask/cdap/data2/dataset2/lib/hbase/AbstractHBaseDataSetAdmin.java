@@ -48,7 +48,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractHBaseDataSetAdmin.class);
 
   // Property key in the coprocessor for storing version of the coprocessor.
-  private static final String CONTINUUITY_VERSION = "continuuity.version";
+  private static final String CDAP_VERSION = "cdap.version";
 
   // Function to convert Class into class Name
   private static final Function<Class<?>, String> CLASS_TO_NAME = new Function<Class<?>, String>() {
@@ -118,8 +118,8 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     // Upgrade any table properties if necessary
     boolean needUpgrade = upgradeTable(tableDescriptor);
 
-    // Get the continuuity version from the table
-    ProjectInfo.Version version = new ProjectInfo.Version(tableDescriptor.getValue(CONTINUUITY_VERSION));
+    // Get the cdap version from the table
+    ProjectInfo.Version version = new ProjectInfo.Version(tableDescriptor.getValue(CDAP_VERSION));
 
     if (!needUpgrade && version.compareTo(ProjectInfo.getVersion()) >= 0) {
       // If the table has greater than or same version, no need to upgrade.
@@ -166,7 +166,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     }
 
     // Add the current version as table properties only if the table needs upgrade
-    tableDescriptor.setValue(CONTINUUITY_VERSION, ProjectInfo.getVersion().toString());
+    tableDescriptor.setValue(CDAP_VERSION, ProjectInfo.getVersion().toString());
 
     LOG.info("Upgrading table '{}'...", tableNameStr);
     boolean enableTable = false;

@@ -113,7 +113,7 @@ For example, in Flows::
 
 Using Services
 -----------------
-Custom Services lifecycle can be controlled via the Continuuity Reactor Dashboard or by using the
+Custom Services lifecycle can be controlled via the CDAP Dashboard or by using the
 `CDAP Client API <rest.html#cdap-client-http-api>`__ as described in the
 `CDAP HTTP REST API <rest.html#cdap-client-http-api>`__.
 

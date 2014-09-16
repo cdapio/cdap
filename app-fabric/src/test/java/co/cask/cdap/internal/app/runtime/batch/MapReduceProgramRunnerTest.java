@@ -137,12 +137,14 @@ public class MapReduceProgramRunnerTest {
 
     final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
 
+    final String testString = "persisted data";
+
     //Populate some input
     txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          input.write(Bytes.toBytes("continuuity"), "continuuity");
+          input.write(Bytes.toBytes(testString), testString);
           input.write(Bytes.toBytes("distributed systems"), "distributed systems");
         }
       });
@@ -155,9 +157,9 @@ public class MapReduceProgramRunnerTest {
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
-          byte[] val = output.read(Bytes.toBytes("continuuity"));
+          byte[] val = output.read(Bytes.toBytes(testString));
           Assert.assertTrue(val != null);
-          Assert.assertEquals(Bytes.toString(val), "11");
+          Assert.assertEquals(Bytes.toString(val), Integer.toString(testString.length()));
 
           val = output.read(Bytes.toBytes("distributed systems"));
           Assert.assertTrue(val != null);

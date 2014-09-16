@@ -56,7 +56,7 @@ import javax.ws.rs.PathParam;
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetTypeHandler extends AbstractHttpHandler {
-  public static final String HEADER_CLASS_NAME = "X-Continuuity-Class-Name";
+  public static final String HEADER_CLASS_NAME = "X-Class-Name";
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 

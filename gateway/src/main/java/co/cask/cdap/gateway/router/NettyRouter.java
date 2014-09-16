@@ -23,7 +23,7 @@ import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
-import com.continuuity.security.tools.SSLHandlerFactory;
+import co.cask.cdap.security.tools.SSLHandlerFactory;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
