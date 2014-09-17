@@ -27,12 +27,10 @@ import csv
 import os
 import subprocess
 import sys
-import tempfile
 
 VERSION = "0.0.4"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
-
 
 ENTERPRISE = "cdap-enterprise-dependencies"
 LEVEL_1    = "cdap-level-1-dependencies"
@@ -213,7 +211,6 @@ def process_standalone(input_file, options):
     
 def process_level_1(input_file, options):
     master_libs_dict = process_master()
-
     level_1_dict = {}
     missing_libs_dict = {}
     csv_path = os.path.join(SCRIPT_DIR_PATH, LICENSES_SOURCE, LEVEL_1 + ".csv")
