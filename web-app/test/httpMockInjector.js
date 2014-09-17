@@ -65,7 +65,7 @@ module.exports = function (nock, gatewayAddr, gatewayPort) {
   /**
    * Set up nock environment. Disable net connection.
    */
-  nock.enableNetConnect('continuuity.com');
+  nock.enableNetConnect('cask.co');
 
   var clientAddr = 'http://' + gatewayAddr + ':' + gatewayPort;
   var options = {allowUnmocked: true};

@@ -77,7 +77,7 @@ import javax.annotation.Nullable;
 public abstract class AppFabricTestBase {
   private static final Gson GSON = new Gson();
   private static final String API_KEY = "SampleTestApiKey";
-  private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+  private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
   private static final String CLUSTER = "SampleTestClusterName";
 
   private static final String hostname = "127.0.0.1";
@@ -305,7 +305,7 @@ public abstract class AppFabricTestBase {
     } else {
       request = getPut("/v2/apps/" + appName);
     }
-    request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
     request.setEntity(new ByteArrayEntity(bos.toByteArray()));
     return execute(request);

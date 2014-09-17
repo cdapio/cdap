@@ -147,7 +147,7 @@ public class PassportClient {
   private String httpGet(String api, String apiKey)  {
     URI uri = URI.create(String.format("%s/%s/%s", baseUri.toASCIIString(), api, apiKey));
     HttpGet get = new HttpGet(uri);
-    get.addHeader(Constants.Gateway.CONTINUUITY_API_KEY, apiKey);
+    get.addHeader(Constants.Gateway.API_KEY, apiKey);
     return request(get);
   }
 

@@ -14,13 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
-
-import org.apache.twill.discovery.ServiceDiscovered;
-
 /**
- * User Service Discovery using Runtime Context.
+ * Package for SparkPageRank Application.
+ *
+ * An Application that demonstrates streaming text analysis using a Spark job.
+ * It computes the page rank of URLs from an input stream.
  */
-public interface ProgramServiceDiscovery {
-  ServiceDiscovered discover(String accId, String appId, String serviceId, String serviceName);
-}
+package co.cask.cdap.examples.sparkpagerank;

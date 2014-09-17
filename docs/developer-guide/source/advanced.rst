@@ -16,10 +16,9 @@ Cask Data Application Platform (CDAP) Application. Developers can implement Cust
 to interface with a legacy system and perform additional processing beyond the CDAP processing
 paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-Services are implemented by extending ``AbstractService``. They consist of ``HttpServiceHandler`` \s to serve requests
-and ``ServiceWorker`` \s to passively execute tasks on behalf of the Service.
+Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler`` \s to serve requests.
 
-You can add services to your application by calling the ``addService`` method in the
+You can add Services to your application by calling the ``addService`` method in the
 Application's ``configure`` method::
 
   public class AnalyticsApp extends AbstractApplication {
@@ -46,7 +45,6 @@ Application's ``configure`` method::
       setDescription("Service to lookup locations of IP addresses.");
       useDataset("IPGeoTable");
       addHandler(new IPGeoLookupHandler());
-      addWorker(new LogCleanupWorker();
     }
   }
 
@@ -74,53 +72,6 @@ Each request to a method is committed as a single transaction.
       responder.sendString(200, location, Charsets.UTF_8);
     }
   }
-
-Service Workers
-----------------
-``ServiceWorker`` \s are used to execute tasks and act passively on behalf of the ``Service``.
-Each worker runs in its own YARN container and their instances may be updated via the CDAP Console or the REST APIs.
-
-You add workers to your Service by calling the ``addWorker`` method in the Service's ``configure`` method.
-
-::
-
-  public class LogCleanupWorker extends AbstractServiceWorker {
-
-    @Override
-    public void stop() {
-      ...
-    }
-
-    @Override
-    public void destroy() {
-      ...
-    }
-
-    @Override
-    public void run() {
-      // Cleanup and rotate logs.
-      ...
-    }
-  }
-
-Workers can access and use ``Dataset`` \s via a ``DataSetContext`` inside their ``run`` method.
-
-::
-
-    @Override
-    public void run() {
-      getContext().execute(new TxRunnable(){
-        @Override
-        public void run(DataSetContext context) {
-          Dataset dataset = context.getDataSet("table");
-          ...
-        }
-      });
-    }
-
-Operations executed on ``Dataset`` \s within a  ``run`` are committed as part of a single transaction.
-The transaction is started before ``run`` is invoked and is committed upon successful execution. Exceptions thrown
-while committing the transaction or thrown by user-code result in a rollback of the transaction.
 
 Service Discovery
 -----------------

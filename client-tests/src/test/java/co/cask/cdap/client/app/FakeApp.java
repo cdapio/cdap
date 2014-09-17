@@ -30,7 +30,7 @@ public class FakeApp extends AbstractApplication {
 
   public static final String NAME = "FakeApp";
   public static final String STREAM_NAME = "fakeStream";
-  public static final String DS_NAME = "fakeDS";
+  public static final String DS_NAME = "fakeds";
 
   public static final List<String> FLOWS = Lists.newArrayList(FakeFlow.NAME);
   public static final List<String> PROCEDURES = Lists.newArrayList(FakeProcedure.NAME);

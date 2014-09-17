@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 /**
@@ -68,6 +69,7 @@ public abstract class AbstractService implements Service {
    * Add a worker to the Service.
    * @param worker for the service.
    */
+  @Beta
   protected void addWorker(ServiceWorker worker) {
     configurer.addWorker(worker);
   }
@@ -76,6 +78,7 @@ public abstract class AbstractService implements Service {
    * Add a list of workers to the Service.
    * @param workers for the service.
    */
+  @Beta
   protected void addWorkers(Iterable<? extends ServiceWorker> workers) {
     configurer.addWorkers(workers);
   }

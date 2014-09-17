@@ -337,9 +337,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
     private static final String CLUSTER_METRICS_CONTEXT = "-.cluster";
     private final Path hbasePath;
-    private final Path continuuityPath;
-    private final PathFilter continuuityFilter;
+    private final Path namedspacedPath;
+    private final PathFilter namespacedFilter;
     private final String rmUrl;
+    private final String namespace;
     private FileSystem hdfs;
 
     public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf,
@@ -351,9 +352,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         LOG.error("unable to get hdfs, cluster storage metrics will be unavailable");
         this.hdfs = null;
       }
-      this.continuuityPath = new Path(cConf.get(Constants.CFG_HDFS_NAMESPACE));
+
+      this.namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
+      this.namedspacedPath = new Path(namespace);
       this.hbasePath = new Path(hConf.get(HConstants.HBASE_DIR));
-      this.continuuityFilter = new ContinuuityPathFilter();
+      this.namespacedFilter = new NamespacedPathFilter();
       this.rmUrl = "http://" + hConf.get(YarnConfiguration.RM_WEBAPP_ADDRESS) + RM_CLUSTER_METRICS_PATH;
     }
 
@@ -423,13 +426,13 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     private void reportClusterStorage() {
       try {
-        ContentSummary summary = hdfs.getContentSummary(continuuityPath);
+        ContentSummary summary = hdfs.getContentSummary(namedspacedPath);
         long totalUsed = summary.getSpaceConsumed();
         long totalFiles = summary.getFileCount();
         long totalDirectories = summary.getDirectoryCount();
 
-        // continuuity hbase tables
-        for (FileStatus fileStatus : hdfs.listStatus(hbasePath, continuuityFilter)) {
+        // cdap hbase tables
+        for (FileStatus fileStatus : hdfs.listStatus(hbasePath, namespacedFilter)) {
           summary = hdfs.getContentSummary(fileStatus.getPath());
           totalUsed += summary.getSpaceConsumed();
           totalFiles += summary.getFileCount();
@@ -453,10 +456,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       }
     }
 
-    private class ContinuuityPathFilter implements PathFilter {
+    private class NamespacedPathFilter implements PathFilter {
       @Override
       public boolean accept(Path path) {
-        return path.getName().startsWith("continuuity");
+        return path.getName().startsWith(namespace);
       }
     }
 

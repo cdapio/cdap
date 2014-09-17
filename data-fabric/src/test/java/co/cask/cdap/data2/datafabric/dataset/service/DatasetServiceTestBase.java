@@ -185,7 +185,7 @@ public abstract class DatasetServiceTestBase {
     final FileInputStream is = new FileInputStream(jarPath);
     try {
       HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
-        .addHeader("X-Continuuity-Class-Name", moduleClass.getName())
+        .addHeader("X-Class-Name", moduleClass.getName())
         .withBody(new File(jarPath)).build();
       return HttpRequests.execute(request).getResponseCode();
     } finally {
@@ -211,7 +211,7 @@ public abstract class DatasetServiceTestBase {
     final FileInputStream is = new FileInputStream(jarPath);
     try {
       HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
-        .addHeader("X-Continuuity-Class-Name", moduleClassName)
+        .addHeader("X-Class-Name", moduleClassName)
         .withBody(new File(jarPath)).build();
       return HttpRequests.execute(request).getResponseCode();
     } finally {

@@ -603,13 +603,13 @@ define(['core/application', 'helpers/localstorage-adapter'], function (Applicati
 
         StreamsRoute: Em.Route.extend(getListHandler(['Stream'])),
 
-        FlowsRoute: Em.Route.extend(getListHandler(['Flow', 'Mapreduce', 'Workflow'])),
+        FlowsRoute: Em.Route.extend(getListHandler(['Flow', 'Mapreduce', 'Workflow', 'Spark'])),
 
         WorkflowsRoute: Em.Route.extend(getListHandler(['Workflow'])),
 
         ProceduresRoute: Em.Route.extend(getListHandler(['Procedure'])),
 
-        DatasetsRoute: Em.Route.extend(datasetListHandler),
+        DatasetsRoute: Em.Route.extend(datasetListHandler)
 
     });
 

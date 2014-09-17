@@ -41,7 +41,7 @@
     </root>
 
     <!--
-      Uncomment the following section to enable access logging by the Router process.
+      Uncomment the following section to enable access logging by the Authentication Server and Router processes.
       Log output will be in the standard Apache HTTPd access log format (see
       http://httpd.apache.org/docs/2.2/logs.html#accesslog).
     -->
@@ -58,6 +58,19 @@
     </appender>
     <logger name="http-access" level="TRACE" additivity="false">
       <appender-ref ref="AUDIT" />
+    </logger>
+    <appender name="EXTERNAL_AUTH_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>external_auth_access.log</file>
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>external_auth_access.log.%d{yyyy-MM-dd}</fileNamePattern>
+        <maxHistory>30</maxHistory>
+      </rollingPolicy>
+      <encoder>
+        <pattern>%msg%n</pattern>
+      </encoder>
+    </appender>
+    <logger name="external-auth-access" level="TRACE" additivity="false">
+      <appender-ref ref="EXTERNAL_AUTH_AUDIT" />
     </logger>
     -->
 

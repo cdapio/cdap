@@ -16,8 +16,6 @@
 
 package co.cask.cdap.api;
 
-import org.apache.twill.discovery.ServiceDiscovered;
-
 import java.net.URL;
 import java.util.Map;
 
@@ -30,16 +28,6 @@ public interface RuntimeContext {
    */
   Map<String, String> getRuntimeArguments();
 
-
-  //TODO: the following discover method will be used for TwillApps.
-  /**
-   * Used to discover services inside a given application and twill-service.
-   * @param applicationId Application Name.
-   * @param serviceId Service Name.
-   * @param serviceName Announced Name.
-   * @return ServiceDiscovered
-   */
-  ServiceDiscovered discover(String applicationId, String serviceId, String serviceName);
 
   /**
    * Used to discover services inside a given application.

@@ -36,7 +36,7 @@ public abstract class JarHttpHandlerTestBase {
   @Test
   public void testServe() throws Exception {
     InternalHttpResponder responder = new InternalHttpResponder();
-    serve(createRequest("/netlens/1.txt", "www.continuuity.net:20000"), responder);
+    serve(createRequest("/netlens/1.txt", "www.abc.com:20000"), responder);
 
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), responder.getResponse().getStatusCode());
     Assert.assertEquals("1 line default",

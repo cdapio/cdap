@@ -89,7 +89,7 @@ public abstract class MetricsSuiteTestBase {
 
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
-  private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.CONTINUUITY_API_KEY, API_KEY);
+  private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
   private static MetricsQueryService metrics;
   private static final String hostname = "127.0.0.1";

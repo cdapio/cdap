@@ -232,7 +232,6 @@ define(['core/lib/lodash'], function (lodash) {
             newObj.query_handle_hashed = "#" + newObj.query_handle;
             newObj.time_started = new Date(query.timestamp);
             newObj.time_started = newObj.time_started.toLocaleString();
-
             existingObj = objArr.pushObject(newObj);
           } else if (   existingObj.get('status')      !== query.status
                      || existingObj.get('has_results') !== query.has_results

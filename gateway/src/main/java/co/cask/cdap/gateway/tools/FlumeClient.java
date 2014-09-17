@@ -258,7 +258,7 @@ public class FlumeClient {
     }
     // add apikey if specified
     if (apikey != null) {
-      event.getHeaders().put(Constants.Gateway.CONTINUUITY_API_KEY, apikey);
+      event.getHeaders().put(Constants.Gateway.API_KEY, apikey);
     }
 
     // event is now fully constructed, ready to send
