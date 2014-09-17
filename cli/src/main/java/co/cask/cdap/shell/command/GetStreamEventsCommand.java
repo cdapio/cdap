@@ -20,18 +20,16 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.ArgumentName;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.StreamIdCompleter;
 import co.cask.cdap.shell.exception.CommandInputError;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import jline.console.completer.Completer;
 
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
@@ -42,54 +40,28 @@ import java.util.concurrent.TimeUnit;
 /**
  * A CLI command for getting stream events.
  */
-public class GetStreamEventsCommand extends AbstractCommand implements Completable {
+public class GetStreamEventsCommand extends AbstractCommand {
 
   private static final int MAX_BODY_SIZE = 256;
   private static final int LINE_WRAP_LIMIT = 64;
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
   private final StreamClient streamClient;
-  private final StreamIdCompleter completer;
 
   @Inject
-  public GetStreamEventsCommand(StreamClient streamClient, StreamIdCompleter completer) {
-    super(
-      "stream", "<stream-id> [<start-time> <end-time> <limit>]",
-      "Gets events from " + ElementType.STREAM.getPrettyName() + ". " +
-      "The time format for <start-time> and <end-time> could be timestamp in milliseconds or " +
-      "relative time in the form of [+\\-][0-9]+[hms]. " +
-      "For <start-time>, it is relative to current time, " +
-      "while for <end-time>, it's relative to start time. " +
-      "Special constants \"min\" and \"max\" can also be used to represent 0 and max timestamp respectively."
-     );
-
+  public GetStreamEventsCommand(StreamClient streamClient) {
     this.streamClient = streamClient;
-    this.completer = completer;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    if (args.length < 1) {
-      throw new CommandInputError("Expected arguments: " + argsFormat);
-    }
-
-    // Defaults for start time, end time, and limit if they are not provided.
-    long startTime = 0L;
-    long endTime = Long.MAX_VALUE;
-    int limit = Integer.MAX_VALUE;
-
-    if (args.length > 1) {
-      startTime = getTimestamp(args[1], System.currentTimeMillis());
-    }
-    if (args.length > 2) {
-      endTime = getTimestamp(args[2], startTime);
-    }
-    if (args.length > 3) {
-      limit = Integer.parseInt(args[3]);
-    }
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String streamId = arguments.get(ArgumentName.STREAM);
+    long startTime = arguments.getLong(ArgumentName.START_TIME, 0L);
+    long endTime = arguments.getLong(ArgumentName.END_TIME, Long.MAX_VALUE);
+    int limit = arguments.getInt(ArgumentName.LIMIT, Integer.MAX_VALUE);
 
     // Get a list of stream events and prints it.
-    List<StreamEvent> events = streamClient.getEvents(args[0], startTime, endTime,
+    List<StreamEvent> events = streamClient.getEvents(streamId, startTime, endTime,
                                                       limit, Lists.<StreamEvent>newArrayList());
     new AsciiTable<StreamEvent>(
       new String[] { "timestamp", "headers", "body size", "body"},
@@ -111,10 +83,19 @@ public class GetStreamEventsCommand extends AbstractCommand implements Completab
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return ImmutableList.of(
-      prefixCompleter(prefix, completer)
-    );
+  public String getPattern() {
+    return String.format("get stream <%s> [%s] [%s] [%s]",
+                         ArgumentName.STREAM, ArgumentName.START_TIME, ArgumentName.END_TIME, ArgumentName.LIMIT);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Gets events from a " + ElementType.STREAM.getPrettyName() + ". " +
+      "The time format for <start-time> and <end-time> could be timestamp in milliseconds or " +
+      "relative time in the form of [+\\-][0-9]+[hms]. " +
+      "For <start-time>, it is relative to current time, " +
+      "while for <end-time>, it's relative to start time. " +
+      "Special constants \"min\" and \"max\" can also be used to represent 0 and max timestamp respectively.";
   }
 
   /**

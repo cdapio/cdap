@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2012-2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command;
-
-import co.cask.cdap.shell.CommandSet;
-
-import javax.inject.Inject;
+package co.cask.cdap.shell;
 
 /**
- * Contains commands for truncating stuff.
+ * Base interface for {@link Command} and {@link CommandSet}.
  */
-public class TruncateCommandSet extends CommandSet {
-
-  @Inject
-  public TruncateCommandSet(TruncateDatasetCommandSet truncateDatasetCommandSet,
-                            TruncateStreamCommand truncateStreamCommand) {
-    super("truncate", truncateDatasetCommandSet, truncateStreamCommand);
-  }
+public interface HasCommand {
+  Iterable<Command> getCommands();
 }

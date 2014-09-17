@@ -21,6 +21,6 @@ package co.cask.cdap.shell;
  */
 public class Constants {
 
-  public static final String EV_HOSTNAME = "CDAP_HOST";
+  public static final String ENV_HOSTNAME = "CDAP_HOST";
 
 }

@@ -17,7 +17,7 @@
 package co.cask.cdap.shell.command;
 
 import co.cask.cdap.shell.AbstractCommand;
-import com.google.inject.Inject;
+import co.cask.cdap.shell.Arguments;
 
 import java.io.PrintStream;
 
@@ -26,13 +26,18 @@ import java.io.PrintStream;
  */
 public class ExitCommand extends AbstractCommand {
 
-  @Inject
-  public ExitCommand() {
-    super("exit", null, "Exits the CLI");
+  @Override
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    System.exit(0);
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    System.exit(0);
+  public String getPattern() {
+    return "exit";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Exits the CLI";
   }
 }

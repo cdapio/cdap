@@ -22,19 +22,30 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.shell.completer.StringsCompleter;
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Completer for program IDs.
  */
 public class ProgramIdCompleter extends StringsCompleter {
 
+  private final ApplicationClient appClient;
+  private final ProgramType programType;
+
   public ProgramIdCompleter(final ApplicationClient appClient, final ProgramType programType) {
-    super(new Supplier<Collection<String>>() {
+    this.appClient = appClient;
+    this.programType = programType;
+  }
+
+  @Override
+  protected Supplier<Collection<String>> getStringsSupplier() {
+    return Suppliers.memoizeWithExpiration(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
@@ -50,6 +61,6 @@ public class ProgramIdCompleter extends StringsCompleter {
           return Lists.newArrayList();
         }
       }
-    });
+    }, 3, TimeUnit.SECONDS);
   }
 }

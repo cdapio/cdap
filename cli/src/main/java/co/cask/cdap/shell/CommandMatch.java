@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.shell.command;
-
-import co.cask.cdap.shell.CommandSet;
-
-import javax.inject.Inject;
+package co.cask.cdap.shell;
 
 /**
- * Contains commands for setting variables.
+ * Represents an input matching for a command and provided arguments.
  */
-public class SetCommandSet extends CommandSet {
+public final class CommandMatch {
+  private final Command command;
+  private final String input;
 
-  @Inject
-  public SetCommandSet(SetInstancesCommandSet setInstancesCommandSet, SetStreamCommandSet setStreamCommandSet) {
-    super("set", setInstancesCommandSet, setStreamCommandSet);
+  public CommandMatch(Command command, String input) {
+    this.command = command;
+    this.input = input;
+  }
+
+  public Command getCommand() {
+    return command;
+  }
+
+  public Arguments getArguments() {
+    return new CommandPattern(command.getPattern()).parseArguments(input);
   }
 }

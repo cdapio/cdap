@@ -17,6 +17,7 @@
 package co.cask.cdap.shell.command;
 
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.CLIConfig;
 import com.google.inject.Inject;
 
@@ -31,12 +32,21 @@ public class VersionCommand extends AbstractCommand {
 
   @Inject
   public VersionCommand(CLIConfig cliConfig) {
-    super("version", null, "Prints the version");
     this.cliConfig = cliConfig;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     output.println(cliConfig.getVersion());
+  }
+
+  @Override
+  public String getPattern() {
+    return "version";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Prints the version";
   }
 }

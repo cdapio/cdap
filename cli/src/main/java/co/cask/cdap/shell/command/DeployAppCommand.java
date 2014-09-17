@@ -18,36 +18,30 @@ package co.cask.cdap.shell.command;
 
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.ArgumentName;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.completer.Completable;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
-import jline.console.completer.FileNameCompleter;
+import com.google.inject.Inject;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.List;
-import javax.inject.Inject;
 
 /**
  * Deploys an application.
  */
-public class DeployAppCommand extends AbstractCommand implements Completable {
+public class DeployAppCommand extends AbstractCommand {
 
   private final ApplicationClient applicationClient;
 
   @Inject
   public DeployAppCommand(ApplicationClient applicationClient) {
-    super("app", "<app-jar-file>", "Deploys an " + ElementType.APP.getPrettyName());
     this.applicationClient = applicationClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    File file = new File(args[0]);
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    File file = new File(arguments.get(ArgumentName.APP_JAR_FILE));
     Preconditions.checkArgument(file.exists(), "File " + file.getAbsolutePath() + " does not exist");
     Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
     applicationClient.deploy(file);
@@ -55,7 +49,12 @@ public class DeployAppCommand extends AbstractCommand implements Completable {
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, new FileNameCompleter()));
+  public String getPattern() {
+    return String.format("deploy app <%s>", ArgumentName.APP_JAR_FILE);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Deploys an " + ElementType.APP.getPrettyName();
   }
 }

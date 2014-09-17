@@ -17,32 +17,57 @@
 package co.cask.cdap.shell.command;
 
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.CLIConfig;
+import co.cask.cdap.shell.Command;
 import co.cask.cdap.shell.CommandSet;
 import co.cask.cdap.shell.Constants;
 import com.google.common.base.Supplier;
+import com.googlecode.concurrenttrees.common.Iterables;
 
 import java.io.PrintStream;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Prints helper text for all commands.
  */
 public class HelpCommand extends AbstractCommand {
 
-  private final Supplier<CommandSet> getCommands;
+  private final Supplier<CommandSet> commands;
   private final CLIConfig config;
 
-  public HelpCommand(Supplier<CommandSet> getCommands, CLIConfig config) {
-    super("help", null, "Prints this helper text");
-    this.getCommands = getCommands;
+  public HelpCommand(Supplier<CommandSet> commands, CLIConfig config) {
+    this.commands = commands;
     this.config = config;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     output.println("CLI version " + config.getVersion());
-    output.println(Constants.EV_HOSTNAME + "=" + config.getHost());
-    output.println();
-    output.println("Available commands: \n" + getCommands.get().getHelperText(""));
+    output.println(Constants.ENV_HOSTNAME + "=" + config.getHost());
+    output.println("Available commands:");
+    List<Command> commandList = Iterables.toList(commands.get().getCommands());
+    Collections.sort(commandList, new Comparator<Command>() {
+      @Override
+      public int compare(Command command, Command command2) {
+        return command.getPattern().compareTo(command2.getPattern());
+      }
+    });
+    for (Command command : commandList) {
+      output.printf("%s: %s\n", command.getPattern(), command.getDescription());
+    }
+  }
+
+  @Override
+  public String getPattern() {
+    return "help";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Prints this helper text";
   }
 }

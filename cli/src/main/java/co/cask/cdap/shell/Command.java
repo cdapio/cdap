@@ -19,10 +19,12 @@ package co.cask.cdap.shell;
 import java.io.PrintStream;
 
 /**
- * Executable command that takes input from the command-line and writes output.
+ *
  */
 public interface Command {
-  void process(String[] args, PrintStream output) throws Exception;
-  String getName();
-  String getHelperText(String namePrefix);
+
+  public void execute(Arguments arguments, PrintStream output) throws Exception;
+  public String getPattern();
+  public String getDescription();
+
 }

@@ -19,13 +19,14 @@ package co.cask.cdap.shell.command;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
+import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.List;
-import javax.inject.Inject;
 
 /**
  * Lists all dataset modules.
@@ -36,14 +37,11 @@ public class ListDatasetModulesCommand extends AbstractCommand {
 
   @Inject
   public ListDatasetModulesCommand(DatasetModuleClient client) {
-    super("modules", null, "Lists " + ElementType.DATASET_MODULE.getPluralPrettyName());
     this.client = client;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     List<DatasetModuleMeta> list = client.list();
     new AsciiTable<DatasetModuleMeta>(
       new String[] { "name", "className" },
@@ -54,5 +52,15 @@ public class ListDatasetModulesCommand extends AbstractCommand {
           return new String[] { object.getName(), object.getClassName() };
         }
       }).print(output);
+  }
+
+  @Override
+  public String getPattern() {
+    return "list dataset modules";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Lists " + ElementType.DATASET_MODULE.getPluralPrettyName();
   }
 }

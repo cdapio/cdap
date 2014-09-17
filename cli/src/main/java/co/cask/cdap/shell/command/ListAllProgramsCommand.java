@@ -20,6 +20,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
@@ -39,14 +40,11 @@ public class ListAllProgramsCommand extends AbstractCommand {
 
   @Inject
   public ListAllProgramsCommand(ApplicationClient appClient) {
-    super("programs", null, "Lists all " + ElementType.PROGRAM.getPluralPrettyName());
     this.appClient = appClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     Map<ProgramType, List<ProgramRecord>> allPrograms = appClient.listAllPrograms();
     List<ProgramRecord> allProgramsList = Lists.newArrayList();
     for (List<ProgramRecord> subList : allPrograms.values()) {
@@ -64,5 +62,15 @@ public class ListAllProgramsCommand extends AbstractCommand {
         }
       }
     ).print(output);
+  }
+
+  @Override
+  public String getPattern() {
+    return "list programs";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Lists all " + ElementType.PROGRAM.getPluralPrettyName();
   }
 }

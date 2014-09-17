@@ -18,44 +18,40 @@ package co.cask.cdap.shell.command;
 
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.ArgumentName;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.DatasetNameCompleter;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
+import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.List;
-import javax.inject.Inject;
 
 /**
  * Deletes a dataset.
  */
-public class DeleteDatasetInstanceCommand extends AbstractCommand implements Completable {
+public class DeleteDatasetInstanceCommand extends AbstractCommand {
 
   private final DatasetClient datasetClient;
-  private final DatasetNameCompleter completer;
 
   @Inject
-  public DeleteDatasetInstanceCommand(DatasetNameCompleter completer,
-                                      DatasetClient datasetClient) {
-    super("instance", "<dataset-name>", "Deletes a " + ElementType.DATASET.getPrettyName());
-    this.completer = completer;
+  public DeleteDatasetInstanceCommand(DatasetClient datasetClient) {
     this.datasetClient = datasetClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String datasetName = args[0];
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String datasetName = arguments.get(ArgumentName.DATASET);
 
     datasetClient.delete(datasetName);
     output.printf("Successfully deleted dataset named '%s'\n", datasetName);
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completer));
+  public String getPattern() {
+    return String.format("delete dataset instance <%s>", ArgumentName.DATASET);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Deletes a " + ElementType.DATASET.getPrettyName();
   }
 }

@@ -22,10 +22,11 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.ArgumentName;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
-import com.google.common.base.Joiner;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -40,15 +41,13 @@ public class ExecuteQueryCommand extends AbstractCommand {
 
   @Inject
   public ExecuteQueryCommand(QueryClient queryClient) {
-    super("execute", "<query>", "Executes a " + ElementType.QUERY.getPrettyName());
     this.queryClient = queryClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String query = arguments.getRawInput().substring("execute query ".length());
 
-    String query = Joiner.on(" ").join(args);
     QueryHandle queryHandle = queryClient.execute(query);
     QueryStatus status = new QueryStatus(null, false);
 
@@ -84,5 +83,15 @@ public class ExecuteQueryCommand extends AbstractCommand {
       output.println("Couldn't obtain results after " + (System.currentTimeMillis() - startTime) + "ms. " +
                        "Try querying manually with handle " + queryHandle.getHandle());
     }
+  }
+
+  @Override
+  public String getPattern() {
+    return String.format("execute query <%s>", ArgumentName.QUERY);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Executes a " + ElementType.QUERY.getPrettyName();
   }
 }

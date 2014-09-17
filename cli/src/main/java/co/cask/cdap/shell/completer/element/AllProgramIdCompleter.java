@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright 2012-2014 Cask, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,28 +18,30 @@ package co.cask.cdap.shell.completer.element;
 
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.shell.completer.StringsCompleter;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
 
 /**
- * Completer for application IDs.
+ * Completer for program IDs.
  */
-public class AppIdCompleter extends StringsCompleter {
+public abstract class AllProgramIdCompleter extends StringsCompleter {
 
-  private final ApplicationClient applicationClient;
+  private final ApplicationClient appClient;
 
   @Inject
-  public AppIdCompleter(final ApplicationClient applicationClient) {
-    this.applicationClient = applicationClient;
+  public AllProgramIdCompleter(final ApplicationClient appClient) {
+    this.appClient = appClient;
   }
 
   @Override
@@ -48,15 +50,15 @@ public class AppIdCompleter extends StringsCompleter {
       @Override
       public Collection<String> get() {
         try {
-          List<ApplicationRecord> appsList = applicationClient.list();
-          List<String> appIds = Lists.newArrayList();
-          for (ApplicationRecord item : appsList) {
-            appIds.add(item.getId());
+          Map<ProgramType, List<ProgramRecord>> programMap = appClient.listAllPrograms();
+          List<String> programIds = Lists.newArrayList();
+          for (Collection<ProgramRecord> programs : programMap.values()) {
+            for (ProgramRecord programRecord : programs) {
+              programIds.add(programRecord.getApp() + "." + programRecord.getId());
+            }
           }
-          return appIds;
-        } catch (IOException e) {
-          return Lists.newArrayList();
-        } catch (UnAuthorizedAccessTokenException e) {
+          return programIds;
+        } catch (Exception e) {
           return Lists.newArrayList();
         }
       }

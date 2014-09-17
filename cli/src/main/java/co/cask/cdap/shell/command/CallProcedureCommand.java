@@ -18,54 +18,43 @@ package co.cask.cdap.shell.command;
 
 import co.cask.cdap.client.ProcedureClient;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.ArgumentName;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.exception.CommandInputError;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import jline.console.completer.Completer;
+import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import javax.inject.Inject;
 
 /**
  * Calls a procedure.
  */
-public class CallProcedureCommand extends AbstractCommand implements Completable {
+public class CallProcedureCommand extends AbstractCommand {
 
   private final ProcedureClient procedureClient;
-  private final ProgramIdCompleterFactory programIdCompleterFactory;
 
   @Inject
-  public CallProcedureCommand(ProgramIdCompleterFactory programIdCompleterFactory,
-                              ProcedureClient procedureClient) {
-    super("procedure", "<app-id>.<procedure-id> <method-id> <parameters-map>",
-          "Calls a " + ElementType.PROCEDURE.getPrettyName());
-    this.programIdCompleterFactory = programIdCompleterFactory;
+  public CallProcedureCommand(ProcedureClient procedureClient) {
     this.procedureClient = procedureClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    if (argsFormat != null && args.length < 2) {
-      throw new CommandInputError("Expected arguments: " + argsFormat);
-    }
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String[] appIdAndProcedureId = arguments.get(ArgumentName.PROCEDURE).split("\\.");
+    String appId = appIdAndProcedureId[0];
+    String procedureId = appIdAndProcedureId[1];
+    String methodId = arguments.get(ArgumentName.METHOD);
 
-    String[] programIdParts = args[0].split("\\.");
-    String appId = programIdParts[0];
-    String procedureId = programIdParts[1];
-    String methodId = args[1];
-    String[] parameters = Arrays.copyOfRange(args, 2, args.length);
     Map<String, String> parametersMap = Maps.newHashMap();
-
-    for (int i = 0; i < parameters.length; i += 2) {
-      String key = parameters[i];
-      String value = parameters[i + 1];
-      parametersMap.put(key, value);
+    String prefix = String.format("call procedure %s %s ", arguments.get(ArgumentName.PROCEDURE), methodId);
+    if (arguments.getRawInput().length() > prefix.length()) {
+      String[] parameters = arguments.getRawInput().substring(prefix.length()).split(" ");
+      for (int i = 0; i < parameters.length; i += 2) {
+        String key = parameters[i];
+        String value = parameters[i + 1];
+        parametersMap.put(key, value);
+      }
     }
 
     String result = procedureClient.call(appId, procedureId, methodId, parametersMap);
@@ -73,8 +62,13 @@ public class CallProcedureCommand extends AbstractCommand implements Completable
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(
-      prefixCompleter(prefix, programIdCompleterFactory.getProgramIdCompleter(ElementType.PROCEDURE)));
+  public String getPattern() {
+    return String.format("call procedure <%s> <%s> [%s]", ArgumentName.PROCEDURE,
+                         ArgumentName.METHOD, ArgumentName.PARAMETER_MAP);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Calls a " + ElementType.PROCEDURE.getPrettyName();
   }
 }

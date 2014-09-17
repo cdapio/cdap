@@ -18,43 +18,30 @@ package co.cask.cdap.shell.command;
 
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.ArgumentName;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
-import co.cask.cdap.shell.completer.Completable;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
 
 import java.io.PrintStream;
-import java.util.List;
-import javax.inject.Inject;
 
 /**
  * Sets the instances of a program.
  */
-public class SetProgramInstancesCommand extends AbstractCommand implements Completable {
+public class SetProgramInstancesCommand extends AbstractCommand {
 
   private final ProgramClient programClient;
-  private final ProgramIdCompleterFactory completerFactory;
   private final ElementType elementType;
 
-  @Inject
-  public SetProgramInstancesCommand(ElementType elementType,
-                                    ProgramIdCompleterFactory completerFactory,
-                                    ProgramClient programClient) {
-    super(elementType.getName(), "<program-id> <num-instances>",
-          "Sets the instances of a " + elementType.getPrettyName());
+  public SetProgramInstancesCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
-    this.completerFactory = completerFactory;
     this.programClient = programClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String[] programIdParts = args[0].split("\\.");
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String[] programIdParts = arguments.get(ArgumentName.PROGRAM).split("\\.");
     String appId = programIdParts[0];
-    int numInstances = Integer.parseInt(args[1]);
+    int numInstances = arguments.getInt(ArgumentName.NUM_INSTANCES);
 
     switch (elementType) {
       case FLOWLET:
@@ -84,7 +71,13 @@ public class SetProgramInstancesCommand extends AbstractCommand implements Compl
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completerFactory.getProgramIdCompleter(elementType)));
+  public String getPattern() {
+    return String.format("set %s instances <%s> <%s>", elementType.getName(),
+                         elementType.getArgumentName(), ArgumentName.NUM_INSTANCES);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Sets the instances of a " + elementType.getPrettyName();
   }
 }

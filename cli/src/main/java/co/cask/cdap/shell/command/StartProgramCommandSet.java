@@ -17,32 +17,29 @@
 package co.cask.cdap.shell.command;
 
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.shell.Command;
 import co.cask.cdap.shell.CommandSet;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
+import co.cask.cdap.shell.HasCommand;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 import java.util.List;
-import javax.inject.Inject;
 
 /**
- * Contains commands for getting the number of instances a program is running on.
+ * Contains commands for starting programs.
  */
 public class StartProgramCommandSet extends CommandSet {
 
   @Inject
-  public StartProgramCommandSet(ProgramIdCompleterFactory programIdCompleterFactory,
-                                ProgramClient programClient) {
-    super("start", generateCommands(programIdCompleterFactory, programClient));
+  public StartProgramCommandSet(ProgramClient programClient) {
+    super(generateCommands(programClient));
   }
 
-  public static List<Command> generateCommands(ProgramIdCompleterFactory programIdCompleterFactory,
-                                               ProgramClient programClient) {
-    List<Command> commands = Lists.newArrayList();
+  private static List<HasCommand> generateCommands(ProgramClient programClient) {
+    List<HasCommand> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.canStartStop()) {
-        commands.add(new StartProgramCommand(elementType, programIdCompleterFactory, programClient));
+        commands.add(new StartProgramCommand(elementType, programClient));
       }
     }
     return commands;

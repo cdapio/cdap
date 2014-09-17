@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.shell.completer;
+package co.cask.cdap.shell;
 
+import com.google.common.collect.ImmutableMap;
 import jline.console.completer.Completer;
 
-import java.util.List;
+import java.util.Map;
 
 /**
- * Used to indicate that a command has associated completers.
+ * Set of {@link Completer}s.
  */
-public interface Completable {
-  List<? extends Completer> getCompleters(String prefix);
+public class CompleterSet {
+
+  private final Map<String, Completer> completers;
+
+  public CompleterSet(Map<String, Completer> completers) {
+    this.completers = ImmutableMap.copyOf(completers);
+  }
+
+  public Map<String, Completer> getCompleters() {
+    return completers;
+  }
+
+  public Completer getCompleter(String type) {
+    return completers.get(type);
+  }
 }

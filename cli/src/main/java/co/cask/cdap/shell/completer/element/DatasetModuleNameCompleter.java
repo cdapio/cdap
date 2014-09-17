@@ -22,12 +22,14 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.shell.completer.StringsCompleter;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 /**
@@ -35,9 +37,16 @@ import javax.inject.Inject;
  */
 public class DatasetModuleNameCompleter extends StringsCompleter {
 
+  private final DatasetModuleClient datasetModuleClient;
+
   @Inject
   public DatasetModuleNameCompleter(final DatasetModuleClient datasetModuleClient) {
-    super(new Supplier<Collection<String>>() {
+    this.datasetModuleClient = datasetModuleClient;
+  }
+
+  @Override
+  protected Supplier<Collection<String>> getStringsSupplier() {
+    return Suppliers.memoizeWithExpiration(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
@@ -56,6 +65,6 @@ public class DatasetModuleNameCompleter extends StringsCompleter {
           return Lists.newArrayList();
         }
       }
-    });
+    }, 3, TimeUnit.SECONDS);
   }
 }

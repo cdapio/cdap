@@ -20,41 +20,31 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.ArgumentName;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
-import co.cask.cdap.shell.completer.Completable;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
 
 import java.io.PrintStream;
-import java.util.List;
 
 /**
  * Gets the live info of a program.
  */
-public class GetProgramLiveInfoCommand extends AbstractCommand implements Completable {
+public class GetProgramLiveInfoCommand extends AbstractCommand {
 
   private final ProgramClient programClient;
-  private final ProgramIdCompleterFactory completerFactory;
   private final ElementType elementType;
 
-  protected GetProgramLiveInfoCommand(ElementType elementType,
-                                      ProgramIdCompleterFactory completerFactory,
-                                      ProgramClient programClient) {
-    super(elementType.getName(), "<app-id>.<program-id>",
-          "Gets the live info of a " + elementType.getPrettyName());
+  protected GetProgramLiveInfoCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
-    this.completerFactory = completerFactory;
     this.programClient = programClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String[] programIdParts = args[0].split("\\.");
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String[] programIdParts = arguments.get(ArgumentName.PROGRAM).split("\\.");
     String appId = programIdParts[0];
     String programId = programIdParts[1];
 
@@ -88,7 +78,12 @@ public class GetProgramLiveInfoCommand extends AbstractCommand implements Comple
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completerFactory.getProgramIdCompleter(elementType)));
+  public String getPattern() {
+    return String.format("get %s live <%s>", elementType.getName(), elementType.getArgumentName());
+  }
+
+  @Override
+  public String getDescription() {
+    return "Gets the live info of a " + elementType.getPrettyName();
   }
 }

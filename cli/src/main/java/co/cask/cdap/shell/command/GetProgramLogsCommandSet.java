@@ -17,32 +17,29 @@
 package co.cask.cdap.shell.command;
 
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.shell.Command;
 import co.cask.cdap.shell.CommandSet;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
+import co.cask.cdap.shell.HasCommand;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 import java.util.List;
-import javax.inject.Inject;
 
 /**
- * Contains commands for getting program history.
+ * Contains commands for getting the number of instances a program is running on.
  */
-public class GetHistoryCommandSet extends CommandSet {
+public class GetProgramLogsCommandSet extends CommandSet {
 
   @Inject
-  public GetHistoryCommandSet(ProgramIdCompleterFactory programIdCompleterFactory,
-                              ProgramClient programClient) {
-    super("history", generateCommands(programIdCompleterFactory, programClient));
+  public GetProgramLogsCommandSet(ProgramClient programClient) {
+    super(generateCommands(programClient));
   }
 
-  private static List<Command> generateCommands(ProgramIdCompleterFactory programIdCompleterFactory,
-                                                ProgramClient programClient) {
-    List<Command> commands = Lists.newArrayList();
+  private static List<HasCommand> generateCommands(ProgramClient programClient) {
+    List<HasCommand> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
-      if (elementType.hasHistory()) {
-        commands.add(new GetProgramHistoryCommand(elementType, programIdCompleterFactory, programClient));
+      if (elementType.hasLogs()) {
+        commands.add(new GetProgramLogsCommand(elementType, programClient));
       }
     }
     return commands;

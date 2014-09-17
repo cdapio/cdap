@@ -26,20 +26,20 @@ import com.google.inject.Inject;
 import java.util.List;
 
 /**
- * Contains commands for stopping programs.
+ * Contains commands for getting the number of instances a program is running on.
  */
-public class StopProgramCommandSet extends CommandSet {
+public class GetProgramInstancesCommandSet extends CommandSet {
 
   @Inject
-  public StopProgramCommandSet(ProgramClient programClient) {
+  public GetProgramInstancesCommandSet(ProgramClient programClient) {
     super(generateCommands(programClient));
   }
 
   private static List<HasCommand> generateCommands(ProgramClient programClient) {
     List<HasCommand> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
-      if (elementType.canStartStop()) {
-        commands.add(new StopProgramCommand(elementType, programClient));
+      if (elementType.canScale()) {
+        commands.add(new GetProgramInstancesCommand(elementType, programClient));
       }
     }
     return commands;

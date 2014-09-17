@@ -22,12 +22,14 @@ import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.shell.completer.StringsCompleter;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 /**
@@ -35,9 +37,16 @@ import javax.inject.Inject;
  */
 public class DatasetNameCompleter extends StringsCompleter {
 
+  private final DatasetClient datasetClient;
+
   @Inject
   public DatasetNameCompleter(final DatasetClient datasetClient) {
-    super(new Supplier<Collection<String>>() {
+    this.datasetClient = datasetClient;
+  }
+
+  @Override
+  protected Supplier<Collection<String>> getStringsSupplier() {
+    return Suppliers.memoizeWithExpiration(new Supplier<Collection<String>>() {
       @Override
       public Collection<String> get() {
         try {
@@ -46,7 +55,6 @@ public class DatasetNameCompleter extends StringsCompleter {
             Iterables.transform(list, new Function<DatasetSpecification, String>() {
               @Override
               public String apply(DatasetSpecification input) {
-                // TODO: hack to handle namespaced dataset names -- assumes there are no periods in dataset names
                 String[] tokens = input.getName().split("\\.");
                 return tokens[tokens.length - 1];
               }
@@ -58,6 +66,6 @@ public class DatasetNameCompleter extends StringsCompleter {
           return Lists.newArrayList();
         }
       }
-    });
+    }, 3, TimeUnit.SECONDS);
   }
 }

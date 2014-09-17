@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,32 +17,29 @@
 package co.cask.cdap.shell.command;
 
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.shell.Command;
 import co.cask.cdap.shell.CommandSet;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.ProgramIdCompleterFactory;
+import co.cask.cdap.shell.HasCommand;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 import java.util.List;
-import javax.inject.Inject;
 
 /**
  * Contains commands for getting the number of instances a program is running on.
  */
-public class SetInstancesCommandSet extends CommandSet {
+public class SetProgramInstancesCommandSet extends CommandSet {
 
   @Inject
-  public SetInstancesCommandSet(ProgramIdCompleterFactory programIdCompleterFactory,
-                                ProgramClient programClient) {
-    super("instances", generateCommands(programIdCompleterFactory, programClient));
+  public SetProgramInstancesCommandSet(ProgramClient programClient) {
+    super(generateCommands(programClient));
   }
 
-  public static List<Command> generateCommands(ProgramIdCompleterFactory programIdCompleterFactory,
-                                               ProgramClient programClient) {
-    List<Command> commands = Lists.newArrayList();
+  public static List<HasCommand> generateCommands(ProgramClient programClient) {
+    List<HasCommand> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
       if (elementType.canScale()) {
-        commands.add(new SetProgramInstancesCommand(elementType, programIdCompleterFactory, programClient));
+        commands.add(new SetProgramInstancesCommand(elementType, programClient));
       }
     }
     return commands;

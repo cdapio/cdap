@@ -18,45 +18,40 @@ package co.cask.cdap.shell.command;
 
 import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.ArgumentName;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
-import co.cask.cdap.shell.completer.Completable;
-import co.cask.cdap.shell.completer.element.StreamIdCompleter;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import jline.console.completer.Completer;
 
 import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.List;
 import javax.inject.Inject;
 
 /**
  * Sends an event to a stream.
  */
-public class SendStreamEventCommand extends AbstractCommand implements Completable {
+public class SendStreamEventCommand extends AbstractCommand {
 
   private final StreamClient streamClient;
-  private final StreamIdCompleter completer;
 
   @Inject
-  public SendStreamEventCommand(StreamIdCompleter completer, StreamClient streamClient) {
-    super("stream", "<stream-id> <stream-event>", "Sends an event to a " + ElementType.STREAM.getPrettyName());
-    this.completer = completer;
+  public SendStreamEventCommand(StreamClient streamClient) {
     this.streamClient = streamClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
-    String streamId = args[0];
-    String streamEvent = Joiner.on(" ").join(Arrays.copyOfRange(args, 1, args.length));
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
+    String streamId = arguments.get(ArgumentName.STREAM);
+    String streamEvent = arguments.getRawInput().substring(String.format("send stream %s ", streamId).length());
     streamClient.sendEvent(streamId, streamEvent);
     output.printf("Successfully send stream event to stream '%s'\n", streamId);
   }
 
   @Override
-  public List<? extends Completer> getCompleters(String prefix) {
-    return Lists.newArrayList(prefixCompleter(prefix, completer));
+  public String getPattern() {
+    return String.format("send stream <%s> <%s>", ArgumentName.STREAM, ArgumentName.STREAM_EVENT);
+  }
+
+  @Override
+  public String getDescription() {
+    return "Sends an event to a " + ElementType.STREAM.getPrettyName();
   }
 }

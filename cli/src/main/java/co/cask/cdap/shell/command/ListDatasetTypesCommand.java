@@ -20,15 +20,16 @@ import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.shell.AbstractCommand;
+import co.cask.cdap.shell.Arguments;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.List;
-import javax.inject.Inject;
 
 /**
  * Lists dataset types.
@@ -39,14 +40,11 @@ public class ListDatasetTypesCommand extends AbstractCommand {
 
   @Inject
   public ListDatasetTypesCommand(DatasetTypeClient datasetTypeClient) {
-    super("types", null, "Lists " + ElementType.DATASET_TYPE.getPluralPrettyName());
     this.datasetTypeClient = datasetTypeClient;
   }
 
   @Override
-  public void process(String[] args, PrintStream output) throws Exception {
-    super.process(args, output);
-
+  public void execute(Arguments arguments, PrintStream output) throws Exception {
     List<DatasetTypeMeta> datasetTypeMetas = datasetTypeClient.list();
 
     new AsciiTable<DatasetTypeMeta>(
@@ -61,5 +59,15 @@ public class ListDatasetTypesCommand extends AbstractCommand {
           return new Object[] { object.getName(), Joiner.on(", ").join(modulesStrings) };
         }
       }).print(output);
+  }
+
+  @Override
+  public String getPattern() {
+    return "list dataset types";
+  }
+
+  @Override
+  public String getDescription() {
+    return "Lists " + ElementType.DATASET_TYPE.getPluralPrettyName();
   }
 }
