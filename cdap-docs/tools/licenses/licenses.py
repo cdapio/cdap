@@ -28,7 +28,7 @@ import os
 import subprocess
 import sys
 
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
 
@@ -224,12 +224,12 @@ def process_level_1(input_file, options):
             row_count +=1
             jar,group_id, artifact_id = row
             key = jar
-            print 'lib.jar %s' % lib.jar
             if not level_1_dict.has_key(key):
                 unique_row_count += 1
                 if master_libs_dict.has_key(jar):
                     # Look up jar reference in dictionary
                     lib = master_libs_dict[jar]
+                    print 'lib.jar %s' % lib.jar
                     level_1_dict[key] = (group_id, artifact_id, lib.license, lib.license_url)
                     continue
                 if not missing_libs_dict.has_key(artifact_id):
@@ -366,12 +366,12 @@ def print_dependencies(title, file_base, header, widths, data_list):
 # Example: "Level 1", LEVEL_1, ...
     RST_HEADER=""".. :author: Cask Data, Inc.
    :version: %(version)s
-============================================
+=================================================
 Cask Data Application Platform %(version)s
-============================================
+=================================================
 
 Cask Data Application Platform %(title)s Dependencies
------------------------------------------------------
+---------------------------------------------------------------
 
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
