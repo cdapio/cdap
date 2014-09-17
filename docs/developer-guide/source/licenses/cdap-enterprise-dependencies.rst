@@ -1,7 +1,8 @@
 .. :author: Cask Data, Inc.
    :version: 2.5.0
 ============================================
-Cask Data Application Platform 2.5.0============================================
+Cask Data Application Platform 2.5.0
+============================================
 
 Cask Data Application Platform Distributed Dependencies
 -----------------------------------------------------
