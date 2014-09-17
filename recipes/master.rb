@@ -28,7 +28,10 @@ if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.
   node['hadoop']['core_site']['hadoop.security.authentication'] == 'kerberos'
 
   if node['cdap'].key?('security') && node['cdap']['security'].key?('cdap_keytab') &&
-    node['cdap']['security'].key?('cdap_principal')
+    node['cdap']['security'].key?('cdap_principal') &&
+    node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('kerberos.auth.enabled') &&
+    node['cdap']['cdap_site']['kerberos.auth.enabled'].to_s == 'true'
+
     my_vars = { :options => node['cdap']['security'] }
 
     directory '/etc/default' do
@@ -77,7 +80,11 @@ if node['hadoop'].key?('core_site') && node['hadoop']['core_site'].key?('hadoop.
     end
   else
     # Hadoop is secure, but we're not configured for Kerberos
-    Chef::Application.fatal!("You must specify node['cdap']['security']['cdap_keytab'] and node['cdap']['security']['cdap_principal'] on secure Hadoop!")
+    log 'bad-security-configuration' do
+      message "Invalid security configuration: You must specify node['cdap']['cdap_site']['kerberos.auth.enabled']"
+      level :error
+    end
+    Chef::Application.fatal!('Invalid Hadoop/CDAP security configuration')
   end
 end
 
