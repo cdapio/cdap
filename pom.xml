@@ -91,7 +91,7 @@
     <hbase96.version>0.96.0-hadoop2</hbase96.version>
     <hive.version>0.13.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
-    <http.component.version>4.2.5</http.component.version>
+    <http.component.version>4.3.1</http.component.version>
     <jetty.version>6.1.22</jetty.version>
     <jetty8.version>8.1.15.v20140411</jetty8.version>
     <jline.version>2.12</jline.version>
