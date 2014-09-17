@@ -498,6 +498,7 @@ public final class Constants {
     public static final String CCONF_KEY = "explore.cconfiguration";
     public static final String HCONF_KEY = "explore.hconfiguration";
     public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
+    public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
 
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";
