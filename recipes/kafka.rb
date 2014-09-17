@@ -24,7 +24,7 @@ package 'cdap-kafka' do
 end
 
 kafka_log_dir =
-  if node['cdap']['cdap_site'].key? 'kafka.log.dir'
+  if node['cdap']['cdap_site'].key?('kafka.log.dir')
     node['cdap']['cdap_site']['kafka.log.dir']
   else
     '/tmp/kafka-logs'

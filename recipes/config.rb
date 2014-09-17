@@ -28,7 +28,7 @@ directory cdap_conf_dir do
 end
 
 # Setup cdap-site.xml
-if node['cdap'].key? 'cdap_site'
+if node['cdap'].key?('cdap_site')
   my_vars = { :options => node['cdap']['cdap_site'] }
 
   template "#{cdap_conf_dir}/cdap-site.xml" do
@@ -42,7 +42,7 @@ if node['cdap'].key? 'cdap_site'
 end # End cdap-site.xml
 
 # Setup cdap-security.xml
-if node['cdap'].key? 'cdap_security'
+if node['cdap'].key?('cdap_security')
   my_vars = { :options => node['cdap']['cdap_security'] }
 
   template "#{cdap_conf_dir}/cdap-security.xml" do
