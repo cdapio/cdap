@@ -16,19 +16,12 @@ describe 'cdap::master' do
       end.converge(described_recipe)
     end
 
-    %w(cdap-master)
-      .each do |pkg|
-      it "installs #{pkg} package" do
-        expect(chef_run).to install_package(pkg)
-      end
+    it "installs cdap-master package" do
+      expect(chef_run).to install_package('cdap-master')
     end
 
-    %w(
-      cdap-master
-    ).each do |svc|
-      it "creates #{svc} service, but does not run it" do
-        expect(chef_run).not_to start_service(svc)
-      end
+    it "creates cdap-master service, but does not run it" do
+      expect(chef_run).not_to start_service('cdap-master')
     end
   end
 end

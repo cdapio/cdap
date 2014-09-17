@@ -16,19 +16,12 @@ describe 'cdap::web_app' do
       end.converge(described_recipe)
     end
 
-    %w(cdap-web-app)
-      .each do |pkg|
-      it "installs #{pkg} package" do
-        expect(chef_run).to install_package(pkg)
-      end
+    it "installs cdap-web-app package" do
+      expect(chef_run).to install_package('cdap-web-app')
     end
 
-    %w(
-      cdap-web-app
-    ).each do |svc|
-      it "creates #{svc} service, but does not run it" do
-        expect(chef_run).not_to start_service(svc)
-      end
+    it "creates cdap-web-app service, but does not run it" do
+      expect(chef_run).not_to start_service('cdap-web-app')
     end
 
     it 'does not create /usr/bin/node link' do
