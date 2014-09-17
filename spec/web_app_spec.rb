@@ -16,11 +16,11 @@ describe 'cdap::web_app' do
       end.converge(described_recipe)
     end
 
-    it "installs cdap-web-app package" do
+    it 'installs cdap-web-app package' do
       expect(chef_run).to install_package('cdap-web-app')
     end
 
-    it "creates cdap-web-app service, but does not run it" do
+    it 'creates cdap-web-app service, but does not run it' do
       expect(chef_run).not_to start_service('cdap-web-app')
     end
 

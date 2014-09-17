@@ -15,15 +15,15 @@ describe 'cdap::gateway' do
       end.converge(described_recipe)
     end
 
-    it "installs cdap-gateway package" do
+    it 'installs cdap-gateway package' do
       expect(chef_run).to install_package('cdap-gateway')
     end
 
-    it "creates cdap-gateway service, but does not run it" do
+    it 'creates cdap-gateway service, but does not run it' do
       expect(chef_run).not_to start_service('cdap-gateway')
     end
 
-    it "creates cdap-router service, but does not run it" do
+    it 'creates cdap-router service, but does not run it' do
       expect(chef_run).not_to start_service('cdap-router')
     end
   end

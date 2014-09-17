@@ -12,7 +12,7 @@ describe 'cdap::config' do
       end.converge(described_recipe)
     end
 
-    it "creates /etc/cdap/conf.chef directory" do
+    it 'creates /etc/cdap/conf.chef directory' do
       expect(chef_run).to create_directory('/etc/cdap/conf.chef')
     end
 

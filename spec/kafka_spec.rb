@@ -15,15 +15,15 @@ describe 'cdap::kafka' do
       end.converge(described_recipe)
     end
 
-    it "installs cdap-kafka package" do
+    it 'installs cdap-kafka package' do
       expect(chef_run).to install_package('cdap-kafka')
     end
 
-    it "creates /data/cdap/kafka-logs directory" do
+    it 'creates /data/cdap/kafka-logs directory' do
       expect(chef_run).to create_directory('/data/cdap/kafka-logs')
     end
 
-    it "creates cdap-kafka-server service, but does not run it" do
+    it 'creates cdap-kafka-server service, but does not run it' do
       expect(chef_run).not_to start_service('cdap-kafka-server')
     end
   end

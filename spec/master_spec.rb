@@ -15,11 +15,11 @@ describe 'cdap::master' do
       end.converge(described_recipe)
     end
 
-    it "installs cdap-master package" do
+    it 'installs cdap-master package' do
       expect(chef_run).to install_package('cdap-master')
     end
 
-    it "creates cdap-master service, but does not run it" do
+    it 'creates cdap-master service, but does not run it' do
       expect(chef_run).not_to start_service('cdap-master')
     end
   end
