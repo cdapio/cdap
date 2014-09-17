@@ -295,7 +295,8 @@ Note that a Dataset can implement either ``RecordScannable``, ``RecordWritable``
 
 Connecting to CDAP Datasets using CDAP JDBC driver
 ==================================================
-CDAP provides a JDBC driver to enable integrations with external programs and third party BI tools easier.
+CDAP provides a JDBC driver to make integrations with external programs and third-party BI (business intelligence)
+tools easier.
 
 The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``lib``
 directory of your SDK installation at ``lib/co.cask.cdap.explore-jdbc-<version>.jar``.
