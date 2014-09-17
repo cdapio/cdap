@@ -26,13 +26,14 @@ import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.nio.Buffer;
 import java.util.NavigableMap;
 
 /**
  * unit-test
  * @param <T> table type
  */
-public abstract class BufferingOrederedTableTest<T extends BufferingOrderedTable>
+public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
   extends OrderedTableConcurrentTest<T> {
 
   @Test
@@ -76,6 +77,103 @@ public abstract class BufferingOrederedTableTest<T extends BufferingOrderedTable
       verify(a(), myTable2.get(R1, a(C1)));
       verify(a(), myTable2.get(R2, a(C2)));
 
+    } finally {
+      admin.drop();
+    }
+  }
+
+  /**
+   * Tests that writes being buffered in memory by the client are still visible during scans.
+   */
+  @Test
+  public void testScanWithBuffering() throws Exception {
+    DatasetAdmin admin = getTableAdmin("testScanWithBuffering");
+    admin.create();
+    try {
+      //
+      Transaction tx1 = txClient.startShort();
+      OrderedTable table1 = getTable("testScanWithBuffering");
+      ((TransactionAware) table1).startTx(tx1);
+
+      table1.put(Bytes.toBytes("1_01"), a(C1), a(V1));
+      table1.put(Bytes.toBytes("1_02"), a(C1), a(V1));
+      table1.put(Bytes.toBytes("1_03"), a(C1), a(V1));
+
+      // written values should not yet be persisted
+      verify(new byte[0][],
+             new byte[0][][],
+             ((BufferingOrderedTable) table1).scanPersisted(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+
+      // buffered values should be visible in a scan
+      verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
+             aa(a(C1, V1),
+                a(C1, V1),
+                a(C1, V1)),
+             table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) table1).commitTx());
+      Assert.assertTrue(txClient.commit(tx1));
+
+      Transaction tx2 = txClient.startShort();
+      ((TransactionAware) table1).startTx(tx2);
+
+      // written values should be visible after commit
+      verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
+             aa(a(C1, V1),
+                a(C1, V1),
+                a(C1, V1)),
+             table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+
+      txClient.commit(tx2);
+
+      Transaction tx3 = txClient.startShort();
+      ((TransactionAware) table1).startTx(tx3);
+
+      // test merging of buffered writes on existing rows
+      table1.put(Bytes.toBytes("1_01"), a(C2), a(V2));
+      table1.put(Bytes.toBytes("1_02"), a(C1), a(V2));
+      table1.put(Bytes.toBytes("1_02a"), a(C1), a(V1));
+      table1.put(Bytes.toBytes("1_02b"), a(C1), a(V1));
+      table1.put(Bytes.toBytes("1_04"), a(C2), a(V2));
+
+      // persisted values should be the same
+      verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_03")),
+             aa(a(C1, V1),
+                a(C1, V1),
+                a(C1, V1)),
+             ((BufferingOrderedTable) table1).scanPersisted(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+
+      // all values should be visible in buffered scan
+      verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_02a"), Bytes.toBytes("1_02b"),
+               Bytes.toBytes("1_03"), Bytes.toBytes("1_04")),
+             aa(a(C1, V1, C2, V2), // 1_01
+                a(C1, V2),         // 1_02
+                a(C1, V1),         // 1_02a
+                a(C1, V1),         // 1_02b
+                a(C1, V1),         // 1_03
+                a(C2, V2)),        // 1_04
+             table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+
+      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) table1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) table1).commitTx());
+      txClient.commit(tx3);
+
+      Transaction tx4 = txClient.startShort();
+      ((TransactionAware) table1).startTx(tx4);
+
+      // all values should be visible after commit
+      verify(a(Bytes.toBytes("1_01"), Bytes.toBytes("1_02"), Bytes.toBytes("1_02a"), Bytes.toBytes("1_02b"),
+               Bytes.toBytes("1_03"), Bytes.toBytes("1_04")),
+             aa(a(C1, V1, C2, V2), // 1_01
+                a(C1, V2),         // 1_02
+                a(C1, V1),         // 1_02a
+                a(C1, V1),         // 1_02b
+                a(C1, V1),         // 1_03
+                a(C2, V2)),        // 1_04
+             table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
+
+      txClient.commit(tx4);
     } finally {
       admin.drop();
     }

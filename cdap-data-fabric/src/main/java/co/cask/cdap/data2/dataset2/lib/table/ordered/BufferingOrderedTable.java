@@ -20,8 +20,10 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.TableSplit;
+import co.cask.cdap.data2.dataset2.lib.table.Result;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Function;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -487,8 +490,17 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow) throws Exception {
-    // todo: merge with in-memory buffer
-    return scanPersisted(startRow, stopRow);
+    NavigableMap<byte[], NavigableMap<byte[], Update>> bufferMap;
+    if (startRow == null && stopRow == null) {
+      bufferMap = buff;
+    } else if (startRow == null) {
+      bufferMap = buff.headMap(stopRow, false);
+    } else if (stopRow == null) {
+      bufferMap = buff.tailMap(startRow, true);
+    } else {
+      bufferMap = buff.subMap(startRow, true, stopRow, false);
+    }
+    return new BufferingScanner(bufferMap, scanPersisted(startRow, stopRow));
   }
 
   private Map<byte[], byte[]> getRowMap(byte[] row) throws Exception {
@@ -563,7 +575,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
    * @param persisted The map to modify with the buffered values.
    * @param buffered The buffered values to overlay on the persisted map.
    */
-  private void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered, byte[][] columns) {
+  private static void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered, byte[][] columns) {
     Iterable<byte[]> columnKeys;
     if (columns != null) {
       columnKeys = Arrays.asList(columns);
@@ -694,5 +706,72 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
 
   private static int getSize(byte[] item) {
     return item == null ? 0 : item.length;
+  }
+
+  /**
+   * Scanner implementation that overlays buffered data on top of already persisted data.
+   */
+  private class BufferingScanner implements Scanner {
+    private final NavigableMap<byte[], NavigableMap<byte[], Update>> buffer;
+    private final Scanner persistedScanner;
+    private final Iterator<byte[]> keyIter;
+    private byte[] currentKey;
+    private Row currentRow;
+
+    private BufferingScanner(NavigableMap<byte[], NavigableMap<byte[], Update>> buffer, Scanner persistedScanner) {
+      this.buffer = buffer;
+      this.keyIter = this.buffer.keySet().iterator();
+      if (this.keyIter.hasNext()) {
+        currentKey = keyIter.next();
+      }
+      this.persistedScanner = persistedScanner;
+      this.currentRow = this.persistedScanner.next();
+    }
+
+    @Nullable
+    @Override
+    public Row next() {
+      if (currentKey == null && currentRow == null) {
+        // out of rows
+        return null;
+      }
+      int order;
+      if (currentKey == null) {
+        // exhausted buffer is the same as persisted scan row coming first
+        order = 1;
+      } else if (currentRow == null) {
+        // exhausted persisted scanner is the same as buffer row coming first
+        order = -1;
+      } else {
+        order = Bytes.compareTo(currentKey, currentRow.getRow());
+      }
+      Row result = null;
+      if (order > 0) {
+        // persisted row comes first or buffer is empty
+        result = currentRow;
+        currentRow = persistedScanner.next();
+      } else if (order < 0) {
+        // buffer row comes first or persisted scanner is empty
+        Map<byte[], byte[]> persistedRow = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        mergeToPersisted(persistedRow, buffer.get(currentKey), null);
+        result = new Result(currentKey, persistedRow);
+
+        currentKey = keyIter.hasNext() ? keyIter.next() : null;
+      } else {
+        // if currentKey and currentRow are equal, merge and advance both
+        Map<byte[], byte[]> persisted = currentRow.getColumns();
+        mergeToPersisted(persisted, buffer.get(currentKey), null);
+        result = new Result(currentRow.getRow(), persisted);
+
+        currentRow = persistedScanner.next();
+        currentKey = keyIter.hasNext() ? keyIter.next() : null;
+      }
+      return result;
+    }
+
+    @Override
+    public void close() {
+      this.persistedScanner.close();
+    }
   }
 }
