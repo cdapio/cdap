@@ -12,7 +12,7 @@ describe 'cdap::fullstack' do
         stub_command('update-alternatives --display hadoop-conf | grep best | awk \'{print $5}\' | grep /etc/hadoop/conf.chef').and_return(false)
         stub_command('update-alternatives --display hbase-conf | grep best | awk \'{print $5}\' | grep /etc/hbase/conf.chef').and_return(false)
         stub_command('update-alternatives --display hive-conf | grep best | awk \'{print $5}\' | grep /etc/hive/conf.chef').and_return(false)
-        stub_command("test -e /usr/bin/node").and_return(true)
+        stub_command('test -e /usr/bin/node').and_return(true)
       end.converge(described_recipe)
     end
 
@@ -66,7 +66,7 @@ describe 'cdap::fullstack' do
         stub_command('update-alternatives --display hadoop-conf | grep best | awk \'{print $5}\' | grep /etc/hadoop/conf.chef').and_return(false)
         stub_command('update-alternatives --display hbase-conf | grep best | awk \'{print $5}\' | grep /etc/hbase/conf.chef').and_return(false)
         stub_command('update-alternatives --display hive-conf | grep best | awk \'{print $5}\' | grep /etc/hive/conf.chef').and_return(false)
-        stub_command("test -e /usr/bin/node").and_return(false)
+        stub_command('test -e /usr/bin/node').and_return(false)
       end.converge(described_recipe)
     end
 
