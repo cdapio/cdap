@@ -40,7 +40,7 @@ public final class Constants {
     public static final String DATASET_EXECUTOR = "dataset.executor";
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
-    public static final String SERVICE_INSTANCE_TABLE_NAME = "reactor.services.instances";
+    public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
   }
 
   /**
@@ -411,7 +411,7 @@ public final class Constants {
    * Logging constants.
    */
   public static final class Logging {
-    public static final String SYSTEM_NAME = "reactor";
+    public static final String SYSTEM_NAME = "cdap";
     public static final String COMPONENT_NAME = "services";
   }
 

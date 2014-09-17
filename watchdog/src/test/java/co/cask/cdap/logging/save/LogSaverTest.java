@@ -159,7 +159,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     waitTillLogSaverDone(logBaseDir, "ACCT_1/APP_1/flow-FLOW_1/%s", "Test log message 59 arg1 arg2");
     waitTillLogSaverDone(logBaseDir, "ACCT_2/APP_2/flow-FLOW_2/%s", "Test log message 59 arg1 arg2");
-    waitTillLogSaverDone(logBaseDir, "reactor/services/service-metrics/%s", "Test log message 59 arg1 arg2");
+    waitTillLogSaverDone(logBaseDir, "cdap/services/service-metrics/%s", "Test log message 59 arg1 arg2");
 
     logSaver.stopAndWait();
     multiElection.stopAndWait();
@@ -170,8 +170,8 @@ public class LogSaverTest extends KafkaTestBase {
   @AfterClass
   public static void testCheckpoint() throws Exception {
     CheckpointManager checkpointManager = new CheckpointManager(tableUtil, txClient, KafkaTopic.getTopic());
-    Assert.assertEquals(60, checkpointManager.getCheckpoint(0));
-    Assert.assertEquals(120, checkpointManager.getCheckpoint(1));
+    Assert.assertEquals(120, checkpointManager.getCheckpoint(0));
+    Assert.assertEquals(60, checkpointManager.getCheckpoint(1));
   }
 
   @Test
@@ -186,7 +186,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   @Test
   public void testLogRead3() throws Exception {
-    testLogRead(new ServiceLoggingContext("reactor", "services", "metrics"));
+    testLogRead(new ServiceLoggingContext("cdap", "services", "metrics"));
   }
 
   private void testLogRead(LoggingContext loggingContext) throws Exception {
@@ -316,7 +316,7 @@ public class LogSaverTest extends KafkaTestBase {
     List<ListenableFuture<?>> futures = Lists.newArrayList();
     futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1"))));
     futures.add(executor.submit(new LogPublisher(new FlowletLoggingContext("ACCT_2", "APP_2", "FLOW_2", "FLOWLET_2"))));
-    futures.add(executor.submit(new LogPublisher(new ServiceLoggingContext("reactor", "services", "metrics"))));
+    futures.add(executor.submit(new LogPublisher(new ServiceLoggingContext("cdap", "services", "metrics"))));
 
     Futures.allAsList(futures).get();
 

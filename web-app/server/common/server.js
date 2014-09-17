@@ -440,7 +440,7 @@ WebAppServer.prototype.bindRoutes = function() {
         self.logger.error('Could not DELETE', path, body, error,  response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
           res.send(response.statusCode,
-            'Unable to connect to the Reactor Gateway. Please check your configuration.');
+            'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(response.statusCode, body || error || response.statusCode);
         }
@@ -478,7 +478,7 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not PUT to', path, error || response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(500, 'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
         }
@@ -519,7 +519,7 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not POST to', path, error || response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(500, 'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
         }
@@ -556,7 +556,7 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not POST to', path, error || response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(500, 'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.body || response.statusCode);
         }
@@ -588,7 +588,7 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not GET', path, error || response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(500, 'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
         }

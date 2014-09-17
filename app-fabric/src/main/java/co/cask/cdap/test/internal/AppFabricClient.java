@@ -74,7 +74,7 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/unrecoverable/reset");
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
-    httpHandler.resetReactor(request, responder);
+    httpHandler.resetCDAP(request, responder);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "reset application failed");
   }
 

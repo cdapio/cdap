@@ -19,7 +19,7 @@ define([], function () {
           self.HTTP.rest('system/services/status', function (statuses) {
             self.set('statuses', statuses);
             if (!statuses) {
-              $(".warning-text").text('Could not get core Reactor services. Please restart Reactor.');
+              $(".warning-text").text('Could not get core CDAP services. Please restart CDAP.');
               return;
             }
 

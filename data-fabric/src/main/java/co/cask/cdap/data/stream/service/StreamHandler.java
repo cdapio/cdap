@@ -84,7 +84,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
   private ExecutorService asyncExecutor;
 
   // TODO: Need to make the decision of whether this should be inside StreamAdmin or not.
-  // Currently is here to align with the existing Reactor organization that dataset admin is not aware of MDS
+  // Currently is here to align with the existing CDAP organization that dataset admin is not aware of MDS
   private final StreamMetaStore streamMetaStore;
 
   @Inject
