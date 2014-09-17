@@ -3,3 +3,6 @@ build/
 *.iml
 *.credential
 *.DS_Store
+
+cdap-config.json
+cdap-security-config.json
