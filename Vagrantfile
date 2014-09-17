@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
   # please see the online documentation at vagrantup.com.
 
   # We *need* vagrant-omnibus for these box images
-  config.omnibus.chef_version = :latest
+  config.omnibus.chef_version = '11.16.0'
 
   config.vm.hostname = "cdap-berkshelf"
 
