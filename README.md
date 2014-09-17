@@ -4,7 +4,7 @@
 
 * Oracle Java JDK 6+ (provided by `java` cookbook)
 * Hadoop 2.0+ HDFS, YARN, ZooKeeper, and HBase (provided by `hadoop` cookbook)
-* Node.JS 0.8.16+ (provided by `nodejs` cookbook)
+* Node.JS 0.8.16+ (provided by `nodejs` cookbook, tested with `1.3.0` and `2.1.0`)
 
 # Usage
 

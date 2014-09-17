@@ -21,6 +21,7 @@ include_recipe 'nodejs::default'
 link '/usr/bin/node' do
   to '/usr/local/bin/node'
   action :create
+  not_if 'test -e /usr/bin/node'
 end
 
 include_recipe 'cdap::repo'
