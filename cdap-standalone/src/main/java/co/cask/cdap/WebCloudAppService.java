@@ -19,6 +19,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.ConfigurationJsonTool;
 import co.cask.cdap.common.conf.SConfiguration;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -26,9 +29,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Writer;
 import java.util.concurrent.Executor;
 
 /**
@@ -37,15 +41,28 @@ import java.util.concurrent.Executor;
  *
  * All output is sent to our Logging service.
  */
-public class WebCloudAppService extends AbstractExecutionThreadService {
-  static final String WEB_APP = "web-app/server/local/main.js"; // Right path passed on command line.
-  static final String JSON_PATH = "web-app/cdap-config.json";
-  static final String JSON_SECURITY_PATH = "web-app/cdap-security-config.json";
+final class WebCloudAppService extends AbstractExecutionThreadService {
+  private static final String JSON_PATH = "cdap-config.json";
+  private static final String JSON_SECURITY_PATH = "cdap-security-config.json";
 
   private static final Logger LOG = LoggerFactory.getLogger(WebCloudAppService.class);
   private static final String NODE_JS_EXECUTABLE = "node";
 
-  private final String webAppPath;
+  private static final File WEB_APP_BASE;
+  static final String WEB_APP;
+  static {
+    // Determine what's the path to the main.js, based on what's on the directory
+    // When run from IDE, the base is "cdap-web-app". When run from SDK, it's "web-app"
+    File base = new File("web-app");
+    if (!base.isDirectory()) {
+      base = new File("cdap-web-app");
+    }
+    Preconditions.checkState(base.isDirectory(), "Unable to determine web-app directory");
+    WEB_APP_BASE = base;
+    WEB_APP = new File(new File(new File(base, "server"), "local"), "main.js").getAbsolutePath();
+  }
+
+  private final File webAppPath;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
 
@@ -54,7 +71,7 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
 
   @Inject
   public WebCloudAppService(@Named("web-app-path")String webAppPath, CConfiguration cConf, SConfiguration sConf) {
-    this.webAppPath = webAppPath;
+    this.webAppPath = new File(webAppPath);
     this.cConf = cConf;
     this.sConf = sConf;
   }
@@ -64,10 +81,11 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-    generateConfigFile(JSON_PATH, cConf);
-    generateConfigFile(JSON_SECURITY_PATH, sConf);
+    // This is ok since this class is only used in singlenode, hence the path is always [base]/server/local/main.js
+    generateConfigFile(new File(WEB_APP_BASE, JSON_PATH), cConf);
+    generateConfigFile(new File(WEB_APP_BASE, JSON_SECURITY_PATH), sConf);
 
-    ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath);
+    ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath.getAbsolutePath());
     builder.redirectErrorStream(true);
     LOG.info("Starting Web Cloud App ... (" + webAppPath + ")");
     process = builder.start();
@@ -76,8 +94,8 @@ public class WebCloudAppService extends AbstractExecutionThreadService {
     bufferedReader = new BufferedReader(isr);
   }
 
-  private void generateConfigFile(String path, Configuration config) throws Exception {
-    FileWriter configWriter = new FileWriter(path);
+  private void generateConfigFile(File path, Configuration config) throws Exception {
+    Writer configWriter = Files.newWriter(path, Charsets.UTF_8);
     try {
       ConfigurationJsonTool.exportToJson(config, configWriter);
     } finally {
