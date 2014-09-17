@@ -213,18 +213,7 @@ def process_standalone(input_file, options):
     
 def process_level_1(input_file, options):
     master_libs_dict = process_master()
-    # Build a lookup table for the artifacts
-    # A dictionary relating an artifact to a Library instance
-    master_artifact_ids= {}
-    keys = master_libs_dict.keys()
-    keys.sort()
-    for k in keys:
-        lib = master_libs_dict[k]
-        if not master_artifact_ids.has_key(lib.base):
-            master_artifact_ids[lib.base] = lib
-            print "Master: %s" % lib.base
-        
-    # Read dependencies: assumes first row is a header
+
     level_1_dict = {}
     missing_libs_dict = {}
     csv_path = os.path.join(SCRIPT_DIR_PATH, LICENSES_SOURCE, LEVEL_1 + ".csv")
@@ -235,31 +224,20 @@ def process_level_1(input_file, options):
         unique_row_count = 0
         csv_reader = csv.reader(csvfile)
         for row in csv_reader:
-            row_count += 1
-            if row_count == 1:
-                continue # Ignore header row
-            group_id, artifact_id = row
-            key = (group_id, artifact_id)
+            row_count +=1
+            jar,group_id, artifact_id = row
+            key = jar
+            print 'lib.jar %s' % lib.jar
             if not level_1_dict.has_key(key):
                 unique_row_count += 1
-                artifact_has_hyphen = artifact_id.rfind("-")
-                if master_artifact_ids.has_key(artifact_id):
-                    # Look up lib reference in dictionary
-                    lib = master_artifact_ids[artifact_id]
+                if master_libs_dict.has_key(jar):
+                    # Look up jar reference in dictionary
+                    lib = master_libs_dict[jar]
                     level_1_dict[key] = (group_id, artifact_id, lib.license, lib.license_url)
                     continue
-                if artifact_has_hyphen != -1:
-                    # Try looking up just the first part
-                    sub_artifact_id = artifact_id[:artifact_has_hyphen]
-                    if master_artifact_ids.has_key(sub_artifact_id):
-                        lib = master_artifact_ids[sub_artifact_id]
-                        level_1_dict[key] = (group_id, artifact_id, lib.license, lib.license_url)
-                        continue
                 if not missing_libs_dict.has_key(artifact_id):
-                    missing_libs_dict[artifact_id] = group_id
+                    missing_libs_dict[artifact_id] = jar
 
-    # Drop header row from count
-    row_count -= 1 
     print "Level 1: Row count: %s" % row_count
     print "Level 1: Unique Row count: %s" % unique_row_count
     print "Level 1: Missing Artifacts: %s" % len(missing_libs_dict.keys())
