@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'cdap::fullstack' do
+describe 'cdap::web_app' do
   context 'on Centos 6.5 x86_64' do
     let(:chef_run) do
       ChefSpec::Runner.new(platform: 'centos', version: 6.5) do |node|
@@ -16,37 +16,19 @@ describe 'cdap::fullstack' do
       end.converge(described_recipe)
     end
 
-    %w(cdap-gateway cdap-kafka cdap-master cdap-web-app)
+    %w(cdap-web-app)
       .each do |pkg|
       it "installs #{pkg} package" do
         expect(chef_run).to install_package(pkg)
       end
     end
 
-    %w(/etc/cdap/conf.chef /data/cdap/kafka-logs).each do |dir|
-      it "creates #{dir} directory" do
-        expect(chef_run).to create_directory(dir)
-      end
-    end
-
     %w(
-      cdap-gateway
-      cdap-router
-      cdap-kafka-server
-      cdap-master
       cdap-web-app
     ).each do |svc|
       it "creates #{svc} service, but does not run it" do
         expect(chef_run).not_to start_service(svc)
       end
-    end
-
-    it 'runs execute[copy logback.xml from conf.dist]' do
-      expect(chef_run).to run_execute('copy logback.xml from conf.dist')
-    end
-
-    it 'runs execute[update cdap-conf alternatives]' do
-      expect(chef_run).to run_execute('update cdap-conf alternatives')
     end
 
     it 'does not create /usr/bin/node link' do
