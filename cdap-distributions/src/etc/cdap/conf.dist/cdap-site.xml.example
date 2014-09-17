@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+<configuration>
+
+  <!--
+    Cluster configurations
+  -->
+
+  <property>
+    <name>root.namespace</name>
+    <value>cdap</value>
+    <description>Specifies the root namespace</description>
+  </property>
+
+  <!-- Substitute the zookeeper quorum for components here -->
+  <property>
+    <name>zookeeper.quorum</name>
+    <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
+    <description>Specifies the zookeeper host:port</description>
+  </property>
+
+  <property>
+    <name>hdfs.namespace</name>
+    <value>/${root.namespace}</value>
+    <description>Namespace for HDFS files</description>
+  </property>
+
+  <property>
+    <name>hdfs.user</name>
+    <value>yarn</value>
+    <description>User name for accessing HDFS</description>
+  </property>
+
+  <!--
+    Gateway configuration
+  -->
+  <!-- Substitue the IP to which Router service should bind to and listen on -->
+  <property>
+    <name>router.bind.address</name>
+    <value>LOCAL-ROUTER-IP</value>
+    <description>Specifies the inet address on which the Router service will listen</description>
+  </property>
+
+  <!--
+    App Fabric configuration
+  -->
+  <!-- Substitute the IP to which App-Fabric service should bind to and listen on -->
+  <property>
+    <name>app.bind.address</name>
+    <value>LOCAL-APP-FABRIC-IP</value>
+    <description>Specifies the inet address on which the app fabric service will listen</description>
+  </property>
+
+  <!--
+    Data Fabric configuration
+  -->
+  <!-- Substitute the IP to which Data-Fabric tx service should bind to and listen on -->
+  <property>
+    <name>data.tx.bind.address</name>
+    <value>LOCAL-DATA-FABRIC-IP</value>
+    <description>Specifies the inet address on which the transaction service will listen</description>
+  </property>
+
+  <!-- 
+    Kafka Configuration
+  -->
+  <property>
+    <name>kafka.log.dir</name>
+    <value>/data/cdap/kafka-logs</value>
+    <description>Directory to store Kafka logs</description>
+  </property>
+
+  <!-- Substitute with a list of all machines which will run the Kafka component -->
+  <property>
+    <name>kafka.seed.brokers</name>
+    <value>FQDN1:9092,FQDN2:9092</value>
+    <description>List of Kafka brokers (comma separated)</description>
+  </property>
+
+  <!-- Must be <= the number of kafka.seed.brokers configured above.  For HA this should be at least 2. -->
+  <property>
+    <name>kafka.default.replication.factor</name>
+    <value>1</value>
+    <description>Kafka replication factor</description>
+  </property>
+
+  <!--
+    Watchdog Configuration
+  -->
+  <!-- Substitute the IP to which metrics-query service should bind to and listen on -->
+  <property>
+    <name>metrics.query.bind.address</name>
+    <value>LOCAL-WATCHDOG-IP</value>
+    <description>Specifies the inet address on which the metrics-query service will listen</description>
+  </property>
+
+  <!--
+    Web-App Configuration
+  -->
+  <property>
+    <name>dashboard.bind.port</name>
+    <value>9999</value>
+    <description>Specifies the port on which dashboard listens</description>
+  </property>
+
+  <!-- Substitute the IP of the Router service to which the UI should connect -->
+  <property>
+    <name>router.server.address</name>
+    <value>ROUTER-HOST-IP</value>
+    <description>Specifies the destination IP where Router service is running</description>
+  </property>
+
+  <property>
+    <name>router.server.port</name>
+    <value>10000</value>
+    <description>Specifies the destination Port where Router service is listening</description>
+  </property>
+
+</configuration>
+

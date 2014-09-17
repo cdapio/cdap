@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#
+# Copyright © 2014 Cask Data, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+#
+
+
+# post install script for <%= project %>
+set -e
+
+package_name="<%= project %>"
+version="<%= @version %>"
+
+case "$1" in
+  configure)
+    mkdir -p /var/log/cdap /var/run/cdap /var/cdap/run ||:
+    echo $version > /opt/cdap/$package_name/VERSION
+    chown -R cdap.cdap /opt/cdap/$package_name
+    chown -R cdap.cdap /var/log/cdap
+    chown -R cdap.cdap /var/run/cdap
+    chown -R cdap.cdap /var/cdap/run
+    chmod +x /opt/cdap/$package_name/bin/service
+
+    if stat -t /opt/cdap/$package_name/conf/*-env.sh >/dev/null 2>&1 ; then
+      find /opt/cdap/$package_name/conf -name '*-env.sh' | xargs -n1 basename | sed 's/-env.sh//' | while read svcname; do
+        # refresh internal symlinks
+        if [ -h "/opt/cdap/$package_name/bin/svc-$svcname" ]; then
+          unlink /opt/cdap/$package_name/bin/svc-$svcname
+        fi
+        ln -s /opt/cdap/$package_name/bin/service /opt/cdap/$package_name/bin/svc-$svcname
+        # conditional-restart each service
+        if [ -x "/etc/init.d/cdap-$svcname" ]; then
+          update-rc.d cdap-$svcname defaults >/dev/null
+          if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+            invoke-rc.d cdap-$svcname condrestart || :
+          else
+            /etc/init.d/cdap-$svcname condrestart || :
+          fi
+        fi
+      done
+    fi
+  ;;
+
+  abort-upgrade|abort-remove|abort-deconfigure)
+  ;;
+
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+esac
+

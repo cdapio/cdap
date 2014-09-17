@@ -13,7 +13,7 @@ Out-of-the-box, its features include transaction management, dataset abstraction
 performance, scalability, security, metrics and log collection, service discovery and a 
 web-based management dashboard.
 
-CDAP provides data virtualization and application containerization for you data and application
+CDAP provides data virtualization and application containerization for your data and application
 needs. With CDAP you do not require understanding the implementation or the complexity of Apache 
 Hadoop&trade;, HBase or Zookeeper. It provides independence of Hadoop versions and runs on any 
 distribution of Hadoop. CDAP's container model allows for the integration of different processing 
@@ -123,7 +123,7 @@ CDAP IRC Channel #cask-cdap on irc.freenode.net
 
 ## License and Trademarks
 
-© Copyright 2014 Cask Data, Inc.
+Copyright © 2014 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at

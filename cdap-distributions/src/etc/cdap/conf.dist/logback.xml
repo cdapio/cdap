@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+
+<configuration>
+
+    <!--
+      Disabling some chatty loggers.
+    -->
+    <logger name="org.apache.commons.beanutils" level="ERROR"/>
+    <logger name="org.apache.zookeeper.server" level="ERROR"/>
+    <logger name="org.apache.zookeeper" level="ERROR"/>
+    <logger name="com.ning" level="WARN"/>
+    <logger name="org.apache.hadoop" level="WARN"/>
+    <logger name="org.apache.hive" level="WARN"/>
+    <logger name="org.quartz.core" level="WARN"/>
+    <logger name="co.cask.cdap" level="INFO"/>
+
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+      <encoder>
+        <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+      </encoder>
+    </appender>
+
+    <root level="ERROR">
+      <appender-ref ref="Console"/>
+    </root>
+
+    <!--
+      Uncomment the following section to enable access logging by the Authentication Server and Router processes.
+      Log output will be in the standard Apache HTTPd access log format (see
+      http://httpd.apache.org/docs/2.2/logs.html#accesslog).
+    -->
+    <!--
+    <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>access.log</file>
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>access.log.%d{yyyy-MM-dd}</fileNamePattern>
+        <maxHistory>30</maxHistory>
+      </rollingPolicy>
+      <encoder>
+        <pattern>%msg%n</pattern>
+      </encoder>
+    </appender>
+    <logger name="http-access" level="TRACE" additivity="false">
+      <appender-ref ref="AUDIT" />
+    </logger>
+    <appender name="EXTERNAL_AUTH_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>external_auth_access.log</file>
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>external_auth_access.log.%d{yyyy-MM-dd}</fileNamePattern>
+        <maxHistory>30</maxHistory>
+      </rollingPolicy>
+      <encoder>
+        <pattern>%msg%n</pattern>
+      </encoder>
+    </appender>
+    <logger name="external-auth-access" level="TRACE" additivity="false">
+      <appender-ref ref="EXTERNAL_AUTH_AUDIT" />
+    </logger>
+    -->
+
+</configuration>
+

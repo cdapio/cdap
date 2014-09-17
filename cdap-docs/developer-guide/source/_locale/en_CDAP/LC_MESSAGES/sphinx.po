@@ -1,0 +1,125 @@
+# Translations template for Sphinx.
+# Copyright © 2014 Cask Data, Inc.
+# This file is distributed under the same license as the Sphinx project.
+# 
+# Translators:
+# JJ
+msgid ""
+msgstr ""
+"Project-Id-Version: Sphinx\n"
+"Report-Msgid-Bugs-To: support@cask.co\n"
+"POT-Creation-Date: 2013-04-02 10:33+0200\n"
+"PO-Revision-Date: 2013-06-18 08:03+0000\n"
+"Last-Translator: JJ\n"
+"Language-Team: Cask\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+"Language: en_CDAP\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: sphinx/config.py:81
+#, python-format
+msgid "%s %s documentation"
+msgstr "%s %s Documentation"
+
+#: sphinx/environment.py:1510
+#, python-format
+msgid "see %s"
+msgstr "See %s"
+
+#: sphinx/environment.py:1513
+#, python-format
+msgid "see also %s"
+msgstr "See Also %s"
+
+#: sphinx/environment.py:1570
+msgid "Symbols"
+msgstr "Symbols"
+
+#: sphinx/themes/agogo/layout.html:46 sphinx/themes/basic/globaltoc.html:10
+#: sphinx/themes/basic/localtoc.html:11 sphinx/themes/scrolls/layout.html:35
+msgid "Table Of Contents"
+msgstr "Table of Contents"
+
+#: sphinx/builders/changes.py:75
+msgid "Module level"
+msgstr "Module Level"
+
+#: sphinx/builders/html.py:309 sphinx/themes/basic/defindex.html:30
+msgid "General Index"
+msgstr "General Index"
+
+#: sphinx/builders/html.py:309
+msgid "index"
+msgstr "Index"
+
+#: sphinx/builders/html.py:369
+msgid "next"
+msgstr "Next"
+
+#: sphinx/builders/html.py:378
+msgid "previous"
+msgstr "Previous"
+
+#: sphinx/directives/other.py:138
+msgid "Section author: "
+msgstr "Section Author: "
+
+#: sphinx/directives/other.py:140
+msgid "Module author: "
+msgstr "Module Author: "
+
+#: sphinx/directives/other.py:142
+msgid "Code author: "
+msgstr "Code Author: "
+
+#: sphinx/themes/basic/relations.html:11
+msgid "Previous topic"
+msgstr "Previous Topic"
+
+#: sphinx/themes/basic/relations.html:13
+msgid "previous chapter"
+msgstr "Previous Chapter"
+
+#: sphinx/themes/basic/relations.html:16
+msgid "Next topic"
+msgstr "Next Topic"
+
+#: sphinx/themes/basic/relations.html:18
+msgid "next chapter"
+msgstr "Next Chapter"
+
+#: sphinx/themes/basic/search.html:32
+msgid ""
+"From here you can search these documents. Enter your search\n"
+"    words into the box below and click \"search\". Note that the search\n"
+"    function will automatically search for all of the words. Pages\n"
+"    containing fewer words won't appear in the result list."
+msgstr "From here you can search these documents. Enter your search\n"
+"    words into the box below and click <b>\"Search\".</b> Note that the Search\n"
+"    function will automatically search for all of the words. Pages\n"
+"    containing fewer words won't appear in the result list."
+
+
+#: sphinx/themes/basic/search.html:39
+#: sphinx/themes/basic/searchresults.html:17
+msgid "search"
+msgstr "Search"
+
+#: sphinx/themes/basic/search.html:43
+#: sphinx/themes/basic/searchresults.html:21
+#: sphinx/themes/basic/static/searchtools.js_t:281
+msgid "Search Results"
+msgstr "Search Results"
+
+#: sphinx/themes/basic/searchbox.html:12
+msgid "Quick search"
+msgstr "Quick Search"
+
+#: sphinx/themes/agogo/layout.html:58 
+#: sphinx/themes/basic/searchbox.html:20
+msgid "Enter search terms or a module, class or function name."
+msgstr "Enter search terms"
+

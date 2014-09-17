@@ -1,0 +1,47 @@
+Ticker Application
+==================
+This application pulls in stock market activity data and stores it in 
+datasets that allow querying for that data with various filters.
+
+Copyright © 2014 Cask Data, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+Installation
+============
+
+Build the Application jar:
+mvn clean package
+
+Deploy the Application to a CDAP instance defined by its host (defaults to localhost):
+bin/app-manager.sh --host [host] --action deploy
+
+Start Application Flows and Procedures:
+bin/app-manager.sh --host [host] --action start
+
+Make sure they are running:
+bin/app-manager.sh --host [host] --action status
+
+Generate some random stock order data (fake data, used for bin/orders script):
+bin/generate-orders --host [host]
+
+Inject some stock symbols that you want timeseries information for (real data, used for bin/get-ticker script):
+bin/inject-symbol --symbol AAPL --host [host]
+
+Querying
+========
+
+To get a summary of a stock over some time period:
+bin/get-ticker --type summary --start "now-7d" --end "now" --symbol "AAPL" --host [host]
+
+To get timeseries data of a stock over some time period:
+bin/get-ticker --type timeseries --start "now-1d" --end "now" --symbol "AAPL" --host [host]
+
+To get order data filtered by specific key value pairs:
+bin/orders --start "now-1d" --end "now" --symbol AAPL --exchange NASDAQ --broker JPMC --currency USD --host [host]
+
+Start and end time can be given as a timestamp in seconds, or it can be given as "now", or "now-X[unit]", where unit is 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days.
