@@ -934,6 +934,35 @@ WebAppServer.prototype.bindRoutes = function() {
     res.end(accessToken, 'utf-8');
   });
 
+  this.app.get('/download-query-results/*', function (req, res) {
+    var query_handle = req.params[0];
+
+    var path = self.routerBindAddress + ':' + self.routerBindPort
+                + '/' + self.API_VERSION + '/data/explore/queries/' + query_handle + '/download';
+    var opts = {
+      method: 'POST',
+      url: self.transferProtocol + path,
+      headers: {
+        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'Authorization': 'Bearer ' + req.cookies.token
+      }
+    };
+
+    request(opts, function (error, response, body) {
+      if (!error && response.statusCode === 200) {
+        res.attachment('results_' + query_handle);
+        res.end(body, 'utf-8');
+      } else {
+        self.logger.error('Could not PUT to', path, error || response.statusCode);
+        if (error && error.code === 'ECONNREFUSED') {
+          res.send(500, 'Unable to connect to the CDAP Gateway. Please check your configuration.');
+        } else {
+          res.send(500, error || response.statusCode);
+        }
+      }
+    });
+  });
+
   /**
    * Check for new version.
    * http://www.continuuity.com/version
