@@ -371,7 +371,7 @@ Cask Data Application Platform %(version)s
 =================================================
 
 Cask Data Application Platform %(title)s Dependencies
----------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
