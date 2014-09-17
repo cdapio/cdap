@@ -21,6 +21,8 @@ default['cdap']['cdap_site']['security.server.ssl.keystore.password'] = 'default
 default['cdap']['cdap_site']['security.server.ssl.keystore.path'] = '/opt/cdap/security/conf/keystore.jks'
 default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']
 
+default['cdap']['security']['ssl_common_name'] = node['fqdn']
+
 if node['cdap']['cdap_site'].key?('kerberos.auth.enabled') && node['cdap']['cdap_site']['kerberos.auth.enabled'].to_s == 'true'
   include_attribute 'krb5_utils'
 
