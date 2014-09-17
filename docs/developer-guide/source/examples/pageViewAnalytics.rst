@@ -233,4 +233,4 @@ Either:
 
 Downloading the Example
 =======================
-This example (and more!) is included with our `software development kit <http://ccask.co/download>`__.
+This example (and more!) is included with our `software development kit <http://cask.co/download>`__.

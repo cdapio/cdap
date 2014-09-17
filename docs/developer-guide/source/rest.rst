@@ -446,7 +446,7 @@ Dataset HTTP API
 .. rst2pdf: CutStop
 
   The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the 
-  `CDAP Developer Guide Advanced Features, Datasets section <http://cask.co/docs/cdap/current/en/advanced.html#datasets-system>`__
+  `CDAP Developer Guide Advanced Features, Datasets section <http://docs.cask.co/cdap/current/advanced.html#datasets-system>`__
 
 
 Listing all Datasets
@@ -1325,7 +1325,7 @@ The response is formatted in JSON; an example of this is shown in the
 
 .. rst2pdf: CutStop
 
-  `CDAP Testing and Debugging Guide <http://cask.co/docs/cdap/current/en/debugging.html#debugging-cdap-applications>`__.
+  `CDAP Testing and Debugging Guide <http://docs.cask.co/cdap/current/debugging.html#debugging-cdap-applications>`__.
 
 
 Scale
@@ -1672,7 +1672,7 @@ As Applications process data, CDAP collects metrics about the Application’s be
 
    Other metrics are user-defined and differ from Application to Application. 
    For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-   the Developer Guide, `CDAP Operations Guide <http://cask.co/docs/cdap/current/en/operations.html>`__.
+   the Developer Guide, `CDAP Operations Guide <http://docs.cask.co/cdap/current/operations.html>`__.
 
 
 Metrics Requests
