@@ -46,6 +46,3 @@ dependency-reduced-pom.xml
 # Hive db Stuff
 derby.log
 
-# generated json config file
-/web-app/cdap-config.json
-/web-app/cdap-security-config.json
