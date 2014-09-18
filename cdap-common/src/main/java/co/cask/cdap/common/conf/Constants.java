@@ -467,6 +467,9 @@ public final class Constants {
       public static final String SSL_KEYPASSWORD = "router.ssl.keystore.keypassword";
       /** SSL keystore password */
       public static final String SSL_KEYSTORE_PASSWORD = "router.ssl.keystore.password";
+
+      /** Default SSL keystore type */
+      public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
     }
 
     /**
@@ -483,6 +486,9 @@ public final class Constants {
       public static final String SSL_KEYPASSWORD = "security.auth.server.ssl.keystore.keypassword";
       /** SSL keystore password */
       public static final String SSL_KEYSTORE_PASSWORD = "security.auth.server.ssl.keystore.password";
+
+      /** Default SSL keystore type */
+      public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
     }
 
     /** Path to the Kerberos keytab file used by CDAP */

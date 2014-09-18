@@ -151,10 +151,11 @@ public class NettyRouter extends AbstractIdleService {
         throw new RuntimeException("Cannot read keystore file : "
                                      + sConf.get(Constants.Security.Router.SSL_KEYSTORE_PATH));
       }
-      this.sslHandlerFactory = new SSLHandlerFactory(
-        keystore, sConf.get(Constants.Security.Router.SSL_KEYSTORE_TYPE, "JKS"),
-        sConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
-        sConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
+      this.sslHandlerFactory = new SSLHandlerFactory(keystore,
+                                                     sConf.get(Constants.Security.Router.SSL_KEYSTORE_TYPE,
+                                                               Constants.Security.Router.DEFAULT_SSL_KEYSTORE_TYPE),
+                                                     sConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
+                                                     sConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
                         Integer.parseInt(cConf.get(Constants.Router.ROUTER_PORT,
