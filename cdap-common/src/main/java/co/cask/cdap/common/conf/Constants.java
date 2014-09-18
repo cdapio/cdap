@@ -467,6 +467,9 @@ public final class Constants {
       public static final String SSL_KEYPASSWORD = "router.ssl.keystore.keypassword";
       /** SSL keystore password */
       public static final String SSL_KEYSTORE_PASSWORD = "router.ssl.keystore.password";
+
+      /** Default SSL keystore type */
+      public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
     }
 
     /**
@@ -483,6 +486,9 @@ public final class Constants {
       public static final String SSL_KEYPASSWORD = "security.auth.server.ssl.keystore.keypassword";
       /** SSL keystore password */
       public static final String SSL_KEYSTORE_PASSWORD = "security.auth.server.ssl.keystore.password";
+
+      /** Default SSL keystore type */
+      public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
     }
 
     /** Path to the Kerberos keytab file used by CDAP */
@@ -498,6 +504,7 @@ public final class Constants {
     public static final String CCONF_KEY = "explore.cconfiguration";
     public static final String HCONF_KEY = "explore.hconfiguration";
     public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
+    public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
 
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";

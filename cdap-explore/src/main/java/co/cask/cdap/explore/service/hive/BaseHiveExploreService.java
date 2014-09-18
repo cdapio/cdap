@@ -856,6 +856,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   /**
    * Called after a handle has been used to fetch all its results. This handle can be timed out aggressively.
+   * It also closes associated transaction.
    *
    * @param handle operation handle.
    */
@@ -867,6 +868,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                 handle);
       return;
     }
+
+    closeTransaction(handle, opInfo);
 
     LOG.trace("Timing out handle {} aggressively", handle);
     inactiveHandleCache.put(handle, new InactiveOperationInfo(opInfo, schema, status));
@@ -905,6 +908,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   private void closeTransaction(QueryHandle handle, OperationInfo opInfo) {
     try {
+      String txCommitted = opInfo.getSessionConf().get(Constants.Explore.TX_QUERY_CLOSED);
+      if (txCommitted != null && Boolean.parseBoolean(txCommitted)) {
+        LOG.trace("Transaction for handle {} has already been closed", handle);
+        return;
+      }
+
       Transaction tx = ConfigurationUtil.get(opInfo.getSessionConf(),
                                              Constants.Explore.TX_QUERY_KEY,
                                              TxnCodec.INSTANCE);
@@ -916,6 +925,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         txClient.abort(tx);
         LOG.info("Aborting transaction: {}", tx);
       }
+      opInfo.getSessionConf().put(Constants.Explore.TX_QUERY_CLOSED, "true");
     } catch (Throwable e) {
       LOG.error("Got exception while closing transaction.", e);
     }
