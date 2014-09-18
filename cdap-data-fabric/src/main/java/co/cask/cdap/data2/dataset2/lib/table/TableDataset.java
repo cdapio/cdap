@@ -176,7 +176,7 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public long increment(byte[] row, byte[] column, long amount) {
+  public long incrementAndGet(byte[] row, byte[] column, long amount) {
     try {
       return table.increment(row, column, amount);
     } catch (NumberFormatException e) {
@@ -189,7 +189,7 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public Row increment(byte[] row, byte[][] columns, long[] amounts) {
+  public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
     Map<byte[], Long> incResult;
     try {
       incResult = table.increment(row, columns, amounts);
@@ -211,7 +211,7 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public Row increment(Increment increment) {
+  public Row incrementAndGet(Increment increment) {
     Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
     byte[][] columns = new byte[increment.getValues().size()][];
     long[] values = new long[increment.getValues().size()];
@@ -221,7 +221,7 @@ class TableDataset extends AbstractDataset implements Table {
       values[i] = columnValue.getValue();
       i++;
     }
-    return increment(increment.getRow(), columns, values);
+    return incrementAndGet(increment.getRow(), columns, values);
   }
 
   @Override

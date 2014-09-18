@@ -84,7 +84,7 @@ public class MultiStreamApp extends AbstractApplication {
 
     @ProcessInput()
     public void process(StreamEvent event) {
-      table.increment(new Increment("row", "counter1", 1));
+      table.incrementAndGet(new Increment("row", "counter1", 1));
     }
   }
 
@@ -97,7 +97,7 @@ public class MultiStreamApp extends AbstractApplication {
 
     @ProcessInput("stream3")
     public void process(StreamEvent event) {
-      table.increment(new Increment("row", "counter2", 1));
+      table.incrementAndGet(new Increment("row", "counter2", 1));
     }
   }
 

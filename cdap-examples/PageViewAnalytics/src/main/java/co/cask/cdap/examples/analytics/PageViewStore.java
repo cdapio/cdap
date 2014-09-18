@@ -44,7 +44,7 @@ public class PageViewStore extends AbstractDataset {
    * @param pageView a PageView instance
    */
   public void incrementCount(PageView pageView) {
-    table.increment(new Increment(pageView.getReferrer(), pageView.getUri(), 1L));
+    table.incrementAndGet(new Increment(pageView.getReferrer(), pageView.getUri(), 1L));
   }
 
   /**

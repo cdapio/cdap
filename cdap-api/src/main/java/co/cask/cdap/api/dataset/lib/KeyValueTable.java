@@ -80,7 +80,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @return the incremented value of that key
    */
   public long incrementAndGet(byte[] key, long value) {
-    return this.table.increment(key, KEY_COLUMN, value);
+    return this.table.incrementAndGet(key, KEY_COLUMN, value);
   }
 
   /**
@@ -121,7 +121,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param amount the amount to increment by
    */
   public void increment(byte[] key, long amount) {
-    this.table.increment(key, KEY_COLUMN, amount);
+    this.table.incrementAndGet(key, KEY_COLUMN, amount);
   }
 
   /**

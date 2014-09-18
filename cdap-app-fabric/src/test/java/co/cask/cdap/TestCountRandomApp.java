@@ -71,7 +71,7 @@ public class TestCountRandomApp extends AbstractApplication {
 
     @ProcessInput
     public void process(Integer number) {
-      counters.increment(number.toString().getBytes(), COLUMN, 1L);
+      counters.incrementAndGet(number.toString().getBytes(), COLUMN, 1L);
     }
 
   }

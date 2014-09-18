@@ -141,7 +141,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   void delete(Delete delete);
 
   /**
-   * Increments the specified column of the row by the specified amounts.
+   * Increments the specified column of the row by the specified amounts and returns the new value.
    *
    * @param row row which value to increment
    * @param column column to increment
@@ -149,12 +149,13 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @return new value of the column
    * @throws NumberFormatException if stored value for the column is not in the serialized long value format
    */
-  long increment(byte[] row, byte[] column, long amount);
+  long incrementAndGet(byte[] row, byte[] column, long amount);
 
   /**
-   * Increments the specified columns of the row by the specified amounts.
+   * Increments the specified columns of the row by the specified amounts and returns the new value.
    * <p>
-   * NOTE: Depending on the implementation, this can work faster than calling {@link #increment(byte[], byte[], long)}
+   * NOTE: Depending on the implementation, this can work faster than calling
+   * {@link #incrementAndGet(byte[], byte[], long)}
    * multiple times (especially in a transaction that increments multiple columns of the same rows)
    *
    * @param row row whose values to increment
@@ -163,16 +164,17 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @return {@link Row} with a subset of changed columns
    * @throws NumberFormatException if stored value for the column is not in the serialized long value format
    */
-  Row increment(byte[] row, byte[][] columns, long[] amounts);
+  Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts);
 
   /**
-   * Increments the specified columns of a row by the specified amounts defined by the {@link Increment} parameter.
+   * Increments the specified columns of a row by the specified amounts defined by the {@link Increment} parameter and
+   * returns the new values
    *
    * @param increment defines changes
    * @return {@link Row} with a subset of changed columns
    * @throws NumberFormatException if stored value for the column is not in the serialized long value format
    */
-  Row increment(Increment increment);
+  Row incrementAndGet(Increment increment);
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new value.
