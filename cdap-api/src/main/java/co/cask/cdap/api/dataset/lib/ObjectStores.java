@@ -64,31 +64,6 @@ public final class ObjectStores {
   }
 
   /**
-   * Adds {@link MultiObjectStore} data set to be created at application deploy if not exists.
-   * @param configurer application configurer
-   * @param datasetName data set name
-   * @param type type of objects to be stored in {@link ObjectStore}
-   * @param props any additional data set properties
-   * @throws UnsupportedTypeException
-   */
-  public static void createMultiObjectStore(ApplicationConfigurer configurer,
-                                            String datasetName, Type type, DatasetProperties props)
-    throws UnsupportedTypeException {
-
-    configurer.createDataset(datasetName, MultiObjectStore.class, objectStoreProperties(type, props));
-  }
-
-  /**
-   * Same as {@link #createMultiObjectStore(ApplicationConfigurer, String, Type, DatasetProperties)} but with empty
-   * properties.
-   */
-  public static void createMultiObjectStore(ApplicationConfigurer configurer, String datasetName, Type type)
-    throws UnsupportedTypeException {
-
-    createMultiObjectStore(configurer, datasetName, type, DatasetProperties.EMPTY);
-  }
-
-  /**
    * Adds {@link IndexedObjectStore} data set to be created at application deploy if not exists.
    * @param configurer application configurer
    * @param datasetName data set name
@@ -114,7 +89,7 @@ public final class ObjectStores {
   }
 
   /**
-   * Creates properties for {@link ObjectStore} or {@link MultiObjectStore} data set instance.
+   * Creates properties for {@link ObjectStore} data set instance.
    * @param type type of objects to be stored in data set
    * @return {@link DatasetProperties} for the data set
    * @throws UnsupportedTypeException
