@@ -63,7 +63,8 @@ In the far upper-right are two buttons: the `Metrics <#metrics-explorer>`__ and
 
 .. _sampling-menu:
 
-In the upper right portion of the display are two buttons (*CDAP* and *Resources*) and a menu.
+In the upper right portion of the display is a menu and, in the Distributed version of 
+CDAP, two buttons (*CDAP* and *Resources*).
 The menu is the **Sampling Menu**, which appears on almost every pane of the
 CDAP Console. 
 
@@ -77,10 +78,10 @@ By default, the sampling menu is set at "Last 1 Minute", indicating that the gra
 the last one minute of activity. Be aware that changing the menu to a longer period (such as "Last 
 1 Hour") can adversely affect the performance of the CDAP Instance and should only be used for short sessions before returning the setting to the default "Last 1 Minute".
 
-The **CDAP** button gives you this starting overview, showing which Applications (*Apps*) are currently
+This starting overview, showing which Applications (*Apps*) are currently
 installed, and realtime graphs of *Collect*, *Process*, *Store*, and *Query*.
 Each statistic is per unit of time—events per second, bytes (or larger) per second, queries per second—and
-are sampled and reported based on the sampling menu in the upper right.
+are sampled and reported based on the sampling menu in the upper right. (In Distributed CDAP, this starting overview can be reached by the **CDAP** button.)
 
 The lower portion of the screen shows all the Apps along with their name, description, and what is happening with each:
 
@@ -103,7 +104,7 @@ Clicking on the name of an Application will take you to the `App's pane <#applic
 :Note: Because of the interconnections in the CDAP Console, you can arrive at the same pane by different paths.
        Remember that the left pane buttons will always take you back to the initial summary panes.
 
-The **Resources** button gives a look at what is being used by the CDAP:
+The **Resources** button (available in Distributed CDAP) gives a look at what is being used by the CDAP:
 
 .. image:: _images/console/console_02_overview_resources.png
    :width: 600px
