@@ -30,7 +30,7 @@ SOURCE="source"
 BUILD="build"
 BUILD_PDF="build-pdf"
 HTML="html"
-API="api"
+API="cdap-api"
 APIDOCS="apidocs"
 JAVADOCS="javadocs"
 LICENSES="licenses"
@@ -54,7 +54,7 @@ if [ "x$2" == "x" ]; then
 else
   PROJECT_PATH="$2"
 fi
-PROJECT_JAVADOCS="$PROJECT_PATH/target/site/apidocs"
+# PROJECT_JAVADOCS="$PROJECT_PATH/target/site/apidocs"
 SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 
 ZIP_FILE_NAME=$HTML
@@ -70,7 +70,7 @@ function usage() {
   echo "    build         Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
   echo ""
   echo "    docs          Clean build of docs"
-  echo "    javadocs      Clean build of javadocs (api module only) for SDK and website"
+  echo "    javadocs      Clean build of javadocs ($API module only) for SDK and website"
   echo "    javadocs-full Clean build of javadocs for all modules"
   echo "    rest-pdf      Clean build of REST PDF"
   echo "    license-pdfs  Clean build of License Dependency PDFs"
@@ -102,7 +102,7 @@ function build_javadocs_full() {
 
 function build_javadocs_sdk() {
   cd $PROJECT_PATH
-  mvn clean package javadoc:javadoc -pl api -am -DskipTests -P release
+  mvn clean package javadoc:javadoc -pl $API -am -DskipTests -P release
 }
 
 function copy_javadocs_sdk() {
