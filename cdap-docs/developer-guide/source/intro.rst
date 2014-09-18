@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Introduction to the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==================================================
 Introduction to the Cask Data Application Platform
@@ -151,7 +152,7 @@ CDAP functions as a middle-tier application platform. As seen in the diagram bel
 it provides an interface (using either HTTP RESTful or Java APIs) to clients through a Router 
 along with services and features that run inside YARN containers in Hadoop.
 
-.. image:: _images/Arch_Diagram.png
+.. image:: _images/architecture_diagram_1.png
    :width: 6in
    :align: center
 
@@ -209,7 +210,7 @@ volume and velocity of data. The custom ETL (extract, transform, load) framework
 a log collector to extract data, transformation of the logs with simple filtering and 
 normalization, and performs the loading into the database of the events.
 
-.. image:: _images/ArchitectureDiagram_1.png
+.. image:: _images/architecture_diagram_2.png
    :width: 6in
    :align: center
 
@@ -233,7 +234,7 @@ creating visualizations for a web browser.
 This is just a summary of the many components required to implement this solution.
 (Don’t worry if you are not familiar with these technology frameworks.)
 
-.. image:: _images/ArchitectureDiagram_2.png
+.. image:: _images/architecture_diagram_3.png
    :width: 6in
    :align: center
 
@@ -260,7 +261,7 @@ aggregation is performed by `MapReduce <programming.html#mapreduce>`__ and
 stored queries, with `Ad-hoc Queries <query.html>`__ accessing the data using SQL. 
 The application can now be scaled independent of the underlying infrastructure.
 
-.. image:: _images/ArchitectureDiagram_4.png
+.. image:: _images/architecture_diagram_4.png
    :width: 6in
    :align: center
 

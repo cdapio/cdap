@@ -7,7 +7,7 @@ in their compiled forms as JAR files in a release.
 
 Additional information about selected examples is available at the Cask website:
 
->   http://cask.co/docs/cdap/current/en/examples/
+>   http://docs.cask.co/cdap/current/en/examples/
 
 
 # Building

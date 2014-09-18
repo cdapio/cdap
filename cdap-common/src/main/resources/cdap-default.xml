@@ -1071,11 +1071,6 @@
     <value>10010</value>
   </property>
 
-  <property>
-    <name>security.auth.server.ssl.keystore.type</name>
-    <value>JKS</value>
-  </property>
-
   <!-- Router configuration-->
 
   <property>

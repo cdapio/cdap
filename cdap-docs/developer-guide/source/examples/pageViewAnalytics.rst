@@ -1,5 +1,6 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform Advanced Apache Log Event Logger
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================
 PageViewAnalytics Example
@@ -232,4 +233,4 @@ Either:
 
 Downloading the Example
 =======================
-This example (and more!) is included with our `software development kit <http://ccask.co/download>`__.
+This example (and more!) is included with our `software development kit <http://cask.co/download>`__.

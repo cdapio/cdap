@@ -48,6 +48,7 @@ RST2PDF_PAGE_BREAK_TEXT = """.. raw:: pdf
 
 	PageBreak"""
 
+DIRECTIVE_HIGHLIGHT      = ".. highlight::" # Highlight directive, not supported by rst2pdf
 
 from optparse import OptionParser
 import os
@@ -126,6 +127,9 @@ def process_pdf(input_file, options):
             continue
         elif line_starts_with(line, REST_EDITOR):
             # Ignore all reST Editor directives
+            continue
+        elif line_starts_with(line, DIRECTIVE_HIGHLIGHT):
+            # Ignore Highlight directive
             continue
         elif line_starts_with(line, RST2PDF_BUILD):
             print line
