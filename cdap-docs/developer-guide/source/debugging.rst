@@ -15,7 +15,7 @@ Strategies in Testing Applications
 ----------------------------------
 
 CDAP comes with a convenient way to unit test your Applications.
-The base for these tests is ``AppTestBase``, which is packaged
+The base for these tests is ``TestBase``, which is packaged
 separately from the API in its own artifact because it depends on the
 CDAP’s runtime classes. You can include it in your test dependencies
 in one of two ways:
@@ -28,13 +28,13 @@ in one of two ways:
 Note that for building an application, you only need to include the
 CDAP API in your dependencies. For testing, however, you need the
 CDAP run-time. To build your test case, extend the
-``AppTestBase`` class.
+``TestBase`` class.
 
 Strategies in Testing Flows
 ---------------------------
 Let’s write a test case for the *WordCount* example::
 
-  public class WordCountTest extends AppTestBase {
+  public class WordCountTest extends TestBase {
     @Test
     public void testWordCount() throws Exception {
 
@@ -110,16 +110,16 @@ application that uses MapReduce. Complete source code and test can be
 found under `TrafficAnalytics </examples/TrafficAnalytics/index.html>`__.
 
 The ``TrafficAnalyticsTest`` class should extend from
-``AppTestBase`` similar to `Strategies in Testing Flows`.
+``TestBase`` similar to `Strategies in Testing Flows`.
 
 ::
 
-  public class TrafficAnalyticsTest extends AppTestBase {
+  public class TrafficAnalyticsTest extends TestBase {
     @Test
     public void test() throws Exception {
 
 The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` 
-method from the ``AppTestBase`` class::
+method from the ``TestBase`` class::
 
   // Deploy an Application
   ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
