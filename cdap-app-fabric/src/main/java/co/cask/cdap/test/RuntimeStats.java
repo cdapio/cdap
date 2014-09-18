@@ -116,7 +116,7 @@ public final class RuntimeStats {
         }
 
         if (timeout == 0 && (value == null || value.get() < count)) {
-          throw new TimeoutException("Time limit reached: " + value.get());
+          throw new TimeoutException("Time limit reached.");
         }
       }
 
