@@ -27,9 +27,8 @@ import csv
 import os
 import subprocess
 import sys
-import tempfile
 
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
 
@@ -48,7 +47,8 @@ DEBUG = False
 
 def get_sdk_version():
     # Sets the CDAP Build Version via maven
-    mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
+    mvn_version_cmd = "mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
+    -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
     version = None
     try:
         version = subprocess.check_output(mvn_version_cmd, shell=True).strip().replace("-SNAPSHOT", "")
@@ -178,7 +178,7 @@ def process_master():
                 lib = Library(row[0], row[3], row[4])
                 # Place lib reference in dictionary
                 if not master_libs_dict.has_key(lib.id):
-                    master_libs_dict[lib.id] = lib
+                    master_libs_dict[lib.jar] = lib
                 else:
                     lib.print_duplicate(master_libs_dict)
             else:
@@ -208,22 +208,9 @@ def process_enterprise(input_file, options):
 
 def process_standalone(input_file, options):
     return process_dependencies(STANDALONE)
-
     
 def process_level_1(input_file, options):
     master_libs_dict = process_master()
-    # Build a lookup table for the artifacts
-    # A dictionary relating an artifact to a Library instance
-    master_artifact_ids= {}
-    keys = master_libs_dict.keys()
-    keys.sort()
-    for k in keys:
-        lib = master_libs_dict[k]
-        if not master_artifact_ids.has_key(lib.base):
-            master_artifact_ids[lib.base] = lib
-            print "Master: %s" % lib.base
-        
-    # Read dependencies: assumes first row is a header
     level_1_dict = {}
     missing_libs_dict = {}
     csv_path = os.path.join(SCRIPT_DIR_PATH, LICENSES_SOURCE, LEVEL_1 + ".csv")
@@ -234,31 +221,20 @@ def process_level_1(input_file, options):
         unique_row_count = 0
         csv_reader = csv.reader(csvfile)
         for row in csv_reader:
-            row_count += 1
-            if row_count == 1:
-                continue # Ignore header row
-            group_id, artifact_id = row
-            key = (group_id, artifact_id)
+            row_count +=1
+            jar,group_id, artifact_id = row
+            key = jar
             if not level_1_dict.has_key(key):
                 unique_row_count += 1
-                artifact_has_hyphen = artifact_id.rfind("-")
-                if master_artifact_ids.has_key(artifact_id):
-                    # Look up lib reference in dictionary
-                    lib = master_artifact_ids[artifact_id]
+                if master_libs_dict.has_key(jar):
+                    # Look up jar reference in dictionary
+                    lib = master_libs_dict[jar]
+                    print 'lib.jar %s' % lib.jar
                     level_1_dict[key] = (group_id, artifact_id, lib.license, lib.license_url)
                     continue
-                if artifact_has_hyphen != -1:
-                    # Try looking up just the first part
-                    sub_artifact_id = artifact_id[:artifact_has_hyphen]
-                    if master_artifact_ids.has_key(sub_artifact_id):
-                        lib = master_artifact_ids[sub_artifact_id]
-                        level_1_dict[key] = (group_id, artifact_id, lib.license, lib.license_url)
-                        continue
                 if not missing_libs_dict.has_key(artifact_id):
-                    missing_libs_dict[artifact_id] = group_id
+                    missing_libs_dict[artifact_id] = jar
 
-    # Drop header row from count
-    row_count -= 1 
     print "Level 1: Row count: %s" % row_count
     print "Level 1: Unique Row count: %s" % unique_row_count
     print "Level 1: Missing Artifacts: %s" % len(missing_libs_dict.keys())
@@ -274,7 +250,6 @@ def process_level_1(input_file, options):
         row = level_1_dict[k]
         rst_data.append(row)
     return rst_data
-
 
 def process_dependencies(dependency):
     # Read in the current master csv file and create a structure with it
@@ -299,14 +274,15 @@ def process_dependencies(dependency):
             row_count += 1
             jar = row[0]
             lib = Library(row[0], "", "")
-            print 'lib.id %s' % lib.id
+            print 'lib.jar %s' % lib.jar
             # Look up lib reference in master dictionary; if not there, add it
-            if not master_libs_dict.has_key(lib.id):
-                master_libs_dict[lib.id] = lib
-                missing_libs_dict[lib.id] = lib
+            if not master_libs_dict.has_key(lib.jar):
+                master_libs_dict[lib.jar] = lib
+                missing_libs_dict[lib.jar] = lib
+                print lib.jar + " Not Present in Master"
             # Place lib reference in dictionary
-            if not new_libs_dict.has_key(lib.id):
-                new_libs_dict[lib.id] = master_libs_dict[lib.id]
+            if not new_libs_dict.has_key(lib.jar):
+                new_libs_dict[lib.jar] = master_libs_dict[lib.jar]
             else:
                 lib.print_duplicate(new_libs_dict)
 
@@ -390,14 +366,13 @@ def print_dependencies(title, file_base, header, widths, data_list):
 # Example: "Level 1", LEVEL_1, ...
     RST_HEADER=""".. :author: Cask Data, Inc.
    :version: %(version)s
-   :copyright: Copyright © %(year) Cask Data, Inc.
-   
-============================================
-Cask Data Application Platform %(version)s\
-============================================
+
+=================================================
+Cask Data Application Platform %(version)s
+=================================================
 
 Cask Data Application Platform %(title)s Dependencies
------------------------------------------------------
+--------------------------------------------------------------------------------
 
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
@@ -411,10 +386,8 @@ Cask Data Application Platform %(title)s Dependencies
    :widths: %(widths)s
 
 """
-    sdk_version = get_sdk_version()
-    import datetime
-    now = datetime.datetime.now()
-    RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths, 'year': now.year}
+    sdk_version = get_sdk_version()        
+    RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths}
     rst_path = os.path.join(SCRIPT_DIR_PATH, file_base + ".rst")
 
     try:
