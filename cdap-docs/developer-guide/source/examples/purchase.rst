@@ -1,5 +1,6 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform Purchase Application
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================
 Purchase Application Example

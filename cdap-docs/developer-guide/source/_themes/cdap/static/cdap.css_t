@@ -70,7 +70,7 @@ background-color: #303840;
     text-shadow: 0px 1px 0 #444;
     font-size: 0.9em;
     width: auto;
-    background-image: url(./cask_logo_horizontal_small.png);
+    background-image: url(./cdap_logo_horizontal_small.png);
     background-repeat: no-repeat;
     background-position: left middle;
     padding-left: 170px;

@@ -1,11 +1,23 @@
 .. :author: Cask Data, Inc.
    :description: HTTP RESTful Interface to the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. highlight:: console
 
 ===============================================
 Cask Data Application Platform HTTP RESTful API
 ===============================================
+
+.. rst2pdf: .. class:: center
+
+.. rst2pdf:    **Copyright © 2014 Cask Data, Inc. All Rights Reserved.**
+
+.. rst2pdf:    .. raw:: pdf
+   
+.. rst2pdf:       Spacer 0,200
+
+.. rst2pdf:    .. image:: _static/cask_logo_horizontal.pdf
+.. rst2pdf:       :width: 4in
 
 .. rst2pdf: .. contents::
 .. rst2pdf: config _templates/pdf-config
@@ -128,11 +140,9 @@ For CDAP-issued access tokens, the authentication scheme must always be ``Bearer
 
 Stream HTTP API
 ===============
-This interface supports creating Streams, sending events to a Stream, and reading single events from a Stream.
+This interface supports creating Streams, sending events to a Stream, and reading events from a Stream.
 
 Streams may have multiple consumers (for example, multiple Flows), each of which may be a group of different agents (for example, multiple instances of a Flowlet).
-
-In order to read events from a Stream, a client application must first obtain a consumer (group) id, which is then passed to subsequent read requests.
 
 
 Creating a Stream
@@ -436,7 +446,7 @@ Dataset HTTP API
 .. rst2pdf: CutStop
 
   The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the 
-  `CDAP Developer Guide Advanced Features, Datasets section <http://cask.co/docs/cdap/current/en/advanced.html#datasets-system>`__
+  `CDAP Developer Guide Advanced Features, Datasets section <http://docs.cask.co/cdap/current/advanced.html#datasets-system>`__
 
 
 Listing all Datasets
@@ -1315,7 +1325,7 @@ The response is formatted in JSON; an example of this is shown in the
 
 .. rst2pdf: CutStop
 
-  `CDAP Testing and Debugging Guide <http://cask.co/docs/cdap/current/en/debugging.html#debugging-cdap-applications>`__.
+  `CDAP Testing and Debugging Guide <http://docs.cask.co/cdap/current/debugging.html#debugging-cdap-applications>`__.
 
 
 Scale
@@ -1662,7 +1672,7 @@ As Applications process data, CDAP collects metrics about the Application’s be
 
    Other metrics are user-defined and differ from Application to Application. 
    For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-   the Developer Guide, `CDAP Operations Guide <http://cask.co/docs/cdap/current/en/operations.html>`__.
+   the Developer Guide, `CDAP Operations Guide <http://docs.cask.co/cdap/current/operations.html>`__.
 
 
 Metrics Requests
@@ -1694,9 +1704,9 @@ Examples
 
    * - HTTP Method
      - ``GET <base-url>/metrics/system/apps/HelloWorld/flows/``
-       ``WhoFlow/flowlets/saver/process.bytes?aggregate=true``
+       ``WhoFlow/flowlets/saver/process.busyness?aggregate=true``
    * - Description
-     - Using a *System* metric, *process.bytes*
+     - Using a *System* metric, *process.busyness*
 
 .. list-table::
    :widths: 20 80
@@ -1725,7 +1735,7 @@ User metrics are always in the Application context.
 For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
 
   GET <base-url>/metrics/system/apps/CountRandom/flows/CountRandomFlow/flowlets/
-          splitter/process.events?start=now-5s&count=5
+          splitter/process.events.processed?start=now-5s&count=5
 
 This returns a JSON response that has one entry for every second in the requested time interval. It will have values only for the times where the metric was actually emitted (shown here "pretty-printed", unlike the actual responses)::
 
@@ -1741,14 +1751,14 @@ This returns a JSON response that has one entry for every second in the requeste
 If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics API at the Flow context::
 
   GET <base-url>/metrics/system/apps/CountRandom/flows/
-    CountRandomFlow/process.events?start=now-5s&count=5
+    CountRandomFlow/process.events.processed?start=now-5s&count=5
 
 Similarly, you can address the context of all flows of an Application, an entire Application, or the entire CDAP::
 
   GET <base-url>/metrics/system/apps/CountRandom/
-    flows/process.events?start=now-5s&count=5
+    flows/process.events.processed?start=now-5s&count=5
   GET <base-url>/metrics/system/apps/CountRandom/
-    process.events?start=now-5s&count=5
+    process.events.processed?start=now-5s&count=5
   GET <base-url>/metrics/system/process.events?start=now-5s&count=5
 
 To request user-defined metrics instead of system metrics, specify ``user`` instead of ``cdap`` in the URL
@@ -1767,7 +1777,7 @@ with the arguments as a JSON string in the body::
 
   Content-Type: application/json
   [ "/system/collect.events?aggregate=true",
-  "/system/apps/HelloWorld/process.events?start=1380323712&count=6000" ]
+  "/system/apps/HelloWorld/process.events.processed?start=1380323712&count=6000" ]
 
 If the context of the requested metric or metric itself doesn't exist the system returns status 200 (OK) with JSON formed as per above description and with values being zeroes.
 
@@ -1797,7 +1807,7 @@ The time range of a metric query can be specified in various ways:
 Instead of getting the values for each second of a time range, you can also retrieve the
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
-  GET <base-url>/metrics/system/apps/CountRandom/process.events?aggregate=true
+  GET <base-url>/metrics/system/apps/CountRandom/process.events.processed?aggregate=true
 
 .. rst2pdf: PageBreak
 
