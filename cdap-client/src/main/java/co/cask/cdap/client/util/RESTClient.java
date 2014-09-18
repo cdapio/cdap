@@ -80,7 +80,7 @@ public class RESTClient {
     if (responseCode == HttpStatus.SC_UNAUTHORIZED) {
       throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
     } else if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
-      throw new IOException(response.getResponseBodyAsString());
+      throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
     }
     return response;
   }
