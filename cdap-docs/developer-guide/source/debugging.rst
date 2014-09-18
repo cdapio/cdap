@@ -102,6 +102,35 @@ as a response, and the value types in the top-level map are not uniform::
     Assert.assertTrue(assocs.containsKey("hello"));
   }
 
+Strategies in Testing Custom Services
+-------------------------------------
+Write a test case for an application that uses a Custom Service.
+For example, a test class for *Purchase* example::
+
+  public class PurchaseTest extends AppTestBase {
+    @Test
+    public void testCase() throws Exception {
+
+Deploy the application which has a Custom Service::
+
+  // Deploy the application
+  ApplicationManager appManager = deployApplication(WordCount.class);
+
+  // Start CatalogLookup service
+  ServiceManager serviceManager = appManager.startService("CatalogLookup");
+
+Because this call to start the service is asynchronous, the service may not actually be up right after the method returns.
+The ``ServiceManager`` has a ``isRunning`` method which can be used to poll until the Service has started.
+
+Once the service is up and running, requests can be sent to it
+::
+
+  int x = 3; //replace with code that pings the service.
+
+In order to stop the Custom Service, utilize the ``ServiceManager``'s ``stop`` method::
+
+  serviceManager.stop();
+
 Strategies in Testing MapReduce Jobs
 ------------------------------------
 In a fashion similar to `Strategies in Testing Flows`_, we can write
