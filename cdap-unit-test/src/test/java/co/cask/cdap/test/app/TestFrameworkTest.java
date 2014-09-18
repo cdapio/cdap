@@ -408,9 +408,7 @@ public class TestFrameworkTest extends TestBase {
 
     // The dataset should not be written by the time this request is made, since the transaction to write
     // has not been committed yet.
-    URL url = new URL(String.format("%s/read/%s",
-                                    baseUrl,
-                                    AppWithServices.DATASET_TEST_KEY));
+    URL url = new URL(String.format("%s/read/%s", baseUrl, AppWithServices.DATASET_TEST_KEY));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(204, response.getResponseCode());
