@@ -1,0 +1,60 @@
+{
+  "name": "thrift",
+  "description": "node.js bindings for the Apache Thrift RPC system",
+  "homepage": "http://thrift.apache.org/",
+  "repository": {
+    "type": "git",
+    "url": "https://git-wip-us.apache.org/repos/asf/thrift.git"
+  },
+  "version": "0.9.1",
+  "author": {
+    "name": "Apache Thrift Developers",
+    "email": "dev@thrift.apache.org",
+    "url": "http://thrift.apache.org"
+  },
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
+  "bugs": {
+    "url": "https://issues.apache.org/jira/browse/THRIFT"
+  },
+  "directories": {
+    "lib": "./lib/thrift"
+  },
+  "main": "./lib/thrift",
+  "engines": {
+    "node": ">= 0.2.4"
+  },
+  "dependencies": {
+    "node-int64": "~0.3.0",
+    "nodeunit": "~0.8.0"
+  },
+  "readme": "# Licensed to the Apache Software Foundation (ASF) under one\n# or more contributor license agreements. See the NOTICE file\n# distributed with this work for additional information\n# regarding copyright ownership. The ASF licenses this file\n# to you under the Apache License, Version 2.0 (the\n# \"License\"); you may not use this file except in compliance\n# with the License. You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing,\n# software distributed under the License is distributed on an\n# \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY\n# KIND, either express or implied. See the License for the\n# specific language governing permissions and limitations\n# under the License.\n\n\nNOTE: you must use the framed thrift transport, TFramedTransport in most\nimplementations, on the server side. Using a popular example, this is enabled\nby default in Cassandra 0.7 (but configuration must be changed in Cassandra\n0.6.x and earlier).\n\n## Install\n\n    npm install thrift \n\n## Thrift Compiler\n\nYou can compile nodejs sources by running the following:\n\n    thrift --gen js:node thrift_file\n\n## Cassandra Client Example:\n\nHere is a Cassandra example:\n\n    var thrift = require('thrift'),\n        Cassandra = require('./gen-nodejs/Cassandra')\n        ttypes = require('./gen-nodejs/cassandra_types');\n\n    var connection = thrift.createConnection(\"localhost\", 9160),\n        client = thrift.createClient(Cassandra, connection);\n\n    connection.on('error', function(err) {\n      console.error(err);\n    });\n\n    client.get_slice(\"Keyspace\", \"key\", new ttypes.ColumnParent({column_family: \"ExampleCF\"}), new ttypes.SlicePredicate({slice_range: new ttypes.SliceRange({start: '', finish: ''})}), ttypes.ConsistencyLevel.ONE, function(err, data) {\n      if (err) {\n        // handle err\n      } else {\n        // data == [ttypes.ColumnOrSuperColumn, ...]\n      }\n      connection.end();\n    });\n\n<a name=\"int64\"></a>\n## Int64\n\nSince JavaScript represents all numbers as doubles, int64 values cannot be accurately represented naturally. To solve this, int64 values in responses will be wrapped with Thirft.Int64 objects. The Int64 implementation used is [broofa/node-int64](https://github.com/broofa/node-int64).\n\n## Libraries using node-thrift\n\n* [yukim/node_cassandra](https://github.com/yukim/node_cassandra)\n\n## Custom client and server example\n\nAn example based on the one shown on the Thrift front page is included in the examples/ folder.\n",
+  "readmeFilename": "README.md",
+  "_id": "thrift@0.9.1",
+  "dist": {
+    "shasum": "70e6aff18e6f14ec0ea71dc669b78c47a55cd798",
+    "tarball": "http://registry.npmjs.org/thrift/-/thrift-0.9.1.tgz"
+  },
+  "_from": "thrift@*",
+  "_npmVersion": "1.3.8",
+  "_npmUser": {
+    "name": "jfarrell",
+    "email": "jfarrell@apache.org"
+  },
+  "maintainers": [
+    {
+      "name": "wadey",
+      "email": "wade@wades.im"
+    },
+    {
+      "name": "jfarrell",
+      "email": "jfarrell@apache.org"
+    }
+  ],
+  "_shasum": "70e6aff18e6f14ec0ea71dc669b78c47a55cd798",
+  "_resolved": "https://registry.npmjs.org/thrift/-/thrift-0.9.1.tgz"
+}

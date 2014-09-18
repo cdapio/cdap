@@ -1,8 +1,8 @@
-# Cask Data Application Platform
+# Cask Data Application Platform - CDAP
 
-**Local and Distributed Cask DAPs**
+**Standalone and Distributed CDAP**
 
-## Building Cask DAP Maven
+## Building CDAP Maven
 
 ### Clean all modules
     mvn clean
@@ -25,13 +25,13 @@
 See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html) for more details
 
 ### Build all examples
-    mvn package -DskipTests -pl examples -am -amd -P examples
+    mvn package -DskipTests -pl cdap-examples -am -amd -P examples
 
-### Build Singlenode distribution ZIP
-    mvn clean package -DskipTests -P examples && mvn package -pl singlenode -am -DskipTests -P dist,release
+### Build Standalone distribution ZIP
+    mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
     
 ### Build the limited set of Javadocs used in distribution ZIP
-    mvn clean package javadoc:javadoc -pl api -am -DskipTests -P release
+    mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
 
 ### Build the complete set of Javadocs, for all modules
     mvn clean site -DskipTests
@@ -57,7 +57,7 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     
 ## License and Trademarks
 
-© Copyright 2014 Cask Data, Inc.
+Copyright © 2014 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at

@@ -47,4 +47,5 @@ dependency-reduced-pom.xml
 derby.log
 
 # generated json config file
-/web-app/cdap-config.json
+/cdap-web-app/cdap-config.json
+/cdap-web-app/cdap-security-config.json

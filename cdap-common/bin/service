@@ -1,0 +1,277 @@
+#!/usr/bin/env bash
+
+# Copyright © 2014 Cask Data, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+# Source function library. used for "status" use case
+if [ -f "/etc/rc.d/init.d/functions" ]; then
+  PLATFORM="RHEL"
+  . /etc/rc.d/init.d/functions
+elif [ -f /lib/lsb/init-functions ] ; then
+  PLATFORM="UBUNTU"
+  . /lib/lsb/init-functions
+else
+  echo "Platform is unsupported."
+  exit 0
+fi
+
+SVCNAME=`basename $0`
+
+if [[ "X$SVCNAME" == "Xsvc" ]]; then
+  echo "Create a soft link to this script as svc-<component>"
+  echo "E.g. ln -s service svc-<component>"
+  exit 1
+fi
+
+# APP is shortened SVCNAME
+APP=`echo $SVCNAME | cut -d'-' -f2-`; export APP
+
+# Determine symlink target (full path)
+TARGET=`readlink $0`
+if [[ $? -ne 0 ]]; then
+  echo "Create a soft link to this script as svc-<component>"
+  echo "E.g. ln -s service svc-<component>"
+  exit 1
+fi
+
+# Determine package name by applying regex to the target of the symlink being run
+D1=`dirname $TARGET`; D2=`dirname $D1`
+PKGNAME=`basename $D2`
+if [[ "X$PKGNAME" == "X" ]]; then
+  echo "Create a soft link to this script as svc-<component>"
+  echo "E.g. ln -s service svc-<component>"
+  exit 1
+fi
+
+# Default CDAP_HOME to /opt/cdap (package default)
+CDAP_HOME=${CDAP_HOME:-/opt/cdap}
+
+# Default CDAP_CONF to /etc/cdap (package default)
+CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
+
+# construct COMPONENT_HOME and COMPONENT_BIN
+COMPONENT_HOME="$CDAP_HOME"/"$PKGNAME"; export COMPONENT_HOME
+COMPONENT_BIN="$COMPONENT_HOME"/bin
+
+# Load component comman.sh 
+source $COMPONENT_BIN/common.sh
+
+# Load component common environment file too
+source $COMPONENT_BIN/common-env.sh
+
+# Load app specific configuration.
+SERVICE_ENVIRONMENT_FILE="$COMPONENT_HOME"/conf/"$APP"-env.sh
+if [ -f "$SERVICE_ENVIRONMENT_FILE" ]; then 
+ . "$SERVICE_ENVIRONMENT_FILE"
+fi
+
+# Set Log location
+export LOG_PREFIX=$APP-$IDENT_STRING-$HOSTNAME
+export LOGFILE=$LOG_PREFIX.log
+loglog="${LOG_DIR}/${LOGFILE}"
+
+# Set PID location
+pid=$PID_DIR/$APP-${IDENT_STRING}.pid
+loggc=$LOG_DIR/$LOG_PREFIX.gc
+
+# Set Niceness
+if [ "$NICENESS" = "" ]; then
+ export NICENESS=0
+fi
+
+start() {
+    if [ $MAIN_CMD ]; then
+      # This app is configured as a NON-JAVA app
+
+      check_before_start
+
+      echo "`date` Starting $APP service on `hostname`"
+      echo "`date` Starting $APP service on `hostname`" >> $loglog
+      echo "`ulimit -a`" >> $loglog 2>&1
+
+      nohup nice -n $NICENESS $MAIN_CMD $MAIN_CMD_ARGS </dev/null >>$loglog 2>&1 &
+
+      echo $! >$pid
+    elif [ $MAIN_CLASS ]; then
+      # This app is configured as a JAVA app (default)
+
+      # Check and set classpath if in development environment. 
+      check_and_set_classpath_for_dev_environment $CDAP_HOME
+
+      # Setup classpaths.
+      set_classpath $COMPONENT_HOME $CDAP_CONF
+
+      # Setup hive classpath if hive is installed, this has to be run after HBASE_CP is setup by set_classpath.
+      set_hive_classpath
+
+      # sets the JAVA variable.
+      set_java
+
+      # Adds the correct HBase support lib to the classpath
+      set_hbase
+
+      check_before_start
+
+      echo "`date` Starting Java $APP service on `hostname`"
+      echo "`date` Starting Java $APP service on `hostname`" >> $loglog
+      echo "`ulimit -a`" >> $loglog 2>&1
+
+      nohup nice -n $NICENESS "$JAVA" -Dcdap.service=$APP "$JAVA_HEAPMAX" \
+        -Dexplore.conf.files=$EXPLORE_CONF_FILES \
+        -Dexplore.classpath=$EXPLORE_CLASSPATH "$OPTS" \
+        -cp $CLASSPATH $MAIN_CLASS $MAIN_CLASS_ARGS </dev/null >>$loglog 2>&1 &
+      echo $! >$pid
+
+    else
+      echo "Error: Neither MAIN_CLASS or MAIN_CMD are set.  Please set one in $SERVICE_ENVIRONMENT_FILE"
+      exit -1
+    fi
+}
+
+stop() {
+    if [ -f $pid ]; then
+      pidToKill=`cat $pid`
+      # kill -0 == see if the PID exists
+      if kill -0 $pidToKill > /dev/null 2>&1; then
+        echo -n stopping $command
+        echo "`date` Terminating $command" >> $loglog
+        kill $pidToKill > /dev/null 2>&1
+        while kill -0 $pidToKill > /dev/null 2>&1;
+        do
+          echo -n "."
+          sleep 1;
+        done
+        rm $pid
+        echo
+      else
+        retval=$?
+        echo nothing to stop because kill -0 of pid $pidToKill failed with status $retval
+      fi
+      rm -f $pid
+    else
+      echo nothing to stop because no pid file $pid
+    fi
+}
+
+restart() {
+    stop
+    start
+}
+
+condrestart(){
+    case "$PLATFORM" in
+      "RHEL")
+        rh_status > /dev/null 2>&1
+        retval=$?
+      ;;
+      "UBUNTU")
+        ub_status > /dev/null 2>&1
+        retval=$?
+      ;;
+    esac
+
+  if [[ $retval -eq 0 ]]; then
+    restart
+  fi
+}
+
+rh_status() {
+    echo "checking status"
+    # call sourced status function
+    status -p $pid 
+}
+
+ub_status() {
+    echo "checking status"
+    # call sourced status function
+    status_of_proc -p $pid "$0" "$APP"
+}
+
+# Executes a specific class' main method with the classpath and environment setup
+run() {
+    classname=$1
+    shift
+    if [ -z "$classname" ]; then
+        echo "ERROR: No classname was given!"
+        echo "Usage: $0 run <fully qualified classname> [arguments]"
+        exit 1
+    fi
+    # Check and set classpath if in development environment. 
+    check_and_set_classpath_for_dev_environment $CDAP_HOME
+
+    # Setup classpaths.
+    set_classpath $COMPONENT_HOME $CDAP_CONF
+
+    # Setup hive classpath if hive is installed.
+    set_hive_classpath
+
+    # sets the JAVA variable.
+    set_java
+
+    # Adds the correct HBase support lib to the classpath
+    set_hbase
+
+    echo "Running class $classname"
+    "$JAVA" "$JAVA_HEAPMAX" -Dhive.classpath=$HIVE_CLASSPATH "$OPTS" -cp $CLASSPATH $classname $@
+}
+
+case "$1" in
+  start)
+    $1  
+  ;;
+  
+  stop)
+    $1
+  ;;
+
+  restart)
+    $1
+  ;;
+
+  condrestart)
+    $1
+  ;;
+
+  status)
+    case "$PLATFORM" in
+      "RHEL")
+        rh_status
+      ;;
+      "UBUNTU")
+        ub_status
+      ;;
+    esac 
+  ;;
+
+  classpath)
+    set_classpath $COMPONENT_HOME $CDAP_CONF
+    set_java
+    set_hbase
+    echo $CLASSPATH
+  ;;
+
+  run)
+    shift
+    run $@
+  ;;
+
+  *)
+    echo "Usage: $0 {start|stop|restart|status|run}"
+    exit 1
+  ;;
+
+
+esac
+exit $? 
+

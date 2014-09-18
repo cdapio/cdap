@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+
+<!--                                                                         -->
+<!-- CLI Client Configuration                                                -->
+<!--                                                                         -->
+<!-- We use the LogBack project for logging in the CLI Client                -->
+<!-- The manual for Logback can be found here: http://logback.qos.ch/manual  -->
+<!--                                                                         -->
+<configuration>
+  <logger name="org.apache.http" level="DEBUG"/>
+
+  <appender name="Debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/auth-client-debug.log</file>
+    <encoder>
+      <pattern>%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>DEBUG</level>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+      <maxIndex>10</maxIndex>
+      <FileNamePattern>logs/auth-client-debug.log.%i</FileNamePattern>
+    </rollingPolicy>
+    <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+      <MaxFileSize>50000KB</MaxFileSize>
+    </triggeringPolicy>
+  </appender>
+
+  <root level="DEBUG">
+    <appender-ref ref="Debug"/>
+  </root>
+
+</configuration>

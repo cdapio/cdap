@@ -1,0 +1,9 @@
+{
+  "name": "reactor-ui-enterprise",
+  "version": "0.0.1",
+  "main": "./main.js",
+  "dependencies": {
+    "nock": "0.34.0",
+    "optimist": "0.6.1"
+  }
+}

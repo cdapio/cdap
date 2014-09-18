@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>co.cask.cdap</groupId>
+    <artifactId>cdap</artifactId>
+    <version>2.5.0-SNAPSHOT</version>
+  </parent>
+
+
+  <artifactId>cdap-standalone</artifactId>
+  <name>CDAP Standalone</name>
+  <packaging>jar</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+
+    <!-- Added to override the embedded guava class in hive-exec -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-cli</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-data-fabric</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-watchdog-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-watchdog</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-security</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>security-authorization</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-app-fabric</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-gateway</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-explore</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-explore-jdbc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.tephra</groupId>
+      <artifactId>tephra-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-discovery-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-discovery-core</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <excludes>
+            <exclude>*.xml</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>dist</id>
+      <properties>
+        <sdk.dir>${project.build.directory}/sdk</sdk.dir>
+        <stage.opt.dir>${sdk.dir}/cdap-sdk-${project.version}</stage.opt.dir>
+        <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-web-app</artifactId>
+          <version>${project.version}</version>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>2.4</version>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.8</version>
+            <executions>
+              <execution>
+                <id>copy-dependencies</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.lib.dir}</outputDirectory>
+                  <overWriteReleases>false</overWriteReleases>
+                  <overWriteSnapshots>false</overWriteSnapshots>
+                  <overWriteIfNewer>true</overWriteIfNewer>
+                  <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
+                  <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
+                  <prependGroupId>true</prependGroupId>
+                  <silent>true</silent>
+                  <includeScope>compile</includeScope>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>2.6</version>
+            <executions>
+              <execution>
+                <id>copy-opt</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>${project.basedir}/src/main/resources</directory>
+                      <targetPath>conf</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.basedir}/src/dist</directory>
+                      <includes>
+                        <include>README</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                    <resource>
+                      <directory>${project.basedir}/src/dist/LICENSES</directory>
+                      <targetPath>LICENSES</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-docs/developer-guide/build-pdf</directory>
+                      <targetPath>docs</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-distributions</directory>
+                      <includes>
+                        <include>VERSION</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                    <resource>
+                      <directory>${project.basedir}/bin</directory>
+                      <targetPath>bin</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-gateway/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <excludes>
+                        <exclude>flume-client</exclude>
+                      </excludes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-data-fabric/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>tx-debugger*</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-explore/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>send-query*</include>
+                      </includes>
+                    </resource>
+                    <!-- Copy binaries for Windows -->
+                    <resource>
+                      <directory>${project.basedir}/libexec</directory>
+                      <targetPath>libexec</targetPath>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-unit-test/src/main/resources</directory>
+                      <targetPath>libexec/bin</targetPath>
+                      <includes>
+                        <include>*.exe</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-unit-test/src/main/resources</directory>
+                      <targetPath>lib/native</targetPath>
+                      <includes>
+                        <include>*.dll</include>
+                      </includes>
+                    </resource>
+                    <!-- Copy api jars -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-api/target</directory>
+                      <includes>
+                        <include>api-${project.version}*.jar</include>
+                      </includes>
+                    </resource>
+                    <!-- Copy web-app -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-web-app/target/local</directory>
+                      <targetPath>web-app/local</targetPath>
+                    </resource>
+                    <!-- Copy api javadocs -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-api/target/apidocs</directory>
+                      <targetPath>javadocs</targetPath>
+                    </resource>
+                    <!-- Copy CLI scripts -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-cli/target</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>cli-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>cdap-cli.sh</include>
+                        <include>cdap-cli.bat</include>
+                      </includes>
+                    </resource>
+                    <!-- Copy examples. The assume the example is already built -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-examples</directory>
+                      <targetPath>examples</targetPath>
+                      <includes>
+                        <include>README*</include>
+                        <include>**/src/**</include>
+                        <include>**/bin/**</include>
+                        <include>**/resources/**</include>
+                        <include>**/pom.xml</include>
+                        <include>**/target/*.jar</include>
+                      </includes>
+                      <excludes>
+                        <exclude>pom.xml</exclude>
+                        <exclude>build.gradle</exclude>
+                        <exclude>**/target/original*.jar</exclude>
+                      </excludes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <!-- Copy example deploy pom -->
+              <execution>
+                <id>copy-examples-pom</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${project.build.directory}/examples</outputDirectory>
+                  <delimiters>
+                    <delimiter>@</delimiter>
+                  </delimiters>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-examples</directory>
+                      <includes>
+                        <include>deploy_pom.xml</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+              <!-- Rename CLI jar and make CLI scripts executable -->
+              <execution>
+                <id>copy-cli-bash</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target>
+                    <chmod file="${stage.opt.dir}/bin/cdap-cli.sh" perm="755"/>
+                    <chmod file="${stage.opt.dir}/bin/cdap-cli.bat" perm="755"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+              <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
+              <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
+              <execution>
+                <id>bin-permission</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target>
+                    <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
+                    <chmod perm="755">
+                      <fileset dir="${stage.opt.dir}/examples">
+                        <include name="**/bin/**"/>
+                      </fileset>
+                    </chmod>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+              <!-- Rename examples deploy_pom.xml to pom.xml -->
+              <execution>
+                <id>rename-pom</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <copy file="${project.build.directory}/examples/deploy_pom.xml" tofile="${stage.opt.dir}/examples/pom.xml" />
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>rename-rest-api-docs</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <move file="${stage.opt.dir}/docs/rest.pdf" tofile="${stage.opt.dir}/docs/REST-API-Reference-v${project.version}.pdf"/>
+                  </target>
+                </configuration>
+              </execution>
+              <!-- Skip the unrelated one when rpm/deb profiles are on -->
+              <execution>
+                <id>rpm-bin-permission</id>
+                <phase>prepare-package</phase>
+                <configuration combine.self="override">
+                  <skip>true</skip>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>deb-bin-permission</id>
+                <phase>prepare-package</phase>
+                <configuration combine.self="override">
+                  <skip>true</skip>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.4</version>
+            <executions>
+              <execution>
+                <id>tgz-package</id>
+                <configuration combine.self="override">
+                  <skipAssembly>true</skipAssembly>
+                </configuration>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>sdk-package</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <descriptors>
+                    <descriptor>${project.basedir}/src/main/assembly/sdk.xml</descriptor>
+                  </descriptors>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <attach>false</attach>
+                  <finalName>cdap-sdk-${project.version}</finalName>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Extra deployment for reactor sdk -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>2.8</version>
+            <executions>
+              <execution>
+                <id>deploy-sdk</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>deploy-file</goal>
+                </goals>
+                <configuration>
+                  <version>${project.version}</version>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>cdap-sdk</artifactId>
+                  <packaging>zip</packaging>
+                  <generatePom>false</generatePom>
+                  <file>${project.build.directory}/cdap-sdk-${project.version}.zip</file>
+                  <repositoryId>continuuity</repositoryId>
+                  <url>${deploy.url}</url>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+</project>
