@@ -276,8 +276,13 @@ public class AppFabricClient {
             } else {
               jarEntry = new JarEntry(entryName);
             }
-            jarOutput.putNextEntry(jarEntry);
 
+            if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
+              jarEntry = jarInput.getNextJarEntry();
+              continue;
+            }
+
+            jarOutput.putNextEntry(jarEntry);
             if (!isDir) {
               ByteStreams.copy(jarInput, jarOutput);
             }
