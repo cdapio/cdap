@@ -81,7 +81,7 @@ final class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-    // This is ok since this class is only used in singlenode, hence the path is always [base]/server/local/main.js
+    // This is ok since this class is only used in standalone, hence the path is always [base]/server/local/main.js
     generateConfigFile(new File(WEB_APP_BASE, JSON_PATH), cConf);
     generateConfigFile(new File(WEB_APP_BASE, JSON_SECURITY_PATH), sConf);
 
