@@ -29,7 +29,7 @@ import com.google.gson.GsonBuilder;
 import java.lang.reflect.Type;
 
 /**
- * Utility for describing {@link ObjectStore} and similar data sets within application configuration.
+ * Utility for describing {@link ObjectStore} and similar datasets within application configuration.
  */
 public final class ObjectStores {
   private static final Gson GSON = new GsonBuilder()
@@ -39,11 +39,11 @@ public final class ObjectStores {
   private ObjectStores() {}
 
   /**
-   * Adds {@link ObjectStore} data set to be created at application deploy if not exists.
+   * Adds {@link ObjectStore} dataset to be created at application deploy if not exists.
    * @param configurer application configurer
-   * @param datasetName data set name
+   * @param datasetName dataset name
    * @param type type of objects to be stored in {@link ObjectStore}
-   * @param props any additional data set properties
+   * @param props any additional dataset properties
    * @throws UnsupportedTypeException
    */
   public static void createObjectStore(ApplicationConfigurer configurer,
@@ -64,11 +64,11 @@ public final class ObjectStores {
   }
 
   /**
-   * Adds {@link IndexedObjectStore} data set to be created at application deploy if not exists.
+   * Adds {@link IndexedObjectStore} dataset to be created at application deploy if not exists.
    * @param configurer application configurer
-   * @param datasetName data set name
+   * @param datasetName dataset name
    * @param type type of objects to be stored in {@link IndexedObjectStore}
-   * @param props any additional data set properties
+   * @param props any additional dataset properties
    * @throws UnsupportedTypeException
    */
   public static void createIndexedObjectStore(ApplicationConfigurer configurer,
@@ -89,9 +89,9 @@ public final class ObjectStores {
   }
 
   /**
-   * Creates properties for {@link ObjectStore} data set instance.
-   * @param type type of objects to be stored in data set
-   * @return {@link DatasetProperties} for the data set
+   * Creates properties for {@link ObjectStore} dataset instance.
+   * @param type type of objects to be stored in dataset
+   * @return {@link DatasetProperties} for the dataset
    * @throws UnsupportedTypeException
    */
   public static DatasetProperties objectStoreProperties(Type type, DatasetProperties props)
