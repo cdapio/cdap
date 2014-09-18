@@ -64,7 +64,8 @@ In the far upper-right are two buttons: the `Metrics <#metrics-explorer>`__ and
 
 .. _sampling-menu:
 
-In the upper right portion of the display are two buttons (*CDAP* and *Resources*) and a menu.
+In the upper right portion of the display is a menu and, in the Distributed version of 
+CDAP, two buttons (*CDAP* and *Resources*).
 The menu is the **Sampling Menu**, which appears on almost every pane of the
 CDAP Console. 
 
@@ -78,10 +79,10 @@ By default, the sampling menu is set at "Last 1 Minute", indicating that the gra
 the last one minute of activity. Be aware that changing the menu to a longer period (such as "Last 
 1 Hour") can adversely affect the performance of the CDAP Instance and should only be used for short sessions before returning the setting to the default "Last 1 Minute".
 
-The **CDAP** button gives you this starting overview, showing which Applications (*Apps*) are currently
+This starting overview, showing which Applications (*Apps*) are currently
 installed, and realtime graphs of *Collect*, *Process*, *Store*, and *Query*.
 Each statistic is per unit of time—events per second, bytes (or larger) per second, queries per second—and
-are sampled and reported based on the sampling menu in the upper right.
+are sampled and reported based on the sampling menu in the upper right. (In Distributed CDAP, this starting overview can be reached by the **CDAP** button.)
 
 The lower portion of the screen shows all the Apps along with their name, description, and what is happening with each:
 
@@ -104,7 +105,7 @@ Clicking on the name of an Application will take you to the `App's pane <#applic
 :Note: Because of the interconnections in the CDAP Console, you can arrive at the same pane by different paths.
        Remember that the left pane buttons will always take you back to the initial summary panes.
 
-The **Resources** button gives a look at what is being used by the CDAP:
+The **Resources** button (available in Distributed CDAP) gives a look at what is being used by the CDAP:
 
 .. image:: _images/console/console_02_overview_resources.png
    :width: 600px
@@ -160,8 +161,8 @@ If you move your mouse over the graph, you will get detailed information about t
 .. image:: _images/console/console_19_metrics_explorer2.png
    :width: 600px
 
-Services Explorer
------------------
+System Services Explorer
+------------------------
 In the top portion of the `Overview image <#console>`__, to the right of the **Metrics** button is the
 **Services** button, which takes you to the *Services Explorer:*
 
@@ -172,6 +173,28 @@ In the top portion of the `Overview image <#console>`__, to the right of the **M
 Here you can monitor a variety of different System Services of the CDAP. For each service name, status
 is given, if logs are available (and link to them if so), the number of instances requested and
 provisioned.
+
+.. _Collect:
+
+Collect
+-------
+.. image:: _images/console/console_03_collect.png
+   :width: 600px
+
+The **Collect** pane shows all the Streams collecting data and their details: name, storage, number of events and the arrival rate, with a graph showing arrivals based on the sampling rate menu setting.
+
+.. _Stream:
+
+Clicking on a Stream's name will take you to the Stream's pane:
+
+.. image:: _images/console/console_21_stream.png
+   :width: 600px
+
+The Stream pane shows the details of the number of events per second currently in the Stream,
+the storage and a graph of events over the last sampling period, and a list of all the Flows
+that are attached to the Stream, with processing rate and `busyness`_ for each Flow.
+Clicking on a Flow name will take you to that `Flow's pane <#flow>`__.
+
 
 .. _Process:
 
@@ -202,7 +225,39 @@ Store
 
 The **Store** pane shows all the Datasets currently specified in the CDAP, along with their name
 (a link to the detail pane for the Dataset), type (the Java class), storage in use,
-a realtime write-rate graph and the current write rate (bytes per second).
+a realtime write-rate graph and the current write rate (bytes per second). It has button that accesses the
+`Dataset Explorer`_.
+
+
+Dataset Explorer
+................
+From within the `Store`_ pane you can access the Dataset Explorer, which allows for SQL-like
+queries of the datasets' underlying Hive tables. Details on the requirements for formulating and
+performing these queries can be found in the Developer Guide `Querying Datasets with SQL <query.html>`__.
+
+Using the information supplied for each Hive table (schema, keys, properties) you can generate a
+SQL-like query and then execute it.
+
+.. image:: _images/console/console_33_query_explorer.png
+   :width: 600px
+
+When the query has completed, it will be listed on the *Results* pane of the Explorer. The results
+can either be viewed directly or downloaded to your computer.
+
+.. image:: _images/console/console_35_query_explorer.png
+   :width: 600px
+
+Double-clicking on the results will reveal them in the browser:
+
+.. image:: _images/console/console_37_query_explorer.png
+   :width: 600px
+
+If no results are available, the "Download" icon will be greyed-out and hovering over it will display a
+message "Results Not Available".
+
+.. image:: _images/console/console_36_query_explorer.png
+   :width: 600px
+
 
 .. _Query:
 
@@ -237,8 +292,11 @@ The Application pane shows details for an individual application deployed in the
 - **Store:** Datasets defined by this Application, with name (a link to details)
   and summary statistics; and
 
-- **Query:** Procedures, with name (a link to details) and summary statistics.
+- **Query:** Procedures, with name (a link to details) and summary statistics,
+  and a management button to start and stop all the Procedures associated with this app;
 
+- **Service:** Services, with name (a link to details) and number of components,
+  and a management button to start and stop all the Services associated with this app.
 
 Deleting an Application
 .......................
@@ -256,21 +314,6 @@ are persistent and are not deleted when an Application is deleted.
 
 To delete these, the CDAP needs to be reset using the `Reset button <#reset>`__ located at the bottom of each pane.
 
-
-.. _Stream:
-
-Stream
-------
-
-Clicking on a Stream's name will take you to the Stream's pane:
-
-.. image:: _images/console/console_21_stream.png
-   :width: 600px
-
-The Stream pane shows the details of the number of events per second currently in the Stream,
-the storage and a graph of events over the last sampling period, and a list of all the Flows
-that are attached to the Stream, with processing rate and `busyness`_ for each Flow.
-Clicking on a Flow name will take you to that `Flow's pane <#flow>`__.
 
 .. _flow:
 
@@ -405,15 +448,6 @@ For a MapReduce, the Mapping and Reducing activity is shown, along with status a
 .. image:: _images/console/console_26_mapreduce.png
    :width: 600px
 
-Spark
------
-For a Spark job, there are status and management controls for starting, stopping, and configuration.
-Buttons for displaying logs and history, similar to those for
-`MapReduce <#mapreduce>`__, are available:
-
-
-.. add the screenshot here once the UI is done
-
 Workflow
 --------
 For a Workflow, the time until the next scheduled run is shown, along with status and management controls for starting, stopping and configuration.
@@ -434,10 +468,8 @@ Dataset
 For a Dataset, write rate (in both bytes and operations per second), read rate and total storage is shown
 along with a list of Flows attached to the Dataset, their processing rate, and `busyness`_.
 
-
 .. image:: _images/console/console_15_dataset.png
    :width: 600px
-
 
 Procedure
 ---------
@@ -451,6 +483,19 @@ In a fashion similar to the `Flow Log Explorer`_, you can examine the logs assoc
 
 
 .. image:: _images/console/console_17_procedure_ranker.png
+   :width: 600px
+
+Custom Service
+--------------
+Each Application can access and use user-defined Custom Services. From an individual Application's panel
+you access its Custom Services panel.
+
+For a Custom Service, components of the Service are shown, along with status and management controls for starting, stopping and configuration. The current number of instances requested and active are shown for
+each component.
+
+For details of making and using Custom Services, see the Developer Guide `Advanced CDAP Features <advanced.html#custom-services>`__.
+
+.. image:: _images/console/console_32_custom_service.png
    :width: 600px
 
 Logging
