@@ -110,7 +110,7 @@ public class RouterServiceLookup {
 
     try {
       // Routing to webapp is a special case. If the service contains "$HOST" the destination is webapp
-      // Otherwise the destination service will be other continuuity services.
+      // Otherwise the destination service will be other cdap services.
       // Path lookup can be skipped for requests to webapp.
       String destService = routerPathLookup.getRoutingService(service, path, httpRequest);
       CacheKey cacheKey = new CacheKey(destService, host, path);

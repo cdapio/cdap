@@ -74,7 +74,7 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/unrecoverable/reset");
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
-    httpHandler.resetReactor(request, responder);
+    httpHandler.resetCDAP(request, responder);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, "reset application failed");
   }
 
@@ -218,7 +218,7 @@ public class AppFabricClient {
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
-    request.setHeader(Constants.Gateway.CONTINUUITY_API_KEY, "api-key-example");
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", applicationId + ".jar");
     MockResponder mockResponder = new MockResponder();
     BodyConsumer bodyConsumer = httpHandler.deploy(request, mockResponder);

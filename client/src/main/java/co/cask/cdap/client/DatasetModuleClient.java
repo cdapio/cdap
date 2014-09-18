@@ -81,7 +81,7 @@ public class DatasetModuleClient {
     throws BadRequestException, AlreadyExistsException, IOException {
 
     URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
-    Map<String, String> headers = ImmutableMap.of("X-Continuuity-Class-Name", className);
+    Map<String, String> headers = ImmutableMap.of("X-Class-Name", className);
     HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(moduleJarFile).build();
 
     HttpResponse response = restClient.upload(request, config.getAccessToken(),

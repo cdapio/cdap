@@ -371,7 +371,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'GET',
       path: '/' + self.API_VERSION + '/metrics/available' + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -429,7 +429,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'DELETE',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     }, function (error, response, body) {
@@ -440,7 +440,7 @@ WebAppServer.prototype.bindRoutes = function() {
         self.logger.error('Could not DELETE', path, body, error,  response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
           res.send(response.statusCode,
-            'Unable to connect to the Reactor Gateway. Please check your configuration.');
+            'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(response.statusCode, body || error || response.statusCode);
         }
@@ -459,7 +459,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'PUT',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -478,7 +478,7 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not PUT to', path, error || response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(500, 'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
         }
@@ -496,7 +496,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -507,7 +507,7 @@ WebAppServer.prototype.bindRoutes = function() {
       };
       opts.body = JSON.stringify(opts.body) || '';
       opts.headers = {
-        'X-Continuuity-ApiKey': req.body.apiKey,
+        'X-ApiKey': req.body.apiKey,
         'Authorization': 'Bearer ' + req.cookies.token
       };
     }
@@ -519,7 +519,7 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not POST to', path, error || response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(500, 'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
         }
@@ -537,7 +537,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -556,7 +556,7 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not POST to', path, error || response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(500, 'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.body || response.statusCode);
         }
@@ -576,7 +576,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'GET',
       url: self.transferProtocol + path,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -588,7 +588,7 @@ WebAppServer.prototype.bindRoutes = function() {
       } else {
         self.logger.error('Could not GET', path, error || response.statusCode);
         if (error && error.code === 'ECONNREFUSED') {
-          res.send(500, 'Unable to connect to the Reactor Gateway. Please check your configuration.');
+          res.send(500, 'Unable to connect to the CDAP Gateway. Please check your configuration.');
         } else {
           res.send(500, error || response.statusCode);
         }
@@ -627,7 +627,7 @@ WebAppServer.prototype.bindRoutes = function() {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': content.length,
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -678,7 +678,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: url,
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -696,7 +696,7 @@ WebAppServer.prototype.bindRoutes = function() {
       path: '/' + self.API_VERSION + '/deploy/status',
       method: 'GET',
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -733,7 +733,7 @@ WebAppServer.prototype.bindRoutes = function() {
       method: 'POST',
       url: self.transferProtocol + host + '/' + self.API_VERSION + '/unrecoverable/reset',
       headers: {
-        'X-Continuuity-ApiKey': req.session ? req.session.api_key : '',
+        'X-ApiKey': req.session ? req.session.api_key : '',
         'Authorization': 'Bearer ' + req.cookies.token
       }
     };
@@ -930,7 +930,7 @@ WebAppServer.prototype.bindRoutes = function() {
 
   this.app.get('/download-access-token/*', function (req, res) {
     var accessToken = req.params[0];
-    res.attachment('.continuuity.accesstoken');
+    res.attachment('.cdap.accesstoken');
     res.end(accessToken, 'utf-8');
   });
 

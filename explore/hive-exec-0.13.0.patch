@@ -62,7 +62,7 @@ index 3efe463..c86377f 100644
                <artifactSet>
                  <includes>
 +                  <!-- Here we removed all the packaged dependencies
-+                       that can enter in conflict with reactor dependencies -->
++                       that can enter in conflict with cdap dependencies -->
 +
                    <!-- order is meant to be the same as the ant build -->
                    <include>org.apache.hive:hive-common</include>
@@ -219,7 +219,7 @@ index c86377f..a55de0b 100644
 From bdd525d90f917554d4ecae641490f4452aa63bae Mon Sep 17 00:00:00 2001
 From: Julien Guery <julien@continuuity.com>
 Date: Wed, 16 Jul 2014 13:50:24 -0700
-Subject: [PATCH 3/5] Reactor 2.4.0 snapshot version
+Subject: [PATCH 3/5] CDAP 2.4.0 snapshot version
 
 ---
  ql/pom.xml | 8 ++++----

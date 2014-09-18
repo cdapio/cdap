@@ -147,7 +147,7 @@ public class ConfigurationTable {
       LOG.info("Read " + propertyCnt + " properties from configuration table = " +
                  tableName + ", row = " + type.name());
     } catch (TableNotFoundException e) {
-      // it's expected that this may occur when tables are created before ReactorServiceMain has started
+      // it's expected that this may occur when tables are created before MasterServiceMain has started
       LOG.warn("Configuration table " + tableName + " does not yet exist.");
     } finally {
       if (table != null) {
@@ -161,7 +161,7 @@ public class ConfigurationTable {
     return conf;
   }
 
-  private static String getTableName(String reactorNamespace) {
-    return reactorNamespace + "." + Namespace.SYSTEM.namespace(TABLE_NAME);
+  private static String getTableName(String namespace) {
+    return namespace + "." + Namespace.SYSTEM.namespace(TABLE_NAME);
   }
 }

@@ -19,7 +19,7 @@ var logLevel = 'INFO';
 
 var EntServer = function() {
   this.productId = 'enterprise';
-  this.productName = 'Enterprise Reactor';
+  this.productName = 'Enterprise CDAP';
   this.cookieName = 'continuuity-enterprise-edition';
   this.secret = 'enterprise-edition-secret';
   EntServer.super_.call(this, __dirname, logLevel, 'Enterprise UI', "enterprise");

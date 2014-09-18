@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.continuuity.security.tools;
+package co.cask.cdap.security.tools;
 
 import org.jboss.netty.handler.ssl.SslHandler;
 

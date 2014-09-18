@@ -4099,6 +4099,66 @@ div.tooltip-inner {
     font-size: 14px;
 }
 
+
+#query-list-table thead th.arrows,
+.data-explore-results .query-table-entry .arrows {
+  width: 1%;
+}
+
+#query-list-table thead th.arrows .arrowHolder,
+.data-explore-results .query-table-entry .arrows .arrowHolder {
+  width: 16px;
+  height: 16px;
+}
+
+.data-explore-results .query-table-entry .arrows .arrow-down {
+  width: 0;
+  height: 0;
+  border-top: 8px solid #696E7E;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  float: right;
+}
+
+
+.data-explore-results .query-table-entry.selected .arrows .arrow-down {
+  border-top: 8px solid white;
+}
+
+
+.data-explore-results .query-table-entry:hover .arrows .arrow-down {
+  border-top: 8px solid white;
+}
+
+.data-explore-results .query-table-entry .arrows .arrow-right {
+  border-left: 8px solid #696E7E;
+}
+
+.data-explore-results .query-table-entry:hover .arrows .arrow-right {
+  border-left: 8px solid white;
+}
+
+
+#query-list-table thead th.time-started,
+.data-explore-results .query-table-entry .time-started {
+  width: 12%;
+}
+
+#query-list-table thead th.query-status,
+.data-explore-results .query-table-entry .query-status {
+  width: 10%;
+}
+
+#query-list-table thead th.result-icons,
+.data-explore-results .query-table-entry .results-icons {
+  width: 8%;
+}
+
+#query-list-table thead th.sql-statements,
+.data-explore-results .query-table-entry .sql-statements {
+  min-width: 35%;
+}
+
 .lighter-color {
     color: #ABAFBE;
 }
@@ -4135,10 +4195,15 @@ div.tooltip-inner {
 }
 
 .query-table-entry .bolder-font {
-    color: #5A5D6E;
+  word-break: break-all;
+  color: #5A5D6E;
 }
 
 .query-table-entry:hover .lighter-color, .query-table-entry:hover .bolder-font {
+  color: white;
+}
+
+.query-table-entry.selected .lighter-color, .query-table-entry.selected .bolder-font {
     color: white;
 }
 .data-explore-results .results-table-holder {
@@ -4179,7 +4244,7 @@ div.tooltip-inner {
 }
 
 .download-query-results-btn {
-    width: 32px;
+    width: 64px;
     height: 32px;
     background-image: url('/assets/img/v2/download_inactive.png');
     background-repeat: no-repeat;
