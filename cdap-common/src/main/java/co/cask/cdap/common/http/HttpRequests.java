@@ -18,6 +18,8 @@ package co.cask.cdap.common.http;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -25,12 +27,29 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Executes {@link HttpRequest}s and returns an {@link HttpResponse}.
  */
 public final class HttpRequests {
+  private static final Logger LOG = LoggerFactory.getLogger(HttpRequests.class);
+
+  private static final AtomicReference<SSLSocketFactory> TRUST_ALL_SSL_FACTORY =
+    new AtomicReference<SSLSocketFactory>();
 
   private HttpRequests() { }
 
@@ -60,6 +79,16 @@ public final class HttpRequests {
     InputSupplier<? extends InputStream> bodySrc = request.getBody();
     if (bodySrc != null) {
       conn.setDoOutput(true);
+    }
+
+    if (conn instanceof HttpsURLConnection && requestConfig.isDisableCertCheck()) {
+      // Certificate checks are disabled for HTTPS connection.
+      LOG.debug("Disabling SSL certificate check for {}", request.getURL());
+      try {
+        disableCertCheck((HttpsURLConnection) conn);
+      } catch (Exception e) {
+        LOG.error("Got exception while disabling SSL certificate check for {}", request.getURL());
+      }
     }
 
     conn.connect();
@@ -106,4 +135,44 @@ public final class HttpRequests {
   private static boolean isSuccessful(int responseCode) {
     return 200 <= responseCode && responseCode < 300;
   }
+
+  private static void disableCertCheck(HttpsURLConnection conn)
+    throws NoSuchAlgorithmException, KeyManagementException {
+    if (TRUST_ALL_SSL_FACTORY.get() == null) {
+      SSLContext sslContext = SSLContext.getInstance("SSL");
+      sslContext.init(null, new TrustManager[]{
+        new X509TrustManager() {
+          @Override
+          public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+          }
+
+          @Override
+          public void checkClientTrusted(X509Certificate[] x509Certificates, String s)
+            throws CertificateException {
+            // Trust all
+          }
+
+          @Override
+          public void checkServerTrusted(X509Certificate[] x509Certificates, String s)
+            throws CertificateException {
+            // Trust all
+          }
+        }
+      }, new SecureRandom());
+
+      TRUST_ALL_SSL_FACTORY.compareAndSet(null, sslContext.getSocketFactory());
+    }
+
+    conn.setSSLSocketFactory(TRUST_ALL_SSL_FACTORY.get());
+    conn.setHostnameVerifier(TRUST_ALL_HOSTNAME_VERIFIER);
+  }
+
+  private static final HostnameVerifier TRUST_ALL_HOSTNAME_VERIFIER =
+    new HostnameVerifier() {
+      @Override
+      public boolean verify(String hostname, SSLSession session) {
+        return true;
+      }
+    };
 }
