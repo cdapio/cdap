@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Introduction to Testing, Debugging, and Troubleshooting the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==========================================================
 Cask Data Application Platform Testing and Debugging Guide
@@ -196,7 +197,7 @@ Any CDAP Application can be debugged in the Standalone CDAP
 by attaching a remote debugger to the CDAP JVM. To enable remote
 debugging:
 
-#. Start the Standalone CDAP with the ``--enable-debug`` option specifying ``port 5005``.
+#. Start the Standalone CDAP with ``--enable-debug``, optionally specifying a port (default is ``5005``).
 
    The CDAP should confirm that the debugger port is open with a message such as
    ``Remote debugger agent started on port 5005``.
@@ -291,22 +292,25 @@ Attaching a Debugger
 Debugging with IntelliJ
 .......................
 
+*Note:* These instructions were developed with *IntelliJ v13.1.2.* 
+You may need to adjust them for your installation or version.
+
 #. From the *IntelliJ* toolbar, select ``Run -> Edit Configurations``.
-#. Click ``+`` and choose ``Remote Configuration``:
+#. Click ``+`` and choose ``Remote``:
 
-   .. image:: _images/IntelliJ_1.png
+   .. image:: _images/debugging/intellij_1.png
 
-#. Create a debug configuration by entering a name, for example, ``Cask``.
+#. Create a debug configuration by entering a name, for example, ``CDAP``.
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
    in the Host field.
 #. Enter the debugging port, for example, ``5005`` in the Port field:
 
-   .. image:: _images/IntelliJ_2.png
+   .. image:: _images/debugging/intellij_2.png
 
-#. To start the debugger, select ``Run -> Debug -> Cask``.
+#. To start the debugger, select ``Run -> Debug -> CDAP``.
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-   .. image:: _images/IntelliJ_3.png
+   .. image:: _images/debugging/intellij_3.png
 
 #. Start the Flow in the Console.
 #. Send an event to the Stream. The control will stop at the breakpoint
@@ -316,19 +320,29 @@ Debugging with IntelliJ
 Debugging with Eclipse
 ......................
 
+*Note:* These instructions were developed with *Eclipse IDE for Java Developers v4.4.0.* 
+You may need to adjust them for your installation or version.
+
 #. In Eclipse, select ``Run-> Debug`` configurations.
-#. In the pop-up, select ``Remote Java application``.
-#. Enter a name, for example, ``Cask``.
+#. In the list on the left of the window, double-click ``Remote Java Application`` to create 
+   a new launch configuration.
+
+   .. image:: _images/debugging/eclipse_1.png
+
+#. Enter a name and project, for example, ``CDAP``.
+
+   .. image:: _images/debugging/eclipse_2.png
+
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
    in the Port field:
-#. Enter the debugging port, for example, ``5005`` in the Port field.
-#. Click ``Debug`` to start the debugger:
+#. Enter the debugging port, for example, ``5005`` in the Port field:
 
-   .. image:: _images/Eclipse_1.png
+
+#. In your project, click ``Debug`` to start the debugger.
 
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-   .. image:: _images/Eclipse_2.png
+   .. image:: _images/debugging/eclipse_3.png
 
 #. Start the Flow in the Console.
 #. Send an event to the Stream.
