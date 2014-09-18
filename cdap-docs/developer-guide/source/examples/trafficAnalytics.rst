@@ -1,5 +1,6 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform Intermediate Apache Log Event Logger
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==========================
 TrafficAnalytics Example

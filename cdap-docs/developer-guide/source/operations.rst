@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Operating Cask Data Application Platform and its Console
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ===============================================
 Cask Data Application Platform Operations Guide
