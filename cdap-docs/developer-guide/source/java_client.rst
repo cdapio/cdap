@@ -20,7 +20,7 @@ To use the Java Client API in your project, add this Maven dependency::
 
   <dependency>
     <groupId>co.cask.cdap</groupId>
-    <artifactId>client</artifactId>
+    <artifactId>cdap-client</artifactId>
     <version>${cdap.version}</version>
   </dependency>
 

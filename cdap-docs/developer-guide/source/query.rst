@@ -314,7 +314,7 @@ If you are using Maven, you can simply add a dependency in your file ``pom.xml``
     ...
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>explore-jdbc</artifactId>
+      <artifactId>cdap-explore-jdbc</artifactId>
       <version><!-- Version of CDAP you want the JDBC driver to query --></version>
     </dependency>
     ...
