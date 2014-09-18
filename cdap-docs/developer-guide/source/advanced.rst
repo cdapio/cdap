@@ -1,9 +1,9 @@
 .. :author: Cask Data, Inc.
    :description: Advanced Cask Data Application Platform Features
 
-======================
-Advanced CDAP Features
-======================
+================================================
+Advanced Cask Data Application Platform Features
+================================================
 
 **Custom Services, Flow, Dataset, and Transaction Systems, 
 with Best Practices for the Cask Data Application Platform**
@@ -113,7 +113,7 @@ For example, in Flows::
 
 Using Services
 -----------------
-Custom Services lifecycle can be controlled via the CDAP Dashboard or by using the
+Custom Services lifecycle can be controlled via the Continuuity Reactor Dashboard or by using the
 `CDAP Client API <rest.html#cdap-client-http-api>`__ as described in the
 `CDAP HTTP REST API <rest.html#cdap-client-http-api>`__.
 
@@ -831,5 +831,5 @@ Where to Go Next
 ================
 Now that you've looked at the advanced features of CDAP, take a look at:
 
-- `Querying Datasets with SQL <query.html>`__,
-  which covers ad-hoc querying of CDAP Datasets using SQL.
+- `Ingesting Data <ingest.html>`__,
+  which covers tools and applications for getting your data into CDAP.
