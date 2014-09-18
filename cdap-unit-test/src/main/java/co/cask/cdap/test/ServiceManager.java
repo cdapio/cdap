@@ -16,8 +16,6 @@
 
 package co.cask.cdap.test;
 
-import org.apache.twill.discovery.ServiceDiscovered;
-
 import java.net.URL;
 
 /**
