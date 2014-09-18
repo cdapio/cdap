@@ -1,5 +1,5 @@
 {
-  "name": "reactor-ui-common",
+  "name": "cdap-ui-common",
   "version": "0.0.1",
   "dependencies": {
     "formidable": "1.0.14",
