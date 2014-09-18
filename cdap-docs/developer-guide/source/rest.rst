@@ -1636,10 +1636,10 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/CountTokens/flows/CountTokensFlow/``
+     - ``GET <base-url>/apps/WordCount/flows/WordCountFlow/``
        ``logs?start=1382576400&stop=1382576700``
    * - Description
-     - Return the logs for all the events from the Flow *CountTokensFlow* of the *CountTokens*
+     - Return the logs for all the events from the Flow *WordCountFlow* of the *WordCount*
        Application,
        beginning ``Thu, 24 Oct 2013 01:00:00 GMT`` and
        ending ``Thu, 24 Oct 2013 01:05:00 GMT`` (five minutes later)
