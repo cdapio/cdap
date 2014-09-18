@@ -157,7 +157,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         SslContextFactory sslContextFactory = new SslContextFactory();
         String keyStorePath = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
         String keyStorePassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
-        String keyStoreType = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE);
+        String keyStoreType = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE, "JKS");
         String keyPassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
 
         Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
