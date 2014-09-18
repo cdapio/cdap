@@ -15,7 +15,7 @@
  */
 
 /**
- * 
+ * This package contains interfaces and classes for CDAP security.
  *
  */
 package co.cask.cdap.api.security;
