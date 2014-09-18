@@ -10,7 +10,7 @@ To modify the hive-exec jar again, follow these steps:
 1. Clone Hive repository from Github and checkout to branch `release-0.13.0-rc2`
 2. Create another branch: ``git checkout -b my_patched_branch``
 3. Apply the existing patch:
-  ``git apply --stat cdap-explore/hive-exec-0.13.0-xxx.patch``
+  ``git apply --stat cdap-explore/hive-exec-0.13.0.patch``
 3. Make your changes in the ``ql`` module (it will be packaged as hive-exec.jar)
 4. You can modify ``pom.xml`` in module ``ql`` to change the version number of the generated jar, according
 to what version of CDAP you are modifying.
