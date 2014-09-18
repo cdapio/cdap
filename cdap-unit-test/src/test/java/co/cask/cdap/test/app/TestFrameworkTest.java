@@ -344,32 +344,10 @@ public class TestFrameworkTest extends TestBase {
 
     LOG.info("Service Started");
 
-    // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices",
-                                                                        AppWithServices.SERVICE_NAME);
-    final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
-    serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        Iterables.addAll(discoverables, serviceDiscovered);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    // There should be one endpoint only
-    Discoverable discoverable = discoverables.poll(5, TimeUnit.SECONDS);
-    Assert.assertNotNull(discoverable);
-    Assert.assertTrue(discoverables.isEmpty());
-
-    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/ping2",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(), AppWithServices.SERVICE_NAME));
+    URL url = new URL(serviceManager.getServiceURL(), "ping2");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(response.getResponseCode(), 200);
-
-    // Connect and close. This should stop the leader instance.
-    Socket socket = new Socket(discoverable.getSocketAddress().getAddress(), discoverable.getSocketAddress().getPort());
-    socket.close();
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
@@ -411,20 +389,8 @@ public class TestFrameworkTest extends TestBase {
 
     LOG.info("Service Started");
 
-    // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices",
-                                                                        AppWithServices.TRANSACTIONS_SERVICE_NAME);
-    final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
-    serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        Iterables.addAll(discoverables, serviceDiscovered);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
 
-    final Discoverable discoverable = discoverables.poll(5, TimeUnit.SECONDS);
-    Assert.assertNotNull(discoverable);
-    Assert.assertTrue(discoverables.isEmpty());
+    final URL baseUrl = serviceManager.getServiceURL();
 
     // Make a request to write in a separate thread and wait for it to return.
     ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -432,10 +398,8 @@ public class TestFrameworkTest extends TestBase {
       @Override
       public Integer call() throws Exception {
         try {
-          URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/write/%s/%s/%d",
-                                          discoverable.getSocketAddress().getHostName(),
-                                          discoverable.getSocketAddress().getPort(),
-                                          AppWithServices.TRANSACTIONS_SERVICE_NAME,
+          URL url = new URL(String.format("%s/write/%s/%s/%d",
+                                          baseUrl,
                                           AppWithServices.DATASET_TEST_KEY,
                                           AppWithServices.DATASET_TEST_VALUE,
                                           10000));
@@ -451,10 +415,8 @@ public class TestFrameworkTest extends TestBase {
 
     // The dataset should not be written by the time this request is made, since the transaction to write
     // has not been committed yet.
-    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/read/%s",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(),
-                                    AppWithServices.TRANSACTIONS_SERVICE_NAME,
+    URL url = new URL(String.format("%s/read/%s",
+                                    baseUrl,
                                     AppWithServices.DATASET_TEST_KEY));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);

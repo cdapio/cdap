@@ -17,6 +17,9 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -48,19 +51,29 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.twill.common.Cancellable;
+import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -322,6 +335,8 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
 
       return new ServiceManager() {
+        private final Logger log = LoggerFactory.getLogger("ServiceManager");
+
         @Override
         public void setRunnableInstances(String runnableName, int instances) {
           Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
@@ -360,9 +375,58 @@ public class DefaultApplicationManager implements ApplicationManager {
         }
 
         @Override
-        public ServiceDiscovered discover(String applicationId, String serviceId) {
-          String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceId);
-          return discoveryServiceClient.discover(discoveryName);
+        public URL getServiceURL() {
+          ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
+                                                                                              accountId,
+                                                                                              applicationId,
+                                                                                              serviceName));
+          EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
+          Discoverable discoverable = endpointStrategy.pick();
+          if (discoverable != null) {
+            return createURL(discoverable, applicationId, serviceName);
+          }
+
+          final SynchronousQueue<URL> discoverableQueue = new SynchronousQueue<URL>();
+          Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
+            @Override
+            public void onChange(ServiceDiscovered serviceDiscovered) {
+              try {
+                URL url = createURL(serviceDiscovered.iterator().next(), applicationId, serviceName);
+                discoverableQueue.offer(url);
+              } catch (NoSuchElementException e) {
+                log.debug("serviceDiscovered is empty");
+              }
+            }
+          }, Threads.SAME_THREAD_EXECUTOR);
+
+          try {
+            URL url = discoverableQueue.poll(1, TimeUnit.SECONDS);
+            if (url == null) {
+              log.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceName);
+            }
+            return url;
+          } catch (InterruptedException e) {
+            log.error("Got exception: ", e);
+            return null;
+          } finally {
+            discoveryCancel.cancel();
+          }
+        }
+
+        private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceId) {
+          if (discoverable == null) {
+            return null;
+          }
+          String hostName = discoverable.getSocketAddress().getHostName();
+          int port = discoverable.getSocketAddress().getPort();
+          String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
+                                      Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
+          try {
+            return new URL(path);
+          } catch (MalformedURLException e) {
+            log.error("Got exception while creating serviceURL", e);
+            return null;
+          }
         }
       };
     } catch (Exception e) {

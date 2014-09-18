@@ -18,6 +18,8 @@ package co.cask.cdap.test;
 
 import org.apache.twill.discovery.ServiceDiscovered;
 
+import java.net.URL;
+
 /**
  * Managing the running Service in an application.
  */
@@ -48,10 +50,8 @@ public interface ServiceManager {
   boolean isRunning();
 
   /**
-   * Used to discover services inside a given application and twill-service.
-   * @param applicationId Application Name.
-   * @param serviceId Service Name.
+   * Used to discover inside a given application.
    * @return ServiceDiscovered
    */
-  ServiceDiscovered discover(String applicationId, String serviceId);
+  URL getServiceURL();
 }
