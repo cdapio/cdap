@@ -41,6 +41,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
 
 /**
@@ -123,7 +124,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
     //       reduce changeset size transferred to/from server
     // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) name.length()}, Bytes.toBytes(name));
-    this.buff = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    this.buff = new ConcurrentSkipListMap<byte[], NavigableMap<byte[], Update>>(Bytes.BYTES_COMPARATOR);
   }
 
   /**
@@ -274,7 +275,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
       // clearing up in-memory buffer by initializing new map.
       // NOTE: we want to init map here so that if no changes are made we re-use same instance of the map in next tx
       // NOTE: we could cache two maps and swap them to avoid creation of map instances, but code would be ugly
-      buff = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      buff = new ConcurrentSkipListMap<byte[], NavigableMap<byte[], Update>>(Bytes.BYTES_COMPARATOR);
       // TODO: tracking of persisted items can be optimized by returning a pair {succeededOrNot, persisted} which
       //       tells if persisting succeeded and what was persisted (i.e. what we will have to undo in case of rollback)
       persist(toUndo);
@@ -761,7 +762,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
         // if currentKey and currentRow are equal, merge and advance both
         Map<byte[], byte[]> persisted = currentRow.getColumns();
         mergeToPersisted(persisted, buffer.get(currentKey), null);
-        result = new Result(currentRow.getRow(), persisted);
+        result = new Result(currentKey, persisted);
 
         currentRow = persistedScanner.next();
         currentKey = keyIter.hasNext() ? keyIter.next() : null;
