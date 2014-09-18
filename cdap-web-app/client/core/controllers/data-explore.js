@@ -282,26 +282,8 @@ define(['core/lib/lodash'], function (lodash) {
       });
     },
 
-    downloadFile: function(filename, content) {
-      var blob = new Blob([content]);
-      var evt = document.createEvent("HTMLEvents");
-      evt.initEvent("click");
-      $("<a>", {
-        download: filename,
-        href: webkitURL.createObjectURL(blob)
-      }).get(0).dispatchEvent(evt);
-    },
-
-    //TODO: make this functionality compatible with more browsers.
     download: function (query) {
-      var self = this;
-      var handle = query.get('query_handle');
-      var url = 'rest/data/explore/queries/' + handle + '/download';
-
-      var handle = query.get('query_handle');
-      self.HTTP.post(url, function (response) {
-        self.downloadFile('results_' + handle + '.txt', response);
-      });
+      location.href = "/download-query-results/" + query.query_handle;
       this.hideTable(query, function () {
         query.set('is_active', false);
       });

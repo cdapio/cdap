@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc 
    :description: Release notes for the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _overview_release-notes:
 
