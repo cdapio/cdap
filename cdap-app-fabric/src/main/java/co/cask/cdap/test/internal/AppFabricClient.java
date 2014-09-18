@@ -51,6 +51,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.zip.ZipException;
 
 /**
  * Client tool for AppFabricHttpHandler.
@@ -276,8 +277,13 @@ public class AppFabricClient {
             } else {
               jarEntry = new JarEntry(entryName);
             }
-            jarOutput.putNextEntry(jarEntry);
 
+            if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
+              jarEntry = jarInput.getNextJarEntry();
+              continue;
+            }
+
+            jarOutput.putNextEntry(jarEntry);
             if (!isDir) {
               ByteStreams.copy(jarInput, jarOutput);
             }
