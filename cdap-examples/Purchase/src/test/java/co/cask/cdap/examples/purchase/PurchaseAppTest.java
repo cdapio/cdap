@@ -67,7 +67,7 @@ public class PurchaseAppTest extends TestBase {
     // Run PurchaseHistoryWorkflow which will process the data
     MapReduceManager mapReduceManager = appManager.startMapReduce("PurchaseHistoryWorkflow_PurchaseHistoryBuilder",
                                                                   ImmutableMap.<String, String>of());
-    mapReduceManager.waitForFinish(60, TimeUnit.SECONDS);
+    mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
     // Start PurchaseProcedure and query
     ProcedureManager procedureManager = appManager.startProcedure("PurchaseProcedure");
