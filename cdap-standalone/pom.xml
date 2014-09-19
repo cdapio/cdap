@@ -465,7 +465,7 @@
             </executions>
           </plugin>
 
-          <!-- Extra deployment for reactor sdk -->
+          <!-- Extra deployment for cdap sdk -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>

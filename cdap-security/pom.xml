@@ -130,7 +130,7 @@
     <profile>
       <id>dist</id>
       <properties>
-        <service.name>auth-server</service.name>
+        <original.service.name>auth-server</original.service.name>
       </properties>
       <build>
         <plugins>
