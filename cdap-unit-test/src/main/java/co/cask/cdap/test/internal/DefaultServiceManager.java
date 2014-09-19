@@ -87,7 +87,7 @@ public class DefaultServiceManager implements ServiceManager {
 
   @Override
   public void stop() {
-    applicationManager.stop(serviceName, serviceId);
+    applicationManager.stopProgram(serviceId);
   }
 
   public boolean isRunning() {

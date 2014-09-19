@@ -143,13 +143,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
         @Override
         public void stop() {
-          try {
-            if (runningProcesses.remove(flowName, flowId)) {
-              appFabricClient.stopProgram(applicationId, flowName, "flows");
-            }
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
+          stopProgram(flowId);
         }
       };
     } catch (Exception e) {
@@ -185,13 +179,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       return new MapReduceManager() {
         @Override
         public void stop() {
-          try {
-            if (runningProcesses.remove(jobName, jobId)) {
-              appFabricClient.stopProgram(applicationId, jobName, "mapreduce");
-            }
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
+          stopProgram(jobId);
         }
 
         @Override
@@ -233,13 +221,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       return new ProcedureManager() {
         @Override
         public void stop() {
-          try {
-            if (runningProcesses.remove(procedureName, procedureId)) {
-              appFabricClient.stopProgram(applicationId, procedureName, "procedures");
-            }
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
+          stopProgram(procedureId);
         }
 
         @Override
@@ -414,7 +396,8 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  void stop(String programName, ProgramId programId) {
+  void stopProgram(ProgramId programId) {
+    String programName = programId.getRunnableId();
     try {
       if (runningProcesses.remove(programName, programId)) {
         appFabricClient.stopProgram(applicationId, programName, programId.getRunnableType());
