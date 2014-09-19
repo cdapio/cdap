@@ -31,6 +31,7 @@ import os
 import subprocess
 
 def get_sdk_version():
+    return "2.5.0"
     # Sets the CDAP Build Version via maven
     mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
     version = None
