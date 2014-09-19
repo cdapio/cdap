@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Ad-hoc Querying of Cask Data Application Platform Datasets using SQL 
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==================================
 Interacting with Datasets with SQL
@@ -299,11 +300,11 @@ CDAP provides a JDBC driver to make integrations with external programs and thir
 tools easier.
 
 The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``lib``
-directory of your SDK installation at ``lib/co.cask.cdap.explore-jdbc-<version>.jar``.
+directory of your SDK installation at ``lib/co.cask.cdap.cdap-explore-jdbc-<version>.jar``.
 
 If you don't have a CDAP SDK and only want to connect to an existing instance of CDAP, you can download the CDAP JDBC
-driver using this `link <https://repository.continuuity.com/content/repositories/releases-public/co/cask/cdap/explore-jdbc/>`__.
-Go to the directory matching the version of your running CDAP instance, and download the file named ``explore-jdbc-<version>.jar``.
+driver using this `link <https://repository.continuuity.com/content/repositories/releases-public/co/cask/cdap/cdap-explore-jdbc/>`__.
+Go to the directory matching the version of your running CDAP instance, and download the file named ``cdap-explore-jdbc-<version>.jar``.
 
 Using the CDAP JDBC driver in your Java code
 --------------------------------------------
@@ -314,7 +315,7 @@ If you are using Maven, you can simply add a dependency in your file ``pom.xml``
     ...
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>explore-jdbc</artifactId>
+      <artifactId>cdap-explore-jdbc</artifactId>
       <version><!-- Version of CDAP you want the JDBC driver to query --></version>
     </dependency>
     ...
@@ -361,13 +362,15 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
 #. Click the ``+`` icon of the ``Drivers`` pane.
 
    .. image:: _images/jdbc/squirrel_drivers.png
+      :width: 4in
 
 #. Add a new Driver by entering a ``Name``, such as ``CDAP Driver``. The ``Example URL`` is of the form
    ``jdbc:cdap://<host>:10000?auth.token=<token>``. The ``Website URL`` can be left blank. In the ``Class Name``
    field, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
-   Click on the ``Extra Class Path`` tab, then on ``Add``, and put the path to ``co.cask.cdap.explore-jdbc-<version>.jar``.
+   Click on the ``Extra Class Path`` tab, then on ``Add``, and put the path to ``co.cask.cdap.cdap-explore-jdbc-<version>.jar``.
 
    .. image:: _images/jdbc/squirrel_add_driver.png
+      :width: 6in
 
 #. Click on ``OK``. You should now see ``Cask CDAP Driver`` in the list of drivers from the ``Drivers`` pane of
    *SquirrelSQL*.
@@ -380,6 +383,7 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
    and pass it as a parameter of the ``URL``. ``User Name`` and ``Password`` are left blank.
 
    .. image:: _images/jdbc/squirrel_add_alias.png
+      :width: 6in
 
 #. Click on ``OK``. ``CDAP Standalone`` is now added to the list of aliases.
 #. A popup asks you to connect to your newly-added alias. Click on ``Connect``, and *SquirrelSQL* will retrieve
@@ -388,6 +392,7 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
    on the "running man" icon on top of the tab. Your results will show in the bottom half of the *SquirrelSQL* main view.
 
    .. image:: _images/jdbc/squirrel_sql_query.png
+      :width: 6in
 
 CDAP JDBC driver integration with Pentaho Data Integration
 ..........................................................
@@ -395,7 +400,7 @@ CDAP JDBC driver integration with Pentaho Data Integration
 transformations of data coming from various sources. Let's see how to connect it to
 CDAP Datasets using the CDAP JDBC driver.
 
-#. Before opening the *Pentaho Data Integration* application, copy the ``co.cask.cdap.explore-jdbc-<version>.jar``
+#. Before opening the *Pentaho Data Integration* application, copy the ``co.cask.cdap.cdap-explore-jdbc-<version>.jar``
    file in the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
 #. Open *Pentaho Data Integration*.
 #. In the toolbar, select ``File -> New -> Database Connection...``.
@@ -405,12 +410,14 @@ CDAP Datasets using the CDAP JDBC driver.
    In the field ``Custom Driver Class Name``, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
 
    .. image:: _images/jdbc/pentaho_add_connection.png
+      :width: 6in
 
 #. Click on ``OK``.
 #. To use this connection, navigate to the ``Design`` tab on the left of the main view. In the ``Input`` menu,
    double click on ``Table input``. It will create a new transformation containing this input.
 
    .. image:: _images/jdbc/pentaho_table_input.png
+      :width: 6in
 
 #. Right-click on ``Table input`` in your transformation and select ``Edit step``. You can specify an appropriate name
    for this input such as ``CDAP Datasets query``. Under ``Connection``, select the newly created database connection;
@@ -418,11 +425,12 @@ CDAP Datasets using the CDAP JDBC driver.
    available to your transformation.
 
    .. image:: _images/jdbc/pentaho_modify_input.png
+      :width: 6in
 
 #. Click on ``OK``. Your input is now ready to be used in your transformation, and it will contain data coming
    from the results of the SQL query on the CDAP Datasets.
 #. For more information on how to add components to a transformation and link them together, see the
-   `Pentaho Data Integration page \<http://community.pentaho.com/projects/data-integration/>`__.
+   `Pentaho Data Integration page <http://community.pentaho.com/projects/data-integration/>`__.
 
 
 Formulating Queries

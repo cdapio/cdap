@@ -1,4 +1,5 @@
 # Cask Stylesheet for PDF Generation
+# Copyright © 2014 Cask Data, Inc.
 
 # List the fonts you would like to embed in the PDF here
 embeddedFonts: [["SourceSansPro-Regular.ttf","SourceSansPro-Bold.ttf","SourceSansPro-Italic.ttf","SourceSansPro-BoldItalic.ttf"]]

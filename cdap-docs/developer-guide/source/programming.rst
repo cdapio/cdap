@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Introduction to Programming Applications for the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ================================================
 Cask Data Application Platform Programming Guide
@@ -77,7 +78,7 @@ following command::
     -DarchetypeCatalog=https://repository.cask.co/content/groups/releases/archetype-catalog.xml \
     -DarchetypeGroupId=co.cask.cdap \
     -DarchetypeArtifactId=cdap-app-archetype \
-    -DarchetypeVersion=2.4.0
+    -DarchetypeVersion=2.5.0
 
 In the interactive shell that appears, specify basic properties for the
 new project. For example, to create a new project called
@@ -827,7 +828,8 @@ You can create a Dataset in CDAP using either
 
 You can also specify to create a Dataset by Application components if one doesn't
 exist. For that you must declare its details in the Application specification.
-For example, to create a DataSet named *myCounters* of type `KeyValueTable`, write::
+For example, to create a DataSet named *myCounters* of type 
+`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
 
   public void configure() {
       createDataset("myCounters", "KeyValueTable");
@@ -842,7 +844,7 @@ annotation::
     private KeyValueTable counters;
     ...
     void process(String key) {
-      counters.increment(key.getBytes());
+      counters.increment(key.getBytes(), 1L);
     }
 
 The runtime system reads the Dataset specification for the key/value
@@ -851,7 +853,7 @@ instance of the Dataset class into the Application.
 
 You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
-`PageViewAnalytics <examples/PageViewAnalytics/index.html>`__
+`Purchase <examples/Purchase/index.html>`__
 example for an implementation of a Custom Dataset. For more details, refer to
 `Advanced Cask Data Application Platform Features <advanced.html>`__.
 

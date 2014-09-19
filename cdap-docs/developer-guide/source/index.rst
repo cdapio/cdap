@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Index document
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
 Cask Data Application Platform Documentation
@@ -29,21 +30,18 @@ Examples
 
 :doc:`Overview <examples/index>`
 
-:doc:`PageViewAnalytics Example <examples/pageViewAnalytics>`
-
-:doc:`ResponseCodeAnalytics Example <examples/responseCodeAnalytics>`
-
-:doc:`TrafficAnalytics Example <examples/trafficAnalytics>`
-
 :doc:`Purchase Example <examples/purchase>`
+
+:doc:`Spark K-Means Example <examples/sparkKMeans>`
+
+:doc:`Spark PageRank Example <examples/sparkPageRank>`
 
 .. toctree::
    :hidden:
 
-   /examples/pageViewAnalytics
-   /examples/responseCodeAnalytics
-   /examples/trafficAnalytics
    /examples/purchase
+   /examples/sparkKMeans
+   /examples/sparkPageRank
    /licenses/cdap-enterprise-dependencies
    /licenses/cdap-level-1-dependencies
    /licenses/cdap-standalone-dependencies

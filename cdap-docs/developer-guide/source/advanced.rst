@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Advanced Cask Data Application Platform Features
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ======================
 Advanced CDAP Features
@@ -113,7 +114,7 @@ For example, in Flows::
 
 Using Services
 -----------------
-Custom Services lifecycle can be controlled via the CDAP Dashboard or by using the
+Custom Services lifecycle can be controlled via the CDAP Console or by using the
 `CDAP Client API <rest.html#cdap-client-http-api>`__ as described in the
 `CDAP HTTP REST API <rest.html#cdap-client-http-api>`__.
 
@@ -571,8 +572,7 @@ Application components can access created Dataset via ``@UseDataSet``::
     ...
   }
 
-A complete application demonstrating the use of a custom Dataset is included in our
-`PageViewAnalytics </examples/PageViewAnalytics/index.html>`__ example.
+A complete application demonstrating the use of a custom Dataset is included in our WordCount example.
 
 You can also create/drop/truncate Datasets using `Cask Data Application Platform HTTP REST API <rest.html>`__. Please refer to the
 REST APIs guide for more details on how to do that.
