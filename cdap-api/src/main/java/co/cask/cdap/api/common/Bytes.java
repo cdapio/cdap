@@ -23,6 +23,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Iterator;
+import javax.annotation.Nullable;
 
 /**
  * Utility class that handles byte arrays, conversions to/from other types,
@@ -1364,5 +1365,30 @@ public class Bytes {
     for (int i = 0; i < size - s.length(); ++i) {
       out.writeByte(0);
     }
+  }
+
+  /**
+   * Returns the given prefixByte, incremented by one, in the form that will be suitable for prefix matching.
+   * @param prefixBytes
+   * @return
+   */
+  @Nullable
+  public static byte[] incrementPrefix(byte[] prefixBytes) {
+    byte[] result = new byte[prefixBytes.length];
+    System.arraycopy(prefixBytes, 0, result, 0, prefixBytes.length);
+    binaryIncrementPos(result, 1);
+    int endIndex = result.length;
+    while (endIndex > 0) {
+      if (result[endIndex - 1] != 0x00) {
+        break;
+      }
+      endIndex--;
+    }
+    byte[] truncated = null;
+    if (endIndex > 0) {
+      truncated = new byte[endIndex];
+      System.arraycopy(result, 0, truncated, 0, endIndex);
+    }
+    return truncated;
   }
 }
