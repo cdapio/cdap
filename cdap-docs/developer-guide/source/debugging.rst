@@ -141,7 +141,7 @@ The response of the request can be verified::
   Assert.assertEquals("Catalog-laptop",
                       new Gson().fromJson(response.getResponseBodyAsString(), String.class)));
 
-In order to stop the Custom Service, the ``ServiceManager``'s ``stop`` method can be utilized::
+To stop the Custom Service, use the ServiceManager's stop method::
 
   serviceManager.stop();
 
