@@ -36,6 +36,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -53,6 +54,7 @@ import static com.google.inject.matcher.Matchers.any;
 import static com.google.inject.matcher.Matchers.only;
 
 
+@Ignore
 public class RESTClientTest {
 
   private static final String ACCESS_TOKEN = "ssdw221e2ffderrfg33322rr";

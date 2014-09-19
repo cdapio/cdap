@@ -362,6 +362,7 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
 #. Click the ``+`` icon of the ``Drivers`` pane.
 
    .. image:: _images/jdbc/squirrel_drivers.png
+      :width: 4in
 
 #. Add a new Driver by entering a ``Name``, such as ``CDAP Driver``. The ``Example URL`` is of the form
    ``jdbc:cdap://<host>:10000?auth.token=<token>``. The ``Website URL`` can be left blank. In the ``Class Name``
@@ -369,6 +370,7 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
    Click on the ``Extra Class Path`` tab, then on ``Add``, and put the path to ``co.cask.cdap.cdap-explore-jdbc-<version>.jar``.
 
    .. image:: _images/jdbc/squirrel_add_driver.png
+      :width: 6in
 
 #. Click on ``OK``. You should now see ``Cask CDAP Driver`` in the list of drivers from the ``Drivers`` pane of
    *SquirrelSQL*.
@@ -381,6 +383,7 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
    and pass it as a parameter of the ``URL``. ``User Name`` and ``Password`` are left blank.
 
    .. image:: _images/jdbc/squirrel_add_alias.png
+      :width: 6in
 
 #. Click on ``OK``. ``CDAP Standalone`` is now added to the list of aliases.
 #. A popup asks you to connect to your newly-added alias. Click on ``Connect``, and *SquirrelSQL* will retrieve
@@ -389,6 +392,7 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
    on the "running man" icon on top of the tab. Your results will show in the bottom half of the *SquirrelSQL* main view.
 
    .. image:: _images/jdbc/squirrel_sql_query.png
+      :width: 6in
 
 CDAP JDBC driver integration with Pentaho Data Integration
 ..........................................................
@@ -406,12 +410,14 @@ CDAP Datasets using the CDAP JDBC driver.
    In the field ``Custom Driver Class Name``, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
 
    .. image:: _images/jdbc/pentaho_add_connection.png
+      :width: 6in
 
 #. Click on ``OK``.
 #. To use this connection, navigate to the ``Design`` tab on the left of the main view. In the ``Input`` menu,
    double click on ``Table input``. It will create a new transformation containing this input.
 
    .. image:: _images/jdbc/pentaho_table_input.png
+      :width: 6in
 
 #. Right-click on ``Table input`` in your transformation and select ``Edit step``. You can specify an appropriate name
    for this input such as ``CDAP Datasets query``. Under ``Connection``, select the newly created database connection;
@@ -419,11 +425,12 @@ CDAP Datasets using the CDAP JDBC driver.
    available to your transformation.
 
    .. image:: _images/jdbc/pentaho_modify_input.png
+      :width: 6in
 
 #. Click on ``OK``. Your input is now ready to be used in your transformation, and it will contain data coming
    from the results of the SQL query on the CDAP Datasets.
 #. For more information on how to add components to a transformation and link them together, see the
-   `Pentaho Data Integration page \<http://community.pentaho.com/projects/data-integration/>`__.
+   `Pentaho Data Integration page <http://community.pentaho.com/projects/data-integration/>`__.
 
 
 Formulating Queries
