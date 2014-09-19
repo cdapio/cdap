@@ -76,7 +76,7 @@
     <!-- We want to re-use test apps -->
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-app-fabric</artifactId>
+      <artifactId>cdap-app-fabric-tests</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
