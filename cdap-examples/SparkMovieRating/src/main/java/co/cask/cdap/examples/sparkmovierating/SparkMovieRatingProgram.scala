@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory
 import scala.util.control.Exception._
 
 /**
- * Implementation of usage of Spark MLib library.
+ * Implementation of usage of Spark MLlib library.
  */
 class SparkMovieRatingProgram extends ScalaSparkProgram {
   private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkMovieRatingProgram])

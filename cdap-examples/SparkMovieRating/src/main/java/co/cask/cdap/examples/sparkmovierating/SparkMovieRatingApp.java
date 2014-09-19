@@ -43,7 +43,7 @@ import java.nio.charset.Charset;
 import java.util.UUID;
 
 /**
- * Application that demonstrates the usage of Spark MLib library
+ * Application that demonstrates the usage of Spark MLlib library
  */
 public class SparkMovieRatingApp extends AbstractApplication {
 
@@ -71,7 +71,7 @@ public class SparkMovieRatingApp extends AbstractApplication {
   }
 
   /**
-   * A Spark Program that demonstrates the usage of Spark MLib library
+   * A Spark Program that demonstrates the usage of Spark MLlib library
    */
   public static class SparkMovieRatingSpecification extends AbstractSpark {
     @Override

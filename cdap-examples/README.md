@@ -124,7 +124,7 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 ## SparkMovieRating
 
-- An application that demonstrates the usage of Spark MLib library.
+- An application that demonstrates the usage of Spark MLlib library.
 - It computes the movie prediction based on the movie rating from an input stream.    
 
 ## SparkPageRank
