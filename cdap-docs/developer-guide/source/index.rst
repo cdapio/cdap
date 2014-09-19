@@ -42,9 +42,11 @@ Examples
    :hidden:
 
    /examples/pageViewAnalytics
-   /examples/responseCodeAnalytics
-   /examples/trafficAnalytics
    /examples/purchase
+   /examples/responseCodeAnalytics
+   /examples/sparkKMeans
+   /examples/sparkPageRank
+   /examples/trafficAnalytics
    /licenses/cdap-enterprise-dependencies
    /licenses/cdap-level-1-dependencies
    /licenses/cdap-standalone-dependencies
