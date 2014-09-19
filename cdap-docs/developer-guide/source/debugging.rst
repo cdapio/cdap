@@ -104,14 +104,14 @@ as a response, and the value types in the top-level map are not uniform::
 
 Strategies in Testing Custom Services
 -------------------------------------
-Write a test case for an application that uses a Custom Service.
-For example, a test class for *Purchase* example::
+Here, we'll write a test case for an application that uses a Custom Service.
+For example, a test class for the Purchase example::
 
   public class PurchaseTest extends AppTestBase {
     @Test
     public void testCase() throws Exception {
 
-Deploy the application which has a Custom Service::
+Deploy the application, which includes a Custom Service::
 
   // Deploy the application
   ApplicationManager appManager = deployApplication(PurchaseApp.class);
@@ -121,20 +121,21 @@ Deploy the application which has a Custom Service::
 
 Because this call to start the service is asynchronous, the service may not actually be up right after the method
 returns. The ``ServiceManager`` has an ``isRunning`` method which can be used to poll until the Service has started.
-Once the service is up and running, requests can be sent to it with any HTTP library, once the URL is obtained.
-Suppose for instance we wanted to make a request to test the endpoint ``/v1/product/{id}/catalog``::
+Once the service is up and running, requests can be sent to it with an HTTP library, once the URL is determined.
+
+In order to make a request to test the endpoint ``/v1/product/{id}/catalog``::
 
   // Get the base URL of the Custom Service
   URL baseURL = serviceManager.getServiceURL();
 
-  // Create the url for the service's endpoint, passing some item's id (laptop in this instance).
+  // Create the url for the service's endpoint, passing an item's id ("laptop" in this instance)
   URL url = new URL(baseURL, "v1/product/laptop/catalog")
 
   // Execute the request
   HttpRequest request = HttpRequest.get(url).build();
   HttpResponse response = HttpRequests.execute(request);
 
-Now, the response of request can be verified::
+The response of the request can be verified::
 
   Assert.assertEquals(200, response.getResponseCode());
   Assert.assertEquals("Catalog-laptop",
