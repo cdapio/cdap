@@ -114,7 +114,7 @@ For example, a test class for *Purchase* example::
 Deploy the application which has a Custom Service::
 
   // Deploy the application
-  ApplicationManager appManager = deployApplication(WordCount.class);
+  ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
   // Start CatalogLookup service
   ServiceManager serviceManager = appManager.startService("CatalogLookup");
