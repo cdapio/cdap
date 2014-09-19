@@ -70,7 +70,7 @@ public class UniqueCountTable extends AbstractDataset {
   public void updateUniqueCount(String entry) {
     long newCount = this.entryCountTable.incrementAndGet(Bytes.toBytes(entry), ENTRY_COUNT, 1L);
     if (newCount == 1L) {
-      this.uniqueCountTable.incrementAndGet(UNIQUE_COUNT, UNIQUE_COUNT, 1L);
+      this.uniqueCountTable.increment(UNIQUE_COUNT, UNIQUE_COUNT, 1L);
     }
   }
 }

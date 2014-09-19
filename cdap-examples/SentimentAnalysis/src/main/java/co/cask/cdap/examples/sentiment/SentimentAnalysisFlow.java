@@ -214,7 +214,7 @@ public class SentimentAnalysisFlow implements Flow {
           String sentiment = Iterables.get(parts, 1);
           metrics.count("sentiment." + sentiment, 1);
           LOG.info("Sentence = {}, Sentiment = {}", sentence, sentiment);
-          sentiments.incrementAndGet(new Increment("aggregate", sentiment, 1));
+          sentiments.increment(new Increment("aggregate", sentiment, 1));
           textSentiments.write(new TimeseriesTable.Entry(sentiment.getBytes(Charsets.UTF_8),
                                                          sentence.getBytes(Charsets.UTF_8),
                                                          System.currentTimeMillis()));

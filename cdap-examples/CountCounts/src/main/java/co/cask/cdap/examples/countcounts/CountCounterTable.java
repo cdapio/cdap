@@ -49,7 +49,7 @@ public class CountCounterTable extends AbstractDataset {
     // Increment the total word count
     increment(WORD_COUNT_KEY, count);
     // Increment the counts count
-    table.incrementAndGet(WORD_COUNT_COUNTS_KEY, Bytes.toBytes(count), 1L);
+    table.increment(WORD_COUNT_COUNTS_KEY, Bytes.toBytes(count), 1L);
   }
 
   public long getTotalWordCount() {
@@ -96,7 +96,7 @@ public class CountCounterTable extends AbstractDataset {
   // Private helpers
 
   private void increment(byte[] key, long count) {
-    table.incrementAndGet(key, KEY_ONLY_COLUMN, count);
+    table.increment(key, KEY_ONLY_COLUMN, count);
   }
 
   private long get(byte[] key) {

@@ -73,7 +73,7 @@ public class AssociationTable extends AbstractDataset {
       byte[][] columns = new byte[n - 1][];
       System.arraycopy(wordBytes, 0, columns, 0, j);
       System.arraycopy(wordBytes, j + 1, columns, j, n - j - 1);
-      this.table.incrementAndGet(row, columns, values);
+      this.table.increment(row, columns, values);
     }
   }
 

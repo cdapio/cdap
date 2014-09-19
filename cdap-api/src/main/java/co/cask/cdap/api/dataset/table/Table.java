@@ -141,7 +141,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   void delete(Delete delete);
 
   /**
-   * Increments the specified column of the row by the specified amounts and returns the new value.
+   * Increments the specified column of the row by the specified amount and returns the new value.
    *
    * @param row row which value to increment
    * @param column column to increment
@@ -152,7 +152,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   long incrementAndGet(byte[] row, byte[] column, long amount);
 
   /**
-   * Increments the specified columns of the row by the specified amounts and returns the new value.
+   * Increments the specified columns of the row by the specified amounts and returns the new values.
    * <p>
    * NOTE: Depending on the implementation, this can work faster than calling
    * {@link #incrementAndGet(byte[], byte[], long)}
@@ -178,7 +178,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new value.
-   *  @param row row which values to increment
+   * @param row row which values to increment
    * @param column column to increment
    * @param amount amount to increment by
    */

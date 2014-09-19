@@ -121,7 +121,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param amount the amount to increment by
    */
   public void increment(byte[] key, long amount) {
-    this.table.incrementAndGet(key, KEY_COLUMN, amount);
+    this.table.increment(key, KEY_COLUMN, amount);
   }
 
   /**

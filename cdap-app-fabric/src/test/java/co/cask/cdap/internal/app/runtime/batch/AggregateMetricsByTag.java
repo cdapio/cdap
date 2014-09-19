@@ -61,8 +61,8 @@ public class AggregateMetricsByTag {
         }
         context.write(new BytesWritable(tag), new LongWritable(val));
       }
-      counters.incrementAndGet(new Increment("mapper", "records", 1L));
-      countersFromContext.incrementAndGet(new Increment("mapper", "records", 1L));
+      counters.increment(new Increment("mapper", "records", 1L));
+      countersFromContext.increment(new Increment("mapper", "records", 1L));
     }
 
     @Override
@@ -102,8 +102,8 @@ public class AggregateMetricsByTag {
       long sum = 0;
       for (LongWritable val : values) {
         sum += val.get();
-        counters.incrementAndGet(new Increment("reducer", "records", 1L));
-        countersFromContext.incrementAndGet(new Increment("reducer", "records", 1L));
+        counters.increment(new Increment("reducer", "records", 1L));
+        countersFromContext.increment(new Increment("reducer", "records", 1L));
       }
       byte[] tag = key.copyBytes();
       context.write(tag, new TimeseriesTable.Entry(BY_TAGS, Bytes.toBytes(sum), System.currentTimeMillis(), tag));

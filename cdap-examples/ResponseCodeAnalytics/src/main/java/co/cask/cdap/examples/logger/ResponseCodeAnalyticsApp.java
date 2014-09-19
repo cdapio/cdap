@@ -139,7 +139,7 @@ public class ResponseCodeAnalyticsApp extends AbstractApplication {
       LOG.info("Status code received: {}", status);
 
       // Increment the number of occurrences of the status code by 1
-      statusCodes.incrementAndGet(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);
+      statusCodes.increment(ResponseCodeAnalyticsApp.ROW_KEY, Bytes.toBytes(status), 1L);
     }
   }
 
