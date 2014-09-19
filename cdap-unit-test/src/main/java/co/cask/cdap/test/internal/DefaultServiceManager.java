@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -49,13 +48,13 @@ public class DefaultServiceManager implements ServiceManager {
   private final String applicationId;
   private final String serviceName;
 
-  private final ConcurrentMap<String, DefaultApplicationManager.ProgramId> runningProcesses;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final AppFabricClient appFabricClient;
+  private final DefaultApplicationManager applicationManager;
 
   public DefaultServiceManager(String accountId, DefaultApplicationManager.ProgramId serviceId,
                                AppFabricClient appFabricClient, DiscoveryServiceClient discoveryServiceClient,
-                               ConcurrentMap<String, DefaultApplicationManager.ProgramId> runningProcesses) {
+                               DefaultApplicationManager applicationManager) {
     this.serviceId = serviceId;
     this.accountId = accountId;
     this.applicationId = serviceId.getApplicationId();
@@ -63,7 +62,7 @@ public class DefaultServiceManager implements ServiceManager {
 
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;
-    this.runningProcesses = runningProcesses;
+    this.applicationManager = applicationManager;
 
   }
 
@@ -88,22 +87,11 @@ public class DefaultServiceManager implements ServiceManager {
 
   @Override
   public void stop() {
-    try {
-      if (runningProcesses.remove(serviceName, serviceId)) {
-        appFabricClient.stopProgram(applicationId, serviceName, "services");
-      }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    applicationManager.stop(serviceName, serviceId);
   }
+
   public boolean isRunning() {
-    try {
-      String status = appFabricClient.getStatus(applicationId, serviceName, "services");
-      // comparing to hardcoded string is ugly, but this is how appFabricServer works now to support legacy UI
-      return "STARTING".equals(status) || "RUNNING".equals(status);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    return applicationManager.isRunning(serviceId);
   }
 
   @Override

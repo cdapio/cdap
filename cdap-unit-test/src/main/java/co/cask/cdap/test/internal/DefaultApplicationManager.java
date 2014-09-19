@@ -319,7 +319,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       }
 
       return new DefaultServiceManager(accountId, serviceId, appFabricClient,
-                                       discoveryServiceClient, runningProcessses);
+                                       discoveryServiceClient, this);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -414,7 +414,17 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  private boolean isRunning(ProgramId programId) {
+  void stop(String programName, ProgramId programId) {
+    try {
+      if (runningProcessses.remove(programName, programId)) {
+        appFabricClient.stopProgram(applicationId, programName, programId.getRunnableType());
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  boolean isRunning(ProgramId programId) {
     try {
 
       String status = appFabricClient.getStatus(programId.getApplicationId(),
