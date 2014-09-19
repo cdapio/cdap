@@ -148,6 +148,7 @@
                   <target>
                     <copy file="${project.build.directory}/dist/rpm/unfilter/cdap-service" tofile="${stage.dir}/etc/rc.d/init.d/cdap-router">
                       <filterSet>
+                        <filter token="package.name" value="${package.name}" />
                         <filter token="service.name" value="router" />
                       </filterSet>
                     </copy>
@@ -184,6 +185,7 @@
                   <target>
                     <copy file="${project.build.directory}/dist/deb/unfilter/cdap-service" tofile="${stage.dir}-deb/etc/init.d/cdap-router">
                       <filterSet>
+                        <filter token="package.name" value="${package.name}" />
                         <filter token="service.name" value="router" />
                       </filterSet>
                     </copy>
