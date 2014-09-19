@@ -66,8 +66,8 @@ public class WordSplitter extends AbstractFlowlet {
 
     // Count other word statistics (word length, total words seen)
     this.wordStatsTable.increment(new Increment("totals")
-                                    .add("total_length", sumOfLengths)
-                                    .add("total_words", wordCount));
+                                          .add("total_length", sumOfLengths)
+                                          .add("total_words", wordCount));
 
     // Send the list of words to the associater
     wordListOutput.emit(wordList);
