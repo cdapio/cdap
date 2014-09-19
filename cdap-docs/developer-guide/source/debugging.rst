@@ -119,15 +119,28 @@ Deploy the application which has a Custom Service::
   // Start CatalogLookup service
   ServiceManager serviceManager = appManager.startService("CatalogLookup");
 
-Because this call to start the service is asynchronous, the service may not actually be up right after the method returns.
-The ``ServiceManager`` has a ``isRunning`` method which can be used to poll until the Service has started.
+Because this call to start the service is asynchronous, the service may not actually be up right after the method
+returns. The ``ServiceManager`` has an ``isRunning`` method which can be used to poll until the Service has started.
+Once the service is up and running, requests can be sent to it with any HTTP library, once the URL is obtained.
+Suppose for instance we wanted to make a request to test the endpoint ``/v1/product/{id}/catalog``::
 
-Once the service is up and running, requests can be sent to it
-::
+  // Get the base URL of the Custom Service
+  URL baseURL = serviceManager.getServiceURL();
 
-  int x = 3; //replace with code that pings the service.
+  // Create the url for the service's endpoint, passing some item's id (laptop in this instance).
+  URL url = new URL(baseURL, "v1/product/laptop/catalog")
 
-In order to stop the Custom Service, utilize the ``ServiceManager``'s ``stop`` method::
+  // Execute the request
+  HttpRequest request = HttpRequest.get(url).build();
+  HttpResponse response = HttpRequests.execute(request);
+
+Now, the response of request can be verified::
+
+  Assert.assertEquals(200, response.getResponseCode());
+  Assert.assertEquals("Catalog-laptop",
+                      new Gson().fromJson(response.getResponseBodyAsString(), String.class)));
+
+In order to stop the Custom Service, the ``ServiceManager``'s ``stop`` method can be utilized::
 
   serviceManager.stop();
 
