@@ -42,4 +42,3 @@ FOR /F "delims=" %%i IN (%APP_HOME%\resources\ratings.txt) DO (
  curl -H "Authorization: Bearer %ACCESS_TOKEN%" -sL -X POST --data "!data!" http://localhost:10000/v2/streams/%STREAM%
 )
 ENDLOCAL
-

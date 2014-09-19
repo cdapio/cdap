@@ -19,13 +19,11 @@
  * Copyright 2014 The Apache Software Foundation. Licensed under the Apache License, Version 2.0.
  *
  */
-package co.cask.cdap.examples.sparkmovielens
+
+package co.cask.cdap.examples.sparkmovierating
 
 import co.cask.cdap.api.spark.ScalaSparkProgram
 import co.cask.cdap.api.spark.SparkContext
-import com.esotericsoftware.kryo.Kryo
-
-import scala.collection.mutable
 
 import org.apache.spark.SparkContext._
 import org.apache.spark.mllib.recommendation.ALS
@@ -33,27 +31,19 @@ import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
 import org.apache.spark.mllib.recommendation.Rating
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.NewHadoopRDD
-import org.apache.spark.serializer.KryoRegistrator
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-/**
- * Implementation of Alternating Least Sequence Spark Program.
- */
-class SparkMovieLensProgram extends ScalaSparkProgram {
-  private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkMovieLensProgram])
+import scala.util.control.Exception._
 
-  class ALSRegistrator extends KryoRegistrator {
-    override def registerClasses(kryo: Kryo) {
-      kryo.register(classOf[Rating])
-      kryo.register(classOf[mutable.BitSet])
-    }
-  }
+/**
+ * Implementation of usage of Spark MLib library.
+ */
+class SparkMovieRatingProgram extends ScalaSparkProgram {
+  private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkMovieRatingProgram])
 
   case class Params(
-                     input: String = null,
-                     kryo: Boolean = false,
                      numIterations: Int = 20,
                      lambda: Double = 1.0,
                      rank: Int = 10,
@@ -62,10 +52,9 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
                      implicitPrefs: Boolean = false)
 
   override def run(sc: SparkContext) {
-
-    val params = Params()
-
-    LOG.info("Processing ratings data")
+    LOG.info("Running with arguments {}", sc.getRuntimeArguments("args"))
+    val params = parseArguments(sc, Params())
+    LOG.info("Processing ratings data with parameters {}", params)
 
     val linesDataset: NewHadoopRDD[Array[Byte], String] =
       sc.readFromDataset("ratings", classOf[Array[Byte]], classOf[String])
@@ -80,7 +69,7 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
          * 3: It's okay
          * 2: Fairly bad
          * 1: Awful
-         * So we should not recommend a movie if the predicted rating is less than 3.
+         * So we should not recommend a movie if the recommended rating is less than 3.
          * To map ratings to confidence scores, we use
          * 5 -> 2.5, 4 -> 1.5, 3 -> 0.5, 2 -> -0.5, 1 -> -1.5. This mappings means unobserved
          * entries are generally between It's okay and Fairly bad.
@@ -114,7 +103,7 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
       splits(1)
     }.cache()
 
-    LOG.info("Calculating ALS")
+    LOG.info("Calculating model")
 
     val numTraining = training.count()
     val numTest = test.count()
@@ -136,27 +125,18 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
 
     LOG.debug("Creating prediction matrix")
 
-    val users = data.map(_.user).distinct().collect()
-    val products = data.map(_.product).distinct().collect()
-
-    var matrix = collection.mutable.Map[Array[Byte], String]()
-
-    for (user <- users) {
-      for (product <- products) {
-        val prediction = model.predict(user, product)
-        val key = ("" + user + product).getBytes
-        matrix += key -> prediction.toString
-      }
+    val predictions = model.predict(data.map(x => (x.user, x.product)))
+    val matrix = predictions.map { e =>
+      val key = ("" + e.user + e.product).getBytes
+      key -> e.rating.toString
     }
+    var result = new Array[(Array[Byte], String)](matrix.collect().size)
+    matrix.collect().zipWithIndex.foreach { case (e, i) => result(i) = new Tuple2(e._1, e._2)}
 
     LOG.info("Writing data")
 
-    var result = new Array[(Array[Byte], String)](matrix.size)
-    matrix.zipWithIndex.foreach { case (e, i) => result(i) = new Tuple2(e._1, e._2) }
-
     val originalContext: org.apache.spark.SparkContext = sc.getOriginalSparkContext()
     sc.writeToDataset(originalContext.parallelize(result), "predictions", classOf[Array[Byte]], classOf[String])
-
 
     LOG.info("Done!")
   }
@@ -172,4 +152,22 @@ class SparkMovieLensProgram extends ScalaSparkProgram {
     }.join(data.map(x => ((x.user, x.product), x.rating))).values
     math.sqrt(predictionsAndRatings.map(x => (x._1 - x._2) * (x._1 - x._2)).mean())
   }
+
+  /** Parse runtime arguments */
+  def parseArguments(sc: SparkContext, defaultParams: Params): Params = {
+    val args: Array[String] = sc.getRuntimeArguments("args")
+
+    val numIterations = getInt(args, 0).getOrElse(defaultParams.numIterations)
+    val lambda = getDouble(args, 1).getOrElse(defaultParams.lambda)
+    val rank = getInt(args, 2).getOrElse(defaultParams.rank)
+    val numUserBlocks = getInt(args, 3).getOrElse(defaultParams.numUserBlocks)
+    val numProductBlocks = getInt(args, 4).getOrElse(defaultParams.numProductBlocks)
+    val implicitPrefs = getBoolean(args, 5).getOrElse(defaultParams.implicitPrefs)
+
+    Params(numIterations, lambda, rank, numUserBlocks, numProductBlocks, implicitPrefs)
+  }
+
+  def getInt(args: Array[String], idx: Int): Option[Int] = catching(classOf[Exception]).opt(args(idx).toInt)
+  def getDouble(args: Array[String], idx: Int): Option[Double] = catching(classOf[Exception]).opt(args(idx).toDouble)
+  def getBoolean(args: Array[String], idx: Int): Option[Boolean] = catching(classOf[Exception]).opt(args(idx).toBoolean)
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.sparkmovielens;
+package co.cask.cdap.examples.sparkmovierating;
 
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
@@ -43,20 +43,20 @@ import java.nio.charset.Charset;
 import java.util.UUID;
 
 /**
- * Application that demonstrate ALS on MovieLens data.
+ * Application that demonstrates the usage of Spark MLib library
  */
-public class SparkMovieLensApp extends AbstractApplication {
+public class SparkMovieRatingApp extends AbstractApplication {
 
   public static final Charset UTF8 = Charset.forName("UTF-8");
 
   @Override
   public void configure() {
-    setName("SparkMovieLens");
-    setDescription("Spark MovieLens app");
+    setName("SparkMovieRating");
+    setDescription("Spark Movie Rating Prediction App");
     addStream(new Stream("ratingsStream"));
     addFlow(new RatingsFlow());
-    addSpark(new SparkMovieLensSpecification());
-    addProcedure(new ALSProcedure());
+    addSpark(new SparkMovieRatingSpecification());
+    addProcedure(new PredictionProcedure());
 
     try {
       ObjectStores.createObjectStore(getConfigurer(), "ratings", String.class);
@@ -71,21 +71,21 @@ public class SparkMovieLensApp extends AbstractApplication {
   }
 
   /**
-   * A Spark Program that demonstrates Alternating Least Sequence example
+   * A Spark Program that demonstrates the usage of Spark MLib library
    */
-  public static class SparkMovieLensSpecification extends AbstractSpark {
+  public static class SparkMovieRatingSpecification extends AbstractSpark {
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
-        .setName("SparkMovieLensProgram")
-        .setDescription("Spark MovieLens Program")
-        .setMainClassName(SparkMovieLensProgram.class.getName())
+        .setName("SparkMovieRatingProgram")
+        .setDescription("Spark Movie Rating Program")
+        .setMainClassName(SparkMovieRatingProgram.class.getName())
         .build();
     }
   }
 
   /**
-   * This Flowlet reads events from a Stream and saves them to a datastore.
+   * This Flowlet reads ratings from a Stream and saves them to a datastore.
    */
   public static class RatingReader extends AbstractFlowlet {
 
@@ -128,36 +128,40 @@ public class SparkMovieLensApp extends AbstractApplication {
   }
 
   /**
-   * Procedure that returns prediction based on user and product parameters.
+   * Procedure that returns prediction based on user and movie parameters.
    */
-  public static class ALSProcedure extends AbstractProcedure {
+  public static class PredictionProcedure extends AbstractProcedure {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ALSProcedure.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PredictionProcedure.class);
 
     // Annotation indicates that predictions dataset is used in the procedure.
     @UseDataSet("predictions")
     private ObjectStore<String> predictions;
 
-    @Handle("prediction")
+    @Handle("getPrediction")
     public void getPrediction(ProcedureRequest request, ProcedureResponder responder)
       throws IOException, InterruptedException {
-      String user = request.getArgument("user");
-      if (user == null) {
-        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "User must be given as argument");
+      String userId = request.getArgument("userId");
+      if (userId == null) {
+        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "userId must be given as argument");
         return;
       }
-      String product = request.getArgument("product");
-      if (product == null) {
-        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "Product must be given as argument");
+      String movieId = request.getArgument("movieId");
+      if (movieId == null) {
+        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "movieId must be given as argument");
         return;
       }
-      byte[] key = ("" + user + product).getBytes();
+      byte[] key = ("" + userId + movieId).getBytes();
 
-      LOG.debug("get prediction for user {} and product {}", user, product);
+      String prediction = predictions.read(key);
+      LOG.debug("got prediction {} for user {} and movie {}", prediction, userId, movieId);
+      if (prediction == null) {
+        responder.error(ProcedureResponse.Code.NOT_FOUND,
+                        String.format("No prediction found for user %s and movie %s", userId, movieId));
+        return;
+      }
 
-      String object = predictions.read(key);
-
-      responder.sendJson(object);
+      responder.sendJson(prediction);
     }
   }
 }

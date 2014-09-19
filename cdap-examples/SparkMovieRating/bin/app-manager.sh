@@ -22,7 +22,7 @@ script=`basename $0`
 user=$USER
 epoch=`date +%s`
 
-app="SparkMovieLens"
+app="SparkMovieRating"
 
 auth_token=
 auth_file="$HOME/.cdap.accesstoken"
@@ -34,7 +34,7 @@ function get_auth_token() {
 }
 
 function usage() {
-  echo "Application lifecycle management tool for the SparkMovieLens application."
+  echo "Application lifecycle management tool for the SparkMovieRating application."
   echo "Usage: $script --action <deploy|start|run|stop|status> [--host <hostname>]"
   echo ""
   echo "  Options"
@@ -141,15 +141,15 @@ fi
 get_auth_token
 
 if [ "x$action" == "xdeploy" ]; then
-  jar_path=`ls $dir/../target/SparkMovieLens-*.jar`
+  jar_path=`ls $dir/../target/SparkMovieRating-*.jar`
   deploy_action $app $jar_path $host
 elif [ "x$action" == "xrun" ]; then
-  program_action $app "SparkMovieLensProgram" "spark" "start" $host
+  program_action $app "SparkMovieRatingProgram" "spark" "start" $host
 else
   program_action $app "RatingsFlow" "flow" $action $host
-  program_action $app "ALSProcedure" "procedure" $action $host
+  program_action $app "PredictionProcedure" "procedure" $action $host
 #  dont start and stop mapreduce if start/stop is specified
   if [ "x$action" == "xstatus" ]; then
-    program_action $app "SparkMovieLensProgram" "spark" $action $host
+    program_action $app "SparkMovieRatingProgram" "spark" $action $host
   fi
 fi

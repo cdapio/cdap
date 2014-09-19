@@ -122,6 +122,11 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 - An application that demonstrates streaming text analysis using a Spark program.
   It calculates the centers of points from an input stream using the KMeans Clustering method.  
 
+## SparkMovieRating
+
+- An application that demonstrates the usage of Spark MLib library.
+- It computes the movie prediction based on the movie rating from an input stream.    
+
 ## SparkPageRank
 
 - An application that demonstrates streaming text analysis using a Spark program.
