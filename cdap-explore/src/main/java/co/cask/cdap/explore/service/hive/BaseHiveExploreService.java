@@ -96,6 +96,8 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
 
 /**
@@ -592,16 +594,20 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     try {
-      // Fetch results from Hive
-      LOG.trace("Getting results for handle {}", handle);
-      List<QueryResult> results = fetchNextResults(getOperationHandle(handle), size);
-
-      QueryStatus status = getStatus(handle);
-      if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
-        // Since operation has fetched all the results, handle can be timed out aggressively.
-        timeoutAggresively(handle, getResultSchema(handle), status);
+      getOperationInfo(handle).getNextLock().lock();
+      try {
+        // Fetch results from Hive
+        LOG.trace("Getting results for handle {}", handle);
+        List<QueryResult> results = fetchNextResults(getOperationHandle(handle), size);
+        QueryStatus status = getStatus(handle);
+        if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
+          // Since operation has fetched all the results, handle can be timed out aggressively.
+          timeoutAggresively(handle, getResultSchema(handle), status);
+        }
+        return results;
+      } finally {
+        getOperationInfo(handle).getNextLock().unlock();
       }
-      return results;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
     }
@@ -644,44 +650,49 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   public List<QueryResult> previewResults(QueryHandle handle)
     throws ExploreException, HandleNotFoundException, SQLException {
-    // TODO add synchronization to this thing?
     if (inactiveHandleCache.getIfPresent(handle) != null) {
       throw new HandleNotFoundException("Query is inactive.", true);
     }
 
     OperationInfo operationInfo = getOperationInfo(handle);
-    File previewFile = operationInfo.getPreviewFile();
-    if (previewFile != null) {
-      try {
-        Reader reader = new FileReader(previewFile);
+    operationInfo.getPreviewLock().lock();
+    try {
+      File previewFile = operationInfo.getPreviewFile();
+      if (previewFile != null) {
         try {
-          return GSON.fromJson(reader, new TypeToken<List<QueryResult>>() { }.getType());
-        } finally {
-          Closeables.closeQuietly(reader);
+          Reader reader = new FileReader(previewFile);
+          try {
+            return GSON.fromJson(reader, new TypeToken<List<QueryResult>>() { }.getType());
+          } finally {
+            Closeables.closeQuietly(reader);
+          }
+        } catch (FileNotFoundException e) {
+          LOG.error("Could not retrieve preview result file {}", previewFile, e);
+          throw new ExploreException(e);
         }
-      } catch (FileNotFoundException e) {
-        LOG.error("Could not retrieve preview result file {}", previewFile, e);
-        throw new ExploreException(e);
       }
+
+      FileWriter fileWriter = null;
+      try {
+        // Create preview results for query
+        previewFile = new File(previewsDir, handle.getHandle());
+        fileWriter = new FileWriter(previewFile);
+        List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
+        GSON.toJson(results, fileWriter);
+        operationInfo.setPreviewFile(previewFile);
+        return results;
+      } catch (IOException e) {
+        LOG.error("Could not write preview results into file", e);
+        throw new ExploreException(e);
+      } finally {
+        if (fileWriter != null) {
+          Closeables.closeQuietly(fileWriter);
+        }
+      }
+    } finally {
+      operationInfo.getPreviewLock().unlock();
     }
 
-    FileWriter fileWriter = null;
-    try {
-      // Create preview results for query
-      previewFile = new File(previewsDir, handle.getHandle());
-      fileWriter = new FileWriter(previewFile);
-      List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
-      GSON.toJson(results, fileWriter);
-      operationInfo.setPreviewFile(previewFile);
-      return results;
-    } catch (IOException e) {
-      LOG.error("Could not write preview results into file", e);
-      throw new ExploreException(e);
-    } finally {
-      if (fileWriter != null) {
-        Closeables.closeQuietly(fileWriter);
-      }
-    }
   }
 
   @Override
@@ -976,6 +987,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     private final Map<String, String> sessionConf;
     private final String statement;
     private final long timestamp;
+    private final Lock nextLock = new ReentrantLock();
+    private final Lock previewLock = new ReentrantLock();
 
     private File previewFile;
 
@@ -997,7 +1010,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       this.statement = statement;
       this.timestamp = timestamp;
     }
-
 
     public SessionHandle getSessionHandle() {
       return sessionHandle;
@@ -1025,6 +1037,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     public void setPreviewFile(File previewFile) {
       this.previewFile = previewFile;
+    }
+
+    public Lock getNextLock() {
+      return nextLock;
+    }
+
+    public Lock getPreviewLock() {
+      return previewLock;
     }
   }
 
