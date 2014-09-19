@@ -1,6 +1,6 @@
 # Contributing to CDAP
 
-Here are instructions to get you started if you want to contribute to reactor. 
+Here are instructions to get you started if you want to contribute to CDAP. 
 
 ## Security Reports
 
@@ -29,7 +29,7 @@ see [BUILD.md](https://github.com/caskco/cdap/blob/develop/BUILD.md) file
 An issue should be created at [http://issues.cask.co](http://issues.cask.co) for any bugs or new features before anybody starts working on it. Please take a moment to check that issue already doesn't exist before creating a new issue. If you see a bug or an improvement already add a "+1"to the issue to indicate the you have this problem as well. This will help us in prioritization
 
 ### Discussions on mailing lists
-We recommend that you discuss your plan on the mailing list (cdap-developers@cask.co)[mailto: cdap-developers@cask.co] before starting to code. This gives us a chance to give feedback and make sure to point you in the right direction.
+We recommend that you discuss your plan on the mailing list [cdap-developers@cask.co](mailto: cdap-developers@cask.co) before starting to code. This gives us a chance to give feedback and make sure to point you in the right direction.
 
 ### Pull requests
 We love having pull requests and we do our best to review them as fast as possible. If your pull request is not accepted on the first try, don't be discouraged. If there is a problem with the implementation, you will receive feedback on what to improve.
