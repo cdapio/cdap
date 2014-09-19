@@ -19,11 +19,8 @@ New Features
 
 Ad-hoc querying
 .................
-- Supports writing to Datasets using SQL
-- Added a CDAP JDBC driver that allows connections to Datasets from Java applications and third-party business intelligence tools
-- Redesigned the Explore client so that it returns a Future object
-- Allow variables in SQL Statements
-- Allow additional options in JDBC connection URL
+- Capability to write to Datasets using SQL
+- Added a CDAP JDBC driver allowing connections from Java applications and third-party business intelligence tools
 - Ability to perform ad-hoc queries from the CDAP Console:
 
   - Execute a SQL query from the Console
@@ -45,8 +42,6 @@ Services
 - Added simplified APIs for using Services from other programs such as MapReduce Jobs, Flows and Procedures
 - Added an API for creating Services and handlers that can use Datasets transactionally
 - Added a RESTful API to make requests to a Service via the Router
-- To allow external programs access to the services hosted by Custom Services, service discovery 
-  is exposed through the RESTful end-points
 
 Security
 .................
