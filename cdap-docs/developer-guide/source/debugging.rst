@@ -107,41 +107,41 @@ Strategies in Testing MapReduce Jobs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under `TrafficAnalytics </examples/TrafficAnalytics/index.html>`__.
+found under `Purchase </examples/Purchase/index.html>`__.
 
-The ``TrafficAnalyticsTest`` class should extend from
-``TestBase`` similar to `Strategies in Testing Flows`.
+The ``PurchaseTest`` class should extend from
+``AppTestBase`` similar to `Strategies in Testing Flows`.
 
 ::
 
-  public class TrafficAnalyticsTest extends TestBase {
+  public class PurchaseTest extends AppTestBase {
     @Test
     public void test() throws Exception {
 
-The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` 
-method from the ``TestBase`` class::
+The ``PurchaseApp`` application can be deployed using the ``deployApplication``
+method from the ``AppTestBase`` class::
 
   // Deploy an Application
-  ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
+  ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
-The MapReduce job reads from the ``logEventTable`` Dataset. As a first
-step, the data to the ``logEventTable`` should be populated by running
-the ``RequestCountFlow`` and sending the data to the ``logEventStream``
+The MapReduce job reads from the ``purchases`` Dataset. As a first
+step, the data to the ``purchases`` should be populated by running
+the ``PurchaseFlow`` and sending the data to the ``purchaseStream``
 Stream::
 
-  FlowManager flowManager = appManager.startFlow("RequestCountFlow");
+  FlowManager flowManager = appManager.startFlow("PurchaseFlow");
   // Send data to the Stream
   sendData(appManager, now);
   
   // Wait for the last Flowlet to process 3 events or at most 5 seconds
   RuntimeMetrics metrics = RuntimeStats.
-      getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
+      getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
   metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Start the MapReduce job and wait for a maximum of 60 seconds::
 
   // Start the MapReduce job.
-  MapReduceManager mrManager = appManager.startMapReduce("RequestCountMapReduce");
+  MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
   mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We can start verifying that the MapReduce job was run correctly by
@@ -151,12 +151,11 @@ the counts::
   ProcedureClient client = procedureManager.getClient();
 
   // Verify the query.
-  String response = client.query("getCounts", Collections.<String, String>emptyMap());
+  String response = client.query("history", ImmutableMap.of("customer", "joe"));
   
   // Deserialize the JSON string.
-  Map<Long, Integer> result = GSON.
-      fromJson(response, new TypeToken<Map<Long, Integer>>(){}.getType());
-  Assert.assertEquals(2, result.size());
+  PurchaseHistory result = GSON.fromJson(response, PurchaseHistory.class);
+  Assert.assertEquals(2, result.getPurchases().size());
 
 The assertion will verify that the correct result was received.
 

@@ -30,23 +30,18 @@ Examples
 
 :doc:`Overview <examples/index>`
 
-:doc:`PageViewAnalytics Example <examples/pageViewAnalytics>`
-
-:doc:`ResponseCodeAnalytics Example <examples/responseCodeAnalytics>`
-
-:doc:`TrafficAnalytics Example <examples/trafficAnalytics>`
-
 :doc:`Purchase Example <examples/purchase>`
+
+:doc:`Spark K-Means Example <examples/sparkKMeans>`
+
+:doc:`Spark PageRank Example <examples/sparkPageRank>`
 
 .. toctree::
    :hidden:
 
-   /examples/pageViewAnalytics
    /examples/purchase
-   /examples/responseCodeAnalytics
    /examples/sparkKMeans
    /examples/sparkPageRank
-   /examples/trafficAnalytics
    /licenses/cdap-enterprise-dependencies
    /licenses/cdap-level-1-dependencies
    /licenses/cdap-standalone-dependencies

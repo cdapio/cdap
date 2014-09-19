@@ -853,7 +853,7 @@ instance of the Dataset class into the Application.
 
 You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
-`PageViewAnalytics <examples/PageViewAnalytics/index.html>`__
+`Purchase <examples/Purchase/index.html>`__
 example for an implementation of a Custom Dataset. For more details, refer to
 `Advanced Cask Data Application Platform Features <advanced.html>`__.
 
