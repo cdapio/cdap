@@ -12,14 +12,14 @@ Introduction
 ============
 ... *More to come* ...
 
-The Wise application uses the following CDAP constructs to analyze web server logs:
+The Wise application - Web Insights Engine application - uses the following CDAP constructs to analyze web server logs:
 
 - **Stream**: Ingests log data in real-time
-- **Dataset**:
-- **Flow**:
-- **MapReduce**:
-- **Service**:
-- **Explore**:
+- **Flow**: Applies transformation on log data in real-time
+- **Dataset**: Stores log analytics according to custom data pattern
+- **MapReduce**: Processes chunks of log data in batch jobs to extract deeper information
+- **Service**: Exposes APIs to query Datasets
+- **Explore**: Executes Ad-hoc queries over Datasets
 
 
 Running Wise
@@ -34,7 +34,11 @@ You can then expand the tarball and build the application by executing::
   $ cd cdap-wise-0.1.0
   $ mvn package
 
-To deploy the application, first make sure cdap standalone (*link*) is running, then execute::
+To deploy the application, first make sure CDAP standalone (*link*) is running, then execute::
 
   $ bin/deploy.sh
 
+Overview of Wise
+================
+Throughout this case study, we are going to present and explain the different constructs that the Wise application
+uses. Let's first have a look at a diagram showing a overview of the Wise application's architecture.
