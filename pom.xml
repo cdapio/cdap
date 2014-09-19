@@ -1404,6 +1404,12 @@
     <profile>
       <id>dist</id>
       <properties>
+        <!--
+          Service name before removing cdap- prefix.
+          It's needed so that children pom can override it.
+          The value is then get transformed into service.name by regex using the build-helper plugin
+        -->
+        <original.service.name>${project.artifactId}</original.service.name>
         <stage.dir>${project.build.directory}/stage-packaging</stage.dir>
         <stage.opt.dir>${stage.dir}/opt/cdap/${package.name}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
@@ -1567,6 +1573,7 @@
             <executions>
               <execution>
                 <id>regex-properties</id>
+                <phase>validate</phase>
                 <goals>
                   <goal>regex-properties</goal>
                 </goals>
@@ -1581,7 +1588,7 @@
                     </regexPropertySetting>
                     <regexPropertySetting>
                       <name>service.name</name>
-                      <value>${project.artifactId}</value>
+                      <value>${original.service.name}</value>
                       <regex>cdap-</regex>
                       <replacement></replacement>
                       <failIfNoMatch>false</failIfNoMatch>
