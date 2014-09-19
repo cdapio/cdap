@@ -9,7 +9,83 @@ Cask Data Application Platform Architecture and Concepts
 Introduction
 ============
 
-This will give an overview of the Cask architecture.
+Before you learn how to write applications on CDAP, this section will introduce its concepts and architecture.
+
+Virtualization
+==============
+
+CDAP lets you virtualize your data and applications by injecting abstraction layers over the various components
+of the Hadoop ecosystem. To access and manipulate data, you interact with CDAP's Datasets rather than actual
+storage engines such as HDFS or HBase. Similarly, you write your applications using CDAP's application interfaces
+and run them inside application containers. These containers are a logical abstraction that can be realized
+differently in several runtime environments, such as in-memory, single-node standalone, or distributed cluster,
+without the need to change a single line of application code.
+
+<Diagram of virtualization layers>
+
+Data Virtualization
+-------------------
+
+In CDAP applications, you interact with data through Datasets. Datasets provide virtualization through:
+
+- Abstraction of the actual representation of data in storage. You can write your code or queries without
+  having to know where and how your data is stored - be it in HBase, LevelDB or a relational database.
+- Encapsulation of data access patterns and business logic as reusable, managed Java code.
+- Consistency of your data under highly concurrent access using CDAP's transaction system.
+- Injection of datasets into different programming paradigms and runtimes: As soon as your data is in a
+  dataset, you can instantly use it in real-time programs, batch processing such as Map/Reduce or Spark,
+  and ad-hoc SQL queries.
+
+Application Virtualization
+--------------------------
+
+CDAP's programming interfaces have multiple implementations in different runtime environments. You build
+your applications against the CDAP application API. This API not only hides the low-level details of
+individual programming paradigms and runtimes, it also gives access to many useful services provided by
+CDAP, such as the dataset service or the service discovery. When you deploy and run the application into a
+specific installation of CDAP, the appropriate implementations of all services and program runtimes are
+injected by CDAP - the application does not need to change based on the environment. This allows you
+develop applications in one environent - say, on your laptop using a stand-alone CDAP for testing - and
+then seamlessly deploy it in a different environemnt - say, your distributed staging cluster.
+
+
+Components of CDAP and their Interactions
+=========================================
+
+CDAP consists mainly of these components:
+
+- The Router is the only public access point into CDAP for external clients. It forwards client requests to
+  the appropriate system service or application. In a secure setup, the router also performs authentication;
+  It is then complemented by an authentication service that allows clients to obtain credentials for CDAP.
+- The Master controls and manages all services and applications.
+- System Services provide vital platform features such datasets, transactions, service discovery logging,
+  and metrics collection. System services run in application containers.
+- Application containers provide virtualization and isolation for execution of application code (and, as a
+  special case, system services). Application containers scale linearly and elastically with the underlying
+  infrastructure.
+
+.. image:: _images/architecture_diagram_1.png
+:width: 6in
+   :align: center
+
+CDAP Programming Interfaces
+===========================
+
+We distinguish between the Developer interface and the Platform interface.
+
+- The Developer interface is used to build applications and exposes various Java APIs that are only available to
+  code that runs inside application containers, for example the Dataset and Transaction APIs as well as the
+  various supported programming paradigms.
+- The Platform interface is a RESTful API and the only way that external clients can interact with CDAP and
+  applications. It includes APIs that are not accessible from inside containers, such as application
+  management and monitoring. As an alternative to HTTP, clients can also use the client libraries
+  provided for different programming languages, including Java, JavaScript and Python.
+
+Note that some interfaces are included in both the Developer and the Platform APIs, for example, Service Discovery
+and Dataset Management.
+
+<venn diagram of APIs>
+
 
 
 The Challenge of Big Data Applications

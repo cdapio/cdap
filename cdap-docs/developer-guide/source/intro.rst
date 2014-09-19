@@ -8,6 +8,7 @@ Introduction to the Cask Data Application Platform
 
 The Cask |(TM)| Data Application Platform (CDAP) provides virtualization for data and applications
 on Hadoop.
+
 - Data virtualization is through CDAP's dataset framework, which allows you to write
   your application agnostic to the representation of data in actual storage engines, and to
   encapsulate your applications data access patterns in reusable libraries.
