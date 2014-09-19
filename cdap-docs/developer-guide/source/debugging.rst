@@ -123,7 +123,7 @@ Because this call to start the service is asynchronous, the service may not actu
 returns. The ``ServiceManager`` has an ``isRunning`` method which can be used to poll until the Service has started.
 Once the service is up and running, requests can be sent to it with an HTTP library, once the URL is determined.
 
-In order to make a request to test the endpoint ``/v1/product/{id}/catalog``::
+To make a request to test an endpoint, such as /v1/product/{id}/catalog::
 
   // Get the base URL of the Custom Service
   URL baseURL = serviceManager.getServiceURL();
