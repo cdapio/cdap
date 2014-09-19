@@ -10,38 +10,15 @@ Cask Data Application Platform Documentation
    :maxdepth: 2
    
    Introduction </intro>
-   Quick Start </quickstart>
-   Examples </examples/index>
-   Programming Guide </programming>
-   Advanced Features </advanced>
-   Querying Datasets with SQL </query>
+   Getting Started </getstarted>
+   Concepts and Architecture </arch>
+   Developer Guide </dev-guide>
+   Case Studies </case-studies>
+   APIs and Clients </api>
    Testing and Debugging </debugging>
-   Security </security>
-   Operations Guide </operations>
-   HTTP RESTful API </rest>
-   Java Client API </java_client>
+   Tools </tools>
+   Admin </admin>
    /javadocs/index
    Licenses and Dependencies </licenses/index>
    Release Notes </releasenotes>
    FAQ </faq>
-
-Examples
-==============
-
-:doc:`Overview <examples/index>`
-
-:doc:`Purchase Example <examples/purchase>`
-
-:doc:`Spark K-Means Example <examples/sparkKMeans>`
-
-:doc:`Spark PageRank Example <examples/sparkPageRank>`
-
-.. toctree::
-   :hidden:
-
-   /examples/purchase
-   /examples/sparkKMeans
-   /examples/sparkPageRank
-   /licenses/cdap-enterprise-dependencies
-   /licenses/cdap-level-1-dependencies
-   /licenses/cdap-standalone-dependencies
