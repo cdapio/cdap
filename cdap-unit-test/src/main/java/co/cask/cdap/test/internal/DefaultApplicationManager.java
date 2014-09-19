@@ -66,7 +66,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class DefaultApplicationManager implements ApplicationManager {
 
-  private final ConcurrentMap<String, ProgramId> runningProcessses = Maps.newConcurrentMap();
+  private final ConcurrentMap<String, ProgramId> runningProcesses = Maps.newConcurrentMap();
   private final String accountId;
   private final String applicationId;
   private final TransactionSystemClient txSystemClient;
@@ -121,12 +121,12 @@ public class DefaultApplicationManager implements ApplicationManager {
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
     try {
       final ProgramId flowId = new ProgramId(applicationId, flowName, "flows");
-      Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
+      Preconditions.checkState(runningProcesses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
         appFabricClient.startProgram(applicationId, flowName, "flows", arguments);
       } catch (Exception e) {
-        runningProcessses.remove(flowName);
+        runningProcesses.remove(flowName);
         throw Throwables.propagate(e);
       }
 
@@ -144,7 +144,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         @Override
         public void stop() {
           try {
-            if (runningProcessses.remove(flowName, flowId)) {
+            if (runningProcesses.remove(flowName, flowId)) {
               appFabricClient.stopProgram(applicationId, flowName, "flows");
             }
           } catch (Exception e) {
@@ -170,15 +170,15 @@ public class DefaultApplicationManager implements ApplicationManager {
 
       // mapreduce job can stop by itself, so refreshing info about its state
       if (!isRunning(jobId)) {
-        runningProcessses.remove(jobName);
+        runningProcesses.remove(jobName);
       }
 
-      Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
+      Preconditions.checkState(runningProcesses.putIfAbsent(jobName, jobId) == null,
                                "MapReduce job %s is already running", jobName);
       try {
         appFabricClient.startProgram(applicationId, jobName, "mapreduce", arguments);
       } catch (Exception e) {
-        runningProcessses.remove(jobName);
+        runningProcesses.remove(jobName);
         throw Throwables.propagate(e);
       }
 
@@ -186,7 +186,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         @Override
         public void stop() {
           try {
-            if (runningProcessses.remove(jobName, jobId)) {
+            if (runningProcesses.remove(jobName, jobId)) {
               appFabricClient.stopProgram(applicationId, jobName, "mapreduce");
             }
           } catch (Exception e) {
@@ -221,12 +221,12 @@ public class DefaultApplicationManager implements ApplicationManager {
   public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
     try {
       final ProgramId procedureId = new ProgramId(applicationId, procedureName, "procedures");
-      Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
+      Preconditions.checkState(runningProcesses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
         appFabricClient.startProgram(applicationId, procedureName, "procedures", arguments);
       } catch (Exception e) {
-        runningProcessses.remove(procedureName);
+        runningProcesses.remove(procedureName);
         throw Throwables.propagate(e);
       }
 
@@ -234,7 +234,7 @@ public class DefaultApplicationManager implements ApplicationManager {
         @Override
         public void stop() {
           try {
-            if (runningProcessses.remove(procedureName, procedureId)) {
+            if (runningProcesses.remove(procedureName, procedureId)) {
               appFabricClient.stopProgram(applicationId, procedureName, "procedures");
             }
           } catch (Exception e) {
@@ -258,7 +258,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
     try {
       final ProgramId workflowId = new ProgramId(applicationId, workflowName, "workflows");
-      Preconditions.checkState(runningProcessses.putIfAbsent(workflowName, workflowId) == null,
+      Preconditions.checkState(runningProcesses.putIfAbsent(workflowName, workflowId) == null,
                                "Workflow %s is already running", workflowName);
 
       // currently we are using it for schedule, so not starting the workflow
@@ -309,12 +309,12 @@ public class DefaultApplicationManager implements ApplicationManager {
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     try {
       final ProgramId serviceId = new ProgramId(applicationId, serviceName, "services");
-      Preconditions.checkState(runningProcessses.putIfAbsent(serviceName, serviceId) == null,
+      Preconditions.checkState(runningProcesses.putIfAbsent(serviceName, serviceId) == null,
                                "Service %s is already running", serviceName);
       try {
         appFabricClient.startProgram(applicationId, serviceName, "services", arguments);
       } catch (Exception e) {
-        runningProcessses.remove(serviceName);
+        runningProcesses.remove(serviceName);
         throw Throwables.propagate(e);
       }
 
@@ -364,7 +364,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (Map.Entry<String, ProgramId> entry : Iterables.consumingIterable(runningProcessses.entrySet())) {
+      for (Map.Entry<String, ProgramId> entry : Iterables.consumingIterable(runningProcesses.entrySet())) {
         // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
         // throw error when you stop smth that is not running.
         if (isRunning(entry.getValue())) {
@@ -416,7 +416,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   void stop(String programName, ProgramId programId) {
     try {
-      if (runningProcessses.remove(programName, programId)) {
+      if (runningProcesses.remove(programName, programId)) {
         appFabricClient.stopProgram(applicationId, programName, programId.getRunnableType());
       }
     } catch (Exception e) {
