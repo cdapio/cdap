@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.metrics.Metrics;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import org.slf4j.Logger;
@@ -35,6 +36,8 @@ public class PurchaseStore extends AbstractFlowlet {
 
   @UseDataSet("purchases")
   private ObjectStore<Purchase> store;
+  private Metrics metrics; // Declare the custom metrics
+
   private static final Logger LOG = LoggerFactory.getLogger(PurchaseStore.class);
 
   @ProcessInput
@@ -48,8 +51,10 @@ public class PurchaseStore extends AbstractFlowlet {
         purchase.setCatalogId(catalog);
       }
     }
-    LOG.info("Purchase info: Customer {}, ProductId {}, CatalogId {}", purchase.getCustomer(),
-                        purchase.getProduct(), purchase.getCatalogId());
+    metrics.count("purchases." + purchase.getCustomer(), 1);
+
+    LOG.info("Purchase info: Customer {}, ProductId {}, CatalogId {}",
+             purchase.getCustomer(), purchase.getProduct(), purchase.getCatalogId());
     store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
   }
 

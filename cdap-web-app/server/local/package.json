@@ -1,5 +1,5 @@
 {
-  "name": "reactor-ui-developer",
+  "name": "cdap-ui-developer",
   "version": "0.0.2",
   "main": "./main.js",
   "dependencies": {

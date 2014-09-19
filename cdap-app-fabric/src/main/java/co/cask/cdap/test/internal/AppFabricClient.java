@@ -51,6 +51,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.zip.ZipException;
 
 /**
  * Client tool for AppFabricHttpHandler.
@@ -277,6 +278,8 @@ public class AppFabricClient {
               jarEntry = new JarEntry(entryName);
             }
 
+            // TODO: this is due to manifest possibly already existing in the jar, but we also
+            // create a manifest programatically so it's possible to have a duplicate entry here
             if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
               jarEntry = jarInput.getNextJarEntry();
               continue;
