@@ -4,7 +4,7 @@ Here are instructions to get you started if you want to contribute to CDAP.
 
 ## Security Reports
 
-Please *DO NOT* file a JIRA for security related issue. Please send your reports to [security@cask.co](mailto:security@cask.co).
+Please *DO NOT* file a issue for security related problems. Please send your reports to [security@cask.co](mailto:security@cask.co).
 
 ## Creating Issues
 Inorder to file bugs or new feature requests please use [http://issues.cask.co](http://issues.cask.co) to file issues.
@@ -34,7 +34,7 @@ We recommend that you discuss your plan on the mailing list [cdap-developers@cas
 ### Pull requests
 We love having pull requests and we do our best to review them as fast as possible. If your pull request is not accepted on the first try, don't be discouraged. If there is a problem with the implementation, you will receive feedback on what to improve.
 
-#### Conventions
+### Conventions
 
 Fork the repository and make changes on your fork in a feature branch. The branch name should be XXXX-something, where XXXX is the number of the issue. 
 
