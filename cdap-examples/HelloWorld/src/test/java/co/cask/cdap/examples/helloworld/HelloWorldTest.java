@@ -37,7 +37,7 @@ public class HelloWorldTest extends TestBase {
 
   @Test
   public void test() throws TimeoutException, InterruptedException, IOException {
-    // Deploy the HelloWolrd application
+    // Deploy the HelloWorld application
     ApplicationManager appManager = deployApplication(HelloWorld.class);
 
     // Start WhoFlow
