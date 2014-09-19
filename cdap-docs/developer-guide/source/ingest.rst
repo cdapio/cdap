@@ -31,12 +31,12 @@ APIs: Java, Python and Ruby.
 Supported Actions
 .................
 
- - Create a Stream with a specified *stream-id*;
- - Update the TTL (time-to-live) for an existing Stream with a specified *stream-id*;
- - Retrieve the current Stream TTL for a specified *stream-id*;
- - Truncate an existing Stream (the deletion of all events that were written to the Stream);
- - Write an event to an existing Stream; and
- - Send a File to an existing Stream.
+- Create a Stream with a specified *stream-id*;
+- Update the TTL (time-to-live) for an existing Stream with a specified *stream-id*;
+- Retrieve the current Stream TTL for a specified *stream-id*;
+- Truncate an existing Stream (the deletion of all events that were written to the Stream);
+- Write an event to an existing Stream; and
+- Send a File to an existing Stream.
  
 Example (using Java API)
 ........................
@@ -127,10 +127,12 @@ Ruby API
 Available at: [link]
 
 
-File Drop Zone
+File DropZone
 --------------------
 
 The File DropZone application allows you to easily perform the bulk ingestion of local files.
+Files can either be directly uploaded, or they can be copied to a *work_dir*, 
+where they will automatically be ingested by a daemon process.
 
 Features
 ........
