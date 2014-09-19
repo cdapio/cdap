@@ -113,10 +113,10 @@ For example, a test class for the Purchase example::
 
 Deploy the application, which includes a Custom Service::
 
-  // Deploy the application
+  // Deploy the Application
   ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
-  // Start CatalogLookup service
+  // Start CatalogLookup Service
   ServiceManager serviceManager = appManager.startService("CatalogLookup");
 
 Because this call to start the service is asynchronous, the service may not actually be up right after the method
@@ -125,7 +125,7 @@ Once the service is up and running, requests can be sent to it with an HTTP libr
 
 To make a request to test an endpoint, such as /v1/product/{id}/catalog::
 
-  // Get the base URL of the Custom Service
+  // Get the base URL of the Service
   URL baseURL = serviceManager.getServiceURL();
 
   // Create the url for the service's endpoint, passing an item's id ("laptop" in this instance)
@@ -140,7 +140,7 @@ The response of the request can be verified::
   Assert.assertEquals("Catalog-laptop",
                       new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8));
 
-To stop the Custom Service, use the ServiceManager's stop method::
+To stop the Service, use the ServiceManager's stop method::
 
   serviceManager.stop();
 
