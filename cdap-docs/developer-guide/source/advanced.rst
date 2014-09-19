@@ -572,8 +572,7 @@ Application components can access created Dataset via ``@UseDataSet``::
     ...
   }
 
-A complete application demonstrating the use of a custom Dataset is included in our
-`PageViewAnalytics </examples/PageViewAnalytics/index.html>`__ example.
+A complete application demonstrating the use of a custom Dataset is included in our WordCount example.
 
 You can also create/drop/truncate Datasets using `Cask Data Application Platform HTTP REST API <rest.html>`__. Please refer to the
 REST APIs guide for more details on how to do that.
