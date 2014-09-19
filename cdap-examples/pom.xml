@@ -30,22 +30,9 @@
   <name>Cask Data Application Platform (CDAP) Examples</name>
 
   <modules>
-    <module>CountAndFilterWords</module>
-    <module>CountCounts</module>
-    <module>CountOddAndEven</module>
     <module>CountRandom</module>
-    <module>CountTokens</module>
     <module>HelloWorld</module>
-    <module>PageViewAnalytics</module>
     <module>Purchase</module>
-    <module>ResourceSpammer</module>
-    <module>ResponseCodeAnalytics</module>
-    <!-- Sentiment analysis showcases running external processes in flowlets -->
-    <!-- assumes Linux style path for locating python. -->
-    <module>SentimentAnalysis</module>
-    <module>SimpleWriteAndRead</module>
-    <module>Ticker</module>
-    <module>TrafficAnalytics</module>
     <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
