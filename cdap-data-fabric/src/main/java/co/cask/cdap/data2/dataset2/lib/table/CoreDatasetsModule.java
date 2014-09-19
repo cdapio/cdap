@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.KeyValueTableDefinition;
-import co.cask.cdap.api.dataset.lib.MultiObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.lib.TimeseriesTableDefinition;
@@ -63,9 +62,6 @@ public class CoreDatasetsModule implements DatasetModule {
 
     registry.add(new IndexedTableDefinition("indexedTable", tableDef));
     registry.add(new IndexedTableDefinition(IndexedTable.class.getName(), tableDef));
-
-    registry.add(new MultiObjectStoreDefinition("multiObjectStore", tableDef));
-    registry.add(new MultiObjectStoreDefinition(MultiObjectStore.class.getName(), tableDef));
 
     registry.add(new TimeseriesTableDefinition("timeseriesTable", tableDef));
     registry.add(new TimeseriesTableDefinition(TimeseriesTable.class.getName(), tableDef));

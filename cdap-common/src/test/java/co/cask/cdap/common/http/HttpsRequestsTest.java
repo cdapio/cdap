@@ -21,52 +21,59 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 
+import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 
 /**
  *
  */
-public class HttpRequestsTest extends HttpRequestsTestBase {
+public class HttpsRequestsTest extends HttpRequestsTestBase {
 
-  private static TestHttpService httpService;
+  private static TestHttpsService httpsService;
 
   @Before
-  public void setUp() {
-    httpService = new TestHttpService();
-    httpService.startAndWait();
+  public void setUp() throws Exception {
+    httpsService = new TestHttpsService();
+    httpsService.startAndWait();
   }
 
   @After
   public void tearDown() {
-    httpService.stopAndWait();
+    httpsService.stopAndWait();
   }
 
   @Override
   protected URI getBaseURI() throws URISyntaxException {
-    InetSocketAddress bindAddress = httpService.getBindAddress();
-    return new URI("http://" + bindAddress.getHostName() + ":" + bindAddress.getPort());
+    InetSocketAddress bindAddress = httpsService.getBindAddress();
+    return new URI("https://" + bindAddress.getHostName() + ":" + bindAddress.getPort());
   }
 
   @Override
   protected HttpRequestConfig getHttpRequestsConfig() {
-    return HttpRequestConfig.DEFAULT;
+    return new HttpRequestConfig(0, 0, true);
   }
 
-  public static final class TestHttpService extends AbstractIdleService {
+  public static final class TestHttpsService extends AbstractIdleService {
 
     private final NettyHttpService httpService;
 
-    public TestHttpService() {
+    public TestHttpsService() throws URISyntaxException {
+      URL keystore = getClass().getClassLoader().getResource("cert.jks");
+      Assert.assertNotNull(keystore);
+
       this.httpService = NettyHttpService.builder()
         .setHost("localhost")
-        .addHttpHandlers(Sets.newHashSet(new HttpRequestsTestBase.TestHandler()))
+        .addHttpHandlers(Sets.newHashSet(new TestHandler()))
         .setWorkerThreadPoolSize(10)
         .setExecThreadPoolSize(10)
         .setConnectionBacklog(20000)
+        .enableSSL(new File(keystore.toURI()), "secret", "secret")
         .build();
     }
 

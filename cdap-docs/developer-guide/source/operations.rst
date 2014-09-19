@@ -567,7 +567,7 @@ To add metrics to a Flowlet *NameSaver*::
     }
   }
 
-An example of user-defined metrics is in the `PageViewAnalytics example <examples/PageViewAnalytics/index.html>`_.
+An example of user-defined metrics is in ``PurchaseStore`` in the `Purchase example <examples/Purchase/index.html>`_.
 
 For details on available system metrics, see the `Metrics section <rest.html#metrics-http-api>`__
 in the `CDAP HTTP REST API Guide <rest.html>`__.

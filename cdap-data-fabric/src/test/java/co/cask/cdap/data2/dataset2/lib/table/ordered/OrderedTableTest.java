@@ -1396,6 +1396,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
   void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
     for (int i = 0; i < expectedRows.length; i++) {
       Row next = scan.next();
+      Assert.assertNotNull(next);
       Assert.assertArrayEquals(expectedRows[i], next.getRow());
       verify(expectedRowMaps[i], next.getColumns());
     }

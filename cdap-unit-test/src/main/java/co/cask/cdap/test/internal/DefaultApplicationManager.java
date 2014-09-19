@@ -26,6 +26,7 @@ import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -36,6 +37,7 @@ import co.cask.cdap.test.ProcedureManager;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
+import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.tephra.TransactionContext;
@@ -158,24 +160,13 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public MapReduceManager startMapReduce(final String jobName, Map<String, String> arguments) {
+    return getMapReduceManager(jobName, arguments, ProgramType.MAPREDUCE.name().toLowerCase());
+  }
+
+  private MapReduceManager getMapReduceManager(final String jobName, Map<String, String> arguments,
+                                               final String programType) {
     try {
-
-      final ProgramId jobId = new ProgramId(applicationId, jobName, "mapreduce");
-
-      // mapreduce job can stop by itself, so refreshing info about its state
-      if (!isRunning(jobId)) {
-        runningProcesses.remove(jobName);
-      }
-
-      Preconditions.checkState(runningProcesses.putIfAbsent(jobName, jobId) == null,
-                               "MapReduce job %s is already running", jobName);
-      try {
-        appFabricClient.startProgram(applicationId, jobName, "mapreduce", arguments);
-      } catch (Exception e) {
-        runningProcesses.remove(jobName);
-        throw Throwables.propagate(e);
-      }
-
+      final ProgramId jobId = startProgram(jobName, arguments, programType);
       return new MapReduceManager() {
         @Override
         public void stop() {
@@ -184,19 +175,72 @@ public class DefaultApplicationManager implements ApplicationManager {
 
         @Override
         public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
-          while (timeout > 0 && isRunning(jobId)) {
-            timeoutUnit.sleep(1);
-            timeout--;
-          }
-
-          if (timeout == 0 && isRunning(jobId)) {
-            throw new TimeoutException("Time limit reached.");
-          }
-
+          programWaitForFinish(timeout, timeoutUnit, jobId);
         }
       };
     } catch (Exception e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+
+  @Override
+  public SparkManager startSpark(String jobName) {
+    return startSpark(jobName, ImmutableMap.<String, String>of());
+  }
+
+  @Override
+  public SparkManager startSpark(String jobName, Map<String, String> arguments) {
+    return getSparkManager(jobName, arguments, ProgramType.SPARK.name().toLowerCase());
+  }
+
+  private SparkManager getSparkManager(final String jobName, Map<String, String> arguments,
+                                       final String programType) {
+    try {
+      final ProgramId jobId = startProgram(jobName, arguments, programType);
+      return new SparkManager() {
+        @Override
+        public void stop() {
+          stopProgram(jobId);
+        }
+
+        @Override
+        public void waitForFinish(long timeout, TimeUnit timeoutUnit) throws TimeoutException, InterruptedException {
+          programWaitForFinish(timeout, timeoutUnit, jobId);
+        }
+      };
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private ProgramId startProgram(String jobName, Map<String, String> arguments, String programType) {
+    final ProgramId jobId = new ProgramId(applicationId, jobName, programType);
+    // program can stop by itself, so refreshing info about its state
+    if (!isRunning(jobId)) {
+      runningProcesses.remove(jobName);
+    }
+
+    Preconditions.checkState(runningProcesses.putIfAbsent(jobName, jobId) == null,
+                             programType + " program %s is already running", jobName);
+    try {
+      appFabricClient.startProgram(applicationId, jobName, programType, arguments);
+    } catch (Exception e) {
+      runningProcesses.remove(jobName);
+      throw Throwables.propagate(e);
+    }
+    return jobId;
+  }
+
+  private void programWaitForFinish(long timeout, TimeUnit timeoutUnit, ProgramId jobId)
+                                                                        throws InterruptedException, TimeoutException {
+    while (timeout > 0 && isRunning(jobId)) {
+      timeoutUnit.sleep(1);
+      timeout--;
+    }
+
+    if (timeout == 0 && isRunning(jobId)) {
+      throw new TimeoutException("Time limit reached.");
     }
   }
 
@@ -348,7 +392,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     try {
       for (Map.Entry<String, ProgramId> entry : Iterables.consumingIterable(runningProcesses.entrySet())) {
         // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
-        // throw error when you stop smth that is not running.
+        // throw error when you stop something that is not running.
         if (isRunning(entry.getValue())) {
           ProgramId id = entry.getValue();
           appFabricClient.stopProgram(id.getApplicationId(), id.getRunnableId(), id.getRunnableType());
