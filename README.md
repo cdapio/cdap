@@ -1,7 +1,7 @@
 
 # Cask Data Application Platform - CDAP
 
-![CDAP Logo](/docs/developer-guide/source/_images/CDAP.png)
+![CDAP Logo](/cdap-docs/developer-guide/source/_images/CDAP.png)
 
 **Introduction**
 
@@ -74,10 +74,10 @@ modifying the example’s Java code to include counting client IP addresses.
 
 Now that you've had a look at the CDAP SDK, take a look at:
 
-- Examples, located in the `/examples` directory of the CDAP SDK;
+- Examples, located in the `/cdap-examples` directory of the CDAP SDK;
 - [Selected Examples](http://docs.cask.co/cdap/current/examples.html) 
   (demonstrating basic features of the CDAP) are located on-line; and
-- Developer Guides, located in the source distribution in `/docs/developer-guide/source`
+- Developer Guides, located in the source distribution in `/cdap-docs/developer-guide/source`
   or [online](http://docs.cask.co/cdap/current/index.html).
 
 
