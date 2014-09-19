@@ -12,6 +12,7 @@ Cask Data Application Platform Documentation
    Introduction </intro>
    Quick Start </quickstart>
    Examples </examples/index>
+   Case Study </case_study>
    Programming Guide </programming>
    Advanced Features </advanced>
    Querying Datasets with SQL </query>
