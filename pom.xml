@@ -147,6 +147,7 @@
     <module>cdap-standalone</module>
     <module>cdap-distributions</module>
     <module>cdap-archetypes</module>
+    <module>cdap-app-fabric-tests</module>
   </modules>
 
   <dependencyManagement>
