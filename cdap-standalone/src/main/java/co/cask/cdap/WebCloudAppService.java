@@ -57,11 +57,15 @@ final class WebCloudAppService extends AbstractExecutionThreadService {
     if (!base.isDirectory()) {
       base = new File("cdap-web-app");
     }
-    Preconditions.checkState(base.isDirectory(), "Unable to determine web-app directory");
+    if (!base.isDirectory()) {
+      // It's ok as the path might get pass from StandaloneMain
+      LOG.warn("Unable to determine web-app directory");
+    }
     WEB_APP_BASE = base;
     WEB_APP = new File(new File(new File(base, "server"), "local"), "main.js").getAbsolutePath();
   }
 
+  private final File webAppBase;
   private final File webAppPath;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
@@ -72,6 +76,9 @@ final class WebCloudAppService extends AbstractExecutionThreadService {
   @Inject
   public WebCloudAppService(@Named("web-app-path")String webAppPath, CConfiguration cConf, SConfiguration sConf) {
     this.webAppPath = new File(webAppPath);
+    // This is ok since this class is only used in standalone, the path is always [base]/server/local/main.js
+    // However, this could change if the layer of web-app changed, which require adjustment to this class anyway
+    this.webAppBase = this.webAppPath.getParentFile().getParentFile().getParentFile();
     this.cConf = cConf;
     this.sConf = sConf;
   }
@@ -81,9 +88,8 @@ final class WebCloudAppService extends AbstractExecutionThreadService {
    */
   @Override
   protected void startUp() throws Exception {
-    // This is ok since this class is only used in standalone, hence the path is always [base]/server/local/main.js
-    generateConfigFile(new File(WEB_APP_BASE, JSON_PATH), cConf);
-    generateConfigFile(new File(WEB_APP_BASE, JSON_SECURITY_PATH), sConf);
+    generateConfigFile(new File(webAppBase, JSON_PATH), cConf);
+    generateConfigFile(new File(webAppBase, JSON_SECURITY_PATH), sConf);
 
     ProcessBuilder builder = new ProcessBuilder(NODE_JS_EXECUTABLE, webAppPath.getAbsolutePath());
     builder.redirectErrorStream(true);
@@ -151,5 +157,8 @@ final class WebCloudAppService extends AbstractExecutionThreadService {
   protected void shutDown() throws Exception {
     LOG.info("Shutting down Web Cloud App ...");
     process.waitFor();
+    // Cleanup generated files
+    new File(webAppBase, JSON_PATH).delete();
+    new File(webAppBase, JSON_SECURITY_PATH).delete();
   }
 }
