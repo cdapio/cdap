@@ -131,15 +131,14 @@ To make a request to test an endpoint, such as /v1/product/{id}/catalog::
   // Create the url for the service's endpoint, passing an item's id ("laptop" in this instance)
   URL url = new URL(baseURL, "v1/product/laptop/catalog")
 
-  // Execute the request
-  HttpRequest request = HttpRequest.get(url).build();
-  HttpResponse response = HttpRequests.execute(request);
+  // Open a connection to the Custom Service
+  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
 The response of the request can be verified::
 
-  Assert.assertEquals(200, response.getResponseCode());
+  Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
   Assert.assertEquals("Catalog-laptop",
-                      new Gson().fromJson(response.getResponseBodyAsString(), String.class)));
+                      new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8));
 
 To stop the Custom Service, use the ServiceManager's stop method::
 
