@@ -110,7 +110,7 @@ CDAP consists mainly of these components:
   special case, system services). Application containers scale linearly and elastically with the underlying
   infrastructure.
 
-.. image:: _images/architecture_diagram_1.png
+.. image:: _images/components.png
    :width: 6in
    :align: center
 
