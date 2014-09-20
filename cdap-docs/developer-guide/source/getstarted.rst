@@ -17,31 +17,46 @@ The minimum requirements to run CDAP applications are only three,
 - `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP UI)
 - `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
 
-Start Using CDAP
-================
-You can Download the CDAP tarball at <link>
-
-CDAP is also available in Maven under the following identifiers
-  co.cask.cdap:cdap
-
-Setting up Development Environment
-==================================
-
-  1 To generate a sample CDAP application, you would use the maven archetype
-  ``TODO : Update Archetype ``
-  ``mvn archetype:generate -   DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml -DarchetypeGroupId=com.continuuity -DarchetypeArtifactId=reactor-app-archetype -DarchetypeVersion=2.3.0``
-
-  2 To setup the CDAP application development environment, you need to import the generated pom file in your IDE.
-     Now you are all set to start developing your first CDAP application.
-
-  3 CDAP comes with a set of Prebuilt specialized CDAP apps, that showcases the power and simplicity of developing
-    Big Data Apps using CDAP. We can see how you can deploy one of the example app and experience what you can do with it.
-
-  This is an example Javadoc link to AbstractFlowlet_
-    Will the link still work?
-  .. _AbstractFlowlet: javadocs/co/cask/cdap/api/mapreduce/MapReduce.html
+Getting CDAP
+============
+CDAP is available as a source tarball and binary on the Downloads section of Cask Website. If you want to get started quickly, the binary is the easiest way to get started.
 
 
+Building from Source
+....................
+
+**Check out the source** ::
+
+    $ git clone https://github.com/caskco/cdap cdap
+    $ cd cdap
+
+**Compile the Project** ::
+
+  $ mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+
+.. note:: Recommended memory settings for maven: export MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m"
+
+If you are a user, you would want the binary distribution ::
+
+  $ cp cdap-standalone/target/cdap-sdk-<version>.zip .
+  $ tar -zxvf cdap-sdk-<version>.zip
+  $ cd cdap-sdk-<version>
+
+**Running CDAP** ::
+
+    $ ./bin/cdap.sh start (If you are using Windows, use the batch script to start)
+
+  Once CDAP is started successfully, you can see the CDAP web UI running at localhost:9999, you can head there to deploy sample example apps and experience CDAP.
+
+For Developers
+..............
+
+To generate a sample CDAP application, you would use the maven archetype ::
+
+   ``mvn archetype:generate -   DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml -DarchetypeGroupId=com.continuuity -DarchetypeArtifactId=reactor-app-archetype -DarchetypeVersion=2.3.0``
+
+To setup the CDAP application development environment, you need to import the generated pom file in your IDE
+Now you are all set to start developing your first CDAP application.
 
 
 
