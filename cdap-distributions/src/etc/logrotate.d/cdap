@@ -1,8 +1,0 @@
-/var/log/cdap/*-cdap-*.log {
-    rotate 7
-    daily
-    missingok
-    notifempty
-    copytruncate
-    compress
-}
