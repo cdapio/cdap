@@ -53,7 +53,10 @@ Spark Integration
 .................
 - Supports running Spark programs as a part of CDAP applications in Standalone mode
 - Supports running Spark programs written with Spark versions 1.0.1 or 1.1.0 
- 
+- Supports Spark's *MLib* and *GraphX* modules
+- Includes three examples demonstrating CDAP Spark programs
+- Adds display of Spark program logs and history in the CDAP Console
+
 Streams
 .................
 - Added a collection of applications, tools and APIs specifically for the ETL (Extract, Transform and Loading) of data
