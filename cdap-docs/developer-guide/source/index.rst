@@ -17,6 +17,7 @@ Cask Data Application Platform Documentation
    APIs and Clients </api>
    Testing and Debugging (to be moved under Tools) </debugging>
    Tools </tools>
+   Installation </install>
    Admin </admin>
    /javadocs/index
    Licenses and Dependencies </licenses/index>
