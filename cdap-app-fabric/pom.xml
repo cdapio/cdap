@@ -30,22 +30,6 @@
   <name>CDAP App-Fabric</name>
   <packaging>jar</packaging>
 
-  <repositories>
-    <repository>
-      <id>scala-tools.org</id>
-      <name>Scala-tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-releases</url>
-    </repository>
-  </repositories>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>scala-tools.org</id>
-      <name>Scala-tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-releases</url>
-    </pluginRepository>
-  </pluginRepositories>
-
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -56,10 +40,6 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-proto</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -122,6 +102,16 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-minicluster</artifactId>
       <scope>compile</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.servlet</groupId>
+          <artifactId>servlet-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.10</artifactId>
     </dependency>
   </dependencies>
 
@@ -143,10 +133,6 @@
           <execution>
             <id>scala-compile-first</id>
             <phase>process-resources</phase>
-            <goals>
-              <goal>add-source</goal>
-              <goal>compile</goal>
-            </goals>
           </execution>
           <execution>
             <id>scala-test-compile</id>
