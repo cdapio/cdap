@@ -2,9 +2,9 @@
    :description: Cask Data Application Platform - Tools
          :copyright: Copyright © 2014 Cask Data, Inc.
 
-==========================================================
+================================================
 Cask Data Application Platform - Available Tools
-===========================================================
+================================================
 
 Tools Info
 ==========
@@ -36,7 +36,6 @@ interact with them and ingest data into them,etc:
 
 .. _CLI:
 
-======================
 Command-Line Interface
 ======================
 
@@ -180,7 +179,6 @@ These are the available commands:
 
 .. _TestFramework:
 
-============
 Testing CDAP
 ============
 
@@ -361,7 +359,6 @@ or prepare statements and execute queries, then iterate over the results set and
 
 .. _DebugCDAP:
 
-==============
 Debugging CDAP
 ==============
 
@@ -525,7 +522,6 @@ You may need to adjust them for your installation or version.
 
 .. _TxDebugger:
 
-===============================
 Dumping the Transaction Manager
 ===============================
 
@@ -580,7 +576,6 @@ from the concerned Tables.
 
 .. _Ingest:
 
-========================
 Ingesting Data Into CDAP
 ========================
 
@@ -588,6 +583,4 @@ Ingesting Data Into CDAP
 
 CDAP Flume Sink
 ---------------
-
-
 

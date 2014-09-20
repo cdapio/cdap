@@ -57,11 +57,3 @@ To generate a sample CDAP application, you would use the maven archetype ::
 
 To setup the CDAP application development environment, you need to import the generated pom file in your IDE
 Now you are all set to start developing your first CDAP application.
-
-
-
-
-
-
-
-
