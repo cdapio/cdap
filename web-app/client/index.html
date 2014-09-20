@@ -1292,12 +1292,12 @@
       <div class="panel">
         <div>
           <div class="panel-title center-align beta-info-font">
+            {{#if showLogsMessage}}
+              <div>
+                <span> To see more details about the job, please see the <span class="logs-link" {{action "logsLinkHandler" on="click"}}> logs </span> </span>
+              </div>
+            {{/if}}
             <div>Beta Feature: Additional components will be added in a future release. </div>
-          {{#if showLogsMessage}}
-            <div>
-              <span> This program is running. To see more details, please see the <span class="logs-link" {{action "logsLinkHandler" on="click"}}> logs </span> </span>
-            </div>
-          {{/if}}
           </div>
         </div>
       </div>
