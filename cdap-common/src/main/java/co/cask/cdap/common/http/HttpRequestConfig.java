@@ -24,7 +24,7 @@ public class HttpRequestConfig {
 
   private final int connectTimeout;
   private final int readTimeout;
-  private final boolean disableCertCheck;
+  private final boolean verifySSLCert;
 
   /**
    * @param connectTimeout Connect timeout, in milliseconds. See {@link java.net.URLConnection#getConnectTimeout()}.
@@ -33,18 +33,19 @@ public class HttpRequestConfig {
   public HttpRequestConfig(int connectTimeout, int readTimeout) {
     this.connectTimeout = connectTimeout;
     this.readTimeout = readTimeout;
-    this.disableCertCheck = false;
+    this.verifySSLCert = true;
   }
 
   /**
    * @param connectTimeout Connect timeout, in milliseconds. See {@link java.net.URLConnection#getConnectTimeout()}.
    * @param readTimeout Read timeout, in milliseconds. See {@link java.net.URLConnection#getReadTimeout()}.
-   * @param disableCertCheck true, to disable certificate checking in SSL connections.
+   * @param verifySSLCert false, to disable certificate verifying in SSL connections. By default SSL certificate is
+   *                      verified.
    */
-  public HttpRequestConfig(int connectTimeout, int readTimeout, boolean disableCertCheck) {
+  public HttpRequestConfig(int connectTimeout, int readTimeout, boolean verifySSLCert) {
     this.connectTimeout = connectTimeout;
     this.readTimeout = readTimeout;
-    this.disableCertCheck = disableCertCheck;
+    this.verifySSLCert = verifySSLCert;
   }
 
   public int getConnectTimeout() {
@@ -55,7 +56,7 @@ public class HttpRequestConfig {
     return readTimeout;
   }
 
-  public boolean isDisableCertCheck() {
-    return disableCertCheck;
+  public boolean isVerifySSLCert() {
+    return verifySSLCert;
   }
 }
