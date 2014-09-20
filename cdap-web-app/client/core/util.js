@@ -475,7 +475,7 @@ define([], function () {
 							transform = metric.options.transform;
 						}
 						buffer = buffer || 5;
-						path = metric.path + '?start=now-' + buffer + 's&count=';
+						var path = metric.path + '?start=now-' + buffer + 's&count=';
 						if (metric.interpolate) {
 							// when interpolating, only need 1 data point, and the window 
 							// over which to interpolate can be 2x the buffer 
