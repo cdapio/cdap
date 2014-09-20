@@ -114,6 +114,41 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
+  private static final class DataSetClassLoader extends ClassLoader {
+
+    private final ClassLoader classLoader;
+
+    private DataSetClassLoader(ClassLoader classLoader) {
+      this.classLoader = classLoader;
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+      return classLoader.loadClass(name);
+    }
+  }
+
+  static class ProgramId {
+    private final String appId;
+    private final String runnableId;
+    private final String runnableType;
+
+    ProgramId(String applicationId, String runnableId, String runnableType) {
+      this.appId = applicationId;
+      this.runnableId = runnableId;
+      this.runnableType = runnableType;
+    }
+    public String getApplicationId() {
+      return this.appId;
+    }
+    public String getRunnableId() {
+      return this.runnableId;
+    }
+    public String getRunnableType() {
+      return this.runnableType;
+    }
+  }
+  
   @Override
   public FlowManager startFlow(final String flowName) {
     return startFlow(flowName, ImmutableMap.<String, String>of());
@@ -402,41 +437,6 @@ public class DefaultApplicationManager implements ApplicationManager {
       throw Throwables.propagate(e);
     } finally {
       RuntimeStats.clearStats(applicationId);
-    }
-  }
-
-  private static final class DataSetClassLoader extends ClassLoader {
-
-    private final ClassLoader classLoader;
-
-    private DataSetClassLoader(ClassLoader classLoader) {
-      this.classLoader = classLoader;
-    }
-
-    @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-      return classLoader.loadClass(name);
-    }
-  }
-
-  static class ProgramId {
-    private final String appId;
-    private final String runnableId;
-    private final String runnableType;
-
-    ProgramId(String applicationId, String runnableId, String runnableType) {
-      this.appId = applicationId;
-      this.runnableId = runnableId;
-      this.runnableType = runnableType;
-    }
-    public String getApplicationId() {
-      return this.appId;
-    }
-    public String getRunnableId() {
-      return this.runnableId;
-    }
-    public String getRunnableType() {
-      return this.runnableType;
     }
   }
 
