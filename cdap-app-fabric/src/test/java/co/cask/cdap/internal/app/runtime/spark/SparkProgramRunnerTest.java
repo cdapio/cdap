@@ -203,7 +203,7 @@ public class SparkProgramRunnerTest {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     completion.await(10, TimeUnit.MINUTES);
-    TimeUnit.SECONDS.wait(2);
+    TimeUnit.SECONDS.sleep(2);
   }
 
   private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
