@@ -54,7 +54,6 @@ public final class ReflectionDatumReader<T> implements DatumReader<T> {
   public ReflectionDatumReader(Schema schema, TypeToken<T> type) {
     this.schema = schema;
 
-    // TODO: (ENG-2940) This is a hack. Until we support class generation based on interface
     this.type = type.getRawType().equals(StreamEvent.class)
                       ? (TypeToken<T>) TypeToken.of(DefaultStreamEvent.class) : type;
 
