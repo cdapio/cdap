@@ -125,12 +125,12 @@ public class SparkProgramRunnerTest {
   }
 
   @Test
-  public void testScalaSparkWithObjectStore() throws Exception {
+  public void testSparkWithObjectStore() throws Exception {
     final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(ScalaSparkAppUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(SparkAppUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
 
     prepareInputData();
-    runProgram(app, ScalaSparkAppUsingObjectStore.CharCountSpecification.class);
+    runProgram(app, SparkAppUsingObjectStore.CharCountSpecification.class);
     checkOutputData();
   }
 
