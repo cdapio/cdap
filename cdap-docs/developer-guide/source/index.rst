@@ -15,7 +15,6 @@ Cask Data Application Platform Documentation
    Developer Guide </dev-guide>
    Case Studies </case-studies>
    APIs and Clients </api>
-   Testing and Debugging (to be moved under Tools) </debugging>
    Tools </tools>
    Installation </install>
    Admin </admin>
