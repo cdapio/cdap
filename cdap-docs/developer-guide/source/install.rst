@@ -1,6 +1,10 @@
-------------------------------
-Installation and Configuration
-------------------------------
+.. :author: Cask Data, Inc.
+   :description: Installation guide for Cask Data Application Platform on Linux systems
+   :copyright: Copyright © 2014 Cask Data, Inc.
+
+------------------------------------
+Installation and Configuration Guide
+------------------------------------
 
 Introduction
 ============
@@ -55,7 +59,7 @@ that need to be met and completed before installation of the CDAP components.
 
 For information on configuring the Cask DAP Instance for security, see the online document
 `CDAP Security Guide 
-<http://cask.co/docs/cdap/current/en/security.html>`__.
+<http://docs.cask.co/cdap/current/security.html>`__.
 
 
 Conventions
@@ -408,7 +412,7 @@ and then restart CDAP.
      for i in `ls /etc/init.d/ | grep cdap` ; do service $i start ; done
 
 Verification
-==========================
+============
 To verify that the CDAP software is successfully installed and you are able to use your
 Hadoop cluster, run an example application.
 We provide in our SDK pre-built ``.JAR`` files for convenience:
@@ -427,12 +431,12 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
    ``CDAP_HOME/examples/TrafficAnalytics/target/TrafficAnalytics-1.0.jar``
 #. Once the application is deployed, instructions on running the example can be found at the 
    `TrafficAnalytics example 
-   </http://cask.co/docs/cdap/current/en/examples/trafficAnalytics#building-and-running-the-application-and-example>`__.
+   </http://docs.cask.co/cdap/current/examples/trafficAnalytics#building-and-running-the-application-and-example>`__.
 #. You should be able to start the application, inject log entries,
    run the ``MapReduce`` job and see results.
 #. When finished, stop and remove the application as described in the
    `TrafficAnalytics example 
-   <http://cask.co/docs/cdap/current/en/examples/trafficAnalytics#stopping-the-application>`__.
+   <http://docs.cask.co/cdap/current/examples/trafficAnalytics#stopping-the-application>`__.
 
 .. rst2pdf: PageBreak
 
@@ -445,7 +449,7 @@ Application Won't Start
 Check HDFS write permissions. It should show an obvious exception in the YARN logs.
  
 No Metrics/logs
------------------------
+---------------
 Make sure the *Kafka* server is running, and make sure local the logs directory is created and accessible.
 On the initial startup, the number of available seed brokers must be greater than or equal to the
 *Kafka* default replication factor.
@@ -457,7 +461,7 @@ metrics will not show up though the application will still run::
         Error while retrieving topic metadata (kafka.server.KafkaApis)
         kafka.admin.AdministrationException:
                replication factor: 2 larger than available brokers: 1
- 
+
 Only the First Flowlet Showing Activity
 ---------------------------------------
 Check that YARN has the capacity to start any of the remaining containers.
@@ -498,7 +502,7 @@ Where to Go Next
 ================
 Now that you've installed CDAP, take a look at:
  
-- `Introduction to Cask Data Application Platform <http://cask.co/developers/>`__,
+- `Introduction to Cask Data Application Platform <http://docs.cask.co/cdap/index.html>`__,
   an introduction to Big Data and CDAP.
 
 .. rst2pdf: CutStop
@@ -506,13 +510,13 @@ Now that you've installed CDAP, take a look at:
 .. _appendix:
 
 Appendix: ``cdap-site.xml``
-======================================
+===========================
 Here are the parameters that can be defined in the ``cdap-site.xml`` file,
 their default values, descriptions and notes.
 
 For information on configuring the ``cdap-site.xml`` file and CDAP for security, 
 see the online document `CDAP Security Guide 
-<http://cask.co/docs/cdap/current/en/security.html>`__.
+<http://docs.cask.co/cdap/current/security.html>`__.
 
 ..   :widths: 20 20 30
 
@@ -904,13 +908,13 @@ see the online document `CDAP Security Guide
   greater than the maximum frame sent on the RPC channel.
 
 Appendix: ``cdap-security.xml``
-======================================
+===============================
 Here are the parameters that can be defined in the ``cdap-security.xml`` file,
 their default values, descriptions and notes.
 
 For information on configuring the ``cdap-security.xml`` file and CDAP for security, 
 see the online document `CDAP Security Guide 
-<http://cask.co/docs/cdap/current/en/security.html>`__.
+<http://docs.cask.co/cdap/current/security.html>`__.
 
 ..   :widths: 20 20 30
 
