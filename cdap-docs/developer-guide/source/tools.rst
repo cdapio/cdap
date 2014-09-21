@@ -576,11 +576,538 @@ from the concerned Tables.
 
 .. _Ingest:
 
-Ingesting Data Into CDAP
-========================
+Ingesting Data into the Cask Data Application Platform
+======================================================
 
 .. highlight:: console
 
-CDAP Flume Sink
----------------
+Introduction
+------------
 
+One of the first tasks of actually working with Big Data applications is getting the data in.
+We understand data ingestion is important and one tool does not fit all the needs,So to assist the user
+for ingesting data into Cask Data Application Platform (CDAP) Applications, we have
+assembled a set of tools and applications that the user can take advantage of for data ingestion:
+
+- Java, Python and Ruby APIs for controlling and writing to Streams;
+- a drop zone for bulk ingestion of files ;
+- a file tailer daemon to tail local files; and
+- an Apache Flume Sink implementation for writing events received from a source.
+
+
+Tools
+-----
+
+Stream Client
+.............
+
+CDAP provides a bunch of Clients for ingesting data into the available Streams, Right now we provide clients for
+Java, Javascript, Python and Ruby.
+The Stream Client is for managing Streams via external applications. It is available in three different
+APIs: Java, Python and Ruby.
+
+Supported Actions
+.................
+
+- Create a Stream with a specified *stream-id*;
+- Retrieve or Update the TTL (time-to-live) for an existing Stream with a specified *stream-id*;
+- Truncate an existing Stream (the deletion of all events that were written to the Stream);
+- Write an event to an existing Stream; and
+- Send a File to an existing Stream.
+
+Example (using Java API)
+........................
+
+Create a StreamClient instance, specifying the fields 'host' and 'port' of the gateway server.
+Optional configurations that can be set:
+
+- SSL: true or false (use HTTP protocol)
+- WriterPoolSize: '10' (max thread pool size for write events to the Stream)
+- Version : 'v2' (Gateway server version, used as a part of the base URI
+  ``http(s)://localhost:10000/v2/...``)
+- AuthToken: null (Need to specify to authenticate client requests)
+- APIKey: null (Need to specify to authenticate client requests using SSL)
+
+::
+
+  StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000).build();
+
+or specified using the builder parameters::
+
+  StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000)
+                                                  .apiKey("apiKey")
+                                                  .authToken("token")
+                                                  .ssl(false)
+                                                  .version("v2")
+                                                  .writerPoolSize(10)
+                                                  .build();
+
+
+Create a new Stream with the *stream id* "newStreamName"::
+
+  streamClient.create("newStreamName");
+
+**Notes:**
+
+- The *stream-id* should only contain ASCII letters, digits and hyphens.
+- If the Stream already exists, no error is returned, and the existing Stream remains in place.
+
+Update TTL for the Stream *streamName*; TTL is a long value and is specified in seconds::
+
+  streamClient.setTTL("streamName", newTTL);
+
+Get the current TTL value(seconds) for the Stream *streamName*::
+
+  long ttl = streamClient.getTTL("streamName");
+
+Create a ``StreamWriter`` instance for writing events to the Stream *streamName*::
+
+   StreamWriter streamWriter = streamClient.createWriter("streamName");
+
+To write new events to the Stream, you can use any of these five methods in the ``StreamWriter`` interface::
+
+  ListenableFuture<Void> write(String str, Charset charset);
+  ListenableFuture<Void> write(String str, Charset charset, Map<String, String> headers);
+  ListenableFuture<Void> write(ByteBuffer buffer);
+  ListenableFuture<Void> write(ByteBuffer buffer, Map<String, String> headers);
+  ListenableFuture<Void> send(File file, MediaType type);
+
+Example::
+
+  streamWriter.write("New log event", Charsets.UTF_8).get();
+
+To truncate the Stream *streamName*, use::
+
+  streamClient.truncate("streamName");
+
+When you are finished, release all resources by calling these two methods::
+
+  streamWriter.close();
+  streamClient.close();
+
+Python API
+-----------
+Usage
+.....
+
+To use the Stream Client Python API, include these imports in your
+Python script:
+
+::
+
+        from config import Config
+        from streamclient import StreamClient
+
+Configuring and Creating a Stream:
+..................................
+
+For Creating a ``StreamClient`` instance you would need a ``config`` object::
+
+You can create the `config`` object by manually configuring the config options or you can read the config options
+from an existing file.
+
+1. Creating ``config`` object and configuring it manually
+::
+
+  #The assigned values are also the default values
+  def createStremClient():
+    config = Config()
+    config.host = ‘localhost’
+    config.port = 10000
+    config.ssl = False
+    streamClient = streamClient(config)
+
+2. using an existing configuration file in JSON format [`Note 1`_] to create a ``config`` object
+::
+
+   def createStremClient():
+    config = Config.read_from_file('/path/to/config.json')
+    streamClient = streamClient(config)
+
+
+3. Once we have configured the stream client, we can create a stream by calling create with a stream-name [`Note 2`_]
+::
+
+  streamClient.create("newStreamName");
+
+TTL:
+....
+
+Update TTL for the Stream “streamName”; ``newTTL`` is a long value specified in seconds:
+::
+
+  streamClient.set_ttl("streamName", newTTL)
+
+Get the current TTL value for the Stream “streamName”:
+::
+
+  ttl = streamClient.get_ttl("streamName")
+
+Writing Events to Stream:
+.........................
+
+Create a ``StreamWriter`` instance for writing events to the Stream
+“streamName”:
+
+Once you have a ``StreamWriter`` instance:
+  1. you can write events to the stream using ``write()`` method or
+  2. you can send a file to the stream using ``send()`` method
+
+Putting it all together:
+........................
+::
+
+  def createStremClient():
+    config = Config.read_from_file('/path/to/config.json')
+    streamClient = streamClient(config)
+    streamWriter = streamClient.create_writer("streamName")
+    streamPromise = streamWriter.write("New log Event") #async
+    streamPromise.onResponse(onOKHandler, onErrorHalnder)
+
+  def onOkHandler(httpResponse): #will be executed after successful write to stream
+    ...
+    parse response
+    return "Success"
+    ...
+
+  def onErrorHandler(httpResponse): #will be executed if stream write fails
+    ...
+    parse response
+    return "Failure"
+    ...
+.. _note 1:
+:Note 1:
+Config file structure in JSON format:
+::
+
+  {
+    hostname: 'localhost',    - gateway hostname
+    port: 10000,              - gateway port
+    SSL: false                - if SSL is being used
+  }
+.. _note 2:
+:Note 2:
+Stream Name:
+  -  The name can only contain ASCII letters, digits and hyphens.
+  -  If the Stream already exists, no error is returned, and the existing
+     Stream remains in place.
+
+Additional Notes
+................
+
+All methods from the ``StreamClient`` and ``StreamWriter`` throw
+exceptions using response code analysis from the gateway server. These
+exceptions help determine if the request was processed successfully or
+not.
+
+In the case of a **200 OK** response, no exception will be thrown; other
+cases will throw the NotFoundException.
+
+Available at: [link]
+
+
+Ruby API
+--------
+
+Build
+-----
+
+To build a gem, run:
+
+``gem build stream-client-ruby.gemspec``
+
+Usage
+-----
+
+To use the Stream Client Ruby API, just add the following to your application Gemfile:
+
+``gem 'stream-client-ruby'``
+
+If you use gem outside Rails, you should require gem files in your application files:
+
+``require 'stream-client-ruby'``
+
+Example
+-------
+
+You can configure StreamClient settings in your config files, for
+example:
+
+::
+
+    # config/stream.yml
+    gateway: 'localhost'
+    port: 10000
+    api_version: 'v2'
+    api_key:
+    ssl: false
+
+::
+
+    # initializers/stream.rb
+    require "yaml"
+
+    config = YAML.load_file("config/stream.yml")
+
+    CDAPIngest::Rest.gateway     = config['gateway']
+    CDAPIngest::Rest.port        = config['port']
+    CDAPIngest::Rest.api_version = config['api_version']
+    CDAPIngest::Rest.ssl         = config['ssl']
+
+Create a StreamClient instance and use it as any Ruby object:
+
+::
+
+    client = CDAPIngest::StreamClient.new
+
+Create a new Stream with the *stream id* “new\_stream\_name”:
+
+``client.create "new_stream_name"``
+
+Notes:
+
+-  The must only contain ASCII letters, digits and hyphens.
+-  If the Stream already exists, no error is returned, and the existing
+   Stream remains in place.
+
+Update TTL for the Stream *stream\_name*; TTL is a integer value in Ruby, but the range should be limited to Java Long:
+
+``client.set_ttl stream_name, 256``
+
+Get the current TTL value for the Stream *stream\_name*:
+
+``ttl = client.get_ttl "stream_name"``
+
+Create a ``StreamWriter`` instance for writing events to the Stream
+*stream\_name* in 3 threads asynchronously:
+
+``writer = client.create_writer "stream_name", 3``
+
+::
+
+  test_data = "string to send in stream 10 times"
+
+  10.times {
+    writer.write(test_data).then(
+      ->(response) {
+        puts "success: #{response.code}"
+      },
+      ->(error) {
+        puts "error: #{error.response.code} -> #{error.message}"
+      }
+    )
+  }
+
+  writer.send('file.log').then { |response|
+    puts "success send file: #{response.code}"
+  }
+
+To truncate the Stream *stream\_name*, use:
+
+``client.truncate "stream_name"``
+
+When you are finished, release all resources by calling this method:
+
+``writer.close``
+
+Additional Notes
+----------------
+
+All methods from the ``StreamClient`` and ``StreamWriter`` throw
+exceptions using response code analysis from the gateway server. These
+exceptions help determine if the request was processed successfully or
+not.
+
+In the case of a **200 OK** response, no exception wi
+
+Available at: [link]
+
+
+File DropZone
+--------------------
+
+The File DropZone application allows you to easily perform the bulk ingestion of local files.
+Files can either be directly uploaded, or they can be copied to a *work_dir*,
+where they will automatically be ingested by a daemon process.
+
+Features
+........
+
+- Distributed as debian and rpm packages;
+- Loads properties from configuration file;
+- Supports multiple observers/topics;
+- Able to survive restart and resume, sending from the first unsent record of each of the existing files; and
+- Cleanup of files that are completely sent.
+
+Available at: [link]
+
+File Tailer
+-----------
+
+File Tailer is a daemon process that performs tailing of sets of local files.
+As soon as a new record has been appended to the end of a file that the daemon is monitoring,
+it will send it to a Stream via the REST API.
+
+Features
+........
+
+- Distributed as debian and rpm packages;
+- Loads properties from a configuration file;
+- Supports rotation of log files;
+- Persists state and is able to resume from first unsent record; and
+- Writes statistics info.
+
+Installing File Tailer
+----------------------
+on Debian/Ubuntu :
+``sudo apt-get install file-tailer.deb``
+on RHEL/Cent OS :
+`` sudo rpm -ivh --force file-tailer.rpm``
+
+Configuring File Tailer
+-----------------------
+After Installation, you can configure the daemon properties at /etc/file-tailer/conf/file-tailer.properties::
+
+     # General pipe properties
+     # Comma-separated list of pipes to be configured
+     pipes=app1pipe,app2pipe
+
+     # Pipe 1 source properties
+     # Working directory (where to monitor files)
+     pipes.app1pipe.source.work_dir=/var/log/app1
+     # Name of log file
+     pipes.app1pipe.source.file_name=app1.log
+
+     # Pipe 1 sink properties
+     # Name of the stream
+     pipes.app1pipe.sink.stream_name=app1Stream
+     # Host name that is used by stream client
+     pipes.app1pipe.sink.host=cdap_host.example.com
+     # Host port that is used by stream client
+     pipes.app1pipe.sink.port=10000
+
+  :Note:  Please note that the target file must be accessible to the File Tailer user. To check, you can use the more command with the File Tailer user:
+          Available at: [link]
+
+Starting and Stopping the Daemon
+--------------------------------
+To Start a file tailer daemon execute:
+``sudo service file-tailer start``
+
+To Stop a file tailer daemon execute:
+``sudo service file-tailer start``
+
+:Note: File Tailer stores log files in the /var/log/file-tailer directory.
+       PID, states and statistics are stored in the /var/run/file-tailer directory.
+
+Configuring Authentication Client for File Tailer
+-------------------------------------------------
+Authentication client for File Tailer can be configured by editing the properties file
+  ``/etc/file-tailer/conf/auth-client.properties``
+
+  A Sample properties file would be already existing at the location that can be edited.
+  Look into
+
+Description of Configuration Properties:
+----------------------------------------
+
+.. list-table::
+    :widths: 30 60
+    :header-rows: 1
+
+    * - Property
+      - Description
+    * - pipes.<pipename>.name
+      - ``name of the pipe``
+    * - pipes.<pipename>.state_file
+      - ``name of file, used to save state``
+    * - pipes.<pipename>.statistics_file
+      - ``name of file, used to save statistics``
+    * - pipes.<pipename>.queue_size
+      - ``size of queue (default 1000), of stored log records, before sending them to Stream``
+    * - pipes.<pipename>.source.work_dir
+      - ``path to directory being monitored for target log files``
+    * - pipes.<pipename>.source.file_name
+      - ``name of target log file``
+    * - pipes.<pipename>.source.rotated_file_name_pattern
+      - ``log file rollover pattern (default "(.*)" )``
+    * - pipes.<pipename>.source.charset_name
+      - ``name of charset used by Stream Client for sending logs (default "UT``
+    * - pipes.<pipename>.source.record_separator
+      - ``symbol that separates each log record (default "\n")``
+    * - pipes.<pipename>.source.sleep_interval
+      - ``interval to sleep after reading all log data (default 3000 ms)``
+    * - pipes.<pipename>.source.failure_retry_limit
+      - ``number of attempts to retry reading a log, if an error occurred while reading file data (default value is 0 for unlimited attempts)``
+    * - pipes.<pipename>.source.failure_sleep_interval
+      - ``interval to sleep if an error occurred while reading the file data (default 60000 ms)``
+    * - pipes.<pipename>.sink.stream_name
+      - ``name of target stream``
+    * - pipes.<pipename>.sink.host
+      - ``server host``
+    * - pipes.<pipename>.sink.port
+      - ``server port``
+    * - pipes.<pipename>.sink.ssl
+      - ``Secure Socket Layer mode [true|false] (default false)``
+    * - pipes.<pipename>.sink.apiKey
+      - ``SSL security key``
+    * - pipes.<pipename>.sink.writerPoolSize
+      - ``number of threads with which Stream Client sends events (default 10)``
+    * - pipes.<pipename>.sink.version
+      - ``CDAP server version (default "v2")``
+    * - pipes.<pipename>.sink.packSize
+      - ``number of logs sent at a time (default 1)``
+    * - pipes.<pipename>.sink.failure_retry_limit
+      - ``number of attempts to retry sending logs, if an error occurred while reading file data (default value is 0 for unlimited attempts)``
+    * - pipes.<pipename>.sink.failure_sleep_interval
+      - ``interval to sleep if an error occurred while sending the logs (default 60000 ms)``
+
+
+Flume Sink
+----------
+
+The CDAP Sink is a `Apache Flume Sink <https://flume.apache.org>`__ implementation using the
+RESTStreamWriter to write events received from a source. For example, you can configure the Flume Sink's
+Agent to read data from a log file by tailing it and putting them into CDAP.
+
+.. list-table::
+:widths: 20 30 50
+    :header-rows: 1
+
+      * - Property
+        - Value
+        - Description
+      * - a1.sinks.sink1.type
+        - ``co.cask.cdap.flume.StreamSink``
+        - Copy the CDAP sink jar to Flume lib directory and specify the fully qualified class name for this property.
+      * - a1.sinks.sink1.host
+        - ``host-name``
+        - Host name used by the Stream client
+      * - a1.sinks.sink1.streamName
+        - ``Stream-name``
+        - Target Stream name
+      * - a1.sinks.sink1.port
+        - ``10000``
+        - This parameter is options and the Default port number is 10000
+      * - a1.sinks.sink1.sslEnabled
+        - ``false``
+        - This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false
+      * - a1.sinks.sink1.writerPoolSize
+        - ``10``
+        - Number of threads to which the stream client can send events
+      * - a1.sinks.sink1.version
+        - ``v2``
+        - CDAP Router server version
+
+:Note: If Authentication is enabled, refer to Client authentication in security_ for configuration.
+
+Where to Go Next
+================
+Now that you've looked at tools for ingesting data into CDAP, take a look at:
+
+- `Querying Datasets with SQL <query.html>`__,
+  which covers ad-hoc querying of CDAP Datasets using SQL.
+
+
+.. |(TM)| unicode:: U+2122 .. trademark sign
+:trim:

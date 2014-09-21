@@ -10,12 +10,15 @@ This chapter is a guide to help you get started with CDAP and prepares you to be
 end of this topic you will have CDAP up and running on your platform, you would learn how to develop, deploy and play with
 CDAP  with the help of the sample CDAP App provided in this chapter.
 
+CDAP is built keeping the developer's in mind. The CDAP SDK provides ease of use for java developers to adpot big-data paradigm as well as
+its easily extensible to satisfy the needs for existing big-data developers. The CDAP SDK
+
 Before Getting Started
 
 The minimum requirements to run CDAP applications are only three,
-- `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP; note that $JAVA_HOME should be set)
-- `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP UI)
-- `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
+ - `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP; note that $JAVA_HOME should be set)
+ - `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP UI)
+ - `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
 
 Getting CDAP
 ============
