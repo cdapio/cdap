@@ -137,6 +137,7 @@ In order to authenticate, all client requests must supply this access token in t
 
 For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
+.. _rest-streams:
 
 Stream HTTP API
 ===============
@@ -431,6 +432,8 @@ Example
 
 .. rst2pdf: PageBreak
 
+.. _rest-datasets:
+
 Dataset HTTP API
 ================
 
@@ -665,6 +668,7 @@ HTTP Responses
 
 .. rst2pdf: PageBreak
 
+.. _rest-sql:
 
 Query HTTP API
 ==============
@@ -1052,6 +1056,8 @@ Example
        {"word":"a"}
 
 .. rst2pdf: PageBreak
+
+.. _rest-services:
 
 Service HTTP API
 ==================

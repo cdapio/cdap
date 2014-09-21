@@ -9,25 +9,25 @@ Cask Data Application Platform Programming Guide
 Introduction
 ============
 
-This document covers in detail the Cask Data Application Platform (CDAP) core
-elements—Applications, Streams, Datasets, Flows, Procedures, MapReduce,
-and Workflows—and how you work with them in Java to build a Big Data
-application.
+This document covers the two core virtualizations in the Cask Data Application Platform (CDAP) — Data and Applications.
+Data virtualizations are grouped into streams and datasets. Application virtualizations are grouped into
+Flows, MapReduce, Spark, Workflows, and Services. This document
+details how to work with these abstractions to build Big Data applications.
 
 For a high-level view of the concepts of the Cask Data Application Platform,
-please see the `Introduction to the Cask Data Application Platform <intro>`__.
+please see :doc:`Concepts and Architecture </arch>`.
 
 For more information beyond this document, see the
-`Javadocs <javadocs/index>`_  and the code in the
-`examples <examples/index>`_ directory, both of which are on the
-`Cask.co <http://cask.co>`__ `Developers website <http://cask.co/developers>`_ as well as in your
+:doc:`Javadocs </javadocs/index>` and the code in the
+:doc:`examples </examples/index>` directory, both of which are on the
+`Cask.co <http://cask.co>`_ `Developers website <http://cask.co/developers>`_ as well as in your
 CDAP installation directory.
 
 Data Virtualization
 ===================
 
-Data is separated into two main virtualizations: streams and datasets. Streams are ordered, partionable,
-sequences of data, and the primary means of bringing data from external system in the CDAP
+There are two main data virtualizations: Streams and Datasets. Streams are ordered, partionable,
+sequences of data, and are the primary means of bringing data from external systems into the CDAP
 in realtime. Datasets are abstractions on top of data, allowing you to access your data using
 higher-level abstractions and generic, reusable Java implementations of common data patterns
 instead of requiring you to manipulate data with low-level APIs.
@@ -37,8 +37,8 @@ instead of requiring you to manipulate data with low-level APIs.
 Streams
 =======
 
-**Streams** are the primary means of bringing data
-from external systems into the CDAP in realtime.
+**Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
+They are ordered, partionable, sequences of data, usable for realtime collection and consumption of data.
 You specify a Stream in your `Application`__ metadata::
 
   addStream(new Stream("myStream"));
@@ -49,10 +49,10 @@ specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the CDAP instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the `Cask Data Application Platform HTTP RESTful API <rest.html>`__
+using either the :ref:`Cask Data Application Platform HTTP RESTful API <rest-streams>`
 or command line tools.
 
-Each individual signal sent to a Stream is stored as an ``StreamEvent``,
+Each individual signal sent to a Stream is stored as a ``StreamEvent``,
 which is comprised of a header (a map of strings for metadata) and a
 body (a blob of arbitrary binary data).
 
@@ -60,7 +60,7 @@ Streams are uniquely identified by an ID string (a "name") and are
 explicitly created before being used. They can be created
 programmatically within your application, through the CDAP Console,
 or by or using a command line tool. Data written to a Stream
-can be consumed by Flows and processed in real-time. Streams are shared
+can be consumed in real-time by Flows or in batch by MapReduce. Streams are shared
 between applications, so they require a unique name.
 
 .. _Datasets:
@@ -69,9 +69,9 @@ Datasets
 ========
 
 **Datasets** store and retrieve data. Datasets are your means of reading
-from and writing data to the CDAP’s storage capabilities. Instead of
-requiring you to manipulate data with low-level APIs, Datasets provide
-higher-level abstractions and generic, reusable Java implementations of
+from and writing to the CDAP’s storage capabilities. Instead of
+forcing you to manipulate data with low-level APIs, Datasets provide
+higher-level abstractions and generic, reusable implementations of
 common data patterns.
 
 The core Dataset of the CDAP is a Table. Unlike relational database
@@ -83,27 +83,26 @@ Other Datasets are built on top of Tables. A Dataset can implement
 specific semantics around a Table, such as a key/value Table or a
 counter Table. A Dataset can also combine multiple Datasets to create a
 complex data pattern. For example, an indexed Table can be implemented
-by using one Table for the data to index and a second Table for the
-index itself.
+by using one Table for the data and a second Table for the index of that data.
 
-You can implement your own data patterns as custom Datasets on top of
-Tables. A number of useful Datasets—we refer to them as system Datasets—are
+A number of useful Datasets—we refer to them as system Datasets—are
 included with CDAP, including key/value tables, indexed tables and
-time series.
+time series. You can implement your own data patterns as custom
+Datasets on top of Tables.
 
-You can create a Dataset in CDAP using either
-`Cask Data Application Platform HTTP RESTful API <rest.html>`__ or command line tools.
+You can create a Dataset in CDAP using either the
+:ref:`Cask Data Application Platform HTTP RESTful API <rest-datasets>` or command line tools.
 
-You can also specify to create a Dataset by Application components if one doesn't
-exist. For that you must declare its details in the Application specification.
+You can also tell Applications to create a Dataset if it does not already
+exist by declaring the Dataset details in the Application specification.
 For example, to create a DataSet named *myCounters* of type 
-`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
+:doc:`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable>`, write::
 
   public void configure() {
       createDataset("myCounters", "KeyValueTable");
       ...
 
-To use the Dataset in a Flowlet or a Procedure, instruct the runtime
+To use the Dataset in a Program, instruct the runtime
 system to inject an instance of the Dataset with the ``@UseDataSet``
 annotation::
 
@@ -116,17 +115,18 @@ annotation::
     }
 
 The runtime system reads the Dataset specification for the key/value
-table *myCounters* from the metadata store and injects a functional
+table *myCounters* from the metadata store and injects an
 instance of the Dataset class into the Application.
 
 You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
-`Purchase <examples/Purchase/index.html>`__
-example for an implementation of a Custom Dataset. For more details, refer to
+:doc:`Purchase <examples/Purchase/index>`
+example for an implementation of a Custom Dataset.
+For more details, refer to :ref:`Custom Datasets <custom-datasets>`
 
 Types of Datasets
 -----------------
-A Dataset abstraction is defined with a Java class that implements the ``DatasetDefinition`` interface.
+A Dataset abstraction is defined by a Java class that implements the ``DatasetDefinition`` interface.
 The implementation of a Dataset typically relies on one or more underlying (embedded) Datasets.
 For example, the ``IndexedTable`` Dataset can be implemented by two underlying Table Datasets –
 one holding the data and one holding the index.
@@ -148,11 +148,10 @@ manipulate it. Every Dataset has a unique name and metadata that defines its beh
 For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table:
 the name of that column is a metadata property of each Dataset of this type.
 
-
 Core Datasets
 -------------
 **Tables** are the only core Datasets, and all other Datasets are built using one or more
-core Tables. These Tables are similar to tables in a relational database with a few key differences:
+Tables. These Tables are similar to tables in a relational database with a few key differences:
 
 - Tables have no fixed schema. Unlike relational database tables where every
   row has the same schema, every row of a Table can have a different set of columns.
@@ -213,7 +212,7 @@ If your application code already deals with byte arrays, you can use the latter 
 
 Read
 ....
-A ``get`` operation reads all columns or selection of columns of a single row::
+A ``get`` operation reads all columns or a selection of columns of a single row::
 
   Table t;
   byte[] rowKey1;
@@ -247,7 +246,7 @@ The ``Row`` object provides an extensive API for accessing returned column value
 
 When requested, the value of a column is converted to a specific type automatically.
 If the column is absent in a row, the returned value is ``null``. To return primitive types,
-the corresponding methods accepts default value to be returned when the column is absent::
+the corresponding methods accept a default value to be returned when the column is absent::
 
   // Get column value as a primitive type or 0 if column is absent
   long valueAsLong = row.getLong("column1", 0);
@@ -307,8 +306,7 @@ Increment
 .........
 An increment operation increments a ``long`` value of one or more columns by either ``1L``
 or an integer amount *n*.
-If a column doesn’t exist, it is created with an assumed value
-before the increment of zero::
+If a column doesn’t exist, it is created with an assumed value of zero before the increment::
 
   // Write long value to a column of a row
   t.put(new Put("rowKey1").add("column1", 55L));
@@ -333,9 +331,9 @@ passing all of them will make the deletion faster.
 
 System Datasets
 ---------------
-The Cask Data Application Platform comes with several system-defined Datasets, including key/value Tables,
-indexed Tables and time series. Each of them is defined with the help of one or more embedded
-Tables, but defines its own interface. For example:
+The Cask Data Application Platform comes with several system-defined Datasets, including but not limited to
+key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded
+Tables, but defines its own interface. Examples include:
 
 - The ``KeyValueTable`` implements a key/value store as a Table with a single column.
 
@@ -345,23 +343,26 @@ Tables, but defines its own interface. For example:
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the `Javadocs <javadocs/index.html>`__ for these classes and `the examples <examples/index.html>`__
-to learn more about these Datasets.
+See the :doc:`Javadocs <javadocs/index>` for these classes and the :doc:`examples <examples/index>`
+to learn more about these Datasets. Any class in the CDAP libraries that implements the ``Dataset`` interface is a
+system Dataset.
+
+.. _custom-datasets:
 
 Custom Datasets
 ---------------
 You can define your own Dataset classes to implement common data patterns specific to your code.
 
 Suppose you want to define a counter table that, in addition to counting words,
-counts how many unique words it has seen. The Dataset can be built on top two underlying Datasets,
-a first Table (``entryCountTable``) to count all the words and a second Table (``uniqueCountTable``) for the unique count.
+counts how many unique words it has seen. The Dataset can be built on top of two underlying Datasets. The first a
+Table (``entryCountTable``) to count all the words and the second a Table (``uniqueCountTable``) for the unique count.
 
 When your custom Dataset is built on top of one or more existing Datasets, the simplest way to implement
 it is to just define the data operations (by implementing the Dataset interface) and delegating all other
 work (such as  administrative operations) to the embedded Dataset.
 
 To do this, you need to implement the Dataset class and define the embedded Datasets by annotating
-its constructor parameters.
+its constructor arguments.
 
 In this case, our  ``UniqueCountTableDefinition`` will have two underlying Datasets:
 an ``entryCountTable`` and an ``uniqueCountTable``, both of type ``Table``::
@@ -405,7 +406,7 @@ All administrative operations (such as create, drop, truncate) will be delegated
 in the order they are defined in the constructor. ``DatasetProperties`` that are passed during creation of
 the Dataset will be passed as-is to the embedded Datasets.
 
-To create a Dataset of ``UniqueCountTable`` type add the following into the Application implementation::
+To create a Dataset of type ``UniqueCountTable``, add the following into the Application implementation::
 
   Class MyApp extends AbstractApplication {
     public void configure() {
@@ -415,10 +416,10 @@ To create a Dataset of ``UniqueCountTable`` type add the following into the Appl
   }
 
 You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
-These properties will be used by embedded Datasets during creation and will be availalbe via ``DatasetSpecification``
-passed to Dataset constructor.
+These properties will be used by embedded Datasets during creation and will be available via the
+``DatasetSpecification`` passed to the Dataset constructor.
 
-Application components can access created Dataset via ``@UseDataSet``::
+Application components can access a created Dataset via the ``@UseDataSet`` annotation::
 
   Class MyFowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
@@ -426,14 +427,14 @@ Application components can access created Dataset via ``@UseDataSet``::
     ...
   }
 
-A complete application demonstrating the use of a custom Dataset is included in our WordCount example.
+A complete application demonstrating the use of a custom Dataset is included in our
+:doc:`Purchase <examples/Purchase/index>` example.
 
-You can also create/drop/truncate Datasets using `Cask Data Application Platform HTTP REST API <rest.html>`__. Please refer to the
-REST APIs guide for more details on how to do that.
+You can also create, drop, and truncate Datasets using the
+:ref:`Cask Data Application Platform HTTP REST API <api-datasets>`.
 
-
-Datasets & MapReduce
---------------------
+Datasets and MapReduce
+----------------------
 
 A MapReduce job can interact with a Dataset by using it as an input or an output.
 The Dataset needs to implement specific interfaces to support this.
@@ -476,8 +477,8 @@ To read a range of keys and give a hint that you want 16 splits, write::
     context.setInput(kvTable, kvTable.getSplits(16, startKey, stopKey);
   }
 
-Similarly to reading input from a Dataset, you have the option to write to a Dataset as
-the output destination of a MapReduce job—if that Dataset implements the ``BatchWritable``
+Just as you have the option to read input from a Dataset, you have the option to write to a Dataset as
+the output destination of a MapReduce job if that Dataset implements the ``BatchWritable``
 interface::
 
   public interface BatchWritable<KEY, VALUE> {
@@ -491,9 +492,8 @@ parameters of the Reducer.
 Data Exploration
 ================
 
-Procedures are a programmatic way to access and query the data in your Datasets. Yet sometimes you may want to explore
-a Dataset in an ad-hoc manner rather than writing procedure code. This can be done using SQL if your Dataset fulfills
-two requirements:
+It is often useful to be able to explore a Dataset in an ad-hoc manner.
+This can be done using SQL if your Dataset fulfills two requirements:
 
 * it defines the schema for each record; and
 * it has a method to scan its data record by record.
@@ -533,10 +533,12 @@ In the case of the above class ``Entry``, the schema will be::
 
   (key STRING, value INT)
 
+.. _sql-limitations:
+
 Limitations
 -----------
 * The record type must be a structured type, that is, a Java class with fields. This is because SQL tables require
-  a structure type at the top level. That means, the record type cannot be a primitive,
+  a structure type at the top level. This means the record type cannot be a primitive,
   collection or map type. However, these types may appear nested inside the record type.
 
 * The record type must be that of an actual Java class, not an interface. The same applies to the types of any
@@ -553,18 +555,18 @@ Limitations
 * Fields of a class that are declared static or transient are ignored during schema generation. This means that the
   record type must have at least one non-transient and non-static field. For example,
   the ``java.util.Date`` class has only static and transient fields. Therefore a record type of ``Date`` is not
-  supported and will result in an exception when the dataset is created.
+  supported and will result in an exception when the Dataset is created.
 
-* A dataset can only be used in ad-hoc queries if its record type is completely contained in the dataset definition.
+* A Dataset can only be used in ad-hoc queries if its record type is completely contained in the Dataset definition.
   This means that if the record type is or contains a parametrized type, then the type parameters must be present in
-  the dataset definition. The reason is that the record type must be instantiated when executing an ad-hoc query.
-  If a type parameter depends on the jar file of the application that created the dataset, then this jar file is not
+  the Dataset definition. The reason is that the record type must be instantiated when executing an ad-hoc query.
+  If a type parameter depends on the jar file of the application that created the Dataset, then this jar file is not
   available to the query execution runtime.
 
   For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
-  the application jar. However, if you define your own dataset type ``MyObjectStore`` that extends or encapsulates an
-  ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the dataset definition for ``MyObjectStore``. See the
-  Purchase application for an example.
+  the application jar. However, if you define your own Dataset type ``MyObjectStore`` that extends or encapsulates an
+  ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the Dataset definition for ``MyObjectStore``. See the
+  :doc:`Purchase </examples/Purchase/index>` application for an example.
 
 
 Parameterized Types
@@ -611,6 +613,8 @@ The SQL schema of the dataset would be::
   (title STRING, year INT, cast MAP<STRING, STRING>, reviews ARRAY<STRING>)
 
 Refer to the Hive language manual for more details on schema and data types.
+
+.. _sql-scanning-records:
 
 Scanning Records
 ----------------
@@ -714,7 +718,7 @@ directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
 Writing to Datasets with SQL
 ----------------------------
-Data can be inserted into Datasets using SQL. For example, you can write in a Dataset named
+Data can be inserted into Datasets using SQL. For example, you can write to a Dataset named
 ``ProductCatalog`` with this SQL query::
 
   INSERT INTO TABLE cdap_user_productcatalog SELECT ...
@@ -723,32 +727,33 @@ In order for a Dataset to enable record insertion from SQL query, it simply has 
 into itself.
 
 For CDAP Datasets, this is done by implementing the ``RecordWritable`` interface.
-Similarly to `Querying Datasets with SQL`_, the CDAP built-in Dataset KeyValueTable already implements this and
-can be used to insert records from SQL queries.
+The system Dataset KeyValueTable already implements this and can be used to insert records from SQL queries.
 
 Let's take a closer look at the ``RecordWritable`` interface.
 
 Defining the Record Schema
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+..........................
+
 Just like in the ``RecordScannable`` interface, the record schema is given by returning the Java type of each record,
 using the method::
 
   Type getRecordType();
 
-`The same rules <limitations>`_ as for the type of the ``RecordScannable`` interface apply to the type of the
-``RecordWritable`` interface. In fact, if a Dataset implements both ``RecordScannable`` and ``RecordWritable``
-interfaces, they will have to use identical record types.
+:ref:`The same rules <sql-limitations>` that apply to the type of the ``RecordScannable`` interface apply
+to the type of the ``RecordWritable`` interface. In fact, if a Dataset implements both ``RecordScannable`` and
+``RecordWritable`` interfaces, they will have to use identical record types.
 
 Writing Records
-^^^^^^^^^^^^^^^
-To enable inserting SQL queries result into a Dataset, it needs to provide a means of writing a record into itself.
-This is similar to how the ``BatchWritable`` interface makes Datasets writable from Map/Reduce jobs by providing
+...............
+
+To enable inserting SQL query results, a Dataset needs to provide a means of writing a record into itself.
+This is similar to how the ``BatchWritable`` interface makes Datasets writable from MapReduce jobs by providing
 a way to write pairs of key and value. You need to implement the ``RecordWritable`` method::
 
       void write(RECORD record) throws IOException;
 
-Continuing the *MyDataset* `example used above <scanning-records>`_, which showed an implementation of
-``RecordScannable``, this example shows implementing a ``RecordWritable`` Dataset that is backed by a ``Table``::
+Continuing the *MyDataset* :ref:`example used above <sql-scanning-records>`, which showed an implementation of
+``RecordScannable``, this example an implementation of a ``RecordWritable`` Dataset that is backed by a ``Table``::
 
   class MyDataset implements Dataset, ..., RecordWritable<Entry> {
 
@@ -785,7 +790,8 @@ driver using this `link <https://repository.continuuity.com/content/repositories
 Go to the directory matching the version of your running CDAP instance, and download the file named ``cdap-explore-jdbc-<version>.jar``.
 
 Using the CDAP JDBC driver in your Java code
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+............................................
+
 To use CDAP JDBC driver in your code, place ``cdap-jdbc-driver.jar`` in the classpath of your application.
 If you are using Maven, you can simply add a dependency in your file ``pom.xml``::
 
@@ -822,17 +828,18 @@ JDBC drivers are a standard in the Java ecosystem, with many `resources about th
 <http://docs.oracle.com/javase/tutorial/jdbc/>`__.
 
 Accessing CDAP Datasets through Business Intelligence Tools
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...........................................................
+
 Most Business Intelligence tools can integrate with relational databases using JDBC drivers. They often include
 drivers to connect to standard databases such as MySQL or PostgreSQL.
 Most tools allow the addition of non-standard JDBC drivers.
 
 We'll look at two business intelligence tools — *SquirrelSQL* and *Pentaho Data Integration* —
-and see how it is possible to connect to a running CDAP instance and interact with
-CDAP Datasets using the CDAP JDBC driver.
+and see how to connect them to a running CDAP instance and interact with CDAP Datasets.
 
-CDAP JDBC driver integration with SquirrelSQL
-.............................................
+SquirrelSQL
+...........
+
 *SquirrelSQL* is a simple JDBC client which executes SQL queries against many different relational databases.
 Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
 
@@ -854,8 +861,8 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
    *SquirrelSQL*.
 #. We can now create an alias to connect to a running instance of CDAP. Open the ``Aliases`` pane, and click on
    the ``+`` icon to create a new alias.
-#. In this example, we are going to connect to a standalone CDAP which we started running from the SDK.
-   The name for our alias will be ``CDAP Standalone``. Select the ``CDAP Driver`` in
+#. In this example, we are going to connect to a standalone CDAP from the SDK.
+   The name of our alias will be ``CDAP Standalone``. Select the ``CDAP Driver`` in
    the list of available drivers. Our URL will be ``jdbc:cdap://localhost:10000``. Our standalone instance
    does not require an authorization token, but if yours requires one, HTML-encode your token
    and pass it as a parameter of the ``URL``. ``User Name`` and ``Password`` are left blank.
@@ -872,14 +879,15 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
    .. image:: _images/jdbc/squirrel_sql_query.png
       :width: 6in
 
-CDAP JDBC driver integration with Pentaho Data Integration
-..........................................................
+Pentaho Data Integration
+........................
+
 *Pentaho Data Integration* is an advanced, open source business intelligence tool that can execute
 transformations of data coming from various sources. Let's see how to connect it to
 CDAP Datasets using the CDAP JDBC driver.
 
 #. Before opening the *Pentaho Data Integration* application, copy the ``co.cask.cdap.cdap-explore-jdbc-<version>.jar``
-   file in the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
+   file to the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
 #. Open *Pentaho Data Integration*.
 #. In the toolbar, select ``File -> New -> Database Connection...``.
 #. In the ``General`` section, select a ``Connection Name``, like ``CDAP Standalone``. For the ``Connection Type``, select
@@ -929,13 +937,20 @@ For more examples of queries, please refer to the `Hive language manual
 Application Virtualization
 ==========================
 
+Application virtualization is achieved by providing different runtimes for various environments.
+Be it in memory for unit testing, a standalone runtime that runs on a single computer, or a distributed
+runtime with execution in the YARN containers of a Hadoop cluster. The application can be written independent of where
+it is executed.
+
 Applications are a virtualization on top of your data, hiding low-level details of individual
 programming paradigms and runtimes, while providing access to many useful and powerful services provided 
 by CDAP such as the ability to dynamically scale processing units, distributed transactions, and service
 discovery. Applications are abstracted away from the platform that runs the application. 
 When you deploy and run the application into a specific installation of CDAP, the appropriate
 implementations of all services and program runtimes are injected by CDAP - the application does not need
-to change based on the environment. This allows you develop applications in one environent - say, on your laptop using a stand-alone CDAP for testing - and then seamlessly deploy it in a different environemnt - say, your distributed staging cluster.
+to change based on the environment. This allows you develop applications in one environment - say, on your laptop
+using a stand-alone CDAP for testing - and then seamlessly deploy it in a different environment - say,
+your distributed staging cluster.
 
 .. _flows:
 
@@ -1286,7 +1301,7 @@ Flowlets and Instances
 ^^^^^^^^^^^^^^^^^^^^^^
 You can have one or more instances of any given Flowlet, each consuming a disjoint
 partition of each input. You can control the number of instances programmatically via the
-`REST interfaces <rest.html>`__ or via the CDAP Console. This enables you
+:doc:`REST interfaces <api>` or via the CDAP Console. This enables you
 to scale your application to meet capacity at runtime.
 
 In the Local DAP, multiple Flowlet instances are run in threads, so in some cases
