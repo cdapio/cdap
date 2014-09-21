@@ -19,20 +19,20 @@ package co.cask.cdap.common.http.exception;
 /**
  * Runtime exception thrown when execution of HTTP request is considered a failure.
  */
-public class ExecutionException extends RuntimeException {
+public class HttpFailureException extends RuntimeException {
   private final int statusCode;
 
-  public ExecutionException(String message, int statusCode) {
+  public HttpFailureException(String message, int statusCode) {
     super(message);
     this.statusCode = statusCode;
   }
 
-  public ExecutionException(String message, Throwable cause, int statusCode) {
+  public HttpFailureException(String message, Throwable cause, int statusCode) {
     super(message, cause);
     this.statusCode = statusCode;
   }
 
-  public ExecutionException(Throwable cause, int statusCode) {
+  public HttpFailureException(Throwable cause, int statusCode) {
     super(cause);
     this.statusCode = statusCode;
   }
