@@ -21,7 +21,9 @@ and run them inside application containers. These containers are a logical abstr
 differently in several runtime environments, such as in-memory, single-node standalone, or distributed cluster,
 without the need to change a single line of application code.
 
-<Diagram of virtualization layers>
+.. image:: _images/layers.png
+   :width: 4in
+   :align: center
 
 Data Virtualization
 -------------------
