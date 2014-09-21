@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- *
+ * A default implementation of {@link co.cask.cdap.test.ApplicationManager}.
  */
 public class DefaultApplicationManager implements ApplicationManager {
 

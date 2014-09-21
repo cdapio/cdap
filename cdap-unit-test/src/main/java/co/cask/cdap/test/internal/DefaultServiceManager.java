@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- *
+ * A default implementation of {@link co.cask.cdap.test.ServiceManager}.
  */
 public class DefaultServiceManager implements ServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceManager.class);

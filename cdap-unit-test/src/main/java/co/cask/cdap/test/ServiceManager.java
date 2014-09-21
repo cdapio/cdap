@@ -48,8 +48,8 @@ public interface ServiceManager {
   boolean isRunning();
 
   /**
-   * Used to discover inside a given application.
-   * @return ServiceDiscovered
+   * Used to discover the Service managed by this ServiceManager.
+   * @return URL of the Service
    */
   URL getServiceURL();
 }
