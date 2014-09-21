@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
- * TODO: remove it, see https://jira.continuuity.com/browse/REACTOR-676
+ * TODO: remove it, see CDAP-5
  * 
  */
 public class AppFabricTestHelper {
@@ -74,7 +74,6 @@ public class AppFabricTestHelper {
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
       injector = Guice.createInjector(new AppFabricTestModule(configuration));
-      // todo: this is not cool! who stops them? Anyhow - see todo on the top of class - we need to refactor the whole
       injector.getInstance(TransactionManager.class).startAndWait();
       injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();

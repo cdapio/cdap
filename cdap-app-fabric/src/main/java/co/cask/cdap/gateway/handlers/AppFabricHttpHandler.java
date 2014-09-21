@@ -3190,7 +3190,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       // NOTE: deleting new datasets stuff first because old datasets system deletes all blindly by prefix
       //       which may damage metadata
-      // TODO: instead of looping thru on client side, dataset service should understand namespacing, see REACTOR-217
       for (DatasetSpecification spec : dsFramework.getInstances()) {
         dsFramework.deleteInstance(spec.getName());
       }

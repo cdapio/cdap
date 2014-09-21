@@ -175,8 +175,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected HiveConf getHiveConf() {
-    // TODO figure out why this hive conf does not contain our env properties - REACTOR-270
-    // return hiveConf;
     return new HiveConf();
   }
 
@@ -533,7 +531,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   public QueryHandle execute(String statement) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
-      // TODO: allow changing of hive user and password - REACTOR-271
       // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
