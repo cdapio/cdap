@@ -27,7 +27,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -45,10 +45,11 @@ public class StreamClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTestRun.class);
 
-  private static StreamClient streamClient;
+  private StreamClient streamClient;
 
-  @BeforeClass
-  public static void init() throws Throwable {
+  @Before
+  public void setUp() throws Throwable {
+    super.setUp();
     streamClient = new StreamClient(clientConfig);
   }
 

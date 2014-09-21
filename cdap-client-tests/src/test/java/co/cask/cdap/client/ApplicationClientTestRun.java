@@ -25,7 +25,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -42,12 +42,13 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationClientTestRun.class);
 
-  private static ApplicationClient appClient;
-  private static DatasetClient datasetClient;
-  private static DatasetModuleClient datasetModuleClient;
+  private ApplicationClient appClient;
+  private DatasetClient datasetClient;
+  private DatasetModuleClient datasetModuleClient;
 
-  @BeforeClass
-  public static void init() throws Throwable {
+  @Before
+  public void setUp() throws Throwable {
+    super.setUp();
     appClient = new ApplicationClient(clientConfig);
     datasetClient = new DatasetClient(clientConfig);
     datasetModuleClient = new DatasetModuleClient(clientConfig);

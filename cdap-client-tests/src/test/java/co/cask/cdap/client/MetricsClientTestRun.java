@@ -20,7 +20,7 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.test.XSlowTests;
 import com.google.gson.JsonObject;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -30,10 +30,11 @@ import org.junit.experimental.categories.Category;
 @Category(XSlowTests.class)
 public class MetricsClientTestRun extends ClientTestBase {
 
-  private static MetricsClient metricsClient;
+  private MetricsClient metricsClient;
 
-  @BeforeClass
-  public static void init() throws Throwable {
+  @Before
+  public void setUp() throws Throwable {
+    super.setUp();
     metricsClient = new MetricsClient(clientConfig);
   }
 

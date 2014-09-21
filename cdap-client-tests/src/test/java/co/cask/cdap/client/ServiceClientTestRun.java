@@ -22,7 +22,7 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceMeta;
 import co.cask.cdap.test.XSlowTests;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -33,12 +33,13 @@ import static org.junit.Assert.assertEquals;
  */
 @Category(XSlowTests.class)
 public class ServiceClientTestRun extends ClientTestBase {
-  private static ApplicationClient appClient;
-  private static ServiceClient serviceClient;
-  private static ProgramClient programClient;
+  private ApplicationClient appClient;
+  private ServiceClient serviceClient;
+  private ProgramClient programClient;
 
-  @BeforeClass
-  public static void init() throws Throwable {
+  @Before
+  public void setUp() throws Throwable {
+    super.setUp();
     appClient = new ApplicationClient(clientConfig);
     serviceClient = new ServiceClient(clientConfig);
     programClient = new ProgramClient(clientConfig);

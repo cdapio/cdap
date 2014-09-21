@@ -18,13 +18,17 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
+import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import java.util.List;
 
 /**
  * Test for {@link QueryClient}.
@@ -32,11 +36,12 @@ import org.junit.experimental.categories.Category;
 @Category(XSlowTests.class)
 public class QueryClientTestRun extends ClientTestBase {
 
-  private static ApplicationClient appClient;
-  private static QueryClient queryClient;
+  private ApplicationClient appClient;
+  private QueryClient queryClient;
 
-  @BeforeClass
-  public static void init() throws Throwable {
+  @Before
+  public void setUp() throws Throwable {
+    super.setUp();
     appClient = new ApplicationClient(clientConfig);
     queryClient = new QueryClient(clientConfig);
   }
