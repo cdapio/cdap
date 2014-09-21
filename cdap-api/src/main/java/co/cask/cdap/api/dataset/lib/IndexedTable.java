@@ -237,12 +237,12 @@ public class IndexedTable extends AbstractDataset {
     Long indexIncrement = increment.getValues().get(this.column);
     if (indexIncrement == null) {
       // note this only adds the increment to the current xaction, it may be deferred
-      table.increment(increment);
+      table.incrementAndGet(increment);
       return;
     }
 
     // index column is affected. Perform the increment synchronously
-    Long newIndexValue = table.increment(increment).getLong(this.column);
+    Long newIndexValue = table.incrementAndGet(increment).getLong(this.column);
     if (newIndexValue == null) {
       // should never happen (we checked that it was in the increment columns)
       // but if it does, we are done;

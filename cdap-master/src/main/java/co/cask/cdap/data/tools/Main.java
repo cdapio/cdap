@@ -223,7 +223,7 @@ public class Main {
         System.out.println(String.format("Upgrading hbase table: %s, desc: %s", tableName, desc.toString()));
 
         final boolean supportsIncrement =
-          "true".equalsIgnoreCase(desc.getValue(OrderedTable.PROPERTY_READLESS_INCREMENT_WRITE));
+          "true".equalsIgnoreCase(desc.getValue(OrderedTable.PROPERTY_READLESS_INCREMENT));
         DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableName, hConf, hBaseTableUtil) {
           @Override
           protected CoprocessorJar createCoprocessorJar() throws IOException {

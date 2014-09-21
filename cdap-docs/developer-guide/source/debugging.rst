@@ -102,6 +102,48 @@ as a response, and the value types in the top-level map are not uniform::
     Assert.assertTrue(assocs.containsKey("hello"));
   }
 
+Strategies in Testing Custom Services
+-------------------------------------
+Here, we'll write a test case for an application that uses a Custom Service.
+For example, a test class for the Purchase example::
+
+  public class PurchaseTest extends AppTestBase {
+    @Test
+    public void testCase() throws Exception {
+
+Deploy the application, which includes a Custom Service::
+
+  // Deploy the Application
+  ApplicationManager appManager = deployApplication(PurchaseApp.class);
+
+  // Start CatalogLookup Service
+  ServiceManager serviceManager = appManager.startService("CatalogLookup");
+
+Because this call to start the service is asynchronous, the service may not actually be up right after the method
+returns. The ``ServiceManager`` has an ``isRunning`` method which can be used to poll until the Service has started.
+Once the service is up and running, requests can be sent to it with an HTTP library, once the URL is determined.
+
+To make a request to test an endpoint, such as /v1/product/{id}/catalog::
+
+  // Get the base URL of the Service
+  URL baseURL = serviceManager.getServiceURL();
+
+  // Create the url for the service's endpoint, passing an item's id ("laptop" in this instance)
+  URL url = new URL(baseURL, "v1/product/laptop/catalog")
+
+  // Open a connection to the Custom Service
+  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+The response of the request can be verified::
+
+  Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+  Assert.assertEquals("Catalog-laptop",
+                      new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8));
+
+To stop the Service, use the ServiceManager's stop method::
+
+  serviceManager.stop();
+
 Strategies in Testing MapReduce Jobs
 ------------------------------------
 In a fashion similar to `Strategies in Testing Flows`_, we can write
