@@ -421,3 +421,102 @@ is obtained, we can use its APIs in the core of the ``count()`` method to store 
 
 Batch Processing of Logs with WiseWorkflow
 ==========================================
+Wise implements a simple Workflow, which executes one Workflow action every 10 minutes. This action is a
+Map/Reduce job that computes the bounce counts of the Web pages seen in the Apache access logs. This Workflow is
+again defined in the ``configure()`` method of the ``WiseApp`` class::
+
+  addWorkflow(new WiseWorkflow());
+
+The ``WiseWorkflow`` class is defined as follows::
+
+  public class WiseWorkflow implements Workflow {
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with()
+        .setName("WiseWorkflow")
+        .setDescription("Wise Workflow")
+        .onlyWith(new BounceCountsMapReduce())
+        .addSchedule(new Schedule("TenMinuteSchedule", "Run every 10 minutes", "0/10 * * * *",
+                                  Schedule.Action.START))
+        .build();
+    }
+  }
+
+It implements the ``Workflow`` interface, with only one method ``configure()``. This is where we define the
+Workflow ID - ``WiseWorkflow``. We attach an action to the Workflow - our Map/Reduce job - and schedule the
+Worflow to run every 10 minutes.
+
+The Bounce Counts Map/Reduce job
+--------------------------------
+The ``BounceCountsMapReduce`` class defines a Map/Reduce job that will execute every 10 minutes. It extends
+``AbstractMapReduce`` and overrides two methods, ``configure()`` and ``beforeSubmit()``.
+The ``configure()`` method is defined as follows::
+
+  @Override
+  public MapReduceSpecification configure() {
+    return MapReduceSpecification.Builder.with()
+      .setName("BounceCountsMapReduce")
+      .setDescription("Bounce Counts MapReduce job")
+      .useDataSet("bounceCountsMapReduceLastRun")
+      .useOutputDataSet("bounceCounts")
+      .build();
+  }
+
+It sets the ID of the Map/Reduce job, ``BounceCountsMapReduce``, and specifies what Datasets will be used in the job.
+This job uses the ``bounceCountsMapReduceLastRun`` system Dataset - which type is ``KeyValueTable`` - to
+store the time of the last successful run of ``BounceCountsMapReduce``. The ``useOutputDataset()`` method
+specifies that the Dataset with the given ID will be used as output of the job. It means that the key/value couples
+outputted by the reducer of this job will be directly written to this Dataset. To understand how this is possible,
+let's go back to the definition of the ``bounceCounts`` Dataset::
+
+  public class BounceCountsStore extends AbstractDataset
+    implements BatchWritable<Void, PageBounce>, ... {
+    ...
+    @Override
+    public void write(Void ignored, PageBounce pageBounce) {
+      this.increment(pageBounce.getUri(), pageBounce.getTotalVisits(), pageBounce.getBounces());
+    }
+    ...
+  }
+
+This ``BatchWritable`` interface, defining a ``write()`` method, is meant to allow Datasets to be the output of
+Map/Reduce jobs. The two generic types that it takes as parameters have to be the same as the type of keys
+and the type of values that the Reduce part of the job outputs. Hence, the ``bounceCounts`` Dataset can be
+used as output of a Map/Reduce job where the output key is of type ``Void``, and the output value is of type
+``PageBounce``.
+
+Traditionally in a Map/Reduce job, a Job configuration is set before each run. This is done in the ``beforeSubmit()``
+method of the ``BounceCountsMapReduce`` class::
+
+  @Override
+  public void beforeSubmit(MapReduceContext context) throws Exception {
+    Job job = context.getHadoopJob();
+    ...
+  }
+
+As we said earlier, the input of the Map/Reduce job is the ``logEventStream``. This connection is done here in the
+``beforeSubmit()`` method, with this statement::
+
+  StreamBatchReadable.useStreamInput(context, "logEventStream", startTime, endTime);
+
+The ``startTime`` is computed using the last value stored in the ``bounceCountsMapReduceLastRun`` Dataset, which can
+be accessed using a ``MapReduceContext`` object by doing the following::
+
+  KeyValueTable lastRunDataset = context.getDataSet("bounceCountsMapReduceLastRun");
+
+Now that the input of our Map/Reduce job is a stream, it forces the key and value types of our Mapper to be
+respectively ``LongWritable`` and ``Text``. The key is the timestamp at which one stream event has been received, and
+the value is the body of the event.
+
+Our ``Mapper`` and ``Reducer`` are standard Hadoop classes. They have the following signatures::
+
+  public static class BounceCountsMapper extends Mapper<LongWritable, Text, LogInfo, IntWritable> {
+    ...
+  }
+
+  public static class BounceCountsReducer extends Reducer<LogInfo, IntWritable, Void, PageBounce> {
+    ...
+  }
+
+Accessing Log Analytics Data
+============================
