@@ -125,16 +125,6 @@ public class SparkProgramRunnerTest {
   }
 
   @Test
-  public void testSparkWithObjectStore() throws Exception {
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(SparkAppUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
-
-    prepareInputData();
-    runProgram(app, SparkAppUsingObjectStore.CharCountSpecification.class);
-    checkOutputData();
-  }
-
-  @Test
   public void testScalaSparkWithObjectStore() throws Exception {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(ScalaSparkAppUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
@@ -203,7 +193,6 @@ public class SparkProgramRunnerTest {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     completion.await(10, TimeUnit.MINUTES);
-    TimeUnit.SECONDS.sleep(2);
   }
 
   private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
