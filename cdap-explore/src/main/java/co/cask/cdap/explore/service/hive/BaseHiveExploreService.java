@@ -673,11 +673,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         }
       }
 
-      FileWriter fileWriter = null;
       try {
         // Create preview results for query
         previewFile = new File(previewsDir, handle.getHandle());
-        fileWriter = new FileWriter(previewFile);
+        FileWriter fileWriter = new FileWriter(previewFile);
         try {
           List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
           GSON.toJson(results, fileWriter);
