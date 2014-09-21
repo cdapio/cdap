@@ -431,7 +431,7 @@ A complete application demonstrating the use of a custom Dataset is included in 
 :doc:`Purchase <examples/Purchase/index>` example.
 
 You can also create, drop, and truncate Datasets using the
-:ref:`Cask Data Application Platform HTTP REST API <api-datasets>`.
+:ref:`Cask Data Application Platform HTTP REST API <rest-datasets>`.
 
 Datasets and MapReduce
 ----------------------
@@ -937,34 +937,71 @@ For more examples of queries, please refer to the `Hive language manual
 Application Virtualization
 ==========================
 
-Application virtualization is achieved by providing different runtimes for various environments.
-Be it in memory for unit testing, a standalone runtime that runs on a single computer, or a distributed
-runtime with execution in the YARN containers of a Hadoop cluster. The application can be written independent of where
-it is executed.
-
 Applications are a virtualization on top of your data, hiding low-level details of individual
 programming paradigms and runtimes, while providing access to many useful and powerful services provided 
 by CDAP such as the ability to dynamically scale processing units, distributed transactions, and service
 discovery. Applications are abstracted away from the platform that runs the application. 
 When you deploy and run the application into a specific installation of CDAP, the appropriate
-implementations of all services and program runtimes are injected by CDAP - the application does not need
-to change based on the environment. This allows you develop applications in one environment - say, on your laptop
-using a stand-alone CDAP for testing - and then seamlessly deploy it in a different environment - say,
+implementations of all services and program runtimes are injected by CDAP; the application does not need
+to change based on the environment. This allows you develop applications in one environment - like on your laptop
+using a stand-alone CDAP for testing - and then seamlessly deploy it in a different environment - like
 your distributed staging cluster.
+
+With your data virtualized in CDAP as Streams and Datasets, you are able to process that data in realtime or in batch
+using Programs (Flows, MapReduce, Spark, Workflow), and you can serve data to external clients using Services
+and Procedures.
+
+Applications
+============
+
+An **Application** is a collection of Programs, Services, and Procedures that read from and write to the data
+virtualization layer in CDAP. Programs include `Flows`_, `MapReduce`_, `Workflows`_, and `Spark`_, and are used
+to process data. Services and Procedures are used to serve data.
+
+The CDAP API is written in a
+`"fluent" interface style <http://en.wikipedia.org/wiki/Fluent_interface>`_,
+and often relies on ``Builder`` methods for creating many parts of the Application.
+
+In writing a CDAP Application, it's best to use an integrated
+development environment that understands the application interface to
+provide code-completion in writing interface methods.
+
+To create an Application, implement the ``Application`` interface
+or subclass from ``AbstractApplication`` class, specifying
+the Application metadata and declaring and configuring each of the Application elements::
+
+      public class MyApp extends AbstractApplication {
+        @Override
+        public void configure() {
+          setName("myApp");
+          setDescription("My Sample Application");
+          addStream(new Stream("myAppStream"));
+          addFlow(new MyAppFlow());
+          addProcedure(new MyAppQuery());
+          addMapReduce(new MyMapReduceJob());
+          addWorkflow(new MyAppWorkflow());
+        }
+      }
+
+Notice that *Streams* are
+defined using provided ``Stream`` class, and are referenced by names, while
+other components are defined using user-written
+classes that implement correspondent interfaces and are referenced by passing
+an object, in addition to being assigned a unique name.
+
+Names used for *Streams* and *Datasets* need to be unique across the
+CDAP instance, while names used for Programs and Services need to be unique only to the application.
 
 .. _flows:
 
 Flows
 =====
 
-**Flows** are developer-implemented, real-time Stream processors. They
-are comprised of one or more `Flowlets`_ that are wired together into a
-directed acyclic graph or DAG.
-
-Flowlets pass DataObjects between one another. Each Flowlet is able to
-perform custom logic and execute data operations for each individual
-data object processed. All data operations happen in a consistent and
-durable way.
+**Flows** are user-implemented real-time stream processors. They are comprised of one or
+more **Flowlets** that are wired together into a directed acyclic graph or DAG. Flowlets
+pass data between one another; each Flowlet is able to perform custom logic and execute
+data operations for each individual data object it processes. All data operations happen
+in a consistent and durable way.
 
 When processing a single input object, all operations, including the
 removal of the object from the input, and emission of data to the
@@ -984,7 +1021,7 @@ to a Stream, or you can implement a Flowlet to generate or pull the data
 from an external source.
 
 The ``Flow`` interface allows you to specify the Flow’s metadata, `Flowlets`_,
-`Flowlet connections <#connection>`_, `Stream to Flowlet connections <#connection>`_,
+`Flowlet connections <#connecting-flowlets>`_, `Stream to Flowlet connections <#connection>`_,
 and any `Datasets`_ used in the Flow.
 
 To create a Flow, implement ``Flow`` via a ``configure`` method that
@@ -1036,7 +1073,7 @@ doesn't do anything for initialization or destruction::
     }
 
     @Override
-      public void initialize(FlowletContext context) throws Exception {
+    public void initialize(FlowletContext context) throws Exception {
     }
 
     @Override
@@ -1065,7 +1102,7 @@ Note that the Flowlet declares the output emitter but does not
 initialize it. The Flow system initializes and injects its
 implementation at runtime.
 
-The method is annotated with @``ProcessInput``—this tells the Flow
+The method is annotated with ``@ProcessInput`` — this tells the Flow
 system that this method can process input data.
 
 You can overload the process method of a Flowlet by adding multiple
@@ -1104,7 +1141,8 @@ origin name::
   }
 
 Input Context
-^^^^^^^^^^^^^
+.............
+
 A process method can have an additional parameter, the ``InputContext``.
 The input context provides information about the input object, such as
 its origin and the number of times the object has been retried. For
@@ -1132,7 +1170,8 @@ context to decide which tokenizer to use::
   }
 
 Type Projection
-^^^^^^^^^^^^^^^
+...............
+
 Flowlets perform an implicit projection on the input objects if they do
 not match exactly what the process method accepts as arguments. This
 allows you to write a single process method that can accept multiple
@@ -1198,7 +1237,8 @@ interact well with inheritance. If a Flowlet can process a specific
 object class, then it can also process any subclass of that class.
 
 Stream Event
-^^^^^^^^^^^^
+............
+
 A Stream event is a special type of object that comes in via Streams. It
 consists of a set of headers represented by a map from String to String,
 and a byte array as the body of the event. To consume a Stream with a
@@ -1211,8 +1251,9 @@ Flow, define a Flowlet that processes data of type ``StreamEvent``::
       ...
     }
 
-Flowlet Method and @Tick Annotation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Tick Methods
+............
+
 A Flowlet’s method can be annotated with ``@Tick``. Instead of
 processing data objects from a Flowlet input, this method is invoked
 periodically, without arguments. This can be used, for example, to
@@ -1234,11 +1275,12 @@ method in the Flowlet emits random numbers::
     }
   }
 
-Note: @Tick method calls are serialized; subsequent calls to the tick
+Note: @Tick method calls are serial; subsequent calls to the tick
 method will be made only after the previous @Tick method call has returned.
 
-Connection
-^^^^^^^^^^
+Connecting Flowlets
+...................
+
 There are multiple ways to connect the Flowlets of a Flow. The most
 common form is to use the Flowlet name. Because the name of each Flowlet
 defaults to its class name, when building the Flow specification you can
@@ -1259,21 +1301,9 @@ If you have multiple Flowlets of the same class, you can give them explicit name
   .connect()
     .from("random").to("rounding")
 
-**Flows** are user-implemented real-time stream processors. They are comprised of one or
-more **Flowlets** that are wired together into a directed acyclic graph or DAG. Flowlets
-pass data between one another; each Flowlet is able to perform custom logic and execute
-data operations for each individual data object it processes.
-
-A Flowlet processes the data objects from its input one by one. If a Flowlet has multiple
-inputs, they are consumed in a round-robin fashion. When processing a single input object,
-all operations, including the removal of the object from the input, and emission of data
-to the outputs, are executed in a transaction. This provides us with Atomicity,
-Consistency, Isolation, and Durability (ACID) properties, and helps assure a unique and
-core property of the Flow system: it guarantees atomic and "exactly-once" processing of
-each input object by each Flowlet in the DAG.
-
 Batch Execution
-^^^^^^^^^^^^^^^
+...............
+
 By default, a Flowlet processes a single data object at a time within a single
 transaction. To increase throughput, you can also process a batch of data objects within
 the same transaction::
@@ -1298,20 +1328,22 @@ In this case, the **process** will be called once per transaction and the **Iter
 will contain up to 100 data objects read from the input.
 
 Flowlets and Instances
-^^^^^^^^^^^^^^^^^^^^^^
+......................
+
 You can have one or more instances of any given Flowlet, each consuming a disjoint
 partition of each input. You can control the number of instances programmatically via the
-:doc:`REST interfaces <api>` or via the CDAP Console. This enables you
+:ref:`REST interfaces <rest-scaling-flowlets>` or via the CDAP Console. This enables you
 to scale your application to meet capacity at runtime.
 
-In the Local DAP, multiple Flowlet instances are run in threads, so in some cases
-actual performance may not be improved. However, in the Distributed DAP,
+In the stand-alone CDAP, multiple Flowlet instances are run in threads, so in some cases
+actual performance may not be improved. However, in the Distributed CDAP,
 each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute
 resources. Scaling the number of Flowlets can improve performance and have a major impact
 depending on your implementation.
 
 Partitioning Strategies
-^^^^^^^^^^^^^^^^^^^^^^^
+.......................
+
 As mentioned above, if you have multiple instances of a Flowlet the input queue is
 partitioned among the Flowlets. The partitioning can occur in different ways, and each
 Flowlet can specify one of these three partitioning strategies:
@@ -1435,8 +1467,8 @@ implementation of three methods:
         .build();
     }
 
-The configure method is similar to the one found in Flow and
-Application. It defines the name and description of the MapReduce job.
+The configure method is similar to the one found in Flows and
+Applications. It defines the name and description of the MapReduce job.
 You can also specify Datasets to be used as input or output for the job.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
@@ -1500,8 +1532,7 @@ CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
 MapReduce and Datasets
 ----------------------
 Both CDAP ``Mapper`` and ``Reducer`` can directly read
-from a Dataset or write to a Dataset similar to the way a Flowlet or
-Procedure can.
+from a Dataset or write to a Dataset similar to the way a Flowlet or Service can.
 
 To access a Dataset directly in Mapper or Reducer, you need (1) a
 declaration and (2) an injection:
@@ -1532,6 +1563,63 @@ declaration and (2) an injection:
          ...
        }
 
+.. _Workflows:
+
+Workflow
+========
+
+**Workflows** are used to execute a series of `MapReduce`_ jobs. A
+Workflow is given a sequence of jobs that follow each other, with an
+optional schedule to run the Workflow periodically. On successful
+execution of a job, the control is transferred to the next job in
+sequence until the last job in the sequence is executed. On failure, the
+execution is stopped at the failed job and no subsequent jobs in the
+sequence are executed.
+
+To process one or more MapReduce jobs in sequence, specify
+``addWorkflow()`` in your application::
+
+  public void configure() {
+    ...
+    addWorkflow(new PurchaseHistoryWorkflow());
+
+You'll then implement the ``Workflow`` interface, which requires the
+``configure()`` method. From within ``configure``, call the
+``addSchedule()`` method to run a WorkFlow job periodically::
+
+  public static class PurchaseHistoryWorkflow implements Workflow {
+
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with()
+        .setName("PurchaseHistoryWorkflow")
+        .setDescription("PurchaseHistoryWorkflow description")
+        .startWith(new PurchaseHistoryBuilder())
+        .last(new PurchaseTrendBuilder())
+        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
+                     "0/5 * * * *", Schedule.Action.START))
+        .build();
+    }
+  }
+
+If there is only one MapReduce job to be run as a part of a WorkFlow,
+use the ``onlyWith()`` method after ``setDescription()`` when building
+the Workflow::
+
+  public static class PurchaseHistoryWorkflow implements Workflow {
+
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with() .setName("PurchaseHistoryWorkflow")
+        .setDescription("PurchaseHistoryWorkflow description")
+        .onlyWith(new PurchaseHistoryBuilder())
+        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
+                     "0/5 * * * *", Schedule.Action.START))
+        .build();
+    }
+  }
+
+
 .. _spark:
 
 Spark (Beta, Standalone CDAP only)
@@ -1545,9 +1633,9 @@ In the current release, Spark is supported only in the Standalone CDAP.
 
 To process data using Spark, specify ``addSpark()`` in your Application specification::
 
-	public void configure() {
-	  ...
-    	addSpark(new WordCountProgram());
+  public void configure() {
+    ...
+      addSpark(new WordCountProgram());
 
 You must implement the ``Spark`` interface, which requires the
 implementation of three methods:
@@ -1583,7 +1671,7 @@ implementation that does nothing::
 
 The ``onFinish()`` method is invoked after the Spark program has
 finished. You could perform cleanup or send a notification of program
-completion, if that was required. Like ``beforeSubmit()``, as many Spark programs do not
+completion, if that was required. Like ``beforeSubmit()``, since many Spark programs do not
 need this method, the ``AbstractSpark`` class also provides a default
 implementation for this method that does nothing::
 
@@ -1658,72 +1746,119 @@ write RDD to a Dataset.
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
 
-.. _Workflows:
-
-Workflow
-========
-
-**Workflows** are used to execute a series of `MapReduce`_ jobs. A
-Workflow is given a sequence of jobs that follow each other, with an
-optional schedule to run the Workflow periodically. On successful
-execution of a job, the control is transferred to the next job in
-sequence until the last job in the sequence is executed. On failure, the
-execution is stopped at the failed job and no subsequent jobs in the
-sequence are executed.
-
-To process one or more MapReduce jobs in sequence, specify
-``addWorkflow()`` in your application::
-
-  public void configure() {
-    ...
-    addWorkflow(new PurchaseHistoryWorkflow());
-
-You'll then implement the ``Workflow`` interface, which requires the
-``configure()`` method. From within ``configure``, call the
-``addSchedule()`` method to run a WorkFlow job periodically::
-
-  public static class PurchaseHistoryWorkflow implements Workflow {
-
-    @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("PurchaseHistoryWorkflow")
-        .setDescription("PurchaseHistoryWorkflow description")
-        .startWith(new PurchaseHistoryBuilder())
-        .last(new PurchaseTrendBuilder())
-        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
-                     "0/5 * * * *", Schedule.Action.START))
-        .build();
-    }
-  }
-
-If there is only one MapReduce job to be run as a part of a WorkFlow,
-use the ``onlyWith()`` method after ``setDescription()`` when building
-the Workflow::
-
-  public static class PurchaseHistoryWorkflow implements Workflow {
-
-    @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with() .setName("PurchaseHistoryWorkflow")
-        .setDescription("PurchaseHistoryWorkflow description")
-        .onlyWith(new PurchaseHistoryBuilder())
-        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
-                     "0/5 * * * *", Schedule.Action.START))
-        .build();
-    }
-  }
-
-
 Services
 ========
+
+Services can be run in a Cask Data Application Platform (CDAP) Application to serve data to external clients.
+Similar to Flows, Services run in containers and the number of running service instances can be dynamically scaled.
+Developers can implement Custom Services to interface with a legacy system and perform additional processing beyond
+the CDAP processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
+
+Custom Services lifecycle can be controlled via the CDAP Console or by using the
+:ref:`CDAP Client API <client-api>` or :ref:`CDAP RESTful API <rest-services>`.
+
+Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler`` \s to serve requests.
+
+You can add Services to your application by calling the ``addService`` method in the
+Application's ``configure`` method::
+
+  public class AnalyticsApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("AnalyticsApp");
+      setDescription("Application for generating mobile analytics");
+      addStream(new Stream("event"));
+      addFlow(new EventProcessingFlow());
+      ...
+      addService(new IPGeoLookupService());
+      addService(new UserLookupService());
+      ...
+    }
+  }
+
+::
+
+  public class IPGeoLookupService extends AbstractService {
+
+    @Override
+    protected void configure() {
+      setName("IpGeoLookupService");
+      setDescription("Service to lookup locations of IP addresses.");
+      useDataset("IPGeoTable");
+      addHandler(new IPGeoLookupHandler());
+    }
+  }
+
+Service Handlers
+................
+
+``ServiceHandler`` \s are used to handle and serve HTTP requests.
+
+You add handlers to your Service by calling the ``addHandler`` method in the Service's ``configure`` method.
+
+To use a Dataset within a handler, specify the Dataset by calling the ``useDataset`` method in the Service's
+``configure`` method and include the ``@UseDataSet`` annotation in the handler to obtain an instance of the Dataset.
+Each request to a method is committed as a single transaction.
+
+::
+
+  public class IPGeoLookupHandler implements AbstractHttpServiceHandler {
+    @UseDataSet("IPGeoTable")
+    Table table;
+
+    @Path("lookup/{ip}")
+    @GET
+    public void lookup(HttpServiceRequest request, HttpServiceResponder responder,
+                                                      @PathParam("ip") String ip) {
+      // ...
+      responder.sendString(200, location, Charsets.UTF_8);
+    }
+  }
+
+Service Discovery
+.................
+
+Services announce the host and port they are running on so that they can be discovered by—and provide
+access to—other programs.
+
+Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
+*hostname* required for registering the Service are automatically obtained.
+
+The Service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
+appropriate program contexts. You may also access Services in a different Application
+by specifying the Application name in the ``getServiceURL`` call.
+
+For example, in Flows::
+
+  public class GeoFlowlet extends AbstractFlowlet {
+
+    // URL for IPGeoLookupService
+    private URL serviceURL;
+
+    // URL for SecurityService in SecurityApplication
+    private URL securityURL;
+
+    @ProcessInput
+    public void process(String ip) {
+      // Get URL for Service in same Application
+      serviceURL = getContext().getServiceURL("IPGeoLookupService");
+
+      // Get URL for Service in a different Application
+      securityURL = getContext().getServiceURL("SecurityApplication", "SecurityService");
+
+      // Access the IPGeoLookupService using its URL
+      URLConnection connection = new URL(serviceURL, String.format("lookup/%s", ip)).openConnection();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      ...
+    }
+  }
 
 .. _Procedures:
 
 Procedures
 ----------
 
-To query CDAP and its Datasets and retrieve results, you use Procedures.
+To query CDAP and its Datasets and retrieve results, you can use Procedures.
 
 Procedures allow you to make synchronous calls into CDAP from an external system
 and perform server-side processing on-demand, similar to a stored procedure in a
@@ -1794,155 +1929,6 @@ There is also a convenience method to respond with an error message::
       return;
     }
 
-
-User Services
--------------
-
-In addition to Flows, MapReduce jobs, and Procedures, additional Services can be run in a
-Cask Data Application Platform (CDAP) Application. Developers can implement Custom Services that run in program containers,
-to interface with a legacy system and perform additional processing beyond the CDAP processing
-paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
-
-Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler`` \s to serve requests.
-
-You can add Services to your application by calling the ``addService`` method in the
-Application's ``configure`` method::
-
-  public class AnalyticsApp extends AbstractApplication {
-    @Override
-    public void configure() {
-      setName("AnalyticsApp");
-      setDescription("Application for generating mobile analytics");
-      addStream(new Stream("event"));
-      addFlow(new EventProcessingFlow());
-      ...
-      addService(new IPGeoLookupService());
-      addService(new UserLookupService());
-      ...
-    }
-  }
-
-::
-
-  public class IPGeoLookupService extends AbstractService {
-
-    @Override
-    protected void configure() {
-      setName("IpGeoLookupService");
-      setDescription("Service to lookup locations of IP addresses.");
-      useDataset("IPGeoTable");
-      addHandler(new IPGeoLookupHandler());
-    }
-  }
-
-Service Handlers
-^^^^^^^^^^^^^^^^
-``ServiceHandler`` \s are used to handle and serve HTTP requests.
-
-You add handlers to your Service by calling the ``addHandler`` method in the Service's ``configure`` method.
-
-To use a Dataset within a handler, specify the Dataset by calling the ``useDataset`` method in the Service's
-``configure`` method and include the ``@UseDataSet`` annotation in the handler to obtain an instance of the Dataset.
-Each request to a method is committed as a single transaction.
-
-::
-
-  public class IPGeoLookupHandler implements AbstractHttpServiceHandler {
-    @UseDataSet("IPGeoTable")
-    Table table;
-
-    @Path("lookup/{ip}")
-    @GET
-    public void lookup(HttpServiceRequest request, HttpServiceResponder responder,
-                                                      @PathParam("ip") String ip) {
-      // ...
-      responder.sendString(200, location, Charsets.UTF_8);
-    }
-  }
-
-Service Discovery
-^^^^^^^^^^^^^^^^^
-Services announce the host and port they are running on so that they can be discovered by—and provide
-access to—other programs.
-
-Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
-*hostname* required for registering the Service are automatically obtained.
-
-The Service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
-appropriate program contexts. You may also access ``Service`` \s in a different ``Application``
-by specifying the ``Application`` name in the ``getServiceURL`` call.
-
-For example, in Flows::
-
-  public class GeoFlowlet extends AbstractFlowlet {
-
-    // URL for IPGeoLookupService
-    private URL serviceURL;
-
-    // URL for SecurityService in SecurityApplication
-    private URL securityURL;
-
-    @ProcessInput
-    public void process(String ip) {
-      // Get URL for Service in same Application
-      serviceURL = getContext().getServiceURL("IPGeoLookupService");
-
-      // Get URL for Service in a different Application
-      securityURL = getContext().getServiceURL("SecurityApplication", "SecurityService");
-
-      // Access the IPGeoLookupService using its URL
-      URLConnection connection = new URL(serviceURL, String.format("lookup/%s", ip)).openConnection();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-      ...
-    }
-  }
-
-Using Services
-^^^^^^^^^^^^^^
-Custom Services lifecycle can be controlled via the CDAP Console or by using the
-`CDAP Client API <rest.html#cdap-client-http-api>`__ as described in the
-`CDAP HTTP REST API <rest.html#cdap-client-http-api>`__.
-
-Applications
-============
-
-Note that the CDAP API is written in a
-`"fluent" interface style <http://en.wikipedia.org/wiki/Fluent_interface>`_,
-and often relies on ``Builder`` methods for creating many parts of the Application.
-
-In writing a CDAP Application, it's best to use an integrated
-development environment that understands the application interface to
-provide code-completion in writing interface methods.
-
-An **Application** is a collection of `Streams`_, `Datasets`_, `Flows`_,
-`Procedures`_, `MapReduce`_ jobs, and `Workflows`_.
-
-To create an Application, implement the ``Application`` interface
-or subclass from ``AbstractApplication`` class, specifying
-the Application metadata and declaring and configuring each of the Application elements::
-
-      public class MyApp extends AbstractApplication {
-        @Override
-        public void configure() {
-          setName("myApp");
-          setDescription("My Sample Application");
-          addStream(new Stream("myAppStream"));
-          addFlow(new MyAppFlow());
-          addProcedure(new MyAppQuery());
-          addMapReduce(new MyMapReduceJob());
-          addWorkflow(new MyAppWorkflow());
-        }
-      }
-
-Notice that *Streams* are
-defined using provided ``Stream`` class, and are referenced by names, while
-other components are defined using user-written
-classes that implement correspondent interfaces and are referenced by passing
-an object, in addition to being assigned a unique name.
-
-Names used for *Streams* and *Datasets* need to be unique across the
-CDAP instance, while names used for *Flows*, *Flowlets* and
-*Procedures* need to be unique only to the application.
 
 Where to Go Next
 ================

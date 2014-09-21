@@ -1118,6 +1118,8 @@ Example
 
 .. rst2pdf: PageBreak
 
+.. _client-api:
+
 CDAP Client HTTP API
 =======================
 
@@ -1402,6 +1404,7 @@ If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a pos
     {"appId":"MyApp3","programType":"Service","programId":"MySvc1,
       "runnableId":"MyRunnable1","statusCode":404,"error":"Runnable: MyRunnable1 not found"} ]
 
+.. _rest-scaling-flowlets:
 
 Scaling Flowlets
 ................

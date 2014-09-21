@@ -8,8 +8,8 @@ Cask Data Application Platform - Available Tools
 
 Tools Info
 ==========
-CDAP comes with a bunch of tools to make developer's life easier. These tools help you to debug CDAP applications,
-interact with them and ingest data into them,etc:
+CDAP comes with a bunch of tools to make developer's life easier. These tools offers various features including,
+helping to debug CDAP applications, interact with them and ingest data into them,etc:
 
 .. list-table::
     :widths: 10 30 60
@@ -522,8 +522,105 @@ You may need to adjust them for your installation or version.
 
 .. _TxDebugger:
 
+Debugging the Transaction Manager (Advanced Use)
+------------------------------------------------
+In this advanced use section, we will explain in depth how transactions work internally.
+Transactions are introduced in the `Advanced Features <advanced.html>`__ guide.
+
+A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
+of its creation. This identifier—also called the `write pointer`—represents the version
+that this transaction will use for all of its writes. It is also used to determine
+the order between transactions. A transaction with a smaller write pointer than
+another transaction must have been started earlier.
+
+The `Transaction Manager` (or TM) uses the write pointers to implement `Optimistic Concurrency Control`
+by maintaining state for all transactions that could be facing concurrency issues.
+
+Transaction Manager States
+..........................
+The `state` of the TM is defined by these structures and rules:
+
+- The `in-progress set`, which contains all the write pointers of transactions
+  which have neither committed nor aborted.
+- The `invalid set`, which contains the write pointers of the transactions
+  considered invalid, and which will never be committed. A transaction
+  becomes invalid only if either it times out or, for a long-running transaction,
+  it is being aborted.
+- A transaction's write pointer cannot be in the `in-progress set`
+  and in the `invalid set` at the same time.
+- The `invalid set` and the `in-progress set` together form the `excluded set`.
+  When a transaction starts, a copy of this set is given to the transaction so that
+  it excludes from its reads any writes performed by transactions in that set.
+- The `committing change sets`, which maps write pointers of the transactions
+  which have requested to commit their writes and which have passed a first round of
+  conflict check to a list of keys in which they have performed those writes.
+- The `committed change sets`, which has the same structure as the `committing change sets`,
+  but where the write pointers refer to transactions which are already committed and
+  which have passed a second round of conflict check.
+
+
+Transaction Lifecycle States
+............................
+Here are the states a transaction goes through in its lifecycle:
+
+- When a transaction starts, the TM creates a new write pointer
+  and saves it in the `in-progress set`.
+  A copy of the current excluded set is given to the transaction,
+  as well as a `read pointer`. The pointer
+  is an upper bound for the version of writes the transaction is allowed to read.
+  It prevents the transaction from reading committed writes performed after the transaction
+  started.
+- The transaction then performs writes to one or more rows, with the version of those writes
+  being the write pointer of the transaction.
+- When the transaction wants to commit its writes, it passes to the TM all the keys where
+  those writes took place. If the transaction is not in the `excluded set`, the
+  TM will use the `committed change sets` structure to detect
+  a conflict. A conflict happens in cases where the transaction tries to modify a
+  row which, after the start of the transaction, has been modified by one
+  of the transactions present in the structure.
+- If there are no conflicts, all the writes of the transaction along with its write pointer
+  are stored in the `committing change sets` structure.
+- The client—namely, a Dataset—can then ask the TM to commit the writes. These are retrieved from the
+  `committing change sets` structure. Since the `committed change sets` structure might
+  have evolved since the last conflict check, another one is performed. If the
+  transaction is in the `excluded set`, the commit will fail regardless
+  of conflicts.
+- If the second conflict check finds no overlapping transactions, the transaction's
+  write pointer is removed from the `in-progress set`, and it is placed in
+  the `committed change sets` structure, along with the keys it has
+  written to. The writes of this transaction will now be seen by all new transactions.
+- If something went wrong in one or other of the committing steps, we distinguish
+  between normal and long-running transactions:
+
+  - For a normal transaction, the cause could be that the transaction
+    was found in the excluded set or that a conflict was detected.
+    The client ensures rolling back the writes the transaction has made,
+    and it then asks the TM to abort the transaction.
+    This will remove the transaction's write pointer from either the
+    `in-progress set` or the `excluded set`, and optionally from the
+    `committing change sets` structure.
+
+  - For a long-running transaction, the only possible cause is that a conflict
+    was detected. Since it is assumed that the writes will not be rolled back
+    by the client, the TM aborts the transaction by storing its
+    write pointer into the `excluded set`. It is the only way to
+    make other transactions exclude the writes performed by this transaction.
+
+The `committed change sets` structure determines how fast conflict detections
+are performed. Fortunately, not all the committed writes need to be
+remembered; only those which may create a conflict with in-progress
+transactions. This is why only the writes committed after the start of the oldest,
+in-progress, not-long-running transaction are stored in this structure,
+and why transactions which participate in conflict detection must remain
+short in duration. The older they are, the bigger the `committed change sets`
+structure will be and the longer conflict detection will take.
+
+When conflict detection takes longer, so does committing a transaction
+and the transaction stays longer in the `in-progress set`. The whole transaction
+system can become slow if such a situation occurs.
+
 Dumping the Transaction Manager
-===============================
+...............................
 
 .. highlight:: console
 
@@ -601,8 +698,6 @@ Tools
 Stream Client
 .............
 
-CDAP provides a bunch of Clients for ingesting data into the available Streams, Right now we provide clients for
-Java, Javascript, Python and Ruby.
 The Stream Client is for managing Streams via external applications. It is available in three different
 APIs: Java, Python and Ruby.
 
@@ -701,7 +796,7 @@ Python script:
 Configuring and Creating a Stream:
 ..................................
 
-For Creating a ``StreamClient`` instance you would need a ``config`` object::
+For Creating a ``StreamClient`` instance you would need a ``config`` object:
 
 You can create the `config`` object by manually configuring the config options or you can read the config options
 from an existing file.
@@ -922,25 +1017,6 @@ In the case of a **200 OK** response, no exception wi
 
 Available at: [link]
 
-
-File DropZone
---------------------
-
-The File DropZone application allows you to easily perform the bulk ingestion of local files.
-Files can either be directly uploaded, or they can be copied to a *work_dir*,
-where they will automatically be ingested by a daemon process.
-
-Features
-........
-
-- Distributed as debian and rpm packages;
-- Loads properties from configuration file;
-- Supports multiple observers/topics;
-- Able to survive restart and resume, sending from the first unsent record of each of the existing files; and
-- Cleanup of files that are completely sent.
-
-Available at: [link]
-
 File Tailer
 -----------
 
@@ -1002,11 +1078,13 @@ To Stop a file tailer daemon execute:
 
 Configuring Authentication Client for File Tailer
 -------------------------------------------------
-Authentication client for File Tailer can be configured by editing the properties file
-  ``/etc/file-tailer/conf/auth-client.properties``
 
-  A Sample properties file would be already existing at the location that can be edited.
-  Look into
+Authentication client parameters :
+  - pipes.<pipe-name>.sink.auth_client - classpath of authentication client class
+  - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is locted at ``/etc/file-tailer/conf/auth-client.properties``
+
+  you can refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
+
 
 Description of Configuration Properties:
 ----------------------------------------
@@ -1070,7 +1148,7 @@ The CDAP Sink is a `Apache Flume Sink <https://flume.apache.org>`__ implementati
 RESTStreamWriter to write events received from a source. For example, you can configure the Flume Sink's
 Agent to read data from a log file by tailing it and putting them into CDAP.
 
-.. list-table::
+.. list-table:: Flume Configuration
 :widths: 20 30 50
     :header-rows: 1
 
@@ -1099,15 +1177,74 @@ Agent to read data from a log file by tailing it and putting them into CDAP.
         - ``v2``
         - CDAP Router server version
 
-:Note: If Authentication is enabled, refer to Client authentication in security_ for configuration.
+Authentication Client
+---------------------
+To use authentication, add these authentication client configuration parameters to the sink configuration file:
+  - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient, Fully qualified class name of the client class
+  - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is locted at ``/usr/local/apache-flume/conf/auth_client.conf``
 
-Where to Go Next
-================
-Now that you've looked at tools for ingesting data into CDAP, take a look at:
+please refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 
-- `Querying Datasets with SQL <query.html>`__,
-  which covers ad-hoc querying of CDAP Datasets using SQL.
+Flume Sink Example
+------------------
 
+::
+
+   a1.sources = r1
+   a1.channels = c1
+   a1.sources.r1.type = exec
+   a1.sources.r1.command = tail -F /tmp/log
+   a1.sources.r1.channels = c1
+   a1.sinks = k1
+   a1.sinks.k1.type = co.cask.cdap.flume.StreamSink
+   a1.sinks.k1.channel = c1
+   a1.sinks.k1.host  = 127.0.0.1
+   a1.sinks.k1.port = 10000
+   a1.sinks.k1.streamName = logEventStream
+   a1.channels.c1.type = memory
+   a1.channels.c1.capacity = 1000
+   a1.channels.c1.transactionCapacity = 100
+
+
+
+File DropZone
+-------------
+
+The File DropZone application allows you to easily perform the bulk ingestion of local files.
+Files can either be directly uploaded, or they can be copied to a *work_dir*,
+where they will automatically be ingested by a daemon process.
+
+Features
+........
+
+- Distributed as debian and rpm packages;
+- Loads properties from configuration file;
+- Supports multiple observers/topics;
+- Able to survive restart and resume, sending from the first unsent record of each of the existing files; and
+- Cleanup of files that are completely sent.
+
+Available at: [link]
+
+
+.. _ConfiguringAuthClient:
+
+Authentication Client Configuration
+-----------------------------------
+.. list-table::
+    :widths: 50 50
+    :header-rows: 1
+
+    * - Property
+      - Description
+    * - security.auth.client.username
+      - authorized user name
+    * - security.auth.client.password
+      - password used for authenticating the user
+    * - security.auth.client.gateway.hostname
+      - Host name that is used by authentication client
+    * - security.auth.client.gateway.port
+      - Host port number that is used by authentication client
+    * - security.auth.client.gateway.ssl.enabled
+      - Enable/Disable SSL
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
-:trim:
