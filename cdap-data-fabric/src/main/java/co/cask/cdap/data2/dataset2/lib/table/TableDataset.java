@@ -176,7 +176,7 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public long increment(byte[] row, byte[] column, long amount) {
+  public long incrementAndGet(byte[] row, byte[] column, long amount) {
     try {
       return table.increment(row, column, amount);
     } catch (NumberFormatException e) {
@@ -189,7 +189,7 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public Row increment(byte[] row, byte[][] columns, long[] amounts) {
+  public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
     Map<byte[], Long> incResult;
     try {
       incResult = table.increment(row, columns, amounts);
@@ -211,7 +211,7 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public Row increment(Increment increment) {
+  public Row incrementAndGet(Increment increment) {
     Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
     byte[][] columns = new byte[increment.getValues().size()][];
     long[] values = new long[increment.getValues().size()];
@@ -221,11 +221,11 @@ class TableDataset extends AbstractDataset implements Table {
       values[i] = columnValue.getValue();
       i++;
     }
-    return increment(increment.getRow(), columns, values);
+    return incrementAndGet(increment.getRow(), columns, values);
   }
 
   @Override
-  public void incrementWrite(byte[] row, byte[] column, long amount) {
+  public void increment(byte[] row, byte[] column, long amount) {
     try {
       table.incrementWrite(row, column, amount);
     } catch (Exception e) {
@@ -236,7 +236,7 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) {
+  public void increment(byte[] row, byte[][] columns, long[] amounts) {
     try {
       table.incrementWrite(row, columns, amounts);
     } catch (Exception e) {
@@ -247,7 +247,7 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public void incrementWrite(Increment increment) {
+  public void increment(Increment increment) {
     Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
     byte[][] columns = new byte[increment.getValues().size()][];
     long[] values = new long[increment.getValues().size()];
@@ -257,7 +257,7 @@ class TableDataset extends AbstractDataset implements Table {
       values[i] = columnValue.getValue();
       i++;
     }
-    incrementWrite(increment.getRow(), columns, values);
+    increment(increment.getRow(), columns, values);
   }
 
   @Override
