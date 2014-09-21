@@ -23,7 +23,7 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -37,13 +37,12 @@ public class ProgramClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramClientTestRun.class);
 
-  private ApplicationClient appClient;
-  private ProcedureClient procedureClient;
-  private ProgramClient programClient;
+  private static ApplicationClient appClient;
+  private static ProcedureClient procedureClient;
+  private static ProgramClient programClient;
 
-  @Before
-  public void setUp() throws Throwable {
-    super.setUp();
+  @BeforeClass
+  public static void init() throws Throwable {
     appClient = new ApplicationClient(clientConfig);
     procedureClient = new ProcedureClient(clientConfig);
     programClient = new ProgramClient(clientConfig);

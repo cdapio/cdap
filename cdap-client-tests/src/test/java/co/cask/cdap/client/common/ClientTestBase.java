@@ -28,7 +28,7 @@ import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClie
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,10 +43,10 @@ public abstract class ClientTestBase extends StandaloneTestBase {
   protected static final String HOSTNAME = "localhost";
   protected static final int PORT = 10000;
 
-  protected ClientConfig clientConfig;
+  protected static ClientConfig clientConfig;
 
-  @Before
-  public void setUp() throws Throwable {
+  @BeforeClass
+  public static void setUp() throws Throwable {
     AuthenticationClient authenticationClient = new BasicAuthenticationClient();
     authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
     clientConfig = new ClientConfig(HOSTNAME, authenticationClient);

@@ -24,7 +24,7 @@ import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -38,13 +38,12 @@ public class ProcedureClientTestRun extends ClientTestBase {
 
   private static final Gson GSON = new Gson();
 
-  private ApplicationClient appClient;
-  private ProcedureClient procedureClient;
-  private ProgramClient programClient;
+  private static ApplicationClient appClient;
+  private static ProcedureClient procedureClient;
+  private static ProgramClient programClient;
 
-  @Before
-  public void setUp() throws Throwable {
-    super.setUp();
+  @BeforeClass
+  public static void init() throws Throwable {
     appClient = new ApplicationClient(clientConfig);
     procedureClient = new ProcedureClient(clientConfig);
     programClient = new ProgramClient(clientConfig);

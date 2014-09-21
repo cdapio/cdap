@@ -23,7 +23,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -39,13 +39,12 @@ public class DatasetClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetClientTestRun.class);
 
-  private DatasetClient datasetClient;
-  private DatasetModuleClient moduleClient;
-  private DatasetTypeClient typeClient;
+  private static DatasetClient datasetClient;
+  private static DatasetModuleClient moduleClient;
+  private static DatasetTypeClient typeClient;
 
-  @Before
-  public void setUp() throws Throwable {
-    super.setUp();
+  @BeforeClass
+  public static void init() throws Throwable {
     datasetClient = new DatasetClient(clientConfig);
     moduleClient = new DatasetModuleClient(clientConfig);
     typeClient = new DatasetTypeClient(clientConfig);
