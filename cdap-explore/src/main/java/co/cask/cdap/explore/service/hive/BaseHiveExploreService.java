@@ -40,6 +40,7 @@ import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -49,6 +50,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -80,7 +82,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
@@ -593,23 +594,22 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return ImmutableList.of();
     }
 
+    Lock nextLock = getOperationInfo(handle).getNextLock();
+    nextLock.lock();
     try {
-      getOperationInfo(handle).getNextLock().lock();
-      try {
-        // Fetch results from Hive
-        LOG.trace("Getting results for handle {}", handle);
-        List<QueryResult> results = fetchNextResults(getOperationHandle(handle), size);
-        QueryStatus status = getStatus(handle);
-        if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
-          // Since operation has fetched all the results, handle can be timed out aggressively.
-          timeoutAggresively(handle, getResultSchema(handle), status);
-        }
-        return results;
-      } finally {
-        getOperationInfo(handle).getNextLock().unlock();
+      // Fetch results from Hive
+      LOG.trace("Getting results for handle {}", handle);
+      List<QueryResult> results = fetchNextResults(getOperationHandle(handle), size);
+      QueryStatus status = getStatus(handle);
+      if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
+        // Since operation has fetched all the results, handle can be timed out aggressively.
+        timeoutAggresively(handle, getResultSchema(handle), status);
       }
+      return results;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
+    } finally {
+      nextLock.unlock();
     }
   }
 
@@ -655,12 +655,13 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     }
 
     OperationInfo operationInfo = getOperationInfo(handle);
-    operationInfo.getPreviewLock().lock();
+    Lock previewLock = operationInfo.getPreviewLock();
+    previewLock.lock();
     try {
       File previewFile = operationInfo.getPreviewFile();
       if (previewFile != null) {
         try {
-          Reader reader = new FileReader(previewFile);
+          Reader reader = Files.newReader(previewFile, Charsets.UTF_8);
           try {
             return GSON.fromJson(reader, new TypeToken<List<QueryResult>>() { }.getType());
           } finally {
@@ -677,20 +678,20 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
         // Create preview results for query
         previewFile = new File(previewsDir, handle.getHandle());
         fileWriter = new FileWriter(previewFile);
-        List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
-        GSON.toJson(results, fileWriter);
-        operationInfo.setPreviewFile(previewFile);
-        return results;
+        try {
+          List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
+          GSON.toJson(results, fileWriter);
+          operationInfo.setPreviewFile(previewFile);
+          return results;
+        } finally {
+          Closeables.closeQuietly(fileWriter);
+        }
       } catch (IOException e) {
         LOG.error("Could not write preview results into file", e);
         throw new ExploreException(e);
-      } finally {
-        if (fileWriter != null) {
-          Closeables.closeQuietly(fileWriter);
-        }
       }
     } finally {
-      operationInfo.getPreviewLock().unlock();
+      previewLock.unlock();
     }
 
   }
