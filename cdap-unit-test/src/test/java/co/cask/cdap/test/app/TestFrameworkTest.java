@@ -99,7 +99,7 @@ public class TestFrameworkTest extends TestBase {
       Gson gson = new Gson();
 
       //Adding sleep so that the test does not fail if the procedure takes sometime to start on slow machines.
-      //TODO : Can be removed after fixing JIRA - REACTOR-373
+      //TODO : Can be removed after fixing JIRA - CDAP-15
       TimeUnit.SECONDS.sleep(2);
 
       Assert.assertEquals("1",

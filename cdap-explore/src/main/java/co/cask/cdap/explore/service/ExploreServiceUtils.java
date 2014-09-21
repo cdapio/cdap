@@ -63,7 +63,6 @@ public class ExploreServiceUtils {
    * Hive support enum.
    */
   public enum HiveSupport {
-    // todo populate this with whatever hive version CDH4.3 runs with - REACTOR-229
     HIVE_CDH4(Pattern.compile("^.*cdh4\\..*$"), HiveCDH4ExploreService.class),
     HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), HiveCDH5ExploreService.class),
 
