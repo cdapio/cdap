@@ -21,4 +21,4 @@ Cask Data Application Platform Documentation
    /javadocs/index
    Licenses and Dependencies </licenses/index>
    Release Notes </releasenotes>
-   FAQ </faq>
+   FAQ </faq/index>
