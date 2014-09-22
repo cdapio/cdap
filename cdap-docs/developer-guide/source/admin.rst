@@ -441,12 +441,24 @@ The Flow History pane shows started and ended events for the Flow and the result
 
 MapReduce
 ---------
-For a MapReduce, the Mapping and Reducing activity is shown, along with status and management controls for starting, stopping and configuration. Buttons for logs and history, similar to those for 
+For a MapReduce, the Mapping and Reducing activity is shown, along with status and management controls for starting,
+stopping and configuration. Buttons for logs and history, similar to those for
 `Flows <#flow-history>`__ and `Workflows <#workflow>`__, are also available:
 
 
 .. image:: _images/console/console_26_mapreduce.png
    :width: 600px
+
+
+Spark
+-----
+For a Spark program, the status is shown along with the management controls for starting,
+stopping and configuration. Buttons for logs and history, similar to those for
+`Flows <#flow-history>`__ and `Workflows <#workflow>`__, are also available:
+
+.. image:: _images/console/console_26a_spark.png
+   :width: 600px
+
 
 Workflow
 --------
