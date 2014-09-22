@@ -133,12 +133,12 @@ public interface OrderedTable extends Dataset {
    * @param amount amount to increment by
    * @return new value of the column
    */
-  long increment(byte[] row, byte[] column, long amount) throws Exception;
+  long incrementAndGet(byte[] row, byte[] column, long amount) throws Exception;
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts.
    *
-   * NOTE: depending on the implementation this may work faster than calling {@link #increment(byte[], byte[], long)}
+   * NOTE: depending on the implementation this may work faster than calling {@link #incrementAndGet(byte[], byte[], long)}
    *       multiple times (esp. in transaction that changes a lot of rows)
    *
    * @param row row which values to increment
@@ -146,7 +146,7 @@ public interface OrderedTable extends Dataset {
    * @param amounts amounts to increment columns by (same order as columns)
    * @return values of counters after the increments are performed, never null
    */
-  Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts) throws Exception;
+  Map<byte[], Long> incrementAndGet(byte[] row, byte[][] columns, long[] amounts) throws Exception;
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new value.
@@ -155,19 +155,19 @@ public interface OrderedTable extends Dataset {
    * @param column column to increment
    * @param amount amount to increment by
    */
-  void incrementWrite(byte[] row, byte[] column, long amount) throws Exception;
+  void increment(byte[] row, byte[] column, long amount) throws Exception;
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
    *
    * NOTE: depending on the implementation this may work faster than calling
-   * {@link #incrementWrite(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
+   * {@link #increment(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
    *
    * @param row row which values to increment
    * @param columns columns to increment
    * @param amounts amounts to increment columns by (same order as columns)
    */
-  void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception;
+  void increment(byte[] row, byte[][] columns, long[] amounts) throws Exception;
 
   /**
    * Compares-and-swaps (atomically) the value of the specified row and column
