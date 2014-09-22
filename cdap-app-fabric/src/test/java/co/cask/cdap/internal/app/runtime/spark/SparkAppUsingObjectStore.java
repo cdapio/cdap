@@ -26,6 +26,7 @@ import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import com.google.common.base.Throwables;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
@@ -74,6 +75,7 @@ public class SparkAppUsingObjectStore extends AbstractApplication {
 
       // write the character count to dataset
       context.writeToDataset(stringLengths, "count", byte[].class, byte[].class);
+      ((JavaSparkContext) context.getOriginalSparkContext()).stop();
     }
   }
 }

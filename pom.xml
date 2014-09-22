@@ -1136,6 +1136,10 @@
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>com.esotericsoftware.reflectasm</groupId>
+            <artifactId>reflectasm</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>

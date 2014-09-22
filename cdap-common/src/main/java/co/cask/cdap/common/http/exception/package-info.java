@@ -14,24 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2;
-
-import javax.annotation.Nullable;
-
 /**
- * Performs namespacing for data set names.
+ * HTTP execution exceptions.
  */
-public interface DatasetNamespace {
-  /**
-   * @param name name of the dataset
-   * @return namespaced name of the dataset
-   */
-  String namespace(String name);
-
-  /**
-   * @param name namespaced name of the dataset
-   * @return original name of the dataset or null if name is not within this namespace
-   */
-  @Nullable
-  String fromNamespaced(String name);
-}
+package co.cask.cdap.common.http.exception;
