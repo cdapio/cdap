@@ -45,6 +45,7 @@ import com.google.inject.Injector;
 import jline.console.ConsoleReader;
 import jline.console.UserInterruptException;
 import jline.console.completer.Completer;
+import sun.security.validator.ValidatorException;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -66,7 +67,7 @@ public class CLIMain {
     this.cliConfig.addHostnameChangeListener(new CLIConfig.HostnameChangeListener() {
       @Override
       public void onHostnameChanged(String newHostname) {
-        reader.setPrompt("cdap (" + cliConfig.getHost() + ":" + cliConfig.getClientConfig().getPort() + ")> ");
+        reader.setPrompt("cdap (" + cliConfig.getURI() + ")> ");
       }
     });
     this.helpCommand = new HelpCommand(new Supplier<CommandSet>() {
@@ -114,7 +115,7 @@ public class CLIMain {
    * @throws Exception
    */
   public void startShellMode(PrintStream output) throws Exception {
-    this.reader.setPrompt("cdap (" + cliConfig.getHost() + ":" + cliConfig.getClientConfig().getPort() + ")> ");
+    this.reader.setPrompt("cdap (" + cliConfig.getURI() + ")> ");
     this.reader.setHandleUserInterrupt(true);
 
     for (Completer completer : commands.getCompleters(null)) {
@@ -142,6 +143,9 @@ public class CLIMain {
           processArgs(commandArgs, output);
         } catch (InvalidCommandException e) {
           output.println("Invalid command: " + command + " (enter 'help' to list all available commands)");
+        } catch (ValidatorException e) {
+          output.println("Error: " + e.getMessage());
+          output.println("To ignore this error, set -DsecureMode=false when starting the CLI");
         } catch (Exception e) {
           output.println("Error: " + e.getMessage());
         }
