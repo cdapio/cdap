@@ -44,7 +44,7 @@ Introduction
 
 The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
 similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
-script or a Windows ``.bat`` file. It is also packaged in the SDK as a JAR file, at ``bin/cdap-cli.jar``.
+script or a Windows ``.bat`` file.
 
 Usage
 -----
@@ -281,16 +281,16 @@ application that uses MapReduce. Complete source code and test can be
 found under `Purchase </examples/Purchase/index.html>`__.
 
 The ``PurchaseTest`` class should extend from
-``AppTestBase`` similar to `Strategies in Testing Flows`.
+``TestBase`` similar to `Strategies in Testing Flows`.
 
 ::
 
-  public class PurchaseTest extends AppTestBase {
+  public class PurchaseTest extends TestBase {
     @Test
     public void test() throws Exception {
 
 The ``PurchaseApp`` application can be deployed using the ``deployApplication``
-method from the ``AppTestBase`` class::
+method from the ``TestBase`` class::
 
   // Deploy an Application
   ApplicationManager appManager = deployApplication(PurchaseApp.class);
@@ -780,6 +780,60 @@ When you are finished, release all resources by calling these two methods::
   streamWriter.close();
   streamClient.close();
 
+Putting it all together:
+........................
+
+::
+
+    try {
+      // Create StreamClient instance with mandatory fields 'host' and 'port'.
+      StreamClient streamClient = RestStreamClient.builder("localhost", 10000).build();
+
+      // Create StreamWriter Instance
+      StreamWriter streamWriter = streamClient.createWriter("streamName");
+
+      try {
+        // Create Stream by id <streamName>
+        streamClient.create(streamName);
+
+        // Get current Stream TTL value by id <streamName>
+        long currentTTL = streamClient.getTTL(streamName);
+        LOG.info("Current TTL value for stream {} is : {} seconds", streamName, currentTTL);
+        long newTTL = 18000;
+
+        // Update TTL value for Stream by id <streamName>
+        streamClient.setTTL(streamName, newTTL);
+        LOG.info("Seting new TTL : {} seconds for stream: {}", newTTL, streamName);
+
+
+        String event = "192.0.2.0 - - [09/Apr/2012:08:40:43 -0400] \"GET /NoteBook/ HTTP/1.0\" 201 809 \"-\" " +
+          "\"Example v0.0.0 (www.example.org)\"";
+
+        // write stream event to server
+        ListenableFuture<Void> future = streamWriter.write(event, null);
+
+        Futures.addCallback(future, new FutureCallback<Void>() {
+          @Override
+          public void onSuccess(Void contents) {
+            LOG.info("Successfully written to stream {}", streamName);
+          }
+
+          @Override
+          public void onFailure(Throwable throwable) {
+            LOG.error("Exception while writing to stream", throwable);
+          }
+        });
+      } finally {
+        // Releasing all resources
+        streamWriter.close();
+        streamClient.close();
+      }
+    } catch (Exception e) {
+      LOG.error("Exception while writing to stream", e);
+    }
+
+Also look at : [`Note stream_client`_]
+
 Python API
 -----------
 Usage
@@ -870,6 +924,8 @@ Putting it all together:
     parse response
     return "Failure"
     ...
+
+
 .. _note 1:
 :Note 1:
 Config file structure in JSON format:
@@ -887,16 +943,7 @@ Stream Name:
   -  If the Stream already exists, no error is returned, and the existing
      Stream remains in place.
 
-Additional Notes
-................
-
-All methods from the ``StreamClient`` and ``StreamWriter`` throw
-exceptions using response code analysis from the gateway server. These
-exceptions help determine if the request was processed successfully or
-not.
-
-In the case of a **200 OK** response, no exception will be thrown; other
-cases will throw the NotFoundException.
+Also look at : [`Note stream_client`_]
 
 Available at: [link]
 
@@ -1005,17 +1052,20 @@ When you are finished, release all resources by calling this method:
 
 ``writer.close``
 
-Additional Notes
-----------------
+Available at: [link]
+
+.. _note stream_client:
+
+Notes on Stream Client
+......................
 
 All methods from the ``StreamClient`` and ``StreamWriter`` throw
 exceptions using response code analysis from the gateway server. These
 exceptions help determine if the request was processed successfully or
 not.
 
-In the case of a **200 OK** response, no exception wi
-
-Available at: [link]
+In the case of a **200 OK** response, no exception will be thrown; other
+cases will throw the NotFoundException.
 
 File Tailer
 -----------
