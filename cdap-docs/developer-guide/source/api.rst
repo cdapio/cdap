@@ -4,9 +4,9 @@
 
 .. highlight:: console
 
-===============================================
-Cask Data Application Platform HTTP RESTful API
-===============================================
+===========================================================
+Cask Data Application Platform HTTP RESTful API And Clients
+===========================================================
 
 .. rst2pdf: .. class:: center
 
@@ -25,6 +25,10 @@ Cask Data Application Platform HTTP RESTful API
 .. rst2pdf: build ../build-pdf/
 
 .. highlight:: console
+
+----------------
+HTTP RESTFul API
+----------------
 
 Introduction
 ============
@@ -123,7 +127,7 @@ but a request may return any of these.
 
 
 Working with CDAP Security
------------------------------
+--------------------------
 When working with a CDAP cluster with security enabled (``security.enabled=true`` in
 ``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
 obtain an access token from the authentication server (see the *Client Authentication* section of the
@@ -249,7 +253,7 @@ After receiving the request, the HTTP handler transforms it into a Stream event:
 .. rst2pdf: PageBreak
 
 Reading Events from a Stream
----------------------------------------------------
+----------------------------
 Reading events from an existing Stream is performed as an HTTP GET method to the URL::
 
   GET <base-url>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
@@ -363,7 +367,7 @@ Example
 .. rst2pdf: PageBreak
 
 Setting Time-To-Live Property of a Stream
-------------------------------------------
+-----------------------------------------
 The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
 it was written to the Stream.
 The default TTL for all Streams is infinite, meaning that events will never expire.
@@ -1122,14 +1126,14 @@ Example
 .. rst2pdf: PageBreak
 
 Service HTTP API
-==================
+================
 
 This interface supports making requests to the methods of an Application’s Services.
 See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
 Services.
 
 Requesting Service Methods
------------------------------
+--------------------------
 To make a request to a Service's method, send the method's path as part of the request URL along with any additional
 headers and body.
 
@@ -1181,7 +1185,7 @@ Example
 .. rst2pdf: PageBreak
 
 CDAP Client HTTP API
-=======================
+====================
 
 Use the CDAP Client HTTP API to deploy or delete Applications and manage the life cycle of 
 Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
@@ -1705,7 +1709,7 @@ For Workflows, you can also retrieve:
 
 
 Logging HTTP API
-=================
+================
 
 Downloading Logs
 ----------------
@@ -2109,7 +2113,7 @@ HTTP Responses
      - The event successfully called the method, and the body contains the results
 
 Checking Status of All CDAP System Services
-----------------------------------------------
+-------------------------------------------
 To check the status of all the System Services, use::
 
   GET <base-url>/system/services/status
@@ -2128,7 +2132,7 @@ HTTP Responses
 .. rst2pdf: PageBreak
 
 Checking Status of a Specific CDAP System Service
-----------------------------------------------------
+-------------------------------------------------
 To check the status of a specific System Service, use::
 
   GET <base-url>/system/services/<service-name>/status
@@ -2242,8 +2246,496 @@ Examples
        with the arguments as a JSON string in the body::
 
           { "instances" : 2 }
+
    * - Description
      - Sets the number of instances of the metrics HTTP service to 2
+
+.. rst2pdf: PageBreak
+
+---------------
+Java Client API
+---------------
+
+The Cask Data Application Platform (CDAP) Java Client API provides methods for interacting
+with CDAP from Java applications.
+
+Maven Dependency
+================
+
+.. highlight:: console
+
+To use the Java Client API in your project, add this Maven dependency::
+
+  <dependency>
+    <groupId>co.cask.cdap</groupId>
+    <artifactId>cdap-client</artifactId>
+    <version>${cdap.version}</version>
+  </dependency>
+
+.. highlight:: java
+
+Components
+==========
+
+The Java Client API allows you to interact with these CDAP components:
+
+- `ApplicationClient`_: interacting with applications
+- `DatasetClient`_: interacting with Datasets
+- `DatasetModuleClient`_: interacting with Dataset Modules
+- `DatasetTypeClient`_: interacting with Dataset Types
+- `MetricsClient`_: interacting with Metrics
+- `MonitorClient`_: monitoring System Services
+- `ProcedureClient`_: interacting with Procedures
+- `ProgramClient`_: interacting with Flows, Procedures, MapReduce Jobs, User Services, and Workflows
+- `QueryClient`_: querying Datasets
+- `ServiceClient`_: interacting with User Services
+- `StreamClient`_: interacting with Streams
+
+The above list links to the examples below for each portion of the API.
+
+Sample Usage
+============
+
+ApplicationClient
+-----------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ApplicationClient appClient = new ApplicationClient(clientConfig);
+
+  // Fetch the list of applications
+  List<ApplicationRecord> apps = appClient.list();
+
+  // Deploy an application
+  File appJarFile = ...;
+  appClient.deploy(appJarFile);
+
+  // Delete an application
+  appClient.delete("Purchase");
+
+  // List programs belonging to an application
+  appClient.listPrograms("Purchase");
+
+
+DatasetClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetClient datasetClient = new DatasetClient(clientConfig);
+
+  // Fetch the list of Datasets
+  List<DatasetSpecification> datasets = datasetClient.list();
+
+  // Create a Dataset
+  datasetClient.create("someDataset", "someDatasetType");
+
+  // Truncate a Dataset
+  datasetClient.truncate("someDataset");
+
+  // Delete a Dataset
+  datasetClient.delete("someDataset");
+
+
+DatasetModuleClient
+-------------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
+
+  // Add a Dataset module
+  File moduleJarFile = createAppJarFile(someDatasetModule.class);
+  datasetModuleClient("someDatasetModule", SomeDatasetModule.class.getName(), moduleJarFile);
+
+  // Fetch the Dataset module information
+  DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get("someDatasetModule");
+
+  // Delete all Dataset modules
+  datasetModuleClient.deleteAll();
+
+
+DatasetTypeClient
+-----------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
+
+  // Fetch the Dataset type information using the type name
+  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get("someDatasetType");
+
+  // Fetch the Dataset type information using the classname
+  datasetTypeMeta = datasetTypeClient.get(SomeDataset.class.getName());
+
+
+MetricsClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  MetricsClient metricsClient = new MetricsClient(clientConfig);
+
+  // Fetch the total number of events that have been processed by a Flow
+  JsonObject metric = metricsClient.getMetric("user", "/apps/HelloWorld/flows",
+                                              "process.events.processed", "aggregate=true");
+
+MonitorClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  MonitorClient monitorClient = new MonitorClient(clientConfig);
+
+  // Fetch the list of System Services
+  List<SystemServiceMeta> services = monitorClient.listSystemServices();
+
+  // Fetch status of System Transaction Service
+  String serviceStatus = monitorClient.getSystemServiceStatus("transaction");
+
+  // Fetch the number of instances of the System Transaction Service
+  int systemServiceInstances = monitorClient.getSystemServiceInstances("transaction");
+
+
+ProcedureClient
+---------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ProcedureClient procedureClient = new ProcedureClient(clientConfig);
+
+  // Call a Procedure in the WordCount example
+  String result = procedureClient.call("WordCount", "RetrieveCounts", "getCount",
+                                       ImmutableMap.of("word", "foo"));
+
+  // Stop a Procedure
+  programClient.stop("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
+
+
+ProgramClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ProgramClient programClient = new ProgramClient(clientConfig);
+
+  // Start a Procedure in the WordCount example
+  programClient.start("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
+
+  // Fetch live information from the HelloWorld example
+  // Live info includes the address of an element’s container host and the container’s debug port,
+  // formatted in JSON
+  programClient.getLiveInfo("HelloWorld", ProgramType.PROCEDURE, "greet");
+
+  // Fetch program logs in the WordCount example
+  programClient.getProgramLogs("WordCount", ProgramType.PROCEDURE, "RetrieveCounts", 0,
+                               Long.MAX_VALUE);
+
+  // Scale a Procedure in the HelloWorld example
+  programClient.setProcedureInstances("HelloWorld", "greet", 3);
+
+  // Stop a Procedure in the HelloWorld example
+  programClient.stop("HelloWorld", ProgramType.PROCEDURE, "greet");
+
+  // Start, scale, and stop a Flow in the WordCount example
+  programClient.start("WordCount", ProgramType.FLOW, "WordCountFlow");
+
+  // Fetch Flow history in the WordCount example
+  programClient.getProgramHistory("WordCount", ProgramType.FLOW, "WordCountFlow");
+
+  // Scale a Flowlet in the WordCount example
+  programClient.setFlowletInstances("WordCount", "WordCountFlow", "Tokenizer", 3);
+
+  // Stop a Flow in the WordCount example
+  programClient.stop("WordCount", ProgramType.FLOW, "WordCountFlow");
+
+
+QueryClient
+-----------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  QueryClient queryClient = new QueryClient(clientConfig);
+
+  //
+  // Perform an ad-hoc query using the Purchase example
+  //
+  String query = "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
+  QueryHandle queryHandle = queryClient.execute(query);
+  QueryStatus status = new QueryStatus(null, false);
+
+  while (QueryStatus.OpStatus.RUNNING == status.getStatus() ||
+         QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
+         QueryStatus.OpStatus.PENDING == status.getStatus()) {
+    Thread.sleep(1000);
+    status = queryClient.getStatus(queryHandle);
+  }
+
+  if (status.hasResults()) {
+    // Get first 20 results
+    List<QueryResult> results = queryClient.getResults(queryHandle, 20);
+    // Fetch schema
+    List<ColumnDesc> schema = queryClient.getSchema(queryHandle);
+    String[] header = new String[schema.size()];
+    for (int i = 0; i < header.length; i++) {
+      ColumnDesc column = schema.get(i);
+      // Hive columns start at 1
+      int index = column.getPosition() - 1;
+      header[index] = column.getName() + ": " + column.getType();
+    }
+  }
+
+  queryClient.delete(queryHandle);
+  //
+  // End perform an ad-hoc query
+  //
+
+ServiceClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ServiceClient serviceClient = new ServiceClient(clientConfig);
+
+  // Fetch Service information using the Service in the PurchaseApp example
+  ServiceMeta serviceMeta = serviceClient.get("PurchaseApp", "CatalogLookup");
+
+
+StreamClient
+------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  StreamClient streamClient = new StreamClient(clientConfig);
+
+  // Fetch the Stream list
+  List streams = streamClient.list();
+
+  // Create a Stream, using the Purchase example
+  streamClient.create("purchaseStream");
+
+  // Fetch a Stream's properties, using the Purchase example
+  StreamProperties config = streamClient.getConfig("purchaseStream");
+
+  // Send events to a Stream, using the Purchase example
+  streamClient.sendEvent("purchaseStream", "Tom bought 5 apples for $10");
+
+  // Read all events from a Stream (results in events)
+  List<StreamEvent> events = Lists.newArrayList();
+  streamClient.getEvents("purchaseStream", 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+
+  // Read first 5 events from a Stream (results in events)
+  List<StreamEvent> events = Lists.newArrayList();
+  streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
+
+  // Read 2nd and 3rd events from a Stream, after first calling getEvents
+  long startTime = events.get(1).getTimestamp();
+  long endTime = events.get(2).getTimestamp() + 1;
+  events.clear()
+  streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
+
+  //
+  // Write asynchronously to a Stream
+  //
+  String streamId = "testAsync";
+  List<StreamEvent> events = Lists.newArrayList();
+
+  streamClient.create(streamId);
+
+  // Send 10 async writes
+  int msgCount = 10;
+  for (int i = 0; i < msgCount; i++) {
+    streamClient.asyncSendEvent(streamId, "Testing " + i);
+  }
+
+  // Read them back; need to read it multiple times as the writes happen asynchronously
+  while (events.size() != msgCount) {
+    events.clear();
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
+  }
+
+  // Check that there are no more events
+  events.clear();
+  while (events.isEmpty()) {
+    events.clear();
+    streamClient.getEvents(streamId, lastTimestamp + 1, Long.MAX_VALUE, msgCount, events);
+  }
+  //
+  // End write asynchronously
+  //
+
+.. _CLI:
+
+----------------------
+Command-Line Interface
+----------------------
+
+Introduction
+============
+
+The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
+similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
+script or a Windows ``.bat`` file.
+
+The CLI may be used in two ways: interactive mode and non-interactive mode.
+
+Interactive Mode
+----------------
+
+.. highlight:: console
+
+To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal::
+
+  $ /bin/cdap-cli
+
+or, on Windows::
+
+  ~SDK> bin\cdap-cli.bat
+
+The executable should bring you into a shell, with this prompt::
+
+  cdap (localhost:10000)>
+
+This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
+There are two ways to interact with a different CDAP server:
+
+- To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
+- To change the current CDAP server, run the command ``connect example.com``.
+
+For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
+a CDAP instance at ``example.com``, port ``10000``::
+
+  cdap (example.com:10000)>
+
+To list all of the available commands, enter ``help``::
+
+  cdap (localhost:10000)> help
+
+Non-Interactive Mode
+--------------------
+
+To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
+as the argument. For example, to list all applications currently deployed to CDAP, execute::
+
+  cdap list apps
+
+Available Commands
+==================
+
+These are the available commands:
+
+.. csv-table::
+   :header: Command,Description
+   :widths: 50, 50
+
+   **General**
+   ``help``,Prints this helper text
+   ``version``,Prints the version
+   ``exit``,Exits the shell
+   **Calling and Executing**
+   ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``,"Calls a Procedure, passing in the parameters as a JSON String map"
+   ``execute <query>``,Executes a Dataset query
+   **Creating**
+   ``create dataset instance <type-name> <new-dataset-name>``,Creates a Dataset
+   ``create stream <new-stream-id>``,Creates a Stream
+   **Deleting**
+   ``delete app <app-id>``,Deletes an Application
+   ``delete dataset instance <dataset-name>``,Deletes a Dataset
+   ``delete dataset module <module-name>``,Deletes a Dataset module
+   **Deploying**
+   ``deploy app <app-jar-file>``,Deploys an application
+   ``deploy dataset module <module-jar-file> <module-name> <module-jar-classname>``,Deploys a Dataset module
+   **Describing**
+   ``describe app <app-id>``,Shows detailed information about an application
+   ``describe dataset module <module-name>``,Shows information about a Dataset module
+   ``describe dataset type <type-name>``,Shows information about a Dataset type
+   **Retrieving Information**
+   ``get history flow <app-id>.<program-id>``,Gets the run history of a Flow
+   ``get history mapreduce <app-id>.<program-id>``,Gets the run history of a MapReduce job
+   ``get history procedure <app-id>.<program-id>``,Gets the run history of a Procedure
+   ``get history runnable <app-id>.<program-id>``,Gets the run history of a Runnable
+   ``get history workflow <app-id>.<program-id>``,Gets the run history of a Workflow
+   ``get instances flowlet <app-id>.<program-id>``,Gets the instances of a Flowlet
+   ``get instances procedure <app-id>.<program-id>``,Gets the instances of a Procedure
+   ``get instances runnable <app-id>.<program-id>``,Gets the instances of a Runnable
+   ``get live flow <app-id>.<program-id>``,Gets the live info of a Flow
+   ``get live procedure <app-id>.<program-id>``,Gets the live info of a Procedure
+   ``get logs flow <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Flow
+   ``get logs mapreduce <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a MapReduce job
+   ``get logs procedure <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Procedure
+   ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Runnable
+   ``get status flow <app-id>.<program-id>``,Gets the status of a Flow
+   ``get status mapreduce <app-id>.<program-id>``,Gets the status of a MapReduce job
+   ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
+   ``get status service <app-id>.<program-id>``,Gets the status of a Service
+   ``get status workflow <app-id>.<program-id>``,Gets the status of a Workflow
+   **Listing Elements**
+   ``list apps``,Lists all applications
+   ``list dataset instances``,Lists all Datasets
+   ``list dataset modules``,Lists Dataset modules
+   ``list dataset types``,Lists Dataset types
+   ``list flows``,Lists Flows
+   ``list mapreduce``,Lists MapReduce jobs
+   ``list procedures``,Lists Procedures
+   ``list programs``,Lists all programs
+   ``list streams``,Lists Streams
+   ``list workflows``,Lists Workflows
+   **Sending Events**
+   ``send stream <stream-id> <stream-event>``,Sends an event to a Stream
+   **Setting**
+   ``set instances flowlet <program-id> <num-instances>``,Sets the instances of a Flowlet
+   ``set instances procedure <program-id> <num-instances>``,Sets the instances of a Procedure
+   ``set instances runnable <program-id> <num-instances>``,Sets the instances of a Runnable
+   ``set stream ttl <stream-id> <ttl-in-seconds>``,Sets the Time-to-Live (TTL) of a Stream
+   **Starting**
+   ``start flow <program-id>``,Starts a Flow
+   ``start mapreduce <program-id>``,Starts a MapReduce job
+   ``start procedure <program-id>``,Starts a Procedure
+   ``start service <program-id>``,Starts a Service
+   ``start workflow <program-id>``,Starts a Workflow
+   **Stopping**
+   ``stop flow <program-id>``,Stops a Flow
+   ``stop mapreduce <program-id>``,Stops a MapReduce job
+   ``stop procedure <program-id>``,Stops a Procedure
+   ``stop service <program-id>``,Stops a Service
+   ``stop workflow <program-id>``,Stops a Workflow
+   **Truncating**
+   ``truncate dataset instance``,Truncates a Dataset
+   ``truncate stream``,Truncates a Stream
+
 
 .. highlight:: java
 
@@ -2251,7 +2743,7 @@ Examples
 
 Where to Go Next
 ================
-Now that you've seen CDAP's HTTP RESTful API, 
+Now that you've seen CDAP's HTTP RESTful APIs and clients,
 the last of our documentation is:
 
 - `Cask Data Application Platform Javadocs <javadocs/index.html>`__,
