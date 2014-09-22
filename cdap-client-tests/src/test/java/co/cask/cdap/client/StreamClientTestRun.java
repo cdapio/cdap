@@ -28,7 +28,6 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -42,7 +41,6 @@ import java.util.concurrent.TimeUnit;
  * Test for {@link StreamClient}.
  */
 @Category(XSlowTests.class)
-@Ignore
 public class StreamClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamClientTestRun.class);

@@ -23,7 +23,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceMeta;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -33,7 +32,6 @@ import static org.junit.Assert.assertEquals;
  * Tests for {@link ServiceClient}.
  */
 @Category(XSlowTests.class)
-@Ignore
 public class ServiceClientTestRun extends ClientTestBase {
   private ApplicationClient appClient;
   private ServiceClient serviceClient;
