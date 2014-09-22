@@ -24,10 +24,10 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>SparkMovieRating</artifactId>
+  <artifactId>MovieSteer</artifactId>
 
   <properties>
-    <app.main.class>co.cask.cdap.examples.sparkmovierating.SparkMovieRatingApp</app.main.class>
+    <app.main.class>co.cask.cdap.examples.moviesteer.MovieSteerApp</app.main.class>
   </properties>
 
   <repositories>

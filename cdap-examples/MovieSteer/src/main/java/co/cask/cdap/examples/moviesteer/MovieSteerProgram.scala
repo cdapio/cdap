@@ -20,7 +20,7 @@
  *
  */
 
-package co.cask.cdap.examples.sparkmovierating
+package co.cask.cdap.examples.moviesteer
 
 import co.cask.cdap.api.spark.ScalaSparkProgram
 import co.cask.cdap.api.spark.SparkContext
@@ -40,8 +40,8 @@ import scala.util.control.Exception._
 /**
  * Implementation of usage of Spark MLlib library.
  */
-class SparkMovieRatingProgram extends ScalaSparkProgram {
-  private final val LOG: Logger = LoggerFactory.getLogger(classOf[SparkMovieRatingProgram])
+class MovieSteerProgram extends ScalaSparkProgram {
+  private final val LOG: Logger = LoggerFactory.getLogger(classOf[MovieSteerProgram])
 
   case class Params(
                      numIterations: Int = 20,

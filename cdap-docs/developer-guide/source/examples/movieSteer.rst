@@ -1,9 +1,9 @@
 .. :Author: Cask Data, Inc.
-   :Description: Cask Data Application Platform SparkMovieRating Application
+   :Description: Cask Data Application Platform MovieSteer Application
    :Copyright: Copyright © 2014 Cask Data, Inc.
 
 ====================================
-SparkMovieRating Application Example
+MovieSteer Application Example
 ====================================
 
 **A Cask Data Application Platform (CDAP) Example Demonstrating Spark**
@@ -16,7 +16,7 @@ from an input stream.
 Data from a sample file is sent to CDAP by the external script *inject-data* to the *ratingsStream*. This data is
 processed by the ``RatingsFlow``, which stores ratings in their entirety in *ratings*, an ObjectStore Dataset.
 
-As these entries are created, they are taken up by the *SparkMovieRatingProgram*, which
+As these entries are created, they are taken up by the *MovieSteerProgram*, which
 goes through the entries, calculates predictions and tabulates results in another ObjectStore Dataset, *predictions*.
 
 Once the application completes, you can query the *predictions* Dataset by using the ``getPrediction`` method of
@@ -25,19 +25,19 @@ on the ``userId`` and ``movieId`` parameters.
 
 Let's look at some of these elements, and then run the Application and see the results.
 
-The SparkMovieRating Application
+The MovieSteer Application
 --------------------------------
 As in the other `examples <index.html>`__, the components
-of the Application are tied together by the class ``SparkMovieRatingApp``::
+of the Application are tied together by the class ``MovieSteerApp``::
 
-  public class SparkMovieRatingApp extends AbstractApplication {
+  public class MovieSteerApp extends AbstractApplication {
 
     public static final Charset UTF8 = Charset.forName("UTF-8");
 
     @Override
     public void configure() {
-      setName("SparkMovieRating");
-      setDescription("Spark Movie Rating Prediction App");
+      setName("MovieSteer");
+      setDescription("Movie Steer Prediction App");
 
       // Ingest data into the Application via a Stream
       addStream(new Stream("ratingsStream"));
@@ -46,7 +46,7 @@ of the Application are tied together by the class ``SparkMovieRatingApp``::
       addFlow(new RatingsFlow());
 
       // Run a Spark program on the acquired data
-      addSpark(new SparkMovieRatingSpecification());
+      addSpark(new MovieSteerSpecification());
 
       // Query the processed data using a Procedure
       addProcedure(new PredictionProcedure());
@@ -90,9 +90,9 @@ injecting ratings data into the Stream.
 
 When finished, stop the Application as described below.
 
-Building the SparkMovieRating Application
+Building the MovieSteer Application
 -----------------------------------------
-From the project root, build ``SparkMovieRating`` with the
+From the project root, build ``MovieSteer`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
@@ -115,10 +115,10 @@ From within the SDK root directory, this command will start CDAP in standalone m
 
 From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in standalone mode):
 
-#. Drag and drop the Application .JAR file (``target/SparkMovieRating-<version>.jar``)
+#. Drag and drop the Application .JAR file (``target/MovieSteer-<version>.jar``)
    onto your browser window.
    Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
-#. Once loaded, select the ``SparkMovieRating`` Application from the list.
+#. Once loaded, select the ``MovieSteer`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
 
 To deploy and start the Application from the command-line:
@@ -138,7 +138,7 @@ Injecting Ratings Data
 ......................
 
 Run this script to inject ratings data
-to the Stream named *ratingsStream* in the ``SparkMovieRating`` application::
+to the Stream named *ratingsStream* in the ``MovieSteer`` application::
 
 	$ ./bin/inject-data.sh [--host <hostname>]
 
@@ -153,13 +153,13 @@ Running the Spark Program
 
 There are three ways to start the Spark program:
 
-1. Click on the ``SparkMovieRatingProgram`` in the Application page of the CDAP Console to get to the
+1. Click on the ``MovieSteerProgram`` in the Application page of the CDAP Console to get to the
    Spark dialogue, then click the *Start* button.
 
 2. Send a query via an HTTP request using the ``curl`` command::
 
      curl -v -d '{args="20 1.5 10"}' \
-    	  -X POST 'http://localhost:10000/v2/apps/SparkMovieRatingProgram/spark/SparkMovieRatingProgram/start'
+    	  -X POST 'http://localhost:10000/v2/apps/MovieSteerProgram/spark/MovieSteerProgram/start'
 
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
 
@@ -178,14 +178,14 @@ Querying the Results
 If the Procedure has not already been started, you start it either through the 
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/SparkMovieRatingProgram/procedures/PredictionProcedure/start'
+	curl -v -X POST 'http://localhost:10000/v2/apps/MovieSteerProgram/procedures/PredictionProcedure/start'
 	
 There are two ways to query the *predictions* ObjectStore through the ``PredictionProcedure`` procedure:
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
 	 curl -v -d '{"userId":"1","movieId":"2"}' \
-	  -X POST 'http://localhost:10000/v2/apps/SparkMovieRatingProgram/procedures/PredictionProcedure/methods/getPrediction'
+	  -X POST 'http://localhost:10000/v2/apps/MovieSteerProgram/procedures/PredictionProcedure/methods/getPrediction'
 
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
 

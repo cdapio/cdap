@@ -18,13 +18,13 @@ REM ## the License.
 REM ##
 REM #################################################################################
 
-REM Application Manager for managing application lifecycle for SparkMovieRating
-SET APP_JAR_PREFIX=SparkMovieRating
+REM Application Manager for managing application lifecycle for MovieSteer
+SET APP_JAR_PREFIX=MovieSteer
 
-SET APP_NAME=SparkMovieRating
+SET APP_NAME=MovieSteer
 SET FLOW_NAME=RatingsFlow
 SET PROCEDURE_NAME= PredictionProcedure
-SET SPARK_NAME=SparkMovieRatingProgram
+SET SPARK_NAME=MovieSteerProgram
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)

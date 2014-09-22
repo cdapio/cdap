@@ -30,7 +30,7 @@ function get_auth_token() {
 }
 
 function usage() {
-  echo "Tool for sending data to the SparkMovieRating application"
+  echo "Tool for sending data to the MovieSteer application"
   echo "Usage: $script [--host <hostname>]"
   echo ""
   echo "  Options"

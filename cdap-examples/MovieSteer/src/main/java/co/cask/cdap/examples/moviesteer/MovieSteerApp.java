@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.sparkmovierating;
+package co.cask.cdap.examples.moviesteer;
 
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
@@ -45,17 +45,17 @@ import java.util.UUID;
 /**
  * Application that demonstrates the usage of Spark MLlib library
  */
-public class SparkMovieRatingApp extends AbstractApplication {
+public class MovieSteerApp extends AbstractApplication {
 
   public static final Charset UTF8 = Charset.forName("UTF-8");
 
   @Override
   public void configure() {
-    setName("SparkMovieRating");
-    setDescription("Spark Movie Rating Prediction App");
+    setName("MovieSteer");
+    setDescription("Movie Steer Prediction App");
     addStream(new Stream("ratingsStream"));
     addFlow(new RatingsFlow());
-    addSpark(new SparkMovieRatingSpecification());
+    addSpark(new MovieSteerSpecification());
     addProcedure(new PredictionProcedure());
 
     try {
@@ -73,13 +73,13 @@ public class SparkMovieRatingApp extends AbstractApplication {
   /**
    * A Spark Program that demonstrates the usage of Spark MLlib library
    */
-  public static class SparkMovieRatingSpecification extends AbstractSpark {
+  public static class MovieSteerSpecification extends AbstractSpark {
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
-        .setName("SparkMovieRatingProgram")
-        .setDescription("Spark Movie Rating Program")
-        .setMainClassName(SparkMovieRatingProgram.class.getName())
+        .setName("MovieSteerProgram")
+        .setDescription("Movie Steer Program")
+        .setMainClassName(MovieSteerProgram.class.getName())
         .build();
     }
   }
