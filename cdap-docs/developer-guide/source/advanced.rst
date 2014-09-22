@@ -2,9 +2,9 @@
    :description: Advanced Cask Data Application Platform Features
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-======================
-Advanced CDAP Features
-======================
+================================================
+Advanced Cask Data Application Platform Features
+================================================
 
 **Custom Services, Flow, Dataset, and Transaction Systems, 
 with Best Practices for the Cask Data Application Platform**
@@ -831,5 +831,5 @@ Where to Go Next
 ================
 Now that you've looked at the advanced features of CDAP, take a look at:
 
-- `Querying Datasets with SQL <query.html>`__,
-  which covers ad-hoc querying of CDAP Datasets using SQL.
+- `Ingesting Data <ingest.html>`__,
+  which covers tools and applications for getting your data into CDAP.
