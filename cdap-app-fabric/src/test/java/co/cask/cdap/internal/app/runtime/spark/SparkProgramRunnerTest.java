@@ -24,6 +24,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -36,6 +37,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.internal.TempFolder;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
@@ -66,6 +68,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(XSlowTests.class)
 public class SparkProgramRunnerTest {
+
+  private static final TempFolder TEMP_FOLDER = new TempFolder();
+
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
 
@@ -95,6 +100,7 @@ public class SparkProgramRunnerTest {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
     injector = AppFabricTestHelper.getInjector(conf);
@@ -131,6 +137,16 @@ public class SparkProgramRunnerTest {
 
     prepareInputData();
     runProgram(app, SparkAppUsingObjectStore.CharCountSpecification.class);
+    checkOutputData();
+  }
+
+  @Test
+  public void testScalaSparkWithObjectStore() throws Exception {
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(ScalaSparkAppUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
+
+    prepareInputData();
+    runProgram(app, ScalaSparkAppUsingObjectStore.CharCountSpecification.class);
     checkOutputData();
   }
 
