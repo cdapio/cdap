@@ -42,7 +42,7 @@ public interface OrderedTable extends Dataset {
 
   /**
    * Reads the values of the specified columns in the specified row.
-   * @return map of columns to values, never null
+   * @return immutable map of columns to values, never null
    */
   Map<byte[], byte[]> get(byte[] row, byte[][] columns) throws Exception;
 
@@ -52,7 +52,7 @@ public interface OrderedTable extends Dataset {
    *       efficient than calling same method with columns as parameters because it may always require round trip to
    *       persistent store
    * @param row row to read from
-   * @return map of columns to values, never null
+   * @return immutable map of columns to values, never null
    */
   Map<byte [], byte []> get(byte[] row) throws Exception;
 
@@ -71,7 +71,7 @@ public interface OrderedTable extends Dataset {
    * @param startColumn beginning of range of columns, inclusive
    * @param stopColumn end of range of columns, exclusive
    * @param limit maximum number of columns to return
-   * @return map of columns to values, never null
+   * @return immutable map of columns to values, never null
    */
   Map<byte[], byte[]> get(byte[] row, byte[] startColumn, byte[] stopColumn, int limit) throws Exception;
 
@@ -144,7 +144,7 @@ public interface OrderedTable extends Dataset {
    * @param row row which values to increment
    * @param columns columns to increment
    * @param amounts amounts to increment columns by (same order as columns)
-   * @return values of counters after the increments are performed, never null
+   * @return immutable map of values of counters after the increments are performed, never null
    */
   Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts) throws Exception;
 
