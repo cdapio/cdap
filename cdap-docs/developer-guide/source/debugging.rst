@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Introduction to Testing, Debugging, and Troubleshooting the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 ==========================================================
 Cask Data Application Platform Testing and Debugging Guide
@@ -14,26 +15,26 @@ Strategies in Testing Applications
 ----------------------------------
 
 CDAP comes with a convenient way to unit test your Applications.
-The base for these tests is ``AppTestBase``, which is packaged
+The base for these tests is ``TestBase``, which is packaged
 separately from the API in its own artifact because it depends on the
 CDAP’s runtime classes. You can include it in your test dependencies
 in one of two ways:
 
 - include all JAR files in the ``lib`` directory of the CDAP SDK installation,
   or
-- include the ``unit-test`` artifact in your Maven test dependencies
+- include the ``cdap-unit-test`` artifact in your Maven test dependencies
   (see the ``pom.xml`` file of the *WordCount* example).
 
 Note that for building an application, you only need to include the
 CDAP API in your dependencies. For testing, however, you need the
 CDAP run-time. To build your test case, extend the
-``AppTestBase`` class.
+``TestBase`` class.
 
 Strategies in Testing Flows
 ---------------------------
 Let’s write a test case for the *WordCount* example::
 
-  public class WordCountTest extends AppTestBase {
+  public class WordCountTest extends TestBase {
     @Test
     public void testWordCount() throws Exception {
 
@@ -101,46 +102,88 @@ as a response, and the value types in the top-level map are not uniform::
     Assert.assertTrue(assocs.containsKey("hello"));
   }
 
+Strategies in Testing Custom Services
+-------------------------------------
+Here, we'll write a test case for an application that uses a Custom Service.
+For example, a test class for the Purchase example::
+
+  public class PurchaseTest extends AppTestBase {
+    @Test
+    public void testCase() throws Exception {
+
+Deploy the application, which includes a Custom Service::
+
+  // Deploy the Application
+  ApplicationManager appManager = deployApplication(PurchaseApp.class);
+
+  // Start CatalogLookup Service
+  ServiceManager serviceManager = appManager.startService("CatalogLookup");
+
+Because this call to start the service is asynchronous, the service may not actually be up right after the method
+returns. The ``ServiceManager`` has an ``isRunning`` method which can be used to poll until the Service has started.
+Once the service is up and running, requests can be sent to it with an HTTP library, once the URL is determined.
+
+To make a request to test an endpoint, such as /v1/product/{id}/catalog::
+
+  // Get the base URL of the Service
+  URL baseURL = serviceManager.getServiceURL();
+
+  // Create the url for the service's endpoint, passing an item's id ("laptop" in this instance)
+  URL url = new URL(baseURL, "v1/product/laptop/catalog")
+
+  // Open a connection to the Custom Service
+  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+The response of the request can be verified::
+
+  Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+  Assert.assertEquals("Catalog-laptop",
+                      new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8));
+
+To stop the Service, use the ServiceManager's stop method::
+
+  serviceManager.stop();
+
 Strategies in Testing MapReduce Jobs
 ------------------------------------
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under `TrafficAnalytics </examples/TrafficAnalytics/index.html>`__.
+found under `Purchase </examples/Purchase/index.html>`__.
 
-The ``TrafficAnalyticsTest`` class should extend from
+The ``PurchaseTest`` class should extend from
 ``AppTestBase`` similar to `Strategies in Testing Flows`.
 
 ::
 
-  public class TrafficAnalyticsTest extends AppTestBase {
+  public class PurchaseTest extends AppTestBase {
     @Test
     public void test() throws Exception {
 
-The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` 
+The ``PurchaseApp`` application can be deployed using the ``deployApplication``
 method from the ``AppTestBase`` class::
 
   // Deploy an Application
-  ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
+  ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
-The MapReduce job reads from the ``logEventTable`` Dataset. As a first
-step, the data to the ``logEventTable`` should be populated by running
-the ``RequestCountFlow`` and sending the data to the ``logEventStream``
+The MapReduce job reads from the ``purchases`` Dataset. As a first
+step, the data to the ``purchases`` should be populated by running
+the ``PurchaseFlow`` and sending the data to the ``purchaseStream``
 Stream::
 
-  FlowManager flowManager = appManager.startFlow("RequestCountFlow");
+  FlowManager flowManager = appManager.startFlow("PurchaseFlow");
   // Send data to the Stream
   sendData(appManager, now);
   
   // Wait for the last Flowlet to process 3 events or at most 5 seconds
   RuntimeMetrics metrics = RuntimeStats.
-      getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
+      getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
   metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Start the MapReduce job and wait for a maximum of 60 seconds::
 
   // Start the MapReduce job.
-  MapReduceManager mrManager = appManager.startMapReduce("RequestCountMapReduce");
+  MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
   mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We can start verifying that the MapReduce job was run correctly by
@@ -150,12 +193,11 @@ the counts::
   ProcedureClient client = procedureManager.getClient();
 
   // Verify the query.
-  String response = client.query("getCounts", Collections.<String, String>emptyMap());
+  String response = client.query("history", ImmutableMap.of("customer", "joe"));
   
   // Deserialize the JSON string.
-  Map<Long, Integer> result = GSON.
-      fromJson(response, new TypeToken<Map<Long, Integer>>(){}.getType());
-  Assert.assertEquals(2, result.size());
+  PurchaseHistory result = GSON.fromJson(response, PurchaseHistory.class);
+  Assert.assertEquals(2, result.getPurchases().size());
 
 The assertion will verify that the correct result was received.
 
@@ -196,7 +238,7 @@ Any CDAP Application can be debugged in the Standalone CDAP
 by attaching a remote debugger to the CDAP JVM. To enable remote
 debugging:
 
-#. Start the Standalone CDAP with the ``--enable-debug`` option specifying ``port 5005``.
+#. Start the Standalone CDAP with ``--enable-debug``, optionally specifying a port (default is ``5005``).
 
    The CDAP should confirm that the debugger port is open with a message such as
    ``Remote debugger agent started on port 5005``.
@@ -291,22 +333,25 @@ Attaching a Debugger
 Debugging with IntelliJ
 .......................
 
+*Note:* These instructions were developed with *IntelliJ v13.1.2.* 
+You may need to adjust them for your installation or version.
+
 #. From the *IntelliJ* toolbar, select ``Run -> Edit Configurations``.
-#. Click ``+`` and choose ``Remote Configuration``:
+#. Click ``+`` and choose ``Remote``:
 
-   .. image:: _images/IntelliJ_1.png
+   .. image:: _images/debugging/intellij_1.png
 
-#. Create a debug configuration by entering a name, for example, ``Cask``.
+#. Create a debug configuration by entering a name, for example, ``CDAP``.
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
    in the Host field.
 #. Enter the debugging port, for example, ``5005`` in the Port field:
 
-   .. image:: _images/IntelliJ_2.png
+   .. image:: _images/debugging/intellij_2.png
 
-#. To start the debugger, select ``Run -> Debug -> Cask``.
+#. To start the debugger, select ``Run -> Debug -> CDAP``.
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-   .. image:: _images/IntelliJ_3.png
+   .. image:: _images/debugging/intellij_3.png
 
 #. Start the Flow in the Console.
 #. Send an event to the Stream. The control will stop at the breakpoint
@@ -316,19 +361,29 @@ Debugging with IntelliJ
 Debugging with Eclipse
 ......................
 
+*Note:* These instructions were developed with *Eclipse IDE for Java Developers v4.4.0.* 
+You may need to adjust them for your installation or version.
+
 #. In Eclipse, select ``Run-> Debug`` configurations.
-#. In the pop-up, select ``Remote Java application``.
-#. Enter a name, for example, ``Cask``.
+#. In the list on the left of the window, double-click ``Remote Java Application`` to create 
+   a new launch configuration.
+
+   .. image:: _images/debugging/eclipse_1.png
+
+#. Enter a name and project, for example, ``CDAP``.
+
+   .. image:: _images/debugging/eclipse_2.png
+
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
    in the Port field:
-#. Enter the debugging port, for example, ``5005`` in the Port field.
-#. Click ``Debug`` to start the debugger:
+#. Enter the debugging port, for example, ``5005`` in the Port field:
 
-   .. image:: _images/Eclipse_1.png
+
+#. In your project, click ``Debug`` to start the debugger.
 
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-   .. image:: _images/Eclipse_2.png
+   .. image:: _images/debugging/eclipse_3.png
 
 #. Start the Flow in the Console.
 #. Send an event to the Stream.

@@ -1627,28 +1627,28 @@ span.log-icon.complete {
 /*
  * CDAP Services
  */
-#reactor-services #panels {
+#cdap-services #panels {
     padding-top: 40px;
 }
 
-#reactor-services th {
+#cdap-services th {
     border-right: 1px solid #C4C5CA;
     border-bottom: 1px solid #C4C5CA;
     line-height: 30px;
 }
 
-#reactor-services th.service-col {
+#cdap-services th.service-col {
     font-size: 14px;
     font-weight: bold;
     text-align: left;
 }
 
-#reactor-services td {
+#cdap-services td {
     height: 60px;
     border-right: 1px solid #C4C5CA;
 }
 
-#reactor-services .event-rate-col {
+#cdap-services .event-rate-col {
     border-right: 0;
 }
 
@@ -1661,11 +1661,11 @@ span.log-icon.complete {
     color: #5A5D6E;
 }
 
-#reactor-services .instance-wrapper, #reactor-services .instance-wrapper div {
+#cdap-services .instance-wrapper, #cdap-services .instance-wrapper div {
     height: 30px;
 }
 
-#reactor-services .instance-wrapper div {
+#cdap-services .instance-wrapper div {
     width: 65px;
 }
 
@@ -4339,4 +4339,16 @@ div.tooltip-inner {
   width: 50%;
   margin: 0px auto;
   display: block;
+}
+
+.panel-title.center-align.beta-info-font {
+  font-size: 14px;
+  padding: 13px;
+  line-height: inherit;
+}
+
+#panels .panel .panel-title .logs-link {
+  cursor: pointer;
+  color: blue;
+  text-decoration: underline;
 }

@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Introducing new developers to the Cask Data Application Platform
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. highlight:: console
 
@@ -21,7 +22,13 @@ The example code for the *ResponseCodeAnalytics* that we'll be using is located 
 
 Step 1: Installation and Startup
 ================================
-Download and unpack the SDK from `Cask.co </download>`_.
+Download and unpack the SDK from `Cask.co </download>`_. 
+
+Make sure you have the pre-requisites for using CDAP:
+
+- `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP; note that $JAVA_HOME should be set)
+- `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP Console)
+- `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build the example applications)
 
 Start CDAP from a command line in the SDK directory::
 

@@ -61,7 +61,7 @@ public class UniqueCountTableDefinition
     }
 
     public void updateUniqueCount(String entry) {
-      long newCount = entryCountTable.increment(new Increment(entry, "count", 1L)).getInt("count");
+      long newCount = entryCountTable.incrementAndGet(new Increment(entry, "count", 1L)).getInt("count");
       if (newCount == 1L) {
         uniqueCountTable.increment(new Increment("unique_count", "count", 1L));
       }

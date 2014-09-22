@@ -1,5 +1,6 @@
 .. :author: Cask Data, Inc.
    :description: Cask Data Application Platform Security
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 =======================================
 Cask Data Application Platform Security
@@ -29,6 +30,11 @@ By enabling perimeter security for CDAP, you can prevent access by any clients w
 credentials.  In addition, access logging can be enabled in CDAP to provide an audit log of all
 operations.
 
+We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with 
+`secure Hadoop clusters <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html>`__.
+In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
+running on the cluster are effectively "trusted”. Though there is still value in having the perimeter access
+be authenticated in that situation, whenever possible a secure Hadoop cluster should be employed with CDAP security.
 
 Enabling Security
 ==================
@@ -41,9 +47,8 @@ security.enabled                              true
 security.auth.server.address                  <hostname>
 ==========================================  ==============
 
-=========================
 Running Servers with SSL
-=========================
+--------------------------------
 
 To enable running servers with SSL in CDAP, add this property to ``cdap-site.xml``:
 
@@ -54,7 +59,7 @@ ssl.enabled                                   true
 ==========================================  ==============
 
 Default Ports
-===============
+--------------------------------
 Without SSL:
 
 =======================================   =================
@@ -77,7 +82,7 @@ dashboard.ssl.bind.port                       9443
 
 
 Configuring SSL for the Authentication Server
-==============================================
+---------------------------------------------
 To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-security.xml``:
 
 =============================================     =====================     =======================================
@@ -93,7 +98,7 @@ security.auth.server.ssl.keystore.type              JKS                       Ke
 
 
 Configuring SSL for the Router
-==============================================
+--------------------------------
 To configure SSL for the Router, add these properties to ``cdap-security.xml``:
 
 ================================    =======================      ================================================
@@ -108,7 +113,7 @@ router.ssl.keystore.type              JKS                          Keystore file
 ================================    =======================      ================================================
 
 Configuring SSL for UI
-=============================================
+--------------------------------
 To enable SSL for the Web-UI, add these properties to ``cdap-security.xml``:
 
 =======================================          ============================================
@@ -125,7 +130,7 @@ dashboard.ssl.key                                   SSL key file location. The f
 **Note:** To allow self signed certificates, set dashboard.ssl.disable.cert.check field to true in cdap-site.xml
 
 Configuring Kerberos (required)
-================================
+--------------------------------
 To configure Kerberos authentication for various CDAP services, add these properties to ``cdap-site.xml``:
 
 ==========================================  ========================  ==========================================
@@ -138,7 +143,7 @@ cdap.master.kerberos.principal                None                     Kerberos 
 ==========================================  ========================  ==========================================
 
 Configuring Zookeeper (required)
-=================================
+--------------------------------
 To configure Zookeeper to enable SASL authentication, add the following to your ``zoo.cfg``::
 
   authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
@@ -168,7 +173,7 @@ Finally, start Zookeeper server with the following JVM option::
   -Djava.security.auth.login.config=/path/to/jaas.conf
 
 Enabling Access Logging
-========================
+-----------------------
 
 .. highlight:: console
 

@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
  */
 public class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
 
-  // todo:  REACTOR-853: "InstanceId is not supported in MR jobs"
+  // TODO: InstanceId is not supported in MR jobs, see CDAP-2
   public static final String INSTANCE_ID = "0";
   private final String accountId;
   private final MapReduceSpecification spec;

@@ -157,6 +157,6 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
    * Defaults to false.
    */
   public static boolean supportsReadlessIncrements(DatasetSpecification spec) {
-    return "true".equalsIgnoreCase(spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT_WRITE));
+    return "true".equalsIgnoreCase(spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT));
   }
 }
