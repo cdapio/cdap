@@ -9,25 +9,25 @@ Cask Data Application Platform Programming Guide
 Introduction
 ============
 
-This document covers in detail the Cask Data Application Platform (CDAP) core
-elements—Applications, Streams, Datasets, Flows, Procedures, MapReduce,
-and Workflows—and how you work with them in Java to build a Big Data
-application.
+This document covers the two core virtualizations in the Cask Data Application Platform (CDAP) — Data and Applications.
+Data virtualizations are grouped into streams and datasets. Application virtualizations are grouped into
+Flows, MapReduce, Spark, Workflows, and Services. This document
+details how to work with these abstractions to build Big Data applications.
 
 For a high-level view of the concepts of the Cask Data Application Platform,
-please see the `Introduction to the Cask Data Application Platform <intro>`__.
+please see :doc:`Concepts and Architecture </arch>`.
 
 For more information beyond this document, see the
-`Javadocs <javadocs/index>`_  and the code in the
-`examples <examples/index>`_ directory, both of which are on the
-`Cask.co <http://cask.co>`__ `Developers website <http://cask.co/developers>`_ as well as in your
+:doc:`Javadocs </javadocs/index>` and the code in the
+:doc:`examples </examples/index>` directory, both of which are on the
+`Cask.co <http://cask.co>`_ `Developers website <http://cask.co/developers>`_ as well as in your
 CDAP installation directory.
 
 Data Virtualization
 ===================
 
-Data is separated into two main virtualizations: streams and datasets. Streams are ordered, partionable,
-sequences of data, and the primary means of bringing data from external system in the CDAP
+There are two main data virtualizations: Streams and Datasets. Streams are ordered, partionable,
+sequences of data, and are the primary means of bringing data from external systems into the CDAP
 in realtime. Datasets are abstractions on top of data, allowing you to access your data using
 higher-level abstractions and generic, reusable Java implementations of common data patterns
 instead of requiring you to manipulate data with low-level APIs.
@@ -37,8 +37,8 @@ instead of requiring you to manipulate data with low-level APIs.
 Streams
 =======
 
-**Streams** are the primary means of bringing data
-from external systems into the CDAP in realtime.
+**Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
+They are ordered, partionable, sequences of data, usable for realtime collection and consumption of data.
 You specify a Stream in your `Application`__ metadata::
 
   addStream(new Stream("myStream"));
@@ -49,10 +49,10 @@ specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the CDAP instance.
 
 You can write to Streams either one operation at a time or in batches,
-using either the `Cask Data Application Platform HTTP RESTful API <rest.html>`__
+using either the :ref:`Cask Data Application Platform HTTP RESTful API <rest-streams>`
 or command line tools.
 
-Each individual signal sent to a Stream is stored as an ``StreamEvent``,
+Each individual signal sent to a Stream is stored as a ``StreamEvent``,
 which is comprised of a header (a map of strings for metadata) and a
 body (a blob of arbitrary binary data).
 
@@ -60,7 +60,7 @@ Streams are uniquely identified by an ID string (a "name") and are
 explicitly created before being used. They can be created
 programmatically within your application, through the CDAP Console,
 or by or using a command line tool. Data written to a Stream
-can be consumed by Flows and processed in real-time. Streams are shared
+can be consumed in real-time by Flows or in batch by MapReduce. Streams are shared
 between applications, so they require a unique name.
 
 .. _Datasets:
@@ -69,9 +69,9 @@ Datasets
 ========
 
 **Datasets** store and retrieve data. Datasets are your means of reading
-from and writing data to the CDAP’s storage capabilities. Instead of
-requiring you to manipulate data with low-level APIs, Datasets provide
-higher-level abstractions and generic, reusable Java implementations of
+from and writing to the CDAP’s storage capabilities. Instead of
+forcing you to manipulate data with low-level APIs, Datasets provide
+higher-level abstractions and generic, reusable implementations of
 common data patterns.
 
 The core Dataset of the CDAP is a Table. Unlike relational database
@@ -83,27 +83,26 @@ Other Datasets are built on top of Tables. A Dataset can implement
 specific semantics around a Table, such as a key/value Table or a
 counter Table. A Dataset can also combine multiple Datasets to create a
 complex data pattern. For example, an indexed Table can be implemented
-by using one Table for the data to index and a second Table for the
-index itself.
+by using one Table for the data and a second Table for the index of that data.
 
-You can implement your own data patterns as custom Datasets on top of
-Tables. A number of useful Datasets—we refer to them as system Datasets—are
+A number of useful Datasets—we refer to them as system Datasets—are
 included with CDAP, including key/value tables, indexed tables and
-time series.
+time series. You can implement your own data patterns as custom
+Datasets on top of Tables.
 
-You can create a Dataset in CDAP using either
-`Cask Data Application Platform HTTP RESTful API <rest.html>`__ or command line tools.
+You can create a Dataset in CDAP using either the
+:ref:`Cask Data Application Platform HTTP RESTful API <rest-datasets>` or command line tools.
 
-You can also specify to create a Dataset by Application components if one doesn't
-exist. For that you must declare its details in the Application specification.
+You can also tell Applications to create a Dataset if it does not already
+exist by declaring the Dataset details in the Application specification.
 For example, to create a DataSet named *myCounters* of type 
-`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
+:doc:`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable>`, write::
 
   public void configure() {
       createDataset("myCounters", "KeyValueTable");
       ...
 
-To use the Dataset in a Flowlet or a Procedure, instruct the runtime
+To use the Dataset in a Program, instruct the runtime
 system to inject an instance of the Dataset with the ``@UseDataSet``
 annotation::
 
@@ -116,17 +115,18 @@ annotation::
     }
 
 The runtime system reads the Dataset specification for the key/value
-table *myCounters* from the metadata store and injects a functional
+table *myCounters* from the metadata store and injects an
 instance of the Dataset class into the Application.
 
 You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
-`Purchase <examples/Purchase/index.html>`__
-example for an implementation of a Custom Dataset. For more details, refer to
+:doc:`Purchase <examples/Purchase/index>`
+example for an implementation of a Custom Dataset.
+For more details, refer to :ref:`Custom Datasets <custom-datasets>`
 
 Types of Datasets
 -----------------
-A Dataset abstraction is defined with a Java class that implements the ``DatasetDefinition`` interface.
+A Dataset abstraction is defined by a Java class that implements the ``DatasetDefinition`` interface.
 The implementation of a Dataset typically relies on one or more underlying (embedded) Datasets.
 For example, the ``IndexedTable`` Dataset can be implemented by two underlying Table Datasets –
 one holding the data and one holding the index.
@@ -148,11 +148,10 @@ manipulate it. Every Dataset has a unique name and metadata that defines its beh
 For example, every ``IndexedTable`` has a name and indexes a particular column of its primary table:
 the name of that column is a metadata property of each Dataset of this type.
 
-
 Core Datasets
 -------------
 **Tables** are the only core Datasets, and all other Datasets are built using one or more
-core Tables. These Tables are similar to tables in a relational database with a few key differences:
+Tables. These Tables are similar to tables in a relational database with a few key differences:
 
 - Tables have no fixed schema. Unlike relational database tables where every
   row has the same schema, every row of a Table can have a different set of columns.
@@ -213,7 +212,7 @@ If your application code already deals with byte arrays, you can use the latter 
 
 Read
 ....
-A ``get`` operation reads all columns or selection of columns of a single row::
+A ``get`` operation reads all columns or a selection of columns of a single row::
 
   Table t;
   byte[] rowKey1;
@@ -247,7 +246,7 @@ The ``Row`` object provides an extensive API for accessing returned column value
 
 When requested, the value of a column is converted to a specific type automatically.
 If the column is absent in a row, the returned value is ``null``. To return primitive types,
-the corresponding methods accepts default value to be returned when the column is absent::
+the corresponding methods accept a default value to be returned when the column is absent::
 
   // Get column value as a primitive type or 0 if column is absent
   long valueAsLong = row.getLong("column1", 0);
@@ -307,8 +306,7 @@ Increment
 .........
 An increment operation increments a ``long`` value of one or more columns by either ``1L``
 or an integer amount *n*.
-If a column doesn’t exist, it is created with an assumed value
-before the increment of zero::
+If a column doesn’t exist, it is created with an assumed value of zero before the increment::
 
   // Write long value to a column of a row
   t.put(new Put("rowKey1").add("column1", 55L));
@@ -333,9 +331,9 @@ passing all of them will make the deletion faster.
 
 System Datasets
 ---------------
-The Cask Data Application Platform comes with several system-defined Datasets, including key/value Tables,
-indexed Tables and time series. Each of them is defined with the help of one or more embedded
-Tables, but defines its own interface. For example:
+The Cask Data Application Platform comes with several system-defined Datasets, including but not limited to
+key/value Tables, indexed Tables and time series. Each of them is defined with the help of one or more embedded
+Tables, but defines its own interface. Examples include:
 
 - The ``KeyValueTable`` implements a key/value store as a Table with a single column.
 
@@ -345,23 +343,26 @@ Tables, but defines its own interface. For example:
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the `Javadocs <javadocs/index.html>`__ for these classes and `the examples <examples/index.html>`__
-to learn more about these Datasets.
+See the :doc:`Javadocs <javadocs/index>` for these classes and the :doc:`examples <examples/index>`
+to learn more about these Datasets. Any class in the CDAP libraries that implements the ``Dataset`` interface is a
+system Dataset.
+
+.. _custom-datasets:
 
 Custom Datasets
 ---------------
 You can define your own Dataset classes to implement common data patterns specific to your code.
 
 Suppose you want to define a counter table that, in addition to counting words,
-counts how many unique words it has seen. The Dataset can be built on top two underlying Datasets,
-a first Table (``entryCountTable``) to count all the words and a second Table (``uniqueCountTable``) for the unique count.
+counts how many unique words it has seen. The Dataset can be built on top of two underlying Datasets. The first a
+Table (``entryCountTable``) to count all the words and the second a Table (``uniqueCountTable``) for the unique count.
 
 When your custom Dataset is built on top of one or more existing Datasets, the simplest way to implement
 it is to just define the data operations (by implementing the Dataset interface) and delegating all other
 work (such as  administrative operations) to the embedded Dataset.
 
 To do this, you need to implement the Dataset class and define the embedded Datasets by annotating
-its constructor parameters.
+its constructor arguments.
 
 In this case, our  ``UniqueCountTableDefinition`` will have two underlying Datasets:
 an ``entryCountTable`` and an ``uniqueCountTable``, both of type ``Table``::
@@ -405,7 +406,7 @@ All administrative operations (such as create, drop, truncate) will be delegated
 in the order they are defined in the constructor. ``DatasetProperties`` that are passed during creation of
 the Dataset will be passed as-is to the embedded Datasets.
 
-To create a Dataset of ``UniqueCountTable`` type add the following into the Application implementation::
+To create a Dataset of type ``UniqueCountTable``, add the following into the Application implementation::
 
   Class MyApp extends AbstractApplication {
     public void configure() {
@@ -415,10 +416,10 @@ To create a Dataset of ``UniqueCountTable`` type add the following into the Appl
   }
 
 You can also pass ``DatasetProperties`` as a third parameter to the ``createDataset`` method.
-These properties will be used by embedded Datasets during creation and will be availalbe via ``DatasetSpecification``
-passed to Dataset constructor.
+These properties will be used by embedded Datasets during creation and will be available via the
+``DatasetSpecification`` passed to the Dataset constructor.
 
-Application components can access created Dataset via ``@UseDataSet``::
+Application components can access a created Dataset via the ``@UseDataSet`` annotation::
 
   Class MyFowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
@@ -426,14 +427,14 @@ Application components can access created Dataset via ``@UseDataSet``::
     ...
   }
 
-A complete application demonstrating the use of a custom Dataset is included in our WordCount example.
+A complete application demonstrating the use of a custom Dataset is included in our
+:doc:`Purchase <examples/Purchase/index>` example.
 
-You can also create/drop/truncate Datasets using `Cask Data Application Platform HTTP REST API <rest.html>`__. Please refer to the
-REST APIs guide for more details on how to do that.
+You can also create, drop, and truncate Datasets using the
+:ref:`Cask Data Application Platform HTTP REST API <rest-datasets>`.
 
-
-Datasets & MapReduce
---------------------
+Datasets and MapReduce
+----------------------
 
 A MapReduce job can interact with a Dataset by using it as an input or an output.
 The Dataset needs to implement specific interfaces to support this.
@@ -476,8 +477,8 @@ To read a range of keys and give a hint that you want 16 splits, write::
     context.setInput(kvTable, kvTable.getSplits(16, startKey, stopKey);
   }
 
-Similarly to reading input from a Dataset, you have the option to write to a Dataset as
-the output destination of a MapReduce job—if that Dataset implements the ``BatchWritable``
+Just as you have the option to read input from a Dataset, you have the option to write to a Dataset as
+the output destination of a MapReduce job if that Dataset implements the ``BatchWritable``
 interface::
 
   public interface BatchWritable<KEY, VALUE> {
@@ -491,9 +492,8 @@ parameters of the Reducer.
 Data Exploration
 ================
 
-Procedures are a programmatic way to access and query the data in your Datasets. Yet sometimes you may want to explore
-a Dataset in an ad-hoc manner rather than writing procedure code. This can be done using SQL if your Dataset fulfills
-two requirements:
+It is often useful to be able to explore a Dataset in an ad-hoc manner.
+This can be done using SQL if your Dataset fulfills two requirements:
 
 * it defines the schema for each record; and
 * it has a method to scan its data record by record.
@@ -533,10 +533,12 @@ In the case of the above class ``Entry``, the schema will be::
 
   (key STRING, value INT)
 
+.. _sql-limitations:
+
 Limitations
 -----------
 * The record type must be a structured type, that is, a Java class with fields. This is because SQL tables require
-  a structure type at the top level. That means, the record type cannot be a primitive,
+  a structure type at the top level. This means the record type cannot be a primitive,
   collection or map type. However, these types may appear nested inside the record type.
 
 * The record type must be that of an actual Java class, not an interface. The same applies to the types of any
@@ -553,18 +555,18 @@ Limitations
 * Fields of a class that are declared static or transient are ignored during schema generation. This means that the
   record type must have at least one non-transient and non-static field. For example,
   the ``java.util.Date`` class has only static and transient fields. Therefore a record type of ``Date`` is not
-  supported and will result in an exception when the dataset is created.
+  supported and will result in an exception when the Dataset is created.
 
-* A dataset can only be used in ad-hoc queries if its record type is completely contained in the dataset definition.
+* A Dataset can only be used in ad-hoc queries if its record type is completely contained in the Dataset definition.
   This means that if the record type is or contains a parametrized type, then the type parameters must be present in
-  the dataset definition. The reason is that the record type must be instantiated when executing an ad-hoc query.
-  If a type parameter depends on the jar file of the application that created the dataset, then this jar file is not
+  the Dataset definition. The reason is that the record type must be instantiated when executing an ad-hoc query.
+  If a type parameter depends on the jar file of the application that created the Dataset, then this jar file is not
   available to the query execution runtime.
 
   For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
-  the application jar. However, if you define your own dataset type ``MyObjectStore`` that extends or encapsulates an
-  ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the dataset definition for ``MyObjectStore``. See the
-  Purchase application for an example.
+  the application jar. However, if you define your own Dataset type ``MyObjectStore`` that extends or encapsulates an
+  ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the Dataset definition for ``MyObjectStore``. See the
+  :doc:`Purchase </examples/Purchase/index>` application for an example.
 
 
 Parameterized Types
@@ -611,6 +613,8 @@ The SQL schema of the dataset would be::
   (title STRING, year INT, cast MAP<STRING, STRING>, reviews ARRAY<STRING>)
 
 Refer to the Hive language manual for more details on schema and data types.
+
+.. _sql-scanning-records:
 
 Scanning Records
 ----------------
@@ -714,7 +718,7 @@ directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
 Writing to Datasets with SQL
 ----------------------------
-Data can be inserted into Datasets using SQL. For example, you can write in a Dataset named
+Data can be inserted into Datasets using SQL. For example, you can write to a Dataset named
 ``ProductCatalog`` with this SQL query::
 
   INSERT INTO TABLE cdap_user_productcatalog SELECT ...
@@ -723,32 +727,33 @@ In order for a Dataset to enable record insertion from SQL query, it simply has 
 into itself.
 
 For CDAP Datasets, this is done by implementing the ``RecordWritable`` interface.
-Similarly to `Querying Datasets with SQL`_, the CDAP built-in Dataset KeyValueTable already implements this and
-can be used to insert records from SQL queries.
+The system Dataset KeyValueTable already implements this and can be used to insert records from SQL queries.
 
 Let's take a closer look at the ``RecordWritable`` interface.
 
 Defining the Record Schema
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+..........................
+
 Just like in the ``RecordScannable`` interface, the record schema is given by returning the Java type of each record,
 using the method::
 
   Type getRecordType();
 
-`The same rules <limitations>`_ as for the type of the ``RecordScannable`` interface apply to the type of the
-``RecordWritable`` interface. In fact, if a Dataset implements both ``RecordScannable`` and ``RecordWritable``
-interfaces, they will have to use identical record types.
+:ref:`The same rules <sql-limitations>` that apply to the type of the ``RecordScannable`` interface apply
+to the type of the ``RecordWritable`` interface. In fact, if a Dataset implements both ``RecordScannable`` and
+``RecordWritable`` interfaces, they will have to use identical record types.
 
 Writing Records
-^^^^^^^^^^^^^^^
-To enable inserting SQL queries result into a Dataset, it needs to provide a means of writing a record into itself.
-This is similar to how the ``BatchWritable`` interface makes Datasets writable from Map/Reduce jobs by providing
+...............
+
+To enable inserting SQL query results, a Dataset needs to provide a means of writing a record into itself.
+This is similar to how the ``BatchWritable`` interface makes Datasets writable from MapReduce jobs by providing
 a way to write pairs of key and value. You need to implement the ``RecordWritable`` method::
 
       void write(RECORD record) throws IOException;
 
-Continuing the *MyDataset* `example used above <scanning-records>`_, which showed an implementation of
-``RecordScannable``, this example shows implementing a ``RecordWritable`` Dataset that is backed by a ``Table``::
+Continuing the *MyDataset* :ref:`example used above <sql-scanning-records>`, which showed an implementation of
+``RecordScannable``, this example an implementation of a ``RecordWritable`` Dataset that is backed by a ``Table``::
 
   class MyDataset implements Dataset, ..., RecordWritable<Entry> {
 
@@ -785,7 +790,8 @@ driver using this `link <https://repository.continuuity.com/content/repositories
 Go to the directory matching the version of your running CDAP instance, and download the file named ``cdap-explore-jdbc-<version>.jar``.
 
 Using the CDAP JDBC driver in your Java code
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+............................................
+
 To use CDAP JDBC driver in your code, place ``cdap-jdbc-driver.jar`` in the classpath of your application.
 If you are using Maven, you can simply add a dependency in your file ``pom.xml``::
 
@@ -822,17 +828,18 @@ JDBC drivers are a standard in the Java ecosystem, with many `resources about th
 <http://docs.oracle.com/javase/tutorial/jdbc/>`__.
 
 Accessing CDAP Datasets through Business Intelligence Tools
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...........................................................
+
 Most Business Intelligence tools can integrate with relational databases using JDBC drivers. They often include
 drivers to connect to standard databases such as MySQL or PostgreSQL.
 Most tools allow the addition of non-standard JDBC drivers.
 
 We'll look at two business intelligence tools — *SquirrelSQL* and *Pentaho Data Integration* —
-and see how it is possible to connect to a running CDAP instance and interact with
-CDAP Datasets using the CDAP JDBC driver.
+and see how to connect them to a running CDAP instance and interact with CDAP Datasets.
 
-CDAP JDBC driver integration with SquirrelSQL
-.............................................
+SquirrelSQL
+...........
+
 *SquirrelSQL* is a simple JDBC client which executes SQL queries against many different relational databases.
 Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
 
@@ -854,8 +861,8 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
    *SquirrelSQL*.
 #. We can now create an alias to connect to a running instance of CDAP. Open the ``Aliases`` pane, and click on
    the ``+`` icon to create a new alias.
-#. In this example, we are going to connect to a standalone CDAP which we started running from the SDK.
-   The name for our alias will be ``CDAP Standalone``. Select the ``CDAP Driver`` in
+#. In this example, we are going to connect to a standalone CDAP from the SDK.
+   The name of our alias will be ``CDAP Standalone``. Select the ``CDAP Driver`` in
    the list of available drivers. Our URL will be ``jdbc:cdap://localhost:10000``. Our standalone instance
    does not require an authorization token, but if yours requires one, HTML-encode your token
    and pass it as a parameter of the ``URL``. ``User Name`` and ``Password`` are left blank.
@@ -872,14 +879,15 @@ Here's how to add the CDAP JDBC driver inside *SquirrelSQL*.
    .. image:: _images/jdbc/squirrel_sql_query.png
       :width: 6in
 
-CDAP JDBC driver integration with Pentaho Data Integration
-..........................................................
+Pentaho Data Integration
+........................
+
 *Pentaho Data Integration* is an advanced, open source business intelligence tool that can execute
 transformations of data coming from various sources. Let's see how to connect it to
 CDAP Datasets using the CDAP JDBC driver.
 
 #. Before opening the *Pentaho Data Integration* application, copy the ``co.cask.cdap.cdap-explore-jdbc-<version>.jar``
-   file in the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
+   file to the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
 #. Open *Pentaho Data Integration*.
 #. In the toolbar, select ``File -> New -> Database Connection...``.
 #. In the ``General`` section, select a ``Connection Name``, like ``CDAP Standalone``. For the ``Connection Type``, select
@@ -934,22 +942,66 @@ programming paradigms and runtimes, while providing access to many useful and po
 by CDAP such as the ability to dynamically scale processing units, distributed transactions, and service
 discovery. Applications are abstracted away from the platform that runs the application. 
 When you deploy and run the application into a specific installation of CDAP, the appropriate
-implementations of all services and program runtimes are injected by CDAP - the application does not need
-to change based on the environment. This allows you develop applications in one environent - say, on your laptop using a stand-alone CDAP for testing - and then seamlessly deploy it in a different environemnt - say, your distributed staging cluster.
+implementations of all services and program runtimes are injected by CDAP; the application does not need
+to change based on the environment. This allows you develop applications in one environment - like on your laptop
+using a stand-alone CDAP for testing - and then seamlessly deploy it in a different environment - like
+your distributed staging cluster.
+
+With your data virtualized in CDAP as Streams and Datasets, you are able to process that data in realtime or in batch
+using Programs (Flows, MapReduce, Spark, Workflow), and you can serve data to external clients using Services
+and Procedures.
+
+Applications
+============
+
+An **Application** is a collection of Programs, Services, and Procedures that read from and write to the data
+virtualization layer in CDAP. Programs include `Flows`_, `MapReduce`_, `Workflows`_, and `Spark`_, and are used
+to process data. Services and Procedures are used to serve data.
+
+The CDAP API is written in a
+`"fluent" interface style <http://en.wikipedia.org/wiki/Fluent_interface>`_,
+and often relies on ``Builder`` methods for creating many parts of the Application.
+
+In writing a CDAP Application, it's best to use an integrated
+development environment that understands the application interface to
+provide code-completion in writing interface methods.
+
+To create an Application, implement the ``Application`` interface
+or subclass from ``AbstractApplication`` class, specifying
+the Application metadata and declaring and configuring each of the Application elements::
+
+      public class MyApp extends AbstractApplication {
+        @Override
+        public void configure() {
+          setName("myApp");
+          setDescription("My Sample Application");
+          addStream(new Stream("myAppStream"));
+          addFlow(new MyAppFlow());
+          addProcedure(new MyAppQuery());
+          addMapReduce(new MyMapReduceJob());
+          addWorkflow(new MyAppWorkflow());
+        }
+      }
+
+Notice that *Streams* are
+defined using provided ``Stream`` class, and are referenced by names, while
+other components are defined using user-written
+classes that implement correspondent interfaces and are referenced by passing
+an object, in addition to being assigned a unique name.
+
+Names used for *Streams* and *Datasets* need to be unique across the
+CDAP instance, while names used for Programs and Services need to be unique only to the application.
 
 .. _flows:
 
 Flows
 =====
 
-**Flows** are developer-implemented, real-time Stream processors. They
-are comprised of one or more `Flowlets`_ that are wired together into a
-directed acyclic graph or DAG.
-
-Flowlets pass DataObjects between one another. Each Flowlet is able to
-perform custom logic and execute data operations for each individual
-data object processed. All data operations happen in a consistent and
-durable way.
+**Flows** are user-implemented real-time stream processors. They are comprised of one or
+more **Flowlets** that are wired together into a directed acyclic graph or DAG. Flowlets
+pass data between one another; each Flowlet is able to perform custom logic and execute
+data operations for each individual data object it processes. All data operations happen
+in a consistent and durable way.
 
 When processing a single input object, all operations, including the
 removal of the object from the input, and emission of data to the
@@ -969,7 +1021,7 @@ to a Stream, or you can implement a Flowlet to generate or pull the data
 from an external source.
 
 The ``Flow`` interface allows you to specify the Flow’s metadata, `Flowlets`_,
-`Flowlet connections <#connection>`_, `Stream to Flowlet connections <#connection>`_,
+`Flowlet connections <#connecting-flowlets>`_, `Stream to Flowlet connections <#connection>`_,
 and any `Datasets`_ used in the Flow.
 
 To create a Flow, implement ``Flow`` via a ``configure`` method that
@@ -1021,7 +1073,7 @@ doesn't do anything for initialization or destruction::
     }
 
     @Override
-      public void initialize(FlowletContext context) throws Exception {
+    public void initialize(FlowletContext context) throws Exception {
     }
 
     @Override
@@ -1050,7 +1102,7 @@ Note that the Flowlet declares the output emitter but does not
 initialize it. The Flow system initializes and injects its
 implementation at runtime.
 
-The method is annotated with @``ProcessInput``—this tells the Flow
+The method is annotated with ``@ProcessInput`` — this tells the Flow
 system that this method can process input data.
 
 You can overload the process method of a Flowlet by adding multiple
@@ -1089,7 +1141,8 @@ origin name::
   }
 
 Input Context
-^^^^^^^^^^^^^
+.............
+
 A process method can have an additional parameter, the ``InputContext``.
 The input context provides information about the input object, such as
 its origin and the number of times the object has been retried. For
@@ -1117,7 +1170,8 @@ context to decide which tokenizer to use::
   }
 
 Type Projection
-^^^^^^^^^^^^^^^
+...............
+
 Flowlets perform an implicit projection on the input objects if they do
 not match exactly what the process method accepts as arguments. This
 allows you to write a single process method that can accept multiple
@@ -1183,7 +1237,8 @@ interact well with inheritance. If a Flowlet can process a specific
 object class, then it can also process any subclass of that class.
 
 Stream Event
-^^^^^^^^^^^^
+............
+
 A Stream event is a special type of object that comes in via Streams. It
 consists of a set of headers represented by a map from String to String,
 and a byte array as the body of the event. To consume a Stream with a
@@ -1196,8 +1251,9 @@ Flow, define a Flowlet that processes data of type ``StreamEvent``::
       ...
     }
 
-Flowlet Method and @Tick Annotation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Tick Methods
+............
+
 A Flowlet’s method can be annotated with ``@Tick``. Instead of
 processing data objects from a Flowlet input, this method is invoked
 periodically, without arguments. This can be used, for example, to
@@ -1219,11 +1275,12 @@ method in the Flowlet emits random numbers::
     }
   }
 
-Note: @Tick method calls are serialized; subsequent calls to the tick
+Note: @Tick method calls are serial; subsequent calls to the tick
 method will be made only after the previous @Tick method call has returned.
 
-Connection
-^^^^^^^^^^
+Connecting Flowlets
+...................
+
 There are multiple ways to connect the Flowlets of a Flow. The most
 common form is to use the Flowlet name. Because the name of each Flowlet
 defaults to its class name, when building the Flow specification you can
@@ -1244,21 +1301,9 @@ If you have multiple Flowlets of the same class, you can give them explicit name
   .connect()
     .from("random").to("rounding")
 
-**Flows** are user-implemented real-time stream processors. They are comprised of one or
-more **Flowlets** that are wired together into a directed acyclic graph or DAG. Flowlets
-pass data between one another; each Flowlet is able to perform custom logic and execute
-data operations for each individual data object it processes.
-
-A Flowlet processes the data objects from its input one by one. If a Flowlet has multiple
-inputs, they are consumed in a round-robin fashion. When processing a single input object,
-all operations, including the removal of the object from the input, and emission of data
-to the outputs, are executed in a transaction. This provides us with Atomicity,
-Consistency, Isolation, and Durability (ACID) properties, and helps assure a unique and
-core property of the Flow system: it guarantees atomic and "exactly-once" processing of
-each input object by each Flowlet in the DAG.
-
 Batch Execution
-^^^^^^^^^^^^^^^
+...............
+
 By default, a Flowlet processes a single data object at a time within a single
 transaction. To increase throughput, you can also process a batch of data objects within
 the same transaction::
@@ -1283,20 +1328,22 @@ In this case, the **process** will be called once per transaction and the **Iter
 will contain up to 100 data objects read from the input.
 
 Flowlets and Instances
-^^^^^^^^^^^^^^^^^^^^^^
+......................
+
 You can have one or more instances of any given Flowlet, each consuming a disjoint
 partition of each input. You can control the number of instances programmatically via the
-`REST interfaces <rest.html>`__ or via the CDAP Console. This enables you
+:ref:`REST interfaces <rest-scaling-flowlets>` or via the CDAP Console. This enables you
 to scale your application to meet capacity at runtime.
 
-In the Local DAP, multiple Flowlet instances are run in threads, so in some cases
-actual performance may not be improved. However, in the Distributed DAP,
+In the stand-alone CDAP, multiple Flowlet instances are run in threads, so in some cases
+actual performance may not be improved. However, in the Distributed CDAP,
 each Flowlet instance runs in its own Java Virtual Machine (JVM) with independent compute
 resources. Scaling the number of Flowlets can improve performance and have a major impact
 depending on your implementation.
 
 Partitioning Strategies
-^^^^^^^^^^^^^^^^^^^^^^^
+.......................
+
 As mentioned above, if you have multiple instances of a Flowlet the input queue is
 partitioned among the Flowlets. The partitioning can occur in different ways, and each
 Flowlet can specify one of these three partitioning strategies:
@@ -1420,8 +1467,8 @@ implementation of three methods:
         .build();
     }
 
-The configure method is similar to the one found in Flow and
-Application. It defines the name and description of the MapReduce job.
+The configure method is similar to the one found in Flows and
+Applications. It defines the name and description of the MapReduce job.
 You can also specify Datasets to be used as input or output for the job.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
@@ -1485,8 +1532,7 @@ CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
 MapReduce and Datasets
 ----------------------
 Both CDAP ``Mapper`` and ``Reducer`` can directly read
-from a Dataset or write to a Dataset similar to the way a Flowlet or
-Procedure can.
+from a Dataset or write to a Dataset similar to the way a Flowlet or Service can.
 
 To access a Dataset directly in Mapper or Reducer, you need (1) a
 declaration and (2) an injection:
@@ -1517,6 +1563,63 @@ declaration and (2) an injection:
          ...
        }
 
+.. _Workflows:
+
+Workflow
+========
+
+**Workflows** are used to execute a series of `MapReduce`_ jobs. A
+Workflow is given a sequence of jobs that follow each other, with an
+optional schedule to run the Workflow periodically. On successful
+execution of a job, the control is transferred to the next job in
+sequence until the last job in the sequence is executed. On failure, the
+execution is stopped at the failed job and no subsequent jobs in the
+sequence are executed.
+
+To process one or more MapReduce jobs in sequence, specify
+``addWorkflow()`` in your application::
+
+  public void configure() {
+    ...
+    addWorkflow(new PurchaseHistoryWorkflow());
+
+You'll then implement the ``Workflow`` interface, which requires the
+``configure()`` method. From within ``configure``, call the
+``addSchedule()`` method to run a WorkFlow job periodically::
+
+  public static class PurchaseHistoryWorkflow implements Workflow {
+
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with()
+        .setName("PurchaseHistoryWorkflow")
+        .setDescription("PurchaseHistoryWorkflow description")
+        .startWith(new PurchaseHistoryBuilder())
+        .last(new PurchaseTrendBuilder())
+        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
+                     "0/5 * * * *", Schedule.Action.START))
+        .build();
+    }
+  }
+
+If there is only one MapReduce job to be run as a part of a WorkFlow,
+use the ``onlyWith()`` method after ``setDescription()`` when building
+the Workflow::
+
+  public static class PurchaseHistoryWorkflow implements Workflow {
+
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with() .setName("PurchaseHistoryWorkflow")
+        .setDescription("PurchaseHistoryWorkflow description")
+        .onlyWith(new PurchaseHistoryBuilder())
+        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
+                     "0/5 * * * *", Schedule.Action.START))
+        .build();
+    }
+  }
+
+
 .. _spark:
 
 Spark (Beta, Standalone CDAP only)
@@ -1530,9 +1633,9 @@ In the current release, Spark is supported only in the Standalone CDAP.
 
 To process data using Spark, specify ``addSpark()`` in your Application specification::
 
-	public void configure() {
-	  ...
-    	addSpark(new WordCountProgram());
+  public void configure() {
+    ...
+      addSpark(new WordCountProgram());
 
 You must implement the ``Spark`` interface, which requires the
 implementation of three methods:
@@ -1568,7 +1671,7 @@ implementation that does nothing::
 
 The ``onFinish()`` method is invoked after the Spark program has
 finished. You could perform cleanup or send a notification of program
-completion, if that was required. Like ``beforeSubmit()``, as many Spark programs do not
+completion, if that was required. Like ``beforeSubmit()``, since many Spark programs do not
 need this method, the ``AbstractSpark`` class also provides a default
 implementation for this method that does nothing::
 
@@ -1643,72 +1746,119 @@ write RDD to a Dataset.
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
 
-.. _Workflows:
-
-Workflow
-========
-
-**Workflows** are used to execute a series of `MapReduce`_ jobs. A
-Workflow is given a sequence of jobs that follow each other, with an
-optional schedule to run the Workflow periodically. On successful
-execution of a job, the control is transferred to the next job in
-sequence until the last job in the sequence is executed. On failure, the
-execution is stopped at the failed job and no subsequent jobs in the
-sequence are executed.
-
-To process one or more MapReduce jobs in sequence, specify
-``addWorkflow()`` in your application::
-
-  public void configure() {
-    ...
-    addWorkflow(new PurchaseHistoryWorkflow());
-
-You'll then implement the ``Workflow`` interface, which requires the
-``configure()`` method. From within ``configure``, call the
-``addSchedule()`` method to run a WorkFlow job periodically::
-
-  public static class PurchaseHistoryWorkflow implements Workflow {
-
-    @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("PurchaseHistoryWorkflow")
-        .setDescription("PurchaseHistoryWorkflow description")
-        .startWith(new PurchaseHistoryBuilder())
-        .last(new PurchaseTrendBuilder())
-        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
-                     "0/5 * * * *", Schedule.Action.START))
-        .build();
-    }
-  }
-
-If there is only one MapReduce job to be run as a part of a WorkFlow,
-use the ``onlyWith()`` method after ``setDescription()`` when building
-the Workflow::
-
-  public static class PurchaseHistoryWorkflow implements Workflow {
-
-    @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with() .setName("PurchaseHistoryWorkflow")
-        .setDescription("PurchaseHistoryWorkflow description")
-        .onlyWith(new PurchaseHistoryBuilder())
-        .addSchedule(new DefaultSchedule("FiveMinuteSchedule", "Run every 5 minutes",
-                     "0/5 * * * *", Schedule.Action.START))
-        .build();
-    }
-  }
-
-
 Services
 ========
+
+Services can be run in a Cask Data Application Platform (CDAP) Application to serve data to external clients.
+Similar to Flows, Services run in containers and the number of running service instances can be dynamically scaled.
+Developers can implement Custom Services to interface with a legacy system and perform additional processing beyond
+the CDAP processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
+
+Custom Services lifecycle can be controlled via the CDAP Console or by using the
+:ref:`CDAP Client API <client-api>` or :ref:`CDAP RESTful API <rest-services>`.
+
+Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler`` \s to serve requests.
+
+You can add Services to your application by calling the ``addService`` method in the
+Application's ``configure`` method::
+
+  public class AnalyticsApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("AnalyticsApp");
+      setDescription("Application for generating mobile analytics");
+      addStream(new Stream("event"));
+      addFlow(new EventProcessingFlow());
+      ...
+      addService(new IPGeoLookupService());
+      addService(new UserLookupService());
+      ...
+    }
+  }
+
+::
+
+  public class IPGeoLookupService extends AbstractService {
+
+    @Override
+    protected void configure() {
+      setName("IpGeoLookupService");
+      setDescription("Service to lookup locations of IP addresses.");
+      useDataset("IPGeoTable");
+      addHandler(new IPGeoLookupHandler());
+    }
+  }
+
+Service Handlers
+................
+
+``ServiceHandler`` \s are used to handle and serve HTTP requests.
+
+You add handlers to your Service by calling the ``addHandler`` method in the Service's ``configure`` method.
+
+To use a Dataset within a handler, specify the Dataset by calling the ``useDataset`` method in the Service's
+``configure`` method and include the ``@UseDataSet`` annotation in the handler to obtain an instance of the Dataset.
+Each request to a method is committed as a single transaction.
+
+::
+
+  public class IPGeoLookupHandler implements AbstractHttpServiceHandler {
+    @UseDataSet("IPGeoTable")
+    Table table;
+
+    @Path("lookup/{ip}")
+    @GET
+    public void lookup(HttpServiceRequest request, HttpServiceResponder responder,
+                                                      @PathParam("ip") String ip) {
+      // ...
+      responder.sendString(200, location, Charsets.UTF_8);
+    }
+  }
+
+Service Discovery
+.................
+
+Services announce the host and port they are running on so that they can be discovered by—and provide
+access to—other programs.
+
+Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
+*hostname* required for registering the Service are automatically obtained.
+
+The Service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
+appropriate program contexts. You may also access Services in a different Application
+by specifying the Application name in the ``getServiceURL`` call.
+
+For example, in Flows::
+
+  public class GeoFlowlet extends AbstractFlowlet {
+
+    // URL for IPGeoLookupService
+    private URL serviceURL;
+
+    // URL for SecurityService in SecurityApplication
+    private URL securityURL;
+
+    @ProcessInput
+    public void process(String ip) {
+      // Get URL for Service in same Application
+      serviceURL = getContext().getServiceURL("IPGeoLookupService");
+
+      // Get URL for Service in a different Application
+      securityURL = getContext().getServiceURL("SecurityApplication", "SecurityService");
+
+      // Access the IPGeoLookupService using its URL
+      URLConnection connection = new URL(serviceURL, String.format("lookup/%s", ip)).openConnection();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      ...
+    }
+  }
 
 .. _Procedures:
 
 Procedures
 ----------
 
-To query CDAP and its Datasets and retrieve results, you use Procedures.
+To query CDAP and its Datasets and retrieve results, you can use Procedures.
 
 Procedures allow you to make synchronous calls into CDAP from an external system
 and perform server-side processing on-demand, similar to a stored procedure in a
@@ -1779,155 +1929,6 @@ There is also a convenience method to respond with an error message::
       return;
     }
 
-
-User Services
--------------
-
-In addition to Flows, MapReduce jobs, and Procedures, additional Services can be run in a
-Cask Data Application Platform (CDAP) Application. Developers can implement Custom Services that run in program containers,
-to interface with a legacy system and perform additional processing beyond the CDAP processing
-paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
-
-Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler`` \s to serve requests.
-
-You can add Services to your application by calling the ``addService`` method in the
-Application's ``configure`` method::
-
-  public class AnalyticsApp extends AbstractApplication {
-    @Override
-    public void configure() {
-      setName("AnalyticsApp");
-      setDescription("Application for generating mobile analytics");
-      addStream(new Stream("event"));
-      addFlow(new EventProcessingFlow());
-      ...
-      addService(new IPGeoLookupService());
-      addService(new UserLookupService());
-      ...
-    }
-  }
-
-::
-
-  public class IPGeoLookupService extends AbstractService {
-
-    @Override
-    protected void configure() {
-      setName("IpGeoLookupService");
-      setDescription("Service to lookup locations of IP addresses.");
-      useDataset("IPGeoTable");
-      addHandler(new IPGeoLookupHandler());
-    }
-  }
-
-Service Handlers
-^^^^^^^^^^^^^^^^
-``ServiceHandler`` \s are used to handle and serve HTTP requests.
-
-You add handlers to your Service by calling the ``addHandler`` method in the Service's ``configure`` method.
-
-To use a Dataset within a handler, specify the Dataset by calling the ``useDataset`` method in the Service's
-``configure`` method and include the ``@UseDataSet`` annotation in the handler to obtain an instance of the Dataset.
-Each request to a method is committed as a single transaction.
-
-::
-
-  public class IPGeoLookupHandler implements AbstractHttpServiceHandler {
-    @UseDataSet("IPGeoTable")
-    Table table;
-
-    @Path("lookup/{ip}")
-    @GET
-    public void lookup(HttpServiceRequest request, HttpServiceResponder responder,
-                                                      @PathParam("ip") String ip) {
-      // ...
-      responder.sendString(200, location, Charsets.UTF_8);
-    }
-  }
-
-Service Discovery
-^^^^^^^^^^^^^^^^^
-Services announce the host and port they are running on so that they can be discovered by—and provide
-access to—other programs.
-
-Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
-*hostname* required for registering the Service are automatically obtained.
-
-The Service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
-appropriate program contexts. You may also access ``Service`` \s in a different ``Application``
-by specifying the ``Application`` name in the ``getServiceURL`` call.
-
-For example, in Flows::
-
-  public class GeoFlowlet extends AbstractFlowlet {
-
-    // URL for IPGeoLookupService
-    private URL serviceURL;
-
-    // URL for SecurityService in SecurityApplication
-    private URL securityURL;
-
-    @ProcessInput
-    public void process(String ip) {
-      // Get URL for Service in same Application
-      serviceURL = getContext().getServiceURL("IPGeoLookupService");
-
-      // Get URL for Service in a different Application
-      securityURL = getContext().getServiceURL("SecurityApplication", "SecurityService");
-
-      // Access the IPGeoLookupService using its URL
-      URLConnection connection = new URL(serviceURL, String.format("lookup/%s", ip)).openConnection();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-      ...
-    }
-  }
-
-Using Services
-^^^^^^^^^^^^^^
-Custom Services lifecycle can be controlled via the CDAP Console or by using the
-`CDAP Client API <rest.html#cdap-client-http-api>`__ as described in the
-`CDAP HTTP REST API <rest.html#cdap-client-http-api>`__.
-
-Applications
-============
-
-Note that the CDAP API is written in a
-`"fluent" interface style <http://en.wikipedia.org/wiki/Fluent_interface>`_,
-and often relies on ``Builder`` methods for creating many parts of the Application.
-
-In writing a CDAP Application, it's best to use an integrated
-development environment that understands the application interface to
-provide code-completion in writing interface methods.
-
-An **Application** is a collection of `Streams`_, `Datasets`_, `Flows`_,
-`Procedures`_, `MapReduce`_ jobs, and `Workflows`_.
-
-To create an Application, implement the ``Application`` interface
-or subclass from ``AbstractApplication`` class, specifying
-the Application metadata and declaring and configuring each of the Application elements::
-
-      public class MyApp extends AbstractApplication {
-        @Override
-        public void configure() {
-          setName("myApp");
-          setDescription("My Sample Application");
-          addStream(new Stream("myAppStream"));
-          addFlow(new MyAppFlow());
-          addProcedure(new MyAppQuery());
-          addMapReduce(new MyMapReduceJob());
-          addWorkflow(new MyAppWorkflow());
-        }
-      }
-
-Notice that *Streams* are
-defined using provided ``Stream`` class, and are referenced by names, while
-other components are defined using user-written
-classes that implement correspondent interfaces and are referenced by passing
-an object, in addition to being assigned a unique name.
-
-Names used for *Streams* and *Datasets* need to be unique across the
-CDAP instance, while names used for *Flows*, *Flowlets* and
-*Procedures* need to be unique only to the application.
 
 Where to Go Next
 ================

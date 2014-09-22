@@ -137,6 +137,7 @@ In order to authenticate, all client requests must supply this access token in t
 
 For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
+.. _rest-streams:
 
 Stream HTTP API
 ===============
@@ -431,6 +432,8 @@ Example
 
 .. rst2pdf: PageBreak
 
+.. _rest-datasets:
+
 Dataset HTTP API
 ================
 
@@ -665,6 +668,7 @@ HTTP Responses
 
 .. rst2pdf: PageBreak
 
+.. _rest-sql:
 
 Query HTTP API
 ==============
@@ -1053,6 +1057,8 @@ Example
 
 .. rst2pdf: PageBreak
 
+.. _rest-services:
+
 Service HTTP API
 ==================
 
@@ -1111,6 +1117,8 @@ Example
      - ``200 OK``
 
 .. rst2pdf: PageBreak
+
+.. _client-api:
 
 CDAP Client HTTP API
 =======================
@@ -1396,6 +1404,7 @@ If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a pos
     {"appId":"MyApp3","programType":"Service","programId":"MySvc1,
       "runnableId":"MyRunnable1","statusCode":404,"error":"Runnable: MyRunnable1 not found"} ]
 
+.. _rest-scaling-flowlets:
 
 Scaling Flowlets
 ................
