@@ -138,8 +138,8 @@ public interface OrderedTable extends Dataset {
   /**
    * Increments (atomically) the specified row and columns by the specified amounts.
    *
-   * NOTE: depending on the implementation this may work faster than calling {@link #incrementAndGet(byte[], byte[], long)}
-   *       multiple times (esp. in transaction that changes a lot of rows)
+   * NOTE: depending on the implementation this may work faster than calling
+   * {@link #incrementAndGet(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows).
    *
    * @param row row which values to increment
    * @param columns columns to increment
