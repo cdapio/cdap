@@ -63,7 +63,7 @@ public final class ClassLoaders {
 
   public static ProgramClassLoader newProgramClassLoader(File unpackedJarDir, Iterable<String> apiResourceList,
                                                          ClassLoader parentClassLoader) throws IOException {
-    // TODO: Unify the creation of FilterClassLoader REACTOR-760
+    // TODO: Unify the creation of FilterClassLoader, see CDAP-6
     Predicate<String> predicate = Predicates.in(Sets.newHashSet(apiResourceList));
     ClassLoader filterParent = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
                                                     ClassLoaders.class.getClassLoader());

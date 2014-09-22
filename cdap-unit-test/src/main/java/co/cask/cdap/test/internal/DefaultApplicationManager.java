@@ -51,7 +51,6 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.rules.TemporaryFolder;
@@ -65,11 +64,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- *
+ * A default implementation of {@link ApplicationManager}.
  */
 public class DefaultApplicationManager implements ApplicationManager {
 
-  private final ConcurrentMap<String, ProgramId> runningProcessses = Maps.newConcurrentMap();
+  private final ConcurrentMap<String, ProgramId> runningProcesses = Maps.newConcurrentMap();
   private final String accountId;
   private final String applicationId;
   private final TransactionSystemClient txSystemClient;
@@ -77,7 +76,6 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
   private final AppFabricClient appFabricClient;
-  private final ServiceHttpHandler serviceHttpHandler;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   @Inject
@@ -101,7 +99,6 @@ public class DefaultApplicationManager implements ApplicationManager {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txSystemClient = txSystemClient;
     this.appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
-    this.serviceHttpHandler = serviceHttpHandler;
 
     try {
       File tempDir = tempFolder.newFolder();
@@ -117,6 +114,41 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
+  private static final class DataSetClassLoader extends ClassLoader {
+
+    private final ClassLoader classLoader;
+
+    private DataSetClassLoader(ClassLoader classLoader) {
+      this.classLoader = classLoader;
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+      return classLoader.loadClass(name);
+    }
+  }
+
+  static class ProgramId {
+    private final String appId;
+    private final String runnableId;
+    private final String runnableType;
+
+    ProgramId(String applicationId, String runnableId, String runnableType) {
+      this.appId = applicationId;
+      this.runnableId = runnableId;
+      this.runnableType = runnableType;
+    }
+    public String getApplicationId() {
+      return this.appId;
+    }
+    public String getRunnableId() {
+      return this.runnableId;
+    }
+    public String getRunnableType() {
+      return this.runnableType;
+    }
+  }
+  
   @Override
   public FlowManager startFlow(final String flowName) {
     return startFlow(flowName, ImmutableMap.<String, String>of());
@@ -126,12 +158,12 @@ public class DefaultApplicationManager implements ApplicationManager {
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
     try {
       final ProgramId flowId = new ProgramId(applicationId, flowName, "flows");
-      Preconditions.checkState(runningProcessses.putIfAbsent(flowName, flowId) == null,
+      Preconditions.checkState(runningProcesses.putIfAbsent(flowName, flowId) == null,
                                "Flow %s is already running", flowName);
       try {
         appFabricClient.startProgram(applicationId, flowName, "flows", arguments);
       } catch (Exception e) {
-        runningProcessses.remove(flowName);
+        runningProcesses.remove(flowName);
         throw Throwables.propagate(e);
       }
 
@@ -148,13 +180,7 @@ public class DefaultApplicationManager implements ApplicationManager {
 
         @Override
         public void stop() {
-          try {
-            if (runningProcessses.remove(flowName, flowId)) {
-              appFabricClient.stopProgram(applicationId, flowName, "flows");
-            }
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
+          stopProgram(flowId);
         }
       };
     } catch (Exception e) {
@@ -179,7 +205,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       return new MapReduceManager() {
         @Override
         public void stop() {
-          programStop(jobName, jobId, programType);
+          stopProgram(jobId);
         }
 
         @Override
@@ -191,6 +217,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       throw Throwables.propagate(e);
     }
   }
+
 
   @Override
   public SparkManager startSpark(String jobName) {
@@ -209,7 +236,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       return new SparkManager() {
         @Override
         public void stop() {
-          programStop(jobName, jobId, programType);
+          stopProgram(jobId);
         }
 
         @Override
@@ -226,28 +253,18 @@ public class DefaultApplicationManager implements ApplicationManager {
     final ProgramId jobId = new ProgramId(applicationId, jobName, programType);
     // program can stop by itself, so refreshing info about its state
     if (!isRunning(jobId)) {
-      runningProcessses.remove(jobName);
+      runningProcesses.remove(jobName);
     }
 
-    Preconditions.checkState(runningProcessses.putIfAbsent(jobName, jobId) == null,
+    Preconditions.checkState(runningProcesses.putIfAbsent(jobName, jobId) == null,
                              programType + " program %s is already running", jobName);
     try {
       appFabricClient.startProgram(applicationId, jobName, programType, arguments);
     } catch (Exception e) {
-      runningProcessses.remove(jobName);
+      runningProcesses.remove(jobName);
       throw Throwables.propagate(e);
     }
     return jobId;
-  }
-
-  private void programStop(String jobName, ProgramId jobId, String programType) {
-    try {
-      if (runningProcessses.remove(jobName, jobId)) {
-        appFabricClient.stopProgram(applicationId, jobName, programType);
-      }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   private void programWaitForFinish(long timeout, TimeUnit timeoutUnit, ProgramId jobId)
@@ -271,25 +288,19 @@ public class DefaultApplicationManager implements ApplicationManager {
   public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
     try {
       final ProgramId procedureId = new ProgramId(applicationId, procedureName, "procedures");
-      Preconditions.checkState(runningProcessses.putIfAbsent(procedureName, procedureId) == null,
+      Preconditions.checkState(runningProcesses.putIfAbsent(procedureName, procedureId) == null,
                                "Procedure %s is already running", procedureName);
       try {
         appFabricClient.startProgram(applicationId, procedureName, "procedures", arguments);
       } catch (Exception e) {
-        runningProcessses.remove(procedureName);
+        runningProcesses.remove(procedureName);
         throw Throwables.propagate(e);
       }
 
       return new ProcedureManager() {
         @Override
         public void stop() {
-          try {
-            if (runningProcessses.remove(procedureName, procedureId)) {
-              appFabricClient.stopProgram(applicationId, procedureName, "procedures");
-            }
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
+          stopProgram(procedureId);
         }
 
         @Override
@@ -308,7 +319,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
     try {
       final ProgramId workflowId = new ProgramId(applicationId, workflowName, "workflows");
-      Preconditions.checkState(runningProcessses.putIfAbsent(workflowName, workflowId) == null,
+      Preconditions.checkState(runningProcesses.putIfAbsent(workflowName, workflowId) == null,
                                "Workflow %s is already running", workflowName);
 
       // currently we are using it for schedule, so not starting the workflow
@@ -359,59 +370,17 @@ public class DefaultApplicationManager implements ApplicationManager {
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
     try {
       final ProgramId serviceId = new ProgramId(applicationId, serviceName, "services");
-      Preconditions.checkState(runningProcessses.putIfAbsent(serviceName, serviceId) == null,
+      Preconditions.checkState(runningProcesses.putIfAbsent(serviceName, serviceId) == null,
                                "Service %s is already running", serviceName);
       try {
         appFabricClient.startProgram(applicationId, serviceName, "services", arguments);
       } catch (Exception e) {
-        runningProcessses.remove(serviceName);
+        runningProcesses.remove(serviceName);
         throw Throwables.propagate(e);
       }
 
-      return new ServiceManager() {
-        @Override
-        public void setRunnableInstances(String runnableName, int instances) {
-          Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
-          try {
-            appFabricClient.setRunnableInstances(applicationId, serviceName, runnableName, instances);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-
-        @Override
-        public int getRunnableInstances(String runnableName) {
-          try {
-            return appFabricClient.getRunnableInstances(applicationId, serviceName, runnableName);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-
-        @Override
-        public void stop() {
-          try {
-            if (runningProcessses.remove(serviceName, serviceId)) {
-              appFabricClient.stopProgram(applicationId, serviceName, "services");
-            }
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-        public boolean isRunning() {
-          try {
-            return DefaultApplicationManager.this.isRunning(serviceId);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-
-        @Override
-        public ServiceDiscovered discover(String applicationId, String serviceId) {
-          String discoveryName = String.format("service.%s.%s.%s", accountId, applicationId, serviceId);
-          return discoveryServiceClient.discover(discoveryName);
-        }
-      };
+      return new DefaultServiceManager(accountId, serviceId, appFabricClient,
+                                       discoveryServiceClient, this);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -456,7 +425,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public void stopAll() {
     try {
-      for (Map.Entry<String, ProgramId> entry : Iterables.consumingIterable(runningProcessses.entrySet())) {
+      for (Map.Entry<String, ProgramId> entry : Iterables.consumingIterable(runningProcesses.entrySet())) {
         // have to do a check, since mapreduce jobs could stop by themselves earlier, and appFabricServer.stop will
         // throw error when you stop something that is not running.
         if (isRunning(entry.getValue())) {
@@ -471,42 +440,18 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  private static final class DataSetClassLoader extends ClassLoader {
-
-    private final ClassLoader classLoader;
-
-    private DataSetClassLoader(ClassLoader classLoader) {
-      this.classLoader = classLoader;
-    }
-
-    @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-      return classLoader.loadClass(name);
+  void stopProgram(ProgramId programId) {
+    String programName = programId.getRunnableId();
+    try {
+      if (runningProcesses.remove(programName, programId)) {
+        appFabricClient.stopProgram(applicationId, programName, programId.getRunnableType());
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
     }
   }
 
-  private class ProgramId {
-    private final String appId;
-    private final String runnableId;
-    private final String runnableType;
-
-    private ProgramId(String applicationId, String runnableId, String runnableType) {
-      this.appId = applicationId;
-      this.runnableId = runnableId;
-      this.runnableType = runnableType;
-    }
-    public String getApplicationId() {
-      return this.appId;
-    }
-    public String getRunnableId() {
-      return this.runnableId;
-    }
-    public String getRunnableType() {
-      return this.runnableType;
-    }
-  }
-
-  private boolean isRunning(ProgramId programId) {
+  boolean isRunning(ProgramId programId) {
     try {
 
       String status = appFabricClient.getStatus(programId.getApplicationId(),
