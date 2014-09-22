@@ -1790,7 +1790,7 @@ Application's ``configure`` method::
   }
 
 Service Handlers
-................
+----------------
 
 ``ServiceHandler`` \s are used to handle and serve HTTP requests.
 
@@ -1816,7 +1816,7 @@ Each request to a method is committed as a single transaction.
   }
 
 Service Discovery
-.................
+-----------------
 
 Services announce the host and port they are running on so that they can be discovered by—and provide
 access to—other programs.

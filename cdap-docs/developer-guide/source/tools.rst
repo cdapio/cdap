@@ -213,65 +213,64 @@ Let’s write a test case for the *WordCount* example::
 The first thing we do in this test is deploy the application,
 then we’ll start the Flow and the Procedure::
 
-    // Deploy the Application
-    ApplicationManager appManager = deployApplication(WordCount.class);
+      // Deploy the Application
+      ApplicationManager appManager = deployApplication(WordCount.class);
 
-    // Start the Flow and the Procedure
-    FlowManager flowManager = appManager.startFlow("WordCounter");
-    ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
+      // Start the Flow and the Procedure
+      FlowManager flowManager = appManager.startFlow("WordCounter");
+      ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
 
 Now that the Flow is running, we can send some events to the Stream::
 
-    // Send a few events to the Stream
-    StreamWriter writer = appManager.getStreamWriter("wordStream");
-    writer.send("hello world");
-    writer.send("a wonderful world");
-    writer.send("the world says hello");
+      // Send a few events to the Stream
+      StreamWriter writer = appManager.getStreamWriter("wordStream");
+      writer.send("hello world");
+      writer.send("a wonderful world");
+      writer.send("the world says hello");
 
 To wait for all events to be processed, we can get a metrics observer
 for the last Flowlet in the pipeline (the "word associator") and wait for
 its processed count to either reach 3 or time out after 5 seconds::
 
-    // Wait for the events to be processed, or at most 5 seconds
-    RuntimeMetrics metrics = RuntimeStats.
-      getFlowletMetrics("WordCount", "WordCounter", "associator");
-    metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+      // Wait for the events to be processed, or at most 5 seconds
+      RuntimeMetrics metrics = RuntimeStats.
+        getFlowletMetrics("WordCount", "WordCounter", "associator");
+      metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Now we can start verifying that the processing was correct by obtaining
 a client for the Procedure, and then submitting a query for the global
 statistics::
 
-    // Call the Procedure
-    ProcedureClient client = procManager.getClient();
+      // Call the Procedure
+      ProcedureClient client = procManager.getClient();
 
-    // Query global statistics
-    String response = client.query("getStats", Collections.EMPTY_MAP);
+      // Query global statistics
+      String response = client.query("getStats", Collections.EMPTY_MAP);
 
 If the query fails for any reason this method would throw an exception.
 In case of success, the response is a JSON string. We must deserialize
 the JSON string to verify the results::
 
-    Map<String, String> map = new Gson().fromJson(response, stringMapType);
-    Assert.assertEquals("9", map.get("totalWords"));
-    Assert.assertEquals("6", map.get("uniqueWords"));
-    Assert.assertEquals(((double)42)/9,
-      (double)Double.valueOf(map.get("averageLength")), 0.001);
+      Map<String, String> map = new Gson().fromJson(response, stringMapType);
+      Assert.assertEquals("9", map.get("totalWords"));
+      Assert.assertEquals("6", map.get("uniqueWords"));
+      Assert.assertEquals(((double)42)/9,
+        (double)Double.valueOf(map.get("averageLength")), 0.001);
 
 Then we ask for the statistics of one of the words in the test events.
 The verification is a little more complex, because we have a nested map
 as a response, and the value types in the top-level map are not uniform::
 
-    // Verify some statistics for one of the words
-    response = client.query("getCount", ImmutableMap.of("word","world"));
-    Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
-    Assert.assertEquals("world", omap.get("word"));
-    Assert.assertEquals(3.0, omap.get("count"));
+      // Verify some statistics for one of the words
+      response = client.query("getCount", ImmutableMap.of("word","world"));
+      Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
+      Assert.assertEquals("world", omap.get("word"));
+      Assert.assertEquals(3.0, omap.get("count"));
 
-    // The associations are a map within the map
-    Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
-    Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
-    Assert.assertTrue(assocs.containsKey("hello"));
-  }
+      // The associations are a map within the map
+      Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
+      Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
+      Assert.assertTrue(assocs.containsKey("hello"));
 
 Strategies in Testing MapReduce Jobs
 ------------------------------------
@@ -292,41 +291,41 @@ The ``PurchaseTest`` class should extend from
 The ``PurchaseApp`` application can be deployed using the ``deployApplication``
 method from the ``TestBase`` class::
 
-  // Deploy an Application
-  ApplicationManager appManager = deployApplication(PurchaseApp.class);
+      // Deploy an Application
+      ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
 The MapReduce job reads from the ``purchases`` Dataset. As a first
 step, the data to the ``purchases`` should be populated by running
 the ``PurchaseFlow`` and sending the data to the ``purchaseStream``
 Stream::
 
-  FlowManager flowManager = appManager.startFlow("PurchaseFlow");
-  // Send data to the Stream
-  sendData(appManager, now);
+      FlowManager flowManager = appManager.startFlow("PurchaseFlow");
+      // Send data to the Stream
+      sendData(appManager, now);
 
-  // Wait for the last Flowlet to process 3 events or at most 5 seconds
-  RuntimeMetrics metrics = RuntimeStats.
-      getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
-  metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+      // Wait for the last Flowlet to process 3 events or at most 5 seconds
+      RuntimeMetrics metrics = RuntimeStats.
+          getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
+      metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Start the MapReduce job and wait for a maximum of 60 seconds::
 
-  // Start the MapReduce job.
-  MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
-  mrManager.waitForFinish(60, TimeUnit.SECONDS);
+      // Start the MapReduce job.
+      MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
+      mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We can start verifying that the MapReduce job was run correctly by
 obtaining a client for the Procedure, and then submitting a query for
 the counts::
 
-  ProcedureClient client = procedureManager.getClient();
+      ProcedureClient client = procedureManager.getClient();
 
-  // Verify the query.
-  String response = client.query("history", ImmutableMap.of("customer", "joe"));
+      // Verify the query.
+      String response = client.query("history", ImmutableMap.of("customer", "joe"));
 
-  // Deserialize the JSON string.
-  PurchaseHistory result = GSON.fromJson(response, PurchaseHistory.class);
-  Assert.assertEquals(2, result.getPurchases().size());
+      // Deserialize the JSON string.
+      PurchaseHistory result = GSON.fromJson(response, PurchaseHistory.class);
+      Assert.assertEquals(2, result.getPurchases().size());
 
 The assertion will verify that the correct result was received.
 
@@ -340,18 +339,18 @@ This can be done using a JDBC connection obtained from the test base::
   // Obtain a JDBC connection
   Connection connection = getQueryClient();
   try {
-      // Run a query over the dataset
-      results = connection.prepareStatement("SELECT key FROM mytable WHERE value = '1'").executeQuery();
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("a", results.getString(1));
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("c", results.getString(1));
-      Assert.assertFalse(results.next());
+    // Run a query over the dataset
+    results = connection.prepareStatement("SELECT key FROM mytable WHERE value = '1'").executeQuery();
+    Assert.assertTrue(results.next());
+    Assert.assertEquals("a", results.getString(1));
+    Assert.assertTrue(results.next());
+    Assert.assertEquals("c", results.getString(1));
+    Assert.assertFalse(results.next());
 
-    } finally {
-      results.close();
-      connection.close();
-    }
+  } finally {
+    results.close();
+    connection.close();
+  }
 
 The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
 will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
@@ -927,17 +926,19 @@ Putting it all together:
 
 
 .. _note 1:
-:Note 1:
-Config file structure in JSON format:
-::
+   :Note 1:
+
+Config file structure in JSON format::
 
   {
     hostname: 'localhost',    - gateway hostname
     port: 10000,              - gateway port
     SSL: false                - if SSL is being used
   }
+
 .. _note 2:
-:Note 2:
+   :Note 2:
+
 Stream Name:
   -  The name can only contain ASCII letters, digits and hyphens.
   -  If the Stream already exists, no error is returned, and the existing
@@ -1198,34 +1199,34 @@ The CDAP Sink is a `Apache Flume Sink <https://flume.apache.org>`__ implementati
 RESTStreamWriter to write events received from a source. For example, you can configure the Flume Sink's
 Agent to read data from a log file by tailing it and putting them into CDAP.
 
-.. list-table:: Flume Configuration
-:widths: 20 30 50
+.. list-table::
+    :widths: 20 30 50
     :header-rows: 1
 
-      * - Property
-        - Value
-        - Description
-      * - a1.sinks.sink1.type
-        - ``co.cask.cdap.flume.StreamSink``
-        - Copy the CDAP sink jar to Flume lib directory and specify the fully qualified class name for this property.
-      * - a1.sinks.sink1.host
-        - ``host-name``
-        - Host name used by the Stream client
-      * - a1.sinks.sink1.streamName
-        - ``Stream-name``
-        - Target Stream name
-      * - a1.sinks.sink1.port
-        - ``10000``
-        - This parameter is options and the Default port number is 10000
-      * - a1.sinks.sink1.sslEnabled
-        - ``false``
-        - This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false
-      * - a1.sinks.sink1.writerPoolSize
-        - ``10``
-        - Number of threads to which the stream client can send events
-      * - a1.sinks.sink1.version
-        - ``v2``
-        - CDAP Router server version
+    * - Property
+      - Value
+      - Description
+    * - a1.sinks.sink1.type
+      - ``co.cask.cdap.flume.StreamSink``
+      - Copy the CDAP sink jar to Flume lib directory and specify the fully qualified class name for this property.
+    * - a1.sinks.sink1.host
+      - ``host-name``
+      - Host name used by the Stream client
+    * - a1.sinks.sink1.streamName
+      - ``Stream-name``
+      - Target Stream name
+    * - a1.sinks.sink1.port
+      - ``10000``
+      - This parameter is options and the Default port number is 10000
+    * - a1.sinks.sink1.sslEnabled
+      - ``false``
+      - This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false
+    * - a1.sinks.sink1.writerPoolSize
+      - ``10``
+      - Number of threads to which the stream client can send events
+    * - a1.sinks.sink1.version
+      - ``v2``
+      - CDAP Router server version
 
 Authentication Client
 ---------------------
