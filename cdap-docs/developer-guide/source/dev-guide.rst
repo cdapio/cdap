@@ -99,7 +99,7 @@ For example, to create a DataSet named *myCounters* of type
 :doc:`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable>`, write::
 
   public void configure() {
-      createDataset("myCounters", "KeyValueTable");
+      createDataset("myCounters", KeyValueTable.class);
       ...
 
 To use the Dataset in a Program, instruct the runtime
