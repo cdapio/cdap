@@ -7,7 +7,7 @@ Cask Data Application Platform Documentation
 ============================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    
    Introduction </intro>
    Getting Started </getstarted>

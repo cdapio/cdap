@@ -24,7 +24,7 @@ differently in several runtime environments, such as in-memory, single-node stan
 Thus you can deploy and run in different environments without the need to change a single line of application
 code.
 
-.. image:: _images/layers.png
+.. image:: _images/arch_logical_view.png
    :width: 5in
    :align: center
 
@@ -84,7 +84,7 @@ We distinguish between the Developer interface and the Client interface.
   lifecycle management and monitoring. As an alternative to HTTP, clients can also use the client libraries
   provided for different programming languages, including Java, JavaScript and Python.
 
-.. image:: _images/interfaces.png
+.. image:: _images/arch_interfaces.png
    :width: 5in
    :align: center
 
@@ -96,7 +96,7 @@ Components of CDAP and their Interactions
 
 The following diagram illustrates the components that make up distributed CDAP and some of their interactions:
 
-.. image:: _images/components.png
+.. image:: _images/arch_components_view.png
    :width: 6in
    :align: center
 
@@ -182,7 +182,7 @@ Hence, a CDAP application consists of the following components:
 
 The following diagram illustrates a typical Big Data application:
 
-.. image:: _images/typical-app.png
+.. image:: _images/app_unified_batch_realtime.png
    :width: 8in
    :align: center
 
