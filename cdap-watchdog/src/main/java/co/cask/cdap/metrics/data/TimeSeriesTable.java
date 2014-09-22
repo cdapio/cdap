@@ -29,12 +29,12 @@ import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Table;
-import com.google.common.collect.TreeBasedTable;
+import com.google.common.collect.Maps;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NavigableMap;
 
 /**
  * Table for storing time series metrics.
@@ -106,14 +106,14 @@ public final class TimeSeriesTable {
     }
 
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
-    Table<byte[], byte[], byte[]> table = TreeBasedTable.create(Bytes.BYTES_COMPARATOR, Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> table = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
     while (records.hasNext()) {
       getUpdates(records.next(), table);
     }
 
     try {
-      timeSeriesTable.put(table.rowMap());
+      timeSeriesTable.put(table);
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
@@ -263,7 +263,7 @@ public final class TimeSeriesTable {
   /**
    * Setups all rows, columns and values for updating the metric table.
    */
-  private void getUpdates(MetricsRecord record, Table<byte[], byte[], byte[]> table) {
+  private void getUpdates(MetricsRecord record, NavigableMap<byte[], NavigableMap<byte[], byte[]>> table) {
     long timestamp = record.getTimestamp() / resolution * resolution;
     int timeBase = getTimeBase(timestamp);
 
@@ -282,13 +282,30 @@ public final class TimeSeriesTable {
     }
   }
 
-  private void addValue(byte[] rowKey, byte[] column, Table<byte[], byte[], byte[]> table, int value) {
-    byte[] oldValue = table.get(rowKey, column);
+  private void addValue(byte[] rowKey, byte[] column,
+                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, int value) {
+    byte[] oldValue = get(table, rowKey, column);
     int newValue = value;
     if (oldValue != null) {
       newValue = Bytes.toInt(oldValue) + value;
     }
-    table.put(rowKey, column, Bytes.toBytes(newValue));
+    put(table, rowKey, column, Bytes.toBytes(newValue));
+  }
+
+  private static byte[] get(NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, byte[] row, byte[] column) {
+    NavigableMap<byte[], byte[]> rowMap = table.get(row);
+    return rowMap == null ? null : rowMap.get(column);
+  }
+
+  private static void put(NavigableMap<byte[], NavigableMap<byte[], byte[]>> table,
+                          byte[] row, byte[] column, byte[] value) {
+    NavigableMap<byte[], byte[]> rowMap = table.get(row);
+    if (rowMap == null) {
+      rowMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      table.put(row, rowMap);
+    }
+
+    rowMap.put(column, value);
   }
 
   /**

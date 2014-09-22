@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.api.common;
 
+import com.google.common.collect.ImmutableSortedMap;
+
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -23,6 +25,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.NavigableMap;
 
 /**
  * Utility class that handles byte arrays, conversions to/from other types,
@@ -1364,5 +1367,16 @@ public class Bytes {
     for (int i = 0; i < size - s.length(); ++i) {
       out.writeByte(0);
     }
+  }
+
+  public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key, byte[] value) {
+    return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
+  }
+
+  public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key1, byte[] value1,
+                                                                  byte[] key2, byte[] value2) {
+    return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR)
+      .put(key1, value1)
+      .put(key2, value2).build();
   }
 }

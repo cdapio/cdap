@@ -56,9 +56,9 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(Map<byte[], Map<byte[], byte[]>> updates) throws Exception {
-    Map<byte[], Map<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<byte[], Map<byte[], byte[]>> entry : updates.entrySet()) {
+  public void put(NavigableMap<byte[], NavigableMap<byte[], byte[]>> updates) throws Exception {
+    NavigableMap<byte[], NavigableMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (NavigableMap.Entry<byte[], NavigableMap<byte[], byte[]>> entry : updates.entrySet()) {
       convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.BYTES_TO_PUTS));
     }
     InMemoryOrderedTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
