@@ -8,8 +8,8 @@ Cask Data Application Platform - Available Tools
 
 Tools Info
 ==========
-CDAP comes with a bunch of tools to make developer's life easier. These tools help you to debug CDAP applications,
-interact with them and ingest data into them,etc:
+CDAP comes with a bunch of tools to make developer's life easier. These tools offers various features including,
+helping to debug CDAP applications, interact with them and ingest data into them,etc:
 
 .. list-table::
     :widths: 10 30 60
@@ -522,8 +522,105 @@ You may need to adjust them for your installation or version.
 
 .. _TxDebugger:
 
+Debugging the Transaction Manager (Advanced Use)
+------------------------------------------------
+In this advanced use section, we will explain in depth how transactions work internally.
+Transactions are introduced in the `Advanced Features <advanced.html>`__ guide.
+
+A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
+of its creation. This identifier—also called the `write pointer`—represents the version
+that this transaction will use for all of its writes. It is also used to determine
+the order between transactions. A transaction with a smaller write pointer than
+another transaction must have been started earlier.
+
+The `Transaction Manager` (or TM) uses the write pointers to implement `Optimistic Concurrency Control`
+by maintaining state for all transactions that could be facing concurrency issues.
+
+Transaction Manager States
+..........................
+The `state` of the TM is defined by these structures and rules:
+
+- The `in-progress set`, which contains all the write pointers of transactions
+  which have neither committed nor aborted.
+- The `invalid set`, which contains the write pointers of the transactions
+  considered invalid, and which will never be committed. A transaction
+  becomes invalid only if either it times out or, for a long-running transaction,
+  it is being aborted.
+- A transaction's write pointer cannot be in the `in-progress set`
+  and in the `invalid set` at the same time.
+- The `invalid set` and the `in-progress set` together form the `excluded set`.
+  When a transaction starts, a copy of this set is given to the transaction so that
+  it excludes from its reads any writes performed by transactions in that set.
+- The `committing change sets`, which maps write pointers of the transactions
+  which have requested to commit their writes and which have passed a first round of
+  conflict check to a list of keys in which they have performed those writes.
+- The `committed change sets`, which has the same structure as the `committing change sets`,
+  but where the write pointers refer to transactions which are already committed and
+  which have passed a second round of conflict check.
+
+
+Transaction Lifecycle States
+............................
+Here are the states a transaction goes through in its lifecycle:
+
+- When a transaction starts, the TM creates a new write pointer
+  and saves it in the `in-progress set`.
+  A copy of the current excluded set is given to the transaction,
+  as well as a `read pointer`. The pointer
+  is an upper bound for the version of writes the transaction is allowed to read.
+  It prevents the transaction from reading committed writes performed after the transaction
+  started.
+- The transaction then performs writes to one or more rows, with the version of those writes
+  being the write pointer of the transaction.
+- When the transaction wants to commit its writes, it passes to the TM all the keys where
+  those writes took place. If the transaction is not in the `excluded set`, the
+  TM will use the `committed change sets` structure to detect
+  a conflict. A conflict happens in cases where the transaction tries to modify a
+  row which, after the start of the transaction, has been modified by one
+  of the transactions present in the structure.
+- If there are no conflicts, all the writes of the transaction along with its write pointer
+  are stored in the `committing change sets` structure.
+- The client—namely, a Dataset—can then ask the TM to commit the writes. These are retrieved from the
+  `committing change sets` structure. Since the `committed change sets` structure might
+  have evolved since the last conflict check, another one is performed. If the
+  transaction is in the `excluded set`, the commit will fail regardless
+  of conflicts.
+- If the second conflict check finds no overlapping transactions, the transaction's
+  write pointer is removed from the `in-progress set`, and it is placed in
+  the `committed change sets` structure, along with the keys it has
+  written to. The writes of this transaction will now be seen by all new transactions.
+- If something went wrong in one or other of the committing steps, we distinguish
+  between normal and long-running transactions:
+
+  - For a normal transaction, the cause could be that the transaction
+    was found in the excluded set or that a conflict was detected.
+    The client ensures rolling back the writes the transaction has made,
+    and it then asks the TM to abort the transaction.
+    This will remove the transaction's write pointer from either the
+    `in-progress set` or the `excluded set`, and optionally from the
+    `committing change sets` structure.
+
+  - For a long-running transaction, the only possible cause is that a conflict
+    was detected. Since it is assumed that the writes will not be rolled back
+    by the client, the TM aborts the transaction by storing its
+    write pointer into the `excluded set`. It is the only way to
+    make other transactions exclude the writes performed by this transaction.
+
+The `committed change sets` structure determines how fast conflict detections
+are performed. Fortunately, not all the committed writes need to be
+remembered; only those which may create a conflict with in-progress
+transactions. This is why only the writes committed after the start of the oldest,
+in-progress, not-long-running transaction are stored in this structure,
+and why transactions which participate in conflict detection must remain
+short in duration. The older they are, the bigger the `committed change sets`
+structure will be and the longer conflict detection will take.
+
+When conflict detection takes longer, so does committing a transaction
+and the transaction stays longer in the `in-progress set`. The whole transaction
+system can become slow if such a situation occurs.
+
 Dumping the Transaction Manager
-===============================
+...............................
 
 .. highlight:: console
 
@@ -576,11 +673,578 @@ from the concerned Tables.
 
 .. _Ingest:
 
-Ingesting Data Into CDAP
-========================
+Ingesting Data into the Cask Data Application Platform
+======================================================
 
 .. highlight:: console
 
-CDAP Flume Sink
----------------
+Introduction
+------------
 
+One of the first tasks of actually working with Big Data applications is getting the data in.
+We understand data ingestion is important and one tool does not fit all the needs,So to assist the user
+for ingesting data into Cask Data Application Platform (CDAP) Applications, we have
+assembled a set of tools and applications that the user can take advantage of for data ingestion:
+
+- Java, Python and Ruby APIs for controlling and writing to Streams;
+- a drop zone for bulk ingestion of files ;
+- a file tailer daemon to tail local files; and
+- an Apache Flume Sink implementation for writing events received from a source.
+
+
+Tools
+-----
+
+Stream Client
+.............
+
+The Stream Client is for managing Streams via external applications. It is available in three different
+APIs: Java, Python and Ruby.
+
+Supported Actions
+.................
+
+- Create a Stream with a specified *stream-id*;
+- Retrieve or Update the TTL (time-to-live) for an existing Stream with a specified *stream-id*;
+- Truncate an existing Stream (the deletion of all events that were written to the Stream);
+- Write an event to an existing Stream; and
+- Send a File to an existing Stream.
+
+Example (using Java API)
+........................
+
+Create a StreamClient instance, specifying the fields 'host' and 'port' of the gateway server.
+Optional configurations that can be set:
+
+- SSL: true or false (use HTTP protocol)
+- WriterPoolSize: '10' (max thread pool size for write events to the Stream)
+- Version : 'v2' (Gateway server version, used as a part of the base URI
+  ``http(s)://localhost:10000/v2/...``)
+- AuthToken: null (Need to specify to authenticate client requests)
+- APIKey: null (Need to specify to authenticate client requests using SSL)
+
+::
+
+  StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000).build();
+
+or specified using the builder parameters::
+
+  StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000)
+                                                  .apiKey("apiKey")
+                                                  .authToken("token")
+                                                  .ssl(false)
+                                                  .version("v2")
+                                                  .writerPoolSize(10)
+                                                  .build();
+
+
+Create a new Stream with the *stream id* "newStreamName"::
+
+  streamClient.create("newStreamName");
+
+**Notes:**
+
+- The *stream-id* should only contain ASCII letters, digits and hyphens.
+- If the Stream already exists, no error is returned, and the existing Stream remains in place.
+
+Update TTL for the Stream *streamName*; TTL is a long value and is specified in seconds::
+
+  streamClient.setTTL("streamName", newTTL);
+
+Get the current TTL value(seconds) for the Stream *streamName*::
+
+  long ttl = streamClient.getTTL("streamName");
+
+Create a ``StreamWriter`` instance for writing events to the Stream *streamName*::
+
+   StreamWriter streamWriter = streamClient.createWriter("streamName");
+
+To write new events to the Stream, you can use any of these five methods in the ``StreamWriter`` interface::
+
+  ListenableFuture<Void> write(String str, Charset charset);
+  ListenableFuture<Void> write(String str, Charset charset, Map<String, String> headers);
+  ListenableFuture<Void> write(ByteBuffer buffer);
+  ListenableFuture<Void> write(ByteBuffer buffer, Map<String, String> headers);
+  ListenableFuture<Void> send(File file, MediaType type);
+
+Example::
+
+  streamWriter.write("New log event", Charsets.UTF_8).get();
+
+To truncate the Stream *streamName*, use::
+
+  streamClient.truncate("streamName");
+
+When you are finished, release all resources by calling these two methods::
+
+  streamWriter.close();
+  streamClient.close();
+
+Python API
+-----------
+Usage
+.....
+
+To use the Stream Client Python API, include these imports in your
+Python script:
+
+::
+
+        from config import Config
+        from streamclient import StreamClient
+
+Configuring and Creating a Stream:
+..................................
+
+For Creating a ``StreamClient`` instance you would need a ``config`` object:
+
+You can create the `config`` object by manually configuring the config options or you can read the config options
+from an existing file.
+
+1. Creating ``config`` object and configuring it manually
+::
+
+  #The assigned values are also the default values
+  def createStremClient():
+    config = Config()
+    config.host = ‘localhost’
+    config.port = 10000
+    config.ssl = False
+    streamClient = streamClient(config)
+
+2. using an existing configuration file in JSON format [`Note 1`_] to create a ``config`` object
+::
+
+   def createStremClient():
+    config = Config.read_from_file('/path/to/config.json')
+    streamClient = streamClient(config)
+
+
+3. Once we have configured the stream client, we can create a stream by calling create with a stream-name [`Note 2`_]
+::
+
+  streamClient.create("newStreamName");
+
+TTL:
+....
+
+Update TTL for the Stream “streamName”; ``newTTL`` is a long value specified in seconds:
+::
+
+  streamClient.set_ttl("streamName", newTTL)
+
+Get the current TTL value for the Stream “streamName”:
+::
+
+  ttl = streamClient.get_ttl("streamName")
+
+Writing Events to Stream:
+.........................
+
+Create a ``StreamWriter`` instance for writing events to the Stream
+“streamName”:
+
+Once you have a ``StreamWriter`` instance:
+  1. you can write events to the stream using ``write()`` method or
+  2. you can send a file to the stream using ``send()`` method
+
+Putting it all together:
+........................
+::
+
+  def createStremClient():
+    config = Config.read_from_file('/path/to/config.json')
+    streamClient = streamClient(config)
+    streamWriter = streamClient.create_writer("streamName")
+    streamPromise = streamWriter.write("New log Event") #async
+    streamPromise.onResponse(onOKHandler, onErrorHalnder)
+
+  def onOkHandler(httpResponse): #will be executed after successful write to stream
+    ...
+    parse response
+    return "Success"
+    ...
+
+  def onErrorHandler(httpResponse): #will be executed if stream write fails
+    ...
+    parse response
+    return "Failure"
+    ...
+.. _note 1:
+:Note 1:
+Config file structure in JSON format:
+::
+
+  {
+    hostname: 'localhost',    - gateway hostname
+    port: 10000,              - gateway port
+    SSL: false                - if SSL is being used
+  }
+.. _note 2:
+:Note 2:
+Stream Name:
+  -  The name can only contain ASCII letters, digits and hyphens.
+  -  If the Stream already exists, no error is returned, and the existing
+     Stream remains in place.
+
+Additional Notes
+................
+
+All methods from the ``StreamClient`` and ``StreamWriter`` throw
+exceptions using response code analysis from the gateway server. These
+exceptions help determine if the request was processed successfully or
+not.
+
+In the case of a **200 OK** response, no exception will be thrown; other
+cases will throw the NotFoundException.
+
+Available at: [link]
+
+
+Ruby API
+--------
+
+Build
+-----
+
+To build a gem, run:
+
+``gem build stream-client-ruby.gemspec``
+
+Usage
+-----
+
+To use the Stream Client Ruby API, just add the following to your application Gemfile:
+
+``gem 'stream-client-ruby'``
+
+If you use gem outside Rails, you should require gem files in your application files:
+
+``require 'stream-client-ruby'``
+
+Example
+-------
+
+You can configure StreamClient settings in your config files, for
+example:
+
+::
+
+    # config/stream.yml
+    gateway: 'localhost'
+    port: 10000
+    api_version: 'v2'
+    api_key:
+    ssl: false
+
+::
+
+    # initializers/stream.rb
+    require "yaml"
+
+    config = YAML.load_file("config/stream.yml")
+
+    CDAPIngest::Rest.gateway     = config['gateway']
+    CDAPIngest::Rest.port        = config['port']
+    CDAPIngest::Rest.api_version = config['api_version']
+    CDAPIngest::Rest.ssl         = config['ssl']
+
+Create a StreamClient instance and use it as any Ruby object:
+
+::
+
+    client = CDAPIngest::StreamClient.new
+
+Create a new Stream with the *stream id* “new\_stream\_name”:
+
+``client.create "new_stream_name"``
+
+Notes:
+
+-  The must only contain ASCII letters, digits and hyphens.
+-  If the Stream already exists, no error is returned, and the existing
+   Stream remains in place.
+
+Update TTL for the Stream *stream\_name*; TTL is a integer value in Ruby, but the range should be limited to Java Long:
+
+``client.set_ttl stream_name, 256``
+
+Get the current TTL value for the Stream *stream\_name*:
+
+``ttl = client.get_ttl "stream_name"``
+
+Create a ``StreamWriter`` instance for writing events to the Stream
+*stream\_name* in 3 threads asynchronously:
+
+``writer = client.create_writer "stream_name", 3``
+
+::
+
+  test_data = "string to send in stream 10 times"
+
+  10.times {
+    writer.write(test_data).then(
+      ->(response) {
+        puts "success: #{response.code}"
+      },
+      ->(error) {
+        puts "error: #{error.response.code} -> #{error.message}"
+      }
+    )
+  }
+
+  writer.send('file.log').then { |response|
+    puts "success send file: #{response.code}"
+  }
+
+To truncate the Stream *stream\_name*, use:
+
+``client.truncate "stream_name"``
+
+When you are finished, release all resources by calling this method:
+
+``writer.close``
+
+Additional Notes
+----------------
+
+All methods from the ``StreamClient`` and ``StreamWriter`` throw
+exceptions using response code analysis from the gateway server. These
+exceptions help determine if the request was processed successfully or
+not.
+
+In the case of a **200 OK** response, no exception wi
+
+Available at: [link]
+
+File Tailer
+-----------
+
+File Tailer is a daemon process that performs tailing of sets of local files.
+As soon as a new record has been appended to the end of a file that the daemon is monitoring,
+it will send it to a Stream via the REST API.
+
+Features
+........
+
+- Distributed as debian and rpm packages;
+- Loads properties from a configuration file;
+- Supports rotation of log files;
+- Persists state and is able to resume from first unsent record; and
+- Writes statistics info.
+
+Installing File Tailer
+----------------------
+on Debian/Ubuntu :
+``sudo apt-get install file-tailer.deb``
+on RHEL/Cent OS :
+`` sudo rpm -ivh --force file-tailer.rpm``
+
+Configuring File Tailer
+-----------------------
+After Installation, you can configure the daemon properties at /etc/file-tailer/conf/file-tailer.properties::
+
+     # General pipe properties
+     # Comma-separated list of pipes to be configured
+     pipes=app1pipe,app2pipe
+
+     # Pipe 1 source properties
+     # Working directory (where to monitor files)
+     pipes.app1pipe.source.work_dir=/var/log/app1
+     # Name of log file
+     pipes.app1pipe.source.file_name=app1.log
+
+     # Pipe 1 sink properties
+     # Name of the stream
+     pipes.app1pipe.sink.stream_name=app1Stream
+     # Host name that is used by stream client
+     pipes.app1pipe.sink.host=cdap_host.example.com
+     # Host port that is used by stream client
+     pipes.app1pipe.sink.port=10000
+
+  :Note:  Please note that the target file must be accessible to the File Tailer user. To check, you can use the more command with the File Tailer user:
+          Available at: [link]
+
+Starting and Stopping the Daemon
+--------------------------------
+To Start a file tailer daemon execute:
+``sudo service file-tailer start``
+
+To Stop a file tailer daemon execute:
+``sudo service file-tailer start``
+
+:Note: File Tailer stores log files in the /var/log/file-tailer directory.
+       PID, states and statistics are stored in the /var/run/file-tailer directory.
+
+Configuring Authentication Client for File Tailer
+-------------------------------------------------
+
+Authentication client parameters :
+  - pipes.<pipe-name>.sink.auth_client - classpath of authentication client class
+  - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is locted at ``/etc/file-tailer/conf/auth-client.properties``
+
+  you can refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
+
+
+Description of Configuration Properties:
+----------------------------------------
+
+.. list-table::
+    :widths: 30 60
+    :header-rows: 1
+
+    * - Property
+      - Description
+    * - pipes.<pipename>.name
+      - ``name of the pipe``
+    * - pipes.<pipename>.state_file
+      - ``name of file, used to save state``
+    * - pipes.<pipename>.statistics_file
+      - ``name of file, used to save statistics``
+    * - pipes.<pipename>.queue_size
+      - ``size of queue (default 1000), of stored log records, before sending them to Stream``
+    * - pipes.<pipename>.source.work_dir
+      - ``path to directory being monitored for target log files``
+    * - pipes.<pipename>.source.file_name
+      - ``name of target log file``
+    * - pipes.<pipename>.source.rotated_file_name_pattern
+      - ``log file rollover pattern (default "(.*)" )``
+    * - pipes.<pipename>.source.charset_name
+      - ``name of charset used by Stream Client for sending logs (default "UT``
+    * - pipes.<pipename>.source.record_separator
+      - ``symbol that separates each log record (default "\n")``
+    * - pipes.<pipename>.source.sleep_interval
+      - ``interval to sleep after reading all log data (default 3000 ms)``
+    * - pipes.<pipename>.source.failure_retry_limit
+      - ``number of attempts to retry reading a log, if an error occurred while reading file data (default value is 0 for unlimited attempts)``
+    * - pipes.<pipename>.source.failure_sleep_interval
+      - ``interval to sleep if an error occurred while reading the file data (default 60000 ms)``
+    * - pipes.<pipename>.sink.stream_name
+      - ``name of target stream``
+    * - pipes.<pipename>.sink.host
+      - ``server host``
+    * - pipes.<pipename>.sink.port
+      - ``server port``
+    * - pipes.<pipename>.sink.ssl
+      - ``Secure Socket Layer mode [true|false] (default false)``
+    * - pipes.<pipename>.sink.apiKey
+      - ``SSL security key``
+    * - pipes.<pipename>.sink.writerPoolSize
+      - ``number of threads with which Stream Client sends events (default 10)``
+    * - pipes.<pipename>.sink.version
+      - ``CDAP server version (default "v2")``
+    * - pipes.<pipename>.sink.packSize
+      - ``number of logs sent at a time (default 1)``
+    * - pipes.<pipename>.sink.failure_retry_limit
+      - ``number of attempts to retry sending logs, if an error occurred while reading file data (default value is 0 for unlimited attempts)``
+    * - pipes.<pipename>.sink.failure_sleep_interval
+      - ``interval to sleep if an error occurred while sending the logs (default 60000 ms)``
+
+
+Flume Sink
+----------
+
+The CDAP Sink is a `Apache Flume Sink <https://flume.apache.org>`__ implementation using the
+RESTStreamWriter to write events received from a source. For example, you can configure the Flume Sink's
+Agent to read data from a log file by tailing it and putting them into CDAP.
+
+.. list-table:: Flume Configuration
+:widths: 20 30 50
+    :header-rows: 1
+
+      * - Property
+        - Value
+        - Description
+      * - a1.sinks.sink1.type
+        - ``co.cask.cdap.flume.StreamSink``
+        - Copy the CDAP sink jar to Flume lib directory and specify the fully qualified class name for this property.
+      * - a1.sinks.sink1.host
+        - ``host-name``
+        - Host name used by the Stream client
+      * - a1.sinks.sink1.streamName
+        - ``Stream-name``
+        - Target Stream name
+      * - a1.sinks.sink1.port
+        - ``10000``
+        - This parameter is options and the Default port number is 10000
+      * - a1.sinks.sink1.sslEnabled
+        - ``false``
+        - This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false
+      * - a1.sinks.sink1.writerPoolSize
+        - ``10``
+        - Number of threads to which the stream client can send events
+      * - a1.sinks.sink1.version
+        - ``v2``
+        - CDAP Router server version
+
+Authentication Client
+---------------------
+To use authentication, add these authentication client configuration parameters to the sink configuration file:
+  - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient, Fully qualified class name of the client class
+  - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is locted at ``/usr/local/apache-flume/conf/auth_client.conf``
+
+please refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
+
+Flume Sink Example
+------------------
+
+::
+
+   a1.sources = r1
+   a1.channels = c1
+   a1.sources.r1.type = exec
+   a1.sources.r1.command = tail -F /tmp/log
+   a1.sources.r1.channels = c1
+   a1.sinks = k1
+   a1.sinks.k1.type = co.cask.cdap.flume.StreamSink
+   a1.sinks.k1.channel = c1
+   a1.sinks.k1.host  = 127.0.0.1
+   a1.sinks.k1.port = 10000
+   a1.sinks.k1.streamName = logEventStream
+   a1.channels.c1.type = memory
+   a1.channels.c1.capacity = 1000
+   a1.channels.c1.transactionCapacity = 100
+
+
+
+File DropZone
+-------------
+
+The File DropZone application allows you to easily perform the bulk ingestion of local files.
+Files can either be directly uploaded, or they can be copied to a *work_dir*,
+where they will automatically be ingested by a daemon process.
+
+Features
+........
+
+- Distributed as debian and rpm packages;
+- Loads properties from configuration file;
+- Supports multiple observers/topics;
+- Able to survive restart and resume, sending from the first unsent record of each of the existing files; and
+- Cleanup of files that are completely sent.
+
+Available at: [link]
+
+
+.. _ConfiguringAuthClient:
+
+Authentication Client Configuration
+-----------------------------------
+.. list-table::
+    :widths: 50 50
+    :header-rows: 1
+
+    * - Property
+      - Description
+    * - security.auth.client.username
+      - authorized user name
+    * - security.auth.client.password
+      - password used for authenticating the user
+    * - security.auth.client.gateway.hostname
+      - Host name that is used by authentication client
+    * - security.auth.client.gateway.port
+      - Host port number that is used by authentication client
+    * - security.auth.client.gateway.ssl.enabled
+      - Enable/Disable SSL
+
+.. |(TM)| unicode:: U+2122 .. trademark sign

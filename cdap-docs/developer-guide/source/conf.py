@@ -59,6 +59,7 @@ def get_sdk_version():
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinxcontrib.googleanalytics',
     'sphinx.ext.todo',
     'sphinx.ext.pngmath',
     'sphinx.ext.ifconfig',
@@ -67,6 +68,9 @@ extensions = [
 
 # Remove intersphinx as we are not linking to other peoples's docs with Sphinx
 #    'sphinx.ext.intersphinx',
+
+# Google analytics configuration
+googleanalytics_id = 'UA-27787617-1'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

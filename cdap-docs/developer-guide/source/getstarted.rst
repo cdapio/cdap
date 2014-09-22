@@ -10,12 +10,23 @@ This chapter is a guide to help you get started with CDAP and prepares you to be
 end of this topic you will have CDAP up and running on your platform, you would learn how to develop, deploy and play with
 CDAP  with the help of the sample CDAP App provided in this chapter.
 
-Before Getting Started
+CDAP SDK - Quick Intro
+......................
 
+CDAP SDK provides clean and nice abstractions like `` Streams, Flows,Datasets `` to help you solve your Big-data problem.
+  - Stream is entry point for data ingestion into CDAP, users can create and define streams and add streams to their application for processing.
+  - Processing is done using Flows, and the flow system is a Directed-acyclic graph constructed by the user and processing logic is provided by the user.
+  - CDAP SDK comes up with a good collection of in-built Datasets, that is developed to suit the needs of the Big-Data Storage and these datasets make it
+    easy for a user to think and store his data in a dataset - which is reflective of the kind of data. we believe this abstraction is more intuitive and removes the complexity of the underlying storage engines.
+  - The SDK has features for running Map-Reduce and Spark Jobs
+  - The SDK provides Ad-hoc SQL support to query the datasets
+
+Before Getting Started
+......................
 The minimum requirements to run CDAP applications are only three,
-- `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP; note that $JAVA_HOME should be set)
-- `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP UI)
-- `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
+ - `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP; note that $JAVA_HOME should be set)
+ - `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP UI)
+ - `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
 
 Getting CDAP
 ============
@@ -53,7 +64,44 @@ For Developers
 
 To generate a sample CDAP application, you would use the maven archetype ::
 
-   ``mvn archetype:generate -   DarchetypeCatalog=https://repository.continuuity.com/content/groups/releases/archetype-catalog.xml -DarchetypeGroupId=com.continuuity -DarchetypeArtifactId=reactor-app-archetype -DarchetypeVersion=2.3.0``
+   ``$ mvn archetype:generate \
+    -DarchetypeCatalog=https://repository.cask.co/content/groups/releases/archetype-catalog.xml \
+    -DarchetypeGroupId=co.cask.cdap \
+    -DarchetypeArtifactId=cdap-app-archetype \
+    -DarchetypeVersion=2.5.0``
 
-To setup the CDAP application development environment, you need to import the generated pom file in your IDE
-Now you are all set to start developing your first CDAP application.
+To setup the CDAP application development environment, you need to import the generated pom file in your IDE,
+Now you are all set to start developing your first CDAP application. To help you familiarize with the environment and get developing CDAP apps, we have provided a set of Example Apps ,
+which uses and demonstrates the components of CDAP and we highly recommend you to read them before diving into CDAP.
+
+Example Apps
+============
+
+HelloWorld
+..........
+
+A Simple HelloWorld App that's written using CDAP
+
+Purchase
+........
+
+ - Receives Events from a PurchaseStream about Purchases in the format "X bought Y apples for $Z" and a processes them and stores it in a ``purchases dataset``
+ - A Mapreduce Job reads the ``purchase dataset`` , creates a purchase history object and stores them in a ``history dataset``
+ - Procedure and Ad-hoc SQL query support enables to query the ``history dataset`` to discover the purchase history of users.
+
+SparkKMeans
+...........
+
+An application that demonstrates streaming text analysis using a Spark program. It calculates the centers of points from an input stream using the KMeans Clustering method.
+
+SparkPageRank
+.............
+
+An application that demonstrates streaming text analysis using a Spark program.
+It computes the page rank of URLs from an input stream.
+
+WordCount
+.........
+
+A simple application that counts words and tracks word associations and unique words seen on the Stream.
+It demonstrates the power of using Datasets and how they can be used to simplify storing complex data
