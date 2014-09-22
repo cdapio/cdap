@@ -707,7 +707,8 @@ Introduction
 
 The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
 similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
-script or a Windows ``.bat`` file. It is also packaged in the SDK as a JAR file, at ``bin/cdap-cli.jar``.
+script or a Windows ``.bat`` file.
+It is also packaged in the SDK as a JAR file, at ``lib/co.cask.cdap.cdap-cli-2.5.0-SNAPSHOT.jar``.
 
 Usage
 -----
