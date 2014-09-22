@@ -25,7 +25,7 @@ Thus you can deploy and run in different environments without the need to change
 code.
 
 .. image:: _images/layers.png
-   :width: 4in
+   :width: 5in
    :align: center
 
 Data Virtualization
