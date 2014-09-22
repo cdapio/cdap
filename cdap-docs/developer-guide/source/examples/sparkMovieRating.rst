@@ -14,7 +14,7 @@ This example demonstrates the usage of Spark MLlib library, computing the movie 
 from an input stream.
 
 Data from a sample file is sent to CDAP by the external script *inject-data* to the *ratingsStream*. This data is
-processed by the ``RatingsFlow``, which stores ratings in its entirety in *ratings*, an ObjectStore Dataset.
+processed by the ``RatingsFlow``, which stores ratings in their entirety in *ratings*, an ObjectStore Dataset.
 
 As these entries are created, they are taken up by the *SparkMovieRatingProgram*, which
 goes through the entries, calculates predictions and tabulates results in another ObjectStore Dataset, *predictions*.
@@ -65,15 +65,14 @@ of the Application are tied together by the class ``SparkMovieRatingApp``::
     }
   }
 
-``ratings`` and ``predictions``: ObjectStore Data Storage
---------------------------------------------------------------
+Data Storage ObjectStores ``ratings`` and ``predictions``
+---------------------------------------------------------
 The raw ratings data is stored in an ObjectStore Dataset, *ratings*.
 The calculated predictions data is stored in a second ObjectStore Dataset, *predictions*.
 
-``PredictionProcedure``: Procedure
---------------------------------
-This procedure has a ``getPrediction`` method to obtain the prediction of a given userId and movieId.
-
+Procedure ``PredictionProcedure``
+---------------------------------
+This procedure has a ``getPrediction`` method to obtain the prediction for a given ``userId`` and ``movieId``.
 
 Building and Running the Application and Example
 ================================================
@@ -102,7 +101,6 @@ From the project root, build ``SparkMovieRating`` with the
 skip the tests by using the command::
 
 	$ mvn -Dmaven.test.skip=true clean package
-
 
 Deploying and Starting the Application
 --------------------------------------
@@ -133,13 +131,11 @@ On Windows:
 #. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy``
 #. To start the App, run ``~SDK> bin\app-manager.bat start``
 
-
-
 Running the Example
 -------------------
 
-Injecting ratings data
-............................
+Injecting Ratings Data
+......................
 
 Run this script to inject ratings data
 to the Stream named *ratingsStream* in the ``SparkMovieRating`` application::
@@ -152,8 +148,8 @@ On Windows::
 
 	~SDK> bin\inject-data.bat
 
-Running Spark program
-.............................
+Running the Spark Program
+.........................
 
 There are three ways to start the Spark program:
 
