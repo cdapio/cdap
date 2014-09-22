@@ -1,0 +1,16 @@
+{
+  "name": "cdap-ui-common",
+  "version": "0.0.1",
+  "dependencies": {
+    "formidable": "1.0.14",
+    "log4js": "0.6.5",
+    "node-int64": "0.3.0",
+    "express": "3.2.4",
+    "socket.io": "0.9.14",
+    "request": "2.42.0",
+    "thrift": "0.9.1",
+    "xml2js": "0.4.4",
+    "q": "1.0.1",
+    "lodash": "2.4.1"
+  }
+}

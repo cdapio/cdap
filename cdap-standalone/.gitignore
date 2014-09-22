@@ -1,0 +1,41 @@
+# Ignore basic Java files
+*.jar
+*.class
+
+# Ignore Intellij files
+*.iml
+*.ipr
+*.iws
+.idea/
+out/
+atlassian-ide-plugin.xml
+
+# Ignore Eclipse files
+.classpath
+.project
+.settings/
+
+# Ignore Gradle files
+.gradle/
+build/
+clover.license
+.clover
+
+# Ignore submodules.
+/common
+/data-fabric
+/flow
+/gateway
+/overlord
+/web-cloud-app
+/examples
+
+# Ignore Node stuff
+npm*
+
+# Ignore Standalone files
+logs/
+data/
+
+# MacOS files
+.DS_Store
