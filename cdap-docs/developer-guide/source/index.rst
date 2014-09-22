@@ -15,10 +15,10 @@ Cask Data Application Platform Documentation
    Developer Guide </dev-guide>
    Case Studies </case-studies>
    APIs and Clients </api>
+   /javadocs/index
    Tools </tools>
    Installation </install>
    Admin </admin>
-   /javadocs/index
    Licenses and Dependencies </licenses/index>
    Release Notes </releasenotes>
    FAQ </faq/index>
