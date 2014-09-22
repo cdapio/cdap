@@ -518,5 +518,136 @@ Our ``Mapper`` and ``Reducer`` are standard Hadoop classes. They have the follow
     ...
   }
 
-Accessing Log Analytics Data
-============================
+Accessing Wise Data through WiseService
+=======================================
+``WiseService`` is a Wise component that exposes HTTP endpoints to retrieve the content of the ``pageViewCDS``
+Dataset. As are the other components, it is also defined in the ``configure()`` method of the ``WiseApp`` class::
+
+  addService(new WiseService());
+
+A CDAP Service is defined by a class which extends ``AbstractService`` with one ``configure()`` method::
+
+  class WiseService extends AbstractService {
+    @Override
+    protected void configure() {
+      setName("PageViewService");
+      useDataset("pageViewCDS");
+      addHandler(new PageViewCountHandler());
+    }
+  }
+
+The ID of the service is set, and it will be used in the URL to reach the endpoints defined by the service.
+The ``useDataset()`` method specifies a Dataset that will be used by the service, as we have also seen in
+the ``BounceCountsMapReduce.configure()`` method. The handlers which will define the HTTP endpoints exposed by the
+Service are added with the ``addHandler()`` method.
+
+Here is the implementation of our ``PageViewCountHandler`` which defines HTTP endpoints to access information
+stored in the ``pageViewCDS`` Dataset::
+
+  public static class PageViewCountHandler extends AbstractHttpServiceHandler {
+    @UseDataSet("pageViewCDS")
+    private PageViewStore pageViewCDS;
+
+    @Path("/ip/{ip}/count")
+    @GET
+    public void getIPCount(HttpServiceRequest request, HttpServiceResponder responder,
+                           @PathParam("ip") String ipAddress) {
+      long counts = pageViewCDS.getCounts(ipAddress);
+      responder.sendJson(200, counts);
+    }
+    ...
+  }
+
+A handler class extends ``AbstractHttpServiceHandler``. The ``PageViewCountHandler`` class accesses the ``pageViewCDS``
+Dataset using the same ``@UseDataSet`` annotation as in the ``PageViewCounterFlowlet`` class.
+
+In the code snippet above, one HTTP endpoint is defined. The ``@Path`` annotation defines the URL path used to reach
+this endpoint. The ``@GET`` annotation specifies the HTTP method used to reach the endpoint. This path has one
+user parameter, ``{ip}``, which is decoded as a ``String`` in the parameters of the ``getIPCount()`` method
+with the help of the ``@PathParam`` annotation. This endpoint will retrieve the number of times a given IP address
+has been seen in the access logs by using the APIs of the ``pageViewCDS`` Dataset.
+
+With a running CDAP standalone instance, the ``getIPCount`` HTTP endpoint can be reached at::
+
+  GET http://localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/164.199.169.153/count
+
+TODO: create mini app/script to reach endpoint
+
+Exploring Wise Datasets through SQL
+===================================
+Wise Datasets, ``pageViewCDS`` and ``bounceCounts``, both expose an interface allowing to execute SQL queries on
+their data. To make that possible, they both implement the ``RecordScannable`` interface. The ``RecordScannable``
+interface exposes a Dataset as a table of ``Record``s all presenting the same schema, just like in a
+traditional SQL database. It gives structure to a Dataset, so that a SQL query can make sense.
+
+Here is the implementation of the ``RecordScannable`` interface on the ``bounceCounts`` Dataset::
+
+  public class BounceCountsStore extends AbstractDataset
+    implements ..., RecordScannable<PageBounce> {
+    ...
+    @Override
+    public Type getRecordType() {
+      return PageBounce.class;
+    }
+
+    @Override
+    public List<Split> getSplits() {
+      return table.getSplits();
+    }
+
+    @Override
+    public RecordScanner<PageBounce> createSplitRecordScanner(Split split) {
+      return Scannables.splitRecordScanner(table.createSplitReader(split), new PageBounceRecordMaker());
+    }
+
+    public class PageBounceRecordMaker implements Scannables.RecordMaker<byte[], Row, PageBounce> {
+      @Override
+      public PageBounce makeRecord(byte[] key, Row row) {
+        long visits = Bytes.toLong(row.get(COL_VISITS));
+        long bounces = Bytes.toLong(row.get(COL_BOUNCES));
+        return new PageBounce(Bytes.toString(key), visits, bounces);
+      }
+    }
+    ...
+  }
+
+The ``bounceCounts`` Dataset exposes records of type ``PageBounce``. ``RecordScannable.getRecordType()`` hence returns
+the type of ``PageBounce``. The important part here is the ``PageBounceRecordMaker`` class. It transforms the entry
+of a ``Table`` object into a ``PageBounce`` object.
+
+To execute SQL queries on Wise Datasets, let's navigate on CDAP dashboard. After deploying Wise in your running
+CDAP standalone instance, go to the **Store** page, which is one of the five pages you can access from the left
+pane of CDAP dashboard.
+
+.. image:: _images/wise_store_page.png
+
+Click on the **Explore** button in the top right corner of the page. You will land on this screen:
+
+.. image:: _images/wise_explore_page.png
+
+This is the *Explore* page, where you can run SQL queries and see information about the Datasets that expose
+a SQL interface.
+
+You will notice that the Datasets have peculiar names, like *cdap_user_bouncecounts*. Those are the SQL table names
+of the Datasets which have a SQL interface.
+
+Let's look at the schemas of our Datasets. The ``bounceCounts`` Dataset schema maps the attributes of the ``PageBounce``
+class. The SQL table *cdap_user_bouncecounts* hence has 3 columns: ``uri``, ``totalvisits`` and ``bounces``.
+You can use this schema to build custom SQL queries. For example, a simple one would be::
+
+  SELECT uri FROM cdap_user_bouncecounts WHERE bounces > 0.5 * totalvisits
+
+Enter this query in the field in the middle of the page, and hit **Execute** in the bottom right corner. You will see
+your query running and soon you'll be able to see a preview of the results, and download the entier result set as a
+CSV file.
+
+The ``pageViewCDS`` Dataset has a more complex schema. It has two columns, ``key`` and ``value``. ``key`` is an
+IP address, and value is a map of Web pages URIs to counts.
+
+To retrieve all the IP addresses which visited the page `/contact.html`, let's enter the following SQL query::
+
+  SELECT key FROM cdap_user_pageviewcds WHERE array_contains(map_keys(value), '/contact.html')=TRUE
+
+Because the SQL engine that CDAP runs internally is Hive, the SQL language used to submit queries is HiveQL.
+You can find more information on it in the `Hive language manual
+<https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`__.
