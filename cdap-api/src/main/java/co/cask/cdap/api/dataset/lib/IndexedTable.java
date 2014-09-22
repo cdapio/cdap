@@ -23,16 +23,21 @@ import co.cask.cdap.api.dataset.table.Delete;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.SortedSet;
 import javax.annotation.Nullable;
@@ -54,6 +59,11 @@ import javax.annotation.Nullable;
  * are currently supported.
  * </p>
  *
+ * <p>Index entries are created by storing additional rows in a second table.  These index rows are keyed by
+ * column name, column value, and original row key, each field separated by a single null byte delimiter.  Values
+ * containing the null byte are allowed, but may be read and filtered out when reading from the index.
+ * </p>
+ *
  * <p>The columns to index can be configured in the {@link co.cask.cdap.api.dataset.DatasetProperties} used
  * when the dataset instance in created.  Multiple column names should be listed as a comma-separated string
  * (with no spaces):
@@ -71,6 +81,9 @@ import javax.annotation.Nullable;
  * &#125;
  * }
  * </pre>
+ *
+ * Note that this means that the column names which should be indexed cannot contain the comma character,
+ * as it would break parsing of the configuration property.
  * </p>
  *
  * @see co.cask.cdap.api.dataset.lib.IndexedTableDefinition#INDEX_COLUMNS_CONF_KEY
@@ -151,10 +164,10 @@ public class IndexedTable extends AbstractDataset implements Table {
     if (!indexedColumns.contains(column)) {
       throw new IllegalArgumentException("Column " + Bytes.toStringBinary(column) + " is not configured for indexing");
     }
-    byte[] startRow = Bytes.concat(column, keyDelimiter, value, keyDelimiter);
-    byte[] stopRow = Bytes.incrementPrefix(startRow);
-    Scanner indexScan = index.scan(startRow, stopRow);
-    return new IndexScanner(indexScan);
+    byte[] rowKeyPrefix = Bytes.concat(column, keyDelimiter, value, keyDelimiter);
+    byte[] stopRow = Bytes.stopKeyForPrefix(rowKeyPrefix);
+    Scanner indexScan = index.scan(rowKeyPrefix, stopRow);
+    return new IndexScanner(indexScan, rowKeyPrefix);
   }
 
   /**
@@ -182,7 +195,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     if (existingRow != null) {
       for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
         if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
-          index.delete(createIndexKey(dataRow, IDX_COL, entry.getValue()));
+          index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
         } else {
           // value already indexed
           colsToIndex.remove(entry.getKey());
@@ -329,51 +342,75 @@ public class IndexedTable extends AbstractDataset implements Table {
 
   /**
    * Increments (atomically) the specified row and column by the specified amount, and returns the new value.
-   * Note that performing this operation on an indexed column throws {@link java.lang.IllegalArgumentException}.
+   * Note that performing this operation on an indexed column will generally have a negative impact on performance,
+   * since up to three writes will need to be performed for every increment (one removing the index for the previous,
+   * pre-increment value, one adding the index for the incremented value, and one for the increment itself).
    *
    * @see Table#incrementAndGet(byte[], byte[], long)
    */
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long amount) {
-    if (indexedColumns.contains(column)) {
-      throw new IllegalArgumentException("Increment is not supported on indexed column '"
-                                           + Bytes.toStringBinary(column) + "'");
-    }
-    return table.incrementAndGet(row, column, amount);
+    byte[] newValue = incrementAndGet(row, new byte[][]{ column }, new long[]{ amount }).get(column);
+    return Bytes.toLong(newValue);
   }
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, and returns the new values.
-   * Note that performing this operation on an indexed column throws {@link java.lang.IllegalArgumentException}.
+   * Note that performing this operation on an indexed column will generally have a negative impact on performance,
+   * since up to three writes will need to be performed for every increment (one removing the index for the previous,
+   * pre-increment value, one adding the index for the incremented value, and one for the increment itself).
    *
    * @see Table#incrementAndGet(byte[], byte[][], long[])
    */
   @Override
   public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
-    for (byte[] col : columns) {
-      if (indexedColumns.contains(col)) {
-        throw new IllegalArgumentException("Increment is not supported on indexed column '"
-                                             + Bytes.toStringBinary(col) + "'");
+    Preconditions.checkArgument(columns.length == amounts.length, "Size of columns and amounts arguments must match");
+
+    Row existingRow = table.get(row, columns);
+    byte[][] updatedValues = new byte[columns.length][];
+    NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+
+    for (int i = 0; i < columns.length; i++) {
+      long existingValue = 0L;
+      if (existingRow != null) {
+        byte[] existingBytes = existingRow.get(columns[i]);
+        if (existingBytes != null) {
+          if (existingBytes.length != Bytes.SIZEOF_LONG) {
+            throw new NumberFormatException("Attempted to increment a value that is not convertible to long," +
+                                              " row: " + Bytes.toStringBinary(row) +
+                                              " column: " + Bytes.toStringBinary(columns[i]));
+          }
+          existingValue = Bytes.toLong(existingBytes);
+          if (indexedColumns.contains(columns[i])) {
+            index.delete(createIndexKey(row, columns[i], existingBytes), IDX_COL);
+          }
+        }
+      }
+      updatedValues[i] = Bytes.toBytes(existingValue + amounts[i]);
+      result.put(columns[i], updatedValues[i]);
+      if (indexedColumns.contains(columns[i])) {
+        index.put(createIndexKey(row, columns[i], updatedValues[i]), IDX_COL, row);
       }
     }
-    return table.incrementAndGet(row, columns, amounts);
+
+    table.put(row, columns, updatedValues);
+    return new Result(row, result);
   }
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, and returns the new values.
-   * Note that performing this operation on an indexed column throws {@link java.lang.IllegalArgumentException}.
+   * Note that performing this operation on an indexed column will generally have a negative impact on performance,
+   * since up to three writes will need to be performed for every increment (one removing the index for the previous,
+   * pre-increment value, one adding the index for the incremented value, and one for the increment itself).
    *
    * @see Table#incrementAndGet(Increment)
    */
   @Override
   public Row incrementAndGet(Increment increment) {
-    for (byte[] col : increment.getValues().keySet()) {
-      if (indexedColumns.contains(col)) {
-        throw new IllegalArgumentException("Increment is not supported on indexed column '"
-                                             + Bytes.toStringBinary(col) + "'");
-      }
-    }
-    return table.incrementAndGet(increment);
+    Map<byte[], Long> incrementValues = increment.getValues();
+    return incrementAndGet(increment.getRow(),
+                           incrementValues.keySet().toArray(new byte[incrementValues.size()][]),
+                           Longs.toArray(incrementValues.values()));
   }
 
 
@@ -460,9 +497,11 @@ public class IndexedTable extends AbstractDataset implements Table {
   private class IndexScanner implements Scanner {
     // scanner over index table
     private final Scanner baseScanner;
+    private final byte[] rowKeyPrefix;
 
-    public IndexScanner(Scanner baseScanner) {
+    public IndexScanner(Scanner baseScanner, byte[] rowKeyPrefix) {
       this.baseScanner = baseScanner;
+      this.rowKeyPrefix = rowKeyPrefix;
     }
 
     @Nullable
@@ -478,7 +517,9 @@ public class IndexedTable extends AbstractDataset implements Table {
           return null;
         }
         byte[] rowkey = indexRow.get(IDX_COL);
-        if (rowkey != null) {
+        // verify that datarow matches the expected row key to avoid issues with column name or value
+        // containing the delimiter used
+        if (rowkey != null && Bytes.equals(indexRow.getRow(), Bytes.add(rowKeyPrefix, rowkey))) {
           dataRow = table.get(rowkey);
         }
       }

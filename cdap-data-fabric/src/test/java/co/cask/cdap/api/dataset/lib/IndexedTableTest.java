@@ -25,12 +25,16 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.cdap.data2.dataset2.TableTest;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.tephra.TransactionExecutor;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for Index table.
@@ -76,15 +80,15 @@ public class IndexedTableTest extends AbstractDatasetTest {
     // tests generation of byte key prefixes for index scanning
     // placed here since used by IndexedTable and we lack of a better home for Bytes testing
     byte[] start = { 0x00 };
-    byte[] stop = Bytes.incrementPrefix(start);
-    Assert.assertArrayEquals(new byte[]{ 0x01 }, stop);
-    stop = Bytes.incrementPrefix(stop);
-    Assert.assertArrayEquals(new byte[]{ 0x02 }, stop);
+    byte[] stop = Bytes.stopKeyForPrefix(start);
+    assertArrayEquals(new byte[]{0x01}, stop);
+    stop = Bytes.stopKeyForPrefix(stop);
+    assertArrayEquals(new byte[]{0x02}, stop);
     start = new byte[]{ 0x01, (byte) 0xff };
-    stop = Bytes.incrementPrefix(start);
-    Assert.assertArrayEquals(new byte[]{ 0x02 }, stop);
+    stop = Bytes.stopKeyForPrefix(start);
+    assertArrayEquals(new byte[]{0x02}, stop);
     start = new byte[]{ (byte) 0xff, (byte) 0xff };
-    stop = Bytes.incrementPrefix(start);
+    stop = Bytes.stopKeyForPrefix(start);
     Assert.assertNull(stop);
   }
 
@@ -316,8 +320,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
             row = scanner.next();
             TableTest.verifyRow(row, Bytes.toBytes("row9"), oddColumns, new byte[][]{idx1, zero, valA});
             // should be end of rows
-            row = scanner.next();
-            Assert.assertNull(row);
+            assertEmpty(scanner);
           } finally {
             scanner.close();
           }
@@ -340,8 +343,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
             row = scanner.next();
             TableTest.verifyRow(row, Bytes.toBytes("row8"), allColumns, new byte[][]{idx1, idx2, two, valA});
             // should be at the end
-            row = scanner.next();
-            Assert.assertNull(row);
+            assertEmpty(scanner);
           } finally {
             scanner.close();
           }
@@ -362,13 +364,12 @@ public class IndexedTableTest extends AbstractDatasetTest {
             row = scanner.next();
             TableTest.verifyRow(row, Bytes.toBytes("row9"), oddColumns, new byte[][]{idx1, zero, valA});
             // should be end of rows
-            row = scanner.next();
-            Assert.assertNull(row);
+            assertEmpty(scanner);
           } finally {
             scanner.close();
           }
 
-          // 1 should have rows 1, 4, 7, 10
+          // 1 should have rows 1, 4, 7
           scanner = mcTable.readByIndex(idxCol3, one);
           try {
             Row row = scanner.next();
@@ -378,8 +379,7 @@ public class IndexedTableTest extends AbstractDatasetTest {
             row = scanner.next();
             TableTest.verifyRow(row, Bytes.toBytes("row7"), oddColumns, new byte[][]{idx1, one, valA});
             // should be end of rows
-            row = scanner.next();
-            Assert.assertNull(row);
+            assertEmpty(scanner);
           } finally {
             scanner.close();
           }
@@ -394,17 +394,277 @@ public class IndexedTableTest extends AbstractDatasetTest {
             row = scanner.next();
             TableTest.verifyRow(row, Bytes.toBytes("row8"), allColumns, new byte[][]{idx1, idx2, two, valA});
             // should be end of rows
-            row = scanner.next();
-            Assert.assertNull(row);
+            assertEmpty(scanner);
           } finally {
             scanner.close();
           }
         }
       });
 
+      // update idx2 value for rows 2 & 4
+      final byte[] idx2b = new byte[]{ '2', 'b' };
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          mcTable.put(Bytes.toBytes("row2"), idxCol2, idx2b);
+          mcTable.put(Bytes.toBytes("row4"), idxCol2, idx2b);
+        }
+      });
+
+      // only rows 6 & 8 should be returned for idx2 now
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Scanner scanner = mcTable.readByIndex(idxCol2, idx2);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, Bytes.toBytes("row6"), allColumns, new byte[][]{idx1, idx2, zero, valA});
+            row = scanner.next();
+            TableTest.verifyRow(row, Bytes.toBytes("row8"), allColumns, new byte[][]{idx1, idx2, two, valA});
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+
+          scanner = mcTable.readByIndex(idxCol2, idx2b);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, Bytes.toBytes("row2"), allColumns, new byte[][]{idx1, idx2b, two, valA});
+            row = scanner.next();
+            TableTest.verifyRow(row, Bytes.toBytes("row4"), allColumns, new byte[][]{idx1, idx2b, one, valA});
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+        }
+      });
+
+      // rows 2 & 4 should be returned for idx2b
     } finally {
       deleteInstance("multicolumntab");
     }
+  }
+
+  /**
+   * Test conditions where the indexed column name or column value may contain the key delimiter.
+   * @throws Exception
+   */
+  @Test
+  public void testIndexKeyDelimiterHandling() throws Exception {
+    createInstance("indexedTable", "delimtab", DatasetProperties.builder()
+      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, idxColString)
+      .build());
+    final IndexedTable iTable = getInstance("delimtab");
+    final byte[] delim = new byte[]{ 0 };
+    try {
+      final byte[] valueWithDelimiter = Bytes.concat(idx1, delim, idx2);
+      TransactionExecutor tx = newTransactionExecutor(iTable);
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          iTable.put(keyA, idxCol, idx1);
+          iTable.put(keyB, idxCol, valueWithDelimiter);
+          iTable.put(keyC, idxCol, idx2);
+        }
+      });
+
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Scanner scanner = iTable.readByIndex(idxCol, idx1);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, keyA, new byte[][]{ idxCol }, new byte[][]{ idx1 });
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+
+          scanner = iTable.readByIndex(idxCol, idx2);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, keyC, new byte[][]{ idxCol }, new byte[][]{ idx2 });
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+
+          scanner = iTable.readByIndex(idxCol, valueWithDelimiter);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, keyB, new byte[][]{ idxCol }, new byte[][]{ valueWithDelimiter });
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+        }
+      });
+    } finally {
+      deleteInstance("delimtab");
+    }
+  }
+
+  @Test
+  public void testIncrementIndexing() throws Exception {
+    createInstance("indexedTable", "incrtab", DatasetProperties.builder()
+      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "idx1,idx2,idx3")
+      .build());
+    final IndexedTable iTable = getInstance("incrtab");
+    final byte[] idxCol1 = Bytes.toBytes("idx1");
+    final byte[] idxCol2 = Bytes.toBytes("idx2");
+    final byte[] idxCol3 = Bytes.toBytes("idx3");
+
+    final byte[] row1 = Bytes.toBytes("row1");
+
+    try {
+      TransactionExecutor tx = newTransactionExecutor(iTable);
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          long result = iTable.incrementAndGet(row1, idxCol1, 1);
+          assertEquals(1L, result);
+        }
+      });
+
+      final byte[] oneBytes = Bytes.toBytes(1L);
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Scanner scanner = iTable.readByIndex(idxCol1, oneBytes);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, row1, new byte[][]{ idxCol1 }, new byte[][]{ oneBytes });
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+        }
+      });
+
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          long result = iTable.incrementAndGet(row1, idxCol1, 1);
+          assertEquals(2L, result);
+        }
+      });
+
+      final byte[] twoBytes = Bytes.toBytes(2L);
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // previous index by value 1 should be gone
+          Scanner scanner = iTable.readByIndex(idxCol1, oneBytes);
+          try {
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+
+          // should now be indexed by value 2
+          scanner = iTable.readByIndex(idxCol1, twoBytes);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, row1, new byte[][]{ idxCol1 }, new byte[][]{ twoBytes });
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+        }
+      });
+
+      final byte[] threeBytes = Bytes.toBytes(3L);
+      final byte[][] idxCols = new byte[][]{ idxCol1, idxCol2, idxCol3 };
+      final byte[][] expectedValues = new byte[][]{ threeBytes, oneBytes, oneBytes };
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Row result = iTable.incrementAndGet(row1, idxCols, new long[]{ 1, 1, 1 });
+          assertNotNull(result);
+          TableTest.verifyColumns(result, idxCols, expectedValues);
+        }
+      });
+
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          Scanner scanner = iTable.readByIndex(idxCol1, threeBytes);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, row1, idxCols, expectedValues);
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+
+          scanner = iTable.readByIndex(idxCol2, oneBytes);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, row1, idxCols, expectedValues);
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+
+          scanner = iTable.readByIndex(idxCol3, oneBytes);
+          try {
+            Row row = scanner.next();
+            TableTest.verifyRow(row, row1, idxCols, expectedValues);
+            assertEmpty(scanner);
+          } finally {
+            scanner.close();
+          }
+        }
+      });
+
+      final byte[] row2 = Bytes.toBytes("row2");
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          // read-less increment on an indexed column should throw an exception
+          try {
+            iTable.increment(row2, idxCol1, 1L);
+            fail("Expected IllegalArgumentException performing increment on indexed column");
+          } catch (IllegalArgumentException iae) {
+            // expected
+          }
+
+          // read-less increment on a non-indexed column should succeed
+          iTable.increment(row2, valCol, 1L);
+          byte[] result = iTable.get(row2, valCol);
+          assertArrayEquals(oneBytes, result);
+        }
+      });
+
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          iTable.put(row2, valCol, valA);
+        }
+      });
+
+      // increment against a column with non-long value should fail
+      tx.execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          try {
+            iTable.incrementAndGet(row2, valCol, 1L);
+            fail("Expected NumberFormatException from increment on a column with non-long value");
+          } catch (NumberFormatException nfe) {
+            // expected
+          }
+        }
+      });
+    } finally {
+      deleteInstance("incrtab");
+    }
+  }
+  /**
+   * Asserts that the given scanner contains no more rows.
+   */
+  private void assertEmpty(Scanner scanner) {
+    Row row = scanner.next();
+    Assert.assertNull(row);
   }
 
   private Row readFirst(Scanner scanner) {

@@ -21,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import javax.annotation.Nullable;
@@ -72,7 +73,6 @@ public class Bytes {
    * Size of short in bytes.
    */
   public static final int SIZEOF_SHORT = Short.SIZE / Byte.SIZE;
-
 
   /**
    * Byte array comparator class.
@@ -1368,27 +1368,23 @@ public class Bytes {
   }
 
   /**
-   * Returns the given prefixByte, incremented by one, in the form that will be suitable for prefix matching.
-   * @param prefixBytes
-   * @return
+   * Returns the given prefix, incremented by one, in the form that will be suitable for prefix matching.
+   * @param prefix the prefix to increment for the stop key
+   * @return the stop key to use (may be null if the prefix cannot be incremented)
    */
+  // NOTE: null means "read to the end"
   @Nullable
-  public static byte[] incrementPrefix(byte[] prefixBytes) {
-    byte[] result = new byte[prefixBytes.length];
-    System.arraycopy(prefixBytes, 0, result, 0, prefixBytes.length);
-    binaryIncrementPos(result, 1);
-    int endIndex = result.length;
-    while (endIndex > 0) {
-      if (result[endIndex - 1] != 0x00) {
-        break;
+  public static byte[] stopKeyForPrefix(byte[] prefix) {
+    for (int i = prefix.length - 1; i >= 0; i--) {
+      int unsigned = prefix[i] & 0xff;
+      if (unsigned < 0xff) {
+        byte[] stopKey = Arrays.copyOf(prefix, i + 1);
+        stopKey[stopKey.length - 1]++;
+        return stopKey;
       }
-      endIndex--;
     }
-    byte[] truncated = null;
-    if (endIndex > 0) {
-      truncated = new byte[endIndex];
-      System.arraycopy(result, 0, truncated, 0, endIndex);
-    }
-    return truncated;
+
+    // i.e. "read to the end"
+    return null;
   }
 }
