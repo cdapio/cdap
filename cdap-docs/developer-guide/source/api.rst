@@ -26,6 +26,8 @@ Cask Data Application Platform HTTP RESTful API And Clients
 
 .. highlight:: console
 
+.. _restful-api:
+
 ----------------
 HTTP RESTFul API
 ----------------
@@ -139,6 +141,7 @@ In order to authenticate, all client requests must supply this access token in t
 
 For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
+.. _rest-streams:
 
 Stream HTTP API
 ===============
@@ -429,6 +432,8 @@ Example
      - Change the TTL property of the Stream named *mystream* to 1 day
 
 .. rst2pdf: PageBreak
+
+.. _rest-datasets:
 
 Dataset HTTP API
 ================
@@ -1501,6 +1506,8 @@ Example
        Procedure *MyProc2* in the Application *MyApp1*, and the runnable *MyRunnable1* in the
        Custom Service *MySvc1* in the Application *MyApp3*
 
+.. _rest-scaling-flowlets:
+
 Scaling Flowlets
 ................
 You can query and set the number of instances executing a given Flowlet
@@ -2251,6 +2258,8 @@ Examples
      - Sets the number of instances of the metrics HTTP service to 2
 
 .. rst2pdf: PageBreak
+
+.. _client-api:
 
 ---------------
 Java Client API

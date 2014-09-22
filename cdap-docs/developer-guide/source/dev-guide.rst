@@ -1755,7 +1755,7 @@ Developers can implement Custom Services to interface with a legacy system and p
 the CDAP processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
 Custom Services lifecycle can be controlled via the CDAP Console or by using the
-:ref:`CDAP Client API <client-api>` or :ref:`CDAP RESTful API <rest-services>`.
+:ref:`CDAP Java Client API <client-api>` or :ref:`CDAP RESTful HTTP API <restful-api>`.
 
 Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler`` \s to serve requests.
 

@@ -6,7 +6,7 @@ Cask Data Application Platform Licenses and Dependencies
 ========================================================
 
 CDAP Product License
-----------------------------------------------
+--------------------
 
 The Cask Data Application Platform (CDAP) product is copyright and licensed as follows:
 
@@ -27,7 +27,7 @@ The Cask Data Application Platform (CDAP) product is copyright and licensed as f
 
 
 CDAP Documentation License
-----------------------------------------------------
+--------------------------
 
 The Cask Data Application Platform (CDAP) documentation is copyright and licensed as follows:
 
@@ -47,7 +47,7 @@ The Cask Data Application Platform (CDAP) documentation is copyright and license
 
 
 CDAP Dependent Packages, Licenses and License URLs
-----------------------------------------------------------------------------
+--------------------------------------------------
 
 - `CDAP Standalone Dependencies <cdap-standalone-dependencies.html>`_
   (`PDF <cdap-standalone-dependencies.pdf>`__)
