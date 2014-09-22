@@ -1369,10 +1369,24 @@ public class Bytes {
     }
   }
 
+  /**
+   * Creates immutable sorted map with one entry with given key and value.
+   * @param key key of the entry
+   * @param value value of the entry
+   * @return instance of {@link NavigableMap}
+   */
   public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key, byte[] value) {
     return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
   }
 
+  /**
+   * Creates immutable sorted map with two entries with given keys and values.
+   * @param key1 key of the first entry
+   * @param value1 value of the first entry
+   * @param key2 key of the second entry
+   * @param value2 value of the second entry
+   * @return instance of {@link NavigableMap}
+   */
   public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key1, byte[] value1,
                                                                   byte[] key2, byte[] value2) {
     return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR)
