@@ -9,17 +9,20 @@ Cask Data Application Platform Architecture and Concepts
 Introduction
 ============
 
-Before you learn how to write applications on CDAP, this section will introduce its concepts and architecture.
+**Cask Data Application Platform (CDAP)** is a developer-centric middleware for developing and running
+Big Data applications. Before you learn how to develop and operate applications, this section will
+explain the concepts and architecture of CDAP.
 
 Virtualization
 ==============
 
 CDAP lets you virtualize your data and applications by injecting abstraction layers over the various components
 of the Hadoop ecosystem. To access and manipulate data, you interact with CDAP's Datasets rather than actual
-storage engines such as HDFS or HBase. Similarly, you write your applications using CDAP's application interfaces
+storage engines such as HDFS or HBase. Similarly, you write your applications using CDAP's developer interface
 and run them inside application containers. These containers are a logical abstraction that can be realized
-differently in several runtime environments, such as in-memory, single-node standalone, or distributed cluster,
-without the need to change a single line of application code.
+differently in several runtime environments, such as in-memory, single-node standalone, or distributed cluster.
+Thus you can deploy and run in different environments without the need to change a single line of application
+code.
 
 .. image:: _images/layers.png
    :width: 4in
@@ -33,7 +36,7 @@ In CDAP applications, you interact with data through Datasets. Datasets provide 
 - Abstraction of the actual representation of data in storage. You can write your code or queries without
   having to know where and how your data is stored - be it in HBase, LevelDB or a relational database.
 - Encapsulation of data access patterns and business logic as reusable, managed Java code.
-- Consistency of your data under highly concurrent access using CDAP's transaction system provoded by
+- Consistency of your data under highly concurrent access using CDAP's transaction system provided by
   `Cask Tephra <http://github.com/continuuity/tephra/>`__
 - Injection of datasets into different programming paradigms and runtimes: As soon as your data is in a
   dataset, you can instantly use it in real-time programs, batch processing such as Map/Reduce or Spark,
@@ -43,62 +46,59 @@ Application Virtualization
 --------------------------
 
 CDAP's programming interfaces have multiple implementations in different runtime environments. You build
-your applications against the CDAP application API. This API not only hides the low-level details of
-individual programming paradigms and runtimes, it also gives access to many useful services provided by
-CDAP, such as the dataset service or the service discovery. When you deploy and run the application into a
-specific installation of CDAP, the appropriate implementations of all services and program runtimes are
-injected by CDAP - the application does not need to change based on the environment. This allows you
-develop applications in one environent - say, on your laptop using a stand-alone CDAP for testing - and
-then seamlessly deploy it in a different environemnt - say, your distributed staging cluster.
+your applications against the CDAP developer API. This API hides the low-level details of individual
+programming paradigms and execution environments. It also enriches the infrastructure with many useful
+services that are typically needed by Big Data applications, such as service discovery, log and metrics
+collection, and configuration. The environment-specific implementations of these services are injected
+by CADP into the program containers in which the application is run - the application itself does not
+need to change based on the environment. This allows you develop applications in one environent - say,
+on your laptop using a stand-alone CDAP for testing - and then seamlessly deploy them in a different
+environemnt - say, your distributed staging cluster.
 
+Deployment of an application as well as its life cycle management, monitoring and scaling are done
+through CDAP's client API. Similarly to the developer API, it is the same in every environment. The
+experience of managing your application does not change when moving from one envirnment to another.
 
-Cask Data Application Platform Overview
-=======================================
-Under the covers, **Cask Data Application Platform (CDAP)** is a Java-based middleware solution that
-abstracts the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce,
-HBase, Zookeeper, etc.). Simply stated, CDAP behaves like a modern-day application
-server, distributed and scalable, sitting on top of a Hadoop distribution (such as CDH,
-HDP, or Apache). It provides a programming framework and scalable runtime environment
-that allows any Java developer to build Big Data applications without having to
-understand all of the details of Hadoop.
+Developer Focus
+---------------
 
-Integrated Framework
---------------------
-Without a Big Data middleware layer, a developer has to piece together multiple open
-source frameworks and runtimes to assemble a complete Big Data infrastructure stack.
-CDAP provides an integrated platform that makes it easy to create all the elements of
-Big Data applications: collecting, processing, storing, and querying data. Data can be
-collected and stored in both structured and unstructured forms, processed in real-time
-and in batch, and results can be made available for retrieval, visualization, and
-further analysis.
-
-Simple APIs
------------
-CDAP aims to reduce the time it takes to create and implement applications
-by hiding the complexity of these distributed technologies with a set of powerful yet
-simple APIs. You don’t need to be an expert on scalable, highly-available system
-architectures, nor do you need to worry about the low-level Hadoop and HBase APIs.
-
-Full Development Lifecycle Support
-----------------------------------
 CDAP supports developers through the entire application development lifecycle:
 development, debugging, testing, continuous integration and production. Using familiar
 development tools such as *IntelliJ* and *Eclipse*, you can build, test and debug your
 application right on your laptop with a *Standalone CDAP*. Utilize the application unit
-test framework for continuous integration. Deploy it to a development cloud or production
-cloud (*Distributed CDAP*) with a push of a button.
+test framework (which embeds an *In-Memory CDAP*, for continuous integration. Deploy
+to a development cloud or production cloud (*Distributed CDAP*) with a push of a button.
+No matter what environment you are in, the experience of managing the application remains
+largely the same.
 
-Easy Application Operations
----------------------------
-Once your Big Data application is in production, CDAP is designed
-specifically to monitor your applications and scale with your data processing needs:
-increase capacity with a click of a button without taking your application offline. Use
-the CDAP Console or RESTful APIs to monitor and manage the lifecycle and scale of your
-application.
+CDAP Programming Interfaces
+===========================
 
+We distinguish between the Developer interface and the Client interface.
+
+- The Developer interface is used to build applications and exposes various Java APIs that are only available to
+  code that runs inside application containers, for example the Dataset and Transaction APIs as well as the
+  various supported programming paradigms.
+- The Client interface is a RESTful API and the only way that external clients can interact with CDAP and
+  applications. It includes APIs that are not accessible from inside containers, such as application
+  lifecycle management and monitoring. As an alternative to HTTP, clients can also use the client libraries
+  provided for different programming languages, including Java, JavaScript and Python.
+
+.. image:: _images/interfaces.png
+   :width: 5in
+   :align: center
+
+Note that some interfaces are included in both the Developer and the Platform APIs, for example, Service Discovery
+and Dataset Management.
 
 Components of CDAP and their Interactions
 =========================================
+
+The following diagram illustrates the components that make up distributed CDAP and some of their interactions:
+
+.. image:: _images/components.png
+   :width: 6in
+   :align: center
 
 CDAP consists mainly of these components:
 
@@ -112,29 +112,10 @@ CDAP consists mainly of these components:
   special case, system services). Application containers scale linearly and elastically with the underlying
   infrastructure.
 
-.. image:: _images/components.png
-   :width: 6in
-   :align: center
-
-CDAP Programming Interfaces
-===========================
-
-We distinguish between the Developer interface and the Platform interface.
-
-- The Developer interface is used to build applications and exposes various Java APIs that are only available to
-  code that runs inside application containers, for example the Dataset and Transaction APIs as well as the
-  various supported programming paradigms.
-- The Platform interface is a RESTful API and the only way that external clients can interact with CDAP and
-  applications. It includes APIs that are not accessible from inside containers, such as application
-  management and monitoring. As an alternative to HTTP, clients can also use the client libraries
-  provided for different programming languages, including Java, JavaScript and Python.
-
-Note that some interfaces are included in both the Developer and the Platform APIs, for example, Service Discovery
-and Dataset Management.
-
-.. image:: _images/api-venn.png
-   :width: 6in
-   :align: center
+In a Hadoop Environment, application containers are implemented as YARN containers and datasets use HBase and
+HDFS for actual storage. In other environments, this implementation can be different. For example, the standalone
+CDAP runs all services in a single JVM, application containers are implemented as threads, and data is stored in
+the local file system.
 
 Anatomy of a Big Data Application
 =================================
@@ -199,15 +180,16 @@ Hence, a CDAP application consists of the following components:
 - `Procedures <dev-guide.html#procedures>`__ and `Services <dev-guide.html#services>`__
   for data serving to external clients.
 
-The follwoing diagram illustrates a typical Big Data application:
+The following diagram illustrates a typical Big Data application:
 
-.. image:: _images/unified_realtime_batch.JPG
-   :width: 6in
+.. image:: _images/typical-app.png
+   :width: 8in
    :align: center
 
 This also illustrates the power of data virtualization in CDAP: A stream is not only a means to collect data, it can
 also be consumed by realtime and batch processing at the same time. Similarly, datasets allow sharing of data between
-programs of different paradigms, be they in realtime or batch.
+programs of different paradigms, be they in realtime or batch, without compromising the consistency of the data,
+because all data access happens under ACID guarantees.
 
 Where to Go Next
 ================
