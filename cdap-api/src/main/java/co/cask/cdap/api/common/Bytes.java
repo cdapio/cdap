@@ -23,9 +23,11 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  * Utility class that handles byte arrays, conversions to/from other types,
@@ -74,7 +76,6 @@ public class Bytes {
    * Size of short in bytes.
    */
   public static final int SIZEOF_SHORT = Short.SIZE / Byte.SIZE;
-
 
   /**
    * Byte array comparator class.
@@ -1367,6 +1368,27 @@ public class Bytes {
     for (int i = 0; i < size - s.length(); ++i) {
       out.writeByte(0);
     }
+  }
+
+  /**
+   * Returns the given prefix, incremented by one, in the form that will be suitable for prefix matching.
+   * @param prefix the prefix to increment for the stop key
+   * @return the stop key to use (may be null if the prefix cannot be incremented)
+   */
+  // NOTE: null means "read to the end"
+  @Nullable
+  public static byte[] stopKeyForPrefix(byte[] prefix) {
+    for (int i = prefix.length - 1; i >= 0; i--) {
+      int unsigned = prefix[i] & 0xff;
+      if (unsigned < 0xff) {
+        byte[] stopKey = Arrays.copyOf(prefix, i + 1);
+        stopKey[stopKey.length - 1]++;
+        return stopKey;
+      }
+    }
+
+    // i.e. "read to the end"
+    return null;
   }
 
   /**

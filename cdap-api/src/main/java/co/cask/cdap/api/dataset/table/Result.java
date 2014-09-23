@@ -14,10 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.data2.dataset2.lib.table;
+package co.cask.cdap.api.dataset.table;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.Row;
 
 import java.util.Map;
 import javax.annotation.Nullable;
