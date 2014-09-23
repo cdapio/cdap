@@ -75,6 +75,7 @@ public class SparkPageRankTest extends TestBase {
     response = client.query("rank", ImmutableMap.of("URL", "http://example.com/page1"));
     Assert.assertEquals(RANK, response);
     client.query("rank", ImmutableMap.of("wrond_argument", "http://example.com/page1"));
+    client.query("rank", ImmutableMap.of("url", "a page which does not exist"));
   }
 
 }
