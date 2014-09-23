@@ -2127,4 +2127,4 @@ Where to Go Next
 Now that you've had an introduction to programming applications
 for CDAP, take a look at:
 
-- :doc:`Case Studies <case-studies>`, to walk through some example applications.
+- :doc:`Apps and Packs <apps-packs>`, to walk through some example applications and useful datasets.

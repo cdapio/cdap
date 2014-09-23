@@ -13,7 +13,7 @@ Cask Data Application Platform Documentation
    Getting Started </getstarted>
    Concepts and Architecture </arch>
    Developer Guide </dev-guide>
-   Case Studies </case-studies>
+   Apps and Packs </apps-packs>
    APIs and Clients </api>
    /javadocs/index
    Tools </tools>

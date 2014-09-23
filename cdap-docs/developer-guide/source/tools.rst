@@ -6,31 +6,26 @@
 Cask Data Application Platform - Available Tools
 ================================================
 
-Tools Info
-==========
+Tools Overview
+==============
 CDAP comes with a bunch of tools to make developer's life easier. These tools offers various features including,
 helping to debug CDAP applications, interact with them and ingest data into them,etc:
 
 .. list-table::
-    :widths: 10 30 60
+    :widths: 15 60
     :header-rows: 1
 
     * - Tool Name
       - Description
-      - Quick Link
-    * - Test Framework
-      - ``How you can take advantage of the Powerful Test Framework to test your CDAP applications before deploying.
-        This makes catching bugs early and easy``
-      - TestFramework_
-    * - Debugging
-      - ``How you can debug CDAP applications in standalone mode and debugging app containers in distributed mode``
-      - DebugCDAP_
-    * - Transactions Debugger
-      - ``Snapshot state of Transaction manager``
-      - TxDebugger_
-    * - Ingestion tools
-      - ``Ways to Ingest data into CDAP``
-      - Ingest_
+    * - :ref:`Test Framework<TestFramework>`
+      - How you can take advantage of the test framework to test your CDAP applications before deploying.
+        This makes catching bugs early and easy.
+    * - :ref:`Debugging<DebugCDAP>`
+      - How you can debug CDAP applications in standalone mode and app containers in distributed mode.
+    * - :ref:`Transactions Debugger<TxDebugger>`
+      - Snapshot and inspect the state of Transaction Manager.
+    * - :ref:`Ingestion Tools<Ingest>`
+      - Ways to ingest data into CDAP.
 
 .. highlight:: java
 
@@ -547,12 +542,8 @@ assembled a set of tools and applications that the user can take advantage of fo
 - a file tailer daemon to tail local files; and
 - an Apache Flume Sink implementation for writing events received from a source.
 
-
-Tools
------
-
 Stream Client
-.............
+-------------
 
 The Stream Client is for managing Streams via external applications. It is available in three different
 APIs: Java, Python and Ruby.
@@ -566,8 +557,8 @@ Supported Actions
 - Write an event to an existing Stream; and
 - Send a File to an existing Stream.
 
-Example (using Java API)
-........................
+Java API
+........
 
 Create a StreamClient instance, specifying the fields 'host' and 'port' of the gateway server.
 Optional configurations that can be set:
@@ -636,8 +627,8 @@ When you are finished, release all resources by calling these two methods::
   streamWriter.close();
   streamClient.close();
 
-Putting it all together:
-........................
+Putting it All Together
++++++++++++++++++++++++
 
 ::
 
@@ -691,9 +682,10 @@ Putting it all together:
 Also look at : [`Note stream_client`_]
 
 Python API
-----------
+..........
+
 Usage
-.....
++++++
 
 To use the Stream Client Python API, include these imports in your
 Python script:
@@ -703,8 +695,8 @@ Python script:
         from config import Config
         from streamclient import StreamClient
 
-Configuring and Creating a Stream:
-..................................
+Configuring and Creating a Stream
++++++++++++++++++++++++++++++++++
 
 For Creating a ``StreamClient`` instance you would need a ``config`` object:
 
@@ -735,8 +727,8 @@ from an existing file.
 
   streamClient.create("newStreamName");
 
-TTL:
-....
+Updating Time-to-Live
++++++++++++++++++++++
 
 Update TTL for the Stream “streamName”; ``newTTL`` is a long value specified in seconds:
 ::
@@ -748,8 +740,8 @@ Get the current TTL value for the Stream “streamName”:
 
   ttl = streamClient.get_ttl("streamName")
 
-Writing Events to Stream:
-.........................
+Writing Events to Stream
+++++++++++++++++++++++++
 
 Create a ``StreamWriter`` instance for writing events to the Stream
 “streamName”:
@@ -758,8 +750,8 @@ Once you have a ``StreamWriter`` instance:
   1. you can write events to the stream using ``write()`` method or
   2. you can send a file to the stream using ``send()`` method
 
-Putting it all together:
-........................
+Putting it All Together
++++++++++++++++++++++++
 ::
 
   def createStreamClient():
@@ -807,17 +799,17 @@ Available at: [link]
 
 
 Ruby API
---------
+........
 
 Build
------
++++++
 
 To build a gem, run:
 
 ``gem build stream-client-ruby.gemspec``
 
 Usage
------
++++++
 
 To use the Stream Client Ruby API, just add the following to your application Gemfile:
 
@@ -828,7 +820,7 @@ If you use gem outside Rails, you should require gem files in your application f
 ``require 'stream-client-ruby'``
 
 Example
--------
++++++++
 
 You can configure StreamClient settings in your config files, for
 example:
@@ -942,14 +934,16 @@ Features
 - Writes statistics info.
 
 Installing File Tailer
-----------------------
+......................
+
 on Debian/Ubuntu :
 ``sudo apt-get install file-tailer.deb``
 on RHEL/Cent OS :
 `` sudo rpm -ivh --force file-tailer.rpm``
 
 Configuring File Tailer
------------------------
+.......................
+
 After Installation, you can configure the daemon properties at /etc/file-tailer/conf/file-tailer.properties::
 
      # General pipe properties
@@ -975,7 +969,8 @@ After Installation, you can configure the daemon properties at /etc/file-tailer/
           Available at: [link]
 
 Starting and Stopping the Daemon
---------------------------------
+................................
+
 To Start a file tailer daemon execute:
 ``sudo service file-tailer start``
 
@@ -986,7 +981,7 @@ To Stop a file tailer daemon execute:
        PID, states and statistics are stored in the /var/run/file-tailer directory.
 
 Configuring Authentication Client for File Tailer
--------------------------------------------------
+.................................................
 
 Authentication client parameters :
   - pipes.<pipe-name>.sink.auth_client - classpath of authentication client class
@@ -996,8 +991,8 @@ Authentication client parameters :
   you can refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 
 
-Description of Configuration Properties:
-----------------------------------------
+Description of Configuration Properties
+.......................................
 
 .. list-table::
     :widths: 30 60
@@ -1088,7 +1083,8 @@ Agent to read data from a log file by tailing it and putting them into CDAP.
       - CDAP Router server version
 
 Authentication Client
----------------------
+.....................
+
 To use authentication, add these authentication client configuration parameters to the sink configuration file:
   - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient,
     Fully qualified class name of the client class
@@ -1098,7 +1094,7 @@ To use authentication, add these authentication client configuration parameters 
 please refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 
 Flume Sink Example
-------------------
+..................
 
 ::
 
@@ -1141,7 +1137,8 @@ Available at: [link]
 .. _ConfiguringAuthClient:
 
 Authentication Client Configuration
------------------------------------
+...................................
+
 .. list-table::
     :widths: 50 50
     :header-rows: 1
