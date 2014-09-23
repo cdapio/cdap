@@ -7,9 +7,9 @@
 .. index::
    single: Frequently Asked Questions
 
-============================
+====
 FAQs
-============================
+====
 
 General
 =======
@@ -17,7 +17,7 @@ General
 #. :doc:`What is CDAP ?<general>`
 #. :doc:`Whom is CDAP built for ?<general>`
 #. :doc:`What's the vision for CDAP ?<general>`
-#. :doc:`Is commerical support available for CDAP ?<general>`
+#. :doc:`Is commercial support available for CDAP ?<general>`
 #. :doc:`How does CDAP work ?<general>`
 #. :doc:`How do I get started with CDAP ?<general>`
 #. :doc:`What are some of the applications that can be built on CDAP ?<general>`
