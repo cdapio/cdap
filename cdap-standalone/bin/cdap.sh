@@ -295,7 +295,7 @@ start() {
     fi
 
     # Disabling NUX
-    # TODO: Enable NUX with new example
+    # TODO: Enable NUX with new example, see CDAP-22
     #nux_enabled
 
     #NUX_ENABLED=$?

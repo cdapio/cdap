@@ -773,7 +773,7 @@ WebAppServer.prototype.bindRoutes = function() {
       environment.credential = self.Api.credential;
       environment.nux = false;
       // Disabling Nux
-      // TODO: Enable NUX with newer examples 
+      // TODO: Enable NUX with new tutorial, see CDAP-22
       /* 
       if (!fs.existsSync('./.nux_dashboard')) {
         environment.nux = true;

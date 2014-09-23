@@ -252,7 +252,7 @@ echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
 
 # Disable NUX
-# TODO: Enable NUX with new app
+# TODO: Enable NUX with new app, see CDAP-22
 # CALL :NUX
 GOTO :FINALLY
 
