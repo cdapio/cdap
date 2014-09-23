@@ -175,7 +175,6 @@ public class ExploreRuntimeModule extends RuntimeModule {
         if (isInMemory) {
           // This seed is required to make all tests pass when launched together, and when several of them
           // start a hive metastore / hive server.
-          // TODO try to remove once maven is there - REACTOR-267
           warehouseDir = new File(warehouseDir, Long.toString(seed));
           databaseDir = new File(databaseDir, Long.toString(seed));
         }
@@ -198,7 +197,6 @@ public class ExploreRuntimeModule extends RuntimeModule {
         System.setProperty(MRConfig.FRAMEWORK_NAME, "local");
 
         // Disable security
-        // TODO: verify if auth=NOSASL is really needed - REACTOR-267
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION.toString(), "NONE");
         System.setProperty(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.toString(), "false");
         System.setProperty(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString(), "false");
@@ -280,7 +278,7 @@ public class ExploreRuntimeModule extends RuntimeModule {
     LOG.debug("Setting {} to {}", HiveConf.ConfVars.HIVEAUXJARS.toString(),
               System.getProperty(HiveConf.ConfVars.HIVEAUXJARS.toString()));
 
-    // Setup HADOOP_CLASSPATH hack, more info on why this is needed - REACTOR-325
+    //TODO: Setup HADOOP_CLASSPATH hack, more info on why this is needed, see CDAP-9
     LocalMapreduceClasspathSetter classpathSetter =
       new LocalMapreduceClasspathSetter(new HiveConf(), System.getProperty("java.io.tmpdir"), orderedDependenciesStr);
     for (File jar : hBaseTableDeps) {

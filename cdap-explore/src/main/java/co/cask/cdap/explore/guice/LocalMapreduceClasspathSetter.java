@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 /**
  * This class hijacks Hadoop bin, and adds hbase-protocol jar to HADOOP_CLASSPATH.
  * This hack should go away when Twill supports setting of environmental variables for a TwillRunnable.
- * Addition info on why this is needed is in https://jira.continuuity.com/browse/REACTOR-325
+ * Addition info on why this is needed is in CDAP-9
  */
 public class LocalMapreduceClasspathSetter {
   private static final Logger LOG = LoggerFactory.getLogger(LocalMapreduceClasspathSetter.class);

@@ -41,13 +41,9 @@ import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -57,19 +53,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.Socket;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -106,7 +99,7 @@ public class TestFrameworkTest extends TestBase {
       Gson gson = new Gson();
 
       //Adding sleep so that the test does not fail if the procedure takes sometime to start on slow machines.
-      //TODO : Can be removed after fixing JIRA - REACTOR-373
+      //TODO : Can be removed after fixing JIRA - CDAP-15
       TimeUnit.SECONDS.sleep(2);
 
       Assert.assertEquals("1",
@@ -344,32 +337,10 @@ public class TestFrameworkTest extends TestBase {
 
     LOG.info("Service Started");
 
-    // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices",
-                                                                        AppWithServices.SERVICE_NAME);
-    final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
-    serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        Iterables.addAll(discoverables, serviceDiscovered);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    // There should be one endpoint only
-    Discoverable discoverable = discoverables.poll(5, TimeUnit.SECONDS);
-    Assert.assertNotNull(discoverable);
-    Assert.assertTrue(discoverables.isEmpty());
-
-    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/ping2",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(), AppWithServices.SERVICE_NAME));
+    URL url = new URL(serviceManager.getServiceURL(), "ping2");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(response.getResponseCode(), 200);
-
-    // Connect and close. This should stop the leader instance.
-    Socket socket = new Socket(discoverable.getSocketAddress().getAddress(), discoverable.getSocketAddress().getPort());
-    socket.close();
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
@@ -411,20 +382,8 @@ public class TestFrameworkTest extends TestBase {
 
     LOG.info("Service Started");
 
-    // Look for service endpoint
-    final ServiceDiscovered serviceDiscovered = serviceManager.discover("AppWithServices",
-                                                                        AppWithServices.TRANSACTIONS_SERVICE_NAME);
-    final BlockingQueue<Discoverable> discoverables = new LinkedBlockingQueue<Discoverable>();
-    serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        Iterables.addAll(discoverables, serviceDiscovered);
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
 
-    final Discoverable discoverable = discoverables.poll(5, TimeUnit.SECONDS);
-    Assert.assertNotNull(discoverable);
-    Assert.assertTrue(discoverables.isEmpty());
+    final URL baseUrl = serviceManager.getServiceURL();
 
     // Make a request to write in a separate thread and wait for it to return.
     ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -432,10 +391,8 @@ public class TestFrameworkTest extends TestBase {
       @Override
       public Integer call() throws Exception {
         try {
-          URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/write/%s/%s/%d",
-                                          discoverable.getSocketAddress().getHostName(),
-                                          discoverable.getSocketAddress().getPort(),
-                                          AppWithServices.TRANSACTIONS_SERVICE_NAME,
+          URL url = new URL(String.format("%s/write/%s/%s/%d",
+                                          baseUrl,
                                           AppWithServices.DATASET_TEST_KEY,
                                           AppWithServices.DATASET_TEST_VALUE,
                                           10000));
@@ -451,11 +408,7 @@ public class TestFrameworkTest extends TestBase {
 
     // The dataset should not be written by the time this request is made, since the transaction to write
     // has not been committed yet.
-    URL url = new URL(String.format("http://%s:%d/v2/apps/AppWithServices/services/%s/methods/read/%s",
-                                    discoverable.getSocketAddress().getHostName(),
-                                    discoverable.getSocketAddress().getPort(),
-                                    AppWithServices.TRANSACTIONS_SERVICE_NAME,
-                                    AppWithServices.DATASET_TEST_KEY));
+    URL url = new URL(String.format("%s/read/%s", baseUrl, AppWithServices.DATASET_TEST_KEY));
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(204, response.getResponseCode());

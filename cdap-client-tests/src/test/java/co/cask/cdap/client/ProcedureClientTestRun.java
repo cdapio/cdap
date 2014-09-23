@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -35,7 +34,6 @@ import java.io.File;
  * Test for {@link ProcedureClient}.
  */
 @Category(XSlowTests.class)
-@Ignore
 public class ProcedureClientTestRun extends ClientTestBase {
 
   private static final Gson GSON = new Gson();

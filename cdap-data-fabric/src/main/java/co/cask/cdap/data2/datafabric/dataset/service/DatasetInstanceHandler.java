@@ -120,7 +120,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
         LOG.warn(msg, e);
         succeeded = false;
         // we continue deleting if something wring happens.
-        // todo: Will later be improved by doing all in async: see REACTOR-200
+        // todo: Will later be improved by doing all in async: see CDAP-7
       }
     }
 
@@ -166,7 +166,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
 
     // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - REACTOR-314
+    // Note: today explore enable is not transactional with dataset create - CDAP-8
     try {
       datasetExploreFacade.enableExplore(name);
     } catch (Exception e) {
@@ -213,7 +213,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
     // Enable ad-hoc exploration of dataset
-    // Note: today explore enable is not transactional with dataset create - REACTOR-314
+    // Note: today explore enable is not transactional with dataset create - CDAP-8
 
     try {
       datasetExploreFacade.disableExplore(name);
@@ -230,7 +230,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     executeAdmin(request, responder, name, "upgrade");
   }
 
-  // todo: this doesn't belong here: instead change unit of ttl in props of spec to seconds, see REACTOR-769
   private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
@@ -346,7 +345,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     String name = spec.getName();
 
     // First disable ad-hoc exploration of dataset
-    // Note: today explore disable is not transactional with dataset delete - REACTOR-314
+    // Note: today explore disable is not transactional with dataset delete - CDAP-8
     try {
       datasetExploreFacade.disableExplore(name);
     } catch (ExploreException e) {
@@ -368,7 +367,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   /**
    * Adapter for {@link co.cask.cdap.api.dataset.DatasetSpecification}
    */
-  // todo: this doesn't belong here: instead change unit of ttl in props of spec to seconds, see REACTOR-769
   private static final class DatasetSpecificationAdapter implements JsonSerializer<DatasetSpecification> {
 
     private static final Type MAP_STRING_STRING_TYPE = new TypeToken<SortedMap<String, String>>() { }.getType();
