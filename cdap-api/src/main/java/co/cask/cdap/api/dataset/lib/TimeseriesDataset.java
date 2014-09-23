@@ -1,19 +1,17 @@
 /*
+ * Copyright © 2014 Cask Data, Inc.
  *
- *  * Copyright 2014 Cask Data, Inc.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  * use this file except in compliance with the License. You may obtain a copy of
- *  * the License at
- *  *
- *  * http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  * License for the specific language governing permissions and limitations under
- *  * the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package co.cask.cdap.api.dataset.lib;
@@ -43,7 +41,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
   public static final String ATTR_TIME_INTERVAL_TO_STORE_PER_ROW = "timeIntervalToStorePerRow";
 
   /**
-   * Default time interval per row. See {@link TimeSeriesTable} javadoc for description. Default is used if
+   * Default time interval per row. See {@link TimeseriesTable} javadoc for description. Default is used if
    * <code>rowPartitionIntervalSize</code> is not specified in the constructor.
    */
   public static final long DEFAULT_TIME_INTERVAL_PER_ROW = TimeUnit.HOURS.toMillis(1);
@@ -273,7 +271,8 @@ abstract class TimeseriesDataset extends AbstractDataset {
       // check tags encoded in columnName against sortedTags.
       // tag is encoded in columnName array from curPos and in length of tagLength.
       int tagsMatch;
-      tagsMatch = Bytes.compareTo(columnName, tagStartPos, tagLength, sortedTags[curTagToCheck], 0, sortedTags[curTagToCheck].length);
+      tagsMatch = Bytes.compareTo(columnName, tagStartPos, tagLength,
+                                  sortedTags[curTagToCheck], 0, sortedTags[curTagToCheck].length);
       if (tagsMatch == 0) {
         // Tags match, advancing to the next tag to be checked.
         curTagToCheck++;

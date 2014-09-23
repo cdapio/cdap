@@ -28,7 +28,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.KeyValueTableDefinition;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
-import co.cask.cdap.api.dataset.lib.TimeSeriesTableDefinition;
+import co.cask.cdap.api.dataset.lib.TimeseriesTableDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.MemoryTable;
@@ -65,8 +65,8 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new IndexedTableDefinition("indexedTable", tableDef));
     registry.add(new IndexedTableDefinition(IndexedTable.class.getName(), tableDef));
 
-    registry.add(new TimeSeriesTableDefinition("timeseriesTable", tableDef));
-    registry.add(new TimeSeriesTableDefinition(TimeseriesTable.class.getName(), tableDef));
+    registry.add(new TimeseriesTableDefinition("timeseriesTable", tableDef));
+    registry.add(new TimeseriesTableDefinition(TimeseriesTable.class.getName(), tableDef));
 
     registry.add(new CounterTimeseriesTableDefinition("counterTimeseriesTable", tableDef));
     registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));

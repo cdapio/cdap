@@ -1,19 +1,17 @@
 /*
+ * Copyright © 2014 Cask Data, Inc.
  *
- *  * Copyright 2014 Cask Data, Inc.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  * use this file except in compliance with the License. You may obtain a copy of
- *  * the License at
- *  *
- *  * http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  * License for the specific language governing permissions and limitations under
- *  * the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package co.cask.cdap.api.dataset.lib;
@@ -27,13 +25,13 @@ import com.google.common.collect.Iterators;
 import java.util.Iterator;
 
 /**
- * <p>A DataSet for incrementing counts over time periods. This DataSet provides an extension to {@link TimeSeriesTable}
+ * <p>A Dataset for incrementing counts over time periods. This Dataset provides an extension to {@link TimeseriesTable}
  * for long values and provides increment methods for counting.</p>
  *
  * <p>For more information on choosing values for <code>rowPartitionIntervalSize</code> and tag usage, please see the
- * {@link TimeSeriesTable} class description.</p>
+ * {@link TimeseriesTable} class description.</p>
  *
- * @see TimeSeriesTable
+ * @see TimeseriesTable
  */
 public class CounterTimeseriesTable extends TimeseriesDataset {
 
@@ -49,7 +47,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
    * @param counter the name of the counter to increment
    * @param amount the amount to increment by
    * @param timestamp timestamp of the entry
-   * @param tags optional list of tags associated with the counter. See {@link TimeSeriesTable} class description
+   * @param tags optional list of tags associated with the counter. See {@link TimeseriesTable} class description
    *             for more details
    * @return value of the entry after increment
    */
@@ -62,7 +60,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
    * @param counter the name of the counter to set
    * @param value the value to set
    * @param timestamp timestamp of the entry
-   * @param tags optional list of tags associated with the counter. See {@link TimeSeriesTable} class description
+   * @param tags optional list of tags associated with the counter. See {@link TimeseriesTable} class description
    *             for more details
    */
   public void set(byte[] counter, long value, long timestamp, byte[]... tags) {
@@ -114,7 +112,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
   }
 
   /**
-   * Defines an object for counters in {@link CounterTimeSeriesTable}.
+   * Defines an object for counters in {@link CounterTimeseriesTable}.
    */
   public static final class Counter {
     private byte[] counter;
@@ -127,7 +125,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
      * @param counter name of the counter
      * @param value value of the counter
      * @param timestamp timestamp of the counter
-     * @param tags optional list of tags associated with the counter. See {@link TimeSeriesTable} class description
+     * @param tags optional list of tags associated with the counter. See {@link TimeseriesTable} class description
      *             for more details
      */
     private Counter(byte[] counter, long value, long timestamp, byte[]... tags) {

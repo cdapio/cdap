@@ -1,19 +1,17 @@
 /*
+ * Copyright © 2014 Cask Data, Inc.
  *
- *  * Copyright 2014 Cask Data, Inc.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  * use this file except in compliance with the License. You may obtain a copy of
- *  * the License at
- *  *
- *  * http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  * License for the specific language governing permissions and limitations under
- *  * the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package co.cask.cdap.api.dataset.lib;
@@ -42,7 +40,7 @@ public class TimeseriesTableTest extends AbstractDatasetTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    createInstance("TimeseriesTable", "metricsTable", DatasetProperties.EMPTY);
+    createInstance("timeseriesTable", "metricsTable", DatasetProperties.EMPTY);
     table = getInstance("metricsTable");
   }
 
@@ -92,7 +90,8 @@ public class TimeseriesTableTest extends AbstractDatasetTest {
         table.write(m2e3);
         TimeseriesTable.Entry m2e4 = new TimeseriesTable.Entry(metric2, Bytes.toBytes(24L), ts + 3 * hour, tag1, tag3);
         table.write(m2e4);
-        TimeseriesTable.Entry m2e5 = new TimeseriesTable.Entry(metric2, Bytes.toBytes(56L), ts + 3 * hour + 2 * second, tag3, tag1);
+        TimeseriesTable.Entry m2e5 = new TimeseriesTable.Entry(metric2, Bytes.toBytes(56L), ts + 3 * hour + 2 * second,
+                                                               tag3, tag1);
         table.write(m2e5);
 
         // whole interval is searched
@@ -100,8 +99,8 @@ public class TimeseriesTableTest extends AbstractDatasetTest {
         assertReadResult(table.read(metric1, ts, ts + 5 * hour, tag2), m1e1, m1e4);
         assertReadResult(table.read(metric1, ts, ts + 5 * hour, tag4));
         assertReadResult(table.read(metric1, ts, ts + 5 * hour, tag2, tag4));
-        // This is extreme case, should not be really used by anyone. Still we want to test that it won't fail. It returns
-        // nothing because there's hard limit on the number of rows traversed during the read.
+        // This is extreme case, should not be really used by anyone. Still we want to test that it won't fail.
+        // It returns nothing because there's hard limit on the number of rows traversed during the read.
         assertReadResult(table.read(metric1, 0, Long.MAX_VALUE));
 
         // test pagination read

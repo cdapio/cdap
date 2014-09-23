@@ -1,19 +1,17 @@
 /*
+ * Copyright © 2014 Cask Data, Inc.
  *
- *  * Copyright 2014 Cask Data, Inc.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  * use this file except in compliance with the License. You may obtain a copy of
- *  * the License at
- *  *
- *  * http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  * License for the specific language governing permissions and limitations under
- *  * the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package co.cask.cdap.api.dataset.lib;
@@ -47,12 +45,13 @@ import javax.annotation.Nullable;
  *
  * <p>
  * A user can set the time interval length for partitioning data into rows (as defined by 
- * <code>rowPartitionIntervalSize</code>). This interval should be chosen according
- * to the use case at hand. In general, larger time intervals sizes means faster reading of small-to-medium
- * time ranges (range size is up to several time intervals) of entries data, while having slower reading of very small
- * time ranges (range size is a small portion of time interval) of entries data. Using a larger time interval also
- * helps with faster batched writing of entries. Vice versa, setting smaller time intervals
- * provides faster reading of very small time ranges of entries data, but has slower batched writing of entries.
+ * <code>timeIntervalToStorePerRow</code> in the {@link co.cask.cdap.api.dataset.DatasetSpecification} properties).
+ * This interval should be chosen according to the use case at hand. In general, larger time intervals sizes means
+ * faster reading of small-to-medium time ranges (range size is up to several time intervals) of entries data,
+ * while having slower reading of very small time ranges (range size is a small portion of time interval) of
+ * entries data. Using a larger time interval also helps with faster batched writing of entries. Vice versa,
+ * setting smaller time intervals provides faster reading of very small time ranges of entries data, but has
+ * slower batched writing of entries.
  * </p>
  * <p>
  * As expected, a larger time interval means that more data will be is stored per row. A user should

@@ -28,15 +28,15 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * {@link co.cask.cdap.api.dataset.DatasetDefinition} for {@link co.cask.cdap.api.dataset.lib.KeyValueTable}.
+ * {@link co.cask.cdap.api.dataset.DatasetDefinition} for {@link co.cask.cdap.api.dataset.lib.TimeseriesTable}.
  */
 @Beta
-public class TimeSeriesTableDefinition
+public class TimeseriesTableDefinition
   extends AbstractDatasetDefinition<TimeseriesTable, DatasetAdmin> {
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public TimeSeriesTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+  public TimeseriesTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     this.tableDef = tableDef;
