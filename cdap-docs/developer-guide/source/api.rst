@@ -2633,7 +2633,7 @@ Interactive Mode
 
 To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal::
 
-  $ /bin/cdap-cli
+  $ /bin/cdap-cli.sh
 
 or, on Windows::
 
