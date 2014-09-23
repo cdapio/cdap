@@ -46,9 +46,7 @@ SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 DEBUG = False
 
 def get_sdk_version():
-    return "2.5.0"
     # Sets the CDAP Build Version via maven
-    return "2.5.0"
     mvn_version_cmd = "mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
     -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
     version = None
