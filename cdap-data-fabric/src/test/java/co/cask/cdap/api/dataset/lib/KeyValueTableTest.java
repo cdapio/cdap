@@ -253,7 +253,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        // write 1000 random values to the table and remember them in a set
+        // write 0..1000 to the table
         for (int i = 0; i < 1000; i++) {
           byte[] key = Bytes.toBytes(i);
           t.write(key, key);

@@ -322,7 +322,6 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     final ObjectStoreDataset<String> t = getInstance("scan");
     TransactionExecutor txnl = newTransactionExecutor(t);
 
-
     // write 10 values
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
