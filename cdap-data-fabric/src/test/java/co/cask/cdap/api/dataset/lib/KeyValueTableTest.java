@@ -289,13 +289,11 @@ public class KeyValueTableTest extends AbstractDatasetTest {
           keyValueIterator.next();
         }
         keyValueIterator.close();
-        KeyValue<byte[], byte[]> keyValue = null;
         try {
-          keyValue = keyValueIterator.next();
+          keyValueIterator.next();
+          Assert.fail("Reading after closing Scanner returned result.");
         } catch (NoSuchElementException e) {
-          return;
         }
-        Assert.fail("Reading after closing Scanner returned result.");
       }
     });
     deleteInstance("tScan");

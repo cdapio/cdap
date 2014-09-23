@@ -380,13 +380,11 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
           rowCount++;
         }
         objectsIterator.close();
-        KeyValue<byte[], String> keyValue = null;
         try {
-          keyValue = objectsIterator.next();
+          objectsIterator.next();
+          Assert.fail("Reading after closing Scanner returned result.");
         } catch (NoSuchElementException e) {
-          return;
         }
-        Assert.fail("Reading after closing Scanner returned result.");
       }
     });
 
