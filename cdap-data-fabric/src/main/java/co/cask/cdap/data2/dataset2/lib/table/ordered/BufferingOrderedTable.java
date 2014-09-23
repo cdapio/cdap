@@ -308,13 +308,13 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   @Override
   public Map<byte[], byte[]> get(byte[] row) throws Exception {
     reportRead(1);
-    return Collections.unmodifiableMap(getRowMap(row));
+    return getRowMap(row);
   }
 
   @Override
   public Map<byte[], byte[]> get(byte[] row, byte[][] columns) throws Exception {
     reportRead(1);
-    return Collections.unmodifiableMap(getRowMap(row, columns));
+    return getRowMap(row, columns);
   }
 
   @Override
@@ -346,7 +346,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
     }
 
     // applying limit
-    return Collections.unmodifiableMap(head(result, limit));
+    return head(result, limit);
   }
 
   /**
@@ -439,7 +439,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
 
     put(row, columns, updatedValues);
 
-    return Collections.unmodifiableMap(result);
+    return result;
   }
 
   @Override
@@ -768,17 +768,14 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
         // buffer row comes first or persisted scanner is empty
         Map<byte[], byte[]> persistedRow = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         mergeToPersisted(persistedRow, buffer.get(currentKey), null);
-        // NOTE: the key's byte array may leak to table client: we want protect buffer from client changes to it by
-        //       returning a copy. We also want to return unmodifiable map as per OrderedTable API definition.
-        result = new Result(copy(currentKey), Collections.unmodifiableMap(persistedRow));
+        result = new Result(copy(currentKey), persistedRow);
 
         currentKey = keyIter.hasNext() ? keyIter.next() : null;
       } else {
         // if currentKey and currentRow are equal, merge and advance both
         Map<byte[], byte[]> persisted = currentRow.getColumns();
         mergeToPersisted(persisted, buffer.get(currentKey), null);
-        // NOTE: we want to return unmodifiable map as per OrderedTable API definition.
-        result = new Result(currentRow.getRow(), Collections.unmodifiableMap(persisted));
+        result = new Result(currentRow.getRow(), persisted);
 
         currentRow = persistedScanner.next();
         currentKey = keyIter.hasNext() ? keyIter.next() : null;

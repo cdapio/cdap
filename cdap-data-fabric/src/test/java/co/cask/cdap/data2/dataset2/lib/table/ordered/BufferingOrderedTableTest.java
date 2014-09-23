@@ -223,12 +223,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       Assert.assertEquals(1, getRowResult.size());
       byte[] colFromGetRow = getRowResult.keySet().iterator().next();
       byte[] valFromGetRow = getRowResult.get(colFromGetRow);
-      try {
-        getRowResult.remove(new byte[] {2});
-        Assert.fail("returned map must be immutable");
-      } catch (UnsupportedOperationException e) {
-        // expected
-      }
+      getRowResult.remove(new byte[] {2});
 
       Assert.assertArrayEquals(new byte[] {2}, colFromGetRow);
       Assert.assertArrayEquals(Bytes.toBytes(3L), valFromGetRow);
@@ -243,12 +238,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       Assert.assertEquals(1, getColumnSetResult.size());
       byte[] colFromGetColumnSet = getColumnSetResult.keySet().iterator().next();
       byte[] valFromGetColumnSet = getColumnSetResult.values().iterator().next();
-      try {
-        getColumnSetResult.remove(new byte[] {2});
-        Assert.fail("returned map must be immutable");
-      } catch (UnsupportedOperationException e) {
-        // expected
-      }
+      getColumnSetResult.remove(new byte[] {2});
 
       Assert.assertArrayEquals(new byte[] {2}, colFromGetColumnSet);
       Assert.assertArrayEquals(Bytes.toBytes(3L), valFromGetColumnSet);
@@ -280,12 +270,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       Assert.assertNotNull(valFromScan);
       Assert.assertArrayEquals(Bytes.toBytes(3L), valFromScan);
       Assert.assertNull(scan.next());
-      try {
-        cols.remove(new byte[] {2});
-        Assert.fail("returned map must be immutable");
-      } catch (UnsupportedOperationException e) {
-        // expected
-      }
+      cols.remove(new byte[] {2});
 
       rowFromScan[0]++;
       colFromScan[0]++;
@@ -344,12 +329,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       byte[] colFromInc = counters.keySet().iterator().next();
       Assert.assertArrayEquals(new byte[] {2}, colFromInc);
       Assert.assertEquals(3, (long) counters.get(colFromInc));
-      try {
-        counters.remove(new byte[] {2});
-        Assert.fail("returned map must be immutable");
-      } catch (UnsupportedOperationException e) {
-        // expected
-      }
+      counters.remove(new byte[] {2});
       colFromInc[0]++;
 
       verify123(table);
