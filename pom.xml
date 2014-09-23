@@ -33,40 +33,32 @@
 
   <repositories>
     <repository>
-      <id>apache.snapshots</id>
-      <url>https://repository.apache.org/content/repositories/snapshots</url>
-    </repository>
-    <repository>
       <id>continuuity-public</id>
       <url>https://repository.continuuity.com/content/repositories/public</url>
     </repository>
     <repository>
-      <id>smartifacts</id>
-      <url>https://repository.continuuity.com/content/repositories/smartifacts</url>
+      <id>apache.snapshots</id>
+      <url>https://repository.apache.org/content/repositories/snapshots</url>
     </repository>
     <repository>
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/groups/public/</url>
     </repository>
-    <repository>
-      <id>continuuity</id>
-      <url>https://repository.continuuity.com/content/repositories/snapshots</url>
-    </repository>
   </repositories>
+
 
   <distributionManagement>
     <repository>
-      <id>nexus</id>
-      <name>continuuity-internal</name>
-      <url>https://repository.continuuity.com/service/local/staging/deploy/maven2</url>
+      <id>sonatype.release</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
     </repository>
     <snapshotRepository>
-      <id>continuuity</id>
-      <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
+      <id>sonatype.snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
     <site>
-      <id>continuuity</id>
-      <url>http://continuuity.com</url>
+      <id>cask</id>
+      <url>http://cask.co</url>
     </site>
   </distributionManagement>
 
@@ -1631,10 +1623,10 @@
                 <configuration>
                   <source>
                     if (project.version.endsWith("-SNAPSHOT")){
-                      project.properties['deploy.url'] = project.distributionManagement.snapshotRepository.url;
+                      project.properties['deploy.url'] = project.properties['cask.packages.snapshot.repo'];
                       project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.snapshots";
                     } else {
-                      project.properties['deploy.url'] = project.distributionManagement.repository.url;
+                      project.properties['deploy.url'] = project.properties['cask.packages.release.repo'];
                       project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.release";
                     }
                   </source>
