@@ -41,8 +41,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
   public static final String ATTR_TIME_INTERVAL_TO_STORE_PER_ROW = "timeIntervalToStorePerRow";
 
   /**
-   * Default time interval per row. See {@link TimeseriesTable} javadoc for description. Default is used if
-   * <code>rowPartitionIntervalSize</code> is not specified in the constructor.
+   * See {@link TimeseriesTable} javadoc for description.
    */
   public static final long DEFAULT_TIME_INTERVAL_PER_ROW = TimeUnit.HOURS.toMillis(1);
 
@@ -116,13 +115,14 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
   /**
    * Returns the value that will be used as the actual row key.
-   * Row keys in underlying table have the following format:
-   * <code>&lt;key&gt;&lt;timestamp/rowPartitionIntervalSize&gt;</code>.
+   * It has the following format:
+   * {@code <key>[<timestamp>/<rowPartitionIntervalSize>]}.
+   *
    * @param key a user-provided entry key value
    * @param timestamp is 8-byte encoded long which defines interval timestamp stamp
    * @param rowPartitionIntervalSize the size of time interval for partitioning data into rows. Used for performance
-   *                    optimization. Please refer to the class javadoc for more details including how to choose this
-   *                    value
+   *                    optimization. Please refer to {@link TimeseriesTable} for more details including how to choose
+   *                    this value.
    * @return a composite value used as the row key
    */
   @VisibleForTesting
@@ -140,12 +140,13 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
   /**
    * Returns the value that will be used as the actual column name.
-   * Column name has the following format: <code>&lt;timestamp&gt;&lt;tags&gt;</code>. Sorting of tags is needed for
+   * Column name has the following format: {@code <timestamp><tags>}. Sorting of tags is needed for
    * efficient filtering based on provided tags during reading
+   *
    * @param timestamp is 8-byte encoded long: user-provided entry timestamp.
-   * @param tags is an encoded user-provided entry tags list. It has the following format:
-   * [<tag_length><tag_value>]*, where tag length is 4-byte encoded int length of the tag and tags are sorted in
-   *             ascending order
+   * @param tags is an encoded user-provided entry tags list. It is formatted as:
+   * {@code [<tag_length><tag_value>]*}, where tag length is the 4-byte encoded int length of the tag and tags
+   *             are sorted in ascending order
    */
   @VisibleForTesting
   static byte[] createColumnName(long timestamp, byte[][] tags) {
@@ -199,8 +200,8 @@ abstract class TimeseriesDataset extends AbstractDataset {
   }
 
   /**
-   * Reads entries for a given time range and returns an <code>Iterator<Entry></code>. This method is intended to be
-   * used for subclasses to define their own public <code>read</code> method.
+   * Reads entries for a given time range and returns an {@code Iterator<Entry>}. This method is intended to be
+   * used by subclasses to define their own public <code>read</code> method.
    * NOTE: A limit is placed on the max number of time intervals to be scanned during a read, as defined by
    * {@link #MAX_ROWS_TO_SCAN_PER_READ}.
    *
@@ -221,6 +222,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
   /**
    * Create Entry. Checking if filter tags are contained in columnName and parsing tags in one pass.
+   *
    * @param key key of the entries to read
    * @param value value of the entries
    * @param columnName columnName of the entries integrated timestamp and tags

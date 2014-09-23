@@ -31,7 +31,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- *
+ * Tests covering the {@link co.cask.cdap.api.dataset.lib.CounterTimeseriesTable} class.
  */
 public class CounterTimeseriesTableTest extends AbstractDatasetTest {
   private static CounterTimeseriesTable table = null;

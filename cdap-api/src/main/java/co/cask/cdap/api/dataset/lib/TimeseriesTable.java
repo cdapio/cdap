@@ -33,12 +33,11 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * <p>
- * Defines a DataSet implementation for managing time series data. This class offers simple ways to process read
+ * Defines a Dataset implementation for managing time series data. This class offers simple ways to process read
  * operations for time ranges.
- * </p>
+ *
  * <p>
- * This DataSet works by partitioning time into bins representing time intervals. Entries added to the DataSet
+ * This Dataset works by partitioning time into bins representing time intervals. Entries added to the Dataset
  * are added to a bin based on their timestamp and row key. Hence, every row in the underlying table contains entries
  * that share the same time interval and row key. Data for each entry is stored in separate columns.
  * </p>
@@ -46,15 +45,18 @@ import javax.annotation.Nullable;
  * <p>
  * A user can set the time interval length for partitioning data into rows (as defined by 
  * <code>timeIntervalToStorePerRow</code> in the {@link co.cask.cdap.api.dataset.DatasetSpecification} properties).
- * This interval should be chosen according to the use case at hand. In general, larger time intervals sizes means
- * faster reading of small-to-medium time ranges (range size is up to several time intervals) of entries data,
- * while having slower reading of very small time ranges (range size is a small portion of time interval) of
- * entries data. Using a larger time interval also helps with faster batched writing of entries. Vice versa,
- * setting smaller time intervals provides faster reading of very small time ranges of entries data, but has
- * slower batched writing of entries.
+ * This interval should be chosen according to the use case at hand. In general, larger time interval sizes mean
+ * faster reading of small-to-medium time ranges (range size up to several time intervals) of entries data,
+ * while having slower reading of very small time ranges of entries data (range size a small portion of the time
+ * interval). Using a larger time interval also helps with faster batched writing of entries.
  * </p>
+ *
+ * <p>Vice versa, setting smaller time intervals provides faster reading of very small time ranges of entries data,
+ * but has slower batched writing of entries.
+ * </p>
+ *
  * <p>
- * As expected, a larger time interval means that more data will be is stored per row. A user should
+ * As expected, a larger time interval means that more data will be stored per row. A user should
  * generally avoid storing more than 50 megabytes of data per row, since it affects performance.
  * </p>
  * <p>
@@ -67,11 +69,13 @@ import javax.annotation.Nullable;
  * <p>
  * TimeseriesTable supports tagging, where each entry is (optionally) labeled with a set of tags used for filtering of
  * items during data retrievals. For an entry to be retrievable using a given tag, the tag must be provided when
- * the entry was written. If multiple tags are provided during read, an entry must contain every one of these tags in
- * order to qualify for return.
+ * the entry was written. If multiple tags are provided during reading, an entry must contain every one of these tags
+ * in order to qualify for return.
+ * </p>
  *
+ * <p>
  * Due to the data format used for storing, filtering by tags during reading is done on client-side (not on a cluster).
- * At the same time filtering by entry keys happens on the server side which is much more efficient performance-wise.
+ * At the same time, filtering by entry keys happens on the server side, which is much more efficient performance-wise.
  * Depending on the use-case you may want to push some of the tags you would use into the entry key for faster reading.
  * </p>
  *
@@ -87,8 +91,8 @@ import javax.annotation.Nullable;
  *   </li>
  *   <li>
  *       The current implementation (including the format of the stored data) is heavily affected by the
- *       {@link co.cask.cdap.api.dataset.table.Table} API which is used under the hood. In particular the
- *       implementation is constrained by the absence of <code>readHigherOrEq()</code> method in
+ *       {@link co.cask.cdap.api.dataset.table.Table} API which is used "under-the-hood". In particular the
+ *       implementation is constrained by the absence of a <code>readHigherOrEq()</code> method in the
  *       {@link co.cask.cdap.api.dataset.table.Table} API, which would return the next row with key greater
  *       or equals to the given.
  *   </li>
@@ -111,7 +115,8 @@ public class TimeseriesTable extends TimeseriesDataset
   }
 
   /**
-   * Writes an entry to the DataSet.
+   * Writes an entry to the Dataset.
+   *
    * @param entry entry to write
    */
   public final void write(Entry entry) {
@@ -131,8 +136,8 @@ public class TimeseriesTable extends TimeseriesDataset
    * @param offset the number of initial entries to ignore and not add to the results
    * @param limit upper limit on number of results returned. If limit is exceeded, the first <code>limit</code> results
    *              are returned
-   * @param tags a set of tags in which entries returned must contain. Tags for entries are defined at write time and an
-   *             entry is only returned if it contains every one of these tags
+   * @param tags a set of tags which entries returned must contain. Tags for entries are defined at write-time and an
+   *             entry is only returned if it contains all of these tags.
    *
    * @return an iterator over entries that satisfy provided conditions
    * @throws IllegalArgumentException when provided condition is incorrect
@@ -152,8 +157,8 @@ public class TimeseriesTable extends TimeseriesDataset
    * @param key key of the entries to read
    * @param startTime defines start of the time range to read, inclusive
    * @param endTime defines end of the time range to read, inclusive
-   * @param tags a set of tags in which entries returned must contain. Tags for entries are defined at write time and an
-   *             entry is only returned if it contains every one of these tags
+   * @param tags a set of tags which entries returned must contain. Tags for entries are defined at write-time and an
+   *             entry is only returned if it contains all of these tags.
    *
    * @return an iterator over entries that satisfy provided conditions
    */
@@ -172,7 +177,7 @@ public class TimeseriesTable extends TimeseriesDataset
 
 
   /**
-   * A method for using DataSet as input for MapReduce job.
+   * A method for using a Dataset as input for a MapReduce job.
    */
   private static final class InputSplit extends Split {
     private byte[] key;
@@ -190,12 +195,13 @@ public class TimeseriesTable extends TimeseriesDataset
 
   /**
    * Defines input selection for batch jobs.
+   *
    * @param splitsCount number of parts to split the data selection into
    * @param key key of the entries to read
    * @param startTime defines start of the time range to read, inclusive
    * @param endTime defines end of the time range to read, inclusive
-   * @param tags a set of tags in which entries returned must contain. Tags for entries are defined at write time and an
-   *             entry is only returned if it contains every one of these tags
+   * @param tags a set of tags which entries returned must contain. Tags for entries are defined at write-time and an
+   *             entry is only returned if it contains all of these tags.
    * @return the list of splits
    */
   public List<Split> getInputSplits(int splitsCount, byte[] key, long startTime, long endTime, byte[]... tags) {
@@ -231,8 +237,9 @@ public class TimeseriesTable extends TimeseriesDataset
   }
 
   /**
-   * Writes an entry to the DataSet. This method overrides write(key, value) in BatchWritable. The key is
-   * ignored in this method and instead uses the key provided in the <code>Entry</code> object, value.
+   * Writes an entry to the Dataset. This method overrides {@code write(key, value)} in {@link BatchWritable}.
+   * The key is ignored in this method and instead it uses the key provided in the <code>Entry</code> object.
+   *
    * @param key row key to write to. Value is ignored
    * @param value entry to write. The key used to write to the table is extracted from this object
    */
@@ -265,10 +272,10 @@ public class TimeseriesTable extends TimeseriesDataset
     /**
      * Creates instance of the time series entry.
      *
-     * @param key       key of the entry
-     * @param value     value to store
+     * @param key key of the entry
+     * @param value value to store
      * @param timestamp timestamp of the entry
-     * @param tags optional list of tags associated with the entry. See class description for more details
+     * @param tags optional list of tags associated with the entry. See class description for more details.
      */
     public Entry(byte[] key, byte[] value, long timestamp, byte[]... tags) {
       super(key, value, timestamp, tags);
