@@ -1,6 +1,6 @@
-# Cask Data Application Platform (CDAP) Spark Java Archetype
+# Cask Data Application Platform (CDAP) Application Archetype
 
-This directory contains a CDAP App Archetype for the Cask Data Application Platform (CDAP).
+This directory contains a CDAP Application Archetype for the Cask Data Application Platform (CDAP).
 
 # Installing
 
