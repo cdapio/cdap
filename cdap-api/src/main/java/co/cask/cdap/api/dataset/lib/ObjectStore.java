@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.table.Delete;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -81,4 +82,10 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
    * {@link co.cask.cdap.api.dataset.lib.KeyValue<byte[], T>}
    */
   CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow);
+
+  /**
+   * Delete the object for the specified key.
+   * @param key key of the object to be deleted
+   */
+  void delete(byte[] key);
 }
