@@ -103,7 +103,8 @@ public class AppWithMapReduce extends AbstractApplication {
       Long startTs = Long.valueOf(context.getRuntimeArguments().get("startTs"));
       Long stopTs = Long.valueOf(context.getRuntimeArguments().get("stopTs"));
       String tag = context.getRuntimeArguments().get("tag");
-      context.setInput("timeSeries", table.getInput(2, Bytes.toBytes(metricName), startTs, stopTs, Bytes.toBytes(tag)));
+      context.setInput("timeSeries", table.getInputSplits(2, Bytes.toBytes(metricName), startTs, stopTs,
+                                                          Bytes.toBytes(tag)));
       beforeSubmitTable.write(Bytes.toBytes("beforeSubmit"), Bytes.toBytes("beforeSubmit:done"));
       String frequentFlushing = context.getRuntimeArguments().get("frequentFlushing");
       if (frequentFlushing != null) {
