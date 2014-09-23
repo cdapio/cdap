@@ -75,6 +75,8 @@ To setup the CDAP application development environment, you need to import the ge
 Now you are all set to start developing your first CDAP application. To help you familiarize with the environment and get developing CDAP apps, we have provided a set of Example Apps ,
 which uses and demonstrates the components of CDAP and we highly recommend you to read them before diving into CDAP.
 
+.. _examples:
+
 Example Apps
 ------------
 
@@ -89,6 +91,8 @@ Purchase
  - Receives Events from a PurchaseStream about Purchases in the format "X bought Y apples for $Z" and a processes them and stores it in a ``purchases dataset``
  - A Mapreduce Job reads the ``purchase dataset`` , creates a purchase history object and stores them in a ``history dataset``
  - Procedure and Ad-hoc SQL query support enables to query the ``history dataset`` to discover the purchase history of users.
+
+Read more about this example :doc:`here <examples/purchase>`.
 
 SparkKMeans
 ===========

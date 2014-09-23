@@ -19,7 +19,7 @@ please see :doc:`Concepts and Architecture </arch>`.
 
 For more information beyond this document, see the
 :doc:`Javadocs </javadocs/index>` and the code in the
-:doc:`examples </examples/index>` directory, both of which are on the
+:ref:`Examples <examples>` directory, both of which are on the
 `Cask.co <http://cask.co>`_ `Developers website <http://cask.co/developers>`_ as well as in your
 CDAP installation directory.
 
@@ -120,7 +120,7 @@ instance of the Dataset class into the Application.
 
 You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
-:doc:`Purchase <examples/Purchase/index>`
+:doc:`Purchase <examples/purchase>`
 example for an implementation of a Custom Dataset.
 For more details, refer to :ref:`Custom Datasets <custom-datasets>`
 
@@ -343,7 +343,7 @@ Tables, but defines its own interface. Examples include:
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the :doc:`Javadocs <javadocs/index>` for these classes and the :doc:`examples <examples/index>`
+See the :doc:`Javadocs <javadocs/index>` for these classes and the :ref:`Examples <examples>`
 to learn more about these Datasets. Any class in the CDAP libraries that implements the ``Dataset`` interface is a
 system Dataset.
 
@@ -428,7 +428,7 @@ Application components can access a created Dataset via the ``@UseDataSet`` anno
   }
 
 A complete application demonstrating the use of a custom Dataset is included in our
-:doc:`Purchase <examples/Purchase/index>` example.
+:doc:`Purchase <examples/purchase>` example.
 
 You can also create, drop, and truncate Datasets using the
 :ref:`Cask Data Application Platform HTTP REST API <rest-datasets>`.
@@ -566,7 +566,7 @@ Limitations
   For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
   the application jar. However, if you define your own Dataset type ``MyObjectStore`` that extends or encapsulates an
   ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the Dataset definition for ``MyObjectStore``. See the
-  :doc:`Purchase </examples/Purchase/index>` application for an example.
+  :doc:`Purchase </examples/purchase>` application for an example.
 
 
 Parameterized Types

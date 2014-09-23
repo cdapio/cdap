@@ -1,3 +1,5 @@
+:orphan:
+
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform SparkPageRank Application
      :Copyright: Copyright © 2014 Cask Data, Inc.
