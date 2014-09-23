@@ -25,6 +25,7 @@ import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
@@ -83,6 +84,14 @@ public class SparkKMeansAppTest extends TestBase {
         double value = Double.parseDouble(coordinate);
         Assert.assertTrue(value > 0);
       }
+      // test wrong argument
+      Throwable exception = null;
+      try {
+        client.query("centers", ImmutableMap.of("position", "0"));
+      } catch (Throwable ex) {
+        exception = ex;
+      }
+      Assert.assertTrue(exception instanceof IOException);
     } finally {
       procedureManager.stop();
     }
