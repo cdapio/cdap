@@ -13,12 +13,14 @@ CDAP  with the help of the sample CDAP App provided in this chapter.
 CDAP SDK - Quick Intro
 ----------------------
 
-CDAP SDK provides nice and clean abstractions like ``Streams, Flows,Datasets`` to help solve your Big-data problem.
+SDK is your entry door for developing apps that can run on CDAP,it provides nice and clean abstractions like ``Streams, Flows,Datasets`` to help solve your Big-data problems.
   - Stream is entry point for data ingestion into CDAP, users can create and define streams and add streams to their application for processing.
   - Processing happens at Flows, and the flow system is a Directed-acyclic graph constructed by the user and processing logic is provided by the user.
   - CDAP SDK comes up with a good collection of in-built Datasets, that is developed to suit the needs of the Big-Data Storage and these datasets make it
     easy for a user to think and store his data in a dataset - which is reflective of the kind of data. we believe this abstraction is more intuitive and
     removes the complexity of the underlying storage engines for the user.
+  - The SDK comes with a standalone CDAP that implements all the features of CDAP, including data and app virtualizatiion, in a single JVM and can run on your laptop.
+  - The SDK also includes tools and clients that can help in developing, interacting-with and debugging CDAP applications.
   - The SDK has features for running Map-Reduce and Spark Jobs
   - The SDK provides Ad-hoc SQL support to query the datasets.
 
@@ -46,15 +48,14 @@ Building from Source
 
   $ mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
 
-.. note:: Recommended memory settings for maven: export MAVEN_OPTS="-Xms512m -Xmx1024m -XX:PermSize=256m -XX:MaxPermSize=512m"
 
-If you are a user, you would want the binary distribution ::
+If you are an app-developer, you would want the binary distribution ::
 
   $ cp cdap-standalone/target/cdap-sdk-<version>.zip .
   $ tar -zxvf cdap-sdk-<version>.zip
   $ cd cdap-sdk-<version>
 
-**Running CDAP** ::
+**Running CDAP SDK** ::
 
     $ ./bin/cdap.sh start (If you are using Windows, use the batch script to start)
 
@@ -83,13 +84,15 @@ Example Apps
 HelloWorld
 ==========
 
-A Simple HelloWorld App that's written using CDAP
+A Simple HelloWorld App that's written using CDAP. It introduces how Stream,Dataset, Flow and Procedure are used in an CDAP application.
 
 Purchase
 ========
+This example demonstrates use of each of the CDAP elements: Streams, Flows, Flowlets,
+Datasets, Queries, Procedures, MapReduce Jobs, Workflows, and Custom Services in a single Application.
 
- - Receives Events from a PurchaseStream about Purchases in the format "X bought Y apples for $Z" and a processes them
-   and stores it in a ``purchases dataset``
+ - PurchaseFlow Receives Events from a PurchaseStream about Purchases in the format "X bought Y apples for $Z", processes them
+   and stores it in a ``purchases dataset``.
  - A Mapreduce Job reads the ``purchase dataset`` , creates a purchase history object and stores them in a
    ``history dataset``
  - Procedure and Ad-hoc SQL query support enables to query the ``history dataset`` to discover the purchase history
@@ -117,4 +120,4 @@ WordCount
 =========
 
 A simple application that counts words and tracks word associations and unique words seen on the Stream.
-It demonstrates the power of using Datasets and how they can be used to simplify storing complex data
+It demonstrates the power of using Datasets and how they can be used to simplify storing complex data.
