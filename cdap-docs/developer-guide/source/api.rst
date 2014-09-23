@@ -26,8 +26,10 @@ Cask Data Application Platform HTTP RESTful API And Clients
 
 .. highlight:: console
 
+.. _restful-api:
+
 ----------------
-HTTP RESTFul API
+HTTP RESTful API
 ----------------
 
 Introduction
@@ -55,8 +57,13 @@ All URLs referenced in this API have this base URL::
 
   http://<host>:<port>/v2
 
-where ``<host>`` is the host name of the CDAP server and ``<port>`` is the port which the HTTP interface binds to
-(default: ``10000``). In this API, the base URL is represented as::
+where ``<host>`` is the host name of the CDAP server and ``<port>`` is the port that is set as the ``router.bind.port``
+in ``cdap-site.xml`` (default: ``10000``).
+
+Note that if SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
+as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: 10443).
+
+In this API, the base URL is represented as::
 
   <base-url>
 
@@ -139,6 +146,7 @@ In order to authenticate, all client requests must supply this access token in t
 
 For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
+.. _rest-streams:
 
 Stream HTTP API
 ===============
@@ -430,6 +438,8 @@ Example
 
 .. rst2pdf: PageBreak
 
+.. _rest-datasets:
+
 Dataset HTTP API
 ================
 
@@ -533,7 +543,7 @@ Example
 Updating an Existing Dataset
 ----------------------------
 
-You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
+You can update an existing dataset's table and properties by issuing an HTTP PUT request to the URL::
 
 	PUT <base-url>/data/datasets/<dataset-name>/properties
 
@@ -1501,6 +1511,8 @@ Example
        Procedure *MyProc2* in the Application *MyApp1*, and the runnable *MyRunnable1* in the
        Custom Service *MySvc1* in the Application *MyApp3*
 
+.. _rest-scaling-flowlets:
+
 Scaling Flowlets
 ................
 You can query and set the number of instances executing a given Flowlet
@@ -2137,7 +2149,7 @@ To check the status of a specific System Service, use::
 
   GET <base-url>/system/services/<service-name>/status
 
-The status of these CDAP System Servcies can be checked:
+The status of these CDAP System Services can be checked:
 
 .. list-table::
    :header-rows: 1
@@ -2251,6 +2263,8 @@ Examples
      - Sets the number of instances of the metrics HTTP service to 2
 
 .. rst2pdf: PageBreak
+
+.. _client-api:
 
 ---------------
 Java Client API
@@ -2617,9 +2631,9 @@ Interactive Mode
 
 .. highlight:: console
 
-To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal::
+To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from the terminal::
 
-  $ /bin/cdap-cli
+  $ /bin/cdap-cli.sh
 
 or, on Windows::
 
@@ -2647,10 +2661,10 @@ To list all of the available commands, enter ``help``::
 Non-Interactive Mode
 --------------------
 
-To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
+To run the CLI in non-interactive mode, run the ``cdap-cli.sh`` executable, passing the command you want executed
 as the argument. For example, to list all applications currently deployed to CDAP, execute::
 
-  cdap list apps
+  cdap-cli.sh list apps
 
 Available Commands
 ==================
