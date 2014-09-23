@@ -92,6 +92,14 @@ public class SparkKMeansAppTest extends TestBase {
         exception = ex;
       }
       Assert.assertTrue(exception instanceof IOException);
+      // test with invalid index
+      exception = null;
+      try {
+        client.query("centers", ImmutableMap.of("index", "5"));
+      } catch (Throwable ex) {
+        exception = ex;
+      }
+      Assert.assertTrue(exception instanceof IOException);
     } finally {
       procedureManager.stop();
     }
