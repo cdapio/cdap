@@ -1,3 +1,5 @@
+:orphan:
+
 .. :author: Cask Data, Inc.
    :description: Frequently Asked Questions about the Cask Data Application Platform
    :copyright: Copyright © 2014 Cask Data, Inc.
@@ -26,7 +28,7 @@ without having to worry about infrastructure, interoperability, or the complexit
 systems.
 
 What is available in the CDAP SDK?
------------------------------------------
+----------------------------------
 The CDAP SDK comes with:
 
 - Java and RESTful APIs to build CDAP applications;
@@ -52,7 +54,7 @@ advantages of using CDAP include:
    be an expert on scalable, highly-available system architectures, nor do you need to worry about the low
    level Hadoop and HBase APIs.
 
-#. **Full Developement Lifecycle Support:**
+#. **Full Development Lifecycle Support:**
    CDAP supports developers through the entire application development lifecycle: development, debugging,
    testing, continuous integration and production. Using familiar development tools like Eclipse and
    IntelliJ, you can build, test and debug your application right on your laptop with a Standalone CDAP. Utilize
@@ -73,29 +75,30 @@ What Platforms are Supported by the Cask Data Application Platform SDK?
 The CDAP SDK can be run on Mac OS X, Linux or Windows platforms.
 
 What programming languages are supported by CDAP?
---------------------------------------------------------
+-------------------------------------------------
 CDAP currently supports Java. 
 
 What Version of Java SDK is Required by CDAP?
-------------------------------------------------------------
+---------------------------------------------
 The latest version of the JDK or JRE version 6 or 7 must be installed in your environment.
 
 What Version of Node.JS is Required by CDAP?
-------------------------------------------------------------
+--------------------------------------------
 The version of Node.js must be v0.8.16 or greater.
 
 
 Hadoop
 ======
 
-I have a Hadoop cluster in my datacenter, can I run CDAP that uses my Hadoop cluster?
----------------------------------------------------------------------------------------- 
+I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?
+--------------------------------------------------------------------------------------
+
 Yes. You can install CDAP on your Hadoop cluster. Contact `Cask support`__ on how this can be done.
 
 __ support_
 
 What Hadoop distributions can CDAP run on? 
--------------------------------------------------
+------------------------------------------
 CDAP has been tested on and supports CDH 4.2.x or later, HDP 2.0 or later, and Apache Hadoop/HBase 2.0.2-0.4 and 2.1.0. 
 
 
