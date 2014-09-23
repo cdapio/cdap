@@ -28,15 +28,15 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * {@link co.cask.cdap.api.dataset.DatasetDefinition} for {@link co.cask.cdap.api.dataset.lib.TimeseriesTable}.
+ * {@link co.cask.cdap.api.dataset.DatasetDefinition} for {@link CounterTimeseriesTable}.
  */
 @Beta
-public class TimeseriesTableDefinition
-  extends AbstractDatasetDefinition<TimeseriesTable, DatasetAdmin> {
+public class CounterTimeseriesTableDefinition
+  extends AbstractDatasetDefinition<CounterTimeseriesTable, DatasetAdmin> {
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public TimeseriesTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+  public CounterTimeseriesTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     this.tableDef = tableDef;
@@ -56,9 +56,10 @@ public class TimeseriesTableDefinition
   }
 
   @Override
-  public TimeseriesTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+  public CounterTimeseriesTable getDataset(DatasetSpecification spec, Map<String, String> arguments,
+                                           ClassLoader classLoader)
     throws IOException {
     Table table = tableDef.getDataset(spec.getSpecification("ts"), arguments, classLoader);
-    return new TimeseriesTable(spec, table);
+    return new CounterTimeseriesTable(spec, table);
   }
 }
