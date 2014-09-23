@@ -61,8 +61,8 @@ public class ProgramClientTestRun extends ClientTestBase {
     verifyProgramNames(FakeApp.PROCEDURES, procedureClient.list());
 
     LOG.info("Fetching runtime args");
-    Map<String,String> emptyRuntimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
-                                                                  FakeProcedure.NAME);
+    Map<String, String> emptyRuntimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
+                                                                        FakeProcedure.NAME);
     Assert.assertEquals(0, emptyRuntimeArgs.size());
 
     LOG.info("Setting runtime args");
@@ -70,8 +70,8 @@ public class ProgramClientTestRun extends ClientTestBase {
                                  FakeProcedure.NAME, ImmutableMap.of("a", "b", "c", "d"));
 
     LOG.info("Fetching runtime args");
-    Map<String,String> runtimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
-                                                                  FakeProcedure.NAME);
+    Map<String, String> runtimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
+                                                                   FakeProcedure.NAME);
     Assert.assertEquals(2, runtimeArgs.size());
     Assert.assertEquals("b", runtimeArgs.get("a"));
     Assert.assertEquals("d", runtimeArgs.get("c"));
