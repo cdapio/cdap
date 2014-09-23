@@ -128,7 +128,7 @@ you can use the procedure or a SQL query to explore the results.
 When finished, stop the Application as described below.
 
 Building the Purchase Application
-----------------------------------
+---------------------------------
 From the project root, build ``Purchase`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
@@ -171,7 +171,7 @@ Running the Example
 -------------------
 
 Injecting Sentences
-............................
+...................
 
 Run this script to inject sentences 
 to the Stream named *purchaseStream* in the ``Purchase`` application::

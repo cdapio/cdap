@@ -4,9 +4,9 @@
    :Description: Cask Data Application Platform SparkKMeans Application
    :Copyright: Copyright © 2014 Cask Data, Inc.
 
-=================================
+===============================
 SparkKMeans Application Example
-=================================
+===============================
 
 **A Cask Data Application Platform (CDAP) Example Demonstrating Spark**
 
@@ -27,7 +27,7 @@ send back a JSON-formatted result with the center's coordinates based on the ``i
 Let's look at some of these elements, and then run the Application and see the results.
 
 The SparkKMeans Application
---------------------------------
+---------------------------
 As in the other `examples <index.html>`__, the components
 of the Application are tied together by the class ``SparkKMeansApp``::
 
@@ -67,12 +67,12 @@ of the Application are tied together by the class ``SparkKMeansApp``::
   }
 
 ``points`` and ``centers``: ObjectStore Data Storage
---------------------------------------------------------------
+----------------------------------------------------
 The raw points data is stored in an ObjectStore Dataset, *points*.
 The calculated centers data is stored in a second ObjectStore Dataset, *centers*.
 
 ``CentersProcedure``: Procedure
---------------------------------
+-------------------------------
 This procedure has a ``centers`` method to obtain the center's coordinates of a given index.
 
 
@@ -93,7 +93,7 @@ injecting points data into the Stream.
 When finished, stop the Application as described below.
 
 Building the SparkKMeans Application
------------------------------------------
+------------------------------------
 From the project root, build ``SparkKMeans`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
@@ -140,7 +140,7 @@ Running the Example
 -------------------
 
 Injecting points data
-............................
+.....................
 
 Run this script to inject points data
 to the Stream named *pointsStream* in the ``SparkKMeans`` application::
@@ -154,7 +154,7 @@ On Windows::
 	~SDK> bin\inject-data.bat
 
 Running Spark program
-.............................
+.....................
 
 There are three ways to start the Spark program:
 
@@ -214,7 +214,7 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
 	   "9.1,9.1,9.1"
 
 Stopping the Application
----------------------------
+------------------------
 Either:
 
 - On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; 
