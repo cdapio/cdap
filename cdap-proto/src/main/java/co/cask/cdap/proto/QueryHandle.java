@@ -31,7 +31,6 @@ public class QueryHandle {
   private final String handle;
 
   public static QueryHandle generate() {
-    // TODO: make sure handles are unique across multiple instances. - REACTOR-272
     return new QueryHandle(UUID.randomUUID().toString());
   }
 

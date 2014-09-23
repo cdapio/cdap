@@ -20,43 +20,11 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 # List of Example Apps
 
-## CountAndFilterWords
-
-- A variation of CountTokens that illustrates that a Flowlet's output can
-  be consumed by multiple downstream Flowlets.
-- In addition to counting all tokens, also sends all tokens to a filter that
-  drops all tokens that are not upper case.
-- The upper case tokens are then counted by a separate Flowlet.
-
-## CountCounts
-
-- A very simple Flow that counts "counts".
-- Reads input Stream "text" and tokenizes it. Instead of counting words, it
-  counts the number of inputs with the same number of tokens.
-
-## CountOddAndEven
-
-- Consumes generated random numbers and counts odd and even numbers.
-
 ## CountRandom
 
 - Generates random numbers between 0 and 9999.
 - For each number *i*, generates i%10000, i%1000, i%100, i%10.
 - Increments the counter for each number.
- 
-## CountTokens
-
-- Reads events ("= byte[] body, Map<String,String>" headers) from input
-  Stream "text".
-- Tokenizes the text in the body and in the header named "title", ignores
-  all other headers.
-- Each token is cloned into two tokens:
-
-  1. the upper cased version of the token; and
-  2. the original token with a field prefix ("title", or if the token is from
-     the body of the event, "text").
-
-- All of the cloned tokens are counted using increment operations.
 
 ## HelloWorld
 
@@ -65,14 +33,6 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 - A Stream, to send names to.
 - A Flow, with a single Flowlet that reads the Stream and stores each name in a KeyValueTable.
 - A Procedure, that reads the name from the KeyValueTable and prints "Hello [Name]!"
-
-## PageViewAnalytics
-
-- This example demonstrates use of custom Datasets and batch processing in an Application.
-- It takes data from Apache access logs, parses them and save the data in a custom Dataset.
-  It then queries the results to find, for a specific URI, pages that are requesting that
-  page and the distribution of those requests.
-- For more information, see http://cask.co/docs/cdap/current/en/examples/.
 
 ## Purchase
 
@@ -99,24 +59,6 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
   will return a "not found" error.
 - For more information, see http://cask.co/docs/cdap/current/en/examples/.
 
-## ResourceSpammer
-
-- An example designed to stress test CPU resources.
-
-## ResponseCodeAnalytics
-
-- A simple application for real-time Streaming log analysis—computing the number of 
-  occurrences of each HTTP status code by processing Apache access log data. 
-- For more information, see http://cask.co/docs/cdap/current/en/examples/.
-
-## SentimentAnalysis
-
-- An application that analyzes sentiment of sentences as positive, negative or neutral.
-
-## SimpleWriteAndRead
-
-- A simple example to illustrate how to read and write key/values in a Flow.
-
 ## SparkKMeans
 
 - An application that demonstrates streaming text analysis using a Spark program.
@@ -126,18 +68,6 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 
 - An application that demonstrates streaming text analysis using a Spark program.
 - It computes the page rank of URLs from an input stream.
-
-## Ticker
-
-- This application pulls in stock market activity data and stores it in Datasets that 
-  allow querying for that data with various filters.
-
-## TrafficAnalytics
-
-- This example demonstrates an application of streaming log analysis using a MapReduce job.
-  It computes the aggregate number of HTTP requests on an hourly basis in each hour of the
-  last twenty-four hours, processing in real-time Apache access log data. 
-- For more information, see http://cask.co/docs/cdap/current/en/examples/.
 
 ## WordCount
 

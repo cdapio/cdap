@@ -44,7 +44,6 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -138,8 +137,6 @@ public abstract class QueueTest {
                    });
   }
 
-  // TODO: (REACTOR-87) Temporarily disable.
-  @Ignore
   @Test
   public void testDropAllStreams() throws Exception {
     // create a queue and a stream and enqueue one entry each

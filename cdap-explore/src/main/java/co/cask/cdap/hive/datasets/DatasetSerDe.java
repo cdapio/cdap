@@ -153,13 +153,13 @@ public class DatasetSerDe implements SerDe {
       }
     }
 
-    // TODO Improve serialization logic - REACTOR-927
+    // TODO Improve serialization logic - CDAP-11
     return new Text(GSON.toJson(recordMap));
   }
 
   @Override
   public SerDeStats getSerDeStats() {
-    // TODO: add real Sataset stats - REACTOR-278
+    // TODO: add real Sataset stats - CDAP-12
     return new SerDeStats();
   }
 

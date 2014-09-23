@@ -1,4 +1,4 @@
-singlenode
+Standalone
 ==========
 
-Single Node 
+Standalone

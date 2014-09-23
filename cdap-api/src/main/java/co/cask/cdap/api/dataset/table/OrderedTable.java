@@ -36,12 +36,15 @@ public interface OrderedTable extends Dataset {
 
   /**
    * Property set to configure read-less increment support for a dataset.  When not set, calling the
-   * {@link Table#incrementWrite(byte[], byte[], long)} method will result in a normal read-modify-write operation.
+   * {@link Table#increment(byte[], byte[], long)} method will result in a normal read-modify-write operation.
    */
-  public static final String PROPERTY_READLESS_INCREMENT_WRITE = "dataset.table.readless.increment.write";
+  public static final String PROPERTY_READLESS_INCREMENT = "dataset.table.readless.increment";
 
   /**
    * Reads the values of the specified columns in the specified row.
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
    * @return map of columns to values, never null
    */
   Map<byte[], byte[]> get(byte[] row, byte[][] columns) throws Exception;
@@ -51,6 +54,10 @@ public interface OrderedTable extends Dataset {
    * NOTE: depending on the implementation of this interface and use-case, calling this method may be much less
    *       efficient than calling same method with columns as parameters because it may always require round trip to
    *       persistent store
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
+   *
    * @param row row to read from
    * @return map of columns to values, never null
    */
@@ -68,6 +75,10 @@ public interface OrderedTable extends Dataset {
   /**
    * Reads the values of all columns in the specified row that are
    * between the specified start (inclusive) and stop (exclusive) columns.
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
+   *
    * @param startColumn beginning of range of columns, inclusive
    * @param stopColumn end of range of columns, exclusive
    * @param limit maximum number of columns to return
@@ -133,20 +144,23 @@ public interface OrderedTable extends Dataset {
    * @param amount amount to increment by
    * @return new value of the column
    */
-  long increment(byte[] row, byte[] column, long amount) throws Exception;
+  long incrementAndGet(byte[] row, byte[] column, long amount) throws Exception;
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts.
-   *
-   * NOTE: depending on the implementation this may work faster than calling {@link #increment(byte[], byte[], long)}
-   *       multiple times (esp. in transaction that changes a lot of rows)
+   * <p>
+   * NOTE: depending on the implementation this may work faster than calling
+   * {@link #incrementAndGet(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows).
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
    *
    * @param row row which values to increment
    * @param columns columns to increment
    * @param amounts amounts to increment columns by (same order as columns)
-   * @return values of counters after the increments are performed, never null
+   * @return map of values of counters after the increments are performed, never null
    */
-  Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts) throws Exception;
+  Map<byte[], Long> incrementAndGet(byte[] row, byte[][] columns, long[] amounts) throws Exception;
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new value.
@@ -155,19 +169,19 @@ public interface OrderedTable extends Dataset {
    * @param column column to increment
    * @param amount amount to increment by
    */
-  void incrementWrite(byte[] row, byte[] column, long amount) throws Exception;
+  void increment(byte[] row, byte[] column, long amount) throws Exception;
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
    *
    * NOTE: depending on the implementation this may work faster than calling
-   * {@link #incrementWrite(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
+   * {@link #increment(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
    *
    * @param row row which values to increment
    * @param columns columns to increment
    * @param amounts amounts to increment columns by (same order as columns)
    */
-  void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception;
+  void increment(byte[] row, byte[][] columns, long[] amounts) throws Exception;
 
   /**
    * Compares-and-swaps (atomically) the value of the specified row and column

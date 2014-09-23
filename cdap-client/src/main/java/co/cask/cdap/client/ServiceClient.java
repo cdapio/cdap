@@ -23,21 +23,10 @@ import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.ServiceMeta;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import org.apache.hadoop.security.authorize.AuthorizationException;
-import org.apache.twill.discovery.Discoverable;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import javax.inject.Inject;
-import javax.management.ServiceNotFoundException;
 
 /**
  * Provides ways to interact with CDAP User Services.

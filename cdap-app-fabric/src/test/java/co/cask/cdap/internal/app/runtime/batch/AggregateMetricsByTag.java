@@ -68,9 +68,9 @@ public class AggregateMetricsByTag {
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
       LOG.info("in mapper: setup()");
-      long mappersCount = counters.increment(new Increment("mapper", "count", 1L)).getLong("count", 0);
-      Assert.assertEquals(mappersCount,
-                          countersFromContext.increment(new Increment("mapper", "count", 1L)).getLong("count", 0));
+      long mappersCount = counters.incrementAndGet(new Increment("mapper", "count", 1L)).getLong("count", 0);
+      Assert.assertEquals(mappersCount, countersFromContext.incrementAndGet(new Increment("mapper", "count", 1L))
+                                                                                                  .getLong("count", 0));
       LOG.info("mappers started so far: " + mappersCount);
     }
 
@@ -112,9 +112,9 @@ public class AggregateMetricsByTag {
     @Override
     protected void setup(Reducer.Context context) throws IOException, InterruptedException {
       LOG.info("in reducer: setup()");
-      long reducersCount = counters.increment(new Increment("reducer", "count", 1L)).getLong("count", 0);
-      Assert.assertEquals(reducersCount,
-                          countersFromContext.increment(new Increment("reducer", "count", 1L)).getLong("count", 0));
+      long reducersCount = counters.incrementAndGet(new Increment("reducer", "count", 1L)).getLong("count", 0);
+      Assert.assertEquals(reducersCount, countersFromContext.incrementAndGet(new Increment("reducer", "count", 1L))
+                                                                                                  .getLong("count", 0));
       LOG.info("reducers started so far: " + reducersCount);
     }
 

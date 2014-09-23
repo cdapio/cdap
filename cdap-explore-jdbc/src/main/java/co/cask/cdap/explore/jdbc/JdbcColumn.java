@@ -31,8 +31,8 @@ public class JdbcColumn {
   /**
    * Default precision when user doesn't specify in the column metadata, such as
    * decimal and decimal(8).
-   * TODO right now we don't return precision and scale given by a user - this should be returned with
-   * columns metadata [REACTOR-560].
+   * TODO: right now we don't return precision and scale given by a user - this should be returned with
+   * columns metadata, see CDAP-14.
    */
   public static final int USER_DEFAULT_PRECISION = 10;
 

@@ -567,7 +567,7 @@ To add metrics to a Flowlet *NameSaver*::
     }
   }
 
-An example of user-defined metrics is in the `PageViewAnalytics example <examples/PageViewAnalytics/index.html>`_.
+An example of user-defined metrics is in ``PurchaseStore`` in the `Purchase example <examples/Purchase/index.html>`_.
 
 For details on available system metrics, see the `Metrics section <rest.html#metrics-http-api>`__
 in the `CDAP HTTP REST API Guide <rest.html>`__.
@@ -707,9 +707,9 @@ Interactive Mode
 
 .. highlight:: console
 
-To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal::
+To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from the terminal::
 
-  $ /bin/cdap-cli
+  $ /bin/cdap-cli.sh
 
 or, on Windows::
 
@@ -737,10 +737,10 @@ To list all of the available commands, enter ``help``::
 Non-Interactive Mode
 --------------------
 
-To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
+To run the CLI in non-interactive mode, run the ``cdap-cli.sh`` executable, passing the command you want executed
 as the argument. For example, to list all applications currently deployed to CDAP, execute::
 
-  cdap list apps
+  cdap-cli.sh list apps
 
 Available Commands
 ------------------

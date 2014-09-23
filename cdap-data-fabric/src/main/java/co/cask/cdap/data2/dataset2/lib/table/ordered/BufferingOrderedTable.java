@@ -20,6 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.Result;
+import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.TableSplit;
 import co.cask.tephra.Transaction;
@@ -35,9 +37,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import javax.annotation.Nullable;
 
 /**
@@ -63,7 +67,7 @@ import javax.annotation.Nullable;
  * NOTE: Using {@link #get(byte[], byte[], byte[], int)} is generally always not efficient since it always hits the
  *       persisted store even if all needed data is in-memory buffer. See more info at method javadoc
  */
-// todo: return immutable maps?
+// todo: copying passed params to write methods may be done more efficiently: no need to copy when no changes are made
 public abstract class BufferingOrderedTable extends AbstractOrderedTable implements TransactionAware, MeteredDataset {
 
   private static final Logger LOG = LoggerFactory.getLogger(BufferingOrderedTable.class);
@@ -76,7 +80,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   private final ConflictDetection conflictLevel;
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
-  // Whether read-less increments should be used when incrementWrite() is called
+  // Whether read-less increments should be used when increment() is called
   private final boolean enableReadlessIncrements;
 
   // In-memory buffer that keeps not yet persisted data. It is row->(column->value) map. Value can be null which means
@@ -120,7 +124,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
     //       reduce changeset size transferred to/from server
     // we want it to be of format length+value to avoid conflicts like table="ab", row="cd" vs table="abc", row="d"
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) name.length()}, Bytes.toBytes(name));
-    this.buff = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    this.buff = new ConcurrentSkipListMap<byte[], NavigableMap<byte[], Update>>(Bytes.BYTES_COMPARATOR);
   }
 
   /**
@@ -271,7 +275,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
       // clearing up in-memory buffer by initializing new map.
       // NOTE: we want to init map here so that if no changes are made we re-use same instance of the map in next tx
       // NOTE: we could cache two maps and swap them to avoid creation of map instances, but code would be ugly
-      buff = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      buff = new ConcurrentSkipListMap<byte[], NavigableMap<byte[], Update>>(Bytes.BYTES_COMPARATOR);
       // TODO: tracking of persisted items can be optimized by returning a pair {succeededOrNot, persisted} which
       //       tells if persisting succeeded and what was persisted (i.e. what we will have to undo in case of rollback)
       persist(toUndo);
@@ -356,11 +360,13 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
     NavigableMap<byte[], Update> colVals = buff.get(row);
     if (colVals == null) {
       colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      buff.put(row, colVals);
-      // ANDREAS: is this thread-safe?
+      // NOTE: we copy passed row's byte arrays to protect buffer against possible changes of this array on client
+      buff.put(copy(row), colVals);
     }
     for (int i = 0; i < columns.length; i++) {
-      colVals.put(columns[i], new PutValue(values[i]));
+      // NOTE: we copy passed column's and value's byte arrays to protect buffer against possible changes of these
+      // arrays on client
+      colVals.put(copy(columns[i]), new PutValue(copy(values[i])));
     }
   }
 
@@ -398,7 +404,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   }
 
   @Override
-  public Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public Map<byte[], Long> incrementAndGet(byte[] row, byte[][] columns, long[] amounts) throws Exception {
     reportRead(1);
     reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
     // Logic:
@@ -437,7 +443,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   }
 
   @Override
-  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public void increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
     if (enableReadlessIncrements) {
       reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
       NavigableMap<byte[], Update> colVals = buff.get(row);
@@ -449,7 +455,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
         colVals.put(columns[i], Updates.mergeUpdates(colVals.get(columns[i]), new IncrementValue(amounts[i])));
       }
     } else {
-      increment(row, columns, amounts);
+      incrementAndGet(row, columns, amounts);
     }
   }
 
@@ -487,8 +493,17 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
 
   @Override
   public Scanner scan(byte[] startRow, byte[] stopRow) throws Exception {
-    // todo: merge with in-memory buffer
-    return scanPersisted(startRow, stopRow);
+    NavigableMap<byte[], NavigableMap<byte[], Update>> bufferMap;
+    if (startRow == null && stopRow == null) {
+      bufferMap = buff;
+    } else if (startRow == null) {
+      bufferMap = buff.headMap(stopRow, false);
+    } else if (stopRow == null) {
+      bufferMap = buff.tailMap(startRow, true);
+    } else {
+      bufferMap = buff.subMap(startRow, true, stopRow, false);
+    }
+    return new BufferingScanner(bufferMap, scanPersisted(startRow, stopRow));
   }
 
   private Map<byte[], byte[]> getRowMap(byte[] row) throws Exception {
@@ -563,12 +578,17 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
    * @param persisted The map to modify with the buffered values.
    * @param buffered The buffered values to overlay on the persisted map.
    */
-  private void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered, byte[][] columns) {
-    Iterable<byte[]> columnKeys;
+  private static void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered, byte[][] columns) {
+    List<byte[]> columnKeys;
     if (columns != null) {
       columnKeys = Arrays.asList(columns);
     } else {
-      columnKeys = buffered.keySet();
+      // NOTE: we want to copy key's byte array because it may be leaked to table's client and we don't want client
+      //       to affect the buffer by changing it in place
+      columnKeys = Lists.newArrayListWithExpectedSize(buffered.size());
+      for (byte[] key : buffered.keySet()) {
+        columnKeys.add(copy(key));
+      }
     }
     // overlay buffered values on persisted, applying increments where necessary
     for (byte[] key : columnKeys) {
@@ -587,7 +607,9 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
         persisted.put(key, Bytes.toBytes(newValue));
       } else if (val instanceof PutValue) {
         // overwrite the current
-        persisted.put(key, ((PutValue) val).getValue());
+        // NOTE: we want to copy value's byte array because it may be leaked to table's client and we don't want client
+        // to affect the buffer by changing it in place
+        persisted.put(key, copy(((PutValue) val).getValue()));
       }
       // unknown type?!
     }
@@ -694,5 +716,76 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
 
   private static int getSize(byte[] item) {
     return item == null ? 0 : item.length;
+  }
+
+  private static byte[] copy(byte[] bytes) {
+    return bytes == null ? null : Arrays.copyOf(bytes, bytes.length);
+  }
+
+  /**
+   * Scanner implementation that overlays buffered data on top of already persisted data.
+   */
+  private class BufferingScanner implements Scanner {
+    private final NavigableMap<byte[], NavigableMap<byte[], Update>> buffer;
+    private final Scanner persistedScanner;
+    private final Iterator<byte[]> keyIter;
+    private byte[] currentKey;
+    private Row currentRow;
+
+    private BufferingScanner(NavigableMap<byte[], NavigableMap<byte[], Update>> buffer, Scanner persistedScanner) {
+      this.buffer = buffer;
+      this.keyIter = this.buffer.keySet().iterator();
+      if (this.keyIter.hasNext()) {
+        currentKey = keyIter.next();
+      }
+      this.persistedScanner = persistedScanner;
+      this.currentRow = this.persistedScanner.next();
+    }
+
+    @Nullable
+    @Override
+    public Row next() {
+      if (currentKey == null && currentRow == null) {
+        // out of rows
+        return null;
+      }
+      int order;
+      if (currentKey == null) {
+        // exhausted buffer is the same as persisted scan row coming first
+        order = 1;
+      } else if (currentRow == null) {
+        // exhausted persisted scanner is the same as buffer row coming first
+        order = -1;
+      } else {
+        order = Bytes.compareTo(currentKey, currentRow.getRow());
+      }
+      Row result = null;
+      if (order > 0) {
+        // persisted row comes first or buffer is empty
+        result = currentRow;
+        currentRow = persistedScanner.next();
+      } else if (order < 0) {
+        // buffer row comes first or persisted scanner is empty
+        Map<byte[], byte[]> persistedRow = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        mergeToPersisted(persistedRow, buffer.get(currentKey), null);
+        result = new Result(copy(currentKey), persistedRow);
+
+        currentKey = keyIter.hasNext() ? keyIter.next() : null;
+      } else {
+        // if currentKey and currentRow are equal, merge and advance both
+        Map<byte[], byte[]> persisted = currentRow.getColumns();
+        mergeToPersisted(persisted, buffer.get(currentKey), null);
+        result = new Result(currentRow.getRow(), persisted);
+
+        currentRow = persistedScanner.next();
+        currentKey = keyIter.hasNext() ? keyIter.next() : null;
+      }
+      return result;
+    }
+
+    @Override
+    public void close() {
+      this.persistedScanner.close();
+    }
   }
 }

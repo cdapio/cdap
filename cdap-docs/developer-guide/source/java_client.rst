@@ -177,12 +177,12 @@ ProcedureClient
   // Construct the client used to interact with CDAP
   ProcedureClient procedureClient = new ProcedureClient(clientConfig);
 
-  // Call a Procedure in the PageViewAnalytics example
-  String result = procedureClient.call("PageViewAnalytics", "PageViewProcedure", "getDistribution",
-                                       ImmutableMap.of("page", "http://www.cask.co"));
+  // Call a Procedure in the WordCount example
+  String result = procedureClient.call("WordCount", "RetrieveCounts", "getCount",
+                                       ImmutableMap.of("word", "foo"));
 
   // Stop a Procedure
-  programClient.stop("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure");
+  programClient.stop("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
 
 
 ProgramClient
@@ -195,16 +195,16 @@ ProgramClient
   // Construct the client used to interact with CDAP
   ProgramClient programClient = new ProgramClient(clientConfig);
 
-  // Start a Procedure in the PageViewAnalytics example
-  programClient.start("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure");
+  // Start a Procedure in the WordCount example
+  programClient.start("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
 
   // Fetch live information from the HelloWorld example
   // Live info includes the address of an element’s container host and the container’s debug port,
   // formatted in JSON
   programClient.getLiveInfo("HelloWorld", ProgramType.PROCEDURE, "greet");
 
-  // Fetch program logs in the PageViewAnalytics example
-  programClient.getProgramLogs("PageViewAnalytics", ProgramType.PROCEDURE, "PageViewProcedure", 0,
+  // Fetch program logs in the WordCount example
+  programClient.getProgramLogs("WordCount", ProgramType.PROCEDURE, "RetrieveCounts", 0,
                                Long.MAX_VALUE);
 
   // Scale a Procedure in the HelloWorld example
@@ -213,17 +213,17 @@ ProgramClient
   // Stop a Procedure in the HelloWorld example
   programClient.stop("HelloWorld", ProgramType.PROCEDURE, "greet");
 
-  // Start, scale, and stop a Flow in the PageViewAnalytics example
-  programClient.start("PageViewAnalytics", ProgramType.FLOW, "PageViewFlow");
+  // Start, scale, and stop a Flow in the WordCount example
+  programClient.start("WordCount", ProgramType.FLOW, "WordCountFlow");
 
-  // Fetch Flow history in the PageViewAnalytics example
-  programClient.getProgramHistory("PageViewAnalytics", ProgramType.FLOW, "PageViewFlow");
+  // Fetch Flow history in the WordCount example
+  programClient.getProgramHistory("WordCount", ProgramType.FLOW, "WordCountFlow");
 
-  // Scale a Flowlet in the PageViewAnalytics example
-  programClient.setFlowletInstances("PageViewAnalytics", "PageViewFlow", "parser", 3);
+  // Scale a Flowlet in the WordCount example
+  programClient.setFlowletInstances("WordCount", "WordCountFlow", "Tokenizer", 3);
  
-  // Stop a Flow in the PageViewAnalytics example
-  programClient.stop("PageViewAnalytics", ProgramType.FLOW, "PageViewFlow");
+  // Stop a Flow in the WordCount example
+  programClient.stop("WordCount", ProgramType.FLOW, "WordCountFlow");
 
 
 QueryClient
@@ -296,11 +296,11 @@ StreamClient
   // Fetch the Stream list
   List streams = streamClient.list();
 
-  // Create a Stream, using the ResponseCodeAnalyticsApp example
-  streamClient.create("logEventStream");
+  // Create a Stream, using the Purchase example
+  streamClient.create("purchaseStream");
 
-  // Fetch a Stream's properties, using the ResponseCodeAnalyticsApp example
-  StreamProperties config = streamClient.getConfig("logEventStream");
+  // Fetch a Stream's properties, using the Purchase example
+  StreamProperties config = streamClient.getConfig("purchaseStream");
 
   // Send events to a Stream, using the Purchase example
   streamClient.sendEvent("purchaseStream", "Tom bought 5 apples for $10");

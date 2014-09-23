@@ -474,8 +474,17 @@ define([], function () {
 							buffer = metric.options.buffer || buffer;
 							transform = metric.options.transform;
 						}
-                        buffer = buffer || 5;
-						queries.push(metric.path + '?start=now-' + buffer + 's&count=' + buffer);
+						buffer = buffer || 5;
+						var path = metric.path + '?start=now-' + buffer + 's&count=';
+						if (metric.interpolate) {
+							// when interpolating, only need 1 data point, and the window 
+							// over which to interpolate can be 2x the buffer 
+							// (1 buffer to the left and 1 buffer to the right).
+							path += '1&maxInterpolateGap=' + buffer + '&interpolate=' + metric.interpolate;
+						} else {
+							path += buffer;
+						}
+						queries.push(path);
 						map[metric.path] = models[j];
 
 				}

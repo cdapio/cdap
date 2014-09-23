@@ -51,7 +51,6 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
-import co.cask.cdap.security.authorization.ACLService;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
@@ -97,7 +96,6 @@ public class StandaloneMain {
   private final CConfiguration configuration;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
-  private ACLService aclService;
   private final DatasetService datasetService;
 
   private ExploreExecutorService exploreExecutorService;
@@ -126,7 +124,6 @@ public class StandaloneMain {
     securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
-      aclService = injector.getInstance(ACLService.class);
     }
 
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
@@ -180,7 +177,6 @@ public class StandaloneMain {
     streamHttpService.startAndWait();
 
     if (securityEnabled) {
-      aclService.startAndWait();
       externalAuthenticationServer.startAndWait();
     }
 
@@ -228,7 +224,6 @@ public class StandaloneMain {
       if (securityEnabled) {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
-        aclService.stopAndWait();
       }
       logAppenderInitializer.close();
 

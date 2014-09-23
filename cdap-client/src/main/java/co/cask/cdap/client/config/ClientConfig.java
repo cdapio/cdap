@@ -30,6 +30,9 @@ import java.net.URL;
  */
 public class ClientConfig {
 
+  private static final HttpRequestConfig DEFAULT_UPLOAD_CONFIG = new HttpRequestConfig(0, 0);
+  private static final HttpRequestConfig DEFAULT_CONFIG = new HttpRequestConfig(15000, 15000);
+
   private static final boolean DEFAULT_IS_SSL_ENABLED = false;
   private static final String DEFAULT_VERSION = "v2";
   private static final String HTTP = "http";
@@ -41,12 +44,13 @@ public class ClientConfig {
 
   private String protocol;
   private URI baseURI;
+  private String hostname;
   private int port;
   private AuthenticationClient authenticationClient;
 
   /**
-   * @param hostname Hostname of the CDAP server (i.e. example.com)
-   * @param port Port of the CDAP server (i.e. 10000)
+   * @param hostname Hostname of the CDAP instance (e.g. example.com)
+   * @param port Port of the CDAP server (e.g. 10000)
    * @param defaultConfig {@link HttpRequestConfig} to use by default
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
    */
@@ -56,8 +60,8 @@ public class ClientConfig {
   }
 
   /**
-   * @param hostname Hostname of the CDAP server (i.e. example.com)
-   * @param port Port of the CDAP server (i.e. 10000)
+   * @param hostname Hostname of the CDAP instance (e.g. example.com)
+   * @param port Port of the CDAP server (e.g. 10000)
    * @param defaultConfig {@link HttpRequestConfig} to use by default
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
    * @param isSslEnabled true, if SSL is enabled in the gateway server
@@ -66,6 +70,7 @@ public class ClientConfig {
                       boolean isSslEnabled, AuthenticationClient authenticationClient) {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
+    this.hostname = hostname;
     this.port = port;
     this.protocol = isSslEnabled ? HTTPS : HTTP;
     this.authenticationClient = authenticationClient;
@@ -73,19 +78,27 @@ public class ClientConfig {
   }
 
   /**
-   * @param hostname Hostname of the CDAP server (i.e. example.com)
-   * @param port Port of the CDAP server (i.e. 10000)
+   * @param uri URI of the CDAP instance (e.g. http://example.com:10000)
+   * @param authenticationClient the authenticationClient to set
    */
-  public ClientConfig(String hostname, int port, AuthenticationClient authenticationClient) {
-    this(hostname, port, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0), authenticationClient);
+  public ClientConfig(URI uri, AuthenticationClient authenticationClient) {
+    this(uri.getHost(), uri.getPort(), DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG,
+         "https".equals(uri.getScheme()), authenticationClient);
   }
 
   /**
-   * @param hostname Hostname of the CDAP server (i.e. example.com)
+   * @param hostname Hostname of the CDAP instance (i.e. example.com)
+   * @param port Port of the CDAP server (e.g. 10000)
+   */
+  public ClientConfig(String hostname, int port, AuthenticationClient authenticationClient) {
+    this(hostname, port, DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG, authenticationClient);
+  }
+
+  /**
+   * @param hostname Hostname of the CDAP instance (e.g. example.com)
    */
   public ClientConfig(String hostname, AuthenticationClient authenticationClient) {
-    this(hostname, DEFAULT_PORT, new HttpRequestConfig(15000, 15000), new HttpRequestConfig(0, 0),
-         authenticationClient);
+    this(hostname, DEFAULT_PORT, DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG, authenticationClient);
   }
 
   /**
@@ -114,7 +127,14 @@ public class ClientConfig {
   }
 
   /**
-   * @return port of CDAP
+   * @return hostname of the target CDAP instance
+   */
+  public String getHostname() {
+    return hostname;
+  }
+
+  /**
+   * @return port of the target CDAP instance
    */
   public int getPort() {
     return port;
@@ -125,9 +145,17 @@ public class ClientConfig {
    * @param port Port of the CDAP server (i.e. 10000)
    */
   public void setHostnameAndPort(String hostname, int port, boolean isSslEnabled) {
+    this.hostname = hostname;
     this.port = port;
     this.protocol = isSslEnabled ? HTTPS : HTTP;
     this.baseURI = URI.create(String.format("%s://%s:%d", protocol, hostname, port));
+  }
+
+  /**
+   * @return the base URI of the target CDAP instance
+   */
+  public URI getBaseURI() {
+    return baseURI;
   }
 
   /**

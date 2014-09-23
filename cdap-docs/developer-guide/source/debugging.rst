@@ -102,46 +102,88 @@ as a response, and the value types in the top-level map are not uniform::
     Assert.assertTrue(assocs.containsKey("hello"));
   }
 
+Strategies in Testing Custom Services
+-------------------------------------
+Here, we'll write a test case for an application that uses a Custom Service.
+For example, a test class for the Purchase example::
+
+  public class PurchaseTest extends AppTestBase {
+    @Test
+    public void testCase() throws Exception {
+
+Deploy the application, which includes a Custom Service::
+
+  // Deploy the Application
+  ApplicationManager appManager = deployApplication(PurchaseApp.class);
+
+  // Start CatalogLookup Service
+  ServiceManager serviceManager = appManager.startService("CatalogLookup");
+
+Because this call to start the service is asynchronous, the service may not actually be up right after the method
+returns. The ``ServiceManager`` has an ``isRunning`` method which can be used to poll until the Service has started.
+Once the service is up and running, requests can be sent to it with an HTTP library, once the URL is determined.
+
+To make a request to test an endpoint, such as /v1/product/{id}/catalog::
+
+  // Get the base URL of the Service
+  URL baseURL = serviceManager.getServiceURL();
+
+  // Create the url for the service's endpoint, passing an item's id ("laptop" in this instance)
+  URL url = new URL(baseURL, "v1/product/laptop/catalog")
+
+  // Open a connection to the Custom Service
+  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+The response of the request can be verified::
+
+  Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+  Assert.assertEquals("Catalog-laptop",
+                      new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8));
+
+To stop the Service, use the ServiceManager's stop method::
+
+  serviceManager.stop();
+
 Strategies in Testing MapReduce Jobs
 ------------------------------------
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under `TrafficAnalytics </examples/TrafficAnalytics/index.html>`__.
+found under `Purchase </examples/Purchase/index.html>`__.
 
-The ``TrafficAnalyticsTest`` class should extend from
-``TestBase`` similar to `Strategies in Testing Flows`.
+The ``PurchaseTest`` class should extend from
+``AppTestBase`` similar to `Strategies in Testing Flows`.
 
 ::
 
-  public class TrafficAnalyticsTest extends TestBase {
+  public class PurchaseTest extends AppTestBase {
     @Test
     public void test() throws Exception {
 
-The ``TrafficAnalytics`` application can be deployed using the ``deployApplication`` 
-method from the ``TestBase`` class::
+The ``PurchaseApp`` application can be deployed using the ``deployApplication``
+method from the ``AppTestBase`` class::
 
   // Deploy an Application
-  ApplicationManager appManager = deployApplication(TrafficAnalyticsApp.class);
+  ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
-The MapReduce job reads from the ``logEventTable`` Dataset. As a first
-step, the data to the ``logEventTable`` should be populated by running
-the ``RequestCountFlow`` and sending the data to the ``logEventStream``
+The MapReduce job reads from the ``purchases`` Dataset. As a first
+step, the data to the ``purchases`` should be populated by running
+the ``PurchaseFlow`` and sending the data to the ``purchaseStream``
 Stream::
 
-  FlowManager flowManager = appManager.startFlow("RequestCountFlow");
+  FlowManager flowManager = appManager.startFlow("PurchaseFlow");
   // Send data to the Stream
   sendData(appManager, now);
   
   // Wait for the last Flowlet to process 3 events or at most 5 seconds
   RuntimeMetrics metrics = RuntimeStats.
-      getFlowletMetrics("TrafficAnalytics", "RequestCountFlow", "collector");
+      getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
   metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Start the MapReduce job and wait for a maximum of 60 seconds::
 
   // Start the MapReduce job.
-  MapReduceManager mrManager = appManager.startMapReduce("RequestCountMapReduce");
+  MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
   mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We can start verifying that the MapReduce job was run correctly by
@@ -151,12 +193,60 @@ the counts::
   ProcedureClient client = procedureManager.getClient();
 
   // Verify the query.
-  String response = client.query("getCounts", Collections.<String, String>emptyMap());
+  String response = client.query("history", ImmutableMap.of("customer", "joe"));
   
   // Deserialize the JSON string.
-  Map<Long, Integer> result = GSON.
-      fromJson(response, new TypeToken<Map<Long, Integer>>(){}.getType());
-  Assert.assertEquals(2, result.size());
+  PurchaseHistory result = GSON.fromJson(response, PurchaseHistory.class);
+  Assert.assertEquals(2, result.getPurchases().size());
+
+The assertion will verify that the correct result was received.
+
+Strategies in Testing Spark Programs
+------------------------------------
+Let's write a test case for an application that uses a Spark program.
+Complete source code for this test can be found at `SparkPageRank </examples/SparkPageRank/index.html>`__.
+
+The ``SparkPageRankTest`` class should extend from
+``TestBase`` similar to `Strategies in Testing Flows`::
+
+  public class SparkPageRankTest extends TestBase {
+    @Test
+    public void test() throws Exception {
+
+The ``SparkPageRankTest`` application can be deployed using the ``deployApplication``
+method from the ``TestBase`` class::
+
+  // Deploy an Application
+  ApplicationManager appManager = deployApplication(SparkPageRankApp.class);
+
+The Spark program reads from the ``backlinkURLs`` Dataset. As a first
+step, data in the ``backlinkURLs`` should be populated by running
+the ``BackLinkFlow`` and sending the data to the Stream ``backlinkURLStream``::
+
+  FlowManager flowManager = appManager.startFlow("BackLinkFlow");
+  // Send data to the Stream
+  sendData(appManager);
+
+  // Wait for the last Flowlet to process 4 events or at most 5 seconds
+  RuntimeMetrics metrics = RuntimeStats.
+      getFlowletMetrics("SparkPageRank", "BackLinkFlow", "reader");
+  metrics.waitForProcessed(4, 5, TimeUnit.SECONDS);
+
+Start the Spark program and wait for a maximum of 60 seconds::
+
+  // Start the Spark program.
+  SparkManager sparkManager = appManager.startSpark("SparkPageRankProgram");
+  sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+
+We verify that the Spark program ran correctly by
+obtaining a client for the Procedure, and then submitting a query for
+the ranks::
+
+  ProcedureClient client = procedureManager.getClient();
+
+  // Verify the query.
+  String response = client.query("rank", ImmutableMap.of("url", "http://example.com/page1"));
+  Assert.assertEquals("1.3690036520596678", response);
 
 The assertion will verify that the correct result was received.
 

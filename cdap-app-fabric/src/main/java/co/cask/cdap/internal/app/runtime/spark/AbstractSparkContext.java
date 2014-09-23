@@ -96,7 +96,7 @@ abstract class AbstractSparkContext implements SparkContext {
    * This function requires that the hConf.xml file containing {@link Configuration} is present in the job jar.
    */
   private Configuration loadHConf() {
-    // TODO: Inject through Guice in Distributed mode. REACTOR-941
+    // TODO: Inject through Guice in Distributed mode, see CDAP-3
     Configuration hConf = new Configuration();
     hConf.clear();
 

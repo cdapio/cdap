@@ -24,4 +24,6 @@ public interface Update<T> {
   T getValue();
 
   byte[] getBytes();
+
+  Update<T> deepCopy();
 }

@@ -30,22 +30,9 @@
   <name>Cask Data Application Platform (CDAP) Examples</name>
 
   <modules>
-    <module>CountAndFilterWords</module>
-    <module>CountCounts</module>
-    <module>CountOddAndEven</module>
     <module>CountRandom</module>
-    <module>CountTokens</module>
     <module>HelloWorld</module>
-    <module>PageViewAnalytics</module>
     <module>Purchase</module>
-    <module>ResourceSpammer</module>
-    <module>ResponseCodeAnalytics</module>
-    <!-- Sentiment analysis showcases running external processes in flowlets -->
-    <!-- assumes Linux style path for locating python. -->
-    <module>SentimentAnalysis</module>
-    <module>SimpleWriteAndRead</module>
-    <module>Ticker</module>
-    <module>TrafficAnalytics</module>
     <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
@@ -136,6 +123,9 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.14.1</version>
+        <configuration>
+          <argLine>-Xmx2048m</argLine>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
@@ -189,7 +179,7 @@
       <dependency>
         <groupId>co.cask.http</groupId>
         <artifactId>netty-http</artifactId>
-        <version>0.4.0-SNAPSHOT</version>
+        <version>0.4.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>

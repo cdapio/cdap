@@ -337,8 +337,177 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1), a(L4));
-      verify(a(C1), la(1L), myTable1.increment(R1, a(C1), la(-3L)));
-      verify(a(C2), la(2L), myTable1.increment(R1, a(C2), la(2L)));
+      verify(a(C1), la(1L), myTable1.incrementAndGet(R1, a(C1), la(-3L)));
+      verify(a(C2), la(2L), myTable1.incrementAndGet(R1, a(C2), la(2L)));
+      // verify increment result visible inside tx before commit
+      verify(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
+      verify(L1, myTable1.get(R1, C1));
+      verify(L2, myTable1.get(R1, C2));
+      verify(null, myTable1.get(R1, C3));
+      verify(a(C1, L1), myTable1.get(R1, a(C1)));
+      verify(a(C1, L1, C2, L2), myTable1.get(R1));
+      // incrementing non-long value should fail
+      myTable1.put(R1, a(C5), a(V5));
+      try {
+        myTable1.incrementAndGet(R1, a(C5), la(5L));
+        Assert.assertTrue(false);
+      } catch (NumberFormatException e) {
+        // Expected
+      }
+      // previous increment should not do any change
+      verify(a(C5, V5), myTable1.get(R1, a(C5)));
+      verify(V5, myTable1.get(R1, C5));
+
+      // start new tx (doesn't see changes of the tx1)
+      Transaction tx2 = txClient.startShort();
+
+      // committing tx1 in stages to check races are handled well
+      // * first, flush operations of table
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+
+      // check that tx2 doesn't see changes (even though they were flushed) of tx1
+      // assuming current value is null
+      myTable2 = getTable("myTable");
+      ((TransactionAware) myTable2).startTx(tx2);
+
+      verify(a(), myTable2.get(R1, a(C1, C2, C5)));
+      verify(null, myTable2.get(R1, C1));
+      verify(null, myTable2.get(R1, C2));
+      verify(null, myTable2.get(R1, C5));
+      verify(a(), myTable2.get(R1));
+      verify(a(C1), la(55L), myTable2.incrementAndGet(R1, a(C1), la(55L)));
+
+      // start tx3 and verify same thing again
+      Transaction tx3 = txClient.startShort();
+      myTable3 = getTable("myTable");
+      ((TransactionAware) myTable3).startTx(tx3);
+      verify(a(), myTable3.get(R1, a(C1, C2, C5)));
+      verify(null, myTable3.get(R1, C1));
+      verify(null, myTable3.get(R1, C2));
+      verify(null, myTable3.get(R1, C5));
+      verify(a(), myTable3.get(R1));
+      verify(a(C1), la(4L), myTable3.incrementAndGet(R1, a(C1), la(4L)));
+
+      // * second, make tx visible
+      Assert.assertTrue(txClient.commit(tx1));
+
+      // verify that tx2 cannot commit because of the conflicts...
+      Assert.assertFalse(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      ((TransactionAware) myTable2).rollbackTx();
+      txClient.abort(tx2);
+
+      // start tx4 and verify that changes of tx1 are now visible
+      Transaction tx4 = txClient.startShort();
+      myTable4 = getTable("myTable");
+      ((TransactionAware) myTable4).startTx(tx4);
+      verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
+      verify(a(C2, L2), myTable4.get(R1, a(C2)));
+      verify(L1, myTable4.get(R1, C1));
+      verify(L2, myTable4.get(R1, C2));
+      verify(null, myTable4.get(R1, C3));
+      verify(V5, myTable4.get(R1, C5));
+      verify(a(C1, L1, C5, V5), myTable4.get(R1, a(C1, C5)));
+      verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1));
+
+      // tx3 still cannot see tx1 changes, only its own
+      verify(a(C1, L4), myTable3.get(R1, a(C1, C2, C5)));
+      verify(L4, myTable3.get(R1, C1));
+      verify(null, myTable3.get(R1, C2));
+      verify(null, myTable3.get(R1, C5));
+      verify(a(C1, L4), myTable3.get(R1));
+      // and it cannot commit because its changes cause conflicts
+      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
+      ((TransactionAware) myTable3).rollbackTx();
+      txClient.abort(tx3);
+
+      // verify we can do some ops with tx4 based on data written with tx1
+      verify(a(C1, C2, C3), la(3L, 3L, 5L), myTable4.incrementAndGet(R1, a(C1, C2, C3), la(2L, 1L, 5L)));
+      myTable4.delete(R1, a(C2));
+      verify(a(C4), la(3L), myTable4.incrementAndGet(R1, a(C4), la(3L)));
+      myTable4.delete(R1, a(C1));
+
+      // committing tx4
+      Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) myTable3).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable4).commitTx());
+      Assert.assertTrue(txClient.commit(tx4));
+
+      // verifying the result contents in next transaction
+      Transaction tx5 = txClient.startShort();
+      // NOTE: table instance can be re-used in series of transactions
+      ((TransactionAware) myTable4).startTx(tx5);
+      verify(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
+      verify(null, myTable4.get(R1, C1));
+      verify(null, myTable4.get(R1, C2));
+      verify(L5, myTable4.get(R1, C3));
+      verify(L3, myTable4.get(R1, C4));
+      verify(V5, myTable4.get(R1, C5));
+      verify(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1));
+      Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable3).commitTx());
+      Assert.assertTrue(txClient.commit(tx5));
+
+    } finally {
+      admin.drop();
+    }
+  }
+
+  // todo: unify with testBasicIncrementWithTx - it is exactly same
+  @Test
+  public void testBasicIncrementWriteWithTxSmall() throws Exception {
+    DatasetProperties props = DatasetProperties.builder().add(
+      OrderedTable.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
+    DatasetAdmin admin = getTableAdmin("myTable", props);
+    admin.create();
+    OrderedTable myTable = getTable("myTable");
+
+    // start 1st tx
+    Transaction tx = txClient.startShort();
+    ((TransactionAware) myTable).startTx(tx);
+
+    myTable.increment(R1, a(C1), la(-3L));
+
+    commitAndAssertSuccess(tx, (TransactionAware) myTable);
+
+    // start 2nd tx
+    tx = txClient.startShort();
+    ((TransactionAware) myTable).startTx(tx);
+
+    verify(Bytes.toBytes(-3L), myTable.get(R1, C1));
+    myTable.increment(R1, a(C1), la(-3L));
+    verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
+
+    commitAndAssertSuccess(tx, (TransactionAware) myTable);
+
+    // start 3rd tx
+    tx = txClient.startShort();
+    ((TransactionAware) myTable).startTx(tx);
+
+    verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
+
+    commitAndAssertSuccess(tx, (TransactionAware) myTable);
+  }
+
+  private void commitAndAssertSuccess(Transaction tx, TransactionAware txAware) throws Exception {
+    Assert.assertTrue(txClient.canCommit(tx, txAware.getTxChanges()));
+    Assert.assertTrue(txAware.commitTx());
+    Assert.assertTrue(txClient.commit(tx));
+  }
+
+  @Test
+  public void testBasicIncrementWriteWithTx() throws Exception {
+    DatasetProperties props = DatasetProperties.builder().add(
+      OrderedTable.PROPERTY_READLESS_INCREMENT, Boolean.TRUE.toString()).build();
+    DatasetAdmin admin = getTableAdmin("myTable", props);
+    admin.create();
+    OrderedTable myTable1, myTable2, myTable3, myTable4;
+    try {
+      Transaction tx1 = txClient.startShort();
+      myTable1 = getTable("myTable");
+      ((TransactionAware) myTable1).startTx(tx1);
+      myTable1.put(R1, a(C1), a(L4));
+      myTable1.increment(R1, a(C1), la(-3L));
+      myTable1.increment(R1, a(C2), la(2L));
       // verify increment result visible inside tx before commit
       verify(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
       verify(L1, myTable1.get(R1, C1));
@@ -376,7 +545,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       verify(null, myTable2.get(R1, C2));
       verify(null, myTable2.get(R1, C5));
       verify(a(), myTable2.get(R1));
-      verify(a(C1), la(55L), myTable2.increment(R1, a(C1), la(55L)));
+      myTable2.increment(R1, a(C1), la(55L));
 
       // start tx3 and verify same thing again
       Transaction tx3 = txClient.startShort();
@@ -387,7 +556,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       verify(null, myTable3.get(R1, C2));
       verify(null, myTable3.get(R1, C5));
       verify(a(), myTable3.get(R1));
-      verify(a(C1), la(4L), myTable3.increment(R1, a(C1), la(4L)));
+      myTable3.increment(R1, a(C1), la(4L));
 
       // * second, make tx visible
       Assert.assertTrue(txClient.commit(tx1));
@@ -422,178 +591,9 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       txClient.abort(tx3);
 
       // verify we can do some ops with tx4 based on data written with tx1
-      verify(a(C1, C2, C3), la(3L, 3L, 5L), myTable4.increment(R1, a(C1, C2, C3), la(2L, 1L, 5L)));
+      myTable4.increment(R1, a(C1, C2, C3), la(2L, 1L, 5L));
       myTable4.delete(R1, a(C2));
-      verify(a(C4), la(3L), myTable4.increment(R1, a(C4), la(3L)));
-      myTable4.delete(R1, a(C1));
-
-      // committing tx4
-      Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) myTable3).getTxChanges()));
-      Assert.assertTrue(((TransactionAware) myTable4).commitTx());
-      Assert.assertTrue(txClient.commit(tx4));
-
-      // verifying the result contents in next transaction
-      Transaction tx5 = txClient.startShort();
-      // NOTE: table instance can be re-used in series of transactions
-      ((TransactionAware) myTable4).startTx(tx5);
-      verify(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
-      verify(null, myTable4.get(R1, C1));
-      verify(null, myTable4.get(R1, C2));
-      verify(L5, myTable4.get(R1, C3));
-      verify(L3, myTable4.get(R1, C4));
-      verify(V5, myTable4.get(R1, C5));
-      verify(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1));
-      Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
-      Assert.assertTrue(((TransactionAware) myTable3).commitTx());
-      Assert.assertTrue(txClient.commit(tx5));
-
-    } finally {
-      admin.drop();
-    }
-  }
-
-  // todo: unify with testBasicIncrementWithTx - it is exactly same
-  @Test
-  public void testBasicIncrementWriteWithTxSmall() throws Exception {
-    DatasetProperties props = DatasetProperties.builder().add(
-      OrderedTable.PROPERTY_READLESS_INCREMENT_WRITE, Boolean.TRUE.toString()).build();
-    DatasetAdmin admin = getTableAdmin("myTable", props);
-    admin.create();
-    OrderedTable myTable = getTable("myTable");
-
-    // start 1st tx
-    Transaction tx = txClient.startShort();
-    ((TransactionAware) myTable).startTx(tx);
-
-    myTable.incrementWrite(R1, a(C1), la(-3L));
-
-    commitAndAssertSuccess(tx, (TransactionAware) myTable);
-
-    // start 2nd tx
-    tx = txClient.startShort();
-    ((TransactionAware) myTable).startTx(tx);
-
-    verify(Bytes.toBytes(-3L), myTable.get(R1, C1));
-    myTable.incrementWrite(R1, a(C1), la(-3L));
-    verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
-
-    commitAndAssertSuccess(tx, (TransactionAware) myTable);
-
-    // start 3rd tx
-    tx = txClient.startShort();
-    ((TransactionAware) myTable).startTx(tx);
-
-    verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
-
-    commitAndAssertSuccess(tx, (TransactionAware) myTable);
-  }
-
-  private void commitAndAssertSuccess(Transaction tx, TransactionAware txAware) throws Exception {
-    Assert.assertTrue(txClient.canCommit(tx, txAware.getTxChanges()));
-    Assert.assertTrue(txAware.commitTx());
-    Assert.assertTrue(txClient.commit(tx));
-  }
-
-  @Test
-  public void testBasicIncrementWriteWithTx() throws Exception {
-    DatasetProperties props = DatasetProperties.builder().add(
-      OrderedTable.PROPERTY_READLESS_INCREMENT_WRITE, Boolean.TRUE.toString()).build();
-    DatasetAdmin admin = getTableAdmin("myTable", props);
-    admin.create();
-    OrderedTable myTable1, myTable2, myTable3, myTable4;
-    try {
-      Transaction tx1 = txClient.startShort();
-      myTable1 = getTable("myTable");
-      ((TransactionAware) myTable1).startTx(tx1);
-      myTable1.put(R1, a(C1), a(L4));
-      myTable1.incrementWrite(R1, a(C1), la(-3L));
-      myTable1.incrementWrite(R1, a(C2), la(2L));
-      // verify increment result visible inside tx before commit
-      verify(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
-      verify(L1, myTable1.get(R1, C1));
-      verify(L2, myTable1.get(R1, C2));
-      verify(null, myTable1.get(R1, C3));
-      verify(a(C1, L1), myTable1.get(R1, a(C1)));
-      verify(a(C1, L1, C2, L2), myTable1.get(R1));
-      // incrementing non-long value should fail
-      myTable1.put(R1, a(C5), a(V5));
-      try {
-        myTable1.incrementWrite(R1, a(C5), la(5L));
-        Assert.assertTrue(false);
-      } catch (NumberFormatException e) {
-        // Expected
-      }
-      // previous increment should not do any change
-      verify(a(C5, V5), myTable1.get(R1, a(C5)));
-      verify(V5, myTable1.get(R1, C5));
-
-      // start new tx (doesn't see changes of the tx1)
-      Transaction tx2 = txClient.startShort();
-
-      // committing tx1 in stages to check races are handled well
-      // * first, flush operations of table
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
-      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-
-      // check that tx2 doesn't see changes (even though they were flushed) of tx1
-      // assuming current value is null
-      myTable2 = getTable("myTable");
-      ((TransactionAware) myTable2).startTx(tx2);
-
-      verify(a(), myTable2.get(R1, a(C1, C2, C5)));
-      verify(null, myTable2.get(R1, C1));
-      verify(null, myTable2.get(R1, C2));
-      verify(null, myTable2.get(R1, C5));
-      verify(a(), myTable2.get(R1));
-      myTable2.incrementWrite(R1, a(C1), la(55L));
-
-      // start tx3 and verify same thing again
-      Transaction tx3 = txClient.startShort();
-      myTable3 = getTable("myTable");
-      ((TransactionAware) myTable3).startTx(tx3);
-      verify(a(), myTable3.get(R1, a(C1, C2, C5)));
-      verify(null, myTable3.get(R1, C1));
-      verify(null, myTable3.get(R1, C2));
-      verify(null, myTable3.get(R1, C5));
-      verify(a(), myTable3.get(R1));
-      myTable3.incrementWrite(R1, a(C1), la(4L));
-
-      // * second, make tx visible
-      Assert.assertTrue(txClient.commit(tx1));
-
-      // verify that tx2 cannot commit because of the conflicts...
-      Assert.assertFalse(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
-      ((TransactionAware) myTable2).rollbackTx();
-      txClient.abort(tx2);
-
-      // start tx4 and verify that changes of tx1 are now visible
-      Transaction tx4 = txClient.startShort();
-      myTable4 = getTable("myTable");
-      ((TransactionAware) myTable4).startTx(tx4);
-      verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1, a(C1, C2, C3, C4, C5)));
-      verify(a(C2, L2), myTable4.get(R1, a(C2)));
-      verify(L1, myTable4.get(R1, C1));
-      verify(L2, myTable4.get(R1, C2));
-      verify(null, myTable4.get(R1, C3));
-      verify(V5, myTable4.get(R1, C5));
-      verify(a(C1, L1, C5, V5), myTable4.get(R1, a(C1, C5)));
-      verify(a(C1, L1, C2, L2, C5, V5), myTable4.get(R1));
-
-      // tx3 still cannot see tx1 changes, only its own
-      verify(a(C1, L4), myTable3.get(R1, a(C1, C2, C5)));
-      verify(L4, myTable3.get(R1, C1));
-      verify(null, myTable3.get(R1, C2));
-      verify(null, myTable3.get(R1, C5));
-      verify(a(C1, L4), myTable3.get(R1));
-      // and it cannot commit because its changes cause conflicts
-      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
-      ((TransactionAware) myTable3).rollbackTx();
-      txClient.abort(tx3);
-
-      // verify we can do some ops with tx4 based on data written with tx1
-      myTable4.incrementWrite(R1, a(C1, C2, C3), la(2L, 1L, 5L));
-      myTable4.delete(R1, a(C2));
-      myTable4.incrementWrite(R1, a(C4), la(3L));
+      myTable4.increment(R1, a(C4), la(3L));
       myTable4.delete(R1, a(C1));
 
       // committing tx4
@@ -1396,6 +1396,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
   void verify(byte[][] expectedRows, byte[][][] expectedRowMaps, Scanner scan) {
     for (int i = 0; i < expectedRows.length; i++) {
       Row next = scan.next();
+      Assert.assertNotNull(next);
       Assert.assertArrayEquals(expectedRows[i], next.getRow());
       verify(expectedRowMaps[i], next.getColumns());
     }

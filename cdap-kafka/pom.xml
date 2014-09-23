@@ -50,7 +50,7 @@
     <profile>
       <id>dist</id>
       <properties>
-        <service.name>kafka-server</service.name>
+        <original.service.name>kafka-server</original.service.name>
       </properties>
       <build>
         <plugins>

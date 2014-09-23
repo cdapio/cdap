@@ -24,11 +24,6 @@ define([], function () {
 				controller.set('previousProcedure', model.get('id'));
 			}
 
-			/*
-			 * Track container metric.
-			 */
-			model.trackMetric('/system/' + model.get('context') + '/resources.used.containers', 'currents', 'containers');
-
 			this.interval = setInterval(function () {
 				self.updateStats();
 			}, C.POLLING_INTERVAL);
@@ -147,7 +142,7 @@ define([], function () {
       if (C.get('isLocal')) {
         return this.get('model.instances');
       } else {
-        var instances = Math.max(0, (+this.get('model.containersLabel') - 1));
+        var instances = this.get('model.containersLabel');
         return instances + ' instance' + (instances === 1 ? '' : 's');
       }
     }.property('model.instances','model.containersLabel'),
