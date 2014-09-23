@@ -342,10 +342,15 @@ plus special scan, atomic increment and compare-and-swap operations::
   public boolean compareAndSwap(byte[] row, byte[] column,
                                 byte[] expectedValue, byte[] newValue)
 
-  // Increment
-  public Row increment(Increment increment)
-  public long increment(byte[] row, byte[] column, long amount)
-  public Row increment(byte[] row, byte[][] columns, long[] amounts)
+  // Increment and return result
+  public Row incrementAndGet(Increment increment)
+  public long incrementAndGet(byte[] row, byte[] column, long amount)
+  public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts)
+
+  // Increment without result
+  public void increment(Increment increment)
+  public void increment(byte[] row, byte[] column, long amount)
+  public void increment(byte[] row, byte[][] columns, long[] amounts)
 
   // Delete
   public void delete(Delete delete)
@@ -452,9 +457,8 @@ The operation returns ``true`` if it succeeds and ``false`` otherwise::
 Increment
 .........
 An increment operation increments a ``long`` value of one or more columns by either ``1L``
-or an integer amount *n*.
-If a column doesn’t exist, it is created with an assumed value
-before the increment of zero::
+or an integer amount *n*.  If a column doesn’t exist, it is created with an assumed value of zero
+before the increment is applied::
 
   // Write long value to a column of a row
   t.put(new Put("rowKey1").add("column1", 55L));
@@ -463,6 +467,40 @@ before the increment of zero::
 
 If the existing value of the column cannot be converted to a ``long``,
 a ``NumberFormatException`` will be thrown.
+
+Two types of increment operations are supported:
+* ``incrementAndGet(...)`` operations will increment the currently stored value and return the
+  result
+* ``increment(...)`` operations will increment the currently stored value without any return
+  value.
+
+*Read-less Increments*
+By default, an increment operation will need to first perform a read operation to find the
+currently stored column value, apply the increment to the stored value, and then write the final
+result.  For high write volume workloads, with only occassional reads, this can impose a great
+deal of unnecessary overhead for increments.
+
+In these situations, you can configure the dataset to support read-less increments.  With read-less
+increments, each operation only performs a write operation, storing the incremental value for the
+column in a new cell.  This completely eliminates the cost of the read operation when performing
+increments.  Instead, when reading the value for a column storing data for read-less increments,
+all of the stored increment values are read and summed up together with the last stored complete
+sum, in order to compute the final result.  As a result, read operations become more expensive, but
+this trade-off can be very beneficial for workloads dominated by writes.
+
+Read-less increments can only be used with the ``increment(...)`` operation, since it does not
+return a value.  To configure a dataset to support read-less increments::
+
+1. Set the property ``dataset.table.readless.increment`` to ``true`` in the DatasetSpecification
+   properties.
+2. Use the ``increment(...)`` methods for any operations that do not need the result value of the
+   increment operation.
+
+*Note:* the current implementation of read-less increments uses an HBase coprocessor to prefix the
+stored values for incremental updates with a special prefix.  Since this prefix could occur
+naturally in other stored data values, it is highly recommended that increments be stored in a
+separate dataset and not be mixed in with other types of values.  This will ensure that other data is
+not mis-identified as a stored increment and prevent incorrect results.
 
 Delete
 ......
@@ -534,7 +572,7 @@ For each word the counter is incremented. If the result of the increment is 1, t
 we've encountered that word, hence we have a new unique word and we then increment the unique counter::
 
     public void updateUniqueCount(String entry) {
-      long newCount = entryCountTable.increment(new Increment(entry, "count", 1L)).getInt("count");
+      long newCount = entryCountTable.incrementAndGet(new Increment(entry, "count", 1L)).getInt("count");
       if (newCount == 1L) {
         uniqueCountTable.increment(new Increment("unique_count", "count", 1L));
       }
