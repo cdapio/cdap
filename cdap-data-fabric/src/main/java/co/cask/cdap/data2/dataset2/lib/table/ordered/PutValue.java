@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.ordered;
 
+
 /**
  * Represents a normal (full) write to a datastore for in-memory buffering, overwriting the previously stored value.
  */
@@ -34,5 +35,10 @@ public class PutValue implements Update<byte[]> {
   @Override
   public byte[] getBytes() {
     return bytes;
+  }
+
+  @Override
+  public Update<byte[]> deepCopy() {
+    return new PutValue(bytes == null ? null : bytes.clone());
   }
 }

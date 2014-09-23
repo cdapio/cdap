@@ -40,6 +40,7 @@ import javax.annotation.Nullable;
  * Holds all in-memory tables for {@link InMemoryOrderedTable}.
  */
 // todo: use locks instead of synchronize
+// todo: consider using SortedMap instead of NavigableMap in APIs
 public class InMemoryOrderedTableService {
   private static Map<String, ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>>> tables =
     Maps.newHashMap();
@@ -69,21 +70,12 @@ public class InMemoryOrderedTableService {
 
   // no nulls
   public static synchronized void merge(String tableName,
-                                        Map<byte[], Map<byte[], Update>> changes,
-                                        long version) {
-    ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
-    for (Map.Entry<byte[], Map<byte[], Update>> change : changes.entrySet()) {
-      merge(table, change.getKey(), change.getValue(), version);
-    }
-  }
-
-  // no nulls
-  public static synchronized void merge(String tableName,
-                                        NavigableMap<byte[], NavigableMap<byte[], Update>> changes,
+                                        NavigableMap<byte[], ? extends NavigableMap<byte[], ? extends Update>> changes,
                                         long version) {
     // todo: handle nulls
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
-    for (Map.Entry<byte[], NavigableMap<byte[], Update>> change : changes.entrySet()) {
+    NavigableMap<byte[], NavigableMap<byte[], Update>> changesCopy = deepCopyUpdates(changes);
+    for (Map.Entry<byte[], NavigableMap<byte[], Update>> change : changesCopy.entrySet()) {
       merge(table, change.getKey(), change.getValue(), version);
     }
   }
@@ -110,6 +102,8 @@ public class InMemoryOrderedTableService {
     }
   }
 
+  // todo: remove it from here: only used by "system" metrics table, which should be revised
+  @Deprecated
   public static synchronized Map<byte[], Long> increment(String tableName, byte[] row, Map<byte[], Long> increments) {
     Map<byte[], Long> resultMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
@@ -250,7 +244,7 @@ public class InMemoryOrderedTableService {
     Preconditions.checkArgument(table != null, "table not found: " + tableName);
     assert table != null;
     NavigableMap<byte[], NavigableMap<Long, Update>> rowMap = table.get(row);
-    return Updates.rowToBytes(getVisible(rowMap, version));
+    return deepCopy(Updates.rowToBytes(getVisible(rowMap, version)));
   }
 
   public static synchronized NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>>
@@ -276,7 +270,7 @@ public class InMemoryOrderedTableService {
     for (Map.Entry<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> rowMap : rows.entrySet()) {
       NavigableMap<byte[], NavigableMap<Long, Update>> columns =
         version == null ? rowMap.getValue() : getVisible(rowMap.getValue(), version);
-      result.put(rowMap.getKey(), Updates.rowToBytes(columns));
+      result.put(copy(rowMap.getKey()), deepCopy(Updates.rowToBytes(columns)));
     }
 
     return result;
@@ -310,6 +304,54 @@ public class InMemoryOrderedTableService {
     NavigableMap<Long, Update> map = Maps.newTreeMap(VERSIONED_VALUE_MAP_COMPARATOR);
     map.putAll(copy);
     return map;
+  }
+
+  @Nullable
+  private static NavigableMap<byte[], NavigableMap<byte[], Update>> deepCopyUpdates(
+    @Nullable NavigableMap<byte[], ? extends NavigableMap<byte[], ? extends Update>> src) {
+
+    if (src == null) {
+      return null;
+    }
+
+    NavigableMap<byte[], NavigableMap<byte[], Update>> copy = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], ? extends NavigableMap<byte[], ? extends Update>> entry : src.entrySet()) {
+      byte[] key = copy(entry.getKey());
+      NavigableMap<byte[], Update> columnUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+      copy.put(key, columnUpdates);
+      for (Map.Entry<byte[], ? extends Update> updateEntry : entry.getValue().entrySet()) {
+        byte[] col = copy(updateEntry.getKey());
+        columnUpdates.put(col, updateEntry.getValue().deepCopy());
+      }
+    }
+
+    return copy;
+  }
+
+  @Nullable
+  private static NavigableMap<byte[], NavigableMap<Long, byte[]>> deepCopy(
+    @Nullable NavigableMap<byte[], NavigableMap<Long, byte[]>> src) {
+
+    if (src == null) {
+      return null;
+    }
+
+    NavigableMap<byte[], NavigableMap<Long, byte[]>> copy = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<byte[], NavigableMap<Long, byte[]>> entry : src.entrySet()) {
+      byte[] key = copy(entry.getKey());
+      NavigableMap<Long, byte[]> columnValues = Maps.newTreeMap(VERSIONED_VALUE_MAP_COMPARATOR);
+      copy.put(key, columnValues);
+      for (Map.Entry<Long, byte[]> valueEntry : entry.getValue().entrySet()) {
+        columnValues.put(valueEntry.getKey(), copy(valueEntry.getValue()));
+      }
+    }
+
+    return copy;
+  }
+
+  @Nullable
+  private static byte[] copy(@Nullable byte[] src) {
+    return src == null ? null : Arrays.copyOf(src, src.length);
   }
 
   // This is descending Longs comparator
