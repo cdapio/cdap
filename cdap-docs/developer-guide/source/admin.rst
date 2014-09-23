@@ -174,7 +174,7 @@ CDAP nodes require Hadoop and HBase client installation and configuration. No Ha
 services need to be running.
 
 Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and possibly *Hive*)
-cluster configurations by adding your configuration to their classpaths.
+cluster configurations by adding your configuration to their class paths.
 
 .. rst2pdf: PageBreak
 
@@ -1273,9 +1273,11 @@ Once again, the top half shows four different elements, all in realtime:
 
 Statistics and graphs are sampled based on the setting of the sampling menu in the upper-right.
 
-The lower half shows the list of deployed applications, their descriptions, along with each app's container, core and memory use in realtime.
+The lower half shows the list of deployed applications, their descriptions, along with each app's container, core
+and memory use in realtime.
 
-The triangles to the left of each application turn to reveal the hierarchy of resources being used by each application's Flows and Flowlets. You can use this tree to drill down into any part of the CDAP.
+The triangles to the left of each application turn to reveal the hierarchy of resources being used by each
+application's Flows and Flowlets. You can use this tree to drill down into any part of the CDAP.
 
 The footer of each pane gives—below the *Cask Data, Inc.* copyright—five buttons
 and the version of the CDAP that you are using.
@@ -1294,7 +1296,8 @@ available if the CDAP has been started with the system property ``enable.unrecov
 Metrics Explorer
 ----------------
 
-In the top portion of the `Overview image <#console>`__ you can see the **Metrics** button, which takes you to the *Metrics Explorer:*
+In the top portion of the `Overview image <#console>`__ you can see the **Metrics** button, which takes you to the
+*Metrics Explorer:*
 
 .. image:: _images/console/console_18_metrics_explorer1.png
    :width: 600px
@@ -2390,10 +2393,11 @@ see the online document `CDAP Security Guide
 .. _note 1:
 
 :Note 1:
+
     ``kafka.default.replication.factor`` is used to replicate *Kafka* messages across multiple
-  machines to prevent data loss in the event of a hardware failure. The recommended setting
-  is to run at least two *Kafka* servers. If you are running two *Kafka* servers, set this
-  value to 2; otherwise, set it to the number of *Kafka* servers
+    machines to prevent data loss in the event of a hardware failure. The recommended setting
+    is to run at least two *Kafka* servers. If you are running two *Kafka* servers, set this
+    value to 2; otherwise, set it to the number of *Kafka* servers
 
 .. _note 2:
 

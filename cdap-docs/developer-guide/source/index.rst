@@ -18,7 +18,6 @@ Cask Data Application Platform Documentation
    /javadocs/index
    Tools </tools>
    Administration and Operations </admin>
-   Installation and Configuration</install>
    Licenses and Dependencies </licenses/index>
    Release Notes </releasenotes>
    FAQ </faq/index>
