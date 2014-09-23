@@ -31,6 +31,29 @@
     <url>http://cask.co</url>
   </organization>
 
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Cask Data</name>
+      <email>cask-dev@googlegroups.com</email>
+      <organization>Cask Data</organization>
+      <organizationUrl>https://github.com/caskco/cdap</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/caskco/cdap.git</connection>
+    <developerConnection>scm:git:git@github.com:caskco/cdap.git</developerConnection>
+    <url>https://github.com/caskco/cdap.git</url>
+    <tag>HEAD</tag>
+  </scm>
+
   <repositories>
     <repository>
       <id>continuuity-public</id>
