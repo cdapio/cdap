@@ -102,8 +102,8 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
           KeyValue<byte[], byte[]> row = keyValueIterator.next();
           return new KeyValue<byte[], T>(row.getKey(), decode(row.getValue()));
         }
-        keyValueIterator.close();
-        return endOfData();
+        close();
+        return null;
       }
 
       @Override

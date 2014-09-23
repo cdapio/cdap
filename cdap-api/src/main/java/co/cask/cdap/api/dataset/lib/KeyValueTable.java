@@ -206,8 +206,8 @@ public class KeyValueTable extends AbstractDataset implements
         if (next != null) {
           return new KeyValue<byte[], byte[]>(next.getRow(), next.get(KEY_COLUMN));
         }
-        scanner.close();
-        return endOfData();
+        close();
+        return null;
       }
 
       @Override

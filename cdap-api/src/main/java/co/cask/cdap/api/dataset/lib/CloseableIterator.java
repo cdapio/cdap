@@ -23,5 +23,5 @@ import java.util.Iterator;
  * @param <T>
  */
 public interface CloseableIterator<T> extends Iterator<T> {
-  public void close();
+ void close();
 }
