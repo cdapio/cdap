@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IntegerStore;
 import co.cask.cdap.api.dataset.lib.IntegerStoreModule;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
@@ -32,6 +33,7 @@ import co.cask.cdap.internal.io.TypeRepresentation;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
@@ -79,6 +81,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     String result = stringStore.read(a);
     Assert.assertEquals(string, result);
 
+    deleteAndVerify(stringStore, a);
+
     deleteInstance("strings");
   }
 
@@ -91,6 +95,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     pairStore.write(a, pair);
     ImmutablePair<Integer, String> result = pairStore.read(a);
     Assert.assertEquals(pair, result);
+
+    deleteAndVerify(pairStore, a);
 
     deleteInstance("pairs");
   }
@@ -109,6 +115,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     result = customStore.read(a);
     Assert.assertEquals(custom, result);
 
+    deleteAndVerify(customStore, a);
+
     deleteInstance("customs");
   }
 
@@ -121,6 +129,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     innerStore.write(a, inner);
     CustomWithInner.Inner<Integer> result = innerStore.read(a);
     Assert.assertEquals(inner, result);
+
+    deleteAndVerify(innerStore, a);
 
     deleteInstance("inners");
   }
@@ -180,6 +190,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
       // expected
     }
 
+    deleteAndVerify(pairStore, a);
+
     deleteInstance("pairs");
   }
 
@@ -207,6 +219,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     objectStore.write("dummy", new Custom(382, Lists.newArrayList("blah")));
     // verify the class name was recorded (the dummy class loader was used).
     Assert.assertEquals(Custom.class.getName(), lastClassLoaded.get());
+
+    deleteAndVerify(objectStore, Bytes.toBytes("dummy"));
 
     deleteInstance("kv");
   }
@@ -240,6 +254,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
       }
     });
 
+    final SortedSet<Long> keysWrittenCopy = ImmutableSortedSet.copyOf(keysWritten);
+
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -261,6 +277,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
         Assert.assertTrue(keysWritten.isEmpty());
       }
     });
+
+    deleteAndVerifyInBatch(customStore, txnl, keysWrittenCopy);
 
     deleteInstance("customlist");
   }
@@ -311,6 +329,8 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
       }
     });
 
+    deleteAndVerifyInBatch(t, txnl, keysWritten);
+
     deleteInstance("batch");
   }
 
@@ -344,10 +364,43 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     ints.write(42, 101);
     Assert.assertEquals((Integer) 101, ints.read(42));
 
+    // test delete
+    ints.delete(42);
+    Assert.assertNull(ints.read(42));
+
     deleteInstance("ints");
   }
 
   private void createObjectStoreInstance(String instanceName, Type type) throws Exception {
     createInstance("objectStore", instanceName, ObjectStores.objectStoreProperties(type, DatasetProperties.EMPTY));
+  }
+
+  private void deleteAndVerify(ObjectStore store, byte[] key) {
+    store.delete(key);
+    Assert.assertNull(store.read(key));
+  }
+
+  private void deleteAndVerifyInBatch(final ObjectStoreDataset t, TransactionExecutor txnl,
+                                      final SortedSet<Long> keysWritten) throws TransactionFailureException,
+                                      InterruptedException {
+    // delete all the keys written earlier
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (Long curKey : keysWritten) {
+          t.delete(Bytes.toBytes(curKey));
+        }
+      }
+    });
+
+    // verify that all the keys are deleted
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (Long curKey : keysWritten) {
+          Assert.assertNull(t.read(Bytes.toBytes(curKey)));
+        }
+      }
+    });
   }
 }
