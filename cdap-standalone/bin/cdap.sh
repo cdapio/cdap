@@ -165,7 +165,7 @@ check_for_updates() {
   l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`
   if [ $l -eq 3 ]
   then
-    new=`curl 'http://cask.co/cdap/version' 2>/dev/null`
+    new=`curl 'http://s3.amazonaws.com/cdap-docs/VERSION' 2>/dev/null`
     if [[ "x${new}" != "x" ]]; then
      current=`cat ${APP_HOME}/VERSION`
      compare_versions $new $current
@@ -173,7 +173,7 @@ check_for_updates() {
        0);;
        1) echo ""
           echo "UPDATE: There is a newer version of the CDAP SDK available."
-          echo "        Download it from http://cask.co/cdap/download"
+          echo "        Download it from http://cask.co/downloads"
           echo "";;
        2);;
      esac
