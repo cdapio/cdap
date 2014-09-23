@@ -311,7 +311,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
     private Iterator<Map.Entry<byte[], byte[]>>  internalIterator;
 
     /**
-     * Construct an EntryScanner. Should only be called by TimeSeriesTable.
+     * Construct an EntryScanner. Should only be called by TimeseriesTable.
      * @param key key of the entries to read
      * @param startTime defines start of the time range to read, inclusive
      * @param endTime defines end of the time range to read, inclusive

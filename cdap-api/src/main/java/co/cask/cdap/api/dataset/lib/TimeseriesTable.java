@@ -65,7 +65,7 @@ import javax.annotation.Nullable;
  * </p>
  *
  * <p>
- * TimeSeriesTable supports tagging, where each entry is (optionally) labeled with a set of tags used for filtering of
+ * TimeseriesTable supports tagging, where each entry is (optionally) labeled with a set of tags used for filtering of
  * items during data retrievals. For an entry to be retrievable using a given tag, the tag must be provided when
  * the entry was written. If multiple tags are provided during read, an entry must contain every one of these tags in
  * order to qualify for return.
@@ -227,7 +227,7 @@ public class TimeseriesTable extends TimeseriesDataset
 
   @Override
   public SplitReader<byte[], Entry> createSplitReader(final Split split) {
-    return new TimeSeriesTableRecordsReader();
+    return new TimeseriesTableRecordsReader();
   }
 
   /**
@@ -244,7 +244,7 @@ public class TimeseriesTable extends TimeseriesDataset
   /**
    * A record reader for time series.
    */
-  public final class TimeSeriesTableRecordsReader extends IteratorBasedSplitReader<byte[], Entry> {
+  public final class TimeseriesTableRecordsReader extends IteratorBasedSplitReader<byte[], Entry> {
     @Override
     public Iterator<Entry> createIterator(final Split split) {
       InputSplit s = (InputSplit) split;

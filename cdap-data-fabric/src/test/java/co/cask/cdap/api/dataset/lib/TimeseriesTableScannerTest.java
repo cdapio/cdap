@@ -40,7 +40,7 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Defines a class to test EntryScanner in TimeSeriesTable
+ * Defines a class to test EntryScanner in TimeseriesTable
  */
 public class TimeseriesTableScannerTest extends AbstractDatasetTest {
   private static final byte[] ALL_KEY = Bytes.toBytes("a");
