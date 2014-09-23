@@ -131,6 +131,8 @@
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.1.0</spark.version>
     <cdap.client.version>1.0.0-SNAPSHOT</cdap.client.version>
+    <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
+    <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
   </properties>
 
   <modules>
