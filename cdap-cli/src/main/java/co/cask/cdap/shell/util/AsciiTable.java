@@ -156,7 +156,8 @@ public class AsciiTable<T> {
     boolean multiLines = false;
     Splitter splitter = Splitter.on(System.getProperty("line.separator"));
     for (Object field : columns) {
-      Cell cell = new Cell(splitter.split(field.toString()));
+      String fieldString = field == null ? "" : field.toString();
+      Cell cell = new Cell(splitter.split(fieldString));
       multiLines = multiLines || cell.size() > 1;
       builder.add(cell);
     }

@@ -274,8 +274,6 @@ public class ExploreMetadataTest extends BaseHiveExploreServiceTest {
                                            "Indicates whether this column is auto incremented.")
                           ),
                           Lists.newArrayList(
-                            // TODO investigate why for some fields, INT is specified but a double is returned
-                            // (might be REACTOR-429)
                             new QueryResult(Lists.<Object>newArrayList(
                               null, "default", "my_table", "key", 12.0, "STRING",
                               2.147483647E9, null, null, null, 1.0,

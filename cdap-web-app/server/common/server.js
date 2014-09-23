@@ -151,7 +151,7 @@ WebAppServer.prototype.configureSSL = function () {
  * Determines security status. Continues until it is able to determine if security is enabled if
  * CDAP is down.
  * @param  {Function} callback to call after security status is determined.
- * TODO: https://jira.continuuity.com/browse/reactor-531
+ * TODO: Reimplement logic to check if security is enabled, CDAP-17 
  */
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;

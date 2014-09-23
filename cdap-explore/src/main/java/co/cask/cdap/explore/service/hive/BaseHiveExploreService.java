@@ -40,6 +40,7 @@ import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -49,6 +50,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -80,7 +82,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
@@ -96,6 +97,8 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
 
 /**
@@ -175,8 +178,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   }
 
   protected HiveConf getHiveConf() {
-    // TODO figure out why this hive conf does not contain our env properties - REACTOR-270
-    // return hiveConf;
     return new HiveConf();
   }
 
@@ -533,7 +534,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   public QueryHandle execute(String statement) throws ExploreException, SQLException {
     try {
       Map<String, String> sessionConf = startSession();
-      // TODO: allow changing of hive user and password - REACTOR-271
       // It looks like the username and password below is not used when security is disabled in Hive Server2.
       SessionHandle sessionHandle = cliService.openSession("", "", sessionConf);
       try {
@@ -591,11 +591,12 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return ImmutableList.of();
     }
 
+    Lock nextLock = getOperationInfo(handle).getNextLock();
+    nextLock.lock();
     try {
       // Fetch results from Hive
       LOG.trace("Getting results for handle {}", handle);
       List<QueryResult> results = fetchNextResults(getOperationHandle(handle), size);
-
       QueryStatus status = getStatus(handle);
       if (results.isEmpty() && status.getStatus() == QueryStatus.OpStatus.FINISHED) {
         // Since operation has fetched all the results, handle can be timed out aggressively.
@@ -604,6 +605,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       return results;
     } catch (HiveSQLException e) {
       throw getSqlException(e);
+    } finally {
+      nextLock.unlock();
     }
   }
 
@@ -644,44 +647,49 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   @Override
   public List<QueryResult> previewResults(QueryHandle handle)
     throws ExploreException, HandleNotFoundException, SQLException {
-    // TODO add synchronization to this thing?
     if (inactiveHandleCache.getIfPresent(handle) != null) {
       throw new HandleNotFoundException("Query is inactive.", true);
     }
 
     OperationInfo operationInfo = getOperationInfo(handle);
-    File previewFile = operationInfo.getPreviewFile();
-    if (previewFile != null) {
-      try {
-        Reader reader = new FileReader(previewFile);
+    Lock previewLock = operationInfo.getPreviewLock();
+    previewLock.lock();
+    try {
+      File previewFile = operationInfo.getPreviewFile();
+      if (previewFile != null) {
         try {
-          return GSON.fromJson(reader, new TypeToken<List<QueryResult>>() { }.getType());
-        } finally {
-          Closeables.closeQuietly(reader);
+          Reader reader = Files.newReader(previewFile, Charsets.UTF_8);
+          try {
+            return GSON.fromJson(reader, new TypeToken<List<QueryResult>>() { }.getType());
+          } finally {
+            Closeables.closeQuietly(reader);
+          }
+        } catch (FileNotFoundException e) {
+          LOG.error("Could not retrieve preview result file {}", previewFile, e);
+          throw new ExploreException(e);
         }
-      } catch (FileNotFoundException e) {
-        LOG.error("Could not retrieve preview result file {}", previewFile, e);
+      }
+
+      try {
+        // Create preview results for query
+        previewFile = new File(previewsDir, handle.getHandle());
+        FileWriter fileWriter = new FileWriter(previewFile);
+        try {
+          List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
+          GSON.toJson(results, fileWriter);
+          operationInfo.setPreviewFile(previewFile);
+          return results;
+        } finally {
+          Closeables.closeQuietly(fileWriter);
+        }
+      } catch (IOException e) {
+        LOG.error("Could not write preview results into file", e);
         throw new ExploreException(e);
       }
+    } finally {
+      previewLock.unlock();
     }
 
-    FileWriter fileWriter = null;
-    try {
-      // Create preview results for query
-      previewFile = new File(previewsDir, handle.getHandle());
-      fileWriter = new FileWriter(previewFile);
-      List<QueryResult> results = nextResults(handle, PREVIEW_COUNT);
-      GSON.toJson(results, fileWriter);
-      operationInfo.setPreviewFile(previewFile);
-      return results;
-    } catch (IOException e) {
-      LOG.error("Could not write preview results into file", e);
-      throw new ExploreException(e);
-    } finally {
-      if (fileWriter != null) {
-        Closeables.closeQuietly(fileWriter);
-      }
-    }
   }
 
   @Override
@@ -976,6 +984,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     private final Map<String, String> sessionConf;
     private final String statement;
     private final long timestamp;
+    private final Lock nextLock = new ReentrantLock();
+    private final Lock previewLock = new ReentrantLock();
 
     private File previewFile;
 
@@ -997,7 +1007,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       this.statement = statement;
       this.timestamp = timestamp;
     }
-
 
     public SessionHandle getSessionHandle() {
       return sessionHandle;
@@ -1025,6 +1034,14 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     public void setPreviewFile(File previewFile) {
       this.previewFile = previewFile;
+    }
+
+    public Lock getNextLock() {
+      return nextLock;
+    }
+
+    public Lock getPreviewLock() {
+      return previewLock;
     }
   }
 

@@ -32,7 +32,7 @@ public class MetaDataInfo {
     SERVER_NAME(null),
     SEARCH_PATTERN_ESCAPE(null),
     DBMS_NAME(new MetaDataInfo("CDAP")),
-    DBMS_VER(new MetaDataInfo("2.4.0")),  // TODO make it dynamic [REACTOR-319]
+    DBMS_VER(new MetaDataInfo("2.4.0")),
     ACCESSIBLE_TABLES(null),
     ACCESSIBLE_PROCEDURES(null),
     CURSOR_COMMIT_BEHAVIOR(null),
