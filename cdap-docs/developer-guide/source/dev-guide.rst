@@ -1802,7 +1802,7 @@ Each request to a method is committed as a single transaction.
 
 ::
 
-  public class IPGeoLookupHandler implements AbstractHttpServiceHandler {
+  public class IPGeoLookupHandler extends AbstractHttpServiceHandler {
     @UseDataSet("IPGeoTable")
     Table table;
 
