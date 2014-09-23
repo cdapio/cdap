@@ -31,7 +31,9 @@ import os
 import subprocess
 
 def get_sdk_version():
+    return "2.5.0"
     # Sets the CDAP Build Version via maven
+    return "2.5.0"
     mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
     version = None
     try:
@@ -57,14 +59,18 @@ def get_sdk_version():
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinxcontrib.googleanalytics',
     'sphinx.ext.todo',
     'sphinx.ext.pngmath',
     'sphinx.ext.ifconfig',
-    'rst2pdf.pdfbuilder',
+    #'rst2pdf.pdfbuilder',
 ]
 
 # Remove intersphinx as we are not linking to other peoples's docs with Sphinx
 #    'sphinx.ext.intersphinx',
+
+# Google analytics configuration
+googleanalytics_id = 'UA-27787617-1'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

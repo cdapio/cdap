@@ -4,9 +4,9 @@
 
 .. highlight:: console
 
-===============================================
-Cask Data Application Platform HTTP RESTful API
-===============================================
+===========================================================
+Cask Data Application Platform HTTP RESTful API And Clients
+===========================================================
 
 .. rst2pdf: .. class:: center
 
@@ -26,35 +26,44 @@ Cask Data Application Platform HTTP RESTful API
 
 .. highlight:: console
 
+.. _restful-api:
+
+----------------
+HTTP RESTful API
+----------------
+
 Introduction
 ============
 
 The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of purposes:
 
-- **Stream:** sending data events to a Stream, or to inspect the contents of a Stream
+- **Stream:** sending data events to a Stream or to inspect the contents of a Stream
 - **Dataset:** interacting with Datasets, Dataset Modules, and Dataset Types
 - **Query:** sending ad-hoc queries to CDAP Datasets
 - **Procedure:** sending calls to a stored Procedure
-- **Client:** deploying and managing Applications, and managing the life cycle of Flows,
+- **Client:** deploying and managing Applications and managing the life cycle of Flows,
   Procedures, MapReduce Jobs, Workflows, and Custom Services
 - **Logging:** retrieving Application logs
 - **Metrics:** retrieving metrics for system and user Applications (user-defined metrics)
-- **Monitor:** checking the status of various CDAP services, both System and Custom
-
-**Note:** The HTTP interface binds to port ``10000``. This port cannot be changed.
+- **Monitor:** checking the status of various System and Custom CDAP services
 
 Conventions
 -----------
 
 In this API, *client* refers to an external application that is calling CDAP using the HTTP interface.
-
-In this API, *Application* refers to a user Application that has been deployed into CDAP.
+*Application* refers to a user Application that has been deployed into CDAP.
 
 All URLs referenced in this API have this base URL::
 
-  http://<host>:10000/v2
+  http://<host>:<port>/v2
 
-where ``<host>`` is the URL of the CDAP server. The base URL is represented as::
+where ``<host>`` is the host name of the CDAP server and ``<port>`` is the port that is set as the ``router.bind.port``
+in ``cdap-site.xml`` (default: ``10000``).
+
+Note that if SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
+as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: 10443).
+
+In this API, the base URL is represented as::
 
   <base-url>
 
@@ -65,7 +74,7 @@ For example::
 means
 ::
 
-  PUT http://<host>:10000/v2/streams/<new-stream-id>
+  PUT http://<host>:<port>/v2/streams/<new-stream-id>
   
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
@@ -120,12 +129,12 @@ Status Codes
      - ``Not Implemented``
      - A request contained a query that is not supported by this API
 
-**Note:** These returned status codes are not necessarily included in the descriptions of the API,
+Note these returned status codes are not necessarily included in the descriptions of the API,
 but a request may return any of these.
 
 
 Working with CDAP Security
------------------------------
+--------------------------
 When working with a CDAP cluster with security enabled (``security.enabled=true`` in
 ``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
 obtain an access token from the authentication server (see the *Client Authentication* section of the
@@ -133,10 +142,11 @@ Developer Guide `CDAP Security <security.html#client-authentication>`__).
 In order to authenticate, all client requests must supply this access token in the
 ``Authorization`` header of the request::
 
-   Authorization: Bearer wohng8Xae7thahfohshahphaeNeeM5ie
+   Authorization: Bearer <token>
 
 For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
+.. _rest-streams:
 
 Stream HTTP API
 ===============
@@ -223,7 +233,6 @@ HTTP Responses
    * - ``404 Not Found``
      - The Stream does not exist
 
-:Note: The response will always have an empty body
 
 Example
 .......
@@ -238,23 +247,21 @@ Example
 
 Comments
 ........
-- The body of the request must contain the event in binary form.
-- You can pass headers for the event as HTTP headers by prefixing them with the *stream-id*::
+You can pass headers for the event as HTTP headers by prefixing them with the *stream-id*::
 
   <stream-id>.<property>:<string value>
 
-  After receiving the request, the HTTP handler transforms it into a Stream event:
+After receiving the request, the HTTP handler transforms it into a Stream event:
 
-  #. The body of the event is an identical copy of the bytes
-     found in the body of the HTTP post request.
-  #. If the request contains any headers prefixed with the *stream-id*,
-     the *stream-id* prefix is stripped from the header name and
-     the header is added to the event.
+- The body of the event is an identical copy of the bytes found in the body of the HTTP post request.
+- If the request contains any headers prefixed with the *stream-id*,
+  the *stream-id* prefix is stripped from the header name and
+  the header is added to the event.
 
 .. rst2pdf: PageBreak
 
 Reading Events from a Stream
----------------------------------------------------
+----------------------------
 Reading events from an existing Stream is performed as an HTTP GET method to the URL::
 
   GET <base-url>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
@@ -289,7 +296,7 @@ HTTP Responses
    * - ``404 Not Found``
      - The Stream does not exist
 
-The response body is an JSON array, with the Stream event objects as array elements::
+The response body is a JSON array with the Stream event objects as array elements::
 
    [ 
      {"timestamp" : ... , "headers": { ... }, "body" : ... }, 
@@ -326,7 +333,7 @@ Example
 
 Truncating a Stream
 -------------------
-Truncation means the deletion of all events that were written to the Stream. 
+Truncating means deleting all events that were ever written to the Stream.
 This is permanent and cannot be undone.
 A Stream can be truncated with an HTTP POST method to the URL::
 
@@ -368,7 +375,7 @@ Example
 .. rst2pdf: PageBreak
 
 Setting Time-To-Live Property of a Stream
-------------------------------------------
+-----------------------------------------
 The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
 it was written to the Stream.
 The default TTL for all Streams is infinite, meaning that events will never expire.
@@ -430,6 +437,8 @@ Example
      - Change the TTL property of the Stream named *mystream* to 1 day
 
 .. rst2pdf: PageBreak
+
+.. _rest-datasets:
 
 Dataset HTTP API
 ================
@@ -503,7 +512,7 @@ with JSON-formatted name of the dataset type and properties in a body::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
@@ -518,7 +527,7 @@ HTTP Responses
 Example
 .......
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
@@ -534,7 +543,7 @@ Example
 Updating an Existing Dataset
 ----------------------------
 
-You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
+You can update an existing dataset's table and properties by issuing an HTTP PUT request to the URL::
 
 	PUT <base-url>/data/datasets/<dataset-name>/properties
 
@@ -545,7 +554,7 @@ with JSON-formatted name of the dataset type and properties in the body::
      "properties":{<properties>}
   }
 
-:Note: The Dataset must exist, and the instance and type passed must match with the existing Dataset.
+Note the Dataset must exist, and the instance and type passed must match with the existing Dataset.
 
 .. list-table::
    :widths: 20 80
@@ -563,7 +572,7 @@ with JSON-formatted name of the dataset type and properties in the body::
 HTTP Responses
 ..............
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Status Codes
@@ -578,7 +587,7 @@ HTTP Responses
 Example
 .......
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
@@ -586,7 +595,7 @@ Example
    * - Body
      - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"}}``
    * - Description
-     - For the "mydataset" of type "Table", updates the Dataset and its time-to-live property to 2 hours
+     - For the "mydataset" of type "Table", update the Dataset and its time-to-live property to 2 hours
 
 .. rst2pdf: PageBreak
 
@@ -613,7 +622,7 @@ HTTP Responses
 Example
 .......
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :stub-columns: 1
 
    * - HTTP Request
@@ -626,7 +635,8 @@ Example
 Deleting all Datasets
 ---------------------
 
-You can delete all Datasets (see **Note** below) by issuing an HTTP DELETE request to the URL::
+If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, you can delete all Datasets
+by issuing an HTTP DELETE request to the URL::
 
   DELETE <base-url>/data/unrecoverable/datasets
 
@@ -641,7 +651,9 @@ HTTP Responses
    * - ``200 OK``
      - All Datasets were successfully deleted
 
-:Note: This operation will only be successful if the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``. Otherwise, this operation will return "403 Forbidden".
+
+If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is not set to ``true``,
+this operation will return a Status Code ``403 Forbidden``.
 
 Truncating a Dataset
 --------------------
@@ -711,6 +723,21 @@ used to identify the query in subsequent requests::
 
   { "handle":"<query-handle>" }
 
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``PUT <base-url>/data/explore/queries``
+   * - Body
+     - ``{"query":"SELECT * FROM cdap_user_mydataset LIMIT 5"}``
+   * - HTTP Response
+     - ``{"handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2"}``
+   * - Description
+     - Submit a query to get the first 5 entries from the Dataset, *mydataset*
+
 .. rst2pdf: PageBreak
 
 Status of a Query
@@ -751,8 +778,21 @@ and whether the query has a results set::
     "hasResults":<boolean>
    }
 
-Status codes include ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``,
+Status can be one of the following: ``INITIALIZED``, ``RUNNING``, ``FINISHED``, ``CANCELED``, ``CLOSED``,
 ``ERROR``, ``UNKNOWN``, and ``PENDING``.
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``GET <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/status``
+   * - HTTP Response
+     - ``{"status":"FINISHED","hasResults":true}``
+   * - Description
+     - Retrieve the status of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
 
 Obtaining the Result Schema
@@ -795,6 +835,20 @@ each given by its name, type and position; if the query has no result set, this 
 
 The type of each column is a data type as defined in the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DDL>`_.
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``GET <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/schema``
+   * - HTTP Response
+     - ``[{"name":"cdap_user_mydataset.key","type":"array<tinyint>","position":1},``
+       ``{"name":"cdap_user_mydataset.value","type":"array<tinyint>","position":2}]``
+   * - Description
+     - Retrieve the schema of the result of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
 
 Retrieving Query Results
@@ -885,6 +939,17 @@ HTTP Responses
    * - ``404 Not Found``
      - The query handle does not match any current query
 
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``DELETE <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
+   * - Description
+     - Close the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
+
 List of Queries
 ---------------
 To return a list of queries, use::
@@ -898,12 +963,27 @@ To return a list of queries, use::
    * - Parameter
      - Description
    * - ``<limit>``
-     - Number of results to return in the response.; by default, 50 results will be returned
+     - Optional number indicating how many results to return in the response. By default, 50 results will be returned
    * - ``<cursor>``
-     - Specifies if the results returned should be in the forward or reverse direction by specifying ``next`` or ``prev``
+     - Optional string specifying if the results returned should be in the forward or reverse direction.
+       Should be one of ``next`` or ``prev``
    * - ``<offset>``
-     - Offset for pagination, returns the results that are greater than offset if the cursor is ``next`` or 
+     - Optional offset for pagination, returns the results that are greater than offset if the cursor is ``next`` or
        results that are less than offset if cursor is ``prev``
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``GET <base-url>/data/explore/queries``
+   * - HTTP Response
+     - ``[{"timestamp":1411266478717,"statement":"SELECT * FROM cdap_user_mydataset","status":"FINISHED",``
+       ``"query_handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2","has_results":true,"is_active":false}``
+   * - Description
+     - Close the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
 Comments
 ........
@@ -1035,6 +1115,8 @@ HTTP Responses
      - The Application, Procedure and method exist, but the arguments are not as expected
    * - ``404 Not Found``
      - The Application, Procedure, or method does not exist
+   * - ``503 Service Unavailable``
+     - The Procedure method is unavailable. For example, the procedure may not have been started yet.
 
 Example
 .......
@@ -1054,14 +1136,14 @@ Example
 .. rst2pdf: PageBreak
 
 Service HTTP API
-==================
+================
 
 This interface supports making requests to the methods of an Application’s Services.
 See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
 Services.
 
 Requesting Service Methods
------------------------------
+--------------------------
 To make a request to a Service's method, send the method's path as part of the request URL along with any additional
 headers and body.
 
@@ -1113,7 +1195,7 @@ Example
 .. rst2pdf: PageBreak
 
 CDAP Client HTTP API
-=======================
+====================
 
 Use the CDAP Client HTTP API to deploy or delete Applications and manage the life cycle of 
 Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
@@ -1141,6 +1223,35 @@ To list all of the deployed applications, issue an HTTP GET request::
 
 This will return a JSON String map that lists each Application with its name and description.
 
+Details of A Deployed Application
+---------------------------------
+
+For detailed information on an application that has been deployed, use::
+
+  GET <base-url>/apps/<app-id>
+
+The information will be returned in the body of the response.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<app-id>``
+     - Name of the Application
+
+HTTP Responses
+..............
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The event successfully called the method, and the body contains the results
+
 Delete an Application
 ---------------------
 To delete an Application together with all of its Flows, Procedures and MapReduce jobs, submit an HTTP DELETE::
@@ -1148,7 +1259,7 @@ To delete an Application together with all of its Flows, Procedures and MapReduc
   DELETE <base-url>/apps/<application-name>
 
 .. list-table::
-   :widths: 25 75
+   :widths: 20 80
    :header-rows: 1
 
    * - Parameter
@@ -1218,31 +1329,49 @@ The response will be the same JSON array with additional parameters for each of 
    * - Parameter
      - Description
    * - ``"status"``
-     - Maps to the status of an individual JSON object's queried element if the query is valid and the element was found.
+     - Maps to the status of an individual JSON object's queried element
+       if the query is valid and the element was found.
    * - ``"statusCode"``
      - The status code from retrieving the status of an individual JSON object.
    * - ``"error"``
-     - If an error, a description of why the status was not retrieved (the specified element was not found,
-       the requested JSON object was missing a parameter, etc.)
+     - If an error, a description of why the status was not retrieved (the specified element was not found, etc.)
 
-Note that the ``status`` and ``error`` fields are mutually exclusive.
+The ``status`` and ``error`` fields are mutually exclusive meaning if there is an error,
+then there will never be a status and vice versa.
 
 Examples
 ........
 
-.. csv-table::
+.. list-table::
    :widths: 20 80
-   :header-rows: 1
+   :stub-columns: 1
 
-   ,Example / Description
-   **HTTP Method**, ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
-   , Start a Flow *WhoFlow* in the Application *HelloWorld*
-   **HTTP Method**, ``POST <base-url>/apps/Count/procedures/GetCounts/stop``
-   , Stop the Procedure *GetCounts* in the Application *Count*
-   **HTTP Method**, ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
-   , Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
-
-.. commas above are creating spacers in the table
+   * -
+     - **Example / Description**
+   * - HTTP Method
+     - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
+   * -
+     - Start a Flow *WhoFlow* in the Application *HelloWorld*
+   * - HTTP Method
+     - ``POST <base-url>/apps/Count/procedures/GetCounts/stop``
+   * -
+     - Stop the Procedure *GetCounts* in the Application *Count*
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
+   * -
+     - Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
+   * - HTTP Method
+     - ``POST <base-url>/status``
+   * - HTTP Body
+     - ``[{"appId": "MyApp", "programType": "flow", "programId": "MyFlow"},``
+       ``{"appId": "MyApp2", "programType": "procedure", "programId": "MyProcedure"}]``
+   * - HTTP Response
+     - ``[{"appId":"MyApp", "programType":"flow", "programId":"MyFlow", "status":"RUNNING", "statusCode":200},``
+       ``{"appId":"MyApp2", "programType":"procedure", "programId":"MyProcedure",``
+       ``"error":"Program not found", "statusCode":404}]``
+   * -
+     - Try to get the status of the Flow *MyFlow* in the Application *MyApp* and of the Procedure *MyProcedure*
+       in the Application *MyApp2*
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
 
@@ -1270,23 +1399,6 @@ request to the element's URL using the same parameter ``runtimeargs``::
   GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
 This will return the saved runtime arguments in JSON format.
-
-To retrieve the status of multiple programs in different applications, use the HTTP POST command::
-
-  POST <base-url>/status
-
-with the arguments for the different applications and programs as a JSON string map in the body, such as::
-
-  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1"},
-   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
-   {"appId":"MyApp3","programType":"Service","programId":"MySvc1}]
-
-If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a possible response could be::
-
-  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","status":"RUNNING","statusCode":200},
-   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2","statusCode":404,"error":"Program: MyProc2 not found"},
-   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"status":"STOPPED","statusCode":200}]
-
 
 Container Information
 ---------------------
@@ -1351,7 +1463,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"programId"``
      - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
    * - ``"runnableId"``
-     - Name of the *Flowlet* or *Runnable* if querying either a *Flow* or *Service*. This parameter
+     - Name of the *Flowlet* or *Service Handler/Worker* if querying either a *Flow* or *User Service*. This parameter
        does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -1363,9 +1475,9 @@ The response will be the same JSON array with additional parameters for each of 
    * - Parameter
      - Description
    * - ``"requested"``
-     - Maps to the number of instances the user requested for the program defined by the individual JSON object's parameters
+     - Number of instances the user requested for the program defined by the individual JSON object's parameters
    * - ``"provisioned"``
-     - Maps to the number of instances that are actually running for the program defined by the individual JSON object's parameters.
+     - Number of instances that are actually running for the program defined by the individual JSON object's parameters.
    * - ``"statusCode"``
      - The status code from retrieving the instance count of an individual JSON object.
    * - ``"error"``
@@ -1377,25 +1489,29 @@ Note that the ``requested`` and ``provisioned`` fields are mutually exclusive of
 Example
 .......
 
-To retrieve the instance count of multiple program runnables in multiple applications, use the HTTP POST command::
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
 
-  POST <base-url>/instances
+   * - HTTP Method
+     - ``POST <base-url>/instances``
+   * - HTTP Body
+     - ``[{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5"},``
+       ``{"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},``
+       ``{"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyHandler1"}]``
+   * - HTTP Response
+     - ``[{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1",``
+       ``"runnableId":"MyFlowlet5","provisioned":2,"requested":2,"statusCode":200},``
+       ``{"appId":"MyApp1","programType":"Procedure","programId":"MyProc2",``
+       ``"provisioned":0,"requested":1,"statusCode":200},``
+       ``{"appId":"MyApp3","programType":"Service","programId":"MySvc1,``
+       ``"runnableId":"MyHandler1","statusCode":404,"error":"Runnable: MyHandler1 not found"}]``
+   * - Description
+     - Try to get the instances of the Flowlet *MyFlowlet5* in the Flow *MyFlow1* in the Application *MyApp1*, the
+       Procedure *MyProc2* in the Application *MyApp1*, and the Service Handler *MyHandler1* in the
+       User Service *MySvc1* in the Application *MyApp3*
 
-with the arguments as a JSON string in the body::
-
-  [{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5"},
-   {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},
-   {"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyRunnable1"}]
-
-If there was no procedure named ``MyProc2`` in the application ``MyApp1``, a possible response could be::
-
-  [ {"appId":"MyApp1","programType":"Flow","programId":"MyFlow1",
-      "runnableId":"MyFlowlet5","provisioned":2,"requested":2,"statusCode":200},
-    {"appId":"MyApp1","programType":"Procedure","programId":"MyProc2",
-      "provisioned":0,"requested":1,"statusCode":200},
-    {"appId":"MyApp3","programType":"Service","programId":"MySvc1,
-      "runnableId":"MyRunnable1","statusCode":404,"error":"Runnable: MyRunnable1 not found"} ]
-
+.. _rest-scaling-flowlets:
 
 Scaling Flowlets
 ................
@@ -1497,7 +1613,7 @@ Example
 
 Scaling Services
 ................
-You can query or change the number of instances of a Service's runnable
+You can query or change the number of instances of a Service's Handler/Worker
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
@@ -1518,7 +1634,7 @@ with the arguments as a JSON string in the body::
    * - ``<service-id>``
      - Name of the Service
    * - ``<runnable-id>``
-     - Name of the Twill Runnable
+     - Name of the Service Handler/Worker
    * - ``<quantity>``
      - Number of instances to be used
 
@@ -1531,7 +1647,7 @@ Example
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables`` ``/WhoRunnable/instances``
    * - Description
-     - Retrieve the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
+     - Retrieve the number of instances of the Service Worker *WhoRunnable* of the Service *WhoService*
 
 .. rst2pdf: PageBreak
 
@@ -1543,7 +1659,7 @@ Services), issue an HTTP GET to the element’s URL with the ``history`` paramet
 This will return a JSON list of all completed runs, each with a start time,
 end time and termination status::
 
-  GET <base-url>/apps/<app-id>/<element>/<element-id>/history
+  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/history
 
 .. list-table::
    :widths: 20 80
@@ -1605,7 +1721,7 @@ For Workflows, you can also retrieve:
 
 
 Logging HTTP API
-=================
+================
 
 Downloading Logs
 ----------------
@@ -1646,17 +1762,22 @@ Example
 
 Comments
 ........
-The output is formatted as HTML-embeddable text; that is, characters that have a special meaning in HTML will be escaped. A line of the log may look like this::
+The output is formatted as HTML-embeddable text; that is, characters that have a special meaning in HTML will be
+escaped. A line of the log may look like this::
 
   2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
         executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp; character
 
-Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
+Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as
+well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire
+this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
 
 Metrics HTTP API
 ================
-As Applications process data, CDAP collects metrics about the Application’s behavior and performance. Some of these metrics are the same for every Application—how many events are processed, how many data operations are performed, etc.—and are thus called system or CDAP metrics.
+As Applications process data, CDAP collects metrics about the Application’s behavior and performance. Some of these
+metrics are the same for every Application—how many events are processed, how many data operations are performed,
+etc.—and are thus called system or CDAP metrics.
 
 .. rst2pdf: CutStart
 
@@ -1688,7 +1809,7 @@ The general form of a metrics request is::
    * - Parameter
      - Description
    * - ``<scope>``
-     - Either ``cdap`` (system metrics) or ``user`` (user-defined metrics)
+     - Either ``system`` (system metrics) or ``user`` (user-defined metrics)
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
    * - ``<metric>``
@@ -1722,22 +1843,25 @@ Examples
      - ``GET <base-url>/metrics/user/apps/HelloWorld/services/``
        ``WhoService/runnables/WhoRun/names.bytes?aggregate=true``
    * - Description
-     - Using a *User-Defined* metric, *names.bytes* in a Service's Twill Runnable
+     - Using a *User-Defined* metric, *names.bytes* in a Service's Handler
 
 Comments
 ........
-The scope must be either ``cdap`` for system metrics or ``user`` for user-defined metrics.
+The scope must be either ``system`` for system metrics or ``user`` for user-defined metrics.
 
 System metrics are either Application metrics (about Applications and their Flows, Procedures, MapReduce and Workflows) or they are Data metrics (relating to Streams or Datasets).
 
 User metrics are always in the Application context.
 
-For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*, in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP GET method::
+For example, to retrieve the number of input data objects (“events”) processed by a Flowlet named *splitter*,
+in the Flow *CountRandomFlow* of the Application *CountRandom*, over the last 5 seconds, you can issue an HTTP
+GET method::
 
   GET <base-url>/metrics/system/apps/CountRandom/flows/CountRandomFlow/flowlets/
           splitter/process.events.processed?start=now-5s&count=5
 
-This returns a JSON response that has one entry for every second in the requested time interval. It will have values only for the times where the metric was actually emitted (shown here "pretty-printed", unlike the actual responses)::
+This returns a JSON response that has one entry for every second in the requested time interval. It will have
+values only for the times where the metric was actually emitted (shown here "pretty-printed")::
 
   HTTP/1.1 200 OK
   Content-Type: application/json
@@ -1748,7 +1872,8 @@ This returns a JSON response that has one entry for every second in the requeste
   {"time":1382637111,"value":6816},
   {"time":1382637112,"value":6765}]}
 
-If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics API at the Flow context::
+If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
+API at the Flow context::
 
   GET <base-url>/metrics/system/apps/CountRandom/flows/
     CountRandomFlow/process.events.processed?start=now-5s&count=5
@@ -1839,7 +1964,7 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/mapreduce/<mapreduce-id>``
    * - All MapReduce of an Application
      - ``/apps/<app-id>/mapreduce``
-   * - One Twill Runnable
+   * - One Service Handler/Worker
      - ``/apps/<app-id>/services/<service-id>/runnables/<runnable-id>``
    * - One Service
      - ``/apps/<app-id>/services/<service-id>``
@@ -2000,7 +2125,7 @@ HTTP Responses
      - The event successfully called the method, and the body contains the results
 
 Checking Status of All CDAP System Services
-----------------------------------------------
+-------------------------------------------
 To check the status of all the System Services, use::
 
   GET <base-url>/system/services/status
@@ -2019,12 +2144,12 @@ HTTP Responses
 .. rst2pdf: PageBreak
 
 Checking Status of a Specific CDAP System Service
-----------------------------------------------------
+-------------------------------------------------
 To check the status of a specific System Service, use::
 
   GET <base-url>/system/services/<service-name>/status
 
-The status of these CDAP System Servcies can be checked:
+The status of these CDAP System Services can be checked:
 
 .. list-table::
    :header-rows: 1
@@ -2038,16 +2163,16 @@ The status of these CDAP System Servcies can be checked:
      - Service that handles metrics related HTTP requests
    * - ``Transaction``
      - ``transaction``
-     - Service handling transactions 
+     - Service that handles transactions
    * - ``Streams``
      - ``streams``
-     - Service handling Stream management 
+     - Service that handles Stream management
    * - ``App Fabric``
      - ``appfabric``
-     - Service handling Application Fabric requests
+     - Service that handles Application Fabric requests
    * - ``Log Saver``
      - ``log.saver``
-     - Service aggregating all system and application logs
+     - Service that aggregates all system and application logs
    * - ``Metrics Processor``
      - ``metrics.processor``
      - Service that aggregates all system and application metrics 
@@ -2059,17 +2184,6 @@ The status of these CDAP System Servcies can be checked:
      - Service that handles all HTTP requests for ad-hoc data exploration
 
 Note that the Service status checks are more useful when CDAP is running in a distributed cluster mode.
-
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-   
-   * - HTTP Method
-     - ``GET <base-url>/system/services/metrics/status``
-   * - Description
-     - Returns the status of the Metrics Service
 
 HTTP Responses
 ..............
@@ -2083,6 +2197,17 @@ HTTP Responses
      - The service is up and running
    * - ``404 Not Found``
      - The service is either not running or not found
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+   
+   * - HTTP Method
+     - ``GET <base-url>/system/services/metrics/status``
+   * - Description
+     - Returns the status of the Metrics Service
 
 .. rst2pdf: PageBreak
 
@@ -2109,7 +2234,7 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
      
-:Note: In standalone CDAP, these commands will return a Status Code ``400 Bad Request``.
+Note in standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
 
 Examples
 ........
@@ -2119,7 +2244,6 @@ Examples
 
    * - HTTP Method
      - ``GET <base-url>/system/services/metrics/instances``
-       ``instances``
    * - Description
      - Determine the number of instances being used for the metrics HTTP service 
 
@@ -2134,37 +2258,498 @@ Examples
        with the arguments as a JSON string in the body::
 
           { "instances" : 2 }
+
    * - Description
      - Sets the number of instances of the metrics HTTP service to 2
 
-Details of A Deployed Application
----------------------------------
+.. rst2pdf: PageBreak
 
-For detailed information on an application that has been deployed, use::
+.. _client-api:
 
-  GET <base-url>/apps/<app-id>
+---------------
+Java Client API
+---------------
 
-The information will be returned in the body of the response.
+The Cask Data Application Platform (CDAP) Java Client API provides methods for interacting
+with CDAP from Java applications.
 
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
+Maven Dependency
+================
 
-   * - Parameter
-     - Description
-   * - ``<app-id>``
-     - Name of the Application 
+.. highlight:: console
 
-HTTP Responses
-..............
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
+To use the Java Client API in your project, add this Maven dependency::
 
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - The event successfully called the method, and the body contains the results
+  <dependency>
+    <groupId>co.cask.cdap</groupId>
+    <artifactId>cdap-client</artifactId>
+    <version>${cdap.version}</version>
+  </dependency>
+
+.. highlight:: java
+
+Components
+==========
+
+The Java Client API allows you to interact with these CDAP components:
+
+- `ApplicationClient`_: interacting with applications
+- `DatasetClient`_: interacting with Datasets
+- `DatasetModuleClient`_: interacting with Dataset Modules
+- `DatasetTypeClient`_: interacting with Dataset Types
+- `MetricsClient`_: interacting with Metrics
+- `MonitorClient`_: monitoring System Services
+- `ProcedureClient`_: interacting with Procedures
+- `ProgramClient`_: interacting with Flows, Procedures, MapReduce Jobs, User Services, and Workflows
+- `QueryClient`_: querying Datasets
+- `ServiceClient`_: interacting with User Services
+- `StreamClient`_: interacting with Streams
+
+The above list links to the examples below for each portion of the API.
+
+Sample Usage
+============
+
+ApplicationClient
+-----------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ApplicationClient appClient = new ApplicationClient(clientConfig);
+
+  // Fetch the list of applications
+  List<ApplicationRecord> apps = appClient.list();
+
+  // Deploy an application
+  File appJarFile = ...;
+  appClient.deploy(appJarFile);
+
+  // Delete an application
+  appClient.delete("Purchase");
+
+  // List programs belonging to an application
+  appClient.listPrograms("Purchase");
+
+
+DatasetClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetClient datasetClient = new DatasetClient(clientConfig);
+
+  // Fetch the list of Datasets
+  List<DatasetSpecification> datasets = datasetClient.list();
+
+  // Create a Dataset
+  datasetClient.create("someDataset", "someDatasetType");
+
+  // Truncate a Dataset
+  datasetClient.truncate("someDataset");
+
+  // Delete a Dataset
+  datasetClient.delete("someDataset");
+
+
+DatasetModuleClient
+-------------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetModuleClient datasetModuleClient = new DatasetModuleClient(clientConfig);
+
+  // Add a Dataset module
+  File moduleJarFile = createAppJarFile(someDatasetModule.class);
+  datasetModuleClient("someDatasetModule", SomeDatasetModule.class.getName(), moduleJarFile);
+
+  // Fetch the Dataset module information
+  DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get("someDatasetModule");
+
+  // Delete all Dataset modules
+  datasetModuleClient.deleteAll();
+
+
+DatasetTypeClient
+-----------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
+
+  // Fetch the Dataset type information using the type name
+  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get("someDatasetType");
+
+  // Fetch the Dataset type information using the classname
+  datasetTypeMeta = datasetTypeClient.get(SomeDataset.class.getName());
+
+
+MetricsClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  MetricsClient metricsClient = new MetricsClient(clientConfig);
+
+  // Fetch the total number of events that have been processed by a Flow
+  JsonObject metric = metricsClient.getMetric("user", "/apps/HelloWorld/flows",
+                                              "process.events.processed", "aggregate=true");
+
+MonitorClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  MonitorClient monitorClient = new MonitorClient(clientConfig);
+
+  // Fetch the list of System Services
+  List<SystemServiceMeta> services = monitorClient.listSystemServices();
+
+  // Fetch status of System Transaction Service
+  String serviceStatus = monitorClient.getSystemServiceStatus("transaction");
+
+  // Fetch the number of instances of the System Transaction Service
+  int systemServiceInstances = monitorClient.getSystemServiceInstances("transaction");
+
+
+ProcedureClient
+---------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ProcedureClient procedureClient = new ProcedureClient(clientConfig);
+
+  // Call a Procedure in the WordCount example
+  String result = procedureClient.call("WordCount", "RetrieveCounts", "getCount",
+                                       ImmutableMap.of("word", "foo"));
+
+  // Stop a Procedure
+  programClient.stop("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
+
+
+ProgramClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ProgramClient programClient = new ProgramClient(clientConfig);
+
+  // Start a Procedure in the WordCount example
+  programClient.start("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
+
+  // Fetch live information from the HelloWorld example
+  // Live info includes the address of an element’s container host and the container’s debug port,
+  // formatted in JSON
+  programClient.getLiveInfo("HelloWorld", ProgramType.PROCEDURE, "greet");
+
+  // Fetch program logs in the WordCount example
+  programClient.getProgramLogs("WordCount", ProgramType.PROCEDURE, "RetrieveCounts", 0,
+                               Long.MAX_VALUE);
+
+  // Scale a Procedure in the HelloWorld example
+  programClient.setProcedureInstances("HelloWorld", "greet", 3);
+
+  // Stop a Procedure in the HelloWorld example
+  programClient.stop("HelloWorld", ProgramType.PROCEDURE, "greet");
+
+  // Start, scale, and stop a Flow in the WordCount example
+  programClient.start("WordCount", ProgramType.FLOW, "WordCountFlow");
+
+  // Fetch Flow history in the WordCount example
+  programClient.getProgramHistory("WordCount", ProgramType.FLOW, "WordCountFlow");
+
+  // Scale a Flowlet in the WordCount example
+  programClient.setFlowletInstances("WordCount", "WordCountFlow", "Tokenizer", 3);
+
+  // Stop a Flow in the WordCount example
+  programClient.stop("WordCount", ProgramType.FLOW, "WordCountFlow");
+
+
+QueryClient
+-----------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  QueryClient queryClient = new QueryClient(clientConfig);
+
+  //
+  // Perform an ad-hoc query using the Purchase example
+  //
+  String query = "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
+  QueryHandle queryHandle = queryClient.execute(query);
+  QueryStatus status = new QueryStatus(null, false);
+
+  while (QueryStatus.OpStatus.RUNNING == status.getStatus() ||
+         QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
+         QueryStatus.OpStatus.PENDING == status.getStatus()) {
+    Thread.sleep(1000);
+    status = queryClient.getStatus(queryHandle);
+  }
+
+  if (status.hasResults()) {
+    // Get first 20 results
+    List<QueryResult> results = queryClient.getResults(queryHandle, 20);
+    // Fetch schema
+    List<ColumnDesc> schema = queryClient.getSchema(queryHandle);
+    String[] header = new String[schema.size()];
+    for (int i = 0; i < header.length; i++) {
+      ColumnDesc column = schema.get(i);
+      // Hive columns start at 1
+      int index = column.getPosition() - 1;
+      header[index] = column.getName() + ": " + column.getType();
+    }
+  }
+
+  queryClient.delete(queryHandle);
+  //
+  // End perform an ad-hoc query
+  //
+
+ServiceClient
+-------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  ServiceClient serviceClient = new ServiceClient(clientConfig);
+
+  // Fetch Service information using the Service in the PurchaseApp example
+  ServiceMeta serviceMeta = serviceClient.get("PurchaseApp", "CatalogLookup");
+
+
+StreamClient
+------------
+::
+
+  // Interact with the CDAP instance located at example.com, port 10000
+  ClientConfig clientConfig = new ClientConfig("example.com", 10000);
+
+  // Construct the client used to interact with CDAP
+  StreamClient streamClient = new StreamClient(clientConfig);
+
+  // Fetch the Stream list
+  List streams = streamClient.list();
+
+  // Create a Stream, using the Purchase example
+  streamClient.create("purchaseStream");
+
+  // Fetch a Stream's properties, using the Purchase example
+  StreamProperties config = streamClient.getConfig("purchaseStream");
+
+  // Send events to a Stream, using the Purchase example
+  streamClient.sendEvent("purchaseStream", "Tom bought 5 apples for $10");
+
+  // Read all events from a Stream (results in events)
+  List<StreamEvent> events = Lists.newArrayList();
+  streamClient.getEvents("purchaseStream", 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
+
+  // Read first 5 events from a Stream (results in events)
+  List<StreamEvent> events = Lists.newArrayList();
+  streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
+
+  // Read 2nd and 3rd events from a Stream, after first calling getEvents
+  long startTime = events.get(1).getTimestamp();
+  long endTime = events.get(2).getTimestamp() + 1;
+  events.clear()
+  streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
+
+  //
+  // Write asynchronously to a Stream
+  //
+  String streamId = "testAsync";
+  List<StreamEvent> events = Lists.newArrayList();
+
+  streamClient.create(streamId);
+
+  // Send 10 async writes
+  int msgCount = 10;
+  for (int i = 0; i < msgCount; i++) {
+    streamClient.asyncSendEvent(streamId, "Testing " + i);
+  }
+
+  // Read them back; need to read it multiple times as the writes happen asynchronously
+  while (events.size() != msgCount) {
+    events.clear();
+    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
+  }
+
+  // Check that there are no more events
+  events.clear();
+  while (events.isEmpty()) {
+    events.clear();
+    streamClient.getEvents(streamId, lastTimestamp + 1, Long.MAX_VALUE, msgCount, events);
+  }
+  //
+  // End write asynchronously
+  //
+
+.. _CLI:
+
+----------------------
+Command-Line Interface
+----------------------
+
+Introduction
+============
+
+The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
+similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
+script or a Windows ``.bat`` file.
+
+The CLI may be used in two ways: interactive mode and non-interactive mode.
+
+Interactive Mode
+----------------
+
+.. highlight:: console
+
+To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from the terminal::
+
+  $ /bin/cdap-cli.sh
+
+or, on Windows::
+
+  ~SDK> bin\cdap-cli.bat
+
+The executable should bring you into a shell, with this prompt::
+
+  cdap (localhost:10000)>
+
+This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
+There are two ways to interact with a different CDAP server:
+
+- To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
+- To change the current CDAP server, run the command ``connect example.com``.
+
+For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
+a CDAP instance at ``example.com``, port ``10000``::
+
+  cdap (example.com:10000)>
+
+To list all of the available commands, enter ``help``::
+
+  cdap (localhost:10000)> help
+
+Non-Interactive Mode
+--------------------
+
+To run the CLI in non-interactive mode, run the ``cdap-cli.sh`` executable, passing the command you want executed
+as the argument. For example, to list all applications currently deployed to CDAP, execute::
+
+  cdap-cli.sh list apps
+
+Available Commands
+==================
+
+These are the available commands:
+
+.. csv-table::
+   :header: Command,Description
+   :widths: 50, 50
+
+   **General**
+   ``help``,Prints this helper text
+   ``version``,Prints the version
+   ``exit``,Exits the shell
+   **Calling and Executing**
+   ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``,"Calls a Procedure, passing in the parameters as a JSON String map"
+   ``execute <query>``,Executes a Dataset query
+   **Creating**
+   ``create dataset instance <type-name> <new-dataset-name>``,Creates a Dataset
+   ``create stream <new-stream-id>``,Creates a Stream
+   **Deleting**
+   ``delete app <app-id>``,Deletes an Application
+   ``delete dataset instance <dataset-name>``,Deletes a Dataset
+   ``delete dataset module <module-name>``,Deletes a Dataset module
+   **Deploying**
+   ``deploy app <app-jar-file>``,Deploys an application
+   ``deploy dataset module <module-jar-file> <module-name> <module-jar-classname>``,Deploys a Dataset module
+   **Describing**
+   ``describe app <app-id>``,Shows detailed information about an application
+   ``describe dataset module <module-name>``,Shows information about a Dataset module
+   ``describe dataset type <type-name>``,Shows information about a Dataset type
+   **Retrieving Information**
+   ``get history flow <app-id>.<program-id>``,Gets the run history of a Flow
+   ``get history mapreduce <app-id>.<program-id>``,Gets the run history of a MapReduce job
+   ``get history procedure <app-id>.<program-id>``,Gets the run history of a Procedure
+   ``get history runnable <app-id>.<program-id>``,Gets the run history of a Service Handler/Worker
+   ``get history workflow <app-id>.<program-id>``,Gets the run history of a Workflow
+   ``get instances flowlet <app-id>.<program-id>``,Gets the instances of a Flowlet
+   ``get instances procedure <app-id>.<program-id>``,Gets the instances of a Procedure
+   ``get instances runnable <app-id>.<program-id>``,Gets the instances of a Service Handler/Worker
+   ``get live flow <app-id>.<program-id>``,Gets the live info of a Flow
+   ``get live procedure <app-id>.<program-id>``,Gets the live info of a Procedure
+   ``get logs flow <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Flow
+   ``get logs mapreduce <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a MapReduce job
+   ``get logs procedure <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Procedure
+   ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Service Handler/Worker
+   ``get status flow <app-id>.<program-id>``,Gets the status of a Flow
+   ``get status mapreduce <app-id>.<program-id>``,Gets the status of a MapReduce job
+   ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
+   ``get status service <app-id>.<program-id>``,Gets the status of a Service
+   ``get status workflow <app-id>.<program-id>``,Gets the status of a Workflow
+   **Listing Elements**
+   ``list apps``,Lists all applications
+   ``list dataset instances``,Lists all Datasets
+   ``list dataset modules``,Lists Dataset modules
+   ``list dataset types``,Lists Dataset types
+   ``list flows``,Lists Flows
+   ``list mapreduce``,Lists MapReduce jobs
+   ``list procedures``,Lists Procedures
+   ``list programs``,Lists all programs
+   ``list streams``,Lists Streams
+   ``list workflows``,Lists Workflows
+   **Sending Events**
+   ``send stream <stream-id> <stream-event>``,Sends an event to a Stream
+   **Setting**
+   ``set instances flowlet <program-id> <num-instances>``,Sets the instances of a Flowlet
+   ``set instances procedure <program-id> <num-instances>``,Sets the instances of a Procedure
+   ``set instances runnable <program-id> <num-instances>``,Sets the instances of a Service Handler/Worker
+   ``set stream ttl <stream-id> <ttl-in-seconds>``,Sets the Time-to-Live (TTL) of a Stream
+   **Starting**
+   ``start flow <program-id>``,Starts a Flow
+   ``start mapreduce <program-id>``,Starts a MapReduce job
+   ``start procedure <program-id>``,Starts a Procedure
+   ``start service <program-id>``,Starts a Service
+   ``start workflow <program-id>``,Starts a Workflow
+   **Stopping**
+   ``stop flow <program-id>``,Stops a Flow
+   ``stop mapreduce <program-id>``,Stops a MapReduce job
+   ``stop procedure <program-id>``,Stops a Procedure
+   ``stop service <program-id>``,Stops a Service
+   ``stop workflow <program-id>``,Stops a Workflow
+   **Truncating**
+   ``truncate dataset instance``,Truncates a Dataset
+   ``truncate stream``,Truncates a Stream
+
 
 .. highlight:: java
 
@@ -2172,7 +2757,7 @@ HTTP Responses
 
 Where to Go Next
 ================
-Now that you've seen CDAP's HTTP RESTful API, 
+Now that you've seen CDAP's HTTP RESTful APIs and clients,
 the last of our documentation is:
 
 - `Cask Data Application Platform Javadocs <javadocs/index.html>`__,
