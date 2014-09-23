@@ -4,9 +4,9 @@
 
 .. highlight:: console
 
-===================================================================
-Cask Data Application Platform HTTP RESTful API And Java Client API
-===================================================================
+===========================================================
+Cask Data Application Platform HTTP RESTful API And Clients
+===========================================================
 
 .. rst2pdf: .. class:: center
 
@@ -26,8 +26,14 @@ Cask Data Application Platform HTTP RESTful API And Java Client API
 
 .. highlight:: console
 
-HTTP RESTful API Introduction
-=============================
+.. _restful-api:
+
+----------------
+HTTP RESTful API
+----------------
+
+Introduction
+============
 
 The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of purposes:
 
@@ -128,7 +134,7 @@ but a request may return any of these.
 
 
 Working with CDAP Security
------------------------------
+--------------------------
 When working with a CDAP cluster with security enabled (``security.enabled=true`` in
 ``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
 obtain an access token from the authentication server (see the *Client Authentication* section of the
@@ -140,6 +146,7 @@ In order to authenticate, all client requests must supply this access token in t
 
 For CDAP-issued access tokens, the authentication scheme must always be ``Bearer``.
 
+.. _rest-streams:
 
 Stream HTTP API
 ===============
@@ -254,7 +261,7 @@ After receiving the request, the HTTP handler transforms it into a Stream event:
 .. rst2pdf: PageBreak
 
 Reading Events from a Stream
----------------------------------------------------
+----------------------------
 Reading events from an existing Stream is performed as an HTTP GET method to the URL::
 
   GET <base-url>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
@@ -368,7 +375,7 @@ Example
 .. rst2pdf: PageBreak
 
 Setting Time-To-Live Property of a Stream
-------------------------------------------
+-----------------------------------------
 The Time-To-Live (TTL) property governs how long an event is valid for consumption since 
 it was written to the Stream.
 The default TTL for all Streams is infinite, meaning that events will never expire.
@@ -430,6 +437,8 @@ Example
      - Change the TTL property of the Stream named *mystream* to 1 day
 
 .. rst2pdf: PageBreak
+
+.. _rest-datasets:
 
 Dataset HTTP API
 ================
@@ -534,7 +543,7 @@ Example
 Updating an Existing Dataset
 ----------------------------
 
-You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
+You can update an existing dataset's table and properties by issuing an HTTP PUT request to the URL::
 
 	PUT <base-url>/data/datasets/<dataset-name>/properties
 
@@ -1127,14 +1136,14 @@ Example
 .. rst2pdf: PageBreak
 
 Service HTTP API
-==================
+================
 
 This interface supports making requests to the methods of an Application’s Services.
 See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
 Services.
 
 Requesting Service Methods
------------------------------
+--------------------------
 To make a request to a Service's method, send the method's path as part of the request URL along with any additional
 headers and body.
 
@@ -1186,7 +1195,7 @@ Example
 .. rst2pdf: PageBreak
 
 CDAP Client HTTP API
-=======================
+====================
 
 Use the CDAP Client HTTP API to deploy or delete Applications and manage the life cycle of 
 Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
@@ -1502,6 +1511,8 @@ Example
        Procedure *MyProc2* in the Application *MyApp1*, and the runnable *MyRunnable1* in the
        Custom Service *MySvc1* in the Application *MyApp3*
 
+.. _rest-scaling-flowlets:
+
 Scaling Flowlets
 ................
 You can query and set the number of instances executing a given Flowlet
@@ -1710,7 +1721,7 @@ For Workflows, you can also retrieve:
 
 
 Logging HTTP API
-=================
+================
 
 Downloading Logs
 ----------------
@@ -2114,7 +2125,7 @@ HTTP Responses
      - The event successfully called the method, and the body contains the results
 
 Checking Status of All CDAP System Services
-----------------------------------------------
+-------------------------------------------
 To check the status of all the System Services, use::
 
   GET <base-url>/system/services/status
@@ -2133,12 +2144,12 @@ HTTP Responses
 .. rst2pdf: PageBreak
 
 Checking Status of a Specific CDAP System Service
-----------------------------------------------------
+-------------------------------------------------
 To check the status of a specific System Service, use::
 
   GET <base-url>/system/services/<service-name>/status
 
-The status of these CDAP System Servcies can be checked:
+The status of these CDAP System Services can be checked:
 
 .. list-table::
    :header-rows: 1
@@ -2253,8 +2264,11 @@ Examples
 
 .. rst2pdf: PageBreak
 
-Java Client API Introduction
-============================
+.. _client-api:
+
+---------------
+Java Client API
+---------------
 
 The Cask Data Application Platform (CDAP) Java Client API provides methods for interacting
 with CDAP from Java applications.
@@ -2597,7 +2611,144 @@ StreamClient
   // End write asynchronously
   //
 
+.. _CLI:
 
+----------------------
+Command-Line Interface
+----------------------
+
+Introduction
+============
+
+The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
+similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
+script or a Windows ``.bat`` file.
+
+The CLI may be used in two ways: interactive mode and non-interactive mode.
+
+Interactive Mode
+----------------
+
+.. highlight:: console
+
+To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal::
+
+  $ /bin/cdap-cli
+
+or, on Windows::
+
+  ~SDK> bin\cdap-cli.bat
+
+The executable should bring you into a shell, with this prompt::
+
+  cdap (localhost:10000)>
+
+This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
+There are two ways to interact with a different CDAP server:
+
+- To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
+- To change the current CDAP server, run the command ``connect example.com``.
+
+For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
+a CDAP instance at ``example.com``, port ``10000``::
+
+  cdap (example.com:10000)>
+
+To list all of the available commands, enter ``help``::
+
+  cdap (localhost:10000)> help
+
+Non-Interactive Mode
+--------------------
+
+To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
+as the argument. For example, to list all applications currently deployed to CDAP, execute::
+
+  cdap list apps
+
+Available Commands
+==================
+
+These are the available commands:
+
+.. csv-table::
+   :header: Command,Description
+   :widths: 50, 50
+
+   **General**
+   ``help``,Prints this helper text
+   ``version``,Prints the version
+   ``exit``,Exits the shell
+   **Calling and Executing**
+   ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``,"Calls a Procedure, passing in the parameters as a JSON String map"
+   ``execute <query>``,Executes a Dataset query
+   **Creating**
+   ``create dataset instance <type-name> <new-dataset-name>``,Creates a Dataset
+   ``create stream <new-stream-id>``,Creates a Stream
+   **Deleting**
+   ``delete app <app-id>``,Deletes an Application
+   ``delete dataset instance <dataset-name>``,Deletes a Dataset
+   ``delete dataset module <module-name>``,Deletes a Dataset module
+   **Deploying**
+   ``deploy app <app-jar-file>``,Deploys an application
+   ``deploy dataset module <module-jar-file> <module-name> <module-jar-classname>``,Deploys a Dataset module
+   **Describing**
+   ``describe app <app-id>``,Shows detailed information about an application
+   ``describe dataset module <module-name>``,Shows information about a Dataset module
+   ``describe dataset type <type-name>``,Shows information about a Dataset type
+   **Retrieving Information**
+   ``get history flow <app-id>.<program-id>``,Gets the run history of a Flow
+   ``get history mapreduce <app-id>.<program-id>``,Gets the run history of a MapReduce job
+   ``get history procedure <app-id>.<program-id>``,Gets the run history of a Procedure
+   ``get history runnable <app-id>.<program-id>``,Gets the run history of a Runnable
+   ``get history workflow <app-id>.<program-id>``,Gets the run history of a Workflow
+   ``get instances flowlet <app-id>.<program-id>``,Gets the instances of a Flowlet
+   ``get instances procedure <app-id>.<program-id>``,Gets the instances of a Procedure
+   ``get instances runnable <app-id>.<program-id>``,Gets the instances of a Runnable
+   ``get live flow <app-id>.<program-id>``,Gets the live info of a Flow
+   ``get live procedure <app-id>.<program-id>``,Gets the live info of a Procedure
+   ``get logs flow <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Flow
+   ``get logs mapreduce <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a MapReduce job
+   ``get logs procedure <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Procedure
+   ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Runnable
+   ``get status flow <app-id>.<program-id>``,Gets the status of a Flow
+   ``get status mapreduce <app-id>.<program-id>``,Gets the status of a MapReduce job
+   ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
+   ``get status service <app-id>.<program-id>``,Gets the status of a Service
+   ``get status workflow <app-id>.<program-id>``,Gets the status of a Workflow
+   **Listing Elements**
+   ``list apps``,Lists all applications
+   ``list dataset instances``,Lists all Datasets
+   ``list dataset modules``,Lists Dataset modules
+   ``list dataset types``,Lists Dataset types
+   ``list flows``,Lists Flows
+   ``list mapreduce``,Lists MapReduce jobs
+   ``list procedures``,Lists Procedures
+   ``list programs``,Lists all programs
+   ``list streams``,Lists Streams
+   ``list workflows``,Lists Workflows
+   **Sending Events**
+   ``send stream <stream-id> <stream-event>``,Sends an event to a Stream
+   **Setting**
+   ``set instances flowlet <program-id> <num-instances>``,Sets the instances of a Flowlet
+   ``set instances procedure <program-id> <num-instances>``,Sets the instances of a Procedure
+   ``set instances runnable <program-id> <num-instances>``,Sets the instances of a Runnable
+   ``set stream ttl <stream-id> <ttl-in-seconds>``,Sets the Time-to-Live (TTL) of a Stream
+   **Starting**
+   ``start flow <program-id>``,Starts a Flow
+   ``start mapreduce <program-id>``,Starts a MapReduce job
+   ``start procedure <program-id>``,Starts a Procedure
+   ``start service <program-id>``,Starts a Service
+   ``start workflow <program-id>``,Starts a Workflow
+   **Stopping**
+   ``stop flow <program-id>``,Stops a Flow
+   ``stop mapreduce <program-id>``,Stops a MapReduce job
+   ``stop procedure <program-id>``,Stops a Procedure
+   ``stop service <program-id>``,Stops a Service
+   ``stop workflow <program-id>``,Stops a Workflow
+   **Truncating**
+   ``truncate dataset instance``,Truncates a Dataset
+   ``truncate stream``,Truncates a Stream
 
 
 .. highlight:: java
@@ -2606,7 +2757,7 @@ StreamClient
 
 Where to Go Next
 ================
-Now that you've seen CDAP's HTTP RESTful and Java Client APIs,
+Now that you've seen CDAP's HTTP RESTful APIs and clients,
 the last of our documentation is:
 
 - `Cask Data Application Platform Javadocs <javadocs/index.html>`__,

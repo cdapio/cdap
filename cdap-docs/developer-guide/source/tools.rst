@@ -18,11 +18,9 @@ helping to debug CDAP applications, interact with them and ingest data into them
     * - Tool Name
       - Description
       - Quick Link
-    * - CLI
-      - ``The Command-Line Interface (CLI) to interact with the CDAP server from within a shell, similar to HBase shell or bash``
-      - CLI_
     * - Test Framework
-      - ``How you can take advantage of the Powerful Test Framework to test your CDAP applications before deploying. This makes catching bugs early and easy``
+      - ``How you can take advantage of the Powerful Test Framework to test your CDAP applications before deploying.
+        This makes catching bugs early and easy``
       - TestFramework_
     * - Debugging
       - ``How you can debug CDAP applications in standalone mode and debugging app containers in distributed mode``
@@ -33,147 +31,6 @@ helping to debug CDAP applications, interact with them and ingest data into them
     * - Ingestion tools
       - ``Ways to Ingest data into CDAP``
       - Ingest_
-
-.. _CLI:
-
-Command-Line Interface
-======================
-
-Introduction
-------------
-
-The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
-similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
-script or a Windows ``.bat`` file.
-
-Usage
------
-
-The CLI may be used in two ways: interactive mode and non-interactive mode.
-
-Interactive Mode
-----------------
-
-.. highlight:: console
-
-To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal::
-
-  $ /bin/cdap-cli
-
-or, on Windows::
-
-  ~SDK> bin\cdap-cli.bat
-
-The executable should bring you into a shell, with this prompt::
-
-  cdap (localhost:10000)>
-
-This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
-There are two ways to interact with a different CDAP server:
-
-- To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
-- To change the current CDAP server, run the command ``connect example.com``.
-
-For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
-a CDAP instance at ``example.com``, port ``10000``::
-
-  cdap (example.com:10000)>
-
-To list all of the available commands, enter ``help``::
-
-  cdap (localhost:10000)> help
-
-Non-Interactive Mode
---------------------
-
-To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
-as the argument. For example, to list all applications currently deployed to CDAP, execute::
-
-  cdap list apps
-
-Available Commands
-------------------
-
-These are the available commands:
-
-.. csv-table::
-   :header: Command,Description
-   :widths: 50, 50
-
-     **General**
-   ``help``,Prints this helper text
-   ``version``,Prints the version
-   ``exit``,Exits the shell
-   **Calling and Executing**
-   ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``,"Calls a Procedure, passing in the parameters as a JSON String map"
-   ``execute <query>``,Executes a Dataset query
-   **Creating**
-   ``create dataset instance <type-name> <new-dataset-name>``,Creates a Dataset
-   ``create stream <new-stream-id>``,Creates a Stream
-   **Deleting**
-   ``delete app <app-id>``,Deletes an Application
-   ``delete dataset instance <dataset-name>``,Deletes a Dataset
-   ``delete dataset module <module-name>``,Deletes a Dataset module
-   **Deploying**
-   ``deploy app <app-jar-file>``,Deploys an application
-   ``deploy dataset module <module-jar-file> <module-name> <module-jar-classname>``,Deploys a Dataset module
-   **Describing**
-   ``describe app <app-id>``,Shows detailed information about an application
-   ``describe dataset module <module-name>``,Shows information about a Dataset module
-   ``describe dataset type <type-name>``,Shows information about a Dataset type
-   **Retrieving Information**
-   ``get history flow <app-id>.<program-id>``,Gets the run history of a Flow
-   ``get history mapreduce <app-id>.<program-id>``,Gets the run history of a MapReduce job
-   ``get history procedure <app-id>.<program-id>``,Gets the run history of a Procedure
-   ``get history runnable <app-id>.<program-id>``,Gets the run history of a Runnable
-   ``get history workflow <app-id>.<program-id>``,Gets the run history of a Workflow
-   ``get instances flowlet <app-id>.<program-id>``,Gets the instances of a Flowlet
-   ``get instances procedure <app-id>.<program-id>``,Gets the instances of a Procedure
-   ``get instances runnable <app-id>.<program-id>``,Gets the instances of a Runnable
-   ``get live flow <app-id>.<program-id>``,Gets the live info of a Flow
-   ``get live procedure <app-id>.<program-id>``,Gets the live info of a Procedure
-   ``get logs flow <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Flow
-   ``get logs mapreduce <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a MapReduce job
-   ``get logs procedure <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Procedure
-   ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Runnable
-   ``get status flow <app-id>.<program-id>``,Gets the status of a Flow
-   ``get status mapreduce <app-id>.<program-id>``,Gets the status of a MapReduce job
-   ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
-   ``get status service <app-id>.<program-id>``,Gets the status of a Service
-   ``get status workflow <app-id>.<program-id>``,Gets the status of a Workflow
-   **Listing Elements**
-   ``list apps``,Lists all applications
-   ``list dataset instances``,Lists all Datasets
-   ``list dataset modules``,Lists Dataset modules
-   ``list dataset types``,Lists Dataset types
-   ``list flows``,Lists Flows
-   ``list mapreduce``,Lists MapReduce jobs
-   ``list procedures``,Lists Procedures
-   ``list programs``,Lists all programs
-   ``list streams``,Lists Streams
-   ``list workflows``,Lists Workflows
-   **Sending Events**
-   ``send stream <stream-id> <stream-event>``,Sends an event to a Stream
-   **Setting**
-   ``set instances flowlet <program-id> <num-instances>``,Sets the instances of a Flowlet
-   ``set instances procedure <program-id> <num-instances>``,Sets the instances of a Procedure
-   ``set instances runnable <program-id> <num-instances>``,Sets the instances of a Runnable
-   ``set stream ttl <stream-id> <ttl-in-seconds>``,Sets the Time-to-Live (TTL) of a Stream
-   **Starting**
-   ``start flow <program-id>``,Starts a Flow
-   ``start mapreduce <program-id>``,Starts a MapReduce job
-   ``start procedure <program-id>``,Starts a Procedure
-   ``start service <program-id>``,Starts a Service
-   ``start workflow <program-id>``,Starts a Workflow
-   **Stopping**
-   ``stop flow <program-id>``,Stops a Flow
-   ``stop mapreduce <program-id>``,Stops a MapReduce job
-   ``stop procedure <program-id>``,Stops a Procedure
-   ``stop service <program-id>``,Stops a Service
-   ``stop workflow <program-id>``,Stops a Workflow
-   **Truncating**
-   ``truncate dataset instance``,Truncates a Dataset
-   ``truncate stream``,Truncates a Stream
 
 .. highlight:: java
 
@@ -213,65 +70,64 @@ Let’s write a test case for the *WordCount* example::
 The first thing we do in this test is deploy the application,
 then we’ll start the Flow and the Procedure::
 
-    // Deploy the Application
-    ApplicationManager appManager = deployApplication(WordCount.class);
+      // Deploy the Application
+      ApplicationManager appManager = deployApplication(WordCount.class);
 
-    // Start the Flow and the Procedure
-    FlowManager flowManager = appManager.startFlow("WordCounter");
-    ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
+      // Start the Flow and the Procedure
+      FlowManager flowManager = appManager.startFlow("WordCounter");
+      ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
 
 Now that the Flow is running, we can send some events to the Stream::
 
-    // Send a few events to the Stream
-    StreamWriter writer = appManager.getStreamWriter("wordStream");
-    writer.send("hello world");
-    writer.send("a wonderful world");
-    writer.send("the world says hello");
+      // Send a few events to the Stream
+      StreamWriter writer = appManager.getStreamWriter("wordStream");
+      writer.send("hello world");
+      writer.send("a wonderful world");
+      writer.send("the world says hello");
 
 To wait for all events to be processed, we can get a metrics observer
 for the last Flowlet in the pipeline (the "word associator") and wait for
 its processed count to either reach 3 or time out after 5 seconds::
 
-    // Wait for the events to be processed, or at most 5 seconds
-    RuntimeMetrics metrics = RuntimeStats.
-      getFlowletMetrics("WordCount", "WordCounter", "associator");
-    metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+      // Wait for the events to be processed, or at most 5 seconds
+      RuntimeMetrics metrics = RuntimeStats.
+        getFlowletMetrics("WordCount", "WordCounter", "associator");
+      metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Now we can start verifying that the processing was correct by obtaining
 a client for the Procedure, and then submitting a query for the global
 statistics::
 
-    // Call the Procedure
-    ProcedureClient client = procManager.getClient();
+      // Call the Procedure
+      ProcedureClient client = procManager.getClient();
 
-    // Query global statistics
-    String response = client.query("getStats", Collections.EMPTY_MAP);
+      // Query global statistics
+      String response = client.query("getStats", Collections.EMPTY_MAP);
 
 If the query fails for any reason this method would throw an exception.
 In case of success, the response is a JSON string. We must deserialize
 the JSON string to verify the results::
 
-    Map<String, String> map = new Gson().fromJson(response, stringMapType);
-    Assert.assertEquals("9", map.get("totalWords"));
-    Assert.assertEquals("6", map.get("uniqueWords"));
-    Assert.assertEquals(((double)42)/9,
-      (double)Double.valueOf(map.get("averageLength")), 0.001);
+      Map<String, String> map = new Gson().fromJson(response, stringMapType);
+      Assert.assertEquals("9", map.get("totalWords"));
+      Assert.assertEquals("6", map.get("uniqueWords"));
+      Assert.assertEquals(((double)42)/9,
+        (double)Double.valueOf(map.get("averageLength")), 0.001);
 
 Then we ask for the statistics of one of the words in the test events.
 The verification is a little more complex, because we have a nested map
 as a response, and the value types in the top-level map are not uniform::
 
-    // Verify some statistics for one of the words
-    response = client.query("getCount", ImmutableMap.of("word","world"));
-    Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
-    Assert.assertEquals("world", omap.get("word"));
-    Assert.assertEquals(3.0, omap.get("count"));
+      // Verify some statistics for one of the words
+      response = client.query("getCount", ImmutableMap.of("word","world"));
+      Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
+      Assert.assertEquals("world", omap.get("word"));
+      Assert.assertEquals(3.0, omap.get("count"));
 
-    // The associations are a map within the map
-    Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
-    Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
-    Assert.assertTrue(assocs.containsKey("hello"));
-  }
+      // The associations are a map within the map
+      Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
+      Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
+      Assert.assertTrue(assocs.containsKey("hello"));
 
 Strategies in Testing MapReduce Jobs
 ------------------------------------
@@ -292,41 +148,41 @@ The ``PurchaseTest`` class should extend from
 The ``PurchaseApp`` application can be deployed using the ``deployApplication``
 method from the ``TestBase`` class::
 
-  // Deploy an Application
-  ApplicationManager appManager = deployApplication(PurchaseApp.class);
+      // Deploy an Application
+      ApplicationManager appManager = deployApplication(PurchaseApp.class);
 
 The MapReduce job reads from the ``purchases`` Dataset. As a first
 step, the data to the ``purchases`` should be populated by running
 the ``PurchaseFlow`` and sending the data to the ``purchaseStream``
 Stream::
 
-  FlowManager flowManager = appManager.startFlow("PurchaseFlow");
-  // Send data to the Stream
-  sendData(appManager, now);
+      FlowManager flowManager = appManager.startFlow("PurchaseFlow");
+      // Send data to the Stream
+      sendData(appManager, now);
 
-  // Wait for the last Flowlet to process 3 events or at most 5 seconds
-  RuntimeMetrics metrics = RuntimeStats.
-      getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
-  metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+      // Wait for the last Flowlet to process 3 events or at most 5 seconds
+      RuntimeMetrics metrics = RuntimeStats.
+          getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
+      metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
 
 Start the MapReduce job and wait for a maximum of 60 seconds::
 
-  // Start the MapReduce job.
-  MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
-  mrManager.waitForFinish(60, TimeUnit.SECONDS);
+      // Start the MapReduce job.
+      MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
+      mrManager.waitForFinish(60, TimeUnit.SECONDS);
 
 We can start verifying that the MapReduce job was run correctly by
 obtaining a client for the Procedure, and then submitting a query for
 the counts::
 
-  ProcedureClient client = procedureManager.getClient();
+      ProcedureClient client = procedureManager.getClient();
 
-  // Verify the query.
-  String response = client.query("history", ImmutableMap.of("customer", "joe"));
+      // Verify the query.
+      String response = client.query("history", ImmutableMap.of("customer", "joe"));
 
-  // Deserialize the JSON string.
-  PurchaseHistory result = GSON.fromJson(response, PurchaseHistory.class);
-  Assert.assertEquals(2, result.getPurchases().size());
+      // Deserialize the JSON string.
+      PurchaseHistory result = GSON.fromJson(response, PurchaseHistory.class);
+      Assert.assertEquals(2, result.getPurchases().size());
 
 The assertion will verify that the correct result was received.
 
@@ -340,18 +196,18 @@ This can be done using a JDBC connection obtained from the test base::
   // Obtain a JDBC connection
   Connection connection = getQueryClient();
   try {
-      // Run a query over the dataset
-      results = connection.prepareStatement("SELECT key FROM mytable WHERE value = '1'").executeQuery();
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("a", results.getString(1));
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("c", results.getString(1));
-      Assert.assertFalse(results.next());
+    // Run a query over the dataset
+    results = connection.prepareStatement("SELECT key FROM mytable WHERE value = '1'").executeQuery();
+    Assert.assertTrue(results.next());
+    Assert.assertEquals("a", results.getString(1));
+    Assert.assertTrue(results.next());
+    Assert.assertEquals("c", results.getString(1));
+    Assert.assertFalse(results.next());
 
-    } finally {
-      results.close();
-      connection.close();
-    }
+  } finally {
+    results.close();
+    connection.close();
+  }
 
 The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
 will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
@@ -383,7 +239,7 @@ For more information, see `Attaching a Debugger`_.
 :Note:  Currently, debugging is not supported under Windows.
 
 Debugging an Application in Distributed CDAP
------------------------------------------------
+--------------------------------------------
 
 .. highlight:: console
 
@@ -673,8 +529,8 @@ from the concerned Tables.
 
 .. _Ingest:
 
-Ingesting Data into the Cask Data Application Platform
-======================================================
+Ingesting Data
+==============
 
 .. highlight:: console
 
@@ -803,7 +659,7 @@ Putting it all together:
 
         // Update TTL value for Stream by id <streamName>
         streamClient.setTTL(streamName, newTTL);
-        LOG.info("Seting new TTL : {} seconds for stream: {}", newTTL, streamName);
+        LOG.info("Setting new TTL : {} seconds for stream: {}", newTTL, streamName);
 
 
         String event = "192.0.2.0 - - [09/Apr/2012:08:40:43 -0400] \"GET /NoteBook/ HTTP/1.0\" 201 809 \"-\" " +
@@ -835,7 +691,7 @@ Putting it all together:
 Also look at : [`Note stream_client`_]
 
 Python API
------------
+----------
 Usage
 .....
 
@@ -859,7 +715,7 @@ from an existing file.
 ::
 
   #The assigned values are also the default values
-  def createStremClient():
+  def createStreamClient():
     config = Config()
     config.host = ‘localhost’
     config.port = 10000
@@ -869,7 +725,7 @@ from an existing file.
 2. using an existing configuration file in JSON format [`Note 1`_] to create a ``config`` object
 ::
 
-   def createStremClient():
+   def createStreamClient():
     config = Config.read_from_file('/path/to/config.json')
     streamClient = streamClient(config)
 
@@ -906,12 +762,12 @@ Putting it all together:
 ........................
 ::
 
-  def createStremClient():
+  def createStreamClient():
     config = Config.read_from_file('/path/to/config.json')
     streamClient = streamClient(config)
     streamWriter = streamClient.create_writer("streamName")
     streamPromise = streamWriter.write("New log Event") #async
-    streamPromise.onResponse(onOKHandler, onErrorHalnder)
+    streamPromise.onResponse(onOKHandler, onErrorHandler)
 
   def onOkHandler(httpResponse): #will be executed after successful write to stream
     ...
@@ -927,17 +783,19 @@ Putting it all together:
 
 
 .. _note 1:
-:Note 1:
-Config file structure in JSON format:
-::
+   :Note 1:
+
+Config file structure in JSON format::
 
   {
     hostname: 'localhost',    - gateway hostname
     port: 10000,              - gateway port
     SSL: false                - if SSL is being used
   }
+
 .. _note 2:
-:Note 2:
+   :Note 2:
+
 Stream Name:
   -  The name can only contain ASCII letters, digits and hyphens.
   -  If the Stream already exists, no error is returned, and the existing
@@ -1112,7 +970,8 @@ After Installation, you can configure the daemon properties at /etc/file-tailer/
      # Host port that is used by stream client
      pipes.app1pipe.sink.port=10000
 
-  :Note:  Please note that the target file must be accessible to the File Tailer user. To check, you can use the more command with the File Tailer user:
+  :Note:  Please note that the target file must be accessible to the File Tailer user. To check, you can use the
+          `more` command with the File Tailer user:
           Available at: [link]
 
 Starting and Stopping the Daemon
@@ -1131,7 +990,8 @@ Configuring Authentication Client for File Tailer
 
 Authentication client parameters :
   - pipes.<pipe-name>.sink.auth_client - classpath of authentication client class
-  - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is locted at ``/etc/file-tailer/conf/auth-client.properties``
+  - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is
+    located at ``/etc/file-tailer/conf/auth-client.properties``
 
   you can refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 
@@ -1198,40 +1058,42 @@ The CDAP Sink is a `Apache Flume Sink <https://flume.apache.org>`__ implementati
 RESTStreamWriter to write events received from a source. For example, you can configure the Flume Sink's
 Agent to read data from a log file by tailing it and putting them into CDAP.
 
-.. list-table:: Flume Configuration
-:widths: 20 30 50
+.. list-table::
+    :widths: 20 30 50
     :header-rows: 1
 
-      * - Property
-        - Value
-        - Description
-      * - a1.sinks.sink1.type
-        - ``co.cask.cdap.flume.StreamSink``
-        - Copy the CDAP sink jar to Flume lib directory and specify the fully qualified class name for this property.
-      * - a1.sinks.sink1.host
-        - ``host-name``
-        - Host name used by the Stream client
-      * - a1.sinks.sink1.streamName
-        - ``Stream-name``
-        - Target Stream name
-      * - a1.sinks.sink1.port
-        - ``10000``
-        - This parameter is options and the Default port number is 10000
-      * - a1.sinks.sink1.sslEnabled
-        - ``false``
-        - This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false
-      * - a1.sinks.sink1.writerPoolSize
-        - ``10``
-        - Number of threads to which the stream client can send events
-      * - a1.sinks.sink1.version
-        - ``v2``
-        - CDAP Router server version
+    * - Property
+      - Value
+      - Description
+    * - a1.sinks.sink1.type
+      - ``co.cask.cdap.flume.StreamSink``
+      - Copy the CDAP sink jar to Flume lib directory and specify the fully qualified class name for this property.
+    * - a1.sinks.sink1.host
+      - ``host-name``
+      - Host name used by the Stream client
+    * - a1.sinks.sink1.streamName
+      - ``Stream-name``
+      - Target Stream name
+    * - a1.sinks.sink1.port
+      - ``10000``
+      - This parameter is options and the Default port number is 10000
+    * - a1.sinks.sink1.sslEnabled
+      - ``false``
+      - This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false
+    * - a1.sinks.sink1.writerPoolSize
+      - ``10``
+      - Number of threads to which the stream client can send events
+    * - a1.sinks.sink1.version
+      - ``v2``
+      - CDAP Router server version
 
 Authentication Client
 ---------------------
 To use authentication, add these authentication client configuration parameters to the sink configuration file:
-  - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient, Fully qualified class name of the client class
-  - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is locted at ``/usr/local/apache-flume/conf/auth_client.conf``
+  - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient,
+    Fully qualified class name of the client class
+  - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is
+    located at ``/usr/local/apache-flume/conf/auth_client.conf``
 
 please refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 

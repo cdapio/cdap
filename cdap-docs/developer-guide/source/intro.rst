@@ -28,8 +28,9 @@ Where to Go Next
 ================
 Now that you've had an introduction to CDAP, take a look at:
 
-- `Cask Data Application Platform Quick Start <quickstart.html>`__,
-  which guides you through installing CDAP and running and modifying an example application.
+- `Cask Data Application Platform Getting Started Guide <getstarted.html>`__,
+  which guides you through installing CDAP, setting up your development environment, and building and running
+  an example application.
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :trim:

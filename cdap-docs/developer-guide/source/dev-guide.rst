@@ -19,14 +19,14 @@ please see :doc:`Concepts and Architecture </arch>`.
 
 For more information beyond this document, see the
 :doc:`Javadocs </javadocs/index>` and the code in the
-:doc:`examples </examples/index>` directory, both of which are on the
+:ref:`Examples <examples>` directory, both of which are on the
 `Cask.co <http://cask.co>`_ `Developers website <http://cask.co/developers>`_ as well as in your
 CDAP installation directory.
 
 Data Virtualization
 ===================
 
-There are two main data virtualizations: Streams and Datasets. Streams are ordered, partionable,
+There are two main data virtualizations: Streams and Datasets. Streams are ordered, partitioned
 sequences of data, and are the primary means of bringing data from external systems into the CDAP
 in realtime. Datasets are abstractions on top of data, allowing you to access your data using
 higher-level abstractions and generic, reusable Java implementations of common data patterns
@@ -38,12 +38,10 @@ Streams
 =======
 
 **Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
-They are ordered, partionable, sequences of data, usable for realtime collection and consumption of data.
-You specify a Stream in your `Application`__ metadata::
+They are ordered, time-partitioned sequences of data, usable for realtime collection and consumption of data.
+You specify a Stream in your :ref:`Application <applications>` specification::
 
   addStream(new Stream("myStream"));
-
-__ applications_
 
 specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the CDAP instance.
@@ -99,14 +97,14 @@ For example, to create a DataSet named *myCounters* of type
 :doc:`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable>`, write::
 
   public void configure() {
-      createDataset("myCounters", "KeyValueTable");
+      createDataset("myCounters", KeyValueTable.class);
       ...
 
 To use the Dataset in a Program, instruct the runtime
 system to inject an instance of the Dataset with the ``@UseDataSet``
 annotation::
 
-  class MyFowlet extends AbstractFlowlet {
+  class MyFlowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
     private KeyValueTable counters;
     ...
@@ -120,7 +118,7 @@ instance of the Dataset class into the Application.
 
 You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
-:doc:`Purchase <examples/Purchase/index>`
+:doc:`Purchase <examples/purchase>`
 example for an implementation of a Custom Dataset.
 For more details, refer to :ref:`Custom Datasets <custom-datasets>`
 
@@ -306,7 +304,7 @@ Increment
 .........
 An increment operation increments a ``long`` value of one or more columns by either ``1L``
 or an integer amount *n*.
-If a column doesn’t exist, it is created with an assumed value of zero before the increment::
+If a column does not exist, it is created with an assumed value of zero before the increment::
 
   // Write long value to a column of a row
   t.put(new Put("rowKey1").add("column1", 55L));
@@ -343,7 +341,7 @@ Tables, but defines its own interface. Examples include:
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the :doc:`Javadocs <javadocs/index>` for these classes and the :doc:`examples <examples/index>`
+See the :doc:`Javadocs <javadocs/index>` for these classes and the :ref:`Examples <examples>`
 to learn more about these Datasets. Any class in the CDAP libraries that implements the ``Dataset`` interface is a
 system Dataset.
 
@@ -421,14 +419,14 @@ These properties will be used by embedded Datasets during creation and will be a
 
 Application components can access a created Dataset via the ``@UseDataSet`` annotation::
 
-  Class MyFowlet extends AbstractFlowlet {
+  Class MyFlowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
     private UniqueCountTable counters;
     ...
   }
 
 A complete application demonstrating the use of a custom Dataset is included in our
-:doc:`Purchase <examples/Purchase/index>` example.
+:doc:`Purchase <examples/purchase>` example.
 
 You can also create, drop, and truncate Datasets using the
 :ref:`Cask Data Application Platform HTTP REST API <rest-datasets>`.
@@ -558,7 +556,7 @@ Limitations
   supported and will result in an exception when the Dataset is created.
 
 * A Dataset can only be used in ad-hoc queries if its record type is completely contained in the Dataset definition.
-  This means that if the record type is or contains a parametrized type, then the type parameters must be present in
+  This means that if the record type is or contains a parameterized type, then the type parameters must be present in
   the Dataset definition. The reason is that the record type must be instantiated when executing an ad-hoc query.
   If a type parameter depends on the jar file of the application that created the Dataset, then this jar file is not
   available to the query execution runtime.
@@ -566,7 +564,7 @@ Limitations
   For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
   the application jar. However, if you define your own Dataset type ``MyObjectStore`` that extends or encapsulates an
   ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the Dataset definition for ``MyObjectStore``. See the
-  :doc:`Purchase </examples/Purchase/index>` application for an example.
+  :doc:`Purchase </examples/purchase>` application for an example.
 
 
 Parameterized Types
@@ -950,6 +948,8 @@ your distributed staging cluster.
 With your data virtualized in CDAP as Streams and Datasets, you are able to process that data in realtime or in batch
 using Programs (Flows, MapReduce, Spark, Workflow), and you can serve data to external clients using Services
 and Procedures.
+
+.. _applications:
 
 Applications
 ============
@@ -1755,7 +1755,7 @@ Developers can implement Custom Services to interface with a legacy system and p
 the CDAP processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
 Custom Services lifecycle can be controlled via the CDAP Console or by using the
-:ref:`CDAP Client API <client-api>` or :ref:`CDAP RESTful API <rest-services>`.
+:ref:`CDAP Java Client API <client-api>` or :ref:`CDAP RESTful HTTP API <restful-api>`.
 
 Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler`` \s to serve requests.
 
@@ -1790,7 +1790,7 @@ Application's ``configure`` method::
   }
 
 Service Handlers
-................
+----------------
 
 ``ServiceHandler`` \s are used to handle and serve HTTP requests.
 
@@ -1816,7 +1816,7 @@ Each request to a method is committed as a single transaction.
   }
 
 Service Discovery
-.................
+-----------------
 
 Services announce the host and port they are running on so that they can be discovered by—and provide
 access to—other programs.
@@ -1929,12 +1929,202 @@ There is also a convenience method to respond with an error message::
       return;
     }
 
+Transaction System
+==================
+
+The Need for Transactions
+-------------------------
+
+A Flowlet processes the data objects received on its inputs one at a time. While processing
+a single input object, all operations, including the removal of the data from the input,
+and emission of data to the outputs, are executed in a **transaction**. This provides us
+with ACID—atomicity, consistency, isolation, and durability properties:
+
+- The process method runs under read isolation to ensure that it does not see dirty writes
+  (uncommitted writes from concurrent processing) in any of its reads.
+  It does see, however, its own writes.
+
+- A failed attempt to process an input object leaves the data in a consistent state;
+  it does not leave partial writes behind.
+
+- All writes and emission of data are committed atomically;
+  either all of them or none of them are persisted.
+
+- After processing completes successfully, all its writes are persisted in a durable way.
+
+In case of failure, the state of the data is unchanged and processing of the input
+object can be reattempted. This ensures "exactly-once" processing of each object.
+
+OCC: Optimistic Concurrency Control
+-----------------------------------
+
+The Cask Data Application Platform uses *Optimistic Concurrency Control* (OCC) to implement
+transactions. Unlike most relational databases that use locks to prevent conflicting
+operations between transactions, under OCC we allow these conflicting writes to happen.
+When the transaction is committed, we can detect whether it has any conflicts: namely, if
+during the lifetime of the transaction, another transaction committed a write for one of
+the same keys that the transaction has written. In that case, the transaction is aborted
+and all of its writes are rolled back.
+
+In other words: If two overlapping transactions modify the same row, then the transaction
+that commits first will succeed, but the transaction that commits last is rolled back due
+to a write conflict.
+
+Optimistic Concurrency Control is lockless and therefore avoids problems such as idle
+processes waiting for locks, or even worse, deadlocks. However, it comes at the cost of
+rollback in case of write conflicts. We can only achieve high throughput with OCC if the
+number of conflicts is small. It is therefore good practice to reduce the probability of
+conflicts wherever possible.
+
+Here are some rules to follow for Flows, Flowlets, Services, and Procedures:
+
+- Keep transactions short. The Cask Data Application Platform attempts to delay the beginning of each
+  transaction as long as possible. For instance, if your Flowlet only performs write
+  operations, but no read operations, then all writes are deferred until the process
+  method returns. They are then performed and transacted, together with the
+  removal of the processed object from the input, in a single batch execution.
+  This minimizes the duration of the transaction.
+
+- However, if your Flowlet performs a read, then the transaction must
+  begin at the time of the read. If your Flowlet performs long-running
+  computations after that read, then the transaction runs longer, too,
+  and the risk of conflicts increases. It is therefore good practice
+  to perform reads as late in the process method as possible.
+
+- There are two ways to perform an increment: As a write operation that
+  returns nothing, or as a read-write operation that returns the incremented
+  value. If you perform the read-write operation, then that forces the
+  transaction to begin, and the chance of conflict increases. Unless you
+  depend on that return value, you should always perform an increment
+  only as a write operation.
+
+- Use hash-based partitioning for the inputs of highly concurrent Flowlets
+  that perform writes. This helps reduce concurrent writes to the same
+  key from different instances of the Flowlet.
+
+Keeping these guidelines in mind will help you write more efficient and faster-performing
+code.
+
+
+The Need for Disabling Transactions
+-----------------------------------
+Transactions providing ACID (atomicity, consistency, isolation, and durability) guarantees
+are useful in several applications where data accuracy is critical—examples include billing
+applications and computing click-through rates.
+
+However, some applications—such as trending—might not need it. Applications that do not
+strictly require accuracy can trade off accuracy against increased throughput by taking
+advantage of not having to write/read all the data in a transaction.
+
+Disabling Transactions
+----------------------
+Transactions can be disabled for a Flow by annotating the Flow class with the
+``@DisableTransaction`` annotation::
+
+  @DisableTransaction
+  class MyExampleFlow implements Flow {
+    ...
+  }
+
+While this may speed up performance, if—for example—a Flowlet fails, the system would not
+be able to roll back to its previous state. You will need to judge whether the increase in
+performance offsets the increased risk of inaccurate data.
+
+Transactions in MapReduce
+-------------------------
+When you run a MapReduce job that interacts with Datasets, the system creates a
+long-running transaction. Similar to the transaction of a Flowlet or a Procedure, here are
+some rules to follow:
+
+- Reads can only see the writes of other transactions that were committed
+  at the time the long-running transaction was started.
+
+- All writes of the long-running transaction are committed atomically,
+  and only become visible to others after they are committed.
+
+- The long-running transaction can read its own writes.
+
+However, there is a key difference: long-running transactions do not participate in
+conflict detection. If another transaction overlaps with the long-running transaction and
+writes to the same row, it will not cause a conflict but simply overwrite it.
+
+It is not efficient to fail the long-running job based on a single conflict. Because of
+this, it is not recommended to write to the same Dataset from both real-time and MapReduce
+programs. It is better to use different Datasets, or at least ensure that the real-time
+processing writes to a disjoint set of columns.
+
+It's important to note that the MapReduce framework will reattempt a task (Mapper or
+Reducer) if it fails. If the task is writing to a Dataset, the reattempt of the task will
+most likely repeat the writes that were already performed in the failed attempt. Therefore
+it is highly advisable that all writes performed by MapReduce programs be idempotent.
+
+Best Practices for Developing Applications
+==========================================
+
+Initializing Instance Fields
+----------------------------
+There are three ways to initialize instance fields used in Flowlets and Procedures:
+
+#. Using the default constructor;
+#. Using the ``initialize()`` method of the Flowlets and Procedures; and
+#. Using ``@Property`` annotations.
+
+To initialize using an Property annotation, simply annotate the field definition with
+``@Property``. 
+
+The following example demonstrates the convenience of using ``@Property`` in a
+``WordFilter`` flowlet
+that filters out specific words::
+
+  public static class WordFilter extends AbstractFlowlet {
+
+    private OutputEmitter<String> out;
+
+    @Property
+    private final String toFilterOut;
+
+    public CountByField(String toFilterOut) {
+      this.toFilterOut = toFilterOut;
+    }
+
+    @ProcessInput()
+    public void process(String word) {
+      if (!toFilterOut.equals(word)) {
+        out.emit(word);
+      }
+    }
+  }
+
+
+The Flowlet constructor is called with the parameter when the Flow is configured::
+
+  public static class WordCountFlow implements Flow {
+    @Override
+    public FlowSpecification configure() {
+      return FlowSpecification.Builder.with()
+        .setName("WordCountFlow")
+        .setDescription("Flow for counting words")
+        .withFlowlets().add(new Tokenizer())
+                       .add(new WordsFilter("the"))
+                       .add(new WordsCounter())
+        .connect().fromStream("text").to("Tokenizer")
+                  .from("Tokenizer").to("WordsFilter")
+                  .from("WordsFilter").to("WordsCounter")
+        .build();
+    }
+  }
+
+
+At run-time, when the Flowlet is started, a value is injected into the ``toFilterOut``
+field.
+
+Field types that are supported using the ``@Property`` annotation are primitives,
+boxed types (e.g. ``Integer``), ``String`` and ``enum``.
+
 
 Where to Go Next
 ================
 Now that you've had an introduction to programming applications
 for CDAP, take a look at:
 
-- `Advanced Cask Data Application Platform Features <advanced.html>`__,
-  with details of the Custom Services, Flow, Dataset, and Transaction systems, and
-  best practices for developing applications.
+- :doc:`Case Studies <case-studies>`, to walk through some example applications.
