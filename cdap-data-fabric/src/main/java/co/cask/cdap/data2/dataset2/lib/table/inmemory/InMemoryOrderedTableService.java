@@ -40,6 +40,7 @@ import javax.annotation.Nullable;
  * Holds all in-memory tables for {@link InMemoryOrderedTable}.
  */
 // todo: use locks instead of synchronize
+// todo: consider using SortedMap instead of NavigableMap in APIs
 public class InMemoryOrderedTableService {
   private static Map<String, ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>>> tables =
     Maps.newHashMap();
@@ -69,7 +70,7 @@ public class InMemoryOrderedTableService {
 
   // no nulls
   public static synchronized void merge(String tableName,
-                                        NavigableMap<byte[], NavigableMap<byte[], Update>> changes,
+                                        NavigableMap<byte[], ? extends NavigableMap<byte[], ? extends Update>> changes,
                                         long version) {
     // todo: handle nulls
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
@@ -307,23 +308,20 @@ public class InMemoryOrderedTableService {
 
   @Nullable
   private static NavigableMap<byte[], NavigableMap<byte[], Update>> deepCopyUpdates(
-    @Nullable NavigableMap<byte[], NavigableMap<byte[], Update>> src) {
+    @Nullable NavigableMap<byte[], ? extends NavigableMap<byte[], ? extends Update>> src) {
 
     if (src == null) {
       return null;
     }
 
     NavigableMap<byte[], NavigableMap<byte[], Update>> copy = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<byte[], NavigableMap<byte[], Update>> entry : src.entrySet()) {
+    for (Map.Entry<byte[], ? extends NavigableMap<byte[], ? extends Update>> entry : src.entrySet()) {
       byte[] key = copy(entry.getKey());
       NavigableMap<byte[], Update> columnUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
       copy.put(key, columnUpdates);
-      for (Map.Entry<byte[], Update> updateEntry : entry.getValue().entrySet()) {
+      for (Map.Entry<byte[], ? extends Update> updateEntry : entry.getValue().entrySet()) {
         byte[] col = copy(updateEntry.getKey());
-        // only PutValue holds object that is mutable
-        Update update = updateEntry.getValue();
-        Update columnUpdate = update instanceof PutValue ? PutValue.deepCopy((PutValue) update) : update;
-        columnUpdates.put(col, columnUpdate);
+        columnUpdates.put(col, updateEntry.getValue().deepCopy());
       }
     }
 
