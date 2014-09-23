@@ -692,11 +692,8 @@ assembled a set of tools and applications that the user can take advantage of fo
 - an Apache Flume Sink implementation for writing events received from a source.
 
 
-Tools
------
-
 Stream Client
-.............
+-------------
 
 The Stream Client is for managing Streams via external applications. It is available in three different
 APIs: Java, Python and Ruby.
@@ -710,8 +707,8 @@ Supported Actions
 - Write an event to an existing Stream; and
 - Send a File to an existing Stream.
 
-Example (using Java API)
-........................
+Java API
+--------
 
 Create a StreamClient instance, specifying the fields 'host' and 'port' of the gateway server.
 Optional configurations that can be set:
@@ -742,10 +739,7 @@ Create a new Stream with the *stream id* "newStreamName"::
 
   streamClient.create("newStreamName");
 
-**Notes:**
-
-- The *stream-id* should only contain ASCII letters, digits and hyphens.
-- If the Stream already exists, no error is returned, and the existing Stream remains in place.
+[`Note StreamName`_]
 
 Update TTL for the Stream *streamName*; TTL is a long value and is specified in seconds::
 
@@ -832,7 +826,7 @@ Putting it all together:
       LOG.error("Exception while writing to stream", e);
     }
 
-Also look at : [`Note stream_client`_]
+Note on Stream Client : [`Note stream_client`_]
 
 Python API
 -----------
@@ -874,7 +868,7 @@ from an existing file.
     streamClient = streamClient(config)
 
 
-3. Once we have configured the stream client, we can create a stream by calling create with a stream-name [`Note 2`_]
+3. Once we have configured the stream client, we can create a stream by calling create with a stream-name [`Note StreamName`_]
 ::
 
   streamClient.create("newStreamName");
@@ -937,7 +931,7 @@ Config file structure in JSON format::
     SSL: false                - if SSL is being used
   }
 
-.. _note 2:
+.. _note StreamName:
    :Note 2:
 
 Stream Name:
@@ -954,14 +948,14 @@ Ruby API
 --------
 
 Build
-=====
+.....
 
 To build a gem, run:
 
 ``gem build stream-client-ruby.gemspec``
 
 Usage
-=====
+.....
 
 To use the Stream Client Ruby API, just add the following to your application Gemfile:
 
@@ -972,7 +966,7 @@ If you use gem outside Rails, you should require gem files in your application f
 ``require 'stream-client-ruby'``
 
 Example
-=======
+.......
 
 You can configure StreamClient settings in your config files, for
 example:
@@ -1086,14 +1080,14 @@ Features
 - Writes statistics info.
 
 Installing File Tailer
-----------------------
+......................
 on Debian/Ubuntu :
 ``sudo apt-get install file-tailer.deb``
 on RHEL/Cent OS :
 `` sudo rpm -ivh --force file-tailer.rpm``
 
 Configuring File Tailer
------------------------
+.......................
 After Installation, you can configure the daemon properties at /etc/file-tailer/conf/file-tailer.properties::
 
      # General pipe properties
@@ -1118,7 +1112,7 @@ After Installation, you can configure the daemon properties at /etc/file-tailer/
           Available at: [link]
 
 Starting and Stopping the Daemon
---------------------------------
+................................
 To Start a file tailer daemon execute:
 ``sudo service file-tailer start``
 
@@ -1129,7 +1123,7 @@ To Stop a file tailer daemon execute:
        PID, states and statistics are stored in the /var/run/file-tailer directory.
 
 Configuring Authentication Client for File Tailer
--------------------------------------------------
+.................................................
 
 Authentication client parameters :
   - pipes.<pipe-name>.sink.auth_client - classpath of authentication client class
@@ -1139,7 +1133,7 @@ Authentication client parameters :
 
 
 Description of Configuration Properties:
-----------------------------------------
+........................................
 
 .. list-table::
     :widths: 30 60
@@ -1230,7 +1224,7 @@ Agent to read data from a log file by tailing it and putting them into CDAP.
       - CDAP Router server version
 
 Authentication Client
----------------------
+.....................
 To use authentication, add these authentication client configuration parameters to the sink configuration file:
   - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient, Fully qualified class name of the client class
   - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is locted at ``/usr/local/apache-flume/conf/auth_client.conf``
@@ -1238,7 +1232,7 @@ To use authentication, add these authentication client configuration parameters 
 please refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 
 Flume Sink Example
-------------------
+..................
 
 ::
 
@@ -1275,8 +1269,56 @@ Features
 - Able to survive restart and resume, sending from the first unsent record of each of the existing files; and
 - Cleanup of files that are completely sent.
 
-Available at: [link]
+Installing File DropZone
+........................
+on Debian/Ubuntu :
+``sudo apt-get install file-drop-zone.deb``
+on RHEL/Cent OS :
+`` sudo rpm -ivh --force file-drop-zone.rpm``
 
+Configuring File Tailer
+.......................
+After Installation, you can configure the daemon properties at /etc/file-drop-zone/conf/file-drop-zone.properties::
+
+     # Polling directories interval in milliseconds
+     polling_interval=5000
+
+     # Comma-separated list of directories observers to be configured
+     observers=obs1
+
+     #Path to work directory
+     work_dir=/var/file-drop-zone/
+
+     # General observer configurations
+     # Pipe is used for loading data from the file to the Stream
+     observers.obs1.pipe=pipe1
+
+     # Pipe sink properties
+     # Name of the stream
+     pipes.pipe1.sink.stream_name=logEventStream
+     # Host name that is used by stream client
+     pipes.pipe1.sink.host=localhost
+     # Host port that is used by stream client
+     pipes.pipe1.sink.port=10000
+
+
+Starting and Stopping the Daemon
+................................
+To Start a file tailer daemon execute:
+``sudo service file-drop-zone start``
+
+To Stop a file tailer daemon execute:
+``sudo service file-drop-zone stop``
+
+:Note: File DropZone stores log files in the /var/log/file-drop-zone directory.
+  PID, states and statistics are stored in the /var/run/file-drop-zone directory
+
+Manual Upload of files
+......................
+If you would like to manually upload a file use,
+``file-drop-zone load <file-path> <observer>``
+
+  you can refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 
 .. _ConfiguringAuthClient:
 
