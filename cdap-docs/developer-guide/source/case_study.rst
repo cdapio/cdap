@@ -11,16 +11,17 @@ CDAP Application Case Study
 Introduction
 ============
 ... *More to come* ...
+Describe here what analytics the Wise app does.
+
 
 The Wise application - Web Insights Engine application - uses the following CDAP constructs to analyze web server logs:
 
 - **Stream**: Ingests log data in real-time
-- **Flow**: Applies transformation on log data in real-time
-- **Dataset**: Stores log analytics according to custom data pattern
-- **MapReduce**: Processes chunks of log data in batch jobs to extract deeper information
-- **Service**: Exposes APIs to query Datasets
-- **Explore**: Executes Ad-hoc queries over Datasets
-
+- **Flow**: Computes Web page visits counts per IP address based on the log data in real-time
+- **Datasets**: Store Web page visits counts and bounce ratio based on custom data access patterns
+- **MapReduce**: Computes the bounce ratio of each Web page present in the log data
+- **Service**: Exposes HTTP APIs to query the page visit counts per IP address
+- **Explore**: Runs SQL queries on the data stored in Datasets
 
 Running Wise
 ============
@@ -45,65 +46,30 @@ uses. Let's first have a look at a diagram showing a overview of the Wise applic
 
 .. image:: _images/wise_architecture_diagram.png
 
-The Wise application has one Stream - ``logEventStream`` - which receives Apache access logs. It sends the events
-it receives to two CDAP components: the ``WiseFlow`` flow and the ``WiseWorkflow`` workflow.
 
-``WiseFlow`` has two flowlets. The first one, ``parser``, extracts information out of the logs received from the
-stream. It then sends the information to the second flowlet, ``pageViewCount``, which role is to store
-the information in a custom-defined Dataset, ``pageViewCDS``.
+- The Wise application has one Stream - ``logEventStream`` - which receives Apache access logs. It sends the events
+  it receives to two CDAP components: the ``WiseFlow`` flow and the ``WiseWorkflow`` workflow.
 
-``WiseWorkflow`` executes a Map/Reduce job every ten minutes. The input of this job are the events from the stream
-which have not yet been processed by the workflow. For each Web page recorded in the access logs, this job counts
-the number of time people have bounced from it. A bounce is counted whenever a user's activity stops for a
-certain amount of time. The last page they visited is counted as a bounce. This information is stored in a Dataset,
-``bounceCounts``.
+- ``WiseFlow`` has two flowlets. The first one, ``parser``, extracts information out of the logs received from the
+  stream. It then sends the information to the second flowlet, ``pageViewCount``, which role is to store
+  the information in a custom-defined Dataset, ``pageViewStore``.
 
-The Wise application contains a Service, the ``WiseService``. It exposes REST endpoints to query the ``pageViewCDS``
-Dataset.
+- ``WiseWorkflow`` executes a Map/Reduce job every ten minutes. The input of this job are the events from the stream
+  which have not yet been processed by the workflow. For each Web page recorded in the access logs, this job counts
+  the number of time people have bounced from it. A bounce is counted whenever a user's activity stops for a
+  certain amount of time. The last page they visited is counted as a bounce. This information is stored in a Dataset,
+  ``bounceCountStore``.
 
-Finally, both the ``pageViewCDS`` and ``bounceCounts`` Datasets expose a SQL interface. They can be queried using
-SQL queries through our ``Explore`` module in CDAP dashboard.
+- The Wise application contains a Service, the ``WiseService``. It exposes REST endpoints to query the ``pageViewStore``
+  Dataset.
 
-All it takes to create the Wise application with those components is to define a class that extends
-``AbstractApplication``::
-
-  public class WiseApp extends AbstractApplication {
-    @Override
-    public void configure() {
-      setName("Wise");
-      setDescription("Web Insights Engine");
-      // The logEventStream stream will receive the access logs
-      addStream(new Stream("logEventStream"));
-      // Custom Dataset to store basic page view information by IP address
-      createDataset("pageViewCDS", PageViewStore.class);
-      // Custom Dataset to store bounce information for every web page
-      createDataset("bounceCounts", BounceCountsStore.class);
-      // Utility Dataset used in the Map/Reduce job
-      createDataset("bounceCountsMapReduceLastRun", KeyValueTable.class);
-      // Add the WiseFlow flow
-      addFlow(new WiseFlow());
-      // Add the WiseWorkflow workflow
-      addWorkflow(new WiseWorkflow());
-      // Add the WiseService service
-      addService(new WiseService());
-    }
-  }
+- Finally, both the ``pageViewStore`` and ``bounceCountStore`` Datasets expose a SQL interface.
+  They can be queried using SQL queries through our ``Explore`` module in CDAP dashboard.
 
 Let's now talk about each of these components in more detail.
 
 Wise Data Patterns
 ==================
-In CDAP, we have put data in the center of everything. Our system Datasets can express common data patterns,
-like key-value storage or time series. We also expose simple APIs to let our users define their custom
-Datasets, which entirely define the way they want data to be stored and accessed.
-
-Wise has two custom-defined Datasets, ``pageViewCDS`` and ``bounceCounts``. A custom-defined Dataset is backed by
-a ``Table``, which is where data will be stored internally. A ``Table`` exposes the same data pattern as an HBase table.
-That is, a ``Table`` stores raw keys; each raw key can have as many columns as it wants, with two raw keys having
-not necessarily the same columns; and each column contains one value. The difference between a ``Table`` and an
-HBase table is that timestamps are not conserved in a ``Table``. Only the latest value of a column will be saved.
-Using the Java ``Map`` interface, a ``Table`` can be seen as being of type ``Map<byte[], Map<byte[], byte[]>>``.
-
 Let's first have a look at what an access log looks like::
 
   47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] "POST /index.html HTTP/1.1" 404 1490 " " "Mozilla/2.0 (compatible; Ask Jeeves)"
@@ -114,13 +80,33 @@ Wise is only interested in 3 parts of those logs:
 - The time the log was saved, *18/Sep/2014:12:52:52 -0400* in this case
 - The Web page visited, */index.html* in the example.
 
-The pageViewCDS Dataset
------------------------
-The ``pageViewCDS`` custom Dataset stores for every IP address, the number of times it visited each web page. To do so,
-it uses a ``Table`` with the following specifications: the raw key is the IP address, each Web page visited by the IP
-address is a column, and the value of each column is the count of visits.
-``pageViewCDS`` is defined by the ``PageViewStore`` class. It extends ``AbstractDataset`` and has a constructor
-which allows to use a ``Table`` to store the data::
+Wise has two ``pageViewStore`` and ``bounceCountStore``, which both store information about the access logs,
+but according to different access patterns.
+
+The pageViewStore Dataset
+-------------------------
+The ``pageViewStore`` custom Dataset stores, for every IP address, the number of times it visited each web page.
+For example, ``pageViewStore`` could contain the following entry::
+
+  47.41.156.173 -> {
+    /index.html -> 3,
+    /career.html -> 1,
+    /team.html -> 4
+  }
+
+``pageViewStore`` uses a ``Table`` object to store this information. ``Table`` is a class provided by the CDAP
+system which has rows and columns. A row consists of a row key and one or more columns with values associated with
+them. Two rows can have different sets of columns.
+Using the Java ``Map`` interface, a ``Table`` can be seen as being of type ``Map<byte[], Map<byte[], byte[]>>``.
+
+``pageViewStore`` uses a ``Table`` object with the following pattern:
+
+- The row key of the ``Table`` is an IP address
+- Each row has as many columns as Web pages URIs visited by the IP address
+- The value for each column is the number of visits the IP address has made to the Web page URI
+
+``pageViewStore`` is a custom-defined Dataset. It is defined in the ``PageViewStore`` class.
+Here is how to define it so that it can be backed by a ``Table`` object::
 
   public class PageViewStore extends AbstractDataset
     ... {
@@ -146,27 +132,8 @@ to store data and access data. Here is the API for storing data::
 IP address, timestamp and web page - and increments the number of visits of the Web page for the given IP address.
 We use the underlying ``Table`` API ``increment()`` to store this information.
 
-To access data, we define two APIs to retrieve the total count of visits for a given IP address, and to retrieve
-the count of visits per Web page for a given IP address::
+Let's now see an example showing how to made data available through our ``pageViewStore`` Dataset::
 
-  /**
-   * Get the count of requested pages viewed from a specified IP address.
-   *
-   * @param ipAddress an IP address used to look for requested pages counts.
-   * @return a map of a requested page URI to its count
-   */
-  public Map<String, Long> getPageCount(String ipAddress) {
-    Row row = this.table.get(Bytes.toBytes(ipAddress));
-    Map<String, Long> pageCount = getPageCounts(row);
-    return pageCount;
-  }
-
-  /**
-   * Get the total number of requested pages viewed from a specified IP address.
-   *
-   * @param ipAddress an IP address used to look for requested pages counts.
-   * @return the number of requested pages
-   */
   public long getCounts(String ipAddress) {
     Row row = this.table.get(Bytes.toBytes(ipAddress));
     if (row == null || row.isEmpty()) {
@@ -179,35 +146,26 @@ the count of visits per Web page for a given IP address::
     return count;
   }
 
-  private Map<String, Long> getPageCounts(Row row) {
-    if (row == null || row.isEmpty()) {
-      return null;
-    }
-    Map<String, Long> pageCount = new HashMap<String, Long>();
-    for (Map.Entry<byte[], byte[]> entry : row.getColumns().entrySet()) {
-      pageCount.put(Bytes.toString(entry.getKey()), Bytes.toLong(entry.getValue()));
-    }
-    return pageCount;
-  }
+This API returns the total number of visits an IP address has made. To do so, it uses the ``Table.get()`` method,
+which returns a ``Row`` object containing all the columns associated to the row key passed as argument of
+``Table.get()``.
 
-Those APIs access data using the ``Table.get()`` method, which returns a ``Row`` object containing all the columns
-associated to the raw key passed as argument of ``Table.get()``.
+The bounceCountStore Dataset
+----------------------------
+The ``bounceCountStore`` Datasets stores the total number of visits for each Web page, as well as the number
+of times users bounced off them.
 
-To use this Dataset, we simply had to create it in the ``configure()`` method of our ``WiseApp`` class::
+Data is stored in a ``Table`` object with the following pattern:
 
-  createDataset("pageViewCDS", PageViewStore.class);
+- The row key is the Web page URI.
+- Each row has two columns, the byte arrays ``COL_VISITS`` and ``COL_BOUNCES``.
+- The ``COL_VISITS`` column stores the total number of visits for the Web page considered.
+- The ``COL_BOUNCES`` column stores the number of times users bounced off the Web page.
 
-We give it an ID as a ``String`` and let our application know which class defines it. In every component of the Wise
-application, we will now be able to access the ``pageViewCDS`` Dataset.
+Let's detail the API exposed by the ``bounceCountStore`` Dataset to store this information::
 
-The bounceCounts Dataset
-------------------------
-The ``bounceCounts`` Datasets stores the total number of visits for each Web page, as well as the number
-of times users bounced off them. It is defined in the ``BounceCountsStore`` class which also extends
-``AbstractDataset`` and is backed by a ``Table`` object. Let's detail the API we use to store this information::
-
-  static final byte[] COL_VISITS = new byte[] { 'v', 'i', 's', 'i', 't', 's' };
-  static final byte[] COL_BOUNCES = new byte[] { 'b', 'o', 'u', 'n', 'c', 'e', 's' };
+  static final byte[] COL_VISITS = new byte[] { 'v' };
+  static final byte[] COL_BOUNCES = new byte[] { 'b' };
 
   /**
    * Increment a bounce counts entry with the specified {@code visits} and {@code bounces}.
@@ -222,13 +180,6 @@ of times users bounced off them. It is defined in the ``BounceCountsStore`` clas
                     new long[] { visits, bounces });
   }
 
-Data is stored in the ``Table`` object with the following pattern:
-
-- The raw key is the Web page URI.
-- Each raw key has two columns, the byte arrays ``COL_VISITS`` and ``COL_BOUNCES``.
-- The ``COL_VISITS`` column stores the total number of visits for the Web page considered.
-- The ``COL_BOUNCES`` column stores the number of times users bounced off the Web page.
-
 The ``increment()`` method adds to a Web page a number of `visits` and a number of `bounces`. It uses the
 ``Table.increment()`` API to do so.
 
@@ -238,7 +189,7 @@ To retrieve the number of `visits` and the number of `bounces` for one Web page,
    * Retrieve a bounce counts entry from this {@link BounceCountsStore}.
    *
    * @param uri URI of the Web page.
-   * @return the bounce ratio entry associated to the Web page with the {@code uri}.
+   * @return the bounce counts entry associated to the Web page with the {@code uri}.
    */
   public PageBounce get(String uri) {
     Row row = table.get(Bytes.toBytes(uri), new byte[][] { COL_VISITS, COL_BOUNCES });
@@ -252,48 +203,20 @@ To retrieve the number of `visits` and the number of `bounces` for one Web page,
 
 The ``get()`` API reads the two columns ``COL_VISITS`` and ``COL_BOUNCES`` of a Web page. Once again,
 we use the ``Table.get()`` API which returns a ``Row`` object. From the information contained in the ``Row``
-object, we build a ``PageBounce`` object containing a ``uri``, a ``visits`` count and a ``bounces`` count::
-
-  public class PageBounce {
-    private final String uri;
-    private final long totalVisits;
-    private final long bounces;
-
-    public PageBounce(String uri, long totalVisits, long bounces) {
-      this.uri = uri;
-      this.totalVisits = totalVisits;
-      this.bounces = bounces;
-    }
-    ...
-  }
-
-We define the ``bounceCounts`` Dataset in the same way that we define the ``pageViewCDS`` Dataset - in the
-``configure()`` method of our ``WiseApp`` class, we had the following::
-
-  createDataset("bounceCounts", BounceCountsStore.class);
+object, we build a ``PageBounce`` object, a simple POJO class, containing a ``uri``,
+a ``visits`` count and a ``bounces`` count.
 
 Ingesting Access Logs in Wise
 =============================
 CDAP has an extremely easy way to ingest data in real time into an application, using **Streams**. A stream exposes
-a simple REST API to ingest data events. An event is composed of a header and a body. The body is a byte array, hence
-it can contain anything.
+a simple `REST API <rest.html>`__ to ingest data events.
 
-Wise has one stream, ``logEventStream``. This is the data entry point of the Wise application. We inject to this stream
-the Apache access logs. This stream is defined in the ``configure()`` method of the ``WiseApp`` class::
-
-  addStream(new Stream("logEventStream"));
-
-The REST API to inject one log into the stream in a running CDAP standalone instance is the following::
-
-  POST http://localhost:10000/v2/streams/logEventStream
-
-We use the ID we gave to the stream - ``logEventStream`` - when we defined it in the ``WiseApp`` class.
-The body of the request is the body of the stream. For example, it could be this access log::
+In Wise, each Apache access log is injected as a stream event to the ``logEventStream`` stream. It has this format::
 
   47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] "POST /index.html HTTP/1.1" 404 1490 " " "Mozilla/2.0 (compatible; Ask Jeeves)"
 
-To make it easy for you to inject a lot of sample logs, we have created a script in the ``bin`` directory of the
-``Wise`` application. On Unix systems, run::
+We have already prepared a sample of Apache access logs for you to inject into ``logEventStream``.
+On Unix systems, simply run the following command at the root of Wise application::
 
   $ bin/inject-data.sh
 
@@ -303,47 +226,17 @@ On Windows, run::
 
 This requires that a CDAP standalone instance be running with the Wise application already deployed.
 
-Real-time Logs Transformation with WiseFlow
-===========================================
-*Flows* are a powerful way in CDAP to transform data coming from streams in real-time. A flow is composed of several
-flowlets connected in a directed acyclic graph. Each flowlet performs one job on the data it receives and outputs the
-results for the next flowlet to process. The last flowlet of a flow usually stores data in a Dataset.
+Real-time Analytics of Logs Data with WiseFlow
+==============================================
+The goal of ``WiseFlow`` is to perform real-time analytics on the logs data received by the ``logEventStream``.
+For each IP address it sees in the logs, it counts the number of visits they made to different Web pages.
 
-Wise has one flow - ``WiseFlow`` - containing two flowlets, ``parser`` and ``pageViewCount``. A flow is defined as
-follows in the ``configure()`` method of an application::
-
-  addFlow(new WiseFlow());
-
-The ``WiseFlow`` class implements the ``Flow`` interface which only consists of one ``configure()`` method::
-
-  public class WiseFlow implements Flow {
-    @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("WiseFlow")
-        .setDescription("Wise Flow")
-        .withFlowlets()
-          .add("parser", new LogEventParserFlowlet())
-          .add("pageViewCount", new PageViewCounterFlowlet())
-        .connect()
-          .fromStream("logEventStream").to("parser")
-          .from("parser").to("pageViewCount")
-        .build();
-    }
-    ...
-  }
-
-We set the ID of the flow - ``WiseFlow`` - and define the flowlets that compose the flow as well as how they are
-connected to each other. The two flowlets ``parser`` and ``pageViewCount`` are defined here. The stream
-``logEventStream`` is connected to the flowlet ``parser``, which in turn is connected to the ``pageViewCount``
-flowlet. When the Wise application is deployed in CDAP, ``WiseFlow`` has this form:
-
-.. image:: _images/wise_flow.png
+This work is realized by two Flowlets, ``parser`` and ``pageViewCount``.
 
 The parser Flowlet
-------------------
-The input of the ``parser`` flowlet is the stream ``logEventStream``. It outputs ``LogInfo`` objects. Here is its
-implementation::
+..................
+``parser`` receives the raw log data from the stream and extracts useful information from it.
+Here is its implementation::
 
   public static class LogEventParserFlowlet extends AbstractFlowlet {
     private static final Logger LOG = LoggerFactory.getLogger(LogEventParserFlowlet.class);
@@ -361,7 +254,7 @@ implementation::
       try {
         LogInfo logInfo = LogInfo.parse(log);
         if (logInfo != null) {
-          output.emit(logInfo, "ipHash", logInfo.getIp().hashCode());
+          output.emit(logInfo, "ip", logInfo.getIp().hashCode());
         }
       } catch (IOException e) {
         LOG.info("Could not parse log event {}", log);
@@ -369,65 +262,96 @@ implementation::
     }
   }
 
-It extends ``AbstractFlowlet`` and contains one method to process the data it receives from ``logEventStream``.
+A Flowlet class extends ``AbstractFlowlet``. The ``LogEventParserFlowlet`` class contains one method to process the
+data it receives from ``logEventStream``.
 This method can have any name. Here we call it ``processFromStream``. It has to bear the ``@ProcessInput``
-annotation indicating that the method will be used to process incoming data. Also, because the ``parser`` flowlet
-receives data from a stream, the ``processFromStream`` method has to take one and only one argument of type
-``StreamEvent``. A ``StreamEvent`` object contains the header and the body of a stream event. In the Wise application,
-the body of a ``StreamEvent`` will be a Apache access log.
+annotation indicating that the method will be used to process incoming data.
 
-The ``parser`` flowlet outputs data as ``LogInfo`` objects. One log line will be parsed into one ``LogInfo`` object.
-To output those, an ``OutputEmitter<LogInfo>`` object has to be defined in the flowlet class. This object is then used
-to emit ``LogInfo``s to the next flowlet in the flow - ``pageViewCount``.
+Because the ``parser`` Flowlet receives data from a stream, the ``processFromStream`` method has to take one and only
+one argument of type ``StreamEvent``. A ``StreamEvent`` object contains the header and the body of a stream event.
+In the Wise application, the body of a ``StreamEvent`` will be an Apache access log.
+
+The ``parser`` Flowlet parses every log it receives into one ``LogInfo`` object. Using an ``OutputEmitter<LogInfo>``
+object, ``parser`` outputs those logs to the next Flowlet input - the ``pageViewCount`` Flowlet.
+When a ``LogInfo`` object is emitted, it is hashed by IP address. We will see in a minute why this is useful.
 
 The pageViewCount Flowlet
--------------------------
-As we have seen, the input of the ``pageViewCount`` flowlet is the output of the ``parser`` flowlet. It means that
-``pageViewCount`` has to deal with ``LogInfo`` objects. Also, this flowlet's role is to store in the ``pageViewCDS``
-Dataset the counts of visits of different Web pages per IP address. Here is how we make that possible::
+.........................
+The ``pageViewCount`` Flowlet receives ``LogInfo`` objects and updates the ``pageViewStore`` Dataset with the
+information they contained.
+
+Its implementation is very brief::
 
   public static class PageViewCounterFlowlet extends AbstractFlowlet {
+    @UseDataSet("pageViewStore")
+    private PageViewStore pageViewStore;
 
-    // UseDataSet annotation indicates the page-views Dataset is used in the Flowlet
-    @UseDataSet("pageViewCDS")
-    private PageViewStore pageViews;
-
-    // Batch annotation indicates processing a batch of data objects to increase throughput
-    // HashPartition annotation indicates using hash partition to distribute data in multiple Flowlet instances
-    // ProcessInput annotation indicates that this method can process incoming data
     @Batch(10)
-    @HashPartition("ipHash")
+    @HashPartition("ip")
     @ProcessInput
-    public void count(Iterator<LogInfo> trackIterator) {
-      while (trackIterator.hasNext()) {
-        LogInfo logInfo = trackIterator.next();
-
-        // Increment the count of a logInfo by 1
-        pageViews.incrementCount(logInfo);
-      }
+    public void count(LogInfo logInfo) {
+      // Increment the count of a logInfo by 1
+      pageViewStore.incrementCount(logInfo);
     }
   }
 
-Once again, this flowlet extends ``AbstractFlowlet``. It contains one method, ``count``, which bear the annotation
-``ProcessInput`` indicating that this method can process incoming data. Because it deals with ``LogInfo`` objects,
-this method takes one argument of type ``Iterator<LogInfo>``. The reason it takes an ``Iterator`` and not a
-``LogInfo`` directly is because the ``@Batch(10)`` annotation allows this flowlet to receive multiple objects
-at once.
+Here are the things to note about the ``PageViewCounterFlowlet`` Flowlet class:
 
-This flowlet stores information in the ``pageViewCDS`` Dataset. To do so, it references the Dataset in an attribute
-of the class using the annotation ``@UseDataset``. Because the Dataset as been defined in the ``configure()`` method
-of the ``WiseApp`` class, the ``PageViewCounterFlowlet`` can have access to the Dataset using the same ID. Once it
-is obtained, we can use its APIs in the core of the ``count()`` method to store information.
+- The ``@ProcessInput`` annotation on the ``count()`` method indicates that ``count()`` will process incoming data.
+
+- The ``@UseDataSet`` annotation gives a reference to the ``pageViewStore`` Dataset inside the ``pageViewStore``
+  attribute. The Dataset APIs can then be used inside the ``count()`` method to store logs analytics.
+
+- The ``@Batch`` annotation indicates that data is processed in batch of ``LogInfo`` objects,
+  which increases the throughput of the Flolet.
+
+- The ``@HashPartition`` annotation makes sure that, if several instance of this Flowlet are running, all
+  ``LogInfo`` objects with the same IP address information will be sent to the same Flowlet instance.
+  This prevents two Flowlet instances from writing to the same row key of the ``pageViewStore`` Dataset at the
+  same time, which would cause a transaction conflict. See the `advanced <advanced.html>`__ chapter for more
+  information about transactions.
+
+Building the WiseFlow
+.....................
+Now that we have had a look at the core of the ``parser`` and ``pageViewCount`` Flowlets, let's see how
+they are connected together and to ``logEventStream``.
+
+The Flowlets are defined in the ``WiseFlow`` Flow, which is defined by this small class::
+
+  public class WiseFlow implements Flow {
+    @Override
+    public FlowSpecification configure() {
+      return FlowSpecification.Builder.with()
+        .setName("WiseFlow")
+        .setDescription("Wise Flow")
+        .withFlowlets()
+          .add("parser", new LogEventParserFlowlet())
+          .add("pageViewCount", new PageViewCounterFlowlet())
+        .connect()
+          .fromStream("logEventStream").to("parser")
+          .from("parser").to("pageViewCount")
+        .build();
+    }
+  }
+
+In the ``configure()`` method of the ``WiseFlow`` Flow, we define the Flowlets, giving them names:
+- ``parser`` is of type ``LogEventParserFlowlet``.
+- ``pageViewCount`` is of type ``PageViewCounterFlowlet``.
+We also define the graph of their connection:
+- The ``logEventStream`` stream is connected to the ``parser`` Flowlet.
+- The ``parser`` Flowlet is connected to the ``pageViewCount`` Flowlet.
+
+``WiseFlow`` looks like this in CDAP dashboard:
+
+.. image:: _images/wise_flow.png
+   :width: 6in
 
 Batch Processing of Logs with WiseWorkflow
 ==========================================
-Wise implements a simple Workflow, which executes one Workflow action every 10 minutes. This action is a
-Map/Reduce job that computes the bounce counts of the Web pages seen in the Apache access logs. This Workflow is
-again defined in the ``configure()`` method of the ``WiseApp`` class::
+Wise implements a simple Workflow, which executes every 10 minutes a Map/Reduce job that computes the bounce
+counts of the Web pages seen in the Apache access logs.
 
-  addWorkflow(new WiseWorkflow());
-
-The ``WiseWorkflow`` class is defined as follows::
+All this is done in the ``WiseWorkflow`` class::
 
   public class WiseWorkflow implements Workflow {
     @Override
@@ -442,13 +366,7 @@ The ``WiseWorkflow`` class is defined as follows::
     }
   }
 
-It implements the ``Workflow`` interface, with only one method ``configure()``. This is where we define the
-Workflow ID - ``WiseWorkflow``. We attach an action to the Workflow - our Map/Reduce job - and schedule the
-Worflow to run every 10 minutes.
-
-The Bounce Counts Map/Reduce job
---------------------------------
-The ``BounceCountsMapReduce`` class defines a Map/Reduce job that will execute every 10 minutes. It extends
+The ``BounceCountsMapReduce`` class defines the Map/Reduce job to run. It extends
 ``AbstractMapReduce`` and overrides two methods, ``configure()`` and ``beforeSubmit()``.
 The ``configure()`` method is defined as follows::
 
@@ -458,16 +376,18 @@ The ``configure()`` method is defined as follows::
       .setName("BounceCountsMapReduce")
       .setDescription("Bounce Counts MapReduce job")
       .useDataSet("bounceCountsMapReduceLastRun")
-      .useOutputDataSet("bounceCounts")
+      .useOutputDataSet("bounceCountStore")
       .build();
   }
 
 It sets the ID of the Map/Reduce job, ``BounceCountsMapReduce``, and specifies what Datasets will be used in the job.
-This job uses the ``bounceCountsMapReduceLastRun`` system Dataset - which type is ``KeyValueTable`` - to
-store the time of the last successful run of ``BounceCountsMapReduce``. The ``useOutputDataset()`` method
-specifies that the Dataset with the given ID will be used as output of the job. It means that the key/value couples
-outputted by the reducer of this job will be directly written to this Dataset. To understand how this is possible,
-let's go back to the definition of the ``bounceCounts`` Dataset::
+This job uses the ``bounceCountsMapReduceLastRun`` system Dataset - of type ``KeyValueTable`` - to
+store the time of the last successful run of ``BounceCountsMapReduce``.
+
+The ``useOutputDataset()`` method specifies that the Dataset with the given ID will be used as output of the job.
+It means that the key/value couples outputted by the reducer of this job will be directly written to this Dataset.
+
+To understand how this is possible, let's go back to the definition of the ``bounceCountStore`` Dataset::
 
   public class BounceCountsStore extends AbstractDataset
     implements BatchWritable<Void, PageBounce>, ... {
@@ -480,8 +400,8 @@ let's go back to the definition of the ``bounceCounts`` Dataset::
   }
 
 This ``BatchWritable`` interface, defining a ``write()`` method, is meant to allow Datasets to be the output of
-Map/Reduce jobs. The two generic types that it takes as parameters have to be the same as the type of keys
-and the type of values that the Reduce part of the job outputs. Hence, the ``bounceCounts`` Dataset can be
+Map/Reduce jobs. The two generic types that it takes as parameters have to be the same as the types of key
+and value that the Reduce part of the job outputs. Hence, the ``bounceCountStore`` Dataset can be
 used as output of a Map/Reduce job where the output key is of type ``Void``, and the output value is of type
 ``PageBounce``.
 
@@ -492,21 +412,19 @@ method of the ``BounceCountsMapReduce`` class::
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
     ...
+    KeyValueTable lastRunDataset = context.getDataSet("bounceCountsMapReduceLastRun");
+    ...
+    StreamBatchReadable.useStreamInput(context, "logEventStream", startTime, endTime);
   }
 
-As we said earlier, the input of the Map/Reduce job is the ``logEventStream``. This connection is done here in the
-``beforeSubmit()`` method, with this statement::
-
-  StreamBatchReadable.useStreamInput(context, "logEventStream", startTime, endTime);
+As we said earlier, the input of the Map/Reduce job is the ``logEventStream``. This connection is done above using
+the ``StreamBatchReadable.useStreamInput()`` method.
 
 The ``startTime`` is computed using the last value stored in the ``bounceCountsMapReduceLastRun`` Dataset, which can
-be accessed using a ``MapReduceContext`` object by doing the following::
+be accessed using the ``MapReduceContext.getDataSet()`` method.
 
-  KeyValueTable lastRunDataset = context.getDataSet("bounceCountsMapReduceLastRun");
-
-Now that the input of our Map/Reduce job is a stream, it forces the key and value types of our Mapper to be
-respectively ``LongWritable`` and ``Text``. The key is the timestamp at which one stream event has been received, and
-the value is the body of the event.
+Now that because the input of our Map/Reduce job is a stream, it forces the key and value types of our Mapper to be
+respectively ``LongWritable`` and ``Text``.
 
 Our ``Mapper`` and ``Reducer`` are standard Hadoop classes. They have the following signatures::
 
@@ -518,112 +436,82 @@ Our ``Mapper`` and ``Reducer`` are standard Hadoop classes. They have the follow
     ...
   }
 
+Here is what each generic parameter of the ``Mapper`` and the ``Reducer`` contains:
+
+- Mapper input key - ``LongWritable``: timestamp at which a stream event has been received.
+- Mapper input value - ``Text``: body of a stream event, i.e. a log data.
+- Mapper output key and Reducer input key - ``LogInfo``: POJO object containing information about
+  one log line.
+- Mapper output value and Reducer input value - ``IntWritable``: Simple placeholder, we actually
+  don't use its content.
+- Reducer output key - ``Void``: This is not used.
+- Reducer output value - ``PageBounce``: bounce counts of a Web page.
+
 Accessing Wise Data through WiseService
 =======================================
-``WiseService`` is a Wise component that exposes HTTP endpoints to retrieve the content of the ``pageViewCDS``
-Dataset. As are the other components, it is also defined in the ``configure()`` method of the ``WiseApp`` class::
-
-  addService(new WiseService());
-
-A CDAP Service is defined by a class which extends ``AbstractService`` with one ``configure()`` method::
-
-  class WiseService extends AbstractService {
-    @Override
-    protected void configure() {
-      setName("PageViewService");
-      useDataset("pageViewCDS");
-      addHandler(new PageViewCountHandler());
-    }
-  }
-
-The ID of the service is set, and it will be used in the URL to reach the endpoints defined by the service.
-The ``useDataset()`` method specifies a Dataset that will be used by the service, as we have also seen in
-the ``BounceCountsMapReduce.configure()`` method. The handlers which will define the HTTP endpoints exposed by the
-Service are added with the ``addHandler()`` method.
-
-Here is the implementation of our ``PageViewCountHandler`` which defines HTTP endpoints to access information
-stored in the ``pageViewCDS`` Dataset::
+``WiseService`` is a Wise component that exposes HTTP endpoints to retrieve the content of the ``pageViewStore``
+Dataset. Endpoints are defined in a class that extends ``AbstractHttpServiceHandler``::
 
   public static class PageViewCountHandler extends AbstractHttpServiceHandler {
-    @UseDataSet("pageViewCDS")
-    private PageViewStore pageViewCDS;
+    @UseDataSet("pageViewStore")
+    private PageViewStore pageViewStore;
 
-    @Path("/ip/{ip}/count")
     @GET
+    @Path("/ip/{ip}/count")
     public void getIPCount(HttpServiceRequest request, HttpServiceResponder responder,
                            @PathParam("ip") String ipAddress) {
-      long counts = pageViewCDS.getCounts(ipAddress);
+      long counts = pageViewStore.getCounts(ipAddress);
       responder.sendJson(200, counts);
     }
     ...
   }
 
-A handler class extends ``AbstractHttpServiceHandler``. The ``PageViewCountHandler`` class accesses the ``pageViewCDS``
-Dataset using the same ``@UseDataSet`` annotation as in the ``PageViewCounterFlowlet`` class.
+The ``PageViewCountHandler`` class accesses the ``pageViewStore`` Dataset using the same ``@UseDataSet``
+annotation used in the ``PageViewCounterFlowlet`` class.
 
-In the code snippet above, one HTTP endpoint is defined. The ``@Path`` annotation defines the URL path used to reach
-this endpoint. The ``@GET`` annotation specifies the HTTP method used to reach the endpoint. This path has one
+The endpoint defined above in the ``getIPCount()`` method will retrieve the number of times a given IP address
+has been seen in the access logs by using the APIs of the ``pageViewStore`` Dataset.
+
+The ``@GET`` annotation specifies the HTTP method used to reach the endpoint. The ``@Path`` annotation defines
+the URL path used to reach this endpoint. This path has one
 user parameter, ``{ip}``, which is decoded as a ``String`` in the parameters of the ``getIPCount()`` method
-with the help of the ``@PathParam`` annotation. This endpoint will retrieve the number of times a given IP address
-has been seen in the access logs by using the APIs of the ``pageViewCDS`` Dataset.
+with the help of the ``@PathParam`` annotation.
 
-With a running CDAP standalone instance, the ``getIPCount`` HTTP endpoint can be reached at::
+With a running CDAP standalone instance, the HTTP endpoint defined by the ``getIPCount()`` can be reached at::
 
   GET http://localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/164.199.169.153/count
 
 TODO: create mini app/script to reach endpoint
 
-Exploring Wise Datasets through SQL
-===================================
-Wise Datasets, ``pageViewCDS`` and ``bounceCounts``, both expose an interface allowing to execute SQL queries on
-their data. To make that possible, they both implement the ``RecordScannable`` interface. The ``RecordScannable``
-interface exposes a Dataset as a table of ``Record``s all presenting the same schema, just like in a
-traditional SQL database. It gives structure to a Dataset, so that a SQL query can make sense.
+The ``PageViewCountHandler`` class is registered in the ``WiseService`` class, which has the
+following implementation::
 
-Here is the implementation of the ``RecordScannable`` interface on the ``bounceCounts`` Dataset::
-
-  public class BounceCountsStore extends AbstractDataset
-    implements ..., RecordScannable<PageBounce> {
-    ...
+  class WiseService extends AbstractService {
     @Override
-    public Type getRecordType() {
-      return PageBounce.class;
+    protected void configure() {
+      setName("PageViewService");
+      useDataset("pageViewStore");
+      addHandler(new PageViewCountHandler());
     }
-
-    @Override
-    public List<Split> getSplits() {
-      return table.getSplits();
-    }
-
-    @Override
-    public RecordScanner<PageBounce> createSplitRecordScanner(Split split) {
-      return Scannables.splitRecordScanner(table.createSplitReader(split), new PageBounceRecordMaker());
-    }
-
-    public class PageBounceRecordMaker implements Scannables.RecordMaker<byte[], Row, PageBounce> {
-      @Override
-      public PageBounce makeRecord(byte[] key, Row row) {
-        long visits = Bytes.toLong(row.get(COL_VISITS));
-        long bounces = Bytes.toLong(row.get(COL_BOUNCES));
-        return new PageBounce(Bytes.toString(key), visits, bounces);
-      }
-    }
-    ...
   }
 
-The ``bounceCounts`` Dataset exposes records of type ``PageBounce``. ``RecordScannable.getRecordType()`` hence returns
-the type of ``PageBounce``. The important part here is the ``PageBounceRecordMaker`` class. It transforms the entry
-of a ``Table`` object into a ``PageBounce`` object.
+- The ID of the service is set, and it will be used in the URL to reach the endpoints defined by the service.
+- The ``useDataset()`` method specifies a Dataset that will be used by the service.
+- The handlers which will define the HTTP endpoints exposed by the Service are added with the ``addHandler()`` method.
 
-To execute SQL queries on Wise Datasets, let's navigate on CDAP dashboard. After deploying Wise in your running
-CDAP standalone instance, go to the **Store** page, which is one of the five pages you can access from the left
-pane of CDAP dashboard.
+Exploring Wise Datasets through SQL
+===================================
+With Wise, you can explore the Datasets using SQL queries. The SQL interface on CDAP is called Explore,
+you will find it in CDAP dashboard:
 
-.. image:: _images/wise_store_page.png
+#. After deploying Wise in your running CDAP standalone instance, go to the **Store** page,
+   which is one of the five pages you can access from the left pane of CDAP dashboard.
 
-Click on the **Explore** button in the top right corner of the page. You will land on this screen:
+   .. image:: _images/wise_store_page.png
 
-.. image:: _images/wise_explore_page.png
+#. Click on the **Explore** button in the top right corner of the page. You will land on this screen:
+
+   .. image:: _images/wise_explore_page.png
 
 This is the *Explore* page, where you can run SQL queries and see information about the Datasets that expose
 a SQL interface.
@@ -631,23 +519,108 @@ a SQL interface.
 You will notice that the Datasets have peculiar names, like *cdap_user_bouncecounts*. Those are the SQL table names
 of the Datasets which have a SQL interface.
 
-Let's look at the schemas of our Datasets. The ``bounceCounts`` Dataset schema maps the attributes of the ``PageBounce``
-class. The SQL table *cdap_user_bouncecounts* hence has 3 columns: ``uri``, ``totalvisits`` and ``bounces``.
-You can use this schema to build custom SQL queries. For example, a simple one would be::
+Here are some SQL queries that you can run::
 
+  Retrieve the web pages from where IP addresses have bounced more than half of the time
   SELECT uri FROM cdap_user_bouncecounts WHERE bounces > 0.5 * totalvisits
 
-Enter this query in the field in the middle of the page, and hit **Execute** in the bottom right corner. You will see
-your query running and soon you'll be able to see a preview of the results, and download the entier result set as a
-CSV file.
-
-The ``pageViewCDS`` Dataset has a more complex schema. It has two columns, ``key`` and ``value``. ``key`` is an
-IP address, and value is a map of Web pages URIs to counts.
-
-To retrieve all the IP addresses which visited the page `/contact.html`, let's enter the following SQL query::
-
+  Retrieve all the IP addresses which visited the page '/contact.html'
   SELECT key FROM cdap_user_pageviewcds WHERE array_contains(map_keys(value), '/contact.html')=TRUE
 
 Because the SQL engine that CDAP runs internally is Hive, the SQL language used to submit queries is HiveQL.
 You can find more information on it in the `Hive language manual
 <https://cwiki.apache.org/confluence/display/Hive/LanguageManual+DML#LanguageManualDML-InsertingdataintoHiveTablesfromqueries>`__.
+
+Now, let's take a look at the schemas of the ``bounceCountStore`` Dataset. The *Explore* interface shows that
+it has 3 columns, `uri`, `totalvisits` and `bounces`.
+
+To understand how we managed to attach this schema to the ``bounceCountStore`` Dataset, let's have another look
+at its class definition::
+
+  public class BounceCountsStore extends AbstractDataset
+    implements ..., RecordScannable<PageBounce> {
+    ...
+  }
+
+The ``RecordScannable`` interface allows a Dataset to be queried using SQL. It exposes a Dataset as a table
+of ``Record`` objects, and the schema of the ``Record`` defines the schema of the Dataset as seen like a
+SQL table.
+
+The ``bounceCountStore`` Dataset's ``Record`` type is ``PageBounce``, which is a POJO object containing 3 attributes,
+`uri`, `totalVisits` and `bounces`. It explains where the schema of the ``bounceCountStore`` comes from.
+
+
+Bringing Wise Components together
+=================================
+All it takes to create the Wise application with the components mentioned above, is to define a class that extends
+``AbstractApplication``::
+
+  public class WiseApp extends AbstractApplication {
+    @Override
+    public void configure() {
+      setName("Wise");
+      setDescription("Web Insights Engine");
+      addStream(new Stream("logEventStream"));
+      createDataset("pageViewStore", PageViewStore.class);
+      createDataset("bounceCountStore", BounceCountStore.class);
+      createDataset("bounceCountsMapReduceLastRun", KeyValueTable.class);
+      addFlow(new WiseFlow());
+      addWorkflow(new WiseWorkflow());
+      addService(new WiseService());
+    }
+  }
+
+When the Wise application is deployed in CDAP, this class is read by the CDAP system. All the components
+it defines are then installed, and can reference one another.
+
+Unit-testing Wise
+=================
+Unit-tests are a major part of the development of an application. And as developers ourselves, we have created a
+full unit-testing framework for CDAP applications. In CDAP applications unit-tests, all CDAP components run in memory.
+
+The ``WiseAppTest`` class, which extends ``TestBase``, tests all the components of the WiseApp.
+The first thing to do is to obtain an ``ApplicationManager`` object by doing with the following statement::
+
+  ApplicationManager appManager = deployApplication(WiseApp.class);
+
+With this object, we can:
+
+- Test log event injection::
+
+    StreamWriter streamWriter = appManager.getStreamWriter("logEventStream");
+    streamWriter.send("1.202.218.8 - - [12/Apr/2012:02:03:43 -0400] " +
+                      "\"GET /product.html HTTP/1.0\" 404 208 \"http://www.example.org\" \"Mozilla/5.0\"");
+
+- Test the call to a Service endpoint::
+
+    ServiceManager serviceManager = appManager.startService("WiseService");
+    URL url = new URL(serviceManager.getServiceURL(), "ip/1.202.218.8/count");
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals("3", Bytes.toString(response.getResponseBody()));
+
+- Start a Map/Reduce job::
+
+    MapReduceManager mrManager = appManager.startMapReduce("WiseWorkflow_BounceCountsMapReduce");
+    try {
+      mrManager.waitForFinish(3, TimeUnit.MINUTES);
+    } finally {
+      mrManager.stop();
+    }
+
+- Test the output of the Map/Reduce job::
+
+    DataSetManager<BounceCountStore> dsManager = appManager.getDataSet("bounceCounts");
+    BounceCountStore bounceCountStore = dsManager.get();
+    Assert.assertEquals(new PageBounce("/product.html", 3, 2), bounceCountStore.get("/product.html"));
+
+- Test a SQL query on Datasets::
+
+    Connection exploreConnection = getQueryClient();
+    ResultSet resultSet =
+      exploreConnection.prepareStatement("SELECT * FROM cdap_user_bouncecounts ORDER BY uri").executeQuery();
+
+Where to Go Next
+================
+Where?
