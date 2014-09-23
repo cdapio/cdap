@@ -21,7 +21,6 @@ import co.cask.cdap.test.XSlowTests;
 import com.google.gson.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -29,7 +28,6 @@ import org.junit.experimental.categories.Category;
  * Test for {@link MetricsClient}.
  */
 @Category(XSlowTests.class)
-@Ignore
 public class MetricsClientTestRun extends ClientTestBase {
 
   private MetricsClient metricsClient;

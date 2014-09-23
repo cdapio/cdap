@@ -56,7 +56,7 @@ public class HttpsRequestsTest extends HttpRequestsTestBase {
 
   @Override
   protected HttpRequestConfig getHttpRequestsConfig() {
-    return new HttpRequestConfig(0, 0, true);
+    return new HttpRequestConfig(0, 0, false);
   }
 
   public static final class TestHttpsService extends AbstractIdleService {

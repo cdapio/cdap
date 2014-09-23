@@ -35,7 +35,7 @@ final class TimeSeriesResponse {
 
     return new Builder() {
       @Override
-      public Builder addData(long timestamp, int value) {
+      public Builder addData(long timestamp, long value) {
         return addData(new TimeValue(timestamp, value));
       }
 
@@ -59,7 +59,7 @@ final class TimeSeriesResponse {
   }
 
   public interface Builder {
-    Builder addData(long timestamp, int value);
+    Builder addData(long timestamp, long value);
 
     Builder addData(TimeValue timeValue);
 

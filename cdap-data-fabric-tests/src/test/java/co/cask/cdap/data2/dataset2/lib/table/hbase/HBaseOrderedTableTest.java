@@ -25,12 +25,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrederedTableTest;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTableTest;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
-import co.cask.tephra.TxConstants;
 import co.cask.tephra.inmemory.DetachedTxSystemClient;
 import com.google.gson.Gson;
 import org.apache.hadoop.hbase.HRegionInfo;
@@ -54,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Category(SlowTests.class)
-public class HBaseOrderedTableTest extends BufferingOrederedTableTest<BufferingOrderedTable> {
+public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOrderedTable> {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseOrderedTableTest.class);
 
   @ClassRule

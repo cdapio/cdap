@@ -147,12 +147,10 @@ public final class ACLHandler extends AbstractHttpHandler {
   }
 
   private boolean groupExists(String groupId) {
-    // TODO: check that group exists (REACTOR-867)
     return true;
   }
 
   private boolean userExists(String userId) {
-    // TODO: check that user exists (REACTOR-867)
     return true;
   }
 
@@ -165,7 +163,6 @@ public final class ACLHandler extends AbstractHttpHandler {
     }
 
     EntityId entityId = new EntityId(entityType, entityIdString);
-    // TODO: check that entity exists (REACTOR-866)
     return true;
   }
 }
