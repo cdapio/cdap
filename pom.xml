@@ -116,8 +116,6 @@
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.1.0</spark.version>
     <cdap.client.version>1.0.0-SNAPSHOT</cdap.client.version>
-    <cask.snapshot.repo>https://nexus.cask.co/content/repositories/snapshots</cask.snapshot.repo>
-    <cask.release.repo>https://nexus.cask.co/service/local/staging/deploy/maven2</cask.release.repo>
   </properties>
 
   <modules>
@@ -1633,10 +1631,10 @@
                 <configuration>
                   <source>
                     if (project.version.endsWith("-SNAPSHOT")){
-                      project.properties['deploy.url'] = ${cask.snapshot.repo};
+                      project.properties['deploy.url'] = project.properties['cask.packages.snapshot.repo'];
                       project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.snapshots";
                     } else {
-                      project.properties['deploy.url'] = ${cask.release.repo};
+                      project.properties['deploy.url'] = project.properties['cask.packages.release.repo'];
                       project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.release";
                     }
                   </source>
