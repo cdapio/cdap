@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IntegerStore;
 import co.cask.cdap.api.dataset.lib.IntegerStoreModule;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -42,6 +43,7 @@ import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -336,10 +338,10 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        Map<String,String> objectScanMap = t.scan(Bytes.toBytes(0),Bytes.toBytes(10));
+        Iterator<KeyValue<byte[], String>> objectsIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(10));
         int sum = 0;
-        for (String val : objectScanMap.values()) {
-          sum += Integer.parseInt(val);
+        while (objectsIterator.hasNext()) {
+          sum += Integer.parseInt(objectsIterator.next().getValue());
         }
         //checking the sum equals sum of values from (0..9) which are the rows written and scanned for.
         Assert.assertEquals(45, sum);

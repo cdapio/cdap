@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.dataset.Dataset;
 
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -76,7 +77,7 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
    * Scans table.
    * @param startRow start row inclusive. {@code null} means start from first row of the table
    * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
-   * @return Map<String,T> Map of key to Object from startRow to stopRow
+   * @return Iterator over {@link co.cask.cdap.api.dataset.lib.KeyValue<byte[], T>}
    */
-  Map<String, T> scan(byte[] startRow, byte[] stopRow);
+  Iterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow);
 }

@@ -31,6 +31,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.SortedSet;
@@ -266,13 +267,13 @@ public class KeyValueTableTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // scan with start row '0' and end row '1000' and make sure we have 1000 records
-        Scanner scanner = t.scan(Bytes.toBytes(0), Bytes.toBytes(1000));
-        int row_count=0;
-        Row next;
-        while((next = scanner.next()) != null) {
-          row_count++;
+        Iterator<KeyValue<byte[], byte[]>> keyValueIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(1000));
+        int rowCount = 0;
+        while (keyValueIterator.hasNext()) {
+          rowCount++;
+          keyValueIterator.next();
         }
-        Assert.assertEquals(1000, row_count);
+        Assert.assertEquals(1000, rowCount);
       }
     });
     deleteInstance("tScan");

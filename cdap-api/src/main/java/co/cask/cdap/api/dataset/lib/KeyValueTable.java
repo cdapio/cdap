@@ -28,10 +28,12 @@ import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -190,10 +192,16 @@ public class KeyValueTable extends AbstractDataset implements
    * Scans table.
    * @param startRow start row inclusive. {@code null} means start from first row of the table
    * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
-   * @return instance of {@link co.cask.cdap.api.dataset.table.Scanner}
+   * @return iterator of {@link co.cask.cdap.api.dataset.lib.KeyValue<byte[],byte[]>}
    */
-  public Scanner scan(byte[] startRow, byte[] stopRow) {
-    return table.scan(startRow, stopRow);
+  public Iterator<KeyValue<byte[], byte[]>> scan(byte[] startRow, byte[] stopRow) {
+    List<KeyValue<byte[], byte[]>> keyValueList = Lists.newArrayList();
+    Scanner scanner = table.scan(startRow, stopRow);
+    Row next;
+    while ((next = scanner.next()) != null) {
+      keyValueList.add(new KeyValue<byte[], byte[]>(next.getRow(), next.get(KEY_COLUMN)));
+    }
+    return keyValueList.iterator();
   }
 
   /**

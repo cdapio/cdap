@@ -36,6 +36,7 @@ import co.cask.cdap.internal.io.ReflectionDatumWriter;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.TypeRepresentation;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
@@ -43,6 +44,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -93,16 +95,15 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   }
 
   @Override
-  public Map<String, T> scan(byte[] startRow, byte[] stopRow) {
-    Scanner scanner = kvTable.scan(startRow, stopRow);
-    final byte[] keyColumn = { 'c' };
-    Map<String, T> objectMap = Maps.newHashMap();
-    Row next;
-    while ((next = scanner.next()) != null) {
-      String key = new String(next.getRow(), Charsets.UTF_8);
-      objectMap.put(key, decode(next.get(keyColumn)));
+  public Iterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow) {
+    Iterator<KeyValue<byte[], byte[]>> keyValueIterator = kvTable.scan(startRow, stopRow);
+    List<KeyValue<byte[], T>> objectScanList = Lists.newArrayList();
+
+    while (keyValueIterator.hasNext()) {
+      KeyValue<byte[], byte[]> row = keyValueIterator.next();
+      objectScanList.add(new KeyValue<byte[], T>(row.getKey(), decode(row.getValue())));
     }
-    return objectMap;
+    return objectScanList.iterator();
   }
 
   @Override
