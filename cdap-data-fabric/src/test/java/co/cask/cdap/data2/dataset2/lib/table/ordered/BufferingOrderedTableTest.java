@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table.ordered;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -26,7 +27,7 @@ import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.nio.Buffer;
+import java.util.Map;
 import java.util.NavigableMap;
 
 /**
@@ -177,6 +178,231 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
     } finally {
       admin.drop();
     }
+  }
+
+  @Test
+  public void testChangingParamsAndReturnValues() throws Exception {
+    // The test verifies that one can re-use byte arrays passed as parameters to write methods of a table without
+    // affecting the stored data.
+    // Also, one can re-use (modify) returned data from the table without affecting the stored data.
+
+    DatasetAdmin admin = getTableAdmin("myTable");
+    admin.create();
+    try {
+      // writing some data: we'll need it to test delete later
+      Transaction tx = txClient.startShort();
+      BufferingOrderedTable table = getTable("myTable");
+      table.startTx(tx);
+
+      table.put(new byte[] {0}, new byte[] {9}, new byte[] {8});
+
+      table.commitTx();
+      txClient.commit(tx);
+
+      // start new for in-mem buffer behavior testing
+      tx = txClient.startShort();
+      table.startTx(tx);
+
+      // write some data but not commit
+      byte[] rowParam = new byte[] {1};
+      byte[] colParam = new byte[] {2};
+      byte[] valParam = Bytes.toBytes(3L);
+      table.put(rowParam, colParam, valParam);
+
+      verify123(table);
+
+      // change passed earlier byte arrays in place, this should not affect stored previously values
+      rowParam[0]++;
+      colParam[0]++;
+      valParam[0]++;
+
+      verify123(table);
+
+      // try get row and change returned values in place, which should not affect the data stored
+      Map<byte[], byte[]> getRowResult = table.get(new byte[] {1});
+      Assert.assertEquals(1, getRowResult.size());
+      byte[] colFromGetRow = getRowResult.keySet().iterator().next();
+      byte[] valFromGetRow = getRowResult.get(colFromGetRow);
+      getRowResult.remove(new byte[] {2});
+
+      Assert.assertArrayEquals(new byte[] {2}, colFromGetRow);
+      Assert.assertArrayEquals(Bytes.toBytes(3L), valFromGetRow);
+
+      colFromGetRow[0]++;
+      valFromGetRow[0]++;
+
+      verify123(table);
+
+      // try get set of columns in a row and change returned values in place, which should not affect the data stored
+      Map<byte[], byte[]> getColumnSetResult = table.get(new byte[] {1});
+      Assert.assertEquals(1, getColumnSetResult.size());
+      byte[] colFromGetColumnSet = getColumnSetResult.keySet().iterator().next();
+      byte[] valFromGetColumnSet = getColumnSetResult.values().iterator().next();
+      getColumnSetResult.remove(new byte[] {2});
+
+      Assert.assertArrayEquals(new byte[] {2}, colFromGetColumnSet);
+      Assert.assertArrayEquals(Bytes.toBytes(3L), valFromGetColumnSet);
+
+      colFromGetColumnSet[0]++;
+      valFromGetColumnSet[0]++;
+
+      verify123(table);
+
+      // try get column and change returned value in place, which should not affect the data stored
+      byte[] valFromGetColumn = table.get(new byte[] {1}, new byte[] {2});
+      Assert.assertArrayEquals(Bytes.toBytes(3L), valFromGetColumn);
+
+      valFromGetColumn[0]++;
+
+      verify123(table);
+
+      // try scan and change returned value in place, which should not affect the data stored
+      Scanner scan = table.scan(new byte[] {1}, null);
+      Row next = scan.next();
+      Assert.assertNotNull(next);
+      byte[] rowFromScan = next.getRow();
+      Assert.assertArrayEquals(new byte[] {1}, rowFromScan);
+      Map<byte[], byte[]> cols = next.getColumns();
+      Assert.assertEquals(1, cols.size());
+      byte[] colFromScan = cols.keySet().iterator().next();
+      Assert.assertArrayEquals(new byte[] {2}, colFromScan);
+      byte[] valFromScan = next.get(new byte[] {2});
+      Assert.assertNotNull(valFromScan);
+      Assert.assertArrayEquals(Bytes.toBytes(3L), valFromScan);
+      Assert.assertNull(scan.next());
+      cols.remove(new byte[] {2});
+
+      rowFromScan[0]++;
+      colFromScan[0]++;
+      valFromScan[0]++;
+
+      verify123(table);
+
+      // try delete and change params in place: this should not affect stored data
+      rowParam = new byte[] {1};
+      colParam = new byte[] {2};
+      table.delete(rowParam, colParam);
+
+      Assert.assertNull(table.get(new byte[] {1}, new byte[] {2}));
+      Assert.assertArrayEquals(new byte[] {8}, table.get(new byte[] {0}, new byte[] {9}));
+
+      rowParam[0] = 0;
+      colParam[0] = 9;
+
+      Assert.assertNull(table.get(new byte[] {1}, new byte[] {2}));
+      Assert.assertArrayEquals(new byte[] {8}, table.get(new byte[] {0}, new byte[] {9}));
+
+      // try increment column and change params in place: this should not affect stored data
+      byte[] rowIncParam = new byte[] {1};
+      byte[] colIncParam = new byte[] {2};
+      table.increment(rowIncParam, colIncParam, 3);
+
+      verify123(table);
+
+      rowIncParam[0]++;
+      colIncParam[0]++;
+
+      verify123(table);
+
+      // try increment set of columns and change params in place, try also to change values in returned map: this all
+      // should not affect stored data.
+
+      rowIncParam = new byte[] {1};
+      colIncParam = new byte[] {2};
+      table.increment(rowIncParam, colIncParam, -1);
+      table.increment(rowIncParam, new byte[][] {colIncParam}, new long[] {1});
+
+      verify123(table);
+
+      rowIncParam[0]++;
+      colIncParam[0]++;
+
+      verify123(table);
+
+      // try increment and change returned values: should not affect the stored data
+      rowIncParam = new byte[] {1};
+      colIncParam = new byte[] {2};
+      table.increment(rowIncParam, colIncParam, -1);
+      Map<byte[], Long> counters = table.increment(rowIncParam, new byte[][] {colIncParam}, new long[] {1});
+
+      Assert.assertEquals(1, counters.size());
+      byte[] colFromInc = counters.keySet().iterator().next();
+      Assert.assertArrayEquals(new byte[] {2}, colFromInc);
+      Assert.assertEquals(3, (long) counters.get(colFromInc));
+      counters.remove(new byte[] {2});
+      colFromInc[0]++;
+
+      verify123(table);
+
+      // try increment write and change params in place: this should not affect stored data
+      rowIncParam = new byte[] {1};
+      colIncParam = new byte[] {2};
+      table.incrementWrite(rowIncParam, colIncParam, -1);
+      table.incrementWrite(rowIncParam, new byte[][] {colIncParam}, new long[] {1});
+
+      verify123(table);
+
+      rowIncParam[0]++;
+      colIncParam[0]++;
+
+      verify123(table);
+
+      // try compareAndSwap and change params in place: this should not affect stored data
+      byte[] rowSwapParam = new byte[] {1};
+      byte[] colSwapParam = new byte[] {2};
+      byte[] valSwapParam = Bytes.toBytes(3L);
+      table.compareAndSwap(rowSwapParam, colSwapParam, Bytes.toBytes(3L), Bytes.toBytes(4L));
+      table.compareAndSwap(rowSwapParam, colSwapParam, Bytes.toBytes(4L), valSwapParam);
+
+      verify123(table);
+
+      rowSwapParam[0]++;
+      colSwapParam[0]++;
+      valSwapParam[0]++;
+
+      verify123(table);
+
+      // We don't care to persist changes and commit tx here: we tested what we wanted
+    } finally {
+      admin.drop();
+    }
+  }
+
+  private void verify123(BufferingOrderedTable table) throws Exception {
+    byte[] row = new byte[] {1};
+    byte[] col = new byte[] {2};
+    byte[] val = Bytes.toBytes((long) 3);
+    verify(table, row, col, val);
+    row[0]++;
+    col[0]++;
+    val[0]++;
+    Assert.assertNull(table.get(row, col));
+    Assert.assertTrue(table.get(row).isEmpty());
+
+    Assert.assertArrayEquals(new byte[] {8}, table.get(new byte[] {0}, new byte[] {9}));
+  }
+
+  private void verify(BufferingOrderedTable table, byte[] row, byte[] col, byte[] val) throws Exception {
+    // get column
+    Assert.assertArrayEquals(val, table.get(row, col));
+
+    // get set of columns
+    Map<byte[], byte[]> getColSetResult = table.get(row, new byte[][] {col});
+    Assert.assertEquals(1, getColSetResult.size());
+    Assert.assertArrayEquals(val, getColSetResult.get(col));
+
+    // get row
+    Map<byte[], byte[]> getRowResult = table.get(row);
+    Assert.assertEquals(1, getRowResult.size());
+    Assert.assertArrayEquals(val, getRowResult.get(col));
+
+    // scan
+    Scanner scan = table.scan(row, null);
+    Row next = scan.next();
+    Assert.assertNotNull(next);
+    Assert.assertArrayEquals(row, next.getRow());
+    Assert.assertArrayEquals(val, next.get(col));
+    Assert.assertNull(scan.next());
   }
 
   // This class looks weird, this is what we have to do to override persist method to make it throw exception in the
