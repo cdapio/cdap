@@ -54,9 +54,9 @@ public class LevelDBOrderedTable extends BufferingOrderedTable {
   }
 
   @Override
-  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public void increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
     // for local operation with leveldb, we don't worry about the cost of reads
-    increment(row, columns, amounts);
+    incrementAndGet(row, columns, amounts);
   }
 
   @Override

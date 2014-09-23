@@ -161,9 +161,9 @@ public abstract class OrderedTableConcurrentTest<T extends OrderedTable>
           txExecutor.execute(new TransactionExecutor.Subroutine() {
             @Override
             public void apply() throws Exception {
-              table.increment(ROW_TO_INCREMENT,
-                              new byte[][]{COLUMN_TO_INCREMENT},
-                              new long[]{(long) executed[0]});
+              table.incrementAndGet(ROW_TO_INCREMENT,
+                                    new byte[][]{COLUMN_TO_INCREMENT},
+                                    new long[]{(long) executed[0]});
             }
           });
         } catch (TransactionConflictException t) {

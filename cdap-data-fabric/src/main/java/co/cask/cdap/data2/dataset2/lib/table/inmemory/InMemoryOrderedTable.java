@@ -52,9 +52,9 @@ public class InMemoryOrderedTable extends BufferingOrderedTable {
   }
 
   @Override
-  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public void increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
     // for in-memory use, no need to do fancy read-less increments
-    increment(row, columns, amounts);
+    incrementAndGet(row, columns, amounts);
   }
 
   @Override

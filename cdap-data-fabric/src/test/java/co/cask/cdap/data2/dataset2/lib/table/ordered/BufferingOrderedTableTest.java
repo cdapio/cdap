@@ -323,7 +323,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       rowIncParam = new byte[] {1};
       colIncParam = new byte[] {2};
       table.increment(rowIncParam, colIncParam, -1);
-      Map<byte[], Long> counters = table.increment(rowIncParam, new byte[][] {colIncParam}, new long[] {1});
+      Map<byte[], Long> counters = table.incrementAndGet(rowIncParam, new byte[][] {colIncParam}, new long[] {1});
 
       Assert.assertEquals(1, counters.size());
       byte[] colFromInc = counters.keySet().iterator().next();
@@ -337,8 +337,8 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       // try increment write and change params in place: this should not affect stored data
       rowIncParam = new byte[] {1};
       colIncParam = new byte[] {2};
-      table.incrementWrite(rowIncParam, colIncParam, -1);
-      table.incrementWrite(rowIncParam, new byte[][] {colIncParam}, new long[] {1});
+      table.increment(rowIncParam, colIncParam, -1);
+      table.increment(rowIncParam, new byte[][] {colIncParam}, new long[] {1});
 
       verify123(table);
 
