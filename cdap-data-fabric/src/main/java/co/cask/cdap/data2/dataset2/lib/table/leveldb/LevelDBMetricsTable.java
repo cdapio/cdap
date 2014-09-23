@@ -48,7 +48,7 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(Map<byte[], Map<byte[], byte[]>> updates) throws Exception {
+  public void put(NavigableMap<byte[], NavigableMap<byte[], byte[]>> updates) throws Exception {
     core.persist(updates, System.currentTimeMillis());
   }
 

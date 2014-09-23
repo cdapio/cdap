@@ -38,4 +38,10 @@ public class IncrementValue implements Update<Long> {
   public byte[] getBytes() {
     return Bytes.toBytes(value);
   }
+
+  @Override
+  public Update<Long> deepCopy() {
+    // it is immutable, safe to return itself
+    return this;
+  }
 }
