@@ -36,6 +36,7 @@
     <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>WebAnalytics</module>
   </modules>
 
   <repositories>
@@ -80,7 +81,7 @@
                   <exclude>**/logrotate.d/**</exclude>
                   <exclude>**/limits.d/**</exclude>
                   <exclude>**/resources/**/*.txt</exclude>
-                  <exclude>**/resources/**/*.accesslog</exclude>
+                  <exclude>**/resources/**/*.log</exclude>
                   <exclude>**/resources/**/*.css</exclude>
                   <exclude>**/resources/**/*.scss</exclude>
                   <exclude>**/resources/**/*.js</exclude>
