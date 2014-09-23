@@ -349,30 +349,15 @@ We also define the graph of their connection:
 - The ``logEventStream`` Stream is connected to the ``parser`` Flowlet.
 - The ``parser`` Flowlet is connected to the ``pageViewCount`` Flowlet.
 
-``WiseFlow`` looks like this in CDAP Console:
+``WiseFlow`` looks like this:
 
 .. image:: _images/wise_flow.png
    :width: 6in
 
 Batch Processing of Logs with WiseWorkflow
 ==========================================
-Wise implements a simple Workflow, which executes every 10 minutes a Map/Reduce job that computes the bounce
-counts of the Web pages seen in the Web server access logs.
-
-All this is done in the ``WiseWorkflow`` class::
-
-  public class WiseWorkflow implements Workflow {
-    @Override
-    public WorkflowSpecification configure() {
-      return WorkflowSpecification.Builder.with()
-        .setName("WiseWorkflow")
-        .setDescription("Wise Workflow")
-        .onlyWith(new BounceCountsMapReduce())
-        .addSchedule(new Schedule("TenMinuteSchedule", "Run every 10 minutes", "0/10 * * * *",
-                                  Schedule.Action.START))
-        .build();
-    }
-  }
+Wise executes every ten minutes a Map/Reduce job that computes the bounce counts of the Web pages
+seen in the Web server access logs.
 
 The ``BounceCountsMapReduce`` class defines the Map/Reduce job to run. It extends
 ``AbstractMapReduce`` and overrides two methods, ``configure()`` and ``beforeSubmit()``.
@@ -392,7 +377,32 @@ It sets the ID of the Map/Reduce job, ``BounceCountsMapReduce``, and specifies w
 This job uses the ``bounceCountsMapReduceLastRun`` system Dataset - of type ``KeyValueTable`` - to
 store the time of the last successful run of ``BounceCountsMapReduce``.
 
-The ``useOutputDataset()`` method specifies that the Dataset with the given ID will be used as output of the job.
+We will talk about the ``useOutputDataset()`` method in only a minute.
+
+Plugging the Stream to the input of the Map/Reduce job
+......................................................
+Traditionally in a Map/Reduce job, a Job configuration is set before each run. This is done in the ``beforeSubmit()``
+method of the ``BounceCountsMapReduce`` class::
+
+  @Override
+  public void beforeSubmit(MapReduceContext context) throws Exception {
+    Job job = context.getHadoopJob();
+    ...
+    KeyValueTable lastRunDataset = context.getDataSet("bounceCountsMapReduceLastRun");
+    ...
+    StreamBatchReadable.useStreamInput(context, "logEventStream", startTime, endTime);
+  }
+
+As we said earlier, the input of the Map/Reduce job is the ``logEventStream``. This connection is done above using
+the ``StreamBatchReadable.useStreamInput()`` method.
+
+The ``startTime`` is computed using the last value stored in the ``bounceCountsMapReduceLastRun`` Dataset, which can
+be accessed using the ``MapReduceContext.getDataSet()`` method.
+
+Writing to the *bounceCountStore* Dataset from the Map/Reduce job
+.................................................................
+In the ``BounceCountsMapReduce.configure()`` method seen earlier, the ``useOutputDataset`` method specifies that the
+Dataset with the given ID will be used as output of the job.
 It means that the key/value couples outputted by the reducer of this job will be directly written to this Dataset.
 
 To understand how this is possible, let's go back to the definition of the ``bounceCountStore`` Dataset::
@@ -413,25 +423,9 @@ and value that the Reduce part of the job outputs. Hence, the ``bounceCountStore
 used as output of a Map/Reduce job where the output key is of type ``Void``, and the output value is of type
 ``PageBounce``.
 
-Traditionally in a Map/Reduce job, a Job configuration is set before each run. This is done in the ``beforeSubmit()``
-method of the ``BounceCountsMapReduce`` class::
-
-  @Override
-  public void beforeSubmit(MapReduceContext context) throws Exception {
-    Job job = context.getHadoopJob();
-    ...
-    KeyValueTable lastRunDataset = context.getDataSet("bounceCountsMapReduceLastRun");
-    ...
-    StreamBatchReadable.useStreamInput(context, "logEventStream", startTime, endTime);
-  }
-
-As we said earlier, the input of the Map/Reduce job is the ``logEventStream``. This connection is done above using
-the ``StreamBatchReadable.useStreamInput()`` method.
-
-The ``startTime`` is computed using the last value stored in the ``bounceCountsMapReduceLastRun`` Dataset, which can
-be accessed using the ``MapReduceContext.getDataSet()`` method.
-
-Now that because the input of our Map/Reduce job is a Stream, it forces the key and value types of our Mapper to be
+Map/Reduce job Structure
+........................
+Because the input of our Map/Reduce job is a Stream, it forces the key and value types of our Mapper to be
 respectively ``LongWritable`` and ``Text``.
 
 Our ``Mapper`` and ``Reducer`` are standard Hadoop classes. They have the following signatures::
@@ -455,10 +449,32 @@ Here is what each generic parameter of the ``Mapper`` and the ``Reducer`` contai
 - Reducer output key - ``Void``: This is not used.
 - Reducer output value - ``PageBounce``: bounce counts of a Web page.
 
+Scheduling the Map/Reduce job
+.............................
+To schedule the ``BounceCountsMapReduce`` job to run every ten minute, we define it in the
+``WiseWorkflow`` as follows::
+
+  public class WiseWorkflow implements Workflow {
+    @Override
+    public WorkflowSpecification configure() {
+      return WorkflowSpecification.Builder.with()
+        .setName("WiseWorkflow")
+        .setDescription("Wise Workflow")
+        .onlyWith(new BounceCountsMapReduce())
+        .addSchedule(new Schedule("TenMinuteSchedule", "Run every 10 minutes", "0/10 * * * *",
+                                  Schedule.Action.START))
+        .build();
+    }
+  }
+
 Accessing Wise Data through WiseService
 =======================================
 ``WiseService`` is a Wise component that exposes HTTP endpoints to retrieve the content of the ``pageViewStore``
-Dataset. Endpoints are defined in a class that extends ``AbstractHttpServiceHandler``::
+Dataset. For example, ``WiseService`` defines the following endpoint::
+
+  GET http://localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/164.199.169.153/count
+
+This endpoint is defined in a class that extends ``AbstractHttpServiceHandler``::
 
   public static class PageViewCountHandler extends AbstractHttpServiceHandler {
     @UseDataSet("pageViewStore")
@@ -485,10 +501,6 @@ the URL path used to reach this endpoint. This path has one
 user parameter, ``{ip}``, which is decoded as a ``String`` in the parameters of the ``getIPCount()`` method
 with the help of the ``@PathParam`` annotation.
 
-With a running CDAP standalone instance, the HTTP endpoint defined by the ``getIPCount()`` can be reached at::
-
-  GET http://localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/164.199.169.153/count
-
 TODO: create mini app/script to reach endpoint
 
 The ``PageViewCountHandler`` class is registered in the ``WiseService`` class, which has the
@@ -498,28 +510,29 @@ following implementation::
     @Override
     protected void configure() {
       setName("PageViewService");
-      useDataset("pageViewStore");
       addHandler(new PageViewCountHandler());
     }
   }
 
 - The ID of the service is set, and it will be used in the URL to reach the endpoints defined by the service.
-- The ``useDataset()`` method specifies a Dataset that will be used by the service.
-- The handlers which will define the HTTP endpoints exposed by the Service are added with the ``addHandler()`` method.
+- We had the ``PageViewCountHandler`` that defines the HTTP endpoints exposed by the Service using the
+  ``addHandler()`` method.
 
 Exploring Wise Datasets through SQL
 ===================================
 With Wise, you can explore the Datasets using SQL queries. The SQL interface on CDAP is called Explore,
-you will find it in CDAP dashboard:
+you will find it in CDAP Console:
 
 #. After deploying Wise in your running CDAP standalone instance, go to the **Store** page,
    which is one of the five pages you can access from the left pane of CDAP dashboard.
 
    .. image:: _images/wise_store_page.png
 
+
 #. Click on the **Explore** button in the top right corner of the page. You will land on this screen:
 
    .. image:: _images/wise_explore_page.png
+
 
 This is the *Explore* page, where you can run SQL queries and see information about the Datasets that expose
 a SQL interface.
@@ -527,12 +540,14 @@ a SQL interface.
 You will notice that the Datasets have peculiar names, like *cdap_user_bouncecounts*. Those are the SQL table names
 of the Datasets which have a SQL interface.
 
-Here are some SQL queries that you can run::
+Here are some SQL queries that you can run:
 
-  Retrieve the web pages from where IP addresses have bounced more than half of the time
+- Retrieve the web pages from where IP addresses have bounced more than half of the time::
+
   SELECT uri FROM cdap_user_bouncecounts WHERE bounces > 0.5 * totalvisits
 
-  Retrieve all the IP addresses which visited the page '/contact.html'
+- Retrieve all the IP addresses which visited the page '/contact.html'::
+
   SELECT key FROM cdap_user_pageviewcds WHERE array_contains(map_keys(value), '/contact.html')=TRUE
 
 Because the SQL engine that CDAP runs internally is Hive, the SQL language used to submit queries is HiveQL.
