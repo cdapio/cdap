@@ -80,7 +80,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   private final ConflictDetection conflictLevel;
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
-  // Whether read-less increments should be used when incrementWrite() is called
+  // Whether read-less increments should be used when increment() is called
   private final boolean enableReadlessIncrements;
 
   // In-memory buffer that keeps not yet persisted data. It is row->(column->value) map. Value can be null which means
@@ -402,7 +402,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   }
 
   @Override
-  public Map<byte[], Long> increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public Map<byte[], Long> incrementAndGet(byte[] row, byte[][] columns, long[] amounts) throws Exception {
     reportRead(1);
     reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
     // Logic:
@@ -441,7 +441,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
   }
 
   @Override
-  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) throws Exception {
+  public void increment(byte[] row, byte[][] columns, long[] amounts) throws Exception {
     if (enableReadlessIncrements) {
       reportWrite(1, getSize(row) + getSize(columns) + getSize(amounts));
       NavigableMap<byte[], Update> colVals = buff.get(row);
@@ -453,7 +453,7 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
         colVals.put(columns[i], Updates.mergeUpdates(colVals.get(columns[i]), new IncrementValue(amounts[i])));
       }
     } else {
-      increment(row, columns, amounts);
+      incrementAndGet(row, columns, amounts);
     }
   }
 
