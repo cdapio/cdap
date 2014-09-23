@@ -50,14 +50,14 @@ your applications against the CDAP developer API. This API hides the low-level d
 programming paradigms and execution environments. It also enriches the infrastructure with many useful
 services that are typically needed by Big Data applications, such as service discovery, log and metrics
 collection, and configuration. The environment-specific implementations of these services are injected
-by CADP into the program containers in which the application is run - the application itself does not
-need to change based on the environment. This allows you develop applications in one environent - say,
+by CDAP into the program containers in which the application is run - the application itself does not
+need to change based on the environment. This allows you develop applications in one environment - say,
 on your laptop using a stand-alone CDAP for testing - and then seamlessly deploy them in a different
-environemnt - say, your distributed staging cluster.
+environment - say, your distributed staging cluster.
 
 Deployment of an application as well as its life cycle management, monitoring and scaling are done
 through CDAP's client API. Similarly to the developer API, it is the same in every environment. The
-experience of managing your application does not change when moving from one envirnment to another.
+experience of managing your application does not change when moving from one environment to another.
 
 Developer Focus
 ---------------

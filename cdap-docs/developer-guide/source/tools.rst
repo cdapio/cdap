@@ -659,7 +659,7 @@ Putting it all together:
 
         // Update TTL value for Stream by id <streamName>
         streamClient.setTTL(streamName, newTTL);
-        LOG.info("Seting new TTL : {} seconds for stream: {}", newTTL, streamName);
+        LOG.info("Setting new TTL : {} seconds for stream: {}", newTTL, streamName);
 
 
         String event = "192.0.2.0 - - [09/Apr/2012:08:40:43 -0400] \"GET /NoteBook/ HTTP/1.0\" 201 809 \"-\" " +
@@ -691,7 +691,7 @@ Putting it all together:
 Also look at : [`Note stream_client`_]
 
 Python API
------------
+----------
 Usage
 .....
 
@@ -715,7 +715,7 @@ from an existing file.
 ::
 
   #The assigned values are also the default values
-  def createStremClient():
+  def createStreamClient():
     config = Config()
     config.host = ‘localhost’
     config.port = 10000
@@ -725,7 +725,7 @@ from an existing file.
 2. using an existing configuration file in JSON format [`Note 1`_] to create a ``config`` object
 ::
 
-   def createStremClient():
+   def createStreamClient():
     config = Config.read_from_file('/path/to/config.json')
     streamClient = streamClient(config)
 
@@ -762,12 +762,12 @@ Putting it all together:
 ........................
 ::
 
-  def createStremClient():
+  def createStreamClient():
     config = Config.read_from_file('/path/to/config.json')
     streamClient = streamClient(config)
     streamWriter = streamClient.create_writer("streamName")
     streamPromise = streamWriter.write("New log Event") #async
-    streamPromise.onResponse(onOKHandler, onErrorHalnder)
+    streamPromise.onResponse(onOKHandler, onErrorHandler)
 
   def onOkHandler(httpResponse): #will be executed after successful write to stream
     ...
@@ -970,7 +970,8 @@ After Installation, you can configure the daemon properties at /etc/file-tailer/
      # Host port that is used by stream client
      pipes.app1pipe.sink.port=10000
 
-  :Note:  Please note that the target file must be accessible to the File Tailer user. To check, you can use the more command with the File Tailer user:
+  :Note:  Please note that the target file must be accessible to the File Tailer user. To check, you can use the
+          `more` command with the File Tailer user:
           Available at: [link]
 
 Starting and Stopping the Daemon
@@ -989,7 +990,8 @@ Configuring Authentication Client for File Tailer
 
 Authentication client parameters :
   - pipes.<pipe-name>.sink.auth_client - classpath of authentication client class
-  - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is locted at ``/etc/file-tailer/conf/auth-client.properties``
+  - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is
+    located at ``/etc/file-tailer/conf/auth-client.properties``
 
   you can refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 
@@ -1088,8 +1090,10 @@ Agent to read data from a log file by tailing it and putting them into CDAP.
 Authentication Client
 ---------------------
 To use authentication, add these authentication client configuration parameters to the sink configuration file:
-  - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient, Fully qualified class name of the client class
-  - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is locted at ``/usr/local/apache-flume/conf/auth_client.conf``
+  - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient,
+    Fully qualified class name of the client class
+  - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is
+    located at ``/usr/local/apache-flume/conf/auth_client.conf``
 
 please refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 

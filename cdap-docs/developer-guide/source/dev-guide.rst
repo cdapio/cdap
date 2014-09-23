@@ -38,7 +38,7 @@ Streams
 =======
 
 **Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
-They are ordered, partionable, sequences of data, usable for realtime collection and consumption of data.
+They are ordered, time-partitioned sequences of data, usable for realtime collection and consumption of data.
 You specify a Stream in your :ref:`Application <applications>` specification::
 
   addStream(new Stream("myStream"));
@@ -104,7 +104,7 @@ To use the Dataset in a Program, instruct the runtime
 system to inject an instance of the Dataset with the ``@UseDataSet``
 annotation::
 
-  class MyFowlet extends AbstractFlowlet {
+  class MyFlowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
     private KeyValueTable counters;
     ...
@@ -304,7 +304,7 @@ Increment
 .........
 An increment operation increments a ``long`` value of one or more columns by either ``1L``
 or an integer amount *n*.
-If a column doesn’t exist, it is created with an assumed value of zero before the increment::
+If a column does not exist, it is created with an assumed value of zero before the increment::
 
   // Write long value to a column of a row
   t.put(new Put("rowKey1").add("column1", 55L));
@@ -419,7 +419,7 @@ These properties will be used by embedded Datasets during creation and will be a
 
 Application components can access a created Dataset via the ``@UseDataSet`` annotation::
 
-  Class MyFowlet extends AbstractFlowlet {
+  Class MyFlowlet extends AbstractFlowlet {
     @UseDataSet("myCounters")
     private UniqueCountTable counters;
     ...
@@ -556,7 +556,7 @@ Limitations
   supported and will result in an exception when the Dataset is created.
 
 * A Dataset can only be used in ad-hoc queries if its record type is completely contained in the Dataset definition.
-  This means that if the record type is or contains a parametrized type, then the type parameters must be present in
+  This means that if the record type is or contains a parameterized type, then the type parameters must be present in
   the Dataset definition. The reason is that the record type must be instantiated when executing an ad-hoc query.
   If a type parameter depends on the jar file of the application that created the Dataset, then this jar file is not
   available to the query execution runtime.

@@ -29,7 +29,7 @@ Cask Data Application Platform HTTP RESTful API And Clients
 .. _restful-api:
 
 ----------------
-HTTP RESTFul API
+HTTP RESTful API
 ----------------
 
 Introduction
@@ -538,7 +538,7 @@ Example
 Updating an Existing Dataset
 ----------------------------
 
-You can update an existing Dataset's table and properties by issuing an HTTP PUT request to the URL::
+You can update an existing dataset's table and properties by issuing an HTTP PUT request to the URL::
 
 	PUT <base-url>/data/datasets/<dataset-name>/properties
 
@@ -2144,7 +2144,7 @@ To check the status of a specific System Service, use::
 
   GET <base-url>/system/services/<service-name>/status
 
-The status of these CDAP System Servcies can be checked:
+The status of these CDAP System Services can be checked:
 
 .. list-table::
    :header-rows: 1
