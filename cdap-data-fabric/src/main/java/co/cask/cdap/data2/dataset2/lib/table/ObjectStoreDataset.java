@@ -23,30 +23,26 @@ import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionDatumWriter;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.TypeRepresentation;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -95,15 +91,28 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   }
 
   @Override
-  public Iterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow) {
-    Iterator<KeyValue<byte[], byte[]>> keyValueIterator = kvTable.scan(startRow, stopRow);
-    List<KeyValue<byte[], T>> objectScanList = Lists.newArrayList();
+  public CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow) {
+    final CloseableIterator<KeyValue<byte[], byte[]>> keyValueIterator = kvTable.scan(startRow, stopRow);
+    return new AbstractCloseableIterator<KeyValue<byte[], T>>() {
+      boolean closed = false;
+      @Override
+      protected KeyValue<byte[], T> computeNext() {
+        Preconditions.checkState(!closed);
+        if (keyValueIterator.hasNext()) {
+          KeyValue<byte[], byte[]> row = keyValueIterator.next();
+          return new KeyValue<byte[], T>(row.getKey(), decode(row.getValue()));
+        }
+        keyValueIterator.close();
+        return endOfData();
+      }
 
-    while (keyValueIterator.hasNext()) {
-      KeyValue<byte[], byte[]> row = keyValueIterator.next();
-      objectScanList.add(new KeyValue<byte[], T>(row.getKey(), decode(row.getValue())));
-    }
-    return objectScanList.iterator();
+      @Override
+      public void close() {
+        keyValueIterator.close();
+        endOfData();
+        closed = true;
+      }
+    };
   }
 
   @Override

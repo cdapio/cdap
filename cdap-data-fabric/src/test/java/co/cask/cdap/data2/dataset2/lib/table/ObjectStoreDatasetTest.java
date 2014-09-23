@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.IntegerStore;
 import co.cask.cdap.api.dataset.lib.IntegerStoreModule;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -45,7 +46,7 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -347,6 +348,28 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
         Assert.assertEquals(45, sum);
       }
     });
+
+    // start a transaction, scan part of them elements using scanner, close the scanner,
+    // then call next() on scanner, it should fail
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        CloseableIterator<KeyValue<byte[], String>> objectsIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(10));
+        int rowCount = 0;
+        while (objectsIterator.hasNext() && (rowCount < 5)) {
+          rowCount++;
+        }
+        objectsIterator.close();
+        KeyValue<byte[], String> keyValue = null;
+        try {
+          keyValue = objectsIterator.next();
+        } catch (NoSuchElementException e) {
+          return;
+        }
+        Assert.fail("Reading after closing Scanner returned result.");
+      }
+    });
+
 
     deleteInstance("scan");
   }

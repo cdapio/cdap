@@ -20,8 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
@@ -33,6 +31,7 @@ import org.junit.Test;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.SortedSet;
 
@@ -274,6 +273,29 @@ public class KeyValueTableTest extends AbstractDatasetTest {
           keyValueIterator.next();
         }
         Assert.assertEquals(1000, rowCount);
+      }
+    });
+
+    // start a transaction, scan part of them elements using scanner, close the scanner,
+    // then call next() on scanner, it should fail
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // scan with start row '0' and end row '1000' and make sure we have 1000 records
+        CloseableIterator<KeyValue<byte[], byte[]>> keyValueIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(200));
+        int rowCount = 0;
+        while (keyValueIterator.hasNext() && (rowCount < 100)) {
+          rowCount++;
+          keyValueIterator.next();
+        }
+        keyValueIterator.close();
+        KeyValue<byte[], byte[]> keyValue = null;
+        try {
+          keyValue = keyValueIterator.next();
+        } catch (NoSuchElementException e) {
+          return;
+        }
+        Assert.fail("Reading after closing Scanner returned result.");
       }
     });
     deleteInstance("tScan");
