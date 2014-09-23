@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An abstract class for time series DataSets.
+ * An abstract class for time series Datasets.
  */
 abstract class TimeseriesDataset extends AbstractDataset {
 
@@ -153,8 +153,8 @@ abstract class TimeseriesDataset extends AbstractDataset {
     // hint: possible perf improvement: we can calculate the columnLength ahead of time and avoid creating many array
     //       objects
 
-    // hint: possible perf provement: we can actually store just the diff from the timestamp encoded in the row key and
-    //       by doing that reduce the footprint of every stored entry
+    // hint: possible perf improvement: we can actually store just the diff from the timestamp encoded in the row key
+    //       and by doing that reduce the footprint of every stored entry
     // hint: consider different column name format: we may want to know "sooner" how many there are tags to make other
     //       parts of the code run faster and avoid creating too many array objects. This may be easily doable as column
     //       name is immutable.
@@ -314,6 +314,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
     /**
      * Construct an EntryScanner. Should only be called by TimeseriesTable.
+     *
      * @param key key of the entries to read
      * @param startTime defines start of the time range to read, inclusive
      * @param endTime defines end of the time range to read, inclusive
@@ -383,6 +384,7 @@ abstract class TimeseriesDataset extends AbstractDataset {
 
     /**
      * Creates instance of the time series entry.
+     *
      * @param key key of the entry. E.g. "metric1"
      * @param value value to store
      * @param timestamp timestamp of the entry

@@ -25,8 +25,8 @@ import com.google.common.collect.Iterators;
 import java.util.Iterator;
 
 /**
- * <p>A Dataset for incrementing counts over time periods. This Dataset provides an extension to {@link TimeseriesTable}
- * for long values and provides increment methods for counting.</p>
+ * A Dataset for incrementing counts over time periods. This Dataset provides an extension to {@link TimeseriesTable}
+ * for long values and provides increment methods for counting.
  *
  * <p>For more information on choosing values for <code>rowPartitionIntervalSize</code> and tag usage, please see the
  * {@link TimeseriesTable} class description.</p>
@@ -44,11 +44,12 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
 
   /**
    * Increments the value for a counter for a row and timestamp.
+   *
    * @param counter the name of the counter to increment
    * @param amount the amount to increment by
    * @param timestamp timestamp of the entry
    * @param tags optional list of tags associated with the counter. See {@link TimeseriesTable} class description
-   *             for more details
+   *             for more details.
    * @return value of the entry after increment
    */
   public long increment(byte[] counter, long amount, long timestamp, byte[]... tags) {
@@ -57,11 +58,12 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
 
   /**
    * Set the value for a counter.
+   *
    * @param counter the name of the counter to set
    * @param value the value to set
    * @param timestamp timestamp of the entry
    * @param tags optional list of tags associated with the counter. See {@link TimeseriesTable} class description
-   *             for more details
+   *             for more details.
    */
   public void set(byte[] counter, long value, long timestamp, byte[]... tags) {
     write(counter, Bytes.toBytes(value), timestamp, tags);
@@ -75,8 +77,8 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
    * @param counter name of the counter to read
    * @param startTime defines start of the time range to read, inclusive
    * @param endTime defines end of the time range to read, inclusive
-   * @param tags a set of tags in which entries returned must contain. Tags for entries are defined at write time and an
-   *             entry is only returned if it contains every one of these tags
+   * @param tags a set of tags which entries returned must contain. Tags for entries are defined at write-time and an
+   *             entry is only returned if it contains all of these tags.
    * @return an iterator over entries that satisfy provided conditions
    */
   public Iterator<Counter> read(byte[] counter, long startTime, long endTime, byte[]... tags) {
@@ -91,17 +93,18 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
   }
 
   /**
-   * * Reads entries for a given time range and returns an <code>Iterator<Counter></code>.
+   * Reads entries for a given time range and returns an <code>Iterator<Counter></code>.
    * Provides the same functionality as {@link #read(byte[], long, long, byte[]...)} but accepts additional
    * parameters for pagination purposes.
+   *
    * @param counter name of the counter to read
    * @param startTime defines start of the time range to read, inclusive
    * @param endTime defines end of the time range to read, inclusive
    * @param offset the number of initial entries to ignore and not add to the results
    * @param limit upper limit on number of results returned. If limit is exceeded, the first <code>limit</code> results
-   *              are returned
-   * @param tags a set of tags in which entries returned must contain. Tags for entries are defined at write time and an
-   *             entry is only returned if it contains every one of these tags
+   *              are returned.
+   * @param tags a set of tags which entries returned must contain. Tags for entries are defined at write-time and an
+   *             entry is only returned if it contains all of these tags.
    * @return an iterator over entries that satisfy provided conditions
    */
   public Iterator<Counter> read(byte[] counter, long startTime, long endTime, int offset, int limit, byte[]... tags) {
@@ -126,7 +129,7 @@ public class CounterTimeseriesTable extends TimeseriesDataset {
      * @param value value of the counter
      * @param timestamp timestamp of the counter
      * @param tags optional list of tags associated with the counter. See {@link TimeseriesTable} class description
-     *             for more details
+     *             for more details.
      */
     private Counter(byte[] counter, long value, long timestamp, byte[]... tags) {
       this.counter = counter;
