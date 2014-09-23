@@ -26,7 +26,7 @@ CDAP installation directory.
 Data Virtualization
 ===================
 
-There are two main data virtualizations: Streams and Datasets. Streams are ordered, partionable,
+There are two main data virtualizations: Streams and Datasets. Streams are ordered, partitioned
 sequences of data, and are the primary means of bringing data from external systems into the CDAP
 in realtime. Datasets are abstractions on top of data, allowing you to access your data using
 higher-level abstractions and generic, reusable Java implementations of common data patterns
@@ -39,11 +39,9 @@ Streams
 
 **Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
 They are ordered, partionable, sequences of data, usable for realtime collection and consumption of data.
-You specify a Stream in your `Application`__ metadata::
+You specify a Stream in your :ref:`Application <applications>` specification::
 
   addStream(new Stream("myStream"));
-
-__ applications_
 
 specifies a new Stream named *myStream*. Names used for Streams need to
 be unique across the CDAP instance.
@@ -950,6 +948,8 @@ your distributed staging cluster.
 With your data virtualized in CDAP as Streams and Datasets, you are able to process that data in realtime or in batch
 using Programs (Flows, MapReduce, Spark, Workflow), and you can serve data to external clients using Services
 and Procedures.
+
+.. _applications:
 
 Applications
 ============

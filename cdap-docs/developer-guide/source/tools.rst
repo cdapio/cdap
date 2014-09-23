@@ -239,7 +239,7 @@ For more information, see `Attaching a Debugger`_.
 :Note:  Currently, debugging is not supported under Windows.
 
 Debugging an Application in Distributed CDAP
------------------------------------------------
+--------------------------------------------
 
 .. highlight:: console
 
@@ -529,8 +529,8 @@ from the concerned Tables.
 
 .. _Ingest:
 
-Ingesting Data into the Cask Data Application Platform
-======================================================
+Ingesting Data
+==============
 
 .. highlight:: console
 

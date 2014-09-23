@@ -88,22 +88,30 @@ A Simple HelloWorld App that's written using CDAP
 Purchase
 ========
 
- - Receives Events from a PurchaseStream about Purchases in the format "X bought Y apples for $Z" and a processes them and stores it in a ``purchases dataset``
- - A Mapreduce Job reads the ``purchase dataset`` , creates a purchase history object and stores them in a ``history dataset``
- - Procedure and Ad-hoc SQL query support enables to query the ``history dataset`` to discover the purchase history of users.
+ - Receives Events from a PurchaseStream about Purchases in the format "X bought Y apples for $Z" and a processes them
+   and stores it in a ``purchases dataset``
+ - A Mapreduce Job reads the ``purchase dataset`` , creates a purchase history object and stores them in a
+   ``history dataset``
+ - Procedure and Ad-hoc SQL query support enables to query the ``history dataset`` to discover the purchase history
+   of users.
 
 Read more about this example :doc:`here <examples/purchase>`.
 
 SparkKMeans
 ===========
 
-An application that demonstrates streaming text analysis using a Spark program. It calculates the centers of points from an input stream using the KMeans Clustering method.
+An application that demonstrates streaming text analysis using a Spark program. It calculates the centers of points
+from an input stream using the KMeans Clustering method.
+
+Read more about this example :doc:`here <examples/sparkKMeans>`.
 
 SparkPageRank
 =============
 
 An application that demonstrates streaming text analysis using a Spark program.
 It computes the page rank of URLs from an input stream.
+
+Read more about this example :doc:`here <examples/sparkPageRank>`.
 
 WordCount
 =========
