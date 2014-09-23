@@ -201,6 +201,55 @@ the counts::
 
 The assertion will verify that the correct result was received.
 
+Strategies in Testing Spark Programs
+------------------------------------
+Let's write a test case for an application that uses a Spark program.
+Complete source code for this test can be found at `SparkPageRank </examples/SparkPageRank/index.html>`__.
+
+The ``SparkPageRankTest`` class should extend from
+``TestBase`` similar to `Strategies in Testing Flows`::
+
+  public class SparkPageRankTest extends TestBase {
+    @Test
+    public void test() throws Exception {
+
+The ``SparkPageRankTest`` application can be deployed using the ``deployApplication``
+method from the ``TestBase`` class::
+
+  // Deploy an Application
+  ApplicationManager appManager = deployApplication(SparkPageRankApp.class);
+
+The Spark program reads from the ``backlinkURLs`` Dataset. As a first
+step, data in the ``backlinkURLs`` should be populated by running
+the ``BackLinkFlow`` and sending the data to the Stream ``backlinkURLStream``::
+
+  FlowManager flowManager = appManager.startFlow("BackLinkFlow");
+  // Send data to the Stream
+  sendData(appManager);
+
+  // Wait for the last Flowlet to process 4 events or at most 5 seconds
+  RuntimeMetrics metrics = RuntimeStats.
+      getFlowletMetrics("SparkPageRank", "BackLinkFlow", "reader");
+  metrics.waitForProcessed(4, 5, TimeUnit.SECONDS);
+
+Start the Spark program and wait for a maximum of 60 seconds::
+
+  // Start the Spark program.
+  SparkManager sparkManager = appManager.startSpark("SparkPageRankProgram");
+  sparkManager.waitForFinish(60, TimeUnit.SECONDS);
+
+We verify that the Spark program ran correctly by
+obtaining a client for the Procedure, and then submitting a query for
+the ranks::
+
+  ProcedureClient client = procedureManager.getClient();
+
+  // Verify the query.
+  String response = client.query("rank", ImmutableMap.of("url", "http://example.com/page1"));
+  Assert.assertEquals("1.3690036520596678", response);
+
+The assertion will verify that the correct result was received.
+
 Validating Test Data with SQL
 -----------------------------
 Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved

@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 
 /**
@@ -393,5 +394,48 @@ public class ProgramClient {
     }
 
     return new String(response.getResponseBody(), Charsets.UTF_8);
+  }
+
+  /**
+   * Gets the runtime args of a program.
+   * 
+   * @param appId ID of the application tat the program belongs to
+   * @param programType type of the program
+   * @param programId ID of the program
+   * @return runtime args of the program
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the application or program could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public Map<String, String> getRuntimeArgs(String appId, ProgramType programType, String programId)
+    throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
+    String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
+    HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL(path), config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ProgramNotFoundException(programType, appId, programId);
+    }
+    return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
+  }
+
+  /**
+   * Sets the runtime args of a program.
+   *
+   * @param appId ID of the application tat the program belongs to
+   * @param programType type of the program
+   * @param programId ID of the program
+   * @param runtimeArgs args of the program
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the application or program could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public void setRuntimeArgs(String appId, ProgramType programType, String programId, Map<String, String> runtimeArgs)
+    throws IOException, UnAuthorizedAccessTokenException, ProgramNotFoundException {
+    String path = String.format("apps/%s/%s/%s/runtimeargs", appId, programType.getCategoryName(), programId);
+    HttpRequest request = HttpRequest.put(config.resolveURL(path)).withBody(GSON.toJson(runtimeArgs)).build();
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ProgramNotFoundException(programType, appId, programId);
+    }
   }
 }

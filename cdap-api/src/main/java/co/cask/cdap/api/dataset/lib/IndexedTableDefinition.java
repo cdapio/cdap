@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -34,7 +35,13 @@ import java.util.Map;
 @Beta
 public class IndexedTableDefinition
   extends AbstractDatasetDefinition<IndexedTable, DatasetAdmin> {
-  
+
+  /**
+   * Configuration key for defining column names to index in the DatasetSpecification properties.
+   * Multiple column names should be listed as a comma-separated string, e.g. "column1,column2,etc".
+   */
+  public static final String INDEX_COLUMNS_CONF_KEY = "columnsToIndex";
+
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
   public IndexedTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
@@ -69,10 +76,17 @@ public class IndexedTableDefinition
     DatasetSpecification indexTableInstance = spec.getSpecification("i");
     Table index = tableDef.getDataset(indexTableInstance, arguments, classLoader);
 
-    String columnToIndex = spec.getProperty("columnToIndex");
-    Preconditions.checkNotNull(columnToIndex, "columnToIndex must be specified");
+    String columnNamesToIndex = spec.getProperty(INDEX_COLUMNS_CONF_KEY);
+    Preconditions.checkNotNull(columnNamesToIndex, "columnsToIndex must be specified");
+    String[] columns = columnNamesToIndex.split(",");
+    byte[][] columnsToIndex = new byte[columns.length][];
+    for (int i = 0; i < columns.length; i++) {
+      columnsToIndex[i] = Bytes.toBytes(columns[i]);
+    }
 
-    return new IndexedTable(spec.getName(), table, index, columnToIndex);
+    // TODO: add support for setting index key delimiter
+
+    return new IndexedTable(spec.getName(), table, index, columnsToIndex);
   }
 
 }
