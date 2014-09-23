@@ -294,13 +294,15 @@ start() {
       echo "Failed to start, please check logs for more information."
     fi
 
-    nux_enabled
+    # Disabling NUX
+    # TODO: Enable NUX with new example, see CDAP-22
+    #nux_enabled
 
-    NUX_ENABLED=$?
-    if [ "x$NUX_ENABLED" == "x0" ]; then
-      nux
-      exit 0;
-    fi
+    #NUX_ENABLED=$?
+    #if [ "x$NUX_ENABLED" == "x0" ]; then
+    #  nux
+    #  exit 0;
+    #fi
 }
 
 stop() {
