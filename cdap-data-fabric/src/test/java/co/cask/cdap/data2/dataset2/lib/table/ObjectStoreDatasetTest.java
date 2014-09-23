@@ -43,6 +43,7 @@ import org.junit.Test;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -312,6 +313,41 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     });
 
     deleteInstance("batch");
+  }
+
+  @Test
+  public void testScanObjectStore() throws Exception {
+    createObjectStoreInstance("scan", String.class);
+
+    final ObjectStoreDataset<String> t = getInstance("scan");
+    TransactionExecutor txnl = newTransactionExecutor(t);
+
+
+    // write 10 values
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (int i = 0; i < 10; i++) {
+          byte[] key = Bytes.toBytes(i);
+          t.write(key, String.valueOf(i));
+        }
+      }
+    });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Map<String,String> objectScanMap = t.scan(Bytes.toBytes(0),Bytes.toBytes(10));
+        int sum = 0;
+        for (String val : objectScanMap.values()) {
+          sum += Integer.parseInt(val);
+        }
+        //checking the sum equals sum of values from (0..9) which are the rows written and scanned for.
+        Assert.assertEquals(45, sum);
+      }
+    });
+
+    deleteInstance("scan");
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys

@@ -27,12 +27,16 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionDatumWriter;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.TypeRepresentation;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.io.ByteArrayInputStream;
@@ -40,6 +44,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -85,6 +90,19 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   @Override
   public T read(String key) {
     return decode(kvTable.read(Bytes.toBytes(key)));
+  }
+
+  @Override
+  public Map<String, T> scan(byte[] startRow, byte[] stopRow) {
+    Scanner scanner = kvTable.scan(startRow, stopRow);
+    final byte[] keyColumn = { 'c' };
+    Map<String, T> objectMap = Maps.newHashMap();
+    Row next;
+    while ((next = scanner.next()) != null) {
+      String key = new String(next.getRow(), Charsets.UTF_8);
+      objectMap.put(key, decode(next.get(keyColumn)));
+    }
+    return objectMap;
   }
 
   @Override

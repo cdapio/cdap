@@ -20,8 +20,9 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.Sets;
@@ -239,6 +240,42 @@ public class KeyValueTableTest extends AbstractDatasetTest {
 
     deleteInstance("t1");
     deleteInstance("t2");
+  }
+
+  @Test
+  public void testScanning() throws Exception {
+    createInstance("keyValueTable", "tScan", DatasetProperties.EMPTY);
+
+    final KeyValueTable t = getInstance("tScan");
+    TransactionExecutor txnl = newTransactionExecutor(t);
+
+    // start a transaction
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // write 1000 random values to the table and remember them in a set
+        for (int i = 0; i < 1000; i++) {
+          byte[] key = Bytes.toBytes(i);
+          t.write(key, key);
+        }
+      }
+    });
+
+    // start a transaction, verify scan
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // scan with start row '0' and end row '1000' and make sure we have 1000 records
+        Scanner scanner = t.scan(Bytes.toBytes(0), Bytes.toBytes(1000));
+        int row_count=0;
+        Row next;
+        while((next = scanner.next()) != null) {
+          row_count++;
+        }
+        Assert.assertEquals(1000, row_count);
+      }
+    });
+    deleteInstance("tScan");
   }
 
   @Test

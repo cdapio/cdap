@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.dataset.Dataset;
 
+import java.util.Map;
+
 /**
  * A dataset that stores objects of a particular class into a table.
  * <p>
@@ -69,4 +71,12 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
    * @return the object if found, or null if not found
    */
   T read(byte[] key);
+
+  /**
+   * Scans table.
+   * @param startRow start row inclusive. {@code null} means start from first row of the table
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @return Map<String,T> Map of key to Object from startRow to stopRow
+   */
+  Map<String, T> scan(byte[] startRow, byte[] stopRow);
 }
