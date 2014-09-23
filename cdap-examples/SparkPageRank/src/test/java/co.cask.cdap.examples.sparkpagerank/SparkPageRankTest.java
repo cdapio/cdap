@@ -25,6 +25,7 @@ import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,9 +39,10 @@ public class SparkPageRankTest extends TestBase {
   private static final String URL_PAIR21 = "http://example.com/page2 http://example.com/page1";
   private static final String URL_PAIR31 = "http://example.com/page3 http://example.com/page1";
   private static final String RANK = "\"1.3690036520596678\"";
+  private static final Gson GSON = new Gson();
 
 
-  @Test
+  @Test(expected = IOException.class)
   public void test() throws Exception {
     ApplicationManager appManager = deployApplication(SparkPageRankApp.class);
     FlowManager flowManager = appManager.startFlow("BackLinkFlow");
@@ -70,6 +72,9 @@ public class SparkPageRankTest extends TestBase {
     ProcedureClient client = procedureManager.getClient();
     String response = client.query("rank", ImmutableMap.of("url", "http://example.com/page1"));
     Assert.assertEquals(RANK, response);
+    response = client.query("rank", ImmutableMap.of("URL", "http://example.com/page1"));
+    Assert.assertEquals(RANK, response);
+    client.query("rank", ImmutableMap.of("wrond_argument", "http://example.com/page1"));
   }
 
 }
