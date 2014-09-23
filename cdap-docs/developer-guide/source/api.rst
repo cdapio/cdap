@@ -51,8 +51,13 @@ All URLs referenced in this API have this base URL::
 
   http://<host>:<port>/v2
 
-where ``<host>`` is the host name of the CDAP server and ``<port>`` is the port which the HTTP interface binds to
-(default: ``10000``). In this API, the base URL is represented as::
+where ``<host>`` is the host name of the CDAP server and ``<port>`` is the port that is set as the ``router.bind.port``
+in ``cdap-site.xml`` (default: ``10000``).
+
+Note that if SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
+as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: 10443).
+
+In this API, the base URL is represented as::
 
   <base-url>
 
@@ -2242,6 +2247,7 @@ Examples
        with the arguments as a JSON string in the body::
 
           { "instances" : 2 }
+
    * - Description
      - Sets the number of instances of the metrics HTTP service to 2
 
