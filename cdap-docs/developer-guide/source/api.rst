@@ -1463,7 +1463,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"programId"``
      - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
    * - ``"runnableId"``
-     - Name of the *Flowlet* or *Runnable* if querying either a *Flow* or *Service*. This parameter
+     - Name of the *Flowlet* or *Service Handler/Worker* if querying either a *Flow* or *User Service*. This parameter
        does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -1498,18 +1498,18 @@ Example
    * - HTTP Body
      - ``[{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1","runnableId":"MyFlowlet5"},``
        ``{"appId":"MyApp1","programType":"Procedure","programId":"MyProc2"},``
-       ``{"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyRunnable1"}]``
+       ``{"appId":"MyApp3","programType":"Service","programId":"MySvc1,"runnableId":"MyHandler1"}]``
    * - HTTP Response
      - ``[{"appId":"MyApp1","programType":"Flow","programId":"MyFlow1",``
        ``"runnableId":"MyFlowlet5","provisioned":2,"requested":2,"statusCode":200},``
        ``{"appId":"MyApp1","programType":"Procedure","programId":"MyProc2",``
        ``"provisioned":0,"requested":1,"statusCode":200},``
        ``{"appId":"MyApp3","programType":"Service","programId":"MySvc1,``
-       ``"runnableId":"MyRunnable1","statusCode":404,"error":"Runnable: MyRunnable1 not found"}]``
+       ``"runnableId":"MyHandler1","statusCode":404,"error":"Runnable: MyHandler1 not found"}]``
    * - Description
      - Try to get the instances of the Flowlet *MyFlowlet5* in the Flow *MyFlow1* in the Application *MyApp1*, the
-       Procedure *MyProc2* in the Application *MyApp1*, and the runnable *MyRunnable1* in the
-       Custom Service *MySvc1* in the Application *MyApp3*
+       Procedure *MyProc2* in the Application *MyApp1*, and the Service Handler *MyHandler1* in the
+       User Service *MySvc1* in the Application *MyApp3*
 
 .. _rest-scaling-flowlets:
 
@@ -1613,7 +1613,7 @@ Example
 
 Scaling Services
 ................
-You can query or change the number of instances of a Service's runnable
+You can query or change the number of instances of a Service's Handler/Worker
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
@@ -1634,7 +1634,7 @@ with the arguments as a JSON string in the body::
    * - ``<service-id>``
      - Name of the Service
    * - ``<runnable-id>``
-     - Name of the Twill Runnable
+     - Name of the Service Handler/Worker
    * - ``<quantity>``
      - Number of instances to be used
 
@@ -1647,7 +1647,7 @@ Example
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables`` ``/WhoRunnable/instances``
    * - Description
-     - Retrieve the number of instances of the Twill Runnable *WhoRunnable* of the Service *WhoService*
+     - Retrieve the number of instances of the Service Worker *WhoRunnable* of the Service *WhoService*
 
 .. rst2pdf: PageBreak
 
@@ -1843,7 +1843,7 @@ Examples
      - ``GET <base-url>/metrics/user/apps/HelloWorld/services/``
        ``WhoService/runnables/WhoRun/names.bytes?aggregate=true``
    * - Description
-     - Using a *User-Defined* metric, *names.bytes* in a Service's Twill Runnable
+     - Using a *User-Defined* metric, *names.bytes* in a Service's Handler
 
 Comments
 ........
@@ -1964,7 +1964,7 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/mapreduce/<mapreduce-id>``
    * - All MapReduce of an Application
      - ``/apps/<app-id>/mapreduce``
-   * - One Twill Runnable
+   * - One Service Handler/Worker
      - ``/apps/<app-id>/services/<service-id>/runnables/<runnable-id>``
    * - One Service
      - ``/apps/<app-id>/services/<service-id>``
@@ -2700,17 +2700,17 @@ These are the available commands:
    ``get history flow <app-id>.<program-id>``,Gets the run history of a Flow
    ``get history mapreduce <app-id>.<program-id>``,Gets the run history of a MapReduce job
    ``get history procedure <app-id>.<program-id>``,Gets the run history of a Procedure
-   ``get history runnable <app-id>.<program-id>``,Gets the run history of a Runnable
+   ``get history runnable <app-id>.<program-id>``,Gets the run history of a Service Handler/Worker
    ``get history workflow <app-id>.<program-id>``,Gets the run history of a Workflow
    ``get instances flowlet <app-id>.<program-id>``,Gets the instances of a Flowlet
    ``get instances procedure <app-id>.<program-id>``,Gets the instances of a Procedure
-   ``get instances runnable <app-id>.<program-id>``,Gets the instances of a Runnable
+   ``get instances runnable <app-id>.<program-id>``,Gets the instances of a Service Handler/Worker
    ``get live flow <app-id>.<program-id>``,Gets the live info of a Flow
    ``get live procedure <app-id>.<program-id>``,Gets the live info of a Procedure
    ``get logs flow <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Flow
    ``get logs mapreduce <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a MapReduce job
    ``get logs procedure <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Procedure
-   ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Runnable
+   ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Service Handler/Worker
    ``get status flow <app-id>.<program-id>``,Gets the status of a Flow
    ``get status mapreduce <app-id>.<program-id>``,Gets the status of a MapReduce job
    ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
@@ -2732,7 +2732,7 @@ These are the available commands:
    **Setting**
    ``set instances flowlet <program-id> <num-instances>``,Sets the instances of a Flowlet
    ``set instances procedure <program-id> <num-instances>``,Sets the instances of a Procedure
-   ``set instances runnable <program-id> <num-instances>``,Sets the instances of a Runnable
+   ``set instances runnable <program-id> <num-instances>``,Sets the instances of a Service Handler/Worker
    ``set stream ttl <stream-id> <ttl-in-seconds>``,Sets the Time-to-Live (TTL) of a Stream
    **Starting**
    ``start flow <program-id>``,Starts a Flow
