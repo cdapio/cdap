@@ -180,7 +180,7 @@
       <h1><span>Services</span></h1>
     </div>
 
-    <div id="reactor-services">
+    <div id="cdap-services">
       <div id="panels">
 
 
@@ -752,7 +752,7 @@
               <tr>
                 <td class="bolder-font">Step 1</td>
                 <td>
-                  Click blue Download button above.
+                  Click Download button above.
                 </td>
               </tr>
               <tr>
@@ -1294,9 +1294,21 @@
         </div>
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
-
     </div>
-
+    <div id="panels">
+      <div class="panel">
+        <div>
+          <div class="panel-title center-align beta-info-font">
+            {{#if showLogsMessage}}
+              <div>
+                <span> To see more details about the job, please see the <span class="logs-link" {{action "logsLinkHandler" on="click"}}> logs </span> </span>
+              </div>
+            {{/if}}
+            <div>Beta Feature: Additional components will be added in a future release. </div>
+          </div>
+        </div>
+      </div>
+    </div>
     {{outlet}}
 
   </script>
@@ -1679,8 +1691,8 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
 
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful" metrics="/system/apps/{parent}/procedures/{id}/query.requests"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed" metrics="/system/apps/{parent}/procedures/{id}/query.failures"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Request Rate" metrics="/system/apps/{parent}/procedures/{id}/query.requests"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Error Rate" metrics="/system/apps/{parent}/procedures/{id}/query.failures"}}</div>
     </div>
     <div id="panels">
 
@@ -1928,7 +1940,7 @@
     <div class="tree-node">
 
       <div class="tree-chart">
-        {{view C.Embed.Chart entityIdBinding=id entityTypeBinding=type height="50" unit="bytes" listMode="true"}}
+        {{view C.Embed.Chart entityIdBinding=id entityTypeBinding=type height="50" unit="bytes" listMode="true" metrictype="memory"}}
       </div>
 
       <div class="tree-count app-list-count">{{coresLabel}}</div>

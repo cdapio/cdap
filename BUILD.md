@@ -25,7 +25,7 @@
 See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html) for more details
 
 ### Build all examples
-    mvn package -DskipTests -pl cdap-examples -am -amd -P examples
+    MAVEN_OPTS="-Xmx512m" mvn package -DskipTests -pl cdap-examples -am -amd -P examples
 
 ### Build Standalone distribution ZIP
     mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release

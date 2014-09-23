@@ -34,6 +34,9 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * NOTE: Depending on the implementation of this interface and use-case, calling this method can be less
    * efficient than calling the same method with columns as parameters because it can require making a
    * round trip to the persistent store.
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
    *
    * @param row row to read from
    * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
@@ -51,6 +54,9 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
 
   /**
    * Reads the values of the specified columns of the specified row.
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
    *
    * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
    */
@@ -59,6 +65,9 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   /**
    * Reads the values of all columns in the specified row that are
    * between the specified start (inclusive) and stop (exclusive) columns.
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
    *
    * @param startColumn beginning of range of columns, inclusive
    * @param stopColumn end of range of columns, exclusive
@@ -69,6 +78,9 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
 
   /**
    * Reads values of columns as defined by {@link Get} parameter.
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
    *
    * @param get defines read selection
    * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
@@ -141,7 +153,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
   void delete(Delete delete);
 
   /**
-   * Increments the specified column of the row by the specified amounts.
+   * Increments the specified column of the row by the specified amount and returns the new value.
    *
    * @param row row which value to increment
    * @param column column to increment
@@ -149,13 +161,17 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @return new value of the column
    * @throws NumberFormatException if stored value for the column is not in the serialized long value format
    */
-  long increment(byte[] row, byte[] column, long amount);
+  long incrementAndGet(byte[] row, byte[] column, long amount);
 
   /**
-   * Increments the specified columns of the row by the specified amounts.
+   * Increments the specified columns of the row by the specified amounts and returns the new values.
    * <p>
-   * NOTE: Depending on the implementation, this can work faster than calling {@link #increment(byte[], byte[], long)}
+   * NOTE: Depending on the implementation, this can work faster than calling
+   * {@link #incrementAndGet(byte[], byte[], long)}
    * multiple times (especially in a transaction that increments multiple columns of the same rows)
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
    *
    * @param row row whose values to increment
    * @param columns columns to increment
@@ -163,47 +179,49 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @return {@link Row} with a subset of changed columns
    * @throws NumberFormatException if stored value for the column is not in the serialized long value format
    */
-  Row increment(byte[] row, byte[][] columns, long[] amounts);
+  Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts);
 
   /**
-   * Increments the specified columns of a row by the specified amounts defined by the {@link Increment} parameter.
+   * Increments the specified columns of a row by the specified amounts defined by the {@link Increment} parameter and
+   * returns the new values
+   * <p>
+   * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
+   *       in returned data structures from this method.
    *
    * @param increment defines changes
    * @return {@link Row} with a subset of changed columns
    * @throws NumberFormatException if stored value for the column is not in the serialized long value format
    */
-  Row increment(Increment increment);
+  Row incrementAndGet(Increment increment);
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new value.
-   *
    * @param row row which values to increment
    * @param column column to increment
    * @param amount amount to increment by
    */
-  void incrementWrite(byte[] row, byte[] column, long amount);
+  void increment(byte[] row, byte[] column, long amount);
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
    *
    * NOTE: depending on the implementation this may work faster than calling
-   * {@link #incrementWrite(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
-   *
-   * @param row row which values to increment
+   * {@link #increment(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
+   *  @param row row which values to increment
    * @param columns columns to increment
    * @param amounts amounts to increment columns by (same order as columns)
    */
-  void incrementWrite(byte[] row, byte[][] columns, long[] amounts);
+  void increment(byte[] row, byte[][] columns, long[] amounts);
 
   /**
    * Increments (atomically) the specified row and columns by the specified amounts, without returning the new values.
    *
    * NOTE: depending on the implementation this may work faster than calling
-   * {@link #incrementWrite(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
+   * {@link #increment(byte[], byte[], long)} multiple times (esp. in transaction that changes a lot of rows)
    *
    * @param increment the row and column increment amounts
    */
-  void incrementWrite(Increment increment);
+  void increment(Increment increment);
 
     /**
      * Scans table.

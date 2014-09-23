@@ -20,7 +20,6 @@ import co.cask.cdap.passport.meta.Account;
 
 /**
  * Overriding accountId type to String. Ideally Account should use String type for accountId.
- * TODO: (ENG-2213) - Use String for accountId remove AccountProvider class                 .
  * @param <T> specific {@link Account} Type
  */
 public class AccountProvider<T extends Account> {

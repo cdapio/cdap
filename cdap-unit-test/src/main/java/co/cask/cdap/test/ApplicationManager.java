@@ -54,6 +54,21 @@ public interface ApplicationManager {
   MapReduceManager startMapReduce(String jobName, Map<String, String> arguments);
 
   /**
+   * Starts a Spark job.
+   * @param jobName Name of the spark job to start.
+   * @return A {@link SparkManager} for controlling the started spark job.
+   */
+  SparkManager startSpark(String jobName);
+
+  /**
+   * Starts a Spark job.
+   * @param jobName Name of the spark job to start.
+   * @param arguments Arguments to be passed while starting a spark.
+   * @return A {@link SparkManager} for controlling the started spark job.
+   */
+  SparkManager startSpark(String jobName, Map<String, String> arguments);
+
+  /**
    * Starts a procedure.
    * @param procedureName Name of the procedure to start.
    * @return A {@link ProcedureManager} for controlling the started procedure.

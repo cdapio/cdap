@@ -151,7 +151,7 @@ WebAppServer.prototype.configureSSL = function () {
  * Determines security status. Continues until it is able to determine if security is enabled if
  * CDAP is down.
  * @param  {Function} callback to call after security status is determined.
- * TODO: https://jira.continuuity.com/browse/reactor-531
+ * TODO: Reimplement logic to check if security is enabled, CDAP-17 
  */
 WebAppServer.prototype.setSecurityStatus = function (callback) {
   var self = this;
@@ -771,12 +771,16 @@ WebAppServer.prototype.bindRoutes = function() {
 
     if (process.env.NODE_ENV !== 'production') {
       environment.credential = self.Api.credential;
-
+      environment.nux = false;
+      // Disabling Nux
+      // TODO: Enable NUX with new tutorial, see CDAP-22
+      /* 
       if (!fs.existsSync('./.nux_dashboard')) {
         environment.nux = true;
       } else {
         environment.nux = false;
       }
+      */
 
     } else {
       if ('info' in self.config) {

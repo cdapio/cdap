@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
@@ -176,9 +177,9 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public long increment(byte[] row, byte[] column, long amount) {
+  public long incrementAndGet(byte[] row, byte[] column, long amount) {
     try {
-      return table.increment(row, column, amount);
+      return table.incrementAndGet(row, column, amount);
     } catch (NumberFormatException e) {
       LOG.debug("increment failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw e;
@@ -189,10 +190,10 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public Row increment(byte[] row, byte[][] columns, long[] amounts) {
+  public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
     Map<byte[], Long> incResult;
     try {
-      incResult = table.increment(row, columns, amounts);
+      incResult = table.incrementAndGet(row, columns, amounts);
     } catch (NumberFormatException e) {
       LOG.debug("increment failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw e;
@@ -211,7 +212,7 @@ class TableDataset extends AbstractDataset implements Table {
   }
 
   @Override
-  public Row increment(Increment increment) {
+  public Row incrementAndGet(Increment increment) {
     Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
     byte[][] columns = new byte[increment.getValues().size()][];
     long[] values = new long[increment.getValues().size()];
@@ -221,33 +222,33 @@ class TableDataset extends AbstractDataset implements Table {
       values[i] = columnValue.getValue();
       i++;
     }
-    return increment(increment.getRow(), columns, values);
+    return incrementAndGet(increment.getRow(), columns, values);
   }
 
   @Override
-  public void incrementWrite(byte[] row, byte[] column, long amount) {
+  public void increment(byte[] row, byte[] column, long amount) {
     try {
-      table.incrementWrite(row, column, amount);
+      table.increment(row, column, amount);
     } catch (Exception e) {
-      LOG.debug("incrementWrite failed for table: " + getTransactionAwareName() +
+      LOG.debug("increment failed for table: " + getTransactionAwareName() +
                   ", row: " + Bytes.toStringBinary(row), e);
-      throw new DataSetException("incrementWrite failed", e);
+      throw new DataSetException("increment failed", e);
     }
   }
 
   @Override
-  public void incrementWrite(byte[] row, byte[][] columns, long[] amounts) {
+  public void increment(byte[] row, byte[][] columns, long[] amounts) {
     try {
-      table.incrementWrite(row, columns, amounts);
+      table.increment(row, columns, amounts);
     } catch (Exception e) {
-      LOG.debug("incrementWrite failed for table: " + getTransactionAwareName() +
+      LOG.debug("increment failed for table: " + getTransactionAwareName() +
                   ", row: " + Bytes.toStringBinary(row), e);
-      throw new DataSetException("incrementWrite failed", e);
+      throw new DataSetException("increment failed", e);
     }
   }
 
   @Override
-  public void incrementWrite(Increment increment) {
+  public void increment(Increment increment) {
     Preconditions.checkArgument(!increment.getValues().isEmpty(), "Increment must have at least one value");
     byte[][] columns = new byte[increment.getValues().size()][];
     long[] values = new long[increment.getValues().size()];
@@ -257,7 +258,7 @@ class TableDataset extends AbstractDataset implements Table {
       values[i] = columnValue.getValue();
       i++;
     }
-    incrementWrite(increment.getRow(), columns, values);
+    increment(increment.getRow(), columns, values);
   }
 
   @Override

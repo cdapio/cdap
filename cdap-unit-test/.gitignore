@@ -28,7 +28,7 @@ target/
 npm-*.log
 logs/
 
-# Singlenode run files. 
+# Ignore Standalone run files.
 data/
 
 # Include helloworld.jar resource

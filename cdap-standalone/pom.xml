@@ -84,11 +84,6 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>security-authorization</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-app-fabric</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -465,7 +460,7 @@
             </executions>
           </plugin>
 
-          <!-- Extra deployment for reactor sdk -->
+          <!-- Extra deployment for cdap sdk -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>
