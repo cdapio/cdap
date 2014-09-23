@@ -27,7 +27,7 @@
   <name>Cask Data Application Platform (CDAP)</name>
 
   <organization>
-    <name>Cask Data, Inc</name>
+    <name>Cask Data, Inc.</name>
     <url>http://cask.co</url>
   </organization>
 
@@ -42,7 +42,7 @@
     <developer>
       <name>Cask Data</name>
       <email>cask-dev@googlegroups.com</email>
-      <organization>Cask Data, Inc</organization>
+      <organization>Cask Data, Inc.</organization>
       <organizationUrl>http://www.cdap.io</organizationUrl>
     </developer>
   </developers>
