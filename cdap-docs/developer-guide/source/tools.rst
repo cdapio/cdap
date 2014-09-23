@@ -759,7 +759,6 @@ To write new events to the Stream, you can use any of these five methods in the 
   ListenableFuture<Void> write(String str, Charset charset, Map<String, String> headers);
   ListenableFuture<Void> write(ByteBuffer buffer);
   ListenableFuture<Void> write(ByteBuffer buffer, Map<String, String> headers);
-  ListenableFuture<Void> send(File file, MediaType type);
 
 Example::
 
@@ -893,8 +892,7 @@ Create a ``StreamWriter`` instance for writing events to the Stream
 “streamName”:
 
 Once you have a ``StreamWriter`` instance:
-  1. you can write events to the stream using ``write()`` method or
-  2. you can send a file to the stream using ``send()`` method
+  1. you can write events to the stream using ``write()`` method
 
 Putting it all together:
 ........................
@@ -1034,10 +1032,6 @@ Create a ``StreamWriter`` instance for writing events to the Stream
         puts "error: #{error.response.code} -> #{error.message}"
       }
     )
-  }
-
-  writer.send('file.log').then { |response|
-    puts "success send file: #{response.code}"
   }
 
 To truncate the Stream *stream\_name*, use:
