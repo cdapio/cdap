@@ -33,7 +33,7 @@ clover.license
 # Ignore Node stuff
 npm*
 
-# Ignore Singlenode files
+# Ignore Standalone files
 logs/
 data/
 

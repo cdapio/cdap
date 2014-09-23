@@ -48,7 +48,7 @@
     "offset": 1402351286865
   },
   {
-    "log": "2014-06-09 15:01:27,111 - INFO  [metrics-cleanup:c.c.m.d.DefaultMetricsTableFactory@80] - TimeSeriesTable created: reactor.metrics.table.ts.1\n",
+    "log": "2014-06-09 15:01:27,111 - INFO  [metrics-cleanup:c.c.m.d.DefaultMetricsTableFactory@80] - TimeSeriesTable created: system.metrics.table.ts.1\n",
     "offset": 1402351287111
   },
   {
@@ -112,11 +112,11 @@
     "offset": 1402351287840
   },
   {
-    "log": "2014-06-09 15:01:27,892 - INFO  [metrics-collection:c.c.m.d.DefaultMetricsTableFactory@80] - TimeSeriesTable created: reactor.metrics.table.ts.1\n",
+    "log": "2014-06-09 15:01:27,892 - INFO  [metrics-collection:c.c.m.d.DefaultMetricsTableFactory@80] - TimeSeriesTable created: system.metrics.table.ts.1\n",
     "offset": 1402351287892
   },
   {
-    "log": "2014-06-09 15:01:27,899 - INFO  [metrics-collection:c.c.m.d.DefaultMetricsTableFactory@96] - AggregatesTable created: reactor.metrics.table.agg\n",
+    "log": "2014-06-09 15:01:27,899 - INFO  [metrics-collection:c.c.m.d.DefaultMetricsTableFactory@96] - AggregatesTable created: system.metrics.table.agg\n",
     "offset": 1402351287899
   },
   {

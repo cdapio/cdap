@@ -180,7 +180,7 @@
       <h1><span>Services</span></h1>
     </div>
 
-    <div id="reactor-services">
+    <div id="cdap-services">
       <div id="panels">
 
 
@@ -1928,7 +1928,7 @@
     <div class="tree-node">
 
       <div class="tree-chart">
-        {{view C.Embed.Chart entityIdBinding=id entityTypeBinding=type height="50" unit="bytes" listMode="true"}}
+        {{view C.Embed.Chart entityIdBinding=id entityTypeBinding=type height="50" unit="bytes" listMode="true" metrictype="memory"}}
       </div>
 
       <div class="tree-count app-list-count">{{coresLabel}}</div>

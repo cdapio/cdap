@@ -25,10 +25,10 @@ import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 import javax.ws.rs.core.HttpHeaders;
@@ -77,7 +77,7 @@ public class RESTClient {
     UnAuthorizedAccessTokenException {
     HttpResponse response = HttpRequests.execute(request, defaultConfig);
     int responseCode = response.getResponseCode();
-    if (responseCode == HttpStatus.SC_UNAUTHORIZED) {
+    if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
       throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
     } else if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
       throw new IOException(response.getResponseBodyAsString());

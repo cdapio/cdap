@@ -42,8 +42,7 @@ import javax.annotation.Nullable;
  */
 public class DatasetAccessor {
 
-  // TODO: this will go away when dataset manager does not return datasets having classloader conflict - REACTOR-276
-  // TODO empty the map once query is over - REACTOR-864
+  // TODO: this will go away when dataset manager does not return datasets having classloader conflict - CDAP-10
   private static final Map<String, ClassLoader> DATASET_CLASSLOADERS = Maps.newConcurrentMap();
 
   /**

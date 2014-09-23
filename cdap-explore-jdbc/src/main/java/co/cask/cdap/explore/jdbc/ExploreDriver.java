@@ -92,7 +92,7 @@ public class ExploreDriver implements Driver {
    * Get the major version number of the Explore driver.
    */
   static int getMajorDriverVersion() {
-    // TODO make it dynamic [REACTOR-319]
+    // TODO make it dynamic, see CDAP-13
     return 2;
   }
 
@@ -100,7 +100,7 @@ public class ExploreDriver implements Driver {
    * Get the minor version number of the Explore driver.
    */
   static int getMinorDriverVersion() {
-    // TODO make it dynamic [REACTOR-319]
+    // TODO make it dynamic, see CDAP-13
     return 4;
   }
 

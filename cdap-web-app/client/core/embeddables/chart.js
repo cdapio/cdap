@@ -4,6 +4,8 @@
 
 define([], function () {
 
+	var KILOBYTES = 1024;
+
 	var Embeddable = Em.View.extend({
 
 		updateData: function (redraw) {
@@ -22,6 +24,10 @@ define([], function () {
           curModel.timeseries[C.Util.enc(metric)]) {
 
 					var data = curModel.timeseries[C.Util.enc(metric)].value;
+
+					if (self.get('metrictype') === 'memory') {
+						data = data.map(function (item) { return item * KILOBYTES });
+					}
 
 					if (data && data.length) {
 						if ((typeof redraw === 'boolean' && redraw) || !this.get('sparkline')) {

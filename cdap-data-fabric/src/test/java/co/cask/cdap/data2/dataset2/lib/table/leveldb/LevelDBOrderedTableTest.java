@@ -25,7 +25,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrederedTableTest;
+import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTableTest;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.Assert;
@@ -39,7 +39,7 @@ import java.io.IOException;
 /**
  * test for LevelDB tables.
  */
-public class LevelDBOrderedTableTest extends BufferingOrederedTableTest<LevelDBOrderedTable> {
+public class LevelDBOrderedTableTest extends BufferingOrderedTableTest<LevelDBOrderedTable> {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();

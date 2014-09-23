@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.5.0-SNAPSHOT</version>
+    <version>2.6.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-security</artifactId>
@@ -130,7 +130,7 @@
     <profile>
       <id>dist</id>
       <properties>
-        <service.name>auth-server</service.name>
+        <original.service.name>auth-server</original.service.name>
       </properties>
       <build>
         <plugins>
