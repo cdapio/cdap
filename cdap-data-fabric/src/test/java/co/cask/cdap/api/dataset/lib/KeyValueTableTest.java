@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.Sets;
@@ -76,11 +75,11 @@ public class KeyValueTableTest extends AbstractDatasetTest {
         Assert.assertArrayEquals(VAL2, kvTable.read(KEY1));
 
         // attempt to swap, expecting old value
-        Assert.assertFalse(kvTable.swap(KEY1, VAL1, VAL3));
+        Assert.assertFalse(kvTable.compareAndSwap(KEY1, VAL1, VAL3));
         Assert.assertArrayEquals(VAL2, kvTable.read(KEY1));
 
         // swap the value and read it back
-        Assert.assertTrue(kvTable.swap(KEY1, VAL2, VAL3));
+        Assert.assertTrue(kvTable.compareAndSwap(KEY1, VAL2, VAL3));
         Assert.assertArrayEquals(VAL3, kvTable.read(KEY1));
 
         // delete the value and verify its gone
@@ -135,7 +134,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // write a swap, this should fail
-        Assert.assertFalse(kvTable.swap(KEY2, VAL1, VAL3));
+        Assert.assertFalse(kvTable.compareAndSwap(KEY2, VAL1, VAL3));
         Assert.assertArrayEquals(VAL2, kvTable.read(KEY2));
       }
     });
@@ -145,7 +144,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // swap the value
-        Assert.assertTrue(kvTable.swap(KEY2, VAL2, VAL3));
+        Assert.assertTrue(kvTable.compareAndSwap(KEY2, VAL2, VAL3));
       }
     });
 
@@ -215,7 +214,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
     }
 
     // add a swap for a third table that should fail
-    Assert.assertFalse(kvTable.swap(KEY3, VAL1, VAL1));
+    Assert.assertFalse(kvTable.compareAndSwap(KEY3, VAL1, VAL1));
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
