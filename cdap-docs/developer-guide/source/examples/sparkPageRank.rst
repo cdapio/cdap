@@ -1,3 +1,5 @@
+:orphan:
+
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform SparkPageRank Application
      :Copyright: Copyright © 2014 Cask Data, Inc.
@@ -10,7 +12,8 @@ SparkPageRank Application Example
 
 Overview
 ========
-This example demonstrates a Spark application performing streaming log analysis, computing the page rank based on information about backlink URLs.
+This example demonstrates a Spark application performing streaming log analysis, computing the page rank based on
+information about backlink URLs.
 
 Data from a sample file is sent to CDAP by the external script *inject-data*
 to the *backlinkURLStream*. This data is processed by the
@@ -19,8 +22,8 @@ to the *backlinkURLStream*. This data is processed by the
 As these entries are created, they are taken up by the *SparkPageRankProgram*, which
 goes through the entries, calculates page rank and tabulates results in another ObjectStore Dataset, *ranks*.
 
-Once the application completes, you can query the *ranks* Dataset by using the ``rank`` method of the *RanksProcedure*. It will
-send back a JSON-formatted result with page rank based on the ``url`` parameter.
+Once the application completes, you can query the *ranks* Dataset by using the ``rank`` method of the *RanksProcedure*.
+It will send back a JSON-formatted result with page rank based on the ``url`` parameter.
 
 Let's look at some of these elements, and then run the Application and see the results.
 
