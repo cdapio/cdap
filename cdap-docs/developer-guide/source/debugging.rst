@@ -203,13 +203,11 @@ The assertion will verify that the correct result was received.
 
 Strategies in Testing Spark Programs
 ------------------------------------
-Let's write a test case for an application that uses Spark program.
-Complete source code and test can be found under `SparkPageRank </examples/SparkPageRank/index.html>`__.
+Let's write a test case for an application that uses a Spark program.
+Complete source code for this test can be found at `SparkPageRank </examples/SparkPageRank/index.html>`__.
 
 The ``SparkPageRankTest`` class should extend from
-``TestBase`` similar to `Strategies in Testing Flows`.
-
-::
+``TestBase`` similar to `Strategies in Testing Flows`::
 
   public class SparkPageRankTest extends TestBase {
     @Test
@@ -222,9 +220,8 @@ method from the ``TestBase`` class::
   ApplicationManager appManager = deployApplication(SparkPageRankApp.class);
 
 The Spark program reads from the ``backlinkURLs`` Dataset. As a first
-step, the data to the ``backlinkURLs`` should be populated by running
-the ``BackLinkFlow`` and sending the data to the ``backlinkURLStream``
-Stream::
+step, data in the ``backlinkURLs`` should be populated by running
+the ``BackLinkFlow`` and sending the data to the Stream ``backlinkURLStream``::
 
   FlowManager flowManager = appManager.startFlow("BackLinkFlow");
   // Send data to the Stream
@@ -241,7 +238,7 @@ Start the Spark program and wait for a maximum of 60 seconds::
   SparkManager sparkManager = appManager.startSpark("SparkPageRankProgram");
   sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
-We can start verifying that the Spark program was run correctly by
+We verify that the Spark program ran correctly by
 obtaining a client for the Procedure, and then submitting a query for
 the ranks::
 
