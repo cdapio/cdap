@@ -69,4 +69,10 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
    * @return the object if found, or null if not found
    */
   T read(byte[] key);
+
+  /**
+   * Delete the object for the specified key.
+   * @param key key of the object to be deleted
+   */
+  void delete(byte[] key);
 }
