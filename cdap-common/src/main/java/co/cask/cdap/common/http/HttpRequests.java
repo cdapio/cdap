@@ -136,7 +136,7 @@ public final class HttpRequests {
     return 200 <= responseCode && responseCode < 300;
   }
 
-  private static void disableCertCheck(HttpsURLConnection conn)
+  public static void disableCertCheck(HttpsURLConnection conn)
     throws NoSuchAlgorithmException, KeyManagementException {
     if (TRUST_ALL_SSL_FACTORY.get() == null) {
       SSLContext sslContext = SSLContext.getInstance("SSL");
