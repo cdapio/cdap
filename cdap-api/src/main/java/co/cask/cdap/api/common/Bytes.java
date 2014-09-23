@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.api.common;
 
+import com.google.common.collect.ImmutableSortedMap;
+
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -24,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.NavigableMap;
 import javax.annotation.Nullable;
 
 /**
@@ -1386,5 +1389,30 @@ public class Bytes {
 
     // i.e. "read to the end"
     return null;
+  }
+
+  /**
+   * Creates immutable sorted map with one entry with given key and value.
+   * @param key key of the entry
+   * @param value value of the entry
+   * @return instance of {@link NavigableMap}
+   */
+  public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key, byte[] value) {
+    return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
+  }
+
+  /**
+   * Creates immutable sorted map with two entries with given keys and values.
+   * @param key1 key of the first entry
+   * @param value1 value of the first entry
+   * @param key2 key of the second entry
+   * @param value2 value of the second entry
+   * @return instance of {@link NavigableMap}
+   */
+  public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key1, byte[] value1,
+                                                                  byte[] key2, byte[] value2) {
+    return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR)
+      .put(key1, value1)
+      .put(key2, value2).build();
   }
 }
