@@ -43,7 +43,7 @@ public class SparkKMeansAppTest extends TestBase {
 
   private static final Gson GSON = new Gson();
 
-  @Test
+  @Test(expected = IOException.class)
   public void test() throws Exception {
     // Deploy an Application
     ApplicationManager appManager = deployApplication(SparkKMeansApp.class);
@@ -73,9 +73,7 @@ public class SparkKMeansAppTest extends TestBase {
       SparkKMeansApp.CentersProcedure.class.getSimpleName());
     try {
       ProcedureClient client = procedureManager.getClient();
-      Map<String, String> params = new HashMap<String, String>();
-      params.put("index", "1");
-      String response = client.query("centers", params);
+      String response = client.query("centers", ImmutableMap.of("index", "1"));
       String centerCoordinates = GSON.fromJson(response, String.class);
       Assert.assertNotNull(centerCoordinates);
       String[] coordinates = centerCoordinates.split(",");
@@ -85,21 +83,9 @@ public class SparkKMeansAppTest extends TestBase {
         Assert.assertTrue(value > 0);
       }
       // test wrong argument
-      Throwable exception = null;
-      try {
-        client.query("centers", ImmutableMap.of("position", "0"));
-      } catch (Throwable ex) {
-        exception = ex;
-      }
-      Assert.assertTrue(exception instanceof IOException);
+      client.query("centers", ImmutableMap.of("position", "0"));
       // test with invalid index
-      exception = null;
-      try {
-        client.query("centers", ImmutableMap.of("index", "5"));
-      } catch (Throwable ex) {
-        exception = ex;
-      }
-      Assert.assertTrue(exception instanceof IOException);
+      client.query("centers", ImmutableMap.of("index", "5"));
     } finally {
       procedureManager.stop();
     }
