@@ -67,7 +67,7 @@ import javax.annotation.Nullable;
  * NOTE: Using {@link #get(byte[], byte[], byte[], int)} is generally always not efficient since it always hits the
  *       persisted store even if all needed data is in-memory buffer. See more info at method javadoc
  */
-// todo: return immutable maps?
+// todo: copying passed params to write methods may be done more efficiently: no need to copy when no changes are made
 public abstract class BufferingOrderedTable extends AbstractOrderedTable implements TransactionAware, MeteredDataset {
 
   private static final Logger LOG = LoggerFactory.getLogger(BufferingOrderedTable.class);
@@ -360,11 +360,13 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
     NavigableMap<byte[], Update> colVals = buff.get(row);
     if (colVals == null) {
       colVals = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-      buff.put(row, colVals);
-      // ANDREAS: is this thread-safe?
+      // NOTE: we copy passed row's byte arrays to protect buffer against possible changes of this array on client
+      buff.put(copy(row), colVals);
     }
     for (int i = 0; i < columns.length; i++) {
-      colVals.put(columns[i], new PutValue(values[i]));
+      // NOTE: we copy passed column's and value's byte arrays to protect buffer against possible changes of these
+      // arrays on client
+      colVals.put(copy(columns[i]), new PutValue(copy(values[i])));
     }
   }
 
@@ -577,11 +579,16 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
    * @param buffered The buffered values to overlay on the persisted map.
    */
   private static void mergeToPersisted(Map<byte[], byte[]> persisted, Map<byte[], Update> buffered, byte[][] columns) {
-    Iterable<byte[]> columnKeys;
+    List<byte[]> columnKeys;
     if (columns != null) {
       columnKeys = Arrays.asList(columns);
     } else {
-      columnKeys = buffered.keySet();
+      // NOTE: we want to copy key's byte array because it may be leaked to table's client and we don't want client
+      //       to affect the buffer by changing it in place
+      columnKeys = Lists.newArrayListWithExpectedSize(buffered.size());
+      for (byte[] key : buffered.keySet()) {
+        columnKeys.add(copy(key));
+      }
     }
     // overlay buffered values on persisted, applying increments where necessary
     for (byte[] key : columnKeys) {
@@ -600,7 +607,9 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
         persisted.put(key, Bytes.toBytes(newValue));
       } else if (val instanceof PutValue) {
         // overwrite the current
-        persisted.put(key, ((PutValue) val).getValue());
+        // NOTE: we want to copy value's byte array because it may be leaked to table's client and we don't want client
+        // to affect the buffer by changing it in place
+        persisted.put(key, copy(((PutValue) val).getValue()));
       }
       // unknown type?!
     }
@@ -709,6 +718,10 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
     return item == null ? 0 : item.length;
   }
 
+  private static byte[] copy(byte[] bytes) {
+    return bytes == null ? null : Arrays.copyOf(bytes, bytes.length);
+  }
+
   /**
    * Scanner implementation that overlays buffered data on top of already persisted data.
    */
@@ -755,14 +768,14 @@ public abstract class BufferingOrderedTable extends AbstractOrderedTable impleme
         // buffer row comes first or persisted scanner is empty
         Map<byte[], byte[]> persistedRow = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
         mergeToPersisted(persistedRow, buffer.get(currentKey), null);
-        result = new Result(currentKey, persistedRow);
+        result = new Result(copy(currentKey), persistedRow);
 
         currentKey = keyIter.hasNext() ? keyIter.next() : null;
       } else {
         // if currentKey and currentRow are equal, merge and advance both
         Map<byte[], byte[]> persisted = currentRow.getColumns();
         mergeToPersisted(persisted, buffer.get(currentKey), null);
-        result = new Result(currentKey, persisted);
+        result = new Result(currentRow.getRow(), persisted);
 
         currentRow = persistedScanner.next();
         currentKey = keyIter.hasNext() ? keyIter.next() : null;

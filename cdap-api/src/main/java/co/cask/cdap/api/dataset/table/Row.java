@@ -31,7 +31,7 @@ public interface Row {
   byte[] getRow();
 
   /**
-   * @return map of column to value of this row
+   * @return immutable map of column to value of this row
    */
   Map<byte[], byte[]> getColumns();
 
