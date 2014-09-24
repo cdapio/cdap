@@ -32,12 +32,6 @@ SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
 
 cd %CDAP_HOME%
 
-REM Get app jar with latest version
-SET APP_JAR_PREFIX=ResponseCodeAnalytics
-for /r %CDAP_HOME%\examples\%APP_JAR_PREFIX%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
-
-if %JAR_PATH% == "" echo "Could not find example application jar with name %APP_JAR_PREFIX%"
-
 REM Process command line
 IF "%1" == "start" GOTO START
 IF "%1" == "stop" GOTO STOP
