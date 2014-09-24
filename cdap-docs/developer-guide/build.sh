@@ -46,8 +46,8 @@ HTML_PATH="$BUILD_PATH/$HTML"
 
 DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
 
-REST_SOURCE="$SOURCE_PATH/api.rst"
-REST_PDF="$SCRIPT_PATH/$BUILD_PDF/api.pdf"
+REST_SOURCE="$SOURCE_PATH/rest.rst"
+REST_PDF="$SCRIPT_PATH/$BUILD_PDF/rest.pdf"
 
 if [ "x$2" == "x" ]; then
   PROJECT_PATH="$SCRIPT_PATH/../../"
@@ -170,10 +170,11 @@ function build_rest_pdf() {
 
 function build_standalone() {
   cd $PROJECT_PATH
-  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+  mvn clean package -DskipTests -P examples && mvn package -pl standalone -am -DskipTests -P dist,release
 }
 
 function build_sdk() {
+  build_rest_pdf
   build_standalone
 }
 
