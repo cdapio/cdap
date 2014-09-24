@@ -245,9 +245,9 @@ for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyN
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
 
-# Disable NUX
-# TODO: Enable NUX with new app, see CDAP-22
-# CALL :NUX
+REM Disable NUX
+REM TODO: Enable NUX with new app, see CDAP-22
+REM CALL :NUX
 GOTO :FINALLY
 
 :NUX
