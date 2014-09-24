@@ -23,7 +23,9 @@ import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
@@ -33,6 +35,7 @@ import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionDatumWriter;
 import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.TypeRepresentation;
+import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
 import java.io.ByteArrayInputStream;
@@ -85,6 +88,31 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   @Override
   public T read(String key) {
     return decode(kvTable.read(Bytes.toBytes(key)));
+  }
+
+  @Override
+  public CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow) {
+    final CloseableIterator<KeyValue<byte[], byte[]>> keyValueIterator = kvTable.scan(startRow, stopRow);
+    return new AbstractCloseableIterator<KeyValue<byte[], T>>() {
+      boolean closed = false;
+      @Override
+      protected KeyValue<byte[], T> computeNext() {
+        Preconditions.checkState(!closed);
+        if (keyValueIterator.hasNext()) {
+          KeyValue<byte[], byte[]> row = keyValueIterator.next();
+          return new KeyValue<byte[], T>(row.getKey(), decode(row.getValue()));
+        }
+        close();
+        return null;
+      }
+
+      @Override
+      public void close() {
+        keyValueIterator.close();
+        endOfData();
+        closed = true;
+      }
+    };
   }
 
   @Override

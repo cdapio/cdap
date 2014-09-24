@@ -20,8 +20,10 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.IntegerStore;
 import co.cask.cdap.api.dataset.lib.IntegerStoreModule;
+import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
@@ -44,7 +46,9 @@ import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -332,6 +336,60 @@ public class ObjectStoreDatasetTest extends AbstractDatasetTest {
     deleteAndVerifyInBatch(t, txnl, keysWritten);
 
     deleteInstance("batch");
+  }
+
+  @Test
+  public void testScanObjectStore() throws Exception {
+    createObjectStoreInstance("scan", String.class);
+
+    final ObjectStoreDataset<String> t = getInstance("scan");
+    TransactionExecutor txnl = newTransactionExecutor(t);
+
+    // write 10 values
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (int i = 0; i < 10; i++) {
+          byte[] key = Bytes.toBytes(i);
+          t.write(key, String.valueOf(i));
+        }
+      }
+    });
+
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Iterator<KeyValue<byte[], String>> objectsIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(10));
+        int sum = 0;
+        while (objectsIterator.hasNext()) {
+          sum += Integer.parseInt(objectsIterator.next().getValue());
+        }
+        //checking the sum equals sum of values from (0..9) which are the rows written and scanned for.
+        Assert.assertEquals(45, sum);
+      }
+    });
+
+    // start a transaction, scan part of them elements using scanner, close the scanner,
+    // then call next() on scanner, it should fail
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        CloseableIterator<KeyValue<byte[], String>> objectsIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(10));
+        int rowCount = 0;
+        while (objectsIterator.hasNext() && (rowCount < 5)) {
+          rowCount++;
+        }
+        objectsIterator.close();
+        try {
+          objectsIterator.next();
+          Assert.fail("Reading after closing Scanner returned result.");
+        } catch (NoSuchElementException e) {
+        }
+      }
+    });
+
+
+    deleteInstance("scan");
   }
 
   // helper to verify that the split readers for the given splits return exactly a set of keys

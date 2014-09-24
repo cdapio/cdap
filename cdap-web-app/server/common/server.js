@@ -969,7 +969,6 @@ WebAppServer.prototype.bindRoutes = function() {
 
   /**
    * Check for new version.
-   * http://www.continuuity.com/version
    */
   this.app.get('/version', function (req, res) {
     var options = {

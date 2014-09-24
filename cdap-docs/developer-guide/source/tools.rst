@@ -6,175 +6,26 @@
 Cask Data Application Platform - Available Tools
 ================================================
 
-Tools Info
-==========
+Tools Overview
+==============
 CDAP comes with a bunch of tools to make developer's life easier. These tools offers various features including,
 helping to debug CDAP applications, interact with them and ingest data into them,etc:
 
 .. list-table::
-    :widths: 10 30 60
+    :widths: 15 60
     :header-rows: 1
 
     * - Tool Name
       - Description
-      - Quick Link
-    * - Test Framework
-      - ``How you can take advantage of the Powerful Test Framework to test your CDAP applications before deploying.
-        This makes catching bugs early and easy``
-      - TestFramework_
-    * - Debugging
-      - ``How you can debug CDAP applications in standalone mode and debugging app containers in distributed mode``
-      - DebugCDAP_
-    * - Transactions Debugger
-      - ``Snapshot state of Transaction manager``
-      - TxDebugger_
-    * - Ingestion tools
-      - ``Ways to Ingest data into CDAP``
-      - Ingest_
-
-.. _CLI:
-
-Command-Line Interface
-======================
-
-Introduction
-------------
-
-The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
-similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
-script or a Windows ``.bat`` file,
-It is also packaged in the SDK as a JAR file, at ``lib/co.cask.cdap.cdap-cli-2.5.0-SNAPSHOT.jar``.
-
-Usage
------
-
-The CLI may be used in two ways: interactive mode and non-interactive mode.
-
-Interactive Mode
-----------------
-
-.. highlight:: console
-
-To run the CLI in interactive mode, run the ``cdap-cli`` executable with no arguments from the terminal::
-
-  $ /bin/cdap-cli
-
-or, on Windows::
-
-  ~SDK> bin\cdap-cli.bat
-
-The executable should bring you into a shell, with this prompt::
-
-  cdap (localhost:10000)>
-
-This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
-There are two ways to interact with a different CDAP server:
-
-- To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
-- To change the current CDAP server, run the command ``connect example.com``.
-
-For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
-a CDAP instance at ``example.com``, port ``10000``::
-
-  cdap (example.com:10000)>
-
-To list all of the available commands, enter ``help``::
-
-  cdap (localhost:10000)> help
-
-Non-Interactive Mode
---------------------
-
-To run the CLI in non-interactive mode, run the ``cdap-cli`` executable, passing the command you want executed
-as the argument. For example, to list all applications currently deployed to CDAP, execute::
-
-  cdap list apps
-
-Available Commands
-------------------
-
-These are the available commands:
-
-.. csv-table::
-   :header: Command,Description
-   :widths: 50, 50
-
-     **General**
-   ``help``,Prints this helper text
-   ``version``,Prints the version
-   ``exit``,Exits the shell
-   **Calling and Executing**
-   ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``,"Calls a Procedure, passing in the parameters as a JSON String map"
-   ``execute <query>``,Executes a Dataset query
-   **Creating**
-   ``create dataset instance <type-name> <new-dataset-name>``,Creates a Dataset
-   ``create stream <new-stream-id>``,Creates a Stream
-   **Deleting**
-   ``delete app <app-id>``,Deletes an Application
-   ``delete dataset instance <dataset-name>``,Deletes a Dataset
-   ``delete dataset module <module-name>``,Deletes a Dataset module
-   **Deploying**
-   ``deploy app <app-jar-file>``,Deploys an application
-   ``deploy dataset module <module-jar-file> <module-name> <module-jar-classname>``,Deploys a Dataset module
-   **Describing**
-   ``describe app <app-id>``,Shows detailed information about an application
-   ``describe dataset module <module-name>``,Shows information about a Dataset module
-   ``describe dataset type <type-name>``,Shows information about a Dataset type
-   **Retrieving Information**
-   ``get history flow <app-id>.<program-id>``,Gets the run history of a Flow
-   ``get history mapreduce <app-id>.<program-id>``,Gets the run history of a MapReduce job
-   ``get history procedure <app-id>.<program-id>``,Gets the run history of a Procedure
-   ``get history runnable <app-id>.<program-id>``,Gets the run history of a Runnable
-   ``get history workflow <app-id>.<program-id>``,Gets the run history of a Workflow
-   ``get instances flowlet <app-id>.<program-id>``,Gets the instances of a Flowlet
-   ``get instances procedure <app-id>.<program-id>``,Gets the instances of a Procedure
-   ``get instances runnable <app-id>.<program-id>``,Gets the instances of a Runnable
-   ``get live flow <app-id>.<program-id>``,Gets the live info of a Flow
-   ``get live procedure <app-id>.<program-id>``,Gets the live info of a Procedure
-   ``get logs flow <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Flow
-   ``get logs mapreduce <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a MapReduce job
-   ``get logs procedure <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Procedure
-   ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Runnable
-   ``get status flow <app-id>.<program-id>``,Gets the status of a Flow
-   ``get status mapreduce <app-id>.<program-id>``,Gets the status of a MapReduce job
-   ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
-   ``get status service <app-id>.<program-id>``,Gets the status of a Service
-   ``get status workflow <app-id>.<program-id>``,Gets the status of a Workflow
-   **Listing Elements**
-   ``list apps``,Lists all applications
-   ``list dataset instances``,Lists all Datasets
-   ``list dataset modules``,Lists Dataset modules
-   ``list dataset types``,Lists Dataset types
-   ``list flows``,Lists Flows
-   ``list mapreduce``,Lists MapReduce jobs
-   ``list procedures``,Lists Procedures
-   ``list programs``,Lists all programs
-   ``list streams``,Lists Streams
-   ``list workflows``,Lists Workflows
-   **Sending Events**
-   ``send stream <stream-id> <stream-event>``,Sends an event to a Stream
-   **Setting**
-   ``set instances flowlet <program-id> <num-instances>``,Sets the instances of a Flowlet
-   ``set instances procedure <program-id> <num-instances>``,Sets the instances of a Procedure
-   ``set instances runnable <program-id> <num-instances>``,Sets the instances of a Runnable
-   ``set stream ttl <stream-id> <ttl-in-seconds>``,Sets the Time-to-Live (TTL) of a Stream
-   **Starting**
-   ``start flow <program-id>``,Starts a Flow
-   ``start mapreduce <program-id>``,Starts a MapReduce job
-   ``start procedure <program-id>``,Starts a Procedure
-   ``start service <program-id>``,Starts a Service
-   ``start workflow <program-id>``,Starts a Workflow
-   **Stopping**
-   ``stop flow <program-id>``,Stops a Flow
-   ``stop mapreduce <program-id>``,Stops a MapReduce job
-   ``stop procedure <program-id>``,Stops a Procedure
-   ``stop service <program-id>``,Stops a Service
-   ``stop workflow <program-id>``,Stops a Workflow
-   **Truncating**
-   ``truncate dataset instance``,Truncates a Dataset
-   ``truncate stream``,Truncates a Stream
-
-=======
+    * - :ref:`Test Framework<TestFramework>`
+      - How you can take advantage of the test framework to test your CDAP applications before deploying.
+        This makes catching bugs early and easy.
+    * - :ref:`Debugging<DebugCDAP>`
+      - How you can debug CDAP applications in standalone mode and app containers in distributed mode.
+    * - :ref:`Transactions Debugger<TxDebugger>`
+      - Snapshot and inspect the state of Transaction Manager.
+    * - :ref:`Ingestion Tools<Ingest>`
+      - Ways to ingest data into CDAP.
 
 .. highlight:: java
 
@@ -330,6 +181,7 @@ the counts::
 
 The assertion will verify that the correct result was received.
 
+
 Strategies in Testing Spark Programs
 ------------------------------------
 Let's write a test case for an application that uses a Spark program.
@@ -378,6 +230,7 @@ the ranks::
   Assert.assertEquals("1.3690036520596678", response);
 
 The assertion will verify that the correct result was received.
+
 
 Validating Test Data with SQL
 -----------------------------
@@ -432,7 +285,7 @@ For more information, see `Attaching a Debugger`_.
 :Note:  Currently, debugging is not supported under Windows.
 
 Debugging an Application in Distributed CDAP
------------------------------------------------
+--------------------------------------------
 
 .. highlight:: console
 
@@ -722,8 +575,8 @@ from the concerned Tables.
 
 .. _Ingest:
 
-Ingesting Data into the Cask Data Application Platform
-======================================================
+Ingesting Data
+==============
 
 .. highlight:: console
 
@@ -739,7 +592,6 @@ assembled a set of tools and applications that the user can take advantage of fo
 - a drop zone for bulk ingestion of files ;
 - a file tailer daemon to tail local files; and
 - an Apache Flume Sink implementation for writing events received from a source.
-
 
 Stream Client
 -------------
@@ -757,7 +609,7 @@ Supported Actions
 - Send a File to an existing Stream.
 
 Java API
---------
+........
 
 Create a StreamClient instance, specifying the fields 'host' and 'port' of the gateway server.
 Optional configurations that can be set:
@@ -789,6 +641,9 @@ Create a new Stream with the *stream id* "newStreamName"::
   streamClient.create("newStreamName");
 
 [`Note StreamName`_]
+
+- The *stream-id* should only contain ASCII letters, digits and hyphens.
+- If the Stream already exists, no error is returned, and the existing Stream remains in place.
 
 Update TTL for the Stream *streamName*; TTL is a long value and is specified in seconds::
 
@@ -822,8 +677,8 @@ When you are finished, release all resources by calling these two methods::
   streamWriter.close();
   streamClient.close();
 
-Putting it all together:
-........................
+Putting it All Together
++++++++++++++++++++++++
 
 ::
 
@@ -845,7 +700,7 @@ Putting it all together:
 
         // Update TTL value for Stream by id <streamName>
         streamClient.setTTL(streamName, newTTL);
-        LOG.info("Seting new TTL : {} seconds for stream: {}", newTTL, streamName);
+        LOG.info("Setting new TTL : {} seconds for stream: {}", newTTL, streamName);
 
 
         String event = "192.0.2.0 - - [09/Apr/2012:08:40:43 -0400] \"GET /NoteBook/ HTTP/1.0\" 201 809 \"-\" " +
@@ -874,12 +729,13 @@ Putting it all together:
       LOG.error("Exception while writing to stream", e);
     }
 
-Note on Stream Client : [`Note stream_client`_]
+Also look at: :ref:`Note on Stream Client <note_stream_client>`
 
 Python API
------------
+..........
+
 Usage
-.....
++++++
 
 To use the Stream Client Python API, include these imports in your
 Python script:
@@ -889,8 +745,8 @@ Python script:
         from config import Config
         from streamclient import StreamClient
 
-Configuring and Creating a Stream:
-..................................
+Configuring and Creating a Stream
++++++++++++++++++++++++++++++++++
 
 For Creating a ``StreamClient`` instance you would need a ``config`` object:
 
@@ -901,7 +757,7 @@ from an existing file.
 ::
 
   #The assigned values are also the default values
-  def createStremClient():
+  def createStreamClient():
     config = Config()
     config.host = ‘localhost’
     config.port = 10000
@@ -911,18 +767,19 @@ from an existing file.
 2. using an existing configuration file in JSON format [`Note 1`_] to create a ``config`` object
 ::
 
-   def createStremClient():
+   def createStreamClient():
     config = Config.read_from_file('/path/to/config.json')
     streamClient = streamClient(config)
 
 
-3. Once we have configured the stream client, we can create a stream by calling create with a stream-name [`Note StreamName`_]
+3. Once we have configured the stream client, we can create a stream by calling create with a stream-name
+[`Note StreamName`_]
 ::
 
   streamClient.create("newStreamName");
 
-TTL:
-....
+Updating Time-to-Live
++++++++++++++++++++++
 
 Update TTL for the Stream “streamName”; ``newTTL`` is a long value specified in seconds:
 ::
@@ -934,8 +791,8 @@ Get the current TTL value for the Stream “streamName”:
 
   ttl = streamClient.get_ttl("streamName")
 
-Writing Events to Stream:
-.........................
+Writing Events to Stream
+++++++++++++++++++++++++
 
 Create a ``StreamWriter`` instance for writing events to the Stream
 “streamName”:
@@ -943,16 +800,16 @@ Create a ``StreamWriter`` instance for writing events to the Stream
 Once you have a ``StreamWriter`` instance:
   1. you can write events to the stream using ``write()`` method
 
-Putting it all together:
-........................
+Putting it All Together
++++++++++++++++++++++++
 ::
 
-  def createStremClient():
+  def createStreamClient():
     config = Config.read_from_file('/path/to/config.json')
     streamClient = streamClient(config)
     streamWriter = streamClient.create_writer("streamName")
     streamPromise = streamWriter.write("New log Event") #async
-    streamPromise.onResponse(onOKHandler, onErrorHalnder)
+    streamPromise.onResponse(onOKHandler, onErrorHandler)
 
   def onOkHandler(httpResponse): #will be executed after successful write to stream
     ...
@@ -986,23 +843,23 @@ Stream Name:
   -  If the Stream already exists, no error is returned, and the existing
      Stream remains in place.
 
-Also look at : [`Note stream_client`_]
+Also look at: :ref:`Note on Stream Client <note_stream_client>`
 
 Available at: [link]
 
 
 Ruby API
---------
+........
 
 Build
-.....
++++++
 
 To build a gem, run:
 
 ``gem build stream-client-ruby.gemspec``
 
 Usage
-.....
++++++
 
 To use the Stream Client Ruby API, just add the following to your application Gemfile:
 
@@ -1013,7 +870,7 @@ If you use gem outside Rails, you should require gem files in your application f
 ``require 'stream-client-ruby'``
 
 Example
-.......
++++++++
 
 You can configure StreamClient settings in your config files, for
 example:
@@ -1093,7 +950,7 @@ When you are finished, release all resources by calling this method:
 
 Available at: [link]
 
-.. _note stream_client:
+.. _note_stream_client:
 
 Notes on Stream Client
 ......................
@@ -1124,6 +981,7 @@ Features
 
 Installing File Tailer
 ......................
+
 on Debian/Ubuntu :
 ``sudo apt-get install file-tailer.deb``
 on RHEL/Cent OS :
@@ -1131,6 +989,7 @@ on RHEL/Cent OS :
 
 Configuring File Tailer
 .......................
+
 After Installation, you can configure the daemon properties at /etc/file-tailer/conf/file-tailer.properties::
 
      # General pipe properties
@@ -1151,11 +1010,13 @@ After Installation, you can configure the daemon properties at /etc/file-tailer/
      # Host port that is used by stream client
      pipes.app1pipe.sink.port=10000
 
-  :Note:  Please note that the target file must be accessible to the File Tailer user. To check, you can use the more command with the File Tailer user:
+  :Note:  Please note that the target file must be accessible to the File Tailer user. To check, you can use the
+          `more` command with the File Tailer user:
           Available at: [link]
 
 Starting and Stopping the Daemon
 ................................
+
 To Start a file tailer daemon execute:
 ``sudo service file-tailer start``
 
@@ -1170,13 +1031,14 @@ Configuring Authentication Client for File Tailer
 
 Authentication client parameters :
   - pipes.<pipe-name>.sink.auth_client - classpath of authentication client class
-  - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is locted at ``/etc/file-tailer/conf/auth-client.properties``
+  - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is
+    located at ``/etc/file-tailer/conf/auth-client.properties``
 
   you can refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 
 
-Description of Configuration Properties:
-........................................
+Description of Configuration Properties
+.......................................
 
 .. list-table::
     :widths: 30 60
@@ -1268,9 +1130,12 @@ Agent to read data from a log file by tailing it and putting them into CDAP.
 
 Authentication Client
 .....................
+
 To use authentication, add these authentication client configuration parameters to the sink configuration file:
-  - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient, Fully qualified class name of the client class
-  - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is locted at ``/usr/local/apache-flume/conf/auth_client.conf``
+  - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient,
+    Fully qualified class name of the client class
+  - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is
+    located at ``/usr/local/apache-flume/conf/auth_client.conf``
 
 please refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
 
@@ -1319,8 +1184,8 @@ on Debian/Ubuntu :
 on RHEL/Cent OS :
 `` sudo rpm -ivh --force file-drop-zone.rpm``
 
-Configuring File Tailer
-.......................
+Configuring File DropZone
+.........................
 After Installation, you can configure the daemon properties at /etc/file-drop-zone/conf/file-drop-zone.properties::
 
      # Polling directories interval in milliseconds
@@ -1347,10 +1212,10 @@ After Installation, you can configure the daemon properties at /etc/file-drop-zo
 
 Starting and Stopping the Daemon
 ................................
-To Start a file tailer daemon execute:
+To Start a file DropZone daemon execute:
 ``sudo service file-drop-zone start``
 
-To Stop a file tailer daemon execute:
+To Stop a file DropZone daemon execute:
 ``sudo service file-drop-zone stop``
 
 :Note: File DropZone stores log files in the /var/log/file-drop-zone directory.
@@ -1367,6 +1232,7 @@ If you would like to manually upload a file use,
 
 Authentication Client Configuration
 -----------------------------------
+
 .. list-table::
     :widths: 50 50
     :header-rows: 1
