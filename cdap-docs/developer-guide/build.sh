@@ -46,8 +46,8 @@ HTML_PATH="$BUILD_PATH/$HTML"
 
 DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
 
-REST_SOURCE="$SOURCE_PATH/rest.rst"
-REST_PDF="$SCRIPT_PATH/$BUILD_PDF/rest.pdf"
+REST_SOURCE="$SOURCE_PATH/api.rst"
+REST_PDF="$SCRIPT_PATH/$BUILD_PDF/api.pdf"
 
 if [ "x$2" == "x" ]; then
   PROJECT_PATH="$SCRIPT_PATH/../../"
@@ -60,14 +60,6 @@ SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
 
-# Set Google Analytics Codes
-# Corporate Docs Code
-GOOGLE_ANALYTICS_WEB="UA-55077523-3"
-WEB="web"
-# CDAP Project Code
-GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
-GITHUB="github"
-
 function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
@@ -76,8 +68,6 @@ function usage() {
   echo ""
   echo "  Options (select one)"
   echo "    build         Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
-  echo "    build-github  Clean build and zip for placing on GitHub"
-  echo "    build-web     Clean build and zip for placing on docs.cask.co webserver"
   echo ""
   echo "    docs          Clean build of docs"
   echo "    javadocs      Clean build of javadocs ($API module only) for SDK and website"
@@ -100,15 +90,8 @@ function clean() {
 }
 
 function build_docs() {
-  clean
   cd $SCRIPT_PATH
   sphinx-build -b html -d build/doctrees source build/html
-}
-
-function build_docs_google() {
-  clean
-  cd $SCRIPT_PATH
-  sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
 }
 
 function build_javadocs_full() {
@@ -154,61 +137,27 @@ function copy_license_pdfs() {
   cp $SCRIPT_PATH/$LICENSES_PDF/* .
 }
 
-function make_zip_html() {
+function make_zip() {
   version
-  ZIP_FILE_NAME="$PROJECT-docs-$PROJECT_VERSION.zip"
+  ZIP_FILE_NAME="$PROJECT-$HTML-docs-$PROJECT_VERSION.zip"
   cd $SCRIPT_PATH/$BUILD
   zip -r $ZIP_FILE_NAME $HTML/*
 }
 
-function make_zip() {
-# This creates a zip that unpacks to the same name
-  version
-  ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
-  cd $SCRIPT_PATH/$BUILD
-  mv $HTML $ZIP_DIR_NAME
-  zip -r $ZIP_DIR_NAME.zip $ZIP_DIR_NAME/*
-}
-
-function make_zip_localized() {
-# This creates a named zip that unpacks to the Project Version, localized to english
-  version
-  ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
-  cd $SCRIPT_PATH/$BUILD
-  mkdir $PROJECT_VERSION
-  mv $HTML $PROJECT_VERSION/en
-  zip -r $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
-}
-
 function build() {
-  build_docs
+  clean
   build_javadocs_sdk
   copy_javadocs_sdk
+  build_docs
   copy_license_pdfs
   make_zip
 }
 
-function build_web() {
-# This is used to stage files at cdap-integration10031-1000.dev.continuuity.net
-# desired path is 2.5.0-SNAPSHOT/en/*
-  build_docs_google $GOOGLE_ANALYTICS_WEB
-  build_javadocs_sdk
-  copy_javadocs_sdk
+function build_quick() {
+  clean
+  build_docs
   copy_license_pdfs
-  make_zip_localized $WEB
-}
-
-function build_github() {
-  # GitHub requires a .nojekyll file at the root to allow for Sphinx's directories beginning with underscores
-  build_docs_google $GOOGLE_ANALYTICS_GITHUB
-  build_javadocs_sdk
   copy_javadocs_sdk
-  copy_license_pdfs
-  make_zip $GITHUB
-  ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$GITHUB"
-  cd $SCRIPT_PATH/$BUILD
-  touch $ZIP_DIR_NAME/.nojekyll
-  zip $ZIP_DIR_NAME.zip $ZIP_DIR_NAME/.nojekyll
 }
 
 function build_rest_pdf() {
@@ -221,11 +170,10 @@ function build_rest_pdf() {
 
 function build_standalone() {
   cd $PROJECT_PATH
-  mvn clean package -DskipTests -P examples && mvn package -pl standalone -am -DskipTests -P dist,release
+  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
 }
 
 function build_sdk() {
-  build_rest_pdf
   build_standalone
 }
 
@@ -270,12 +218,11 @@ fi
 
 case "$1" in
   build )             build; exit 1;;
-  build-github )      build_github; exit 1;;
-  build-web )         build_web; exit 1;;
+  build-quick )       build_quick; exit 1;;
   docs )              build_docs; exit 1;;
   license-pdfs )      build_license_pdfs; exit 1;;
   build-standalone )  build_standalone; exit 1;;
-  copy-javadocs )     copy_javadocs; exit 1;;
+  copy-javadocs )     copy_javadocs_sdk; exit 1;;
   copy-license-pdfs ) copy_license_pdfs; exit 1;;
   javadocs )          build_javadocs_sdk; exit 1;;
   javadocs-full )     build_javadocs_full; exit 1;;
