@@ -41,7 +41,7 @@ Building from Source
 
 **Check out the source** ::
 
-    $ git clone https://github.com/caskco/cdap cdap
+    $ git clone https://github.com/caskdata/cdap cdap
     $ cd cdap
 
 **Compile the Project** ::
