@@ -1277,6 +1277,18 @@
             </execution>
           </executions>
         </plugin>
+        <!-- Nexus deploy plugin -->
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.2</version>
+          <extensions>true</extensions>
+          <configuration>
+            <nexusUrl>https://oss.sonatype.org</nexusUrl>
+            <serverId>sonatype.release</serverId>
+            <stagingProfileId>655dc88dc770c3</stagingProfileId>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -1310,6 +1322,11 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <version>2.8</version>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.2</version>
       </plugin>
     </plugins>
   </build>
