@@ -22,8 +22,8 @@ in order to support ever-increasing amount of data as well as new requirements.
 In this tutorial, we would like to show how easy it is to build a web analytics application with CDAP.
 In particular, we use the following components in CDAP:
 
-* **Stream** for web server logs collection
-* **Flow** for real-time data analysis
+* **Stream** for web server logs collection and persistence to the file system
+* **Flow** for real-time data analysis over logs collected
 * **SQL** to explore and getting insights form the data
 
 Build and Run
@@ -76,10 +76,14 @@ to produce real-time analytics from the web server logs. A **Flow** contains one
 **Flowlets** that are wired together into a directed acyclic graph or DAG.
 
 To keep it simple, we only computes total visit count for each IP visiting the site.
-It is done by using a Flowlet that reads web log events from the ``log`` Stream, followed by
-extracting the IP address from each log event and performs an increment of the visit count
-associated with that specific IP. The result of the increment is persisted using
-a custom **Dataset** ``UniqueVisitCount``.
+We use a Flowlet called ``UniqueVisitor`` to keep track of the unique visit counts from each client.
+It is done with the following steps:
+
+1. Read a log event from the ``log`` Stream
+#. Parse the client IP from the log event
+#. Increments the visit count of that client IP by 1 and persist the change.
+
+The result of the increment is persisted using a custom **Dataset** ``UniqueVisitCount``.
 
 Here is how the ``UniqueVisitor`` Flowlet looks like::
 
