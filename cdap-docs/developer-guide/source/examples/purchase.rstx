@@ -1,17 +1,17 @@
-:orphan:
-
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform Purchase Application
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================
-Purchase Application Example
-============================
+.. _purchase:
 
-**A Cask Data Application Platform (CDAP) Example demonstrating all CDAP elements**
+Purchase
+--------
+
+A Cask Data Application Platform (CDAP) Example demonstrating all CDAP elements.
 
 Overview
-========
+........
+
 This example demonstrates use of each of the CDAP elements: Streams, Flows, Flowlets,
 Datasets, Queries, Procedures, MapReduce Jobs, Workflows, and Custom Services in a single Application.
 
@@ -44,7 +44,8 @@ PurchaseProcedure will return a "not found" error.
 Let's look at some of these elements, and then run the Application and see the results.
 
 The Purchase Application
-------------------------
+........................
+
 As in the other `examples <index.html>`__, the components
 of the Application are tied together by the class ``PurchaseApp``::
 
@@ -88,7 +89,8 @@ of the Application are tied together by the class ``PurchaseApp``::
 
 
 ``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
---------------------------------------------------------------
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 The raw purchase data is stored in an ObjectStore Dataset, *purchases*,
 with this method defined in ``PurchaseStore``::
 
@@ -104,12 +106,13 @@ implements the ``RecordScannable`` interface to allow SQL queries over the Datas
 
 
 ``PurchaseProcedure``: Procedure
---------------------------------
+++++++++++++++++++++++++++++++++
+
 This procedure has a ``history`` method to obtain the purchase history of a given customer.
 
 
 Building and Running the Application and Example
-================================================
+................................................
 
 .. highlight:: console
 
@@ -128,7 +131,8 @@ you can use the procedure or a SQL query to explore the results.
 When finished, stop the Application as described below.
 
 Building the Purchase Application
----------------------------------
++++++++++++++++++++++++++++++++++
+
 From the project root, build ``Purchase`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
@@ -141,7 +145,8 @@ skip the tests by using the command::
 
 
 Deploying and Starting the Application
---------------------------------------
+++++++++++++++++++++++++++++++++++++++
+
 Make sure an instance of the CDAP is running and available.
 From within the SDK root directory, this command will start CDAP in local mode::
 
@@ -168,10 +173,10 @@ On Windows:
 #. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 Running the Example
--------------------
++++++++++++++++++++
 
 Injecting Sentences
-...................
+###################
 
 Run this script to inject sentences 
 to the Stream named *purchaseStream* in the ``Purchase`` application::
@@ -186,7 +191,8 @@ On Windows::
 
 
 Starting the Workflow
-.....................
+#####################
+
 The easiest way to start the ``PurchaseHistoryWorkflow`` is to click on the Workflow in the Application
 page of the CDAP Console and then click the start button. You can see the status of the Workflow and observe when it finishes.
 
@@ -195,7 +201,8 @@ Alternatively, you can send a ``curl`` request to the CDAP::
   curl -v -X POST http://localhost:10000/v2/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start
 
 Querying the Results
-....................
+####################
+
 If the Procedure has not already been started, you start it either through the 
 CDAP Console or via an HTTP request using the ``curl`` command::
 
@@ -226,7 +233,8 @@ There are two ways to query the *history* ObjectStore through the ``PurchaseProc
 	      "product":"coconut","quantity":2,"price":5,"purchaseTime":1404268588338,"catalogId":""}]}
 
 Exploring the Results Using SQL
-...............................
+###############################
+
 You can use SQL to formulate ad-hoc queries over the *history* Dataset. This is done by a series of
 ``curl`` calls, as described in the RESTful API section of the Developer Guide. For your convenience, the SDK
 includes a script, ``bin/send-query.sh``, that will execute a series of calls.
@@ -282,7 +290,8 @@ You repeat this step until the ``curl`` call returns an empty list. That means y
   curl -v -X DELETE http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782
 
 Stopping the Application
-------------------------
+++++++++++++++++++++++++
+
 Either:
 
 - On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; 
@@ -298,5 +307,6 @@ or:
 .. highlight:: java
 
 Downloading the Example
-=======================
+.......................
+
 This example (and more!) is included with our `software development kit <http://cask.co/download>`__.

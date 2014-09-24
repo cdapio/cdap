@@ -1,17 +1,17 @@
-:orphan:
-
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform SparkKMeans Application
    :Copyright: Copyright © 2014 Cask Data, Inc.
 
-===============================
-SparkKMeans Application Example
-===============================
+.. _spark-k-means:
+
+Spark K-Means
+-------------
 
 **A Cask Data Application Platform (CDAP) Example Demonstrating Spark**
 
 Overview
-========
+........
+
 This example demonstrates a Spark application performing streaming analysis, computing the centers of points from an
 input stream using the KMeans Clustering method.
 
@@ -27,7 +27,8 @@ send back a JSON-formatted result with the center's coordinates based on the ``i
 Let's look at some of these elements, and then run the Application and see the results.
 
 The SparkKMeans Application
----------------------------
+...........................
+
 As in the other `examples <index.html>`__, the components
 of the Application are tied together by the class ``SparkKMeansApp``::
 
@@ -67,17 +68,19 @@ of the Application are tied together by the class ``SparkKMeansApp``::
   }
 
 ``points`` and ``centers``: ObjectStore Data Storage
-----------------------------------------------------
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 The raw points data is stored in an ObjectStore Dataset, *points*.
 The calculated centers data is stored in a second ObjectStore Dataset, *centers*.
 
 ``CentersProcedure``: Procedure
--------------------------------
++++++++++++++++++++++++++++++++
+
 This procedure has a ``centers`` method to obtain the center's coordinates of a given index.
 
 
 Building and Running the Application and Example
-================================================
+................................................
 
 .. highlight:: console
 
@@ -93,7 +96,8 @@ injecting points data into the Stream.
 When finished, stop the Application as described below.
 
 Building the SparkKMeans Application
-------------------------------------
+++++++++++++++++++++++++++++++++++++
+
 From the project root, build ``SparkKMeans`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
@@ -106,7 +110,8 @@ skip the tests by using the command::
 
 
 Deploying and Starting the Application
---------------------------------------
+++++++++++++++++++++++++++++++++++++++
+
 Make sure an instance of the CDAP is running and available.
 From within the SDK root directory, this command will start CDAP in standalone mode::
 
@@ -135,12 +140,11 @@ On Windows:
 #. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 
-
 Running the Example
--------------------
++++++++++++++++++++
 
 Injecting points data
-.....................
+#####################
 
 Run this script to inject points data
 to the Stream named *pointsStream* in the ``SparkKMeans`` application::
@@ -153,8 +157,8 @@ On Windows::
 
 	~SDK> bin\inject-data.bat
 
-Running Spark program
-.....................
+Running the Spark program
+#########################
 
 There are three ways to start the Spark program:
 
@@ -179,7 +183,8 @@ There are three ways to start the Spark program:
 	~SDK> bin\app-manager.bat run
 
 Querying the Results
-....................
+####################
+
 If the Procedure has not already been started, you start it either through the 
 CDAP Console or via an HTTP request using the ``curl`` command::
 
@@ -214,7 +219,8 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
 	   "9.1,9.1,9.1"
 
 Stopping the Application
-------------------------
+++++++++++++++++++++++++
+
 Either:
 
 - On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; 
@@ -230,5 +236,6 @@ or:
 .. highlight:: java
 
 Downloading the Example
-=======================
+.......................
+
 This example (and more!) is included with our `software development kit <http://cask.co/download>`__.

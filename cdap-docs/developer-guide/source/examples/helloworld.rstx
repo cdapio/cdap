@@ -1,0 +1,93 @@
+.. :Author: Cask Data, Inc.
+   :Description: Cask Data Application Platform Hello World Application
+   :Copyright: Copyright © 2014 Cask Data, Inc.
+
+.. _hello-world:
+
+HelloWorld
+----------
+
+The most simple Cask Data Application Platform (CDAP) Example.
+
+Overview
+........
+
+This application uses one Stream, one Dataset, one Flow and one Procedure to implement the classic "Hello World".
+
+- A stream to send names to;
+- A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable; and
+- A procedure that reads the name from the KeyValueTable and prints 'Hello [Name]!'.
+
+The ``WhoFlow``
++++++++++++++++
+
+This is a trivial flow with a single flowlet named ``NamSaver``::
+
+  public static class WhoFlow implements Flow {
+
+    @Override
+    public FlowSpecification configure() {
+      return FlowSpecification.Builder.with().
+        setName("WhoFlow").
+        setDescription("A flow that collects names").
+        withFlowlets().add("saver", new NameSaver()).
+        connect().fromStream("who").to("saver").
+        build();
+    }
+  }
+
+The flowlet uses a dataset of type ``KeyValueTable`` to store the names it reads from the stream. Every time a new
+name is received, it is stored in the table under the key ``name``-and it overwrites any name that was previously
+stored::
+
+  /**
+   * Sample Flowlet.
+   */
+  public static class NameSaver extends AbstractFlowlet {
+
+    static final byte[] NAME = { 'n', 'a', 'm', 'e' };
+
+    @UseDataSet("whom")
+    KeyValueTable whom;
+    Metrics flowletMetrics;
+
+    @ProcessInput
+    public void process(StreamEvent event) {
+      byte[] name = Bytes.toBytes(event.getBody());
+      if (name != null && name.length > 0) {
+        whom.write(NAME, name);
+      }
+      if (name.length > 10) {
+        flowletMetrics.count("names.longnames", 1);
+      }
+      flowletMetrics.count("names.bytes", name.length);
+    }
+  }
+
+Note that the flowlet also emits metrics: Every time a new name is received the counter ``names.longnames`` is
+incremented by one, and the metric ``names.bytes`` is incremented by the length of the name. We will see below
+how to retrieve these metrics using the CDAP Client API.
+
+The `` Greeting`` Procedure
++++++++++++++++++++++++++++
+
+This procedure has a single handler method called ``greet`` that does not except arguments. When invoked, it
+reads the name stored by the ``NameSaver`` from the key-value table. It return a simple gretting with that name::
+
+  public static class Greeting extends AbstractProcedure {
+
+    @UseDataSet("whom")
+    KeyValueTable whom;
+    Metrics procedureMetrics;
+
+    @Handle("greet")
+    public void greet(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+      byte[] name = whom.read(NameSaver.NAME);
+      String toGreet = name != null ? new String(name) : "World";
+      if (toGreet.equals("Jane Doe")) {
+        procedureMetrics.count("greetings.count.jane_doe", 1);
+      }
+      responder.sendJson(new ProcedureResponse(SUCCESS), "Hello " + toGreet + "!");
+    }
+  }
+
