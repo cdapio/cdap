@@ -581,7 +581,7 @@ Introduction
 ------------
 
 One of the first tasks of actually working with Big Data applications is getting the data in.
-We understand data ingestion is important and one tool does not fit all the needs, So to assist the user
+We understand data ingestion is important and one tool does not fit all the needs, to assist the user
 for ingesting data into the Cask Data Application Platform (CDAP), we have
 assembled a set of tools and applications that the user can take advantage of for data ingestion:
 
@@ -598,10 +598,10 @@ The stream client is for managing Streams via external applications. The stream 
 Supported Actions
 .................
 
-- Create a Stream with a specified *stream-name*;
-- Retrieve or Update the TTL (time-to-live) for an existing Stream with a specified *stream-name*;
-- Truncate an existing stream (the deletion of all events that were written to the stream);
-- Write an event to an existing stream; and
+- Create a stream with a specified *stream-name*
+- Retrieve or update the TTL (time-to-live) for an existing stream with a specified *stream-name*
+- Truncate an existing stream (the deletion of all events that were written to the stream)
+- Write an event to an existing stream
 
 Java API
 ........
@@ -610,10 +610,10 @@ Create a StreamClient instance, specifying the fields 'host' and 'port' of the C
 Optional configurations that can be set:
 
 - SSL: true or false, default - false
-- WriterPoolSize: max thread pool size for write events to the Stream , default - 10
-- Version: CDAP instance version, used as a part of the base URI, default - 'v2'
-- AuthToken: Need to specify to authenticate client requests, if SSL is enabled, default - null
-- APIKey: Need to specify to authenticate client requests, if SSL is enabled, default - null
+- WriterPoolSize: max thread pool size for writing events to the stream , default - 10
+- Version: CDAP instance version - used as a part of the base URI, default - 'v2'
+- AuthToken: If SSL is enabled, need to specify to authenticate client requests, default - null
+- APIKey: If SSL is enabled, need to specify to authenticate client requests, default - null
 
 ::
 
@@ -635,15 +635,15 @@ Create a new Stream with the *stream-name* "purchaseStream"::
 - The *stream-name* should only contain ASCII letters, digits and hyphens.
 - If the Stream already exists, no error is returned, and the existing Stream remains in place.
 
-Update TTL for the Stream *purchaseStream*; TTL is a long value and is specified in seconds::
+Update TTL for the *purchaseStream* , TTL is a long value and is specified in seconds::
 
   streamClient.setTTL("purchaseStream", newTTL);
 
-Get the current TTL value(seconds) for the Stream *purchaseStream*::
+Get the current TTL value(seconds) for the *purchaseStream*::
 
   long ttl = streamClient.getTTL("purchaseStream");
 
-Create a ``StreamWriter`` instance for writing events to the Stream *purchaseStream*::
+Create a ``StreamWriter`` instance for writing events to the *purchaseStream*::
 
    StreamWriter streamWriter = streamClient.createWriter("purchaseStream");
 
@@ -658,7 +658,7 @@ Example::
 
   streamWriter.write("New log event", Charsets.UTF_8).get();
 
-To truncate the Stream *purchaseStream*, use::
+To truncate the *purchaseStream*, use::
 
   streamClient.truncate("purchaseStream");
 
@@ -677,7 +677,7 @@ Putting it All Together
       StreamClient streamClient = RestStreamClient.builder("localhost", 10000).build();
 
       try {
-        // Create Stream "purchaseStream"
+        // Create a stream named "purchaseStream"
         streamClient.create("purchaseStream");
 
         // Create StreamWriter Instance
@@ -748,7 +748,6 @@ from an existing file.
 1. Creating ``config`` object and configuring it manually
 ::
 
-  #The assigned values are also the default values
   def createStreamClient():
     config = Config()
     config.host = ‘localhost’
@@ -765,19 +764,20 @@ from an existing file.
 
 
 3. Once we have configured the stream client, we can create a stream by calling create with a stream-name
-:ref:`Note on Stream Name <StreamName>`
 ::
 
   streamClient.create("purchaseStream");
 
+:ref:`Note on Stream Name <StreamName>`
+
 Updating Time-to-Live
 +++++++++++++++++++++
 
-Update TTL for the Stream "purchaseStream"; ``newTTL`` is a long value specified in seconds::
+Update TTL for the "purchaseStream"; ``newTTL`` is a long value specified in seconds::
 
   streamClient.set_ttl("purchaseStream", newTTL)
 
-Get the current TTL value for the Stream "purchaseStream"::
+Get the current TTL value for the "purchaseStream"::
 
   ttl = streamClient.get_ttl("purchaseStream")
 
@@ -818,34 +818,55 @@ Config file structure in JSON format::
   {
     hostname: 'localhost',    - CDAP Instance hostname
     port: 10000,              - CDAP instance port
-    SSL: false                - if SSL is being used
+    SSL: false                - is SSL enabled
   }
 
 .. _StreamName:
 
-Stream Name:
+Stream name:
   -  The name can only contain ASCII letters, digits and hyphens.
-  -  If the Stream already exists, no error is returned, and the existing
-     Stream remains in place.
+  -  If the stream already exists, no error is returned, and the existing stream remains in place.
 
 Also look at: :ref:`Note on Stream Client <note_stream_client>`
 
 You can refer to Authentication Client Usage for Python here - :ref:`Authentication Client-Python <AuthClientPython>`
 
-Available at: [link]
+You can download the client at: [link]
 
 .. _note_stream_client:
 
-Notes on Stream Client
-......................
+Note on Stream Client
+.....................
 
 All methods from the ``StreamClient`` and ``StreamWriter`` throw
 exceptions using response code analysis from the CDAP instance. These
 exceptions help determine if the request was processed successfully or
 not.
 
-In the case of a **200 OK** response, no exception will be thrown; other
-cases will throw the NotFoundException.
+.. list-table::
+    :widths: 40 60
+    :header-rows: 1
+
+    * - Response Code
+      - Exception
+    * - ``400 Bad Request``
+      - javax.ws.rs.BadRequestException
+    * - ``401 Unauthorized``
+      - javax.ws.rs.NotAuthorizedException
+    * - ``403 Forbidden``
+      - javax.ws.rs.ForbiddenException
+    * - ``404 Not Found``
+      - javax.ws.rs.NotFoundException/co.cask.cdap.client.exception.NotFoundException
+    * - ``405 Method Not Allowed``
+      - javax.ws.rs.NotAcceptableException
+    * - ``409 Conflict``
+      - javax.ws.rs.NotAcceptableException
+    * - ``500 Internal Server Error``
+      - javax.ws.rs.ServerErrorException
+    * - ``501 Not Implemented``
+      - javax.ws.rs.NotSupportedException
+
+In the case of a 200 OK response, no exception will be thrown.
 
 File Tailer
 -----------
@@ -857,10 +878,10 @@ it will send it to a Stream via the REST API.
 Features
 ........
 
-- Distributed as debian and rpm packages;
-- Loads properties from a configuration file;
-- Supports rotation of log files;
-- Persists state and is able to resume from first unsent record; and
+- Distributed as debian and rpm packages
+- Loads properties from a configuration file
+- Supports rotation of log files
+- Persists state and is able to resume from first unsent record and
 - Writes statistics info.
 
 Installing File Tailer
@@ -914,7 +935,7 @@ Configuring Authentication Client for File Tailer
 .................................................
 
 Authentication client parameters:
-  - pipes.<pipe-name>.sink.auth_client - classpath of authentication client class
+  - pipes.<pipe-name>.sink.auth_client - fully qualified class name of the authentication client.
   - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is
     located at ``/etc/file-tailer/conf/auth-client.properties``
 
@@ -998,10 +1019,10 @@ Agent to read data from a log file by tailing it and putting them into CDAP.
       - Host name used by the Stream client
     * - a1.sinks.sink1.streamName
       - ``Stream-name``
-      - Target Stream name
+      - Target stream name
     * - a1.sinks.sink1.port
       - ``10000``
-      - This parameter is options and the Default port number is 10000
+      - This parameter is options and the default port number is 10000
     * - a1.sinks.sink1.sslEnabled
       - ``false``
       - This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false
@@ -1016,8 +1037,8 @@ Authentication Client
 .....................
 
 To use authentication, add these authentication client configuration parameters to the sink configuration file:
-  - a1.sinks.sink1.authClientClass = co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient,
-    Fully qualified class name of the client class
+  - a1.sinks.sink1.authClientClass - co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient,
+    fully qualified class name of the client class
   - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is
     located at ``/usr/local/apache-flume/conf/auth_client.conf``
 
@@ -1055,10 +1076,10 @@ where they will automatically be ingested by a daemon process.
 Features
 ........
 
-- Distributed as debian and rpm packages;
-- Loads properties from configuration file;
-- Supports multiple observers/topics;
-- Able to survive restart and resume, sending from the first unsent record of each of the existing files; and
+- Distributed as debian and rpm packages
+- Loads properties from configuration file
+- Supports multiple observers/topics
+- Able to survive restart and resume, sending from the first unsent record of each of the existing files and
 - Cleanup of files that are completely sent.
 
 Installing File DropZone
@@ -1158,17 +1179,21 @@ Create a ``BasicAuthenticationClient`` to get access token::
 
   String authClientClassName = "co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient";
   AuthenticationClient authenticationClient = configuration.getClassByName(authClientClassName);
-  // Set the CDAP instance connection info : hostname, port and flag to indicate if SSL is enabled or not
+
+  // Set the CDAP instance connection info: hostname, port and flag to indicate if SSL is enabled or not
   authenticationClient.setConnectionInfo("localhost", 10000, false);
+
   // If you have additional properties, you can include them for configuration using the following
   authenticationClient.configure(properties);
+
   // Check if authentication is enabled
   boolean isEnabled = authenticationClient.isAuthEnabled();
+
   // Get the access token for the user from the authentication service
   // If access token is not available an IOException will be thrown
   String token = authenticationClient.getAccessToken();
 
-The following example illustrates the authentication client obtaining credentials from user and uses that for configuration::
+The following example illustrates an authentication client obtaining credentials from user and it uses that for configuration::
 
   authenticationClient.setConnectionInfo(hostname, port, ssl);
   Properties properties = new Properties();
@@ -1275,6 +1300,6 @@ Authentication Client Configuration
     * - security.auth.client.password
       - password used for authenticating the user
     * - security.auth.client.verify.ssl.cert
-      - When SSL is enabled , if you want to allow self-signed certificates set this to false, that will disable the certificate check.
+      - When SSL is enabled , if you want to allow self-signed certificates set this to false - this will disable the certificate check.
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
