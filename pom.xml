@@ -61,7 +61,7 @@
     </repository>
     <repository>
       <id>sonatype</id>
-      <url>https://oss.sonatype.org/content/groups/public/</url>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
     <repository>
       <id>continuuity-public</id>
