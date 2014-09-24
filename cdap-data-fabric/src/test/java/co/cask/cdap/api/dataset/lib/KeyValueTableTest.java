@@ -29,7 +29,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.SortedSet;
 
@@ -238,6 +240,63 @@ public class KeyValueTableTest extends AbstractDatasetTest {
 
     deleteInstance("t1");
     deleteInstance("t2");
+  }
+
+  @Test
+  public void testScanning() throws Exception {
+    createInstance("keyValueTable", "tScan", DatasetProperties.EMPTY);
+
+    final KeyValueTable t = getInstance("tScan");
+    TransactionExecutor txnl = newTransactionExecutor(t);
+
+    // start a transaction
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // write 0..1000 to the table
+        for (int i = 0; i < 1000; i++) {
+          byte[] key = Bytes.toBytes(i);
+          t.write(key, key);
+        }
+      }
+    });
+
+    // start a transaction, verify scan
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // scan with start row '0' and end row '1000' and make sure we have 1000 records
+        Iterator<KeyValue<byte[], byte[]>> keyValueIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(1000));
+        int rowCount = 0;
+        while (keyValueIterator.hasNext()) {
+          rowCount++;
+          keyValueIterator.next();
+        }
+        Assert.assertEquals(1000, rowCount);
+      }
+    });
+
+    // start a transaction, scan part of them elements using scanner, close the scanner,
+    // then call next() on scanner, it should fail
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // scan with start row '0' and end row '1000' and make sure we have 1000 records
+        CloseableIterator<KeyValue<byte[], byte[]>> keyValueIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(200));
+        int rowCount = 0;
+        while (keyValueIterator.hasNext() && (rowCount < 100)) {
+          rowCount++;
+          keyValueIterator.next();
+        }
+        keyValueIterator.close();
+        try {
+          keyValueIterator.next();
+          Assert.fail("Reading after closing Scanner returned result.");
+        } catch (NoSuchElementException e) {
+        }
+      }
+    });
+    deleteInstance("tScan");
   }
 
   @Test

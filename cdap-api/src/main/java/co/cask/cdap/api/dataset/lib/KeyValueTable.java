@@ -26,7 +26,9 @@ import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
@@ -183,6 +185,38 @@ public class KeyValueTable extends AbstractDataset implements
   @Override
   public void write(KeyValue<byte[], byte[]> keyValue) throws IOException {
     write(keyValue.getKey(), keyValue.getValue());
+  }
+
+  /**
+   * Scans table.
+   * @param startRow start row inclusive. {@code null} means start from first row of the table
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @return {@link co.cask.cdap.api.dataset.lib.CloseableIterator} of
+   * {@link co.cask.cdap.api.dataset.lib.KeyValue<byte[],byte[]>}
+   */
+  public CloseableIterator<KeyValue<byte[], byte[]>> scan(byte[] startRow, byte[] stopRow) {
+    final Scanner scanner = table.scan(startRow, stopRow);
+
+    return new AbstractCloseableIterator<KeyValue<byte[], byte[]>>() {
+      private boolean closed = false;
+      @Override
+      protected KeyValue<byte[], byte[]> computeNext() {
+        Preconditions.checkState(!closed);
+        Row next = scanner.next();
+        if (next != null) {
+          return new KeyValue<byte[], byte[]>(next.getRow(), next.get(KEY_COLUMN));
+        }
+        close();
+        return null;
+      }
+
+      @Override
+      public void close() {
+        scanner.close();
+        endOfData();
+        closed = true;
+      }
+    };
   }
 
   /**
