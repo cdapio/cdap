@@ -681,7 +681,9 @@ HTTP Responses
 Query HTTP API
 ==============
 
-This interface supports submitting SQL queries over Datasets. Executing a query is asynchronous: 
+This interface supports submitting SQL queries over Datasets. Queries are
+processed asynchronously, therefore to obtain query results the following steps
+need to be performed:
 
 - first, **submit** the query;
 - then poll for the query's **status** until it is finished;
@@ -980,8 +982,14 @@ Example
    * - HTTP Request
      - ``GET <base-url>/data/explore/queries``
    * - HTTP Response
-     - ``[{"timestamp":1411266478717,"statement":"SELECT * FROM cdap_user_mydataset","status":"FINISHED",``
-       ``"query_handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2","has_results":true,"is_active":false}``
+     - ``[{``
+       ``   "timestamp": 1411266478717,``
+       ``   "statement": "SELECT * FROM cdap_user_mydataset",``
+       ``   "status": "FINISHED",``
+       ``   "query_handle": "57cf1b01-8dba-423a-a8b4-66cd29dd75e2",
+       ``   "has_results": true,
+       ``   "is_active": false``
+       ``}]``
    * - Description
      - Close the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
@@ -990,15 +998,21 @@ Comments
 The results are returned as a JSON array, with each element containing information about the query::
 
   [
-    {"timestamp":1407192465183,"statement":"SHOW TABLES","status":"FINISHED",
-     "query_handle":"319d9438-903f-49b8-9fff-ac71cf5d173d","has_results":true,"is_active":false},
+    {
+        "timestamp": 1407192465183,
+        "statement": "SHOW TABLES",
+        "status": "FINISHED",
+        "query_handle": "319d9438-903f-49b8-9fff-ac71cf5d173d",
+        "has_results": true,
+        "is_active": false
+    },
     ...
   ]
 
 Download Query Results
 ----------------------
 To download the results of a query, use::
-  
+
   GET <base-url>/data/explore/queries/<query-handle>
 
 The results of the query are returned in CSV format.
