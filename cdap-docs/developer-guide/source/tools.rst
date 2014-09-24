@@ -1168,8 +1168,8 @@ To use the Authentication Client Java API, include this Maven dependency in your
 
  <dependency>
   <groupId>co.cask.cdap</groupId>
-  <artifactId>authentication-client-java</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <artifactId>cdap-authentication-client</artifactId>
+  <version>1.0.0</version>
  </dependency>
 
 Example
