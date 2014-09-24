@@ -67,8 +67,8 @@ public class WebAnalyticsTest extends TestBase {
       flowletMetrics.waitForProcessed(lines, 10, TimeUnit.SECONDS);
 
       // Verify the unique count
-      KeyValueTable uniqueVisitCount = appManager.<KeyValueTable>getDataSet("UniqueVisitCount").get();
-      Assert.assertEquals(3L, Bytes.toLong(uniqueVisitCount.read("192.168.12.72")));
+      UniqueVisitCount uniqueVisitCount = appManager.<UniqueVisitCount>getDataSet("UniqueVisitCount").get();
+      Assert.assertEquals(3L, uniqueVisitCount.getCount("192.168.12.72"));
 
     } finally {
       appManager.stopAll();

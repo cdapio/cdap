@@ -62,6 +62,17 @@ public class UniqueVisitCount extends AbstractDataset implements RecordScannable
     keyValueTable.increment(Bytes.toBytes(ip), amount);
   }
 
+  /**
+   * Reads the visit count for a given IP.
+   *
+   * @param ip The IP to lookup
+   * @return the number of visits
+   */
+  public long getCount(String ip) {
+    byte[] value = keyValueTable.read(Bytes.toBytes(ip));
+    return (value == null) ? 0L : Bytes.toLong(value);
+  }
+
   @Override
   public Type getRecordType() {
     return new TypeToken<KeyValue<String, Long>>() { }.getType();
