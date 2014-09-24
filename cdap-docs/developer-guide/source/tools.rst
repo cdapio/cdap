@@ -282,7 +282,7 @@ debugging:
 
 For more information, see `Attaching a Debugger`_.
 
-:Note:  Currently, debugging is not supported under Windows.
+**Note** : Currently, debugging is not supported under Windows.
 
 Debugging an Application in Distributed CDAP
 --------------------------------------------
@@ -640,7 +640,7 @@ Create a new Stream with the *stream id* "newStreamName"::
 
   streamClient.create("newStreamName");
 
-[`Note StreamName`_]
+**Note** : Stream Name:
 
 - The *stream-id* should only contain ASCII letters, digits and hyphens.
 - If the Stream already exists, no error is returned, and the existing Stream remains in place.
@@ -731,6 +731,8 @@ Putting it All Together
 
 Also look at: :ref:`Note on Stream Client <note_stream_client>`
 
+you can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+
 Python API
 ..........
 
@@ -750,7 +752,7 @@ Configuring and Creating a Stream
 
 For Creating a ``StreamClient`` instance you would need a ``config`` object:
 
-You can create the `config`` object by manually configuring the config options or you can read the config options
+You can create the ``config`` object by manually configuring the config options or you can read the config options
 from an existing file.
 
 1. Creating ``config`` object and configuring it manually
@@ -764,7 +766,7 @@ from an existing file.
     config.ssl = False
     streamClient = streamClient(config)
 
-2. using an existing configuration file in JSON format [`Note 1`_] to create a ``config`` object
+2. using an existing configuration file in JSON format :ref:`Configuration-Json <JsonConfig>` to create a ``config`` object
 ::
 
    def createStreamClient():
@@ -773,7 +775,7 @@ from an existing file.
 
 
 3. Once we have configured the stream client, we can create a stream by calling create with a stream-name
-[`Note StreamName`_]
+:ref:`Note on Stream Name <StreamName>`
 ::
 
   streamClient.create("newStreamName");
@@ -824,8 +826,7 @@ Putting it All Together
     ...
 
 
-.. _note 1:
-   :Note 1:
+.. _JsonConfig:
 
 Config file structure in JSON format::
 
@@ -835,8 +836,7 @@ Config file structure in JSON format::
     SSL: false                - if SSL is being used
   }
 
-.. _note StreamName:
-   :Note 2:
+.. _StreamName:
 
 Stream Name:
   -  The name can only contain ASCII letters, digits and hyphens.
@@ -844,6 +844,8 @@ Stream Name:
      Stream remains in place.
 
 Also look at: :ref:`Note on Stream Client <note_stream_client>`
+
+you can refer to Authentication Client Usage for Python here - :ref:`Authentication Client-Python <AuthClientPython>`
 
 Available at: [link]
 
@@ -982,10 +984,11 @@ Features
 Installing File Tailer
 ......................
 
-on Debian/Ubuntu :
-``sudo apt-get install file-tailer.deb``
-on RHEL/Cent OS :
-`` sudo rpm -ivh --force file-tailer.rpm``
+  on Debian/Ubuntu :
+  ``sudo apt-get install file-tailer.deb``
+
+  on RHEL/Cent OS :
+  ``sudo rpm -ivh --force file-tailer.rpm``
 
 Configuring File Tailer
 .......................
@@ -1010,21 +1013,20 @@ After Installation, you can configure the daemon properties at /etc/file-tailer/
      # Host port that is used by stream client
      pipes.app1pipe.sink.port=10000
 
-  :Note:  Please note that the target file must be accessible to the File Tailer user. To check, you can use the
-          `more` command with the File Tailer user:
-          Available at: [link]
+**Note**: Please note that the target file must be accessible to the File Tailer user.
+
+Available at: [link]
 
 Starting and Stopping the Daemon
 ................................
 
 To Start a file tailer daemon execute:
-``sudo service file-tailer start``
+  ``sudo service file-tailer start``
 
 To Stop a file tailer daemon execute:
-``sudo service file-tailer start``
+  ``sudo service file-tailer start``
 
-:Note: File Tailer stores log files in the /var/log/file-tailer directory.
-       PID, states and statistics are stored in the /var/run/file-tailer directory.
+**Note** : File Tailer stores log files in the /var/log/file-tailer directory. PID, states and statistics are stored in the /var/run/file-tailer directory.
 
 Configuring Authentication Client for File Tailer
 .................................................
@@ -1034,7 +1036,7 @@ Authentication client parameters :
   - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is
     located at ``/etc/file-tailer/conf/auth-client.properties``
 
-  you can refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
+you can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
 
 
 Description of Configuration Properties
@@ -1137,7 +1139,7 @@ To use authentication, add these authentication client configuration parameters 
   - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is
     located at ``/usr/local/apache-flume/conf/auth_client.conf``
 
-please refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
+you can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
 
 Flume Sink Example
 ..................
@@ -1179,10 +1181,11 @@ Features
 
 Installing File DropZone
 ........................
-on Debian/Ubuntu :
-``sudo apt-get install file-drop-zone.deb``
-on RHEL/Cent OS :
-`` sudo rpm -ivh --force file-drop-zone.rpm``
+  on Debian/Ubuntu :
+    ``sudo apt-get install file-drop-zone.deb``
+
+  on RHEL/Cent OS :
+    ``sudo rpm -ivh --force file-drop-zone.rpm``
 
 Configuring File DropZone
 .........................
@@ -1213,25 +1216,182 @@ After Installation, you can configure the daemon properties at /etc/file-drop-zo
 Starting and Stopping the Daemon
 ................................
 To Start a file DropZone daemon execute:
-``sudo service file-drop-zone start``
+  ``sudo service file-drop-zone start``
 
 To Stop a file DropZone daemon execute:
-``sudo service file-drop-zone stop``
+  ``sudo service file-drop-zone stop``
 
-:Note: File DropZone stores log files in the /var/log/file-drop-zone directory.
-  PID, states and statistics are stored in the /var/run/file-drop-zone directory
+Note:  File DropZone stores log files in the /var/log/file-drop-zone directory. PID, states and statistics are stored in the /var/run/file-drop-zone directory
 
 Manual Upload of files
 ......................
 If you would like to manually upload a file use,
 ``file-drop-zone load <file-path> <observer>``
 
-  you can refer to the properties and description of auth_client_properties here - ConfiguringAuthClient_
+you can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+
+.. _AuthClientJava:
+
+Authentication Client - Java
+............................
+The Authentication Client Java API is for fetching the access token from the authentication server.
+
+Supported Actions
++++++++++++++++++
+
+- fetch an access token from the authentication server with credentials supported by the active authentication
+ mechanism
+- check that authentication is enabled in the gateway server
+
+Current implementation supports three authentication mechanisms:
+  - Basic Authentication
+  - LDAP
+  - JAASPI
+
+It is also possible to extend existing logic and implement a custom client for any other authentication
+mechanisms. To create a new authentication client, implement the ``AuthenticationClient`` interface.
+
+Build
++++++
+
+To build the Authentication Client Java API jar, use:
+
+mvn clean package
+
+Usage
++++++
+
+To use the Authentication Client Java API, include this Maven dependency in your project's ``pom.xml`` file:
+::
+
+ <dependency>
+  <groupId>co.cask.cdap</groupId>
+  <artifactId>authentication-client-java</artifactId>
+  <version>1.0-SNAPSHOT</version>
+ </dependency>
+
+Example
+.......
+
+Create a ``BasicAuthenticationClient`` instance by full class name:
+::
+
+  String authClientClassName = "co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient";
+  AuthenticationClient authenticationClient = configuration.getClassByName(authClientClassName);
+  // set the gateway server connection info : hostname, port and flag to indicate if SSL is enabled or not
+  authenticationClient.setConnectionInfo("localhost", 10000, false);
+  // If you have additional properties, you can include them for configuration using the following
+  authenticationClient.configure(properties);
+  // check if authentication is enabled
+  boolean isEnabled = authenticationClient.isAuthEnabled();
+  // Get the access token for the user from the authentication server
+  // If access token is not available an IOException will be thrown
+  String token = authenticationClient.getAccessToken();
+
+  //Retrieve credentials required by the authentication provider from the authentication server
+  List<Credential> credentials = authenticationClient.getRequiredCredentials();
+
+Interactive Client can get Configuration from user and use that to configure Authentication Client
+::
+
+  authenticationClient.setConnectionInfo(hostname, port, ssl);
+  Properties properties = new Properties();
+  if (authenticationClient.isAuthEnabled()) {
+    ConsoleReader reader = new ConsoleReader();
+    for (Credential credential : authenticationClient.getRequiredCredentials()) {
+      String credentialValue;
+      output.printf("Please, specify "  credential.getDescription()  "> ");
+      if (credential.isSecret()) {
+          credentialValue = reader.readLine(prompt, '*');
+      } else {
+        credentialValue = reader.readLine(prompt);
+      }
+      properties.put(credential.getName(), credentialValue);
+    }
+    authenticationClient.configure(properties);
+    cliConfig.getClientConfig().setAuthenticationClient(authenticationClient);
+  }
+
+To see the properties supported by the Authentication Client, look at ConfiguringAuthClient_
+
+.. _AuthClientPython:
+
+Authentication Client - Python
+..............................
+Example Usage
++++++++++++++
+
+1) Read Config from Json and retrieve AccessToken
+
+::
+
+    # include these imports in your Python script
+    from Config import Config
+    from BasicAuthenticationClient import BasicAuthenticationClient
+
+    # Create a BasicAuthenticationClient instance
+    authentication_client = BasicAuthenticationClient()
+
+    # Set the connection parameters: authentication server host; authentication server host port; SSL mode
+    authentication_client.set_connection_info('localhost', 10000, False)
+
+    # Load configuration from JSON File
+    config = Config().read_from_file('auth_config.json')
+
+    # Configure the authentication client with the Config object
+    authentication_client.configure(config)
+
+    # Check if authentication is enabled in the gateway server
+    is_enabled = authentication_client.is_auth_enabled()
+
+    # Retrieve the access token from the authentication server:
+    token = authentication_client.get_access_token()
+
+
+sample config JSON file:
+
+::
+
+  {
+    "security_auth_client_username": "admin",
+    "security_auth_client_password": "secret",
+    "security_ssl_cert_check": true
+  }
+
+2) Create a Config object and configure it manually
+::
+
+    # include these imports in your Python script
+    from Config import Config
+    from BasicAuthenticationClient import BasicAuthenticationClient
+
+    # Create a BasicAuthenticationClient instance
+    authentication_client = BasicAuthenticationClient()
+
+    # Set the connection parameters: authentication server host; authentication server host port; SSL mode
+    authentication_client.set_connection_info('localhost', 10000, False)
+
+    # Load configuration from JSON File
+    config = Config()
+    config.security_auth_client_username = "admin"
+    config.security_auth_client_password = "secret"
+    config.security_ssl_cert_check = True
+
+    # Configure the authentication client with the Config object
+    authentication_client.configure(config)
+
+    # Check if authentication is enabled in the gateway server
+    is_enabled = authentication_client.is_auth_enabled()
+
+    # Retrieve the access token from the authentication server:
+    token = authentication_client.get_access_token()
+
+To see the properties supported by the Authentication Client, look at ConfiguringAuthClient_
 
 .. _ConfiguringAuthClient:
 
 Authentication Client Configuration
------------------------------------
+...................................
 
 .. list-table::
     :widths: 50 50
@@ -1243,11 +1403,7 @@ Authentication Client Configuration
       - authorized user name
     * - security.auth.client.password
       - password used for authenticating the user
-    * - security.auth.client.gateway.hostname
-      - Host name that is used by authentication client
-    * - security.auth.client.gateway.port
-      - Host port number that is used by authentication client
-    * - security.auth.client.gateway.ssl.enabled
-      - Enable/Disable SSL
+    * - security.auth.client.verify.ssl.cert
+      - When SSL is enabled, to allow self-signed certificates set this to false
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
