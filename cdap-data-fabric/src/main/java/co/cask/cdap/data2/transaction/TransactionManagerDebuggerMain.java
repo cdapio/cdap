@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.transaction;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.tephra.ChangeId;
 import co.cask.tephra.TransactionManager;
@@ -31,7 +32,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -106,6 +106,7 @@ public class TransactionManagerDebuggerMain {
                                       // is to be persisted on the disk
   private boolean showTxids;          // show all the transaction IDs present in the snapshot
 
+  private Configuration hConf;
   private Options options;
 
   private final SnapshotCodecProvider codecProvider;
@@ -113,6 +114,7 @@ public class TransactionManagerDebuggerMain {
   private TransactionManagerDebuggerMain (Configuration configuration) {
     codecProvider = new SnapshotCodecProvider(configuration);
     buildOptions();
+    this.hConf = configuration;
   }
 
   private void buildOptions() {
@@ -650,7 +652,7 @@ public class TransactionManagerDebuggerMain {
     return "['" + id + "' start time: " + formatter.format(date) + " number: " + (id % TxConstants.MAX_TX_PER_MS) + "]";
   }
 
-  private boolean execute(String[] args, Configuration conf) {
+  private boolean execute(String[] args) {
     if (args.length <= 0) {
       printUsage(true);
       return false;
@@ -661,7 +663,7 @@ public class TransactionManagerDebuggerMain {
       return false;
     }
     List<String> subArgs = Arrays.asList(args).subList(1, args.length);
-    return parseArgsAndExecMode(subArgs.toArray(new String[0]), conf);
+    return parseArgsAndExecMode(subArgs.toArray(new String[0]), hConf);
   }
 
   /**
@@ -700,9 +702,12 @@ public class TransactionManagerDebuggerMain {
 
   public static void main(String[] args) {
     // create a config and load the gateway properties
-    Configuration config = HBaseConfiguration.create();
-    TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain(config);
-    boolean success = instance.execute(args, config);
+    CConfiguration cConf = CConfiguration.create();
+    Configuration hConf = new Configuration();
+    cConf.copyTxProperties(hConf);
+
+    TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain(hConf);
+    boolean success = instance.execute(args);
     if (!success) {
       System.exit(1);
     }
