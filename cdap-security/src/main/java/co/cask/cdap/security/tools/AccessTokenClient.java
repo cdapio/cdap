@@ -114,7 +114,7 @@ public class AccessTokenClient {
       name = System.getProperty("script").replaceAll("[./]", "");
     }
     out.println("Usage: ");
-    out.println("  " + name + " [ --host <host> ] [ --username <username> ]");
+    out.println("  " + name + " [ --host <host> ] [ --username <username> ] [ --file <outputfile> ]");
     out.println();
     printOptions(error);
   }
@@ -180,9 +180,7 @@ public class AccessTokenClient {
     useSsl = commandLine.hasOption(ConfigurableOptions.SSL);
     disableCertCheck = commandLine.hasOption(ConfigurableOptions.DISABLE_CERT_CHECK);
 
-    if (commandLine.hasOption(ConfigurableOptions.HOST)) {
-      host = commandLine.getOptionValue(ConfigurableOptions.HOST, "localhost");
-    }
+    host = commandLine.getOptionValue(ConfigurableOptions.HOST, "localhost");
 
     if (commandLine.hasOption(ConfigurableOptions.PORT)) {
       try {
@@ -194,27 +192,23 @@ public class AccessTokenClient {
       port = (useSsl) ? SSL_PORT : NO_SSL_PORT;
     }
 
-    if (commandLine.hasOption(ConfigurableOptions.USER_NAME)) {
-      username = commandLine.getOptionValue(ConfigurableOptions.USER_NAME, System.getProperty("user.name"));
-      if (username == null) {
-        usage("Specify --username to login as a user.");
-      }
+    username = commandLine.getOptionValue(ConfigurableOptions.USER_NAME, System.getProperty("user.name"));
+
+    if (username == null) {
+      usage("Specify --username to login as a user.");
     }
 
-    if (commandLine.hasOption(ConfigurableOptions.PASSWORD)) {
-      password = commandLine.getOptionValue(ConfigurableOptions.PASSWORD);
-    } else {
-      if (password == null) {
-        Console console = System.console();
-        password = String.valueOf(console.readPassword("Password: "));
-      }
+    password = commandLine.getOptionValue(ConfigurableOptions.PASSWORD);
+
+    if (password == null) {
+      Console console = System.console();
+      password = String.valueOf(console.readPassword(String.format("Password for %s: ", username)));
     }
 
     if (commandLine.hasOption(ConfigurableOptions.FILE)) {
       filePath = commandLine.getOptionValue(ConfigurableOptions.FILE);
-      if (filePath == null) {
-        usage("Specify --file to save to file");
-      }
+    } else {
+      usage("Specify --file to save to file");
     }
 
     if (commandLine.getArgs().length > 0) {
