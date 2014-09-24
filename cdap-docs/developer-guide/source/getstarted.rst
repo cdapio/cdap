@@ -31,7 +31,7 @@ The CDAP Software Developers Kit (SDK) is all you need to develop CDAP applicati
 System Requirements and Dependencies for the SDK
 ------------------------------------------------
 
-The CDAP SDK has only three requirements:
+The CDAP SDK runs on Linux, Unix, MacOS and Windows, and only has three requirements:
 
  - `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP;
    note that $JAVA_HOME should be set)
