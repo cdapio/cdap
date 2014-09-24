@@ -581,8 +581,8 @@ Introduction
 ------------
 
 One of the first tasks of actually working with Big Data applications is getting the data in.
-We understand data ingestion is important and one tool does not fit all the needs,So to assist the user
-for ingesting data into Cask Data Application Platform (CDAP) Applications, we have
+We understand data ingestion is important and one tool does not fit all the needs, So to assist the user
+for ingesting data into the Cask Data Application Platform (CDAP), we have
 assembled a set of tools and applications that the user can take advantage of for data ingestion:
 
 - Java and Python APIs for controlling and writing to Streams;
@@ -593,17 +593,15 @@ assembled a set of tools and applications that the user can take advantage of fo
 Stream Client
 -------------
 
-The stream client is for managing Streams via external applications. The stream client is currently available in Java
- and Python.
+The stream client is for managing Streams via external applications. The stream client is currently available in Java and Python.
 
 Supported Actions
 .................
 
 - Create a Stream with a specified *stream-name*;
 - Retrieve or Update the TTL (time-to-live) for an existing Stream with a specified *stream-name*;
-- Truncate an existing Stream (the deletion of all events that were written to the Stream);
-- Write an event to an existing Stream; and
-- Send a File to an existing Stream.
+- Truncate an existing stream (the deletion of all events that were written to the stream);
+- Write an event to an existing stream; and
 
 Java API
 ........
@@ -611,14 +609,15 @@ Java API
 Create a StreamClient instance, specifying the fields 'host' and 'port' of the CDAP instance.
 Optional configurations that can be set:
 
-- SSL: true or false (use HTTP protocol)
-- WriterPoolSize: '10' (max thread pool size for write events to the Stream)
-- Version:'v2' (CDAP instance version, used as a part of the base URI
-  ``http(s)://localhost:10000/v2/...``)
-- AuthToken: null (Need to specify to authenticate client requests)
-- APIKey: null (Need to specify to authenticate client requests using SSL)::
+- SSL: true or false, default - false
+- WriterPoolSize: max thread pool size for write events to the Stream , default - 10
+- Version: CDAP instance version, used as a part of the base URI, default - 'v2'
+- AuthToken: Need to specify to authenticate client requests, if SSL is enabled, default - null
+- APIKey: Need to specify to authenticate client requests, if SSL is enabled, default - null
 
-  StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000)
+::
+
+   StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000)
                                                   .apiKey("apiKey")
                                                   .authToken("token")
                                                   .ssl(false)
@@ -627,26 +626,26 @@ Optional configurations that can be set:
                                                   .build();
 
 
-Create a new Stream with the *stream-name* "newStreamName"::
+Create a new Stream with the *stream-name* "purchaseStream"::
 
-  streamClient.create("newStreamName");
+  streamClient.create("purchaseStream");
 
-**Note**-Stream Name:
+**Note** Stream Name *<stream-name>*:
 
 - The *stream-name* should only contain ASCII letters, digits and hyphens.
 - If the Stream already exists, no error is returned, and the existing Stream remains in place.
 
-Update TTL for the Stream *streamName*; TTL is a long value and is specified in seconds::
+Update TTL for the Stream *purchaseStream*; TTL is a long value and is specified in seconds::
 
-  streamClient.setTTL("streamName", newTTL);
+  streamClient.setTTL("purchaseStream", newTTL);
 
-Get the current TTL value(seconds) for the Stream *streamName*::
+Get the current TTL value(seconds) for the Stream *purchaseStream*::
 
-  long ttl = streamClient.getTTL("streamName");
+  long ttl = streamClient.getTTL("purchaseStream");
 
-Create a ``StreamWriter`` instance for writing events to the Stream *streamName*::
+Create a ``StreamWriter`` instance for writing events to the Stream *purchaseStream*::
 
-   StreamWriter streamWriter = streamClient.createWriter("streamName");
+   StreamWriter streamWriter = streamClient.createWriter("purchaseStream");
 
 To write new events to the Stream, You can use any of these five methods in the ``StreamWriter`` interface::
 
@@ -659,9 +658,9 @@ Example::
 
   streamWriter.write("New log event", Charsets.UTF_8).get();
 
-To truncate the Stream *streamName*, use::
+To truncate the Stream *purchaseStream*, use::
 
-  streamClient.truncate("streamName");
+  streamClient.truncate("purchaseStream");
 
 When you are finished, release all resources by calling these two methods::
 
@@ -677,21 +676,21 @@ Putting it All Together
       // Create StreamClient instance with mandatory fields 'host' and 'port'.
       StreamClient streamClient = RestStreamClient.builder("localhost", 10000).build();
 
-      // Create StreamWriter Instance
-      StreamWriter streamWriter = streamClient.createWriter("streamName");
-
       try {
-        // Create Stream <streamName>
-        streamClient.create(streamName);
+        // Create Stream "purchaseStream"
+        streamClient.create("purchaseStream");
 
-        // Get current Stream TTL value by <streamName>
-        long currentTTL = streamClient.getTTL(streamName);
-        LOG.info("Current TTL value for stream {} is: {} seconds", streamName, currentTTL);
+        // Create StreamWriter Instance
+        StreamWriter streamWriter = streamClient.createWriter("purchaseStream");
+
+        // Get current Stream TTL value
+        long currentTTL = streamClient.getTTL("purchaseStream");
+        LOG.info("Current TTL value for stream {} is: {} seconds", "purchaseStream", currentTTL);
         long newTTL = 18000;
 
-        // Update TTL value for Stream by <streamName>
-        streamClient.setTTL(streamName, newTTL);
-        LOG.info("Setting new TTL: {} seconds for stream: {}", newTTL, streamName);
+        // Update TTL value for Stream
+        streamClient.setTTL("purchaseStream", newTTL);
+        LOG.info("Setting new TTL: {} seconds for stream: {}", newTTL, "purchaseStream");
 
 
         String event = "192.0.2.0 - - [09/Apr/2012:08:40:43 -0400] \"GET /NoteBook/ HTTP/1.0\" 201 809 \"-\" " +
@@ -703,7 +702,7 @@ Putting it All Together
         Futures.addCallback(future, new FutureCallback<Void>() {
           @Override
           public void onSuccess(Void contents) {
-            LOG.info("Successfully written to stream {}", streamName);
+            LOG.info("Successfully written to stream {}", "purchaseStream");
           }
 
           @Override
@@ -755,43 +754,39 @@ from an existing file.
     config.host = ‘localhost’
     config.port = 10000
     config.ssl = False
-    streamClient = streamClient(config)
+    streamClient = StreamClient(config)
 
 2. using an existing configuration file in JSON format :ref:`Configuration-Json <JsonConfig>` to create a ``config`` object
 ::
 
    def createStreamClient():
     config = Config.read_from_file('/path/to/config.json')
-    streamClient = streamClient(config)
+    streamClient = StreamClient(config)
 
 
 3. Once we have configured the stream client, we can create a stream by calling create with a stream-name
 :ref:`Note on Stream Name <StreamName>`
 ::
 
-  streamClient.create("newStreamName");
+  streamClient.create("purchaseStream");
 
 Updating Time-to-Live
 +++++++++++++++++++++
 
-Update TTL for the Stream “streamName”; ``newTTL`` is a long value specified in seconds:
-::
+Update TTL for the Stream "purchaseStream"; ``newTTL`` is a long value specified in seconds::
 
-  streamClient.set_ttl("streamName", newTTL)
+  streamClient.set_ttl("purchaseStream", newTTL)
 
-Get the current TTL value for the Stream “streamName”:
-::
+Get the current TTL value for the Stream "purchaseStream"::
 
-  ttl = streamClient.get_ttl("streamName")
+  ttl = streamClient.get_ttl("purchaseStream")
 
 Writing Events to Stream
 ++++++++++++++++++++++++
 
-Create a ``StreamWriter`` instance for writing events to the Stream
-“streamName”:
+Create a ``StreamWriter`` instance for writing events to the Stream.
 
-Once you have a ``StreamWriter`` instance:
-  1. You can write events to the stream using ``write()`` method
+Once you have a ``StreamWriter`` instance you can write events to the stream using the ``write()`` method
 
 Putting it All Together
 +++++++++++++++++++++++
@@ -799,8 +794,8 @@ Putting it All Together
 
   def createStreamClient():
     config = Config.read_from_file('/path/to/config.json')
-    streamClient = streamClient(config)
-    streamWriter = streamClient.create_writer("streamName")
+    streamClient = StreamClient(config)
+    streamWriter = streamClient.create_writer("purchaseStream")
     streamPromise = streamWriter.write("New log Event") #async
     streamPromise.onResponse(onOKHandler, onErrorHandler)
 
@@ -815,7 +810,6 @@ Putting it All Together
     parse response
     return "Failure"
     ...
-
 
 .. _JsonConfig:
 
@@ -1113,8 +1107,9 @@ Note:  File DropZone stores log files in the /var/log/file-drop-zone directory. 
 
 Manual Upload of files
 ......................
-If you would like to manually upload a file use,
-``file-drop-zone load <file-path> <observer>``
+If you would like to manually upload a file use::
+
+  file-drop-zone load <file-path> <observer>
 
 You can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
 
