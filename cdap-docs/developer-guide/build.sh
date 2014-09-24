@@ -90,7 +90,6 @@ function clean() {
 }
 
 function build_docs() {
-  clean
   cd $SCRIPT_PATH
   sphinx-build -b html -d build/doctrees source build/html
 }
@@ -146,11 +145,19 @@ function make_zip() {
 }
 
 function build() {
-  build_docs
+  clean
   build_javadocs_sdk
   copy_javadocs_sdk
+  build_docs
   copy_license_pdfs
   make_zip
+}
+
+function build_quick() {
+  clean
+  build_docs
+  copy_license_pdfs
+  copy_javadocs_sdk
 }
 
 function build_rest_pdf() {
@@ -212,10 +219,11 @@ fi
 
 case "$1" in
   build )             build; exit 1;;
+  build-quick )       build_quick; exit 1;;
   docs )              build_docs; exit 1;;
   license-pdfs )      build_license_pdfs; exit 1;;
   build-standalone )  build_standalone; exit 1;;
-  copy-javadocs )     copy_javadocs; exit 1;;
+  copy-javadocs )     copy_javadocs_sdk; exit 1;;
   copy-license-pdfs ) copy_license_pdfs; exit 1;;
   javadocs )          build_javadocs_sdk; exit 1;;
   javadocs-full )     build_javadocs_full; exit 1;;
