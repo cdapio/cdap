@@ -53,8 +53,8 @@ To deploy the application and start it, first make sure CDAP is running, and the
 
 On Windows, run::
 
-  $ bin/app-manager.bat --action deploy
-  $ bin/app-manager.bat --action start
+  $ bin/app-manager.bat deploy
+  $ bin/app-manager.bat start
 
 Overview of Wise
 ================
@@ -523,8 +523,6 @@ The ``@GET`` annotation specifies the HTTP method used to reach the endpoint. Th
 single user parameter, ``{ip}``. It is decoded as a ``String`` in the parameters of the
 ``getIPCount()`` method with the help of the ``@PathParam`` annotation.
 
-.. TODO: create mini app/script to reach endpoint
-
 The ``PageViewCountHandler`` class is registered in the ``WiseService`` class, which has the implementation::
 
   class WiseService extends AbstractService {
@@ -539,6 +537,17 @@ The ``PageViewCountHandler`` class is registered in the ``WiseService`` class, w
   endpoints defined by the service. 
 - The ``PageViewCountHandler`` that responds to the HTTP endpoint exposed by the Service is 
   specified by the ``addHandler()`` method.
+
+We have created a script to query the HTTP endpoints defined by the ``WiseService``. In the root of the ``Wise``
+application, execute::
+
+  $ bin/call-service.sh --ip 255.255.255.154
+  $ bin/call-service.sh --ip 255.255.255.154 --uri /index.html
+
+On Windows, execute::
+
+  $ bin/call-service.bat 255.255.255.154
+  $ bin/call-service.bat 255.255.255.154 /index.html
 
 Exploring Wise Datasets through SQL
 ===================================
