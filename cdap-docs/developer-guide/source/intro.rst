@@ -23,7 +23,7 @@ Hive, and Spark.
 
 This document is your complete guide to the Cask Data Application Platform: It helps you get
 started and set up your development environment; it explains how CDAP works and teaches how to
-develop and test application with CDAP, or how to virtualize an existing Hadoop application.
+develop and test applications with CDAP, or how to virtualize an existing Hadoop application.
 It also contains a complete reference of CDAP programming APIs and client interfaces.
 Furthermore, this document describes how to install, monitor and diagnose a fully distributed
 CDAP in a Hadoop cluster.

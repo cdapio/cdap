@@ -9,14 +9,14 @@ Getting Started with Cask Data Application Platform
 ===================================================
 
 This chapter is a guide to help you get started with CDAP. At the end of this topic you will have the CDAP SDK up
-and running in your development environment, you will have built, deployed, run, and interacted with a sample
+and running in your development environment, and you will have built, deployed, run, and interacted with a sample
 application.
 
 Introduction to the CDAP SDK
 ============================
 
 The CDAP Software Developers Kit (SDK) is all you need to develop CDAP applications in your development environment
-(for example, your laptop or work station). It includes
+(for example, your laptop or work station). It includes:
 
 - A Standalone CDAP that can run on a single machine in a single JVM. It provides all of
   the CDAP APIs without requiring a Hadoop cluster, using alternative, fully functional
@@ -31,7 +31,7 @@ The CDAP Software Developers Kit (SDK) is all you need to develop CDAP applicati
 System Requirements and Dependencies for the SDK
 ------------------------------------------------
 
-The minimum requirements to use the CDAP SKK for developing and running CDAP applications are only three:
+The CDAP SDK has only three requirements:
 
  - `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP;
    note that $JAVA_HOME should be set)
@@ -42,6 +42,7 @@ Downloading and Setting Up the CDAP SDK
 =======================================
 The SDK is available as a binary on the Downloads section of the Cask Website.
 [TODO: add link] Once downloaded, unzip it to a directory on your machine:
+::
 
   $ tar -zxvf cdap-sdk-2.5.0.zip
   $ cd cdap-sdk-2.5.0
@@ -67,7 +68,7 @@ The best way to start developing a CDAP application is using the Maven archetype
     -DarchetypeVersion=2.5.0``
 
 This creates a Maven project with all required dependencies and Maven plugins as well as a simple
-application template that you can modify to develop your application. you can import this Maven project
+application template that you can modify to develop your application. You can import this Maven project
 into your favorite IDE, such as Eclipse or IntelliJ, and you are ready to start developing your first
 CDAP application.
 
@@ -99,7 +100,7 @@ Purchase
 This example demonstrates use of each of the CDAP elements: Streams, Flows, Flowlets,
 Datasets, Queries, Procedures, MapReduce Jobs, Workflows, and Custom Services in a single Application.
 
- - The PurchaseFlow receives Events from a stream, each describing an purchase by a given customer.
+ - The PurchaseFlow receives Events from a stream, each describing a purchase by a given customer
    ("John bought 5 apples for $2"), processes and stores them it in a ``purchases`` dataset.
  - A Mapreduce Job reads the ``purchase`` dataset, compiles the purchases of each customer into a purchase
    history, and stores them in a ``history`` dataset.
@@ -124,7 +125,7 @@ It computes the page rank of URLs from an input stream.
 Read more about this example :doc:`here <examples/sparkPageRank>`.
 
 WordCount
-=========
+---------
 
 A simple application that counts words and tracks word associations and unique words seen on the Stream.
 It demonstrates the power of using datasets and how they can be used to simplify storing complex data.
