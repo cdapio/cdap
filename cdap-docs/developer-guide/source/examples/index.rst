@@ -42,9 +42,9 @@ The SDK includes these examples:
     - An application that demonstrates streaming text analysis using a Spark program. It computes the page rank
       of URLs from an input stream.
 
-.. include:: /examples/helloworld.rstx
-.. include:: /examples/wordcount.rstx
-.. include:: /examples/countrandom.rstx
-.. include:: /examples/purchase.rstx
-.. include:: /examples/sparkKMeans.rstx
-.. include:: /examples/sparkPageRank.rstx
+.. include:: /_examples/helloworld.rstx
+.. include:: /_examples/wordcount.rstx
+.. include:: /_examples/countrandom.rstx
+.. include:: /_examples/purchase.rstx
+.. include:: /_examples/sparkKMeans.rstx
+.. include:: /_examples/sparkPageRank.rstx
