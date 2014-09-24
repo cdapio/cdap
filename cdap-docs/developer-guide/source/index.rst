@@ -11,6 +11,7 @@ Cask Data Application Platform Documentation
    
    Introduction </intro>
    Getting Started </getstarted>
+   Case Study </case_study>
    Concepts and Architecture </arch>
    Developer Guide </dev-guide>
    Apps and Packs </apps-packs>
