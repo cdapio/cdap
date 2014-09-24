@@ -1139,8 +1139,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/methods/``
-       ``getCount``
+     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/methods/getCount``
    * - Description
      - Call the ``getCount()`` method of the *RetrieveCounts* Procedure in the *WordCount* Application
        with the arguments as a JSON string in the body::
