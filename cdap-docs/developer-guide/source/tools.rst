@@ -588,7 +588,7 @@ We understand data ingestion is important and one tool does not fit all the need
 for ingesting data into Cask Data Application Platform (CDAP) Applications, we have
 assembled a set of tools and applications that the user can take advantage of for data ingestion:
 
-- Java, Python and Ruby APIs for controlling and writing to Streams;
+- Java and Python APIs for controlling and writing to Streams;
 - a drop zone for bulk ingestion of files ;
 - a file tailer daemon to tail local files; and
 - an Apache Flume Sink implementation for writing events received from a source.
@@ -597,7 +597,7 @@ Stream Client
 -------------
 
 The Stream Client is for managing Streams via external applications. It is available in three different
-APIs: Java, Python and Ruby.
+APIs: Java and Python.
 
 Supported Actions
 .................
@@ -846,109 +846,6 @@ Stream Name:
 Also look at: :ref:`Note on Stream Client <note_stream_client>`
 
 you can refer to Authentication Client Usage for Python here - :ref:`Authentication Client-Python <AuthClientPython>`
-
-Available at: [link]
-
-
-Ruby API
-........
-
-Build
-+++++
-
-To build a gem, run:
-
-``gem build stream-client-ruby.gemspec``
-
-Usage
-+++++
-
-To use the Stream Client Ruby API, just add the following to your application Gemfile:
-
-``gem 'stream-client-ruby'``
-
-If you use gem outside Rails, you should require gem files in your application files:
-
-``require 'stream-client-ruby'``
-
-Example
-+++++++
-
-You can configure StreamClient settings in your config files, for
-example:
-
-::
-
-    # config/stream.yml
-    gateway: 'localhost'
-    port: 10000
-    api_version: 'v2'
-    api_key:
-    ssl: false
-
-::
-
-    # initializers/stream.rb
-    require "yaml"
-
-    config = YAML.load_file("config/stream.yml")
-
-    CDAPIngest::Rest.gateway     = config['gateway']
-    CDAPIngest::Rest.port        = config['port']
-    CDAPIngest::Rest.api_version = config['api_version']
-    CDAPIngest::Rest.ssl         = config['ssl']
-
-Create a StreamClient instance and use it as any Ruby object:
-
-::
-
-    client = CDAPIngest::StreamClient.new
-
-Create a new Stream with the *stream id* “new\_stream\_name”:
-
-``client.create "new_stream_name"``
-
-Notes:
-
--  The must only contain ASCII letters, digits and hyphens.
--  If the Stream already exists, no error is returned, and the existing
-   Stream remains in place.
-
-Update TTL for the Stream *stream\_name*; TTL is a integer value in Ruby, but the range should be limited to Java Long:
-
-``client.set_ttl stream_name, 256``
-
-Get the current TTL value for the Stream *stream\_name*:
-
-``ttl = client.get_ttl "stream_name"``
-
-Create a ``StreamWriter`` instance for writing events to the Stream
-*stream\_name* in 3 threads asynchronously:
-
-``writer = client.create_writer "stream_name", 3``
-
-::
-
-  test_data = "string to send in stream 10 times"
-
-  10.times {
-    writer.write(test_data).then(
-      ->(response) {
-        puts "success: #{response.code}"
-      },
-      ->(error) {
-        puts "error: #{error.response.code} -> #{error.message}"
-      }
-    )
-  }
-
-To truncate the Stream *stream\_name*, use:
-
-``client.truncate "stream_name"``
-
-When you are finished, release all resources by calling this method:
-
-``writer.close``
 
 Available at: [link]
 
@@ -1239,8 +1136,7 @@ The Authentication Client Java API is for fetching the access token from the aut
 Supported Actions
 +++++++++++++++++
 
-- fetch an access token from the authentication server with credentials supported by the active authentication
- mechanism
+- fetch an access token from the authentication server with credentials supported by the active authentication mechanism
 - check that authentication is enabled in the gateway server
 
 Current implementation supports three authentication mechanisms:
