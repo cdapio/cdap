@@ -63,6 +63,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.pngmath',
     'sphinx.ext.ifconfig',
+    'sphinxcontrib.googleanalytics',
     #'rst2pdf.pdfbuilder',
 ]
 
@@ -140,6 +141,14 @@ highlight_language = 'java'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
+# Add Google Analytics ID, or over-ride on the command line with 
+# -D googleanalytics_id=UA-999-999-999
+googleanalytics_id = 'UA-123-123-123'
+
+# True by default, use it to turn off tracking.
+# -D googleanalytics_enabled=1
+# Turned off so unless the code and flag are passed on the command line, tracking is off.
+googleanalytics_enabled = False
 
 # -- Options for HTML output ----------------------------------------------
 
