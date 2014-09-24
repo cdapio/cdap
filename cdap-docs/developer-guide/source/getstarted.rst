@@ -59,7 +59,7 @@ head there to deploy example applications and interact with CDAP.
 Creating an Application
 =======================
 
-The best way to start developing a CDAP application is using the Maven archetype ::
+The best way to start developing a CDAP application is using the Maven archetype::
 
   $ mvn archetype:generate \
     -DarchetypeCatalog=https://repository.cask.co/content/groups/releases/archetype-catalog.xml \
