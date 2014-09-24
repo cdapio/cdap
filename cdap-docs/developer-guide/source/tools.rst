@@ -750,7 +750,7 @@ from an existing file.
 
   def createStreamClient():
     config = Config()
-    config.host = ‘localhost’
+    config.host = localhost
     config.port = 10000
     config.ssl = False
     streamClient = StreamClient(config)
@@ -1132,19 +1132,19 @@ If you would like to manually upload a file use::
 
   file-drop-zone load <file-path> <observer>
 
-You can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+You can refer to authentication client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
 
 .. _AuthClientJava:
 
 Authentication Client - Java
 ............................
-The Authentication Client Java API is for fetching the access token from the authentication service.
+The authentication client Java API is for fetching the access token from the authentication service.
 
 Supported Actions
 +++++++++++++++++
 
-- fetch an access token from the authentication service with credentials supported by the active authentication mechanism
-- check that authentication is enabled in the CDAP instance
+- Fetch an access token from the authentication service with credentials supported by the active authentication mechanism
+- Check that authentication is enabled in the CDAP instance
 
 The current implementation supports three authentication mechanisms:
   - Basic Authentication
@@ -1157,7 +1157,7 @@ mechanisms. To create a new authentication client, implement the ``Authenticatio
 Build
 +++++
 
-To build the Authentication Client Java API jar, use:
+To build the authentication client Java API jar, use:
 
 mvn clean package
 
@@ -1247,13 +1247,13 @@ Example Usage
     token = authentication_client.get_access_token()
 
 
-sample config JSON file::
+   Sample config JSON file::
 
-  {
-    "security_auth_client_username": "admin",
-    "security_auth_client_password": "secret",
-    "security_ssl_cert_check": true
-  }
+      {
+        "security_auth_client_username": "admin",
+        "security_auth_client_password": "secret",
+        "security_ssl_cert_check": true
+      }
 
 2) Create a Config object and configure it manually::
 
