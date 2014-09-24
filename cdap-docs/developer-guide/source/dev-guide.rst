@@ -528,6 +528,8 @@ The ``write()`` method is used to redirect all writes performed by a Reducer to 
 Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type
 parameters of the Reducer.
 
+.. _data-explore:
+
 Data Exploration
 ================
 
@@ -1970,6 +1972,7 @@ There is also a convenience method to respond with an error message::
       return;
     }
 
+.. _transaction-system:
 Transaction System
 ==================
 

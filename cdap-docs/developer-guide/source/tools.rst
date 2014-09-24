@@ -129,12 +129,10 @@ Strategies in Testing MapReduce Jobs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under `Purchase <examples/purchase.html>`__.
+found under :ref:`Purchase Example <purchase-example>`
 
 The ``PurchaseTest`` class should extend from
-``TestBase`` similar to `Strategies in Testing Flows`.
-
-::
+``TestBase`` similar to `Strategies in Testing Flows`::
 
   public class PurchaseTest extends TestBase {
     @Test
@@ -181,11 +179,10 @@ the counts::
 
 The assertion will verify that the correct result was received.
 
-
 Strategies in Testing Spark Programs
 ------------------------------------
 Let's write a test case for an application that uses a Spark program.
-Complete source code for this test can be found at `SparkPageRank <examples/sparkPageRank.html>`__.
+Complete source code for this test can be found at :ref:`Spark Pagerank <spark-pagerank-example>`
 
 The ``SparkPageRankTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::
@@ -235,7 +232,7 @@ The assertion will verify that the correct result was received.
 Validating Test Data with SQL
 -----------------------------
 Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
-in the test case are record-scannable as described in `Querying Datasets with SQL <dev-guide.html#data-exploration>`__.
+in the test case are record-scannable as described in :ref:`Querying Datasets with SQL <data-explore>`.
 This can be done using a JDBC connection obtained from the test base::
 
 
@@ -282,7 +279,7 @@ debugging:
 
 For more information, see `Attaching a Debugger`_.
 
-**Note** : Currently, debugging is not supported under Windows.
+**Note**: Currently, debugging is not supported under Windows.
 
 Debugging an Application in Distributed CDAP
 --------------------------------------------
@@ -302,7 +299,7 @@ an HTTP request to the element’s URL. For example, the following will start a 
 
 Note that this URL differs from the URL for starting the Flow only by the last path
 component (``debug`` instead of ``start``; see
-`CDAP Client HTTP API <api.html#cdap-client-http-api>`__). You can pass in
+:ref:`CDAP Client HTTP API <cdap-client-http-api>`.). You can pass in
 runtime arguments in the exact same way as you normally would start a Flow.
 
 Once the Flow is running, each Flowlet will detect an available port in its container
@@ -427,7 +424,7 @@ You may need to adjust them for your installation or version.
 Debugging the Transaction Manager (Advanced Use)
 ------------------------------------------------
 In this advanced use section, we will explain in depth how transactions work internally.
-Transactions are introduced in the `Developer Guide <dev-guide.html#transaction-system>`__ guide.
+Transactions are introduced in the :ref:`Transaction System <transaction-system>`
 
 A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
 of its creation. This identifier—also called the `write pointer`—represents the version
@@ -590,20 +587,20 @@ assembled a set of tools and applications that the user can take advantage of fo
 
 - Java and Python APIs for controlling and writing to Streams;
 - a drop zone for bulk ingestion of files ;
-- a file tailer daemon to tail local files; and
+- a File Tailer daemon to tail local files; and
 - an Apache Flume Sink implementation for writing events received from a source.
 
 Stream Client
 -------------
 
-The Stream Client is for managing Streams via external applications. It is available in three different
-APIs: Java and Python.
+The stream client is for managing Streams via external applications. The stream client is currently available in Java
+ and Python.
 
 Supported Actions
 .................
 
-- Create a Stream with a specified *stream-id*;
-- Retrieve or Update the TTL (time-to-live) for an existing Stream with a specified *stream-id*;
+- Create a Stream with a specified *stream-name*;
+- Retrieve or Update the TTL (time-to-live) for an existing Stream with a specified *stream-name*;
 - Truncate an existing Stream (the deletion of all events that were written to the Stream);
 - Write an event to an existing Stream; and
 - Send a File to an existing Stream.
@@ -611,21 +608,15 @@ Supported Actions
 Java API
 ........
 
-Create a StreamClient instance, specifying the fields 'host' and 'port' of the gateway server.
+Create a StreamClient instance, specifying the fields 'host' and 'port' of the CDAP instance.
 Optional configurations that can be set:
 
 - SSL: true or false (use HTTP protocol)
 - WriterPoolSize: '10' (max thread pool size for write events to the Stream)
-- Version : 'v2' (Gateway server version, used as a part of the base URI
+- Version:'v2' (CDAP instance version, used as a part of the base URI
   ``http(s)://localhost:10000/v2/...``)
 - AuthToken: null (Need to specify to authenticate client requests)
-- APIKey: null (Need to specify to authenticate client requests using SSL)
-
-::
-
-  StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000).build();
-
-or specified using the builder parameters::
+- APIKey: null (Need to specify to authenticate client requests using SSL)::
 
   StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000)
                                                   .apiKey("apiKey")
@@ -636,13 +627,13 @@ or specified using the builder parameters::
                                                   .build();
 
 
-Create a new Stream with the *stream id* "newStreamName"::
+Create a new Stream with the *stream-name* "newStreamName"::
 
   streamClient.create("newStreamName");
 
-**Note** : Stream Name:
+**Note**-Stream Name:
 
-- The *stream-id* should only contain ASCII letters, digits and hyphens.
+- The *stream-name* should only contain ASCII letters, digits and hyphens.
 - If the Stream already exists, no error is returned, and the existing Stream remains in place.
 
 Update TTL for the Stream *streamName*; TTL is a long value and is specified in seconds::
@@ -657,7 +648,7 @@ Create a ``StreamWriter`` instance for writing events to the Stream *streamName*
 
    StreamWriter streamWriter = streamClient.createWriter("streamName");
 
-To write new events to the Stream, you can use any of these five methods in the ``StreamWriter`` interface::
+To write new events to the Stream, You can use any of these five methods in the ``StreamWriter`` interface::
 
   ListenableFuture<Void> write(String str, Charset charset);
   ListenableFuture<Void> write(String str, Charset charset, Map<String, String> headers);
@@ -690,23 +681,23 @@ Putting it All Together
       StreamWriter streamWriter = streamClient.createWriter("streamName");
 
       try {
-        // Create Stream by id <streamName>
+        // Create Stream <streamName>
         streamClient.create(streamName);
 
-        // Get current Stream TTL value by id <streamName>
+        // Get current Stream TTL value by <streamName>
         long currentTTL = streamClient.getTTL(streamName);
-        LOG.info("Current TTL value for stream {} is : {} seconds", streamName, currentTTL);
+        LOG.info("Current TTL value for stream {} is: {} seconds", streamName, currentTTL);
         long newTTL = 18000;
 
-        // Update TTL value for Stream by id <streamName>
+        // Update TTL value for Stream by <streamName>
         streamClient.setTTL(streamName, newTTL);
-        LOG.info("Setting new TTL : {} seconds for stream: {}", newTTL, streamName);
+        LOG.info("Setting new TTL: {} seconds for stream: {}", newTTL, streamName);
 
 
         String event = "192.0.2.0 - - [09/Apr/2012:08:40:43 -0400] \"GET /NoteBook/ HTTP/1.0\" 201 809 \"-\" " +
           "\"Example v0.0.0 (www.example.org)\"";
 
-        // write stream event to server
+        // Write stream event to server
         ListenableFuture<Void> future = streamWriter.write(event, null);
 
         Futures.addCallback(future, new FutureCallback<Void>() {
@@ -729,9 +720,9 @@ Putting it All Together
       LOG.error("Exception while writing to stream", e);
     }
 
-Also look at: :ref:`Note on Stream Client <note_stream_client>`
+Also look at :ref:`Note on Stream Client <note_stream_client>`
 
-you can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+You can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
 
 Python API
 ..........
@@ -800,7 +791,7 @@ Create a ``StreamWriter`` instance for writing events to the Stream
 “streamName”:
 
 Once you have a ``StreamWriter`` instance:
-  1. you can write events to the stream using ``write()`` method
+  1. You can write events to the stream using ``write()`` method
 
 Putting it All Together
 +++++++++++++++++++++++
@@ -831,8 +822,8 @@ Putting it All Together
 Config file structure in JSON format::
 
   {
-    hostname: 'localhost',    - gateway hostname
-    port: 10000,              - gateway port
+    hostname: 'localhost',    - CDAP Instance hostname
+    port: 10000,              - CDAP instance port
     SSL: false                - if SSL is being used
   }
 
@@ -845,7 +836,7 @@ Stream Name:
 
 Also look at: :ref:`Note on Stream Client <note_stream_client>`
 
-you can refer to Authentication Client Usage for Python here - :ref:`Authentication Client-Python <AuthClientPython>`
+You can refer to Authentication Client Usage for Python here - :ref:`Authentication Client-Python <AuthClientPython>`
 
 Available at: [link]
 
@@ -855,7 +846,7 @@ Notes on Stream Client
 ......................
 
 All methods from the ``StreamClient`` and ``StreamWriter`` throw
-exceptions using response code analysis from the gateway server. These
+exceptions using response code analysis from the CDAP instance. These
 exceptions help determine if the request was processed successfully or
 not.
 
@@ -881,11 +872,11 @@ Features
 Installing File Tailer
 ......................
 
-  on Debian/Ubuntu :
-  ``sudo apt-get install file-tailer.deb``
+  on Debian/Ubuntu:
+  ``apt-get install file-tailer.deb``
 
-  on RHEL/Cent OS :
-  ``sudo rpm -ivh --force file-tailer.rpm``
+  on RHEL/Cent OS:
+  ``rpm -ivh --force file-tailer.rpm``
 
 Configuring File Tailer
 .......................
@@ -917,23 +908,23 @@ Available at: [link]
 Starting and Stopping the Daemon
 ................................
 
-To Start a file tailer daemon execute:
-  ``sudo service file-tailer start``
+To start a File Tailer daemon execute:
+  ``service file-tailer start``
 
-To Stop a file tailer daemon execute:
-  ``sudo service file-tailer start``
+To stop a File Tailer daemon execute:
+  ``service file-tailer start``
 
-**Note** : File Tailer stores log files in the /var/log/file-tailer directory. PID, states and statistics are stored in the /var/run/file-tailer directory.
+**Note**: File Tailer stores log files in the /var/log/file-tailer directory. PID, states and statistics are stored in the /var/run/file-tailer directory.
 
 Configuring Authentication Client for File Tailer
 .................................................
 
-Authentication client parameters :
+Authentication client parameters:
   - pipes.<pipe-name>.sink.auth_client - classpath of authentication client class
   - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is
     located at ``/etc/file-tailer/conf/auth-client.properties``
 
-you can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+You can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
 
 
 Description of Configuration Properties
@@ -1036,7 +1027,7 @@ To use authentication, add these authentication client configuration parameters 
   - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is
     located at ``/usr/local/apache-flume/conf/auth_client.conf``
 
-you can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+You can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
 
 Flume Sink Example
 ..................
@@ -1078,11 +1069,11 @@ Features
 
 Installing File DropZone
 ........................
-  on Debian/Ubuntu :
-    ``sudo apt-get install file-drop-zone.deb``
+  on Debian/Ubuntu:
+    ``apt-get install file-drop-zone.deb``
 
-  on RHEL/Cent OS :
-    ``sudo rpm -ivh --force file-drop-zone.rpm``
+  on RHEL/Cent OS:
+    ``rpm -ivh --force file-drop-zone.rpm``
 
 Configuring File DropZone
 .........................
@@ -1112,11 +1103,11 @@ After Installation, you can configure the daemon properties at /etc/file-drop-zo
 
 Starting and Stopping the Daemon
 ................................
-To Start a file DropZone daemon execute:
-  ``sudo service file-drop-zone start``
+To start a file DropZone daemon execute:
+  ``service file-drop-zone start``
 
-To Stop a file DropZone daemon execute:
-  ``sudo service file-drop-zone stop``
+To stop a file DropZone daemon execute:
+  ``service file-drop-zone stop``
 
 Note:  File DropZone stores log files in the /var/log/file-drop-zone directory. PID, states and statistics are stored in the /var/run/file-drop-zone directory
 
@@ -1125,24 +1116,24 @@ Manual Upload of files
 If you would like to manually upload a file use,
 ``file-drop-zone load <file-path> <observer>``
 
-you can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+You can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
 
 .. _AuthClientJava:
 
 Authentication Client - Java
 ............................
-The Authentication Client Java API is for fetching the access token from the authentication server.
+The Authentication Client Java API is for fetching the access token from the authentication service.
 
 Supported Actions
 +++++++++++++++++
 
-- fetch an access token from the authentication server with credentials supported by the active authentication mechanism
-- check that authentication is enabled in the gateway server
+- fetch an access token from the authentication service with credentials supported by the active authentication mechanism
+- check that authentication is enabled in the CDAP instance
 
-Current implementation supports three authentication mechanisms:
+The current implementation supports three authentication mechanisms:
   - Basic Authentication
   - LDAP
-  - JAASPI
+  - JASPI
 
 It is also possible to extend existing logic and implement a custom client for any other authentication
 mechanisms. To create a new authentication client, implement the ``AuthenticationClient`` interface.
@@ -1157,8 +1148,7 @@ mvn clean package
 Usage
 +++++
 
-To use the Authentication Client Java API, include this Maven dependency in your project's ``pom.xml`` file:
-::
+To use the Authentication Client Java API, include this Maven dependency in your project's ``pom.xml`` file::
 
  <dependency>
   <groupId>co.cask.cdap</groupId>
@@ -1169,26 +1159,21 @@ To use the Authentication Client Java API, include this Maven dependency in your
 Example
 .......
 
-Create a ``BasicAuthenticationClient`` instance by full class name:
-::
+Create a ``BasicAuthenticationClient`` to get access token::
 
   String authClientClassName = "co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient";
   AuthenticationClient authenticationClient = configuration.getClassByName(authClientClassName);
-  // set the gateway server connection info : hostname, port and flag to indicate if SSL is enabled or not
+  // Set the CDAP instance connection info : hostname, port and flag to indicate if SSL is enabled or not
   authenticationClient.setConnectionInfo("localhost", 10000, false);
   // If you have additional properties, you can include them for configuration using the following
   authenticationClient.configure(properties);
-  // check if authentication is enabled
+  // Check if authentication is enabled
   boolean isEnabled = authenticationClient.isAuthEnabled();
-  // Get the access token for the user from the authentication server
+  // Get the access token for the user from the authentication service
   // If access token is not available an IOException will be thrown
   String token = authenticationClient.getAccessToken();
 
-  //Retrieve credentials required by the authentication provider from the authentication server
-  List<Credential> credentials = authenticationClient.getRequiredCredentials();
-
-Interactive Client can get Configuration from user and use that to configure Authentication Client
-::
+The following example illustrates the authentication client obtaining credentials from user and uses that for configuration::
 
   authenticationClient.setConnectionInfo(hostname, port, ssl);
   Properties properties = new Properties();
@@ -1217,18 +1202,16 @@ Authentication Client - Python
 Example Usage
 +++++++++++++
 
-1) Read Config from Json and retrieve AccessToken
+1) Read Config from Json and retrieve AccessToken::
 
-::
-
-    # include these imports in your Python script
+    # Include these imports in your Python script
     from Config import Config
     from BasicAuthenticationClient import BasicAuthenticationClient
 
     # Create a BasicAuthenticationClient instance
     authentication_client = BasicAuthenticationClient()
 
-    # Set the connection parameters: authentication server host; authentication server host port; SSL mode
+    # Set the connection parameters: authentication service host, port and SSL mode
     authentication_client.set_connection_info('localhost', 10000, False)
 
     # Load configuration from JSON File
@@ -1237,16 +1220,14 @@ Example Usage
     # Configure the authentication client with the Config object
     authentication_client.configure(config)
 
-    # Check if authentication is enabled in the gateway server
+    # Check if authentication is enabled in the CDAP instance
     is_enabled = authentication_client.is_auth_enabled()
 
-    # Retrieve the access token from the authentication server:
+    # Retrieve the access token from the authentication service:
     token = authentication_client.get_access_token()
 
 
-sample config JSON file:
-
-::
+sample config JSON file::
 
   {
     "security_auth_client_username": "admin",
@@ -1254,17 +1235,16 @@ sample config JSON file:
     "security_ssl_cert_check": true
   }
 
-2) Create a Config object and configure it manually
-::
+2) Create a Config object and configure it manually::
 
-    # include these imports in your Python script
+    # Include these imports in your Python script
     from Config import Config
     from BasicAuthenticationClient import BasicAuthenticationClient
 
     # Create a BasicAuthenticationClient instance
     authentication_client = BasicAuthenticationClient()
 
-    # Set the connection parameters: authentication server host; authentication server host port; SSL mode
+    # Set the connection parameters: authentication service host, port, SSL mode
     authentication_client.set_connection_info('localhost', 10000, False)
 
     # Load configuration from JSON File
@@ -1276,10 +1256,10 @@ sample config JSON file:
     # Configure the authentication client with the Config object
     authentication_client.configure(config)
 
-    # Check if authentication is enabled in the gateway server
+    # Check if authentication is enabled in the CDAP instance
     is_enabled = authentication_client.is_auth_enabled()
 
-    # Retrieve the access token from the authentication server:
+    # Retrieve the access token from the authentication service:
     token = authentication_client.get_access_token()
 
 To see the properties supported by the Authentication Client, look at ConfiguringAuthClient_
@@ -1300,6 +1280,6 @@ Authentication Client Configuration
     * - security.auth.client.password
       - password used for authenticating the user
     * - security.auth.client.verify.ssl.cert
-      - When SSL is enabled, to allow self-signed certificates set this to false
+      - When SSL is enabled , if you want to allow self-signed certificates set this to false, that will disable the certificate check.
 
 .. |(TM)| unicode:: U+2122 .. trademark sign

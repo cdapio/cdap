@@ -1076,7 +1076,7 @@ Procedure HTTP API
 
 This interface supports sending calls to the methods of an Application’s Procedures.
 See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
-Procedures. 
+Procedures.
 
 Executing Procedures
 --------------------
@@ -1193,6 +1193,8 @@ Example
      - ``200 OK``
 
 .. rst2pdf: PageBreak
+
+.. _cdap-client-http-api:
 
 CDAP Client HTTP API
 ====================
