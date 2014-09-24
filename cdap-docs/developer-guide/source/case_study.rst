@@ -36,23 +36,25 @@ The Wise application uses these Cask Data Application Platform (CDAP) constructs
 Running Wise
 ============
 Building and running Wise is straightforward. We'll assume that you have already downloaded, 
-installed, and have running an instance of CDAP. Download the *Wise* source tarball from::
+installed, and have running an instance of CDAP. Download the *Wise* source zip from::
 
   url
 
-Expand the tarball and build the application by executing::
+Unzip the directory and build the application by executing::
 
-  $ tar -xzf cdap-wise-0.1.0.zip
+  $ unzip cdap-wise-0.1.0.zip
   $ cd cdap-wise-0.1.0
   $ mvn package
 
-To deploy the application, first make sure CDAP is running, and then execute::
+To deploy the application and start it, first make sure CDAP is running, and then execute::
 
-  $ bin/deploy.sh
+  $ bin/app-manager.sh --action deploy
+  $ bin/app-manager.sh --action start
 
 On Windows, run::
 
-  $ bin/deploy.bat
+  $ bin/app-manager.bat --action deploy
+  $ bin/app-manager.bat --action start
 
 Overview of Wise
 ================
@@ -117,7 +119,7 @@ Using the Java ``Map`` interface, a ``Table`` can be seen as being of type ``Map
 
 .. highlight:: java
 
-``pageViewStore`` uses a ``Table`` object with the pattern:
+``pageViewStore`` uses a ``Table`` object with this pattern:
 
 - The row key of the ``Table`` is an IP address;
 - Each Web page visited by the IP address is a column;
@@ -668,6 +670,6 @@ A complete example of the test is included in the downloaded zip.
 
 Where to Go Next
 ================
-Now that you've seen how a CDAP example, take a look at our additional examples,
-located in both the ``/examples`` directory of the SDK and ``also online.
-<http://docs.cask.co/current/en/examples/index.html>``__
+Now that you've seen a CDAP application, take a look at our additional examples,
+located in both the ``/examples`` directory of the SDK and `also online.
+<http://docs.cask.co/current/en/examples/index.html>`__
