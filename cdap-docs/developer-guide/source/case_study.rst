@@ -566,11 +566,11 @@ Here are some of the SQL queries that you can run:
 
 - Retrieve the web pages from where IP addresses have bounced more than 50% of the time::
 
-  SELECT uri FROM cdap_user_bouncecounts WHERE bounces > 0.5 * totalvisits
+  SELECT uri FROM cdap_user_bouncecountstore WHERE bounces > 0.5 * totalvisits
 
 - Retrieve all the IP addresses which visited the page '/contact.html'::
 
-  SELECT key FROM cdap_user_pageviewcds WHERE array_contains(map_keys(value), '/contact.html')=TRUE
+  SELECT key FROM cdap_user_pageviewstore WHERE array_contains(map_keys(value), '/contact.html')=TRUE
 
 As the SQL engine that CDAP runs internally is Hive, the SQL language used to submit queries is HiveQL.
 A description of it is in the `Hive language manual
@@ -648,15 +648,11 @@ With this object, we can:
 - Start a Map/Reduce job::
 
     MapReduceManager mrManager = appManager.startMapReduce("WiseWorkflow_BounceCountsMapReduce");
-    try {
-      mrManager.waitForFinish(3, TimeUnit.MINUTES);
-    } finally {
-      mrManager.stop();
-    }
+    mrManager.waitForFinish(3, TimeUnit.MINUTES);
 
 - Test the output of the Map/Reduce job::
 
-    DataSetManager<BounceCountStore> dsManager = appManager.getDataSet("bounceCounts");
+    DataSetManager<BounceCountStore> dsManager = appManager.getDataSet("bounceCountStore");
     BounceCountStore bounceCountStore = dsManager.get();
     Assert.assertEquals(new PageBounce("/product.html", 3, 2), bounceCountStore.get("/product.html"));
 
@@ -664,7 +660,7 @@ With this object, we can:
 
     Connection exploreConnection = getQueryClient();
     ResultSet resultSet =
-      exploreConnection.prepareStatement("SELECT * FROM cdap_user_bouncecounts ORDER BY uri").executeQuery();
+      exploreConnection.prepareStatement("SELECT * FROM cdap_user_bouncecountstore ORDER BY uri").executeQuery();
 
 A complete example of the test is included in the downloaded zip.
 
