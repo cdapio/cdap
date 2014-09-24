@@ -150,7 +150,7 @@ For CDAP-issued access tokens, the authentication scheme must always be ``Bearer
 
 Stream HTTP API
 ===============
-This interface supports creating Streams, sending events to a Stream, and reading events from a Stream.
+This interface supports creation of a Stream, sending, reading and truncating events to/from a Stream, as well as setting the TTL property of a Stream.
 
 Streams may have multiple consumers (for example, multiple Flows), each of which may be a group of different agents (for example, multiple instances of a Flowlet).
 
@@ -205,7 +205,7 @@ An event can be sent to a Stream by sending an HTTP POST method to the URL of th
 
   POST <base-url>/streams/<stream-id>
 
-In cases where it is acceptable to have some events lost if the system crashes, you can send events to a Stream asynchronously with higher throughput by sending an HTTP POST method to the ``async`` URL::
+In cases where it is acceptable to have some events lost, events can be transmitted asynchronously to a Stream with higher throughput by sending an HTTP POST method to the ``async`` URL::
 
   POST <base-url>/streams/<stream-id>/async
 
@@ -262,7 +262,7 @@ After receiving the request, the HTTP handler transforms it into a Stream event:
 
 Reading Events from a Stream
 ----------------------------
-Reading events from an existing Stream is performed as an HTTP GET method to the URL::
+Reading events from an existing Stream is performed with an HTTP GET method to the URL::
 
   GET <base-url>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
 
