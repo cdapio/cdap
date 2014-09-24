@@ -1160,7 +1160,7 @@
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
-        <artifactId>authentication-client-java</artifactId>
+        <artifactId>cdap-authentication-client</artifactId>
         <version>${cdap.client.version}</version>
       </dependency>
     </dependencies>
