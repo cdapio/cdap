@@ -99,8 +99,8 @@ or as a Docker image.
       $ cd cdap-sdk-2.5.0 
       $ ./bin/cdap.sh start 
       
-  + Once CDAP starts, it will instruct you to connect to the Console with a web browser
-    at http://host_ip:9999, replacing *host_ip* with the IP address you obtained earlier.
+  + Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
+    at http://host-ip:9999, replacing *host-ip* with the IP address you obtained earlier.
 
   + Start a browser and enter the address to access the CDAP Console.
   + It is recommended that you have our usually-recommended software and tools already installed
