@@ -279,7 +279,7 @@ debugging:
 
 For more information, see `Attaching a Debugger`_.
 
-**Note**: Currently, debugging is not supported under Windows.
+**Note:** Currently, debugging is not supported under Windows.
 
 Debugging an Application in Distributed CDAP
 --------------------------------------------
@@ -299,7 +299,7 @@ an HTTP request to the element’s URL. For example, the following will start a 
 
 Note that this URL differs from the URL for starting the Flow only by the last path
 component (``debug`` instead of ``start``; see
-:ref:`CDAP Client HTTP API <cdap-client-http-api>`.). You can pass in
+:ref:`CDAP Client HTTP API <cdap-client-http-api>`). You can pass in
 runtime arguments in the exact same way as you normally would start a Flow.
 
 Once the Flow is running, each Flowlet will detect an available port in its container
@@ -581,10 +581,8 @@ Introduction
 ------------
 
 One of the first tasks of actually working with Big Data applications is getting the data in.
-We understand data ingestion is important and one tool does not fit all the needs, to assist the user
-for ingesting data into the Cask Data Application Platform (CDAP), we have
-assembled a set of tools and applications that the user can take advantage of for data ingestion:
-
+As data ingestion is a fundamental issue, and as one tool often does not fit all needs,
+we have assembled a set of tools and applications to assist in ingesting data into CDAP:
 - Java and Python APIs for controlling and writing to Streams;
 - a drop zone for bulk ingestion of files ;
 - a File Tailer daemon to tail local files; and
@@ -635,7 +633,7 @@ Create a new Stream with the *stream-name* "purchaseStream"::
 - The *stream-name* should only contain ASCII letters, digits and hyphens.
 - If the Stream already exists, no error is returned, and the existing Stream remains in place.
 
-Update TTL for the *purchaseStream* , TTL is a long value and is specified in seconds::
+Update TTL for the *purchaseStream*; TTL is a long value and is specified in seconds::
 
   streamClient.setTTL("purchaseStream", newTTL);
 
@@ -647,7 +645,7 @@ Create a ``StreamWriter`` instance for writing events to the *purchaseStream*::
 
    StreamWriter streamWriter = streamClient.createWriter("purchaseStream");
 
-To write new events to the Stream, You can use any of these five methods in the ``StreamWriter`` interface::
+To write new events to the Stream,use any of these five methods from the ``StreamWriter`` interface::
 
   ListenableFuture<Void> write(String str, Charset charset);
   ListenableFuture<Void> write(String str, Charset charset, Map<String, String> headers);
@@ -721,7 +719,7 @@ Putting it All Together
 
 Also look at :ref:`Note on Stream Client <note_stream_client>`
 
-You can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+You can refer to  :ref:`Authentication Client Usage for Java. <AuthClientJava>`
 
 Python API
 ..........
@@ -829,7 +827,7 @@ Stream name:
 
 Also look at: :ref:`Note on Stream Client <note_stream_client>`
 
-You can refer to Authentication Client Usage for Python here - :ref:`Authentication Client-Python <AuthClientPython>`
+You can refer to  - :ref:`Authentication Client Usage for Python <AuthClientPython>`
 
 You can download the client at: [link]
 
@@ -878,11 +876,11 @@ it will send it to a Stream via the REST API.
 Features
 ........
 
-- Distributed as debian and rpm packages
+- Distributed as Debian and RPM packages
 - Loads properties from a configuration file
 - Supports rotation of log files
-- Persists state and is able to resume from first unsent record and
-- Writes statistics info.
+- Persists state and is able to resume from first unsent record
+- Writes statistics info
 
 Installing File Tailer
 ......................
@@ -939,7 +937,7 @@ Authentication client parameters:
   - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is
     located at ``/etc/file-tailer/conf/auth-client.properties``
 
-You can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+You can refer to :ref:`Authentication Client Usage for Java. <AuthClientJava>`
 
 
 Description of Configuration Properties
@@ -1042,7 +1040,7 @@ To use authentication, add these authentication client configuration parameters 
   - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is
     located at ``/usr/local/apache-flume/conf/auth_client.conf``
 
-You can refer to Authentication Client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+You can refer to :ref:`Authentication Client Usage for Java. <AuthClientJava>`
 
 Flume Sink Example
 ..................
@@ -1076,11 +1074,11 @@ where they will automatically be ingested by a daemon process.
 Features
 ........
 
-- Distributed as debian and rpm packages
+- Distributed as Debian and RPM packages
 - Loads properties from configuration file
 - Supports multiple observers/topics
-- Able to survive restart and resume, sending from the first unsent record of each of the existing files and
-- Cleanup of files that are completely sent.
+- Able to survive restart and resume, sending from the first unsent record of each of the existing files
+- Cleanup of files that are completely sent
 
 Installing File DropZone
 ........................
@@ -1132,13 +1130,13 @@ If you would like to manually upload a file use::
 
   file-drop-zone load <file-path> <observer>
 
-You can refer to authentication client Usage for Java here - :ref:`Authentication Client-Java <AuthClientJava>`
+You can refer to :ref:`Authentication Client Usage for Java. <AuthClientJava>`
 
 .. _AuthClientJava:
 
 Authentication Client - Java
 ............................
-The authentication client Java API is for fetching the access token from the authentication service.
+The Authentication Client Java API fetches access tokens from the authentication service.
 
 Supported Actions
 +++++++++++++++++
@@ -1157,9 +1155,9 @@ mechanisms. To create a new authentication client, implement the ``Authenticatio
 Build
 +++++
 
-To build the authentication client Java API jar, use:
+To build the authentication client Java API jar, use::
 
-mvn clean package
+  mvn clean package
 
 Usage
 +++++
@@ -1172,10 +1170,10 @@ To use the Authentication Client Java API, include this Maven dependency in your
   <version>1.0.0</version>
  </dependency>
 
-Example
-.......
+Examples
+........
 
-Create a ``BasicAuthenticationClient`` to get access token::
+This example creates a ``BasicAuthenticationClient`` to retrieve an access token::
 
   String authClientClassName = "co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient";
   AuthenticationClient authenticationClient = configuration.getClassByName(authClientClassName);
@@ -1193,7 +1191,7 @@ Create a ``BasicAuthenticationClient`` to get access token::
   // If access token is not available an IOException will be thrown
   String token = authenticationClient.getAccessToken();
 
-The following example illustrates an authentication client obtaining credentials from user and it uses that for configuration::
+This example illustrates an authentication client obtaining credentials from a user and then using them for configuration::
 
   authenticationClient.setConnectionInfo(hostname, port, ssl);
   Properties properties = new Properties();
@@ -1213,7 +1211,7 @@ The following example illustrates an authentication client obtaining credentials
     cliConfig.getClientConfig().setAuthenticationClient(authenticationClient);
   }
 
-To see the properties supported by the Authentication Client, look at ConfiguringAuthClient_
+To see the properties supported by the Authentication Client, look at :ref:`Configuring Authentication Client <ConfiguringAuthClient>`
 
 .. _AuthClientPython:
 
@@ -1222,7 +1220,7 @@ Authentication Client - Python
 Example Usage
 +++++++++++++
 
-1) Read Config from Json and retrieve AccessToken::
+1) Read the configuration from Json and retrieve an AccessToken::
 
     # Include these imports in your Python script
     from Config import Config
@@ -1255,7 +1253,7 @@ Example Usage
         "security_ssl_cert_check": true
       }
 
-2) Create a Config object and configure it manually::
+2) Create a configuration object and configure it manually::
 
     # Include these imports in your Python script
     from Config import Config
