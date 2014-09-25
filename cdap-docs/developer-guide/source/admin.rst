@@ -300,36 +300,37 @@ to your custom directory.
 
 RPM using Yum
 .............
-Create a file ``cask.repo`` at the location::
+Download the Cask Yum repo definition file as follows::
 
-  /etc/yum.repos.d/cask.repo
+  sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/downloads/centos/6/x86_64/cask.repo
 
-The RPM packages are accessible using Yum at this authenticated URL::
+This will create the file ``/etc/yum.repos.d/cask.repo`` with the following contents::
 
-  [cdap]
+  [cask]
   name=Cask Packages
   baseurl=http://repository.cask.co/centos/6/x86_64/releases
   enabled=1
   gpgcheck=1
 
 
+Add the Cask Public GPG Key to your repository as follows::
+
+  sudo rpm --import http://repository.cask.co/centos/6/x86_64/releases/pubkey.gpg
+
 Debian using APT
 ................
-Debian packages are accessible via APT on *Ubuntu 12*.
+Download the Cask Apt repo definition file as follows::
 
-Create a file ``cdap.list`` at the location::
+  sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/downloads/ubuntu/precise/amd64/cask.list
 
-  /etc/apt/sources.list.d/cdap.list
+This will create the file ``/etc/apt/sources.list.d/cask.list`` with the following contents (on one line)::
 
-Use this authenticated URL (on one line)::
+  deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/releases precise releases
 
-  deb [ arch=amd64 ] https://<username>:<password>@repository.cask.co/content/sites/apt
-            precise release
 
-:where:
-  :<username>: Username provided by your Cask representative
-    :<password>: Password provided by your Cask representative
+Add the Cask Public GPG Key to your repository as follows::
 
+  curl -s http://repository.cask.co/ubuntu/precise/amd64/releases/pubkey.gpg | sudo apt-key add -
 
 .. _installation:
 
