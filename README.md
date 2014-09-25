@@ -74,7 +74,7 @@ document that will guide you through installing CDAP and running an example appl
 Now that you've had a look at the CDAP SDK, take a look at:
 
 - Examples, located in the `cdap-examples` directory of the CDAP SDK;
-- [Selected Examples](http://docs.cask.co/cdap/current/en/examples.html) 
+- [Selected Examples](http://docs.cask.co/cdap/current/en/getstarted.html#examples) 
   (demonstrating basic features of the CDAP) are located on-line; and
 - Developer Guides, located in the source distribution in `cdap-docs/developer-guide/source`
   or [online](http://docs.cask.co/cdap/current/en/index.html).
