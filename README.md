@@ -1,5 +1,8 @@
 # cdap cookbook
 
+[![Cookbook Version](http://img.shields.io/cookbook/v/cdap.svg)](https://supermarket.getchef.com/cookbooks/cdap)
+[![Build Status](http://img.shields.io/travis/caskdata/cdap_cookbook.svg)](http://travis-ci.org/caskdata/cdap_cookbook)
+
 # Requirements
 
 * Oracle Java JDK 6+ (provided by `java` cookbook)
