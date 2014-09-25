@@ -350,6 +350,7 @@ Using Yum::
 
 Using APT::
 
+  sudo apt-get update
   sudo apt-get install cdap-gateway cdap-kafka cdap-cdap-master cdap-security cdap-web-app
 
 Do this on each of the boxes that are being used for the CDAP components; our
