@@ -25,11 +25,36 @@
   <version>2.6.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
+  <description>Data Application Platform for Hadoop</description>
+  <url>https://github.com/caskdata/cdap</url>
 
   <organization>
-    <name>Cask</name>
+    <name>Cask Data, Inc.</name>
     <url>http://cask.co</url>
   </organization>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Cask Data</name>
+      <email>cask-dev@googlegroups.com</email>
+      <organization>Cask Data, Inc.</organization>
+      <organizationUrl>http://www.cdap.io</organizationUrl>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/caskdata/cdap.git</connection>
+    <developerConnection>scm:git:git@github.com:caskdata/cdap.git</developerConnection>
+    <url>https://github.com/caskdata/cdap.git</url>
+    <tag>HEAD</tag>
+  </scm>
 
   <repositories>
     <repository>
@@ -37,36 +62,28 @@
       <url>https://repository.apache.org/content/repositories/snapshots</url>
     </repository>
     <repository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    </repository>
+    <repository>
       <id>continuuity-public</id>
       <url>https://repository.continuuity.com/content/repositories/public</url>
     </repository>
-    <repository>
-      <id>smartifacts</id>
-      <url>https://repository.continuuity.com/content/repositories/smartifacts</url>
-    </repository>
-    <repository>
-      <id>sonatype</id>
-      <url>https://oss.sonatype.org/content/groups/public/</url>
-    </repository>
-    <repository>
-      <id>continuuity</id>
-      <url>https://repository.continuuity.com/content/repositories/snapshots</url>
-    </repository>
   </repositories>
+
 
   <distributionManagement>
     <repository>
-      <id>nexus</id>
-      <name>continuuity-internal</name>
-      <url>https://repository.continuuity.com/service/local/staging/deploy/maven2</url>
+      <id>sonatype.release</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
     </repository>
     <snapshotRepository>
-      <id>continuuity</id>
-      <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
+      <id>sonatype.snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
     <site>
-      <id>continuuity</id>
-      <url>http://continuuity.com</url>
+      <id>cask</id>
+      <url>http://cask.co</url>
     </site>
   </distributionManagement>
 
@@ -102,7 +119,7 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.4.0</netty.http.version>
+    <netty.http.version>0.4.1</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -111,11 +128,13 @@
     <slf4j.version>1.7.5</slf4j.version>
     <tephra.version>0.3.0</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>0.4.0-incubating-SNAPSHOT</twill.version>
+    <twill.version>[0.4.0-incubating-SNAPSHOT,0.5.0-incubating-SNAPSHOT)</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.1.0</spark.version>
     <cdap.client.version>1.0.0-SNAPSHOT</cdap.client.version>
+    <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
+    <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
   </properties>
 
   <modules>
@@ -132,7 +151,6 @@
     <module>cdap-watchdog-tests</module>
     <module>cdap-app-fabric</module>
     <module>cdap-security</module>
-    <module>cdap-security-service</module>
     <module>cdap-gateway</module>
     <module>cdap-explore-client</module>
     <module>cdap-explore-jdbc</module>
@@ -610,6 +628,12 @@
         <groupId>org.apache.hadoop</groupId>
         <artifactId>hadoop-hdfs</artifactId>
         <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>
@@ -989,6 +1013,10 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -1144,7 +1172,7 @@
       </dependency>
       <dependency>
         <groupId>co.cask.cdap</groupId>
-        <artifactId>authentication-client-java</artifactId>
+        <artifactId>cdap-authentication-client</artifactId>
         <version>${cdap.client.version}</version>
       </dependency>
     </dependencies>
@@ -1251,6 +1279,37 @@
             </execution>
           </executions>
         </plugin>
+
+        <!-- GPG signature -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>1.5</version>
+          <configuration>
+            <passphrase>${gpg.passphrase}</passphrase>
+            <useAgent>${gpg.useagent}</useAgent>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>sign</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <!-- Nexus deploy plugin -->
+        <plugin>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+          <version>1.6.2</version>
+          <extensions>true</extensions>
+          <configuration>
+            <nexusUrl>https://oss.sonatype.org</nexusUrl>
+            <serverId>sonatype.release</serverId>
+            <stagingProfileId>655dc88dc770c3</stagingProfileId>
+          </configuration>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -1284,6 +1343,16 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <version>2.8</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>1.5</version>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.2</version>
       </plugin>
     </plugins>
   </build>
@@ -1631,10 +1700,10 @@
                 <configuration>
                   <source>
                     if (project.version.endsWith("-SNAPSHOT")){
-                      project.properties['deploy.url'] = project.distributionManagement.snapshotRepository.url;
+                      project.properties['deploy.url'] = project.properties['cask.packages.snapshot.repo'];
                       project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.snapshots";
                     } else {
-                      project.properties['deploy.url'] = project.distributionManagement.repository.url;
+                      project.properties['deploy.url'] = project.properties['cask.packages.release.repo'];
                       project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.release";
                     }
                   </source>

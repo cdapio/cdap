@@ -16,16 +16,20 @@
 
 package co.cask.cdap.shell.command;
 
+import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.shell.AbstractCommand;
 import co.cask.cdap.shell.CLIConfig;
 import co.cask.cdap.shell.util.SocketUtil;
+import com.google.gson.Gson;
 import jline.console.ConsoleReader;
 
+import java.io.Console;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.Properties;
 import javax.inject.Inject;
 
@@ -47,35 +51,57 @@ public class ConnectCommand extends AbstractCommand {
   public void process(String[] args, PrintStream output) throws Exception {
     super.process(args, output);
 
-    String hostname = args[0];
+    String uriString = args[0];
+    URI uri = URI.create(uriString);
 
-    int port;
-    boolean ssl = SocketUtil.isAvailable(hostname, cliConfig.getSslPort());
-    if (ssl) {
-      port = cliConfig.getSslPort();
-    } else if (SocketUtil.isAvailable(hostname, cliConfig.getPort())) {
-      port = cliConfig.getPort();
+    String hostname;
+    boolean ssl = false;
+    int port = cliConfig.getPort();
+
+    if (uri.getScheme() == null && uri.getHost() == null) {
+      hostname = uriString;
     } else {
-      throw new IOException(String.format("Host %s on port %d and %d could not be reached", hostname,
-                                          cliConfig.getPort(), cliConfig.getSslPort()));
+      hostname = uri.getHost();
+      ssl = "https".equals(uri.getScheme());
+      port = uri.getPort();
+    }
+
+    if (port == -1) {
+      if (ssl) {
+        port = cliConfig.getSslPort();
+      } else {
+        port = cliConfig.getPort();
+      }
+    }
+
+    if (!SocketUtil.isAvailable(hostname, port)) {
+      throw new IOException(String.format("Host %s on port %d could not be reached", hostname, port));
     }
 
     AuthenticationClient authenticationClient = new BasicAuthenticationClient();
     authenticationClient.setConnectionInfo(hostname, port, ssl);
     Properties properties = new Properties();
+    properties.put(BasicAuthenticationClient.VERIFY_SSL_CERT_PROP_NAME, String.valueOf(cliConfig.isVerifySSLCert()));
+
     if (authenticationClient.isAuthEnabled()) {
       output.printf("Authentication is enabled in the gateway server: %s.\n", hostname);
       ConsoleReader reader = new ConsoleReader();
       for (Credential credential : authenticationClient.getRequiredCredentials()) {
-        output.printf("Please, specify " + credential.getDescription() + "> ");
-        String credentialValue = reader.readLine();
+        String prompt = "Please, specify " + credential.getDescription() + "> ";
+        String credentialValue;
+        if (credential.isSecret()) {
+          credentialValue = reader.readLine(prompt, '*');
+        } else {
+          credentialValue = reader.readLine(prompt);
+        }
         properties.put(credential.getName(), credentialValue);
       }
       authenticationClient.configure(properties);
       cliConfig.getClientConfig().setAuthenticationClient(authenticationClient);
+      authenticationClient.getAccessToken();
     }
 
     cliConfig.setConnection(hostname, port, ssl);
-    output.printf("Successfully connected CDAP host at %s:%d\n", hostname, port);
+    output.printf("Successfully connected CDAP instance at %s:%d\n", hostname, port);
   }
 }

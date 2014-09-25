@@ -40,4 +40,7 @@ public class IntegerStore extends ObjectStoreDataset<Integer> {
     return super.read(Bytes.toBytes(key));
   }
 
+  public void delete(int key) {
+    super.delete(Bytes.toBytes(key));
+  }
 }

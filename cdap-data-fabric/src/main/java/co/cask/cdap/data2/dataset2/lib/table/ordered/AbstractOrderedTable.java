@@ -45,13 +45,13 @@ public abstract class AbstractOrderedTable implements OrderedTable {
   }
 
   @Override
-  public long increment(byte[] row, byte[] column, long amount) throws Exception {
-    return increment(row, new byte[][] {column}, new long[] {amount}).get(column);
+  public long incrementAndGet(byte[] row, byte[] column, long amount) throws Exception {
+    return incrementAndGet(row, new byte[][]{column}, new long[]{amount}).get(column);
   }
 
   @Override
-  public void incrementWrite(byte[] row, byte[] column, long amount) throws Exception {
-    incrementWrite(row, new byte[][] {column}, new long[] {amount});
+  public void increment(byte[] row, byte[] column, long amount) throws Exception {
+    increment(row, new byte[][]{column}, new long[]{amount});
   }
 
   @Override

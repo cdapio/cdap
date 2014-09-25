@@ -46,8 +46,8 @@ HTML_PATH="$BUILD_PATH/$HTML"
 
 DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
 
-REST_SOURCE="$SOURCE_PATH/rest.rst"
-REST_PDF="$SCRIPT_PATH/$BUILD_PDF/rest.pdf"
+REST_SOURCE="$SOURCE_PATH/api.rst"
+REST_PDF="$SCRIPT_PATH/$BUILD_PDF/api.pdf"
 
 if [ "x$2" == "x" ]; then
   PROJECT_PATH="$SCRIPT_PATH/../../"
@@ -90,7 +90,6 @@ function clean() {
 }
 
 function build_docs() {
-  clean
   cd $SCRIPT_PATH
   sphinx-build -b html -d build/doctrees source build/html
 }
@@ -139,16 +138,26 @@ function copy_license_pdfs() {
 }
 
 function make_zip() {
+  version
+  ZIP_FILE_NAME="$PROJECT-$HTML-docs-$PROJECT_VERSION.zip"
   cd $SCRIPT_PATH/$BUILD
   zip -r $ZIP_FILE_NAME $HTML/*
 }
 
 function build() {
-  build_docs
+  clean
   build_javadocs_sdk
   copy_javadocs_sdk
+  build_docs
   copy_license_pdfs
   make_zip
+}
+
+function build_quick() {
+  clean
+  build_docs
+  copy_license_pdfs
+  copy_javadocs_sdk
 }
 
 function build_rest_pdf() {
@@ -161,11 +170,10 @@ function build_rest_pdf() {
 
 function build_standalone() {
   cd $PROJECT_PATH
-  mvn clean package -DskipTests -P examples && mvn package -pl standalone -am -DskipTests -P dist,release
+  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
 }
 
 function build_sdk() {
-  build_rest_pdf
   build_standalone
 }
 
@@ -176,7 +184,11 @@ function build_dependencies() {
 
 function version() {
   cd $PROJECT_PATH
-  PROJECT_VERSION=`mvn help:evaluate -o -Dexpression=project.version | grep -v '^\['`
+#   PROJECT_VERSION=`mvn help:evaluate -o -Dexpression=project.version | grep -v '^\['`
+#   PROJECT_VERSION="2.5.0"
+  PROJECT_VERSION=`grep "<version>" pom.xml`
+  PROJECT_VERSION=${PROJECT_VERSION#*<version>}
+  PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
   IFS=/ read -a branch <<< "`git rev-parse --abbrev-ref HEAD`"
   GIT_BRANCH="${branch[1]}"
 }
@@ -206,10 +218,11 @@ fi
 
 case "$1" in
   build )             build; exit 1;;
+  build-quick )       build_quick; exit 1;;
   docs )              build_docs; exit 1;;
   license-pdfs )      build_license_pdfs; exit 1;;
   build-standalone )  build_standalone; exit 1;;
-  copy-javadocs )     copy_javadocs; exit 1;;
+  copy-javadocs )     copy_javadocs_sdk; exit 1;;
   copy-license-pdfs ) copy_license_pdfs; exit 1;;
   javadocs )          build_javadocs_sdk; exit 1;;
   javadocs-full )     build_javadocs_full; exit 1;;

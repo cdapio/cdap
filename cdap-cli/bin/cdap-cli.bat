@@ -18,5 +18,5 @@ REM ## the License.
 REM ##
 REM #################################################################################
 
-cd %~dp0\..\lib
-java -cp .:* co.cask.cdap.shell.CLIMain
+cd
+java -cp %~dp0\..\lib;%~dp0\..\lib\* co.cask.cdap.shell.CLIMain

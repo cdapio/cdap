@@ -32,12 +32,6 @@ SET PATH=%PATH%;%CDAP_HOME%\libexec\bin
 
 cd %CDAP_HOME%
 
-REM Get app jar with latest version
-SET APP_JAR_PREFIX=ResponseCodeAnalytics
-for /r %CDAP_HOME%\examples\%APP_JAR_PREFIX%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
-
-if %JAR_PATH% == "" echo "Could not find example application jar with name %APP_JAR_PREFIX%"
-
 REM Process command line
 IF "%1" == "start" GOTO START
 IF "%1" == "stop" GOTO STOP
@@ -162,7 +156,7 @@ if exist %~dsp0MyProg.pid (
 attrib +h %~dsp0MyProg.pid >NUL
 
 REM Check for new version of CDAP
-bitsadmin /Transfer NAME http://cask.co/cdap/version %~f0_version.txt > NUL 2>&1
+bitsadmin /Transfer NAME http://s3.amazonaws.com/cdap-docs/VERSION %~f0_version.txt > NUL 2>&1
 if exist %~f0_version.txt (
   for /f "tokens=* delims= " %%f in (%~f0_version.txt) do (
     SET new_version = %%f
@@ -174,7 +168,7 @@ if exist %~f0_version.txt (
 
   if not "%current_version%" == "%new_version%" (
     echo UPDATE: There is a newer version of the CDAP SDK available.
-    echo         Download it from http://cask.co/cdap/download
+    echo         Download it from http://cask.co/downloads
   )
 )
 
@@ -251,8 +245,9 @@ for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyN
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
 
-
-CALL :NUX
+REM Disable NUX
+REM TODO: Enable NUX with new app, see CDAP-22
+REM CALL :NUX
 GOTO :FINALLY
 
 :NUX

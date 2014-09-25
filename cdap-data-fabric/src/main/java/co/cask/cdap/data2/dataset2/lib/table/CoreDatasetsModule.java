@@ -18,6 +18,8 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.lib.CounterTimeseriesTable;
+import co.cask.cdap.api.dataset.lib.CounterTimeseriesTableDefinition;
 import co.cask.cdap.api.dataset.lib.IndexedObjectStore;
 import co.cask.cdap.api.dataset.lib.IndexedObjectStoreDefinition;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
@@ -65,6 +67,9 @@ public class CoreDatasetsModule implements DatasetModule {
 
     registry.add(new TimeseriesTableDefinition("timeseriesTable", tableDef));
     registry.add(new TimeseriesTableDefinition(TimeseriesTable.class.getName(), tableDef));
+
+    registry.add(new CounterTimeseriesTableDefinition("counterTimeseriesTable", tableDef));
+    registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));
 
     // in-memory table
     InMemoryOrderedTableDefinition inMemoryOrderedTable = new InMemoryOrderedTableDefinition("inMemoryOrderedTable");

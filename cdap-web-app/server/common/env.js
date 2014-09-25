@@ -7,7 +7,7 @@ var fs = require('fs');
 (function () {
 
 	this.getVersion = function (done) {
-		fs.readFile('/opt/continuuity/VERSION', 'utf8', function (error, result) {
+		fs.readFile('/opt/cdap/VERSION', 'utf8', function (error, result) {
 			if (error) {
 				fs.readFile('./VERSION', 'utf8', function (error, result) {
 					if (error) {

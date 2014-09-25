@@ -27,7 +27,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -60,7 +59,7 @@ public class MetadataStoreDataset extends AbstractDataset {
   @Nullable
   public <T> T get(Key id, Class<T> classOfT) {
     try {
-      Scanner scan = table.scan(id.getKey(), createStopKey(id.getKey()));
+      Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()));
       Row row = scan.next();
       if (row == null || row.isEmpty()) {
         return null;
@@ -90,7 +89,7 @@ public class MetadataStoreDataset extends AbstractDataset {
   // lists all that has first id parts in range of startId and stopId
   public <T> List<T> list(Key startId, @Nullable Key stopId, Class<T> classOfT, int limit) {
     byte[] startKey = startId.getKey();
-    byte[] stopKey = stopId == null ? createStopKey(startKey) : stopId.getKey();
+    byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 
     try {
       List<T> list = Lists.newArrayList();
@@ -112,7 +111,7 @@ public class MetadataStoreDataset extends AbstractDataset {
 
   public <T> void deleteAll(Key id) {
     byte[] prefix = id.getKey();
-    byte[] stopKey = createStopKey(prefix);
+    byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
     try {
       Scanner scan = table.scan(prefix, stopKey);
@@ -189,19 +188,4 @@ public class MetadataStoreDataset extends AbstractDataset {
     }
   }
 
-  // NOTE: null means "read to the end"
-  @Nullable
-  private static byte[] createStopKey(byte[] prefix) {
-    for (int i = prefix.length - 1; i >= 0; i--) {
-      int unsigned = prefix[i] & 0xff;
-      if (unsigned < 0xff) {
-        byte[] stopKey = Arrays.copyOf(prefix, i + 1);
-        stopKey[stopKey.length - 1]++;
-        return stopKey;
-      }
-    }
-
-    // i.e. "read to the end"
-    return null;
-  }
 }
