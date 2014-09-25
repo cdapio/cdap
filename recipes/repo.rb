@@ -23,8 +23,6 @@ when 'rhel'
   yum_repository 'cdap' do
     description 'CDAP YUM repository'
     url node['cdap']['repo']['url']
-    ### TODO: remove this once we get packages signing configured
-    gpgcheck false
     action :add
   end
 when 'debian'
@@ -35,7 +33,6 @@ when 'debian'
     components node['cdap']['repo']['components']
     action :add
     arch 'amd64'
-    trusted true
     key "#{node['cdap']['repo']['url']}/pubkey.gpg"
   end
 end

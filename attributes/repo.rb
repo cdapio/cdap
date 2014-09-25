@@ -18,6 +18,11 @@
 #
 
 # URL to repository
-default['cdap']['repo']['url'] = 'https://<username>:<password>@server.address/path/to/repository'
+case node['platform_family']
+when 'debian'
+  default['cdap']['repo']['url'] = 'http://repository.cask.co/ubuntu/precise/amd64/releases'
+else
+  default['cdap']['repo']['url'] = 'http://repository.cask.co/centos/6/x86_64/releases'
+end
 # Repository components to use
-default['cdap']['repo']['components'] = ['release']
+default['cdap']['repo']['components'] = ['releases']
