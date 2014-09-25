@@ -68,7 +68,7 @@ Note that the flowlet also emits metrics: Every time a name longer than 10 chara
 the counter ``names.longnames`` is incremented by one, and the metric ``names.bytes`` is incremented
 by the length of the name. We will see below how to retrieve these metrics using the CDAP Client API.
 
-The `` Greeting`` Procedure
+The ``Greeting`` Procedure
 +++++++++++++++++++++++++++
 
 This procedure has a single handler method called ``greet`` that does not except arguments. When invoked, it
