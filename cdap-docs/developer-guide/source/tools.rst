@@ -647,7 +647,7 @@ Create a ``StreamWriter`` instance for writing events to the *purchaseStream*::
 
    StreamWriter streamWriter = streamClient.createWriter("purchaseStream");
 
-To write new events to the Stream,use any of these five methods from the ``StreamWriter`` interface::
+To write new events to the Stream,use any of these four methods from the ``StreamWriter`` interface::
 
   ListenableFuture<Void> write(String str, Charset charset);
   ListenableFuture<Void> write(String str, Charset charset, Map<String, String> headers);
