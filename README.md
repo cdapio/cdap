@@ -104,7 +104,7 @@ features, or fixing bugs, here's how to do it:
 Thanks for helping to improve CDAP!
 
 ### Filing Issues
-[Issue](http://issues.cask.co)
+JIRA for filing [Issues](http://issues.cask.co)
 
 ### Mailing List
 
