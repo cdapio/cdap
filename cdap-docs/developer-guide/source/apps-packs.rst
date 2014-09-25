@@ -25,7 +25,7 @@ CDAP. Selected applications include:
 - `MovieRecommender <https://github.com/caskdata/cdap-apps/MovieRecommender/>`__: Movie recommendation system
 
   The application performs sentiment analysis on Twitter data to understand consumer feelings and 
-  attitudes towards brands or topics in online conversations. Download the app or clone at GitHub.
+  attitudes towards brands or topics in online conversations. Download the app or clone it at GitHub.
 
 - `TwitterSentiment <https://github.com/caskdata/cdap-apps/TwitterSentiment/>`__: Social analytics application
 
