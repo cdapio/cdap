@@ -414,21 +414,19 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
 
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
-#. Each example folder has in its ``target`` directory a .JAR file.
-   For verification, we will use the ``TrafficAnalytics`` example.
-#. Open a web browser to the CDAP Web-App ("Console").
-   It will be located on port ``9999`` of the box where you installed CDAP.
-#. On the Console, click the button *Load an App.*
-#. Find the pre-built JAR (`TrafficAnalytics-1.0.jar`) by using the dialog box to navigate to
-   ``CDAP_HOME/examples/TrafficAnalytics/target/TrafficAnalytics-1.0.jar``
+#. Each example folder has a ``.jar`` file in its ``target`` directory.
+   For verification, we will use the ``WordCount`` example.
+#. Open a web browser to the CDAP Console.
+   It is located on port ``9999`` of the box where you installed CDAP.
+#. On the Console, click the button *Load an App*.
+#. Find the pre-built ``WordCount-2.5.0.jar`` using the dialog box to navigate to
+   ``CDAP_HOME/examples/WordCount/target/``
 #. Once the application is deployed, instructions on running the example can be found at the
-   `TrafficAnalytics example
-   </http://docs.cask.co/cdap/current/examples/trafficAnalytics#building-and-running-the-application-and-example>`__.
-#. You should be able to start the application, inject log entries,
-   run the ``MapReduce`` job and see results.
+   :ref:`WordCount example<word-count>`.
+#. You should be able to start the application, inject sentences,
+   run the Flow and the Procedure, and see results.
 #. When finished, stop and remove the application as described in the
-   `TrafficAnalytics example
-   <http://docs.cask.co/cdap/current/examples/trafficAnalytics#stopping-the-application>`__.
+   :ref:`examples<examples>`.
 
 .. rst2pdf: PageBreak
 
