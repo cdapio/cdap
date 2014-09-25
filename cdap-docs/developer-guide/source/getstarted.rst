@@ -143,8 +143,6 @@ application template for the development of your application. You can import thi
 into your preferred IDE—such as Eclipse or IntelliJ—and start developing your first
 CDAP application.
 
-.. _examples:
-
 First Steps
 ===========
 
@@ -152,59 +150,119 @@ Before you start developing your own applications, it is recommended that you fa
 APIs and concepts of CDAP as well as the CDAP Console using the example applications that are provided
 with the SDK. Let's take a look at one of these:
 
-.. include:: first-app.rst
+.. include:: /_examples/first-app.rst
+
+.. _examples:
 
 Other Example Applications
 ==========================
 
-In addition to the previous example, these examples are included in the SDK:
+The SDK includes these examples:
 
-HelloWorld
-----------
+.. list-table::
+  :widths: 15 60
+  :header-rows: 1
 
-A Simple HelloWorld App that's written using CDAP. It introduces Streams, Datasets, Flows, and Procedures,
-and how they are used in a CDAP application.
-
-Purchase
---------
-
-This example demonstrates use of each of the CDAP elements: Streams, Flows, Flowlets,
-Datasets, Queries, Procedures, MapReduce Jobs, Workflows, and Custom Services, all in a single Application.
-
- - The PurchaseFlow receives Events from a Stream, each event ("John bought 5 apples for $2")
-   describing a purchase by a customer. The Flow processes and stores the events in a ``purchases`` Dataset.
- - A Mapreduce Job reads the ``purchase`` Dataset, compiles the purchases of each customer into a purchase
-   history, and stores them in a ``history`` Dataset.
- - The ``history`` Dataset can then be queried through a Procedure and also through ad-hoc SQL queries.
-
-:doc:`Read more about this example. <examples/purchase>`
-
-SparkKMeans
------------
-
-An application that demonstrates streaming text analysis using a Spark program. It calculates the centers of points
-from an input stream using the KMeans Clustering method.
-
-:doc:`Read more about this example. <examples/sparkKMeans>`
-
-SparkPageRank
--------------
-
-An application that demonstrates streaming text analysis using a Spark program.
-It computes the page rank of URLs from an input stream.
-
-:doc:`Read more about this example. <examples/sparkPageRank>`
-
-WordCount
----------
-
-A simple application that counts words, unique words, and tracks word associations as seen on a Stream.
-It demonstrates the power of using datasets and how they can be used to simplify storing complex data.
+  * - Example Name
+    - Description
+  * - :ref:`HelloWorld<hello-world>`
+    - A simple HelloWorld App that's written using CDAP. It introduces how the elements Stream, Dataset, Flow,
+      and Procedure are used in a CDAP application.
+  * - :ref:`WordCount<word-count>`
+    - A simple application that counts words, and tracks word associations and unique words seen on the Stream.
+      It demonstrates the power of using datasets and how they can be employed to simplify storing complex data.
+  * - :ref:`CountRandom<count-random>`
+    - An application that demonstrates the ``@Tick`` feature of Flows. It uses a tick method to generate random
+      numbers which are then counted by downstream Flowlets.
+  * - :ref:`Purchase<purchase>`
+    - This example demonstrates use of each of the CDAP elements—Streams, Flows, Flowlets, Datasets, Queries,
+      Procedures, MapReduce, Workflows, and Services—in a single Application.
+      A Flow receives events from a Stream, each event describing a purchase ("John bought 5 apples for $2");
+      the Flow processes the events and stores them in a Dataset. A Mapreduce Job reads the Dataset, compiles
+      the purchases for each customer into a purchase history and stores the histories in a second Dataset.
+      The purchase histories can then be queried either through a Procedure or an ad-hoc SQL query.
+  * - :ref:`SparkKMeans<spark-k-means>`
+    - An application that demonstrates streaming text analysis using a Spark program. It calculates the centers
+      of points from an input stream using the KMeans Clustering method.
+  * - :ref:`SparkPageRank<spark-page-rank>`
+    - An application that demonstrates streaming text analysis using a Spark program. It computes the page rank
+      of URLs from an input stream.
+  * - :ref:`Web Analytics<web-analytics>`
+    - An application to generate statistics and to provide insights about web usage through the analysis
+      of web traffic.
 
 
-Where to Go Next
-================
-Now that you've had an introduction to CDAP, take a look at:
+.. _convention:
 
-- :doc:`Concepts and Architecture, <arch>` an overview of CDAP's underlying technology.
+Building and Running Applications
+---------------------------------
 
+.. highlight:: console
+
+In the examples, we refer to the Standalone CDAP as "CDAP", and the
+example code that is running on it as an "Application".
+
+
+Building the Application
+........................
+
+From the example's project root, build an example with the
+`Apache Maven <http://maven.apache.org>`__ command::
+
+	$ mvn clean package
+
+Starting CDAP
+.............
+
+Make sure an instance of CDAP is running and available.
+From within the SDK root directory, this command will start the Standalone CDAP::
+
+	$ ./bin/cdap.sh start
+
+On Windows::
+
+	> bin\cdap.bat start
+
+
+Deploying an application
+........................
+
+Once CDAP is Started, you can deploy the example JAR by:
+
+- Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console
+  running at `http://localhost:9999/ <http://localhost:9999/>`__
+- Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar.
+- From the example's project root run the App Manager script:
+
+   - Linux: ``$./bin/app-manager.sh --action deploy``
+   - Windows: ``>bin\app-manager.bat deploy``
+
+Starting an Application
+.......................
+
+Once the application is deployed,
+
+- You can go to the Application view by clicking on the Application's name. Now you can *Start* or *Stop* the Process
+  and Query of the application, or
+- From the example's project root run the App Manager script:
+
+    - Linux: ``$./bin/app-manager.sh --action start``
+    - Windows: ``>bin\app-manager.bat start``
+
+.. _stop-application:
+
+Stopping an Application
+.......................
+
+- On the Application detail page of the CDAP Console, click the *Stop* button on both the Process and Query lists or
+- From the example's project root run the App Manager script:
+
+  - Linux: ``$./bin/app-manager.sh --action stop``
+  - Windows: ``>bin\app-manager.bat stop``
+
+.. include:: /_examples/helloworld.rst
+.. include:: /_examples/wordcount.rst
+.. include:: /_examples/countrandom.rst
+.. include:: /_examples/purchase.rst
+.. include:: /_examples/sparkKMeans.rst
+.. include:: /_examples/sparkPageRank.rst

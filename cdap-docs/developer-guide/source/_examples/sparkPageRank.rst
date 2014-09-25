@@ -1,19 +1,18 @@
-:orphan:
 
 .. :Author: Cask Data, Inc.
-   :Description: Cask Data Application Platform SparkPageRank Application
+     :Description: Cask Data Application Platform SparkPageRank Application
      :Copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _spark-pagerank-example:
+.. _spark-page-rank:
 
-=================================
 SparkPageRank Application Example
-=================================
+---------------------------------
 
-**A Cask Data Application Platform (CDAP) Example Demonstrating Spark**
+A Cask Data Application Platform (CDAP) Example Demonstrating Spark
 
 Overview
-========
+........
+
 This example demonstrates a Spark application performing streaming log analysis, computing the page rank based on
 information about backlink URLs.
 
@@ -30,7 +29,8 @@ It will send back a JSON-formatted result with page rank based on the ``url`` pa
 Let's look at some of these elements, and then run the Application and see the results.
 
 The SparkPageRank Application
------------------------------
+.............................
+
 As in the other `examples <index.html>`__, the components
 of the Application are tied together by the class ``SparkPageRankApp``::
 
@@ -70,92 +70,35 @@ of the Application are tied together by the class ``SparkPageRankApp``::
   }
 
 ``backlinkURLs`` and ``ranks``: ObjectStore Data Storage
---------------------------------------------------------
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 The raw URL pair data is stored in an ObjectStore Dataset, *backlinkURLs*.
 The calculated page rank data is stored in a second ObjectStore Dataset, *ranks*.
 
 ``RanksProcedure``: Procedure
------------------------------
++++++++++++++++++++++++++++++
+
 This procedure has a ``rank`` method to obtain the page rank of a given URL.
 
-
-Building and Running the Application and Example
-================================================
-
-.. highlight:: console
-
-In the remainder of this document, we refer to the CDAP runtime as "CDAP", and the
-example code that is running on it as an "Application".
-
-We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
-
-In this example, you need to build the app from source and then deploy the compiled JAR file.
-You start the CDAP, deploy the app, start the Flow and then run the example by
-injecting URL pairs into the Stream.
-
-When finished, stop the Application as described below.
-
-Building the SparkPageRank Application
---------------------------------------
-From the project root, build ``SparkPageRank`` with the
-`Apache Maven <http://maven.apache.org>`__ command::
-
-	$ mvn clean package
-
-(If you modify the code and would like to rebuild the Application, you can
-skip the tests by using the command::
-
-	$ mvn -Dmaven.test.skip=true clean package
-
-
-Deploying and Starting the Application
---------------------------------------
-Make sure an instance of the CDAP is running and available.
-From within the SDK root directory, this command will start CDAP in standalone mode::
-
-	$ ./bin/cdap.sh start
-
-  On Windows::
-
-	~SDK> bin\cdap.bat start
-
-From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in standalone mode):
-
-#. Drag and drop the Application .JAR file (``target/SparkPageRank-<version>.jar``)
-   onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
-#. Once loaded, select the ``SparkPageRank`` Application from the list.
-   On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
-
-To deploy and start the Application from the command-line:
-
-#. To deploy the App JAR file, run ``$ ./bin/app-manager.sh --action deploy``
-#. To start the App, run ``$ ./bin/app-manager.sh --action start``
-
-On Windows:
-
-#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy``
-#. To start the App, run ``~SDK> bin\app-manager.bat start``
+Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
 
 Running the Example
--------------------
++++++++++++++++++++
 
 Injecting URL Pairs
-...................
+###################
 
 Run this script to inject URL pairs
 to the Stream named *backlinkURLStream* in the ``SparkPageRank`` application::
 
-	$ ./bin/inject-data.sh [--host <hostname>]
-
-:Note: ``[--host ]`` is not available for a *Standalone CDAP*.
+	$ ./bin/inject-data.sh
 
 On Windows::
 
 	~SDK> bin\inject-data.bat
 
-Running Spark program
-.....................
+Running the Spark Program
+#########################
 
 There are three ways to start the Spark program:
 
@@ -167,7 +110,7 @@ There are three ways to start the Spark program:
      curl -v -d '{args="3"}' \
     	  -X POST 'http://localhost:10000/v2/apps/SparkPageRank/spark/SparkPageRankProgram/start'
 
-   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the example::
+   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
      libexec\curl...
 
@@ -180,7 +123,8 @@ There are three ways to start the Spark program:
     ~SDK> bin\app-manager.bat run
 
 Querying the Results
-....................
+####################
+
 If the Procedure has not already been started, you start it either through the 
 CDAP Console or via an HTTP request using the ``curl`` command::
 
@@ -193,7 +137,7 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 	 curl -v -d '{"url": "http://example.com/page1"}' \
 	  -X POST 'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/methods/rank'
 
-   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the example::
+   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
 	  libexec\curl...
 
@@ -219,23 +163,6 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 
             "0.9988696312751688"
 
-
-Stopping the Application
-------------------------
-Either:
-
-- On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; 
-
-or:
-
-- Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
-
-:Note: ``[--host ]`` is not available for a *Standalone CDAP*.
-
-  On Windows, run ``~SDK> bin\app-manager.bat stop``
+Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
 
 .. highlight:: java
-
-Downloading the Example
-=======================
-This example (and more!) is included with our `software development kit <http://cask.co/download>`__.
