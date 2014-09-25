@@ -26,6 +26,7 @@
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
+  <url>https://github.com/caskdata/cdap</url>
 
   <organization>
     <name>Cask Data, Inc.</name>
