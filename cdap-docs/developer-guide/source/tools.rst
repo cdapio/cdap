@@ -604,6 +604,8 @@ Supported Actions
 Java API
 ........
 
+Download: `Java Stream Client <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
+
 Create a StreamClient instance, specifying the fields 'host' and 'port' of the CDAP instance.
 Optional configurations that can be set:
 
@@ -721,8 +723,11 @@ Also look at :ref:`Note on Stream Client <note_stream_client>`
 
 You can refer to  :ref:`Authentication Client Usage for Java. <AuthClientJava>`
 
+
 Python API
 ..........
+
+Download: `Python Stream Client <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
 
 Usage
 +++++
@@ -829,7 +834,6 @@ Also look at: :ref:`Note on Stream Client <note_stream_client>`
 
 You can refer to  - :ref:`Authentication Client Usage for Python <AuthClientPython>`
 
-You can download the client at: [link]
 
 .. _note_stream_client:
 
@@ -882,6 +886,10 @@ Features
 - Persists state and is able to resume from first unsent record
 - Writes statistics info
 
+Getting the File Tailer
+.......................
+Download: `File Tailer <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
+
 Installing File Tailer
 ......................
 
@@ -916,7 +924,6 @@ After Installation, you can configure the daemon properties at /etc/file-tailer/
 
 **Note**: Please note that the target file must be accessible to the File Tailer user.
 
-Available at: [link]
 
 Starting and Stopping the Daemon
 ................................
@@ -1002,6 +1009,11 @@ The CDAP Sink is a `Apache Flume Sink <https://flume.apache.org>`__ implementati
 RESTStreamWriter to write events received from a source. For example, you can configure the Flume Sink's
 Agent to read data from a log file by tailing it and putting them into CDAP.
 
+Building the Flume Sink Jar
+...........................
+
+Download: `Flume Sink <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
+
 .. list-table::
     :widths: 20 30 50
     :header-rows: 1
@@ -1080,6 +1092,11 @@ Features
 - Able to survive restart and resume, sending from the first unsent record of each of the existing files
 - Cleanup of files that are completely sent
 
+Getting File DropZone
+.....................
+
+Download: `File DropZone <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
+
 Installing File DropZone
 ........................
   on Debian/Ubuntu:
@@ -1152,6 +1169,11 @@ The current implementation supports three authentication mechanisms:
 It is also possible to extend existing logic and implement a custom client for any other authentication
 mechanisms. To create a new Authentication Client, implement the ``AuthenticationClient`` interface.
 
+Download
+++++++++
+
+Download: `Authentication Client - Java <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/java>`__
+
 Build
 +++++
 
@@ -1217,6 +1239,12 @@ To see the properties supported by the Authentication Client, look at :ref:`Conf
 
 Authentication Client - Python
 ..............................
+
+Download
+++++++++
+
+Download: `Authentication Client - Python <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/python>`__
+
 Example Usage
 +++++++++++++
 
