@@ -1738,8 +1738,9 @@ Logging HTTP API
 
 Downloading Logs
 ----------------
-You can download the logs that are emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs,
-or *Services* running in CDAP. To do that, send an HTTP GET request::
+Logs emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs, or
+*Services* running in CDAP can be downloaded with the Logging HTTP API. To do
+that, send an HTTP GET request::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
