@@ -39,3 +39,10 @@ CDAP Packs Repository
 The `CDAP Packs <https://github.com/caskdata/cdap-packs/>`__ repository is a collection of useful 
 and reusable building blocks for your data applications.
 They are libraries of common data patterns and other programs useful when building big data applications.
+
+
+Where to Go Next
+================
+Now that you've seen some of the applications available with CDAP, take a look at:
+
+- `HTTP RESTful API and Clients <api.html>`__, which covers the RESTful and Java APIs and the command-line interface.
