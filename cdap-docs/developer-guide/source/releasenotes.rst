@@ -33,13 +33,12 @@ Datasets
 - CDAP now checks Datasets for compatibility in a verification stage
 - The Transaction engine uses server-side filtering for efficient transactional reads
 - Dataset specifications can now be dynamically reconfigured through the use of RESTful endpoints
-- The RESTful endpoint now can modify Dataset instance specifications
 - The Bundle jar format is now used for Dataset libs
 - Increments on Datasets are now read-less
 
 Services
 .................
-- Added simplified APIs for using Services from other programs such as MapReduce Jobs, Flows and Procedures
+- Added simplified APIs for using Services from other programs such as MapReduce, Flows and Procedures
 - Added an API for creating Services and handlers that can use Datasets transactionally
 - Added a RESTful API to make requests to a Service via the Router
 
@@ -62,7 +61,7 @@ Streams
 - Added a collection of applications, tools and APIs specifically for the ETL (Extract, Transform and Loading) of data
 - Added support for asynchronously writing to Streams
 
-Management
+Clients
 .................
 - Added a Command-line Interface
 - Added a Java Client Interface
@@ -71,10 +70,9 @@ Management
 Major CDAP Bug Fixes
 --------------------
 - Fixed a problem with a HADOOP_HOME exception stacktrace when unit-testing an Application
-- Fixed an issue with Hive creating directories in /tmp in the Singlenode and unit-test frameworks
+- Fixed an issue with Hive creating directories in /tmp in the Standalone and unit-test frameworks
 - Fixed a problem with type inconsistency of Service API calls, where numbers were showing up as strings
 - Fixed an issue with the premature expiration of long-term Authentication Tokens
-- Fixed a problem with the cliService returning a double when an integer was stored
 - Fixed an issue with the Dataset size metric showing data operations size instead of resource usage
 
 
