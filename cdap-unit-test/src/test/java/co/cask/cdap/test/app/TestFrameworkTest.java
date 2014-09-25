@@ -337,7 +337,7 @@ public class TestFrameworkTest extends TestBase {
 
     LOG.info("Service Started");
 
-    URL url = new URL(serviceManager.getServiceURL(), "ping2");
+    URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(response.getResponseCode(), 200);
@@ -383,7 +383,7 @@ public class TestFrameworkTest extends TestBase {
     LOG.info("Service Started");
 
 
-    final URL baseUrl = serviceManager.getServiceURL();
+    final URL baseUrl = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
 
     // Make a request to write in a separate thread and wait for it to return.
     ExecutorService executorService = Executors.newSingleThreadExecutor();
