@@ -1,123 +1,170 @@
 .. :author: Cask Data, Inc.
    :description: Getting Started with Cask Data Application Platform
-         :copyright: Copyright © 2014 Cask Data, Inc.
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
-===================================================
-Getting Started with Cask Data Application Platform
-===================================================
+.. _get-started:
 
-This chapter is a guide to help you get started with CDAP and prepares you to be familiar with the environment, At the
-end of this topic you will have CDAP up and running on your platform, you would learn how to develop, deploy and play with
-CDAP  with the help of the sample CDAP App provided in this chapter.
+=======================================================
+Getting Started with the Cask Data Application Platform
+=======================================================
 
-CDAP SDK - Quick Intro
-----------------------
+This chapter is a guide to help you get started with CDAP. At the end of this topic, you
+will have the CDAP SDK up and running in your development environment, and you will have
+built, deployed, and run a sample application.
 
-SDK is your entry door for developing apps that can run on CDAP,it provides nice and clean abstractions like ``Streams, Flows,Datasets`` to help solve your Big-data problems.
-  - Stream is entry point for data ingestion into CDAP, users can create and define streams and add streams to their application for processing.
-  - Processing happens at Flows, and the flow system is a Directed-acyclic graph constructed by the user and processing logic is provided by the user.
-  - CDAP SDK comes up with a good collection of in-built Datasets, that is developed to suit the needs of the Big-Data Storage and these datasets make it
-    easy for a user to think and store his data in a dataset - which is reflective of the kind of data. we believe this abstraction is more intuitive and
-    removes the complexity of the underlying storage engines for the user.
-  - The SDK comes with a standalone CDAP that implements all the features of CDAP, including data and app virtualizatiion, in a single JVM and can run on your laptop.
-  - The SDK also includes tools and clients that can help in developing, interacting-with and debugging CDAP applications.
-  - The SDK has features for running Map-Reduce and Spark Jobs
-  - The SDK provides Ad-hoc SQL support to query the datasets.
+Introduction to the CDAP SDK
+============================
 
-Before Getting Started
-======================
-The minimum requirements to run CDAP applications are only three,
- - `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP; note that $JAVA_HOME should be set)
- - `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP UI)
- - `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
+The CDAP Software Development Kit (SDK) is all that is needed to develop CDAP applications
+in your development environment, either your laptop or a work station. It includes:
 
-Getting CDAP
-------------
-CDAP is available as a source tarball and binary on the Downloads section of Cask Website. If you want to get started quickly, the binary is the easiest way to get started.
+- A Standalone CDAP that can run on a single machine in a single JVM. It provides all of
+  the CDAP APIs without requiring a Hadoop cluster, using alternative, fully functional
+  implementations of CDAP features. For example, application containers are implemented as
+  Java threads instead of YARN containers.
+- The CDAP Console, a web-based graphical user interface to interact with the Standalone CDAP
+  and the applications it runs.
+- The complete CDAP documentation, including this document and the Javadocs for the CDAP APIs.
+- A set of tools, datasets and example applications that help you get familiar with CDAP, and
+  can also serve as templates for developing your own applications.
 
+System Requirements and Dependencies
+------------------------------------
 
-Building from Source
-====================
+The CDAP SDK runs on Linux, Unix, MacOS and Windows, and only has three requirements:
 
-**Check out the source** ::
+- `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ 
+  (required to run CDAP; note that $JAVA_HOME should be set)
+- `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP Console UI)
+- `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
 
-    $ git clone https://github.com/caskdata/cdap cdap
-    $ cd cdap
+.. highlight:: console
 
-**Compile the Project** ::
+Download and Setup
+==================
 
-  $ mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
+There are three ways to download the CDAP SDK: as a binary zip file, as a Virtual Machine image,
+or as a Docker image.
 
+- The zip file is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
+  Once downloaded, unzip it to a directory on your machine::
 
-If you are an app-developer, you would want the binary distribution ::
+    $ tar -zxvf cdap-sdk-2.5.0.zip
 
-  $ cp cdap-standalone/target/cdap-sdk-<version>.zip .
-  $ tar -zxvf cdap-sdk-<version>.zip
-  $ cd cdap-sdk-<version>
+- To use the Virtual Machine image:
 
-**Running CDAP SDK** ::
+  + Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
+    `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
+  + Download the CDAP Standalone Virtual Machine (the .ova file) at `<http://cask.co/downloads>`__.
+  + Import the Virtual Machine into VirtualBox or VMWare Player.
+  + The CDAP Standalone Virtual Machine has been configured and setup so you can be productive immediately:
 
-    $ ./bin/cdap.sh start (If you are using Windows, use the batch script to start)
+    * CDAP VM is configured with 4GB Default RAM (recommended).
+    * The virtual machine has Ubuntu Desktop Linux installed as the operating system.
+    * No password is required to enter the virtual machine; however, should you need to install or
+      remove software, the admin user and password are both “cdap”.
+    * 10GB of disk space is available for you to build your first CDAP project.
+    * Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
+    * The CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0``.
+    * The Standalone CDAP will automatically start when the virtual machine starts.
+    * The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console
+      (http://localhost:9999). You're welcome to install your favorite browser.
+    * Maven is installed and configured to work for CDAP.
+    * The Java JDK and Node JS are both installed.
 
-Once CDAP is started successfully, you can see the CDAP web UI running at localhost:9999, you can head there to deploy sample example apps and experience CDAP.
+Starting the Standalone CDAP
+----------------------------
 
-For Developers
-==============
+Use the ``cdap.sh`` script to start and stop the Standalone CDAP::
 
-To generate a sample CDAP application, you would use the maven archetype ::
+  $ cd cdap-sdk-2.5.0
+  $ ./bin/cdap.sh start
+  ...
+  $ ./bin/cdap.sh stop
 
-   ``$ mvn archetype:generate \
+Or, if you are using Windows, use the batch script cdap.bat to start the SDK.
+
+Once CDAP is started successfully, you can see the CDAP Console running in a web browser
+at ``localhost:9999``, where you can deploy example applications and interact with CDAP.
+
+Creating an Application
+=======================
+
+The best way to start developing a CDAP application is by using the Maven archetype::
+
+  $ mvn archetype:generate \
     -DarchetypeCatalog=https://repository.cask.co/content/groups/releases/archetype-catalog.xml \
     -DarchetypeGroupId=co.cask.cdap \
     -DarchetypeArtifactId=cdap-app-archetype \
-    -DarchetypeVersion=2.5.0``
+    -DarchetypeVersion=2.5.0
 
-To setup the CDAP application development environment, you need to import the generated pom file in your IDE,
-Now you are all set to start developing your first CDAP application. To help you familiarize with the environment and get developing CDAP apps, we have provided a set of Example Apps ,
-which uses and demonstrates the components of CDAP and we highly recommend you to read them before diving into CDAP.
+This creates a Maven project with all required dependencies, Maven plugins, and a simple
+application template for the development of your application. You can import this Maven project
+into your preferred IDE—such as Eclipse or IntelliJ—and start developing your first
+CDAP application.
 
 .. _examples:
 
-Example Apps
-------------
+First Steps
+===========
+
+Before you start developing your own applications, it is recommended that you familiarize yourself with the
+APIs and concepts of CDAP as well as the CDAP Console using the example applications that are provided
+with the SDK. Let's take a look at one of these:
+
+.. include:: first-app.rst
+
+Other Example Applications
+==========================
+
+In addition to the previous example, these examples are included in the SDK:
 
 HelloWorld
-==========
+----------
 
-A Simple HelloWorld App that's written using CDAP. It introduces how Stream,Dataset, Flow and Procedure are used in an CDAP application.
+A Simple HelloWorld App that's written using CDAP. It introduces Streams, Datasets, Flows, and Procedures,
+and how they are used in a CDAP application.
 
 Purchase
-========
+--------
+
 This example demonstrates use of each of the CDAP elements: Streams, Flows, Flowlets,
-Datasets, Queries, Procedures, MapReduce Jobs, Workflows, and Custom Services in a single Application.
+Datasets, Queries, Procedures, MapReduce Jobs, Workflows, and Custom Services, all in a single Application.
 
- - PurchaseFlow Receives Events from a PurchaseStream about Purchases in the format "X bought Y apples for $Z", processes them
-   and stores it in a ``purchases dataset``.
- - A Mapreduce Job reads the ``purchase dataset`` , creates a purchase history object and stores them in a
-   ``history dataset``
- - Procedure and Ad-hoc SQL query support enables to query the ``history dataset`` to discover the purchase history
-   of users.
+ - The PurchaseFlow receives Events from a Stream, each event ("John bought 5 apples for $2")
+   describing a purchase by a customer. The Flow processes and stores the events in a ``purchases`` Dataset.
+ - A Mapreduce Job reads the ``purchase`` Dataset, compiles the purchases of each customer into a purchase
+   history, and stores them in a ``history`` Dataset.
+ - The ``history`` Dataset can then be queried through a Procedure and also through ad-hoc SQL queries.
 
-Read more about this example :doc:`here <examples/purchase>`.
+:doc:`Read more about this example. <examples/purchase>`
 
 SparkKMeans
-===========
+-----------
 
 An application that demonstrates streaming text analysis using a Spark program. It calculates the centers of points
 from an input stream using the KMeans Clustering method.
 
-Read more about this example :doc:`here <examples/sparkKMeans>`.
+:doc:`Read more about this example. <examples/sparkKMeans>`
 
 SparkPageRank
-=============
+-------------
 
 An application that demonstrates streaming text analysis using a Spark program.
 It computes the page rank of URLs from an input stream.
 
-Read more about this example :doc:`here <examples/sparkPageRank>`.
+:doc:`Read more about this example. <examples/sparkPageRank>`
 
 WordCount
-=========
+---------
 
-A simple application that counts words and tracks word associations and unique words seen on the Stream.
-It demonstrates the power of using Datasets and how they can be used to simplify storing complex data.
+A simple application that counts words, unique words, and tracks word associations as seen on a Stream.
+It demonstrates the power of using datasets and how they can be used to simplify storing complex data.
+
+
+Where to Go Next
+================
+Now that you've had an introduction to CDAP, take a look at:
+
+- :doc:`Concepts and Architecture, <arch>` an overview of CDAP's underlying technology.
+

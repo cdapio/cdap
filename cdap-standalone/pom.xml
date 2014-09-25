@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.5.0-SNAPSHOT</version>
+    <version>2.5.0</version>
   </parent>
 
 
@@ -170,7 +170,7 @@
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
                   <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka</excludeGroupIds>
-                  <excludeArtifactIds>hadoop-hdfs,zkclient</excludeArtifactIds>
+                  <excludeArtifactIds>hadoop-hdfs,zkclient,servlet-api</excludeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>compile</includeScope>
@@ -206,10 +206,6 @@
                     <resource>
                       <directory>${project.basedir}/src/dist/LICENSES</directory>
                       <targetPath>LICENSES</targetPath>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-docs/developer-guide/build-pdf</directory>
-                      <targetPath>docs</targetPath>
                     </resource>
                     <resource>
                       <directory>${project.parent.basedir}/cdap-distributions</directory>
@@ -390,18 +386,6 @@
                 <configuration>
                   <target>
                     <copy file="${project.build.directory}/examples/deploy_pom.xml" tofile="${stage.opt.dir}/examples/pom.xml" />
-                  </target>
-                </configuration>
-              </execution>
-              <execution>
-                <id>rename-rest-api-docs</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <move file="${stage.opt.dir}/docs/rest.pdf" tofile="${stage.opt.dir}/docs/REST-API-Reference-v${project.version}.pdf"/>
                   </target>
                 </configuration>
               </execution>
