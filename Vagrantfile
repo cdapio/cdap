@@ -1,7 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant.configure("2") do |config|
+Vagrant.configure('2') do |config|
   # All Vagrant configuration is done here. The most common configuration
   # options are documented and commented below. For a complete reference,
   # please see the online documentation at vagrantup.com.
@@ -9,20 +9,20 @@ Vagrant.configure("2") do |config|
   # We *need* vagrant-omnibus for these box images
   config.omnibus.chef_version = '11.16.0'
 
-  config.vm.hostname = "cdap-berkshelf"
+  config.vm.hostname = 'cdap-berkshelf'
 
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "opscode-centos-6.5"
+  config.vm.box = 'opscode-centos-6.5'
 
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
-  config.vm.box_url = "https://opscode-vm-bento.s3.amazonaws.com/vagrant/opscode_centos-6.5_provisionerless.box"
+  config.vm.box_url = 'https://opscode-vm-bento.s3.amazonaws.com/vagrant/opscode_centos-6.5_provisionerless.box'
 
   # Assign this VM to a host-only network IP, allowing you to access it
   # via the IP. Host-only networks can talk to the host machine as well as
   # any other machines on the same network, but cannot be accessed (through this
   # network interface) by any external networks.
-  config.vm.network :private_network, ip: "33.33.33.10"
+  config.vm.network :private_network, ip: '33.33.33.10'
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -45,11 +45,11 @@ Vagrant.configure("2") do |config|
   # Example for VirtualBox:
   #
   config.vm.provider :virtualbox do |vb|
-  #   # Don't boot with headless mode
-  #   vb.gui = true
-  #
+    #   # Don't boot with headless mode
+    #   vb.gui = true
+    #
     # Use VBoxManage to customize the VM. For example to change memory:
-    vb.customize ["modifyvm", :id, "--memory", "1024"]
+    vb.customize ['modifyvm', :id, '--memory', '1024']
   end
   #
   # View the documentation for the provider you're using for more
@@ -79,7 +79,7 @@ Vagrant.configure("2") do |config|
       },
       :java => {
         :install_flavor => 'oracle',
-        :jdk_version => "6",
+        :jdk_version => '6',
         :oracle => {
           :accept_oracle_download_terms => true
         }
@@ -87,8 +87,8 @@ Vagrant.configure("2") do |config|
     }
 
     chef.run_list = [
-      "recipe[minitest-handler::default]",
-      "recipe[cdap::fullstack]"
+      'recipe[minitest-handler::default]',
+      'recipe[cdap::fullstack]'
     ]
   end
 end
