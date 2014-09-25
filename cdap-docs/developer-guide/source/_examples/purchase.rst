@@ -114,7 +114,7 @@ This procedure has a ``history`` method to obtain the purchase history of a give
 Setting up
 ++++++++++
 
-#. Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
+#. Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
 #. Note: the CatalogLookupService will not be displayed in the Console
 
 Running the Example
@@ -235,6 +235,6 @@ You repeat this step until the ``curl`` call returns an empty list. That means y
   curl -v -X DELETE http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782
 
 
-Once done, You can stop the application as described in :ref:`Stop Application <stop-application>`
+Once done, You can stop the application as described in :ref:`Building and Running Applications <stop-application>`
 .. highlight:: java
 
