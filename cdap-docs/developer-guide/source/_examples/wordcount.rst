@@ -2,7 +2,7 @@
    :Description: Cask Data Application Platform WordCount Application
      :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _wordcount:
+.. _word-count:
 
 Word Count
 ----------
@@ -14,6 +14,7 @@ Overview
 
 This application receives words and sentences from a stream and uses flowlets to process them and
 store the results and stats in datasets.
+
   - The ``wordStream`` receives sends the received sentences to the flowlet ``splitter``
   - The ``splitter`` flowlet splits the received sentence into words, writes global stats of the received words like "total words received"
     and "total length of words received" and emits each word to the flowlet ``counter`` and the sentence (list of words)
@@ -21,8 +22,7 @@ store the results and stats in datasets.
   - The ``associator`` flowlet receives the set of words and writes word association to the dataset,
     Example: If we recevie a sentence "welcome to CDAP", there would be word associations for
     {"welcome","to"} , {"welcome", "CDAP"}, and {"welcome","to}
-  - The ``counter`` flowlet receives a word and increments the count for this word, maintained in a Key-Value table and forwards
-        this word to ``unique`` flowlet
+  - The ``counter`` flowlet receives a word and increments the count for this word, maintained in a Key-Value table and forwards this word to ``unique`` flowlet
   - The ``unique`` flowlet receives a word and updates the UniqueCountTable if we are seeing this word for the first time.
 
 Let's look at some of these elements, and then run the Application and see the results.
@@ -71,7 +71,7 @@ RetrieveCounts Procedure
 This Procedure has three methods,
   - getStats(): Returns global stats like get total words received, total length of words received and the average length of words.
   - getCount(): Given a word, this would return the total count of occurrence and the top-10 associated words for this word.
-  - getAssoc(): Given a pair, "word1" and "word2" this would return the total-count for this pair of association
+  - getAssoc(): Given a pair, "word1" and "word2" this would return the association count for this pair
 
 Building and Running the Application and Example
 ................................................
@@ -92,7 +92,7 @@ When finished, stop the Application as described below.
 Building the WordCount Application
 ++++++++++++++++++++++++++++++++++
 
-From the project root, build ``Purchase`` with the
+From the project root, build ``WordCount`` with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
@@ -120,9 +120,8 @@ From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`_
 #. Drag and drop the Application .JAR file (``target/WordCount-<version>.jar``)
    onto your browser window.
    Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
-#. Once loaded, select the ``Purchase`` Application from the list.
+#. Once loaded, select the ``WordCount`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
-#. Note: the CatalogLookupService will not be displayed in the Console
 
 On Windows:
 
@@ -167,10 +166,10 @@ There are two ways to query the  ``RetrieveCounts`` procedure:
    Procedure dialogue. Type in the method name ``getCount``, and enter the word in the parameters
    field, such as::
 
-	{ "word" : "CDAP" }
+	  { "word" : "CDAP" }
 
-   Then click the *Execute* button. The word count and top-10 associations words for the input word will be displayed in the
-   Console in JSON format, for example [reformatted to fit]::
+Then click the *Execute* button. The word count and top-10 associations words for the input word will be displayed in the
+Console in JSON format, for example [reformatted to fit]::
 
   {
     "assocs": {
