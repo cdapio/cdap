@@ -46,12 +46,12 @@ Download and Setup
 There are three ways to download the CDAP SDK: as a binary zip file, as a Virtual Machine image,
 or as a Docker image.
 
-- The zip file is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
+- **The zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
   Once downloaded, unzip it to a directory on your machine::
 
     $ tar -zxvf cdap-sdk-2.5.0.zip
 
-- To use the Virtual Machine image:
+- To use the **Virtual Machine image**:
 
   + Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
     `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
@@ -72,6 +72,45 @@ or as a Docker image.
     * Maven is installed and configured to work for CDAP.
     * The Java JDK and Node JS are both installed.
 
+
+- To use the **Docker image**:
+
+  + Download and install Docker in your environment following the instructions at 
+    `Docker.com. <https://docker.com>`__
+  + Start Docker using::
+
+      boot2docker start
+      
+  + Pull down the *CDAP Docker Image* from the Docker hub using::
+  
+      docker pull caskdata/cdap-standalone
+      
+  + Identify the Docker Virtual Machine's Host Interface IP address
+    (this address will be used in a later step) with::
+    
+      boot2docker ip
+      
+  + Start the *Docker CDAP VM* with::
+  
+      docker run -t -i -p 9999:9999 caskdata/cdap-standalone
+      
+  + Once you enter the *Docker CDAP VM*, you can start CDAP with these commands::
+  
+      $ cd cdap-sdk-2.5.0 
+      $ ./bin/cdap.sh start 
+      
+  + Once CDAP starts, it will instruct you to connect to the Console with a web browser
+    at http://host_ip:9999, replacing *host_ip* with the IP address you obtained earlier.
+
+  + Start a browser and enter the address to access the CDAP Console.
+  + It is recommended that you have our usually-recommended software and tools already installed
+    in your environment, in order to begin building CDAP applications:
+
+    * An IDE such as IntelliJ or Eclipse IDE
+    * Apache Maven 3.0+
+    * Java JDK
+
+
 Starting the Standalone CDAP
 ----------------------------
 
@@ -82,10 +121,11 @@ Use the ``cdap.sh`` script to start and stop the Standalone CDAP::
   ...
   $ ./bin/cdap.sh stop
 
-Or, if you are using Windows, use the batch script cdap.bat to start the SDK.
+Or, if you are using Windows, use the batch script ``cdap.bat`` to start and stop the SDK.
 
-Once CDAP is started successfully, you can see the CDAP Console running in a web browser
-at ``localhost:9999``, where you can deploy example applications and interact with CDAP.
+Once CDAP is started successfully, in a web browser you will be able to see the CDAP
+Console running at ``localhost:9999``, where you can deploy example applications and
+interact with CDAP.
 
 Creating an Application
 =======================
