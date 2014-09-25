@@ -258,8 +258,8 @@ In order to configure CDAP Master for Kerberos authentication:
   be readable only by the user running the CDAP Master process.
 - Edit ``/etc/default/cdap-master``::
 
-   REACTOR_KEYTAB="/etc/security/keytabs/cdap.keytab"
-   REACTOR_PRINCIPAL="<cdap principal>@EXAMPLE.REALM.COM"
+   CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
+   CDAP_PRINCIPAL="<cdap principal>@EXAMPLE.REALM.COM"
 
 - When CDAP Master is started via the init script, it will now start using ``k5start``, which will
   first login using the configured keytab file and principal.
@@ -350,6 +350,7 @@ Using Yum::
 
 Using APT::
 
+  sudo apt-get update
   sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
 
 Do this on each of the boxes that are being used for the CDAP components; our
@@ -359,11 +360,11 @@ This will download and install the latest version of CDAP
 with all of its dependencies. When all the packages and dependencies have been installed,
 you can start the services on each of the CDAP boxes by running this command::
 
-  for i in `ls /etc/init.d/ | grep cdap` ; do service $i restart ; done
+  for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
 When all the services have completed starting, the CDAP Console should then be
-accessible through a browser at port 9999. The URL will be ``http://<app-fabric-ip>:9999`` where
-``<app-fabric-ip>`` is the IP address of one of the machine where you installed the packages
+accessible through a browser at port 9999. The URL will be ``http://<console-ip>:9999`` where
+``<console-ip>`` is the IP address of one of the machine where you installed the packages
 and started the services.
 
 Upgrading From a Previous Version
@@ -376,7 +377,7 @@ and then restart CDAP.
 
 1. Stop all CDAP processes::
 
-     for i in `ls /etc/init.d/ | grep cdap` ; do service $i stop ; done
+     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
 #. Update the CDAP packages by running either of these methods:
 
@@ -401,7 +402,7 @@ and then restart CDAP.
 
 #. Restart the CDAP processes::
 
-     for i in `ls /etc/init.d/ | grep cdap` ; do service $i start ; done
+     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 Verification
 ------------
@@ -410,7 +411,7 @@ Hadoop cluster, run an example application.
 We provide in our SDK pre-built ``.JAR`` files for convenience:
 
 #. Download and install the latest CDAP Developer Suite from
-   http://accounts.cask.co.
+   http://cask.co/resources.
 
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
@@ -643,7 +644,7 @@ Configuring Authentication Mechanisms
 CDAP provides several ways to authenticate a user's identity.
 
 Basic Authentication
--------------------_
+--------------------
 The simplest way to identity a user is to authenticate against a realm file.
 To configure basic authentication add the following properties to ``cdap-site.xml``:
 
