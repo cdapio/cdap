@@ -1,4 +1,3 @@
-:orphan:
 
 .. :author: Cask Data, Inc.
    :description: An example Cask Data Application Platform application
@@ -49,8 +48,8 @@ with these commands, executed from the ``examples/WebAnalytics`` directory of th
 On Windows, run these instead::
 
   > mvn package
-  > bin\app-manager.bat --action deploy
-  > bin\app-manager.bat --action start
+  > bin\app-manager.bat deploy
+  > bin\app-manager.bat start
 
 How It Works
 --------------
