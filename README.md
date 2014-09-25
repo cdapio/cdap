@@ -44,7 +44,7 @@ To install and use CDAP and its included examples, there are a few simple prereq
 You can get started with CDAP by building directly from the latest source code::
 
 ```
-  git clone https://github.com/cask/cdap.git
+  git clone https://github.com/caskdata/cdap.git
   cd cdap
   mvn clean package
 ```
