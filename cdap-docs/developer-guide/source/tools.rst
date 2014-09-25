@@ -182,7 +182,7 @@ The assertion will verify that the correct result was received.
 Strategies in Testing Spark Programs
 ------------------------------------
 Let's write a test case for an application that uses a Spark program.
-Complete source code for this test can be found at :ref:`Spark PageRank. <spark-pagerank>`
+Complete source code for this test can be found at :ref:`Spark PageRank<spark-page-rank>`.
 
 The ``SparkPageRankTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::
