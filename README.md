@@ -1,7 +1,7 @@
 
 # Cask Data Application Platform - CDAP
 
-![CDAP Logo](/cdap-docs/developer-guide/source/_images/CDAP.png)
+![CDAP Logo](cdap-docs/developer-guide/source/_images/CDAP.png)
 
 **Introduction**
 
@@ -30,10 +30,10 @@ For more information, see our collection of
 
 ## Is It Building?
 
-Build                                                                    | Status / Version
--------------------------------------------------------------------------|-----------------
-[Continuous Integration Build](https://builds.cask.co)                   | ![Build](https://builds.cask.co/plugins/servlet/buildStatusImage/CDAP-DUT)
-[GitHub Version](https://github.com/caskdata/cdap/releases/latest)       | ![github](http://img.shields.io/github/release/caskdata/cdap.svg)
+Build                                                                | Status / Version
+---------------------------------------------------------------------|-----------------
+[Continuous Integration Build](https://builds.cask.co/browse/CDAP)   | ![Build](https://builds.cask.co/plugins/servlet/buildStatusImage/CDAP-DUT)
+[GitHub Version](https://github.com/caskdata/cdap/releases/latest)   | ![github](http://img.shields.io/github/release/caskdata/cdap.svg)
 
 
 ## Getting Started
@@ -63,11 +63,10 @@ Take the `cdap-<version>.tar.gz` file and unzip it into a suitable location.
 
 For more build options, please refer to the [build instructions](BUILD.md).
 
-## Quick Start
+## Getting Started
 
-Visit our web site for a [Quick Start](http://docs.cask.co/cdap/current/en/quickstart.html)
-that will guide you through installing CDAP and running an example that counts HTTP status
-codes and then modifying the example’s Java code to include counting client IP addresses.  
+Visit our web site for a [Getting Started](http://docs.cask.co/cdap/current/en/getstarted.html)
+that will guide you through installing CDAP and running an example application.  
 
 
 ## Where to Go Next
