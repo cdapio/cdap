@@ -231,10 +231,10 @@ Once CDAP is Started, you can deploy the example JAR by:
 
 - Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console running at `http://localhost:9999/ <http://localhost:9999/>`__
 - Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar.
-- From the example's main directory run the App Manager script:
+- From the example's project root run the App Manager script:
 
-   - Linux: ``./bin/app-manager.sh --action deploy``
-   - Windows: ``bin\app-manager.bat deploy``
+   - Linux: ``$./bin/app-manager.sh --action deploy``
+   - Windows: ``>bin\app-manager.bat deploy``
 
 Starting an application
 .......................
@@ -242,10 +242,10 @@ Starting an application
 Once the application is deployed,
 
 - You can go to the Application view by clicking on the Application's Name. Now you can **Start** or **Stop** Process and Query components available to the application, or
-- From the example's main directory run the App Manager script:
+- From the example's project root run the App Manager script:
 
-    - Linux: ``./bin/app-manager.sh --action start``
-    - Windows: ``bin\app-manager.bat start``
+    - Linux: ``$./bin/app-manager.sh --action start``
+    - Windows: ``>bin\app-manager.bat start``
 
 .. _stop-application:
 
@@ -253,10 +253,10 @@ Stopping the Application
 ........................
 
 - On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists or
-- Run the App Manager script:
+- From the example's project root run the App Manager script:
 
   - Linux: ``$./bin/app-manager.sh --action stop``
-  - Windows: ``~SDK>bin\app-manager.bat stop``
+  - Windows: ``>bin\app-manager.bat stop``
 
 .. include:: /_examples/helloworld.rst
 .. include:: /_examples/wordcount.rst
