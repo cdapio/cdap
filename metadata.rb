@@ -11,3 +11,7 @@ version          '0.1.6'
 end
 
 depends 'krb5_utils'
+
+%w(amazon centos debian redhat scientific ubuntu).each do |os|
+  supports os
+end
