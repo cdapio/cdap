@@ -94,7 +94,7 @@ You can create a Dataset in CDAP using either the
 You can also tell Applications to create a Dataset if it does not already
 exist by declaring the Dataset details in the Application specification.
 For example, to create a DataSet named *myCounters* of type 
-:doc:`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable>`, write::
+`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
 
   public void configure() {
       createDataset("myCounters", KeyValueTable.class);
@@ -527,6 +527,8 @@ interface::
 The ``write()`` method is used to redirect all writes performed by a Reducer to the Dataset.
 Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type
 parameters of the Reducer.
+
+.. _data-explore:
 
 Data Exploration
 ================
@@ -1787,6 +1789,8 @@ write RDD to a Dataset.
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
 
+.. _user-services:
+
 Services
 ========
 
@@ -1969,6 +1973,8 @@ There is also a convenience method to respond with an error message::
                       "Method 'getCount' requires argument 'word'");
       return;
     }
+
+.. _transaction-system:
 
 Transaction System
 ==================

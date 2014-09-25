@@ -150,7 +150,7 @@ For CDAP-issued access tokens, the authentication scheme must always be ``Bearer
 
 Stream HTTP API
 ===============
-This interface supports creating Streams, sending events to a Stream, and reading events from a Stream.
+This interface supports creation of a Stream; sending, reading, and truncating events to and from a Stream; and setting the TTL property of a Stream.
 
 Streams may have multiple consumers (for example, multiple Flows), each of which may be a group of different agents (for example, multiple instances of a Flowlet).
 
@@ -205,7 +205,7 @@ An event can be sent to a Stream by sending an HTTP POST method to the URL of th
 
   POST <base-url>/streams/<stream-id>
 
-In cases where it is acceptable to have some events lost if the system crashes, you can send events to a Stream asynchronously with higher throughput by sending an HTTP POST method to the ``async`` URL::
+In cases where it is acceptable to have some events lost, events can be transmitted asynchronously to a Stream with higher throughput by sending an HTTP POST method to the ``async`` URL::
 
   POST <base-url>/streams/<stream-id>/async
 
@@ -262,7 +262,7 @@ After receiving the request, the HTTP handler transforms it into a Stream event:
 
 Reading Events from a Stream
 ----------------------------
-Reading events from an existing Stream is performed as an HTTP GET method to the URL::
+Reading events from an existing Stream is performed with an HTTP GET method to the URL::
 
   GET <base-url>/streams/<stream-id>/events?start=<startTime>&end=<endTime>&limit=<limit>
 
@@ -681,7 +681,8 @@ HTTP Responses
 Query HTTP API
 ==============
 
-This interface supports submitting SQL queries over Datasets. Executing a query is asynchronous: 
+This interface supports submitting SQL queries over Datasets. Queries are
+processed asynchronously; to obtain query results, perform these steps:
 
 - first, **submit** the query;
 - then poll for the query's **status** until it is finished;
@@ -980,8 +981,14 @@ Example
    * - HTTP Request
      - ``GET <base-url>/data/explore/queries``
    * - HTTP Response
-     - ``[{"timestamp":1411266478717,"statement":"SELECT * FROM cdap_user_mydataset","status":"FINISHED",``
-       ``"query_handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2","has_results":true,"is_active":false}``
+     - ``[{``
+       ``   "timestamp": 1411266478717,``
+       ``   "statement": "SELECT * FROM cdap_user_mydataset",``
+       ``   "status": "FINISHED",``
+       ``   "query_handle": "57cf1b01-8dba-423a-a8b4-66cd29dd75e2",
+       ``   "has_results": true,
+       ``   "is_active": false``
+       ``}]``
    * - Description
      - Close the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
@@ -990,15 +997,21 @@ Comments
 The results are returned as a JSON array, with each element containing information about the query::
 
   [
-    {"timestamp":1407192465183,"statement":"SHOW TABLES","status":"FINISHED",
-     "query_handle":"319d9438-903f-49b8-9fff-ac71cf5d173d","has_results":true,"is_active":false},
+    {
+        "timestamp": 1407192465183,
+        "statement": "SHOW TABLES",
+        "status": "FINISHED",
+        "query_handle": "319d9438-903f-49b8-9fff-ac71cf5d173d",
+        "has_results": true,
+        "is_active": false
+    },
     ...
   ]
 
 Download Query Results
 ----------------------
 To download the results of a query, use::
-  
+
   GET <base-url>/data/explore/queries/<query-handle>
 
 The results of the query are returned in CSV format.
@@ -1076,7 +1089,7 @@ Procedure HTTP API
 
 This interface supports sending calls to the methods of an Application’s Procedures.
 See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
-Procedures. 
+Procedures.
 
 Executing Procedures
 --------------------
@@ -1125,8 +1138,7 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/methods/``
-       ``getCount``
+     - ``POST <base-url>/apps/WordCount/procedures/RetrieveCounts/methods/getCount``
    * - Description
      - Call the ``getCount()`` method of the *RetrieveCounts* Procedure in the *WordCount* Application
        with the arguments as a JSON string in the body::
@@ -1193,6 +1205,8 @@ Example
      - ``200 OK``
 
 .. rst2pdf: PageBreak
+
+.. _cdap-client-http-api:
 
 CDAP Client HTTP API
 ====================
@@ -1720,13 +1734,16 @@ For Workflows, you can also retrieve:
     GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
 
+.. _loggingHTTP:
+
 Logging HTTP API
 ================
 
 Downloading Logs
 ----------------
-You can download the logs that are emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs,
-or *Services* running in CDAP. To do that, send an HTTP GET request::
+Logs emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs, or
+*Services* running in CDAP can be downloaded with the Logging HTTP API. To do
+that, send an HTTP GET request::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
 
@@ -1772,6 +1789,7 @@ Note how the context of the log line shows the name of the Flowlet (*source*), i
 well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire
 this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
+.. _metricsHTTP:
 
 Metrics HTTP API
 ================
@@ -2101,6 +2119,8 @@ These metrics are available in the Datasets context:
      - Read operations performed
    * - ``store.writes``
      - Write operations performed
+
+.. _monitorHTTP:
 
 Monitor HTTP API
 ================
