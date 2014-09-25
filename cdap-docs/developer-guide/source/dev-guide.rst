@@ -20,7 +20,7 @@ please see :doc:`Concepts and Architecture </arch>`.
 For more information beyond this document, see the
 :doc:`Javadocs </javadocs/index>` and the code in the
 :ref:`Examples <examples>` directory, both of which are on the
-`Cask.co <http://cask.co>`_ `Developers website <http://cask.co/developers>`_ as well as in your
+`Cask.co <http://cask.co>`_ `resources page<http://cask.co/resources>`_ as well as in your
 CDAP installation directory.
 
 Data Virtualization

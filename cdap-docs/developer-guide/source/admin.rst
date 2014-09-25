@@ -411,7 +411,7 @@ Hadoop cluster, run an example application.
 We provide in our SDK pre-built ``.JAR`` files for convenience:
 
 #. Download and install the latest CDAP Developer Suite from
-   http://cask.co/resources.
+   http://cask.co/download
 
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
@@ -1286,7 +1286,7 @@ and the version of the CDAP that you are using.
 
 The five buttons provide access to the `terms of use <http://cask.co/terms>`__,
 the `privacy policy <http://cask.co/privacy>`__,
-contacting `Cask <http://cask.co/contact-us>`__,
+contacting `Cask <http://cask.co/company/#company-contact>`__,
 contacting Cask support, and *Reset*, for resetting the CDAP.
 
 *Reset* deletes all data and applications from the
