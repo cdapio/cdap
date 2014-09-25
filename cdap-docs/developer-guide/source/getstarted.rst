@@ -95,22 +95,21 @@ The SDK includes these examples:
   * - Example Name
     - Description
   * - :ref:`HelloWorld<hello-world>`
-    - A Simple HelloWorld App that's written using CDAP. It introduces how Stream, Dataset, Flow and Procedure
-      are used in an CDAP application.
+    - A simple HelloWorld App that's written using CDAP. It introduces how the elements Stream, Dataset, Flow,
+      and Procedure are used in a CDAP application.
   * - :ref:`WordCount<word-count>`
-    - A simple application that counts words and tracks word associations and unique words seen on the Stream.
-      It demonstrates the power of using datasets and how they can be used to simplify storing complex data.
+    - A simple application that counts words, and tracks word associations and unique words seen on the Stream.
+      It demonstrates the power of using datasets and how they can be employed to simplify storing complex data.
   * - :ref:`CountRandom<count-random>`
-    - A simple application that demonstrates the ``@Tick`` feature of flows. It uses a tick method to generate
-      random numbers, which are then counted by downstream flowlets.
+    - An application that demonstrates the ``@Tick`` feature of Flows. It uses a tick method to generate random
+      numbers which are then counted by downstream Flowlets.
   * - :ref:`Purchase<purchase>`
-    - This example demonstrates use of each of the CDAP elements: Streams, Flows, Flowlets, Datasets, Queries,
-      Procedures, MapReduce Jobs, Workflows, and Services in a single Application.
-
-      A flow receives events from a stream, each describing a purchase ("John bought 5 apples for $2"), processes
-      and stores them it in a dataset. A Mapreduce Job reads that dataset, compiles the purchases of each customer
-      into a purchase history and stores it in a dataset. The purchase histories can then be queried through a
-      procedure and also through Ad-hoc SQL queries.
+    - This example demonstrates use of each of the CDAP elements—Streams, Flows, Flowlets, Datasets, Queries,
+      Procedures, MapReduce, Workflows, and Services—in a single Application.
+      A Flow receives events from a Stream, each event describing a purchase ("John bought 5 apples for $2");
+      the Flow processes the events and stores them in a Dataset. A Mapreduce Job reads the Dataset, compiles
+      the purchases for each customer into a purchase history and stores the histories in a second Dataset.
+      The purchase histories can then be queried either through a Procedure or an ad-hoc SQL query.
   * - :ref:`SparkKMeans<spark-k-means>`
     - An application that demonstrates streaming text analysis using a Spark program. It calculates the centers
       of points from an input stream using the KMeans Clustering method.
