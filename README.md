@@ -28,14 +28,6 @@ installation. CDAP can be run either standalone, deployed within the Enterprise 
 For more information, see our collection of 
 [Developer Guides and other documentation](http://docs.cask.co/cdap/current/en/index.html).
 
-## Is It Building?
-
-Build                                                                | Status / Version
----------------------------------------------------------------------|-----------------
-[Continuous Integration Build](https://builds.cask.co/browse/CDAP)   | ![Build](https://builds.cask.co/plugins/servlet/buildStatusImage/CDAP-DUT)
-[GitHub Version](https://github.com/caskdata/cdap/releases/latest)   | ![github](http://img.shields.io/github/release/caskdata/cdap.svg)
-
-
 ## Getting Started
 
 ### Prerequisites
