@@ -24,8 +24,8 @@ applications and data on existing Hadoop infrastructure such as HBase, HDFS, YAR
 Hive, and Spark.
 
 This document is your complete guide to the Cask Data Application Platform: it helps you get
-started and set up your development environment; explains how CDAP works; teaches how to
-develop and test applications with CDAP; and describes how to virtualize an existing Hadoop application.
+started and set up your development environment; explains how CDAP works; and teaches how to
+develop and test applications with CDAP.
 
 It has a complete reference to CDAP programming APIs and client interfaces, with descriptions
 of how to install, monitor and diagnose fully distributed CDAP in a Hadoop cluster.

@@ -575,11 +575,11 @@ Here are some of the SQL queries that you can run:
 
 - Retrieve the web pages from where IP addresses have bounced more than 50% of the time::
 
-  SELECT uri FROM cdap_user_bouncecountstore WHERE bounces > 0.5 * totalvisits
+    SELECT uri FROM cdap_user_bouncecountstore WHERE bounces > 0.5 * totalvisits
 
 - Retrieve all the IP addresses which visited the page '/contact.html'::
 
-  SELECT key FROM cdap_user_pageviewstore WHERE array_contains(map_keys(value), '/contact.html')=TRUE
+    SELECT key FROM cdap_user_pageviewstore WHERE array_contains(map_keys(value), '/contact.html')=TRUE
 
 As the SQL engine that CDAP runs internally is Hive, the SQL language used to submit queries is HiveQL.
 A description of it is in the `Hive language manual
@@ -676,5 +676,5 @@ A complete example of the test is included in the downloaded zip.
 Where to Go Next
 ================
 Now that you've seen a CDAP application, take a look at our additional examples,
-located in both the ``/examples`` directory of the SDK and `also online.
-<http://docs.cask.co/current/en/examples/index.html>`__
+located in both the ``/examples`` directory of the SDK and :ref:`also online
+<examples>`.

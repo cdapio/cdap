@@ -258,8 +258,8 @@ In order to configure CDAP Master for Kerberos authentication:
   be readable only by the user running the CDAP Master process.
 - Edit ``/etc/default/cdap-master``::
 
-   REACTOR_KEYTAB="/etc/security/keytabs/cdap.keytab"
-   REACTOR_PRINCIPAL="<cdap principal>@EXAMPLE.REALM.COM"
+   CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
+   CDAP_PRINCIPAL="<cdap principal>@EXAMPLE.REALM.COM"
 
 - When CDAP Master is started via the init script, it will now start using ``k5start``, which will
   first login using the configured keytab file and principal.
@@ -346,11 +346,12 @@ Install the CDAP packages by using either of these methods:
 
 Using Yum::
 
-  sudo yum install cdap-gateway cdap-kafka cdap-cdap-master cdap-security cdap-web-app
+  sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
 
 Using APT::
 
-  sudo apt-get install cdap-gateway cdap-kafka cdap-cdap-master cdap-security cdap-web-app
+  sudo apt-get update
+  sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
 
 Do this on each of the boxes that are being used for the CDAP components; our
 recommended installation is a minimum of two boxes.
@@ -359,11 +360,11 @@ This will download and install the latest version of CDAP
 with all of its dependencies. When all the packages and dependencies have been installed,
 you can start the services on each of the CDAP boxes by running this command::
 
-  for i in `ls /etc/init.d/ | grep cdap` ; do service $i restart ; done
+  for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
 When all the services have completed starting, the CDAP Console should then be
-accessible through a browser at port 9999. The URL will be ``http://<app-fabric-ip>:9999`` where
-``<app-fabric-ip>`` is the IP address of one of the machine where you installed the packages
+accessible through a browser at port 9999. The URL will be ``http://<console-ip>:9999`` where
+``<console-ip>`` is the IP address of one of the machine where you installed the packages
 and started the services.
 
 Upgrading From a Previous Version
@@ -376,7 +377,7 @@ and then restart CDAP.
 
 1. Stop all CDAP processes::
 
-     for i in `ls /etc/init.d/ | grep cdap` ; do service $i stop ; done
+     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
 #. Update the CDAP packages by running either of these methods:
 
@@ -401,7 +402,7 @@ and then restart CDAP.
 
 #. Restart the CDAP processes::
 
-     for i in `ls /etc/init.d/ | grep cdap` ; do service $i start ; done
+     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 Verification
 ------------
@@ -410,25 +411,23 @@ Hadoop cluster, run an example application.
 We provide in our SDK pre-built ``.JAR`` files for convenience:
 
 #. Download and install the latest CDAP Developer Suite from
-   http://accounts.cask.co.
+   http://cask.co/download
 
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
-#. Each example folder has in its ``target`` directory a .JAR file.
-   For verification, we will use the ``TrafficAnalytics`` example.
-#. Open a web browser to the CDAP Web-App ("Console").
-   It will be located on port ``9999`` of the box where you installed CDAP.
-#. On the Console, click the button *Load an App.*
-#. Find the pre-built JAR (`TrafficAnalytics-1.0.jar`) by using the dialog box to navigate to
-   ``CDAP_HOME/examples/TrafficAnalytics/target/TrafficAnalytics-1.0.jar``
+#. Each example folder has a ``.jar`` file in its ``target`` directory.
+   For verification, we will use the ``WordCount`` example.
+#. Open a web browser to the CDAP Console.
+   It is located on port ``9999`` of the box where you installed CDAP.
+#. On the Console, click the button *Load an App*.
+#. Find the pre-built ``WordCount-2.5.0.jar`` using the dialog box to navigate to
+   ``CDAP_HOME/examples/WordCount/target/``
 #. Once the application is deployed, instructions on running the example can be found at the
-   `TrafficAnalytics example
-   </http://docs.cask.co/cdap/current/examples/trafficAnalytics#building-and-running-the-application-and-example>`__.
-#. You should be able to start the application, inject log entries,
-   run the ``MapReduce`` job and see results.
+   :ref:`WordCount example<word-count>`.
+#. You should be able to start the application, inject sentences,
+   run the Flow and the Procedure, and see results.
 #. When finished, stop and remove the application as described in the
-   `TrafficAnalytics example
-   <http://docs.cask.co/cdap/current/examples/trafficAnalytics#stopping-the-application>`__.
+   :ref:`examples<examples>`.
 
 .. rst2pdf: PageBreak
 
@@ -645,7 +644,7 @@ Configuring Authentication Mechanisms
 CDAP provides several ways to authenticate a user's identity.
 
 Basic Authentication
--------------------_
+--------------------
 The simplest way to identity a user is to authenticate against a realm file.
 To configure basic authentication add the following properties to ``cdap-site.xml``:
 
@@ -1287,7 +1286,7 @@ and the version of the CDAP that you are using.
 
 The five buttons provide access to the `terms of use <http://cask.co/terms>`__,
 the `privacy policy <http://cask.co/privacy>`__,
-contacting `Cask <http://cask.co/contact-us>`__,
+contacting `Cask <http://cask.co/company/#company-contact>`__,
 contacting Cask support, and *Reset*, for resetting the CDAP.
 
 *Reset* deletes all data and applications from the

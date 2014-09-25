@@ -20,7 +20,7 @@ please see :doc:`Concepts and Architecture </arch>`.
 For more information beyond this document, see the
 :doc:`Javadocs </javadocs/index>` and the code in the
 :ref:`Examples <examples>` directory, both of which are on the
-`Cask.co <http://cask.co>`_ `Developers website <http://cask.co/developers>`_ as well as in your
+`Cask.co <http://cask.co>`_ `resources page <http://cask.co/resources>`_ as well as in your
 CDAP installation directory.
 
 Data Virtualization
@@ -118,8 +118,7 @@ instance of the Dataset class into the Application.
 
 You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
-:doc:`Purchase <examples/purchase>`
-example for an implementation of a Custom Dataset.
+:ref:`Purchase Example<purchase>` for an implementation of a Custom Dataset.
 For more details, refer to :ref:`Custom Datasets <custom-datasets>`
 
 Types of Datasets
@@ -467,7 +466,7 @@ Application components can access a created Dataset via the ``@UseDataSet`` anno
   }
 
 A complete application demonstrating the use of a custom Dataset is included in our
-:doc:`Purchase <examples/purchase>` example.
+:ref:`Purchase Example<purchase>`.
 
 You can also create, drop, and truncate Datasets using the
 :ref:`Cask Data Application Platform HTTP REST API <rest-datasets>`.
@@ -607,7 +606,7 @@ Limitations
   For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
   the application jar. However, if you define your own Dataset type ``MyObjectStore`` that extends or encapsulates an
   ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the Dataset definition for ``MyObjectStore``. See the
-  :doc:`Purchase </examples/purchase>` application for an example.
+  :ref:`Purchase <purchase>` application for an example.
 
 
 Parameterized Types
