@@ -1974,6 +1974,8 @@ There is also a convenience method to respond with an error message::
       return;
     }
 
+.. _transaction-system:
+
 Transaction System
 ==================
 
