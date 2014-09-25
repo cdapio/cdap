@@ -359,7 +359,7 @@ This will download and install the latest version of CDAP
 with all of its dependencies. When all the packages and dependencies have been installed,
 you can start the services on each of the CDAP boxes by running this command::
 
-  for i in `ls /etc/init.d/ | grep cdap` ; do service $i restart ; done
+  for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
 When all the services have completed starting, the CDAP Console should then be
 accessible through a browser at port 9999. The URL will be ``http://<app-fabric-ip>:9999`` where
