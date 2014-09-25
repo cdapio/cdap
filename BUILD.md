@@ -52,7 +52,7 @@ See [Surefire doc](http://maven.apache.org/surefire/maven-surefire-plugin/exampl
     mvn -o ....
 
 ### Change version
-    mvn versions:set -DnewVersion=[new_version] -DgenerateBackupPoms=false
+    mvn versions:set -DnewVersion=[new_version] -DgenerateBackupPoms=false -P examples
     
     
 ## License and Trademarks
