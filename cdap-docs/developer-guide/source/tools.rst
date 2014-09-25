@@ -129,7 +129,7 @@ Strategies in Testing MapReduce Jobs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under :ref:`Purchase Example <purchase-example>`
+found under :ref:`Purchase Example. <purchase>`
 
 The ``PurchaseTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::
@@ -182,7 +182,7 @@ The assertion will verify that the correct result was received.
 Strategies in Testing Spark Programs
 ------------------------------------
 Let's write a test case for an application that uses a Spark program.
-Complete source code for this test can be found at :ref:`Spark Pagerank <spark-pagerank-example>`
+Complete source code for this test can be found at :ref:`Spark Pagerank. <spark-pagerank-example>`
 
 The ``SparkPageRankTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::
@@ -232,7 +232,7 @@ The assertion will verify that the correct result was received.
 Validating Test Data with SQL
 -----------------------------
 Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
-in the test case are record-scannable as described in :ref:`Querying Datasets with SQL <data-explore>`.
+in the test case are record-scannable as described in :ref:`Querying Datasets with SQL. <data-explore>`
 This can be done using a JDBC connection obtained from the test base::
 
 
@@ -609,7 +609,7 @@ Optional configurations that can be set:
 
 - SSL: true or false, default - false
 - WriterPoolSize: max thread pool size for writing events to the stream , default - 10
-- Version: CDAP instance version - used as a part of the base URI, default - 'v2'
+- Version: CDAP instance version, used as a part of the base URI, default - 'v2'
 - AuthToken: If SSL is enabled, need to specify to authenticate client requests, default - null
 - APIKey: If SSL is enabled, need to specify to authenticate client requests, default - null
 
@@ -1020,7 +1020,7 @@ Agent to read data from a log file by tailing it and putting them into CDAP.
       - Target stream name
     * - a1.sinks.sink1.port
       - ``10000``
-      - This parameter is options and the default port number is 10000
+      - This parameter is optional; the default port is 10000
     * - a1.sinks.sink1.sslEnabled
       - ``false``
       - This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false
@@ -1150,12 +1150,12 @@ The current implementation supports three authentication mechanisms:
   - JASPI
 
 It is also possible to extend existing logic and implement a custom client for any other authentication
-mechanisms. To create a new authentication client, implement the ``AuthenticationClient`` interface.
+mechanisms. To create a new Authentication Client, implement the ``AuthenticationClient`` interface.
 
 Build
 +++++
 
-To build the authentication client Java API jar, use::
+To build the Authentication Client Java API jar, use::
 
   mvn clean package
 
@@ -1191,7 +1191,7 @@ This example creates a ``BasicAuthenticationClient`` to retrieve an access token
   // If access token is not available an IOException will be thrown
   String token = authenticationClient.getAccessToken();
 
-This example illustrates an authentication client obtaining credentials from a user and then using them for configuration::
+This example illustrates an Authentication Client obtaining credentials from a user and then using them for configuration::
 
   authenticationClient.setConnectionInfo(hostname, port, ssl);
   Properties properties = new Properties();
@@ -1235,7 +1235,7 @@ Example Usage
     # Load configuration from JSON File
     config = Config().read_from_file('auth_config.json')
 
-    # Configure the authentication client with the Config object
+    # Configure the Authentication Client with the Config object
     authentication_client.configure(config)
 
     # Check if authentication is enabled in the CDAP instance
@@ -1271,7 +1271,7 @@ Example Usage
     config.security_auth_client_password = "secret"
     config.security_ssl_cert_check = True
 
-    # Configure the authentication client with the Config object
+    # Configure the Authentication Client with the Config object
     authentication_client.configure(config)
 
     # Check if authentication is enabled in the CDAP instance
