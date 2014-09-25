@@ -78,11 +78,8 @@ The calculated centers data is stored in a second ObjectStore Dataset, *centers*
 
 This procedure has a ``centers`` method to obtain the center's coordinates of a given index.
 
-Setting Up
-++++++++++
-#. You can find instructions for starting CDAP console and deploying an example application here :ref:`Build, Deploy and start <convention>`
-#. Once loaded, select the ``SparkKMeans`` Application from the list.
-   On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
+
+Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
 
 Running the Example
 +++++++++++++++++++
@@ -162,5 +159,5 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
 
 	   "9.1,9.1,9.1"
 
-
+Once done, You can stop the application as described in :ref:`Stop Application <stop-application>`
 .. highlight:: java

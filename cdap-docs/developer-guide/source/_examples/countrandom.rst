@@ -1,19 +1,19 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform CountRandom Application
-       :copyright: Copyright © 2014 Cask Data, Inc.
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _count-random:
 
 Count Random
 ------------
 
-A Cask Data Application Platform (CDAP) Example demonstrating Flows.
+A Cask Data Application Platform (CDAP) Example demonstrating the @Tick feature of Flows.
 
 Overview
 ........
 
-This application does not have a Stream, instead it has a Generator Flowlet ``source``
-  - The ``source`` flowlet has a ``@Tick`` annotation which specifies how frequent this flowlet will be called.
+This application does not have a Stream, instead it uses a Tick annotation in the ``source`` flowlet to generate data.
+  - The ``generate`` method of the  ``source`` flowlet has a ``@Tick`` annotation which specifies how frequent the method will be called.
   - The ``source`` flowlet generates a random integer in the range {1..10000} and emits it to the next flowlet ``splitter``
   - The ``splitter`` flowlet splits the number into digits, and emits these digits to the next stage
   - The ``counter`` increments the count of the received number in the KeyValueTable.
@@ -53,27 +53,12 @@ The Generator Flowlet that generates Random numbers every 1 millisecond::
   }
 
 
-You can find instructions for starting CDAP console and deploying an example application here :ref:`Build, Deploy and start <convention>`
-Once Deployed, select the ``CountRandom`` Application from the list.
-On the Application's detail page, click the *Start* button on the *Process* list.
+Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
 
-Viewing the Run:
-++++++++++++++++
+Running the Application:
++++++++++++++++++++++++
 
-Once the flow ``source`` is started, you could see the stream count is '0', however the ``splitter`` would show the count of random numbers
-received from the source and the ``counter`` will show the count of digits received.
+Once you start the flow, the ``source`` flowlet will continuously generate data. You can see this by observing the counters that is displayed for each flowlet
+in the flow visualization: Even though you are not injecting any data into the flow, the counters increase steadily.
 
-Stopping the Application
-++++++++++++++++++++++++
-
-Either:
-
-- On the Application detail page of the CDAP Console,
-  click the *Stop* button on the *Process* list;
-
-or:
-
-- Run ``$ ./bin/app-manager.sh --action stop``
-
-  On Windows, run ``~SDK> bin\app-manager.bat stop``
-
+Once done, You can stop the application as described in :ref:`Stop Application <stop-application>`

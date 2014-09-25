@@ -91,12 +91,10 @@ reads the name stored by the ``NameSaver`` from the key-value table. It return a
     }
   }
 
+Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
+
 Running the Example
 +++++++++++++++++++
-
-You can find instructions for starting CDAP console and deploying an example application here :ref:`Build, Deploy and start <convention>`
-
-Once Deployed, Start the **WhoFlow** flow in ``Process`` and **Greeting** procedure in ``Query``.
 
 Injecting a Name
 ################
@@ -123,4 +121,4 @@ you can make an HTTP request to the Metrics API using curl::
   $ curl http://localhost:10000/v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.bytes?aggregate=true
   {"data":3}
 
-
+Once done, You can stop the application as described in :ref:`Stop Application <stop-application>`

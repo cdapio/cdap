@@ -1,6 +1,6 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform WordCount Application
-       :copyright: Copyright © 2014 Cask Data, Inc.
+   :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _convention:
 
@@ -17,16 +17,16 @@ We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in t
 Building the Application
 ........................
 
-From the project root, build example with the
+From the project root, build an example with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
 
-Deploying and Starting the Application
-......................................
+Starting CDAP
+.............
 
-Make sure an instance of the CDAP is running and available.
-From within the SDK root directory, this command will start CDAP in local mode::
+Make sure an instance of CDAP is running and available.
+From within the SDK root directory, this command will start the Standalone CDAP::
 
 	$ ./bin/cdap.sh start
 
@@ -35,34 +35,37 @@ On Windows::
 	~SDK> bin\cdap.bat start
 
 
-Once Started, you can deploy the example JAR by:
+Deploying an application
+........................
 
-#. Dragging and dropping the Application .JAR file (``target/<example>-<version>.jar``)
-   onto CDAP Console running at (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode)
-   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
 
-On Windows:
+Once CDAP is Started, you can deploy the example JAR by:
 
-#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
-   Application .JAR file (``target/HelloWorld-<version>.jar`` onto onto CDAP Console
-   running at (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode).
+#. Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console running at `http://localhost:9999/ <http://localhost:9999/>`__
+#. Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar.
+#. Run the App Manager script located in ``example/bin``:
 
-#. To start the App, run ``~SDK> bin\app-manager.bat start``
+   - Linux: ``./app-manager.sh --action deploy``
+   - Windows: ``app-manager.bat deploy``
 
-Once the application is deployed, you can go to the Application view by clicking on the Application's Name.
-Now you can **Start** or **Stop** Process and Query components available to the application.
+Starting an application
+.......................
 
+Once the application is deployed,
+
+#. You can go to the Application view by clicking on the Application's Name. Now you can **Start** or **Stop** Process and Query components available to the application.
+#. Alternately you can run ``./app-manager.sh --action start`` - on Linux and run ``app-manager.bat start`` on Windows,
+   to start the flows and procedures.
+
+.. _stop-application:
 Stopping the Application
 ........................
 
-Either:
+- On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists or
+- Run the App Manager script:
 
-- On the Application detail page of the CDAP Console,
-  click the *Stop* button on **both** the *Process* and *Query* lists;
-or:
-
-#. Linux: ``$./bin/app-manager.sh --action stop``
-#. Windows: ``~SDK>bin\app-manager.bat stop``
+  - Linux: ``$./bin/app-manager.sh --action stop``
+  - Windows: ``~SDK>bin\app-manager.bat stop``
 
 .. highlight:: java
 

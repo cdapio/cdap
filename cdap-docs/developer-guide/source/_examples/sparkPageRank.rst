@@ -79,11 +79,7 @@ The calculated page rank data is stored in a second ObjectStore Dataset, *ranks*
 
 This procedure has a ``rank`` method to obtain the page rank of a given URL.
 
-Setting Up
-++++++++++
-#. You can find instructions for starting CDAP console and deploying an example application here :ref:`Build, Deploy and start <convention>`
-#. Once loaded, select the ``SparkPageRank`` Application from the list.
-   On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
+Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
 
 Running the Example
 +++++++++++++++++++
@@ -167,5 +163,7 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 	   ::
 
             "0.9988696312751688"
+
+Once done, You can stop the application as described in :ref:`Stop Application <stop-application>`
 
 .. highlight:: java

@@ -113,9 +113,7 @@ This procedure has a ``history`` method to obtain the purchase history of a give
 Setting up
 ++++++++++
 
-#. You can find instructions for starting CDAP console and deploying an example application here :ref:`Build, Deploy and start <convention>`
-#. Once loaded, select the ``Purchase`` Application from the list.
-   On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
+#. Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
 #. Note: the CatalogLookupService will not be displayed in the Console
 
 Running the Example
@@ -235,20 +233,7 @@ You repeat this step until the ``curl`` call returns an empty list. That means y
 
   curl -v -X DELETE http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782
 
-Stopping the Application
-++++++++++++++++++++++++
 
-Either:
-
-- On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; 
-
-or:
-
-- Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
-
-  :Note:	[--host <hostname>] is not available for a *Local CDAP*.
-
-  On Windows, run ``~SDK> bin\app-manager.bat stop``
-
+Once done, You can stop the application as described in :ref:`Stop Application <stop-application>`
 .. highlight:: java
 
