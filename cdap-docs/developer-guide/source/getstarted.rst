@@ -150,7 +150,7 @@ Before you start developing your own applications, it is recommended that you fa
 APIs and concepts of CDAP as well as the CDAP Console using the example applications that are provided
 with the SDK. Let's take a look at one of these:
 
-.. include:: first-app.rst
+.. include:: /_examples/first-app.rst
 
 .. _examples:
 
