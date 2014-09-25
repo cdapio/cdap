@@ -1,0 +1,80 @@
+---
+driver:
+  name: vagrant
+  customize:
+    cpus: 2
+    memory: 4096
+
+provisioner:
+  name: chef_solo
+  require_chef_omnibus: true
+
+platforms:
+  - name: centos-6.5
+    attributes:
+      hadoop:
+        hdfs_site:
+         'dfs.datanode.max.transfer.threads': 4096
+      hive:
+        hive_site:
+         'hive.support.concurrency': true
+         'hive.zookeeper.quorum': 'localhost'
+  - name: debian-6.0.10
+    run_list:
+    - apt::default
+    attributes:
+      hadoop:
+        hdfs_site:
+         'dfs.datanode.max.transfer.threads': 4096
+      hive:
+        hive_site:
+         'hive.support.concurrency': true
+         'hive.zookeeper.quorum': 'localhost'
+  - name: ubuntu-12.04
+    run_list:
+    - apt::default
+    attributes:
+      hadoop:
+        hdfs_site:
+         'dfs.datanode.max.transfer.threads': 4096
+      hive:
+        hive_site:
+         'hive.support.concurrency': true
+         'hive.zookeeper.quorum': 'localhost'
+  - name: ubuntu-14.04
+    run_list:
+    - apt::default
+    attributes:
+      hadoop:
+        hdfs_site:
+         'dfs.datanode.max.transfer.threads': 4096
+      hive:
+        hive_site:
+         'hive.support.concurrency': true
+         'hive.zookeeper.quorum': 'localhost'
+
+suites:
+  - name: cdh4
+    run_list:
+      - recipe[cdap::fullstack]
+      - recipe[cdap::security]
+      - recipe[minitest-handler::default]
+    attributes: { hadoop: { distribution: 'cdh', distribution_version: 4 } }
+  - name: cdh5
+    run_list:
+      - recipe[cdap::fullstack]
+      - recipe[cdap::security]
+      - recipe[minitest-handler::default]
+    attributes: { hadoop: { distribution: 'cdh', distribution_version: 5 } }
+  - name: hdp20
+    run_list:
+      - recipe[cdap::fullstack]
+      - recipe[cdap::security]
+      - recipe[minitest-handler::default]
+    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.0' } }
+  - name: hdp21
+    run_list:
+      - recipe[cdap::fullstack]
+      - recipe[cdap::security]
+      - recipe[minitest-handler::default]
+    attributes: { hadoop: { distribution: 'hdp', distribution_version: '2.1' } }
