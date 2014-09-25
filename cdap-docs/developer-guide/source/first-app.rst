@@ -198,5 +198,5 @@ data application using CDAP by:
 
 * Exploring the Web Analytics Application source code. It includes test cases that show unit-testing an
   application.
-* Look at another CDAP tutorial: `Building a Web Insights Engine <link>`__.
-* For a detailed understanding of what CDAP is capable of, read our `developer documentation. <link>`__
+* Look at a CDAP case study: `Web Analytics using CDAP. <case_study.html>`__
+* For a detailed understanding of what CDAP is capable of, read our `Programming Guide. <dev-guide.html>`__
