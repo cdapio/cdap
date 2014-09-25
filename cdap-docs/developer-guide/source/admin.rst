@@ -300,25 +300,18 @@ to your custom directory.
 
 RPM using Yum
 .............
-Create a file ``cdap.repo`` at the location::
+Create a file ``cask.repo`` at the location::
 
-  /etc/yum.repos.d/cdap.repo
+  /etc/yum.repos.d/cask.repo
 
 The RPM packages are accessible using Yum at this authenticated URL::
 
   [cdap]
-  name=CDAP Packages
-  baseurl=https://<username>:<password>@repository.cask.co/content/groups/restricted
+  name=Cask Packages
+  baseurl=http://repository.cask.co/centos/6/x86_64/releases
   enabled=1
-  protect=0
-  gpgcheck=0
-  metadata_expire=30s
-  autorefresh=1
-  type=rpm-md
+  gpgcheck=1
 
-:where:
-  :<username>: Username provided by your Cask representative
-    :<password>: Password provided by your Cask representative
 
 Debian using APT
 ................
