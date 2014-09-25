@@ -1,8 +1,6 @@
 
 # Cask Data Application Platform - CDAP
 
-![CDAP Logo](/docs/developer-guide/source/_images/CDAP.png)
-
 **Introduction**
 
 The Cask Data Application Platform (CDAP) is an application server that provides a
@@ -27,13 +25,6 @@ installation. CDAP can be run either standalone, deployed within the Enterprise 
 
 For more information, see our collection of 
 [Developer Guides and other documentation](http://docs.cask.co/cdap/current/index.html).
-
-## Is It Building?
-
-Build                                                                    | Status / Version
--------------------------------------------------------------------------|-----------------
-[Cask Continuous Integration Build](https://builds.cask.co/browse/CDAP-DUT) | ![Cask](https://builds.cask.co/plugins/servlet/buildStatusImage/CDAP-DUT)
-[GitHub Version](https://github.com/caskdata/cdap/releases/latest)         | ![github](http://img.shields.io/github/release/caskdata/cdap.svg)
 
 
 ## Getting Started
