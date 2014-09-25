@@ -81,6 +81,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
@@ -358,7 +359,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       InputStream in = txClient.getSnapshotInputStream();
       LOG.trace("Took and retrieved transaction manager snapshot successfully.");
       try {
-        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
+        ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
+                                                                 ImmutableMultimap.<String, String>of());
         while (true) {
           // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
           byte[] readBytes = new byte[4096];
@@ -366,9 +368,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           if (res == -1) {
             break;
           }
-          responder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
+          // If failed to send chunk, IOException will be raised.
+          // It'll just propagated to the netty-http library to handle it
+          chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
         }
-        responder.sendChunkEnd();
+        Closeables.closeQuietly(chunkResponder);
       } finally {
         in.close();
       }
