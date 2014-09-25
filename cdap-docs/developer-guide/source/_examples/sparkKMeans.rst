@@ -80,7 +80,7 @@ The calculated centers data is stored in a second ObjectStore Dataset, *centers*
 This procedure has a ``centers`` method to obtain the center's coordinates of a given index.
 
 
-Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
+Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
 
 Running the Example
 +++++++++++++++++++
@@ -160,5 +160,5 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
 
 	   "9.1,9.1,9.1"
 
-Once done, You can stop the application as described in :ref:`Stop Application <stop-application>`
+Once done, You can stop the application as described in :ref:`Building and Running Applications <stop-application>`
 .. highlight:: java

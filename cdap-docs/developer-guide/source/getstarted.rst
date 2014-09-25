@@ -202,12 +202,11 @@ Building and Running Applications
 In the examples, we refer to the Standalone CDAP as "CDAP", and the
 example code that is running on it as an "Application".
 
-We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
 
 Building the Application
 ........................
 
-From the project root, build an example with the
+From the example's project root, build an example with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
@@ -222,7 +221,7 @@ From within the SDK root directory, this command will start the Standalone CDAP:
 
 On Windows::
 
-	~SDK> bin\cdap.bat start
+	> bin\cdap.bat start
 
 
 Deploying an application
@@ -230,23 +229,26 @@ Deploying an application
 
 Once CDAP is Started, you can deploy the example JAR by:
 
-#. Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console running at `http://localhost:9999/ <http://localhost:9999/>`__
-#. Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar.
-#. Run the App Manager script located in ``example/bin``:
+- Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console running at `http://localhost:9999/ <http://localhost:9999/>`__
+- Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar.
+- From the example's main directory run the App Manager script:
 
-   - Linux: ``./app-manager.sh --action deploy``
-   - Windows: ``app-manager.bat deploy``
+   - Linux: ``./bin/app-manager.sh --action deploy``
+   - Windows: ``bin\app-manager.bat deploy``
 
 Starting an application
 .......................
 
 Once the application is deployed,
 
-#. You can go to the Application view by clicking on the Application's Name. Now you can **Start** or **Stop** Process and Query components available to the application.
-#. Alternately you can run ``./app-manager.sh --action start`` - on Linux and run ``app-manager.bat start`` on Windows,
-   to start the flows and procedures.
+- You can go to the Application view by clicking on the Application's Name. Now you can **Start** or **Stop** Process and Query components available to the application, or
+- From the example's main directory run the App Manager script:
+
+    - Linux: ``./bin/app-manager.sh --action start``
+    - Windows: ``bin\app-manager.bat start``
 
 .. _stop-application:
+
 Stopping the Application
 ........................
 

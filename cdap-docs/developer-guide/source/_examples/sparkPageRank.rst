@@ -80,7 +80,7 @@ The calculated page rank data is stored in a second ObjectStore Dataset, *ranks*
 
 This procedure has a ``rank`` method to obtain the page rank of a given URL.
 
-Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
+Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
 
 Running the Example
 +++++++++++++++++++
@@ -165,6 +165,6 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 
             "0.9988696312751688"
 
-Once done, You can stop the application as described in :ref:`Stop Application <stop-application>`
+Once done, You can stop the application as described in :ref:`Building and Running Applications <stop-application>`
 
 .. highlight:: java

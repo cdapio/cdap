@@ -92,7 +92,7 @@ reads the name stored by the ``NameSaver`` from the key-value table. It return a
     }
   }
 
-Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
+Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
 
 Running the Example
 +++++++++++++++++++
@@ -122,4 +122,4 @@ you can make an HTTP request to the Metrics API using curl::
   $ curl http://localhost:10000/v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.bytes?aggregate=true
   {"data":3}
 
-Once done, You can stop the application as described in :ref:`Stop Application <stop-application>`
+Once done, You can stop the application as described in :ref:`Building and Running Applications <stop-application>`
