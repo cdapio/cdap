@@ -129,7 +129,7 @@ Strategies in Testing MapReduce Jobs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found under `Purchase </examples/Purchase/index.html>`__.
+found at :ref:`Purchase Example <purchase-example>`
 
 The ``PurchaseTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`.
@@ -180,7 +180,6 @@ the counts::
       Assert.assertEquals(2, result.getPurchases().size());
 
 The assertion will verify that the correct result was received.
-
 
 Strategies in Testing Spark Programs
 ------------------------------------

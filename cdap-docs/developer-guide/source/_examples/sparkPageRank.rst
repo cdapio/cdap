@@ -170,7 +170,7 @@ There are three ways to start the Spark program:
      curl -v -d '{args="3"}' \
     	  -X POST 'http://localhost:10000/v2/apps/SparkPageRank/spark/SparkPageRankProgram/start'
 
-   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the example::
+   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
      libexec\curl...
 
@@ -197,7 +197,7 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 	 curl -v -d '{"url": "http://example.com/page1"}' \
 	  -X POST 'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/methods/rank'
 
-   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the example::
+   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
 	  libexec\curl...
 
