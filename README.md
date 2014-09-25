@@ -66,7 +66,7 @@ For more build options, please refer to the [build instructions](BUILD.md).
 ## Getting Started
 
 Visit our web site for a [Getting Started](http://docs.cask.co/cdap/current/en/getstarted.html)
-that will guide you through installing CDAP and running an example application.  
+document that will guide you through installing CDAP and running an example application.  
 
 
 ## Where to Go Next
