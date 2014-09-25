@@ -1,4 +1,3 @@
-:orphan:
 
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform SparkKMeans Application
@@ -92,7 +91,7 @@ Injecting points data
 Run this script to inject points data
 to the Stream named *pointsStream* in the ``SparkKMeans`` application::
 
-	$ ./bin/inject-data.sh [--host <hostname>]
+	$ ./bin/inject-data.sh
 
 **Note** ``[--host ]`` is not available for a *Standalone CDAP*.
 
