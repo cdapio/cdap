@@ -604,7 +604,7 @@ Supported Actions
 Java API
 ........
 
-You can download and also find Build instructions at `Java Stream Client <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
+You can download and also find Build instructions at `Java Stream Client. <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
 
 Create a StreamClient instance, specifying the fields 'host' and 'port' of the CDAP instance.
 Optional configurations that can be set:
@@ -727,7 +727,7 @@ You can refer to  :ref:`Authentication Client Usage for Java. <AuthClientJava>`
 Python API
 ..........
 
-Download: `Python Stream Client <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
+Download: `Python Stream Client. <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
 
 Usage
 +++++
@@ -888,7 +888,7 @@ Features
 
 Getting the File Tailer
 .......................
-You can download and also find Build instructions at `File Tailer <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
+You can download and also find Build instructions at `File Tailer. <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
 
 Installing File Tailer
 ......................
@@ -1095,7 +1095,7 @@ Features
 Getting File DropZone
 .....................
 
-You can download and also find Build instructions at `File DropZone <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
+You can download and also find Build instructions at `File DropZone. <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
 
 Installing File DropZone
 ........................
@@ -1172,7 +1172,7 @@ mechanisms. To create a new Authentication Client, implement the ``Authenticatio
 Download
 ++++++++
 
-Download and build instructions are available at  `Authentication Client - Java <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/java>`__
+Download and build instructions are available at  `Authentication Client - Java. <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/java>`__
 
 Build
 +++++
@@ -1243,7 +1243,7 @@ Authentication Client - Python
 Download
 ++++++++
 
-You can download the Authentication Client for Python `here <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/python>`__
+You can download the Authentication Client for Python `here. <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/python>`__
 
 Example Usage
 +++++++++++++
