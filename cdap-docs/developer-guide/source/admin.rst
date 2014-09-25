@@ -376,7 +376,7 @@ and then restart CDAP.
 
 1. Stop all CDAP processes::
 
-     for i in `ls /etc/init.d/ | grep cdap` ; do service $i stop ; done
+     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
 
 #. Update the CDAP packages by running either of these methods:
 
@@ -401,7 +401,7 @@ and then restart CDAP.
 
 #. Restart the CDAP processes::
 
-     for i in `ls /etc/init.d/ | grep cdap` ; do service $i start ; done
+     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 Verification
 ------------
