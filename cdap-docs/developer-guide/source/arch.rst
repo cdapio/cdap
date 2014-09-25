@@ -36,8 +36,8 @@ In CDAP applications, you interact with data through Datasets. Datasets provide 
 - Abstraction of the actual representation of data in storage. You can write your code or queries without
   having to know where and how your data is stored—be it in HBase, LevelDB or a relational database.
 - Encapsulation of data access patterns and business logic as reusable, managed Java code.
-- Consistency of your data under highly concurrent access using CDAP's
-  `Cask Tephra transaction system. <https://github.com/caskco/tephra/>`__
+- Consistency of your data under highly concurrent access using Cask's
+  `Tephra transaction system. <https://github.com/caskco/tephra/>`__
 - Injection of datasets into different programming paradigms and runtimes. As soon as your data is in a
   dataset, you can immediately use it: in real-time programs; in batch processing applications such as Map/Reduce
   and Spark; in ad-hoc SQL queries.
@@ -52,7 +52,7 @@ services that are typically needed by Big Data applications, such as service dis
 collection, and configuration. The environment-specific implementations of these services are injected
 by CDAP into the program containers in which the application is run—the application itself does not
 need to change based on the environment. This allows you to develop applications in one environment—on 
-your laptop using a stand-alone CDAP for testing—and then seamlessly deploy them in the different
+your laptop using a Standalone CDAP for testing—and then seamlessly deploy them in the different
 environment of a distributed staging cluster.
 
 Deployment of an application as well as its lifecycle management, monitoring and scaling are done
@@ -104,7 +104,7 @@ CDAP consists chiefly of these components:
 
 - The Router is the only public access point into CDAP for external clients. It forwards client requests to
   the appropriate system service or application. In a secure setup, the router also performs authentication;
-  it is then complemented by an authentication service that allows clients to obtain credentials for CDAP.
+  it is then complemented by an authentication service that allows clients to obtain access tokens for CDAP.
 - The Master controls and manages all services and applications.
 - System Services provide vital platform features such datasets, transactions, service discovery logging,
   and metrics collection. System services run in application containers.

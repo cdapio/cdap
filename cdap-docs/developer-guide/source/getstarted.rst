@@ -139,5 +139,5 @@ Where to Go Next
 ================
 Now that you've had an introduction to CDAP, take a look at:
 
-- :doc:`Concepts and Architecture, <arch>` a complete overview of CDAP's underlying technology.
+- :doc:`Concepts and Architecture, <arch>` an overview of CDAP's underlying technology.
 
