@@ -86,6 +86,8 @@ Interested in helping to improve CDAP? We welcome all contributions, whether in 
 bug reports, submitting pull requests for code changes and improvements, or by asking questions and
 assisting others on the mailing list.
 
+For quick guide to getting your system setup to contribute to CDAP, take a look at our [Contributor Quickstart Guide](DEVELOPERS.md).
+
 ### Bug Reports & Feature Requests
 
 Bugs and tasks are tracked in a public JIRA issue tracker. Details on access will be forthcoming.
