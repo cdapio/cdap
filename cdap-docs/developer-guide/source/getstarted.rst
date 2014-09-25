@@ -28,28 +28,59 @@ The CDAP Software Developers Kit (SDK) is all you need to develop CDAP applicati
 - A set of tools, datasets and example applications that help you get familiar with CDAP, and
   can also serve as templates for developing for own applications.
 
-System Requirements and Dependencies for the SDK
-------------------------------------------------
+System Requirements and Dependencies
+------------------------------------
 
 The CDAP SDK runs on Linux, Unix, MacOS and Windows, and only has three requirements:
 
- - `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP;
-   note that $JAVA_HOME should be set)
- - `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP UI)
- - `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
+- `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ (required to run CDAP;
+  note that $JAVA_HOME should be set)
+- `Node.js 0.8.16+ <http://nodejs.org>`__ (required to run the CDAP UI)
+- `Apache Maven 3.0+ <http://maven.apache.org>`__ (required to build CDAP applications)
 
-Downloading and Setting Up the CDAP SDK
-=======================================
-The SDK is available as a binary on the Downloads section of the Cask Website.
-[TODO: add link] Once downloaded, unzip it to a directory on your machine:
-::
+.. highlight:: console
 
-  $ tar -zxvf cdap-sdk-2.5.0.zip
+Download and Setup
+==================
+
+There are three ways to download the CDAP SDK: as a binary zip file, as a Virtual Machine image,
+or as a Docker image.
+
+- The zip file is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
+  Once downloaded, unzip it to a directory on your machine::
+
+    $ tar -zxvf cdap-sdk-2.5.0.zip
+
+- To use the Virtual Machine image:
+
+  + Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
+    `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
+  + Download the CDAP Standalone Virtual Machine (the .ova file) at `<http://cask.co/downloads>`__.
+  + Import the Virtual Machine into VirtualBox or VMWare Player.
+  + The CDAP Standalone Virtual Machine has been configured and setup so you can be productive immediately:
+
+    * CDAP VM is configured with 4GB Default RAM (recommended).
+    * The virtual machine has Ubuntu Desktop Linux installed as the operating system.
+    * No password is required to enter the virtual machine; however, should you need to install or
+      remove software, the admin user and password are both “cdap”.
+    * 10GB of disk space is available for you to build your first CDAP project.
+    * Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
+    * The CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0``.
+    * The Standalone CDAP will automatically start when the virtual machine starts.
+    * The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console
+      (http://localhost:9999). You're welcome to install your favorite browser.
+    * Maven is installed and configured to work for CDAP.
+    * The Java JDK and Node JS are both installed.
+
+Starting the Standalone CDAP
+----------------------------
+
+Use the ``cdap.sh`` script to start and stop the Standalone CDAP::
+
   $ cd cdap-sdk-2.5.0
-
-**Running CDAP SDK** ::
-
-    $ ./bin/cdap.sh start
+  $ ./bin/cdap.sh start
+  ...
+  $ ./bin/cdap.sh stop
 
 Or, if you are using Windows, use the batch script cdap.bat to start the SDK.
 
