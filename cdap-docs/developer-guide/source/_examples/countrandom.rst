@@ -56,7 +56,7 @@ The Generator Flowlet that generates Random numbers every 1 millisecond::
 
 Deploy and start the application as described in  :ref:`Build, Deploy and start <convention>`
 
-Running the Application:
+Running the Application
 +++++++++++++++++++++++
 
 Once you start the flow, the ``source`` flowlet will continuously generate data. You can see this by observing the counters that is displayed for each flowlet
