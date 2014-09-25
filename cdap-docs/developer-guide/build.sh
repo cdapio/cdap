@@ -68,6 +68,7 @@ function usage() {
   echo ""
   echo "  Options (select one)"
   echo "    build         Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
+  echo "    build-quick   Quick build of docs using existing javadocs"
   echo ""
   echo "    docs          Clean build of docs"
   echo "    javadocs      Clean build of javadocs ($API module only) for SDK and website"
