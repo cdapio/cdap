@@ -1,7 +1,7 @@
 
 # Cask Data Application Platform - CDAP
 
-![CDAP Logo](/docs/developer-guide/source/_images/CDAP.png)
+![CDAP Logo](cdap-docs/developer-guide/source/_images/CDAP.png)
 
 **Introduction**
 
@@ -26,14 +26,14 @@ Developers can build and test their applications end-to-end in a full-stack, sin
 installation. CDAP can be run either standalone, deployed within the Enterprise or hosted in the Cloud.
 
 For more information, see our collection of 
-[Developer Guides and other documentation](http://docs.cask.co/cdap/current/index.html).
+[Developer Guides and other documentation](http://docs.cask.co/cdap/current/en/index.html).
 
 ## Is It Building?
 
-Build                                                                    | Status / Version
--------------------------------------------------------------------------|-----------------
-[Travis Continuous Integration Build](https://travis-ci.org/caskco/cdap) | ![travis](https://travis-ci.org/caskco/cdap.svg?branch=develop)
-[GitHub Version](https://github.com/caskco/cdap/releases/latest)         | ![github](http://img.shields.io/github/release/caskco/cdap.svg)
+Build                                                                | Status / Version
+---------------------------------------------------------------------|-----------------
+[Continuous Integration Build](https://builds.cask.co/browse/CDAP)   | ![Build](https://builds.cask.co/plugins/servlet/buildStatusImage/CDAP-DUT)
+[GitHub Version](https://github.com/caskdata/cdap/releases/latest)   | ![github](http://img.shields.io/github/release/caskdata/cdap.svg)
 
 
 ## Getting Started
@@ -63,22 +63,21 @@ Take the `cdap-<version>.tar.gz` file and unzip it into a suitable location.
 
 For more build options, please refer to the [build instructions](BUILD.md).
 
-## Quick Start
+## Getting Started
 
-Visit our web site for a [Quick Start](http://docs.cask.co/cdap/current/quickstart.html)
-that will guide you through installing CDAP, running an example that counts HTTP status codes and then
-modifying the example’s Java code to include counting client IP addresses.  
+Visit our web site for a [Getting Started](http://docs.cask.co/cdap/current/en/getstarted.html)
+document that will guide you through installing CDAP and running an example application.  
 
 
 ## Where to Go Next
 
 Now that you've had a look at the CDAP SDK, take a look at:
 
-- Examples, located in the `/examples` directory of the CDAP SDK;
-- [Selected Examples](http://docs.cask.co/cdap/current/examples.html) 
+- Examples, located in the `cdap-examples` directory of the CDAP SDK;
+- [Selected Examples](http://docs.cask.co/cdap/current/en/getstarted.html#examples) 
   (demonstrating basic features of the CDAP) are located on-line; and
-- Developer Guides, located in the source distribution in `/docs/developer-guide/source`
-  or [online](http://docs.cask.co/cdap/current/index.html).
+- Developer Guides, located in the source distribution in `cdap-docs/developer-guide/source`
+  or [online](http://docs.cask.co/cdap/current/en/index.html).
 
 
 ## How to Contribute

@@ -94,7 +94,7 @@ You can create a Dataset in CDAP using either the
 You can also tell Applications to create a Dataset if it does not already
 exist by declaring the Dataset details in the Application specification.
 For example, to create a DataSet named *myCounters* of type 
-:doc:`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable>`, write::
+`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
 
   public void configure() {
       createDataset("myCounters", KeyValueTable.class);
@@ -118,8 +118,7 @@ instance of the Dataset class into the Application.
 
 You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
-:doc:`Purchase <examples/purchase>`
-example for an implementation of a Custom Dataset.
+:ref:`Purchase Example<purchase>` for an implementation of a Custom Dataset.
 For more details, refer to :ref:`Custom Datasets <custom-datasets>`
 
 Types of Datasets
@@ -467,7 +466,7 @@ Application components can access a created Dataset via the ``@UseDataSet`` anno
   }
 
 A complete application demonstrating the use of a custom Dataset is included in our
-:doc:`Purchase <examples/purchase>` example.
+:ref:`Purchase Example<purchase>`.
 
 You can also create, drop, and truncate Datasets using the
 :ref:`Cask Data Application Platform HTTP REST API <rest-datasets>`.
@@ -527,6 +526,8 @@ interface::
 The ``write()`` method is used to redirect all writes performed by a Reducer to the Dataset.
 Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type
 parameters of the Reducer.
+
+.. _data-explore:
 
 Data Exploration
 ================
@@ -605,7 +606,7 @@ Limitations
   For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
   the application jar. However, if you define your own Dataset type ``MyObjectStore`` that extends or encapsulates an
   ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the Dataset definition for ``MyObjectStore``. See the
-  :doc:`Purchase </examples/purchase>` application for an example.
+  :ref:`Purchase <purchase>` application for an example.
 
 
 Parameterized Types
@@ -1787,6 +1788,8 @@ write RDD to a Dataset.
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
 
+.. _user-services:
+
 Services
 ========
 
@@ -1969,6 +1972,8 @@ There is also a convenience method to respond with an error message::
                       "Method 'getCount' requires argument 'word'");
       return;
     }
+
+.. _transaction-system:
 
 Transaction System
 ==================

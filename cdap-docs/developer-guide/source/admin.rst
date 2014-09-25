@@ -2,9 +2,15 @@
    :description: Operating Cask Data Application Platform and its Console
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-===============================================
-Cask Data Application Platform Operations Guide
-===============================================
+
+
+.. _admin:
+
+==================================================================
+Cask Data Application Platform Administration and Operations Guide
+==================================================================
+
+.. _install:
 
 Installation and Configuration
 ==============================
@@ -300,43 +306,37 @@ to your custom directory.
 
 RPM using Yum
 .............
-Create a file ``cdap.repo`` at the location::
+Download the Cask Yum repo definition file::
 
-  /etc/yum.repos.d/cdap.repo
+  sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/downloads/centos/6/x86_64/cask.repo
 
-The RPM packages are accessible using Yum at this authenticated URL::
+This will create the file ``/etc/yum.repos.d/cask.repo`` with::
 
-  [cdap]
-  name=CDAP Packages
-  baseurl=https://<username>:<password>@repository.cask.co/content/groups/restricted
+  [cask]
+  name=Cask Packages
+  baseurl=http://repository.cask.co/centos/6/x86_64/releases
   enabled=1
-  protect=0
-  gpgcheck=0
-  metadata_expire=30s
-  autorefresh=1
-  type=rpm-md
+  gpgcheck=1
 
-:where:
-  :<username>: Username provided by your Cask representative
-    :<password>: Password provided by your Cask representative
+
+Add the Cask Public GPG Key to your repository::
+
+  sudo rpm --import http://repository.cask.co/centos/6/x86_64/releases/pubkey.gpg
 
 Debian using APT
 ................
-Debian packages are accessible via APT on *Ubuntu 12*.
+Download the Cask Apt repo definition file::
 
-Create a file ``cdap.list`` at the location::
+  sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/downloads/ubuntu/precise/amd64/cask.list
 
-  /etc/apt/sources.list.d/cdap.list
+This will create the file ``/etc/apt/sources.list.d/cask.list`` with::
 
-Use this authenticated URL (on one line)::
+  deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/releases precise releases
 
-  deb [ arch=amd64 ] https://<username>:<password>@repository.cask.co/content/sites/apt
-            precise release
 
-:where:
-  :<username>: Username provided by your Cask representative
-    :<password>: Password provided by your Cask representative
+Add the Cask Public GPG Key to your repository::
 
+  curl -s http://repository.cask.co/ubuntu/precise/amd64/releases/pubkey.gpg | sudo apt-key add -
 
 .. _installation:
 
@@ -414,23 +414,23 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
 
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
-#. Each example folder has in its ``target`` directory a .JAR file.
-   For verification, we will use the ``TrafficAnalytics`` example.
-#. Open a web browser to the CDAP Web-App ("Console").
-   It will be located on port ``9999`` of the box where you installed CDAP.
-#. On the Console, click the button *Load an App.*
-#. Find the pre-built JAR (`TrafficAnalytics-1.0.jar`) by using the dialog box to navigate to
-   ``CDAP_HOME/examples/TrafficAnalytics/target/TrafficAnalytics-1.0.jar``
+#. Each example folder has a ``.jar`` file in its ``target`` directory.
+   For verification, we will use the ``WordCount`` example.
+#. Open a web browser to the CDAP Console.
+   It is located on port ``9999`` of the box where you installed CDAP.
+#. On the Console, click the button *Load an App*.
+#. Find the pre-built ``WordCount-2.5.0.jar`` using the dialog box to navigate to
+   ``CDAP_HOME/examples/WordCount/target/``
 #. Once the application is deployed, instructions on running the example can be found at the
-   `TrafficAnalytics example
-   </http://docs.cask.co/cdap/current/examples/trafficAnalytics#building-and-running-the-application-and-example>`__.
-#. You should be able to start the application, inject log entries,
-   run the ``MapReduce`` job and see results.
+   :ref:`WordCount example<word-count>`.
+#. You should be able to start the application, inject sentences,
+   run the Flow and the Procedure, and see results.
 #. When finished, stop and remove the application as described in the
-   `TrafficAnalytics example
-   <http://docs.cask.co/cdap/current/examples/trafficAnalytics#stopping-the-application>`__.
+   :ref:`examples<examples>`.
 
 .. rst2pdf: PageBreak
+
+.. _security:
 
 Security
 ========
@@ -1095,8 +1095,8 @@ CDAP collects logs and metrics for all of its internal services. Being able to v
 helpful in debugging CDAP Applications as well as analyzing their performance. CDAP gives access to its logs, metrics,
 and other monitoring information through REST APIs as well as a Java Client.
 
-See the `Logging <api.html#logging-http-api>`__, `Metrics <api.html#metrics-http-api>`__,
-and `Monitoring <api.html#monitor-http-api>`__ APIs for more information.
+See the :ref:`Logging <loggingHTTP>`, :ref:`Metrics <metricsHTTP>`,
+and :ref:`Monitoring <monitorHTTP>` HTTP APIs for more information.
 
 .. rst2pdf: PageBreak
 
@@ -1182,7 +1182,7 @@ The Standalone CDAP allows you to run the entire CDAP stack in a single Java Vir
 
 The Standalone CDAP by default binds to the localhost address, and is not available for remote access by any outside process or application outside of the local machine.
 
-See the `Cask Data Application Platform Quick Start <quickstart.html>`__ and
+See the :ref:`Getting Started Guide <get-started>` and
 the *Cask Data Application Platform SDK* for information on how to start and manage your Standalone CDAP.
 
 
@@ -1387,7 +1387,7 @@ Dataset Explorer
 ................
 From within the `Store`_ pane you can access the Dataset Explorer, which allows for SQL-like
 queries of the datasets' underlying Hive tables. Details on the requirements for formulating and
-performing these queries can be found in the Developer Guide `Querying Datasets with SQL <query.html>`__.
+performing these queries can be found in the Developer Guide :ref:`data-explore`.
 
 Using the information supplied for each Hive table (schema, keys, properties) you can generate a
 SQL-like query and then execute it.
@@ -1644,7 +1644,7 @@ For a Procedure, request statistics are shown, along with status and management 
 JSON string parameters are passed to the Procedure when calling its methods.
 
 For details of making requests and using Procedures, including configuring the parameters and calling
-methods, see the `Cask Data Application Platform HTTP RESTful API <rest.html>`__.
+methods, see the :ref:`restful-api`.
 
 In a fashion similar to the `Flow Log Explorer`_, you can examine the logs associated with each Procedure.
 
@@ -1652,15 +1652,16 @@ In a fashion similar to the `Flow Log Explorer`_, you can examine the logs assoc
 .. image:: _images/console/console_17_procedure_ranker.png
    :width: 600px
 
-Custom Service
---------------
-Each Application can access and use user-defined Custom Services. From an individual Application's panel
-you access its Custom Services panel.
+Service
+-------
+Each Application can access and use user-defined Services. From an individual Application's panel
+you access its Services panel.
 
-For a Custom Service, components of the Service are shown, along with status and management controls for starting, stopping and configuration. The current number of instances requested and active are shown for
+For a Service, components of the Service are shown, along with status and management controls for starting,
+stopping and configuration. The current number of instances requested and active are shown for
 each component.
 
-For details of making and using Custom Services, see the Developer Guide `Advanced CDAP Features <advanced.html#custom-services>`__.
+For details of making and using Custom Services, see the Developer Guide section on :ref:`user-services`.
 
 .. image:: _images/console/console_32_custom_service.png
    :width: 600px
@@ -1684,8 +1685,8 @@ For instance, in a Flowlet you can write::
 
 The log messages emitted by your Application code can be viewed in two different ways.
 
-- Using the `Cask Data Application Platform HTTP RESTful API <rest.html>`__.
-  The `RESTful interface <rest.html#logging-http-api>`__ details all the available contexts that
+- Using the :ref:`restful-api`.
+  The :ref:`Logging HTTP interface <loggingHTTP>` details all the available contexts that
   can be called to retrieve different messages.
 - All log messages of an Application can be viewed in the CDAP Console
   by clicking the *Logs* button in the Flow or Procedure screens.
@@ -1702,13 +1703,12 @@ As applications process data, the CDAP collects metrics about the application’
 
 Other metrics are user-defined or "custom" and differ from application to application.
 To add user-defined metrics to your application, read this section in conjunction with the
-details on available system metrics in the
-`Cask Data Application Platform HTTP RESTful API <rest.html#metrics-http-api>`__.
+details on available system metrics in the :ref:`Metrics HTTP API<metricsHTTP>`.
 
 You embed user-defined metrics in the methods defining the elements of your application.
 They will then emit their metrics and you can retrieve them
 (along with system metrics) via the `Metrics Explorer`_ in the CDAP Console or
-via the CDAP’s `RESTful interfaces <rest.html>`__.
+via the CDAP’s :ref:`restful-api`.
 The names given to the metrics (such as ``names.longnames`` and ``names.bytes`` as in the example below)
 should be composed only of alphanumeric characters.
 
@@ -1734,10 +1734,7 @@ To add metrics to a Flowlet *NameSaver*::
     }
   }
 
-An example of user-defined metrics is in ``PurchaseStore`` in the `Purchase example <examples/Purchase/index.html>`_.
-
-For details on available system metrics, see the `Metrics section <rest.html#metrics-http-api>`__
-in the `CDAP HTTP REST API Guide <rest.html>`__.
+An example of user-defined metrics is in ``PurchaseStore`` in the :ref:`purchase`.
 
 Using Metrics Explorer
 ----------------------
@@ -1877,8 +1874,7 @@ Here are the parameters that can be defined in the ``cdap-site.xml`` file,
 their default values, descriptions and notes.
 
 For information on configuring the ``cdap-site.xml`` file and CDAP for security,
-see the online document `CDAP Security Guide
-<http://docs.cask.co/cdap/current/security.html>`__.
+see the :ref:`security` section.
 
 ..   :widths: 20 20 30
 
@@ -2276,8 +2272,7 @@ Here are the parameters that can be defined in the ``cdap-security.xml`` file,
 their default values, descriptions and notes.
 
 For information on configuring the ``cdap-security.xml`` file and CDAP for security,
-see the online document `CDAP Security Guide
-<http://docs.cask.co/cdap/current/security.html>`__.
+see the :ref:`security` section.
 
 ..   :widths: 20 20 30
 
