@@ -142,7 +142,7 @@ As an application developer building a Big Data application, you are primarily c
   at processing time. An important step between collecting the data and processing it is exploration; that is,
   examining data with ad-hoc queries to learn about its structure and nature.
 
-  NOTE: This is not exactly what CDAP allows! FIXME!
+.. FIXME! This is not exactly what CDAP allows!
 
 - **Data Processing:** After data is collected, we need to process it in various ways. For example:
 
