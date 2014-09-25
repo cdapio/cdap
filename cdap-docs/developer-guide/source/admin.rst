@@ -300,11 +300,11 @@ to your custom directory.
 
 RPM using Yum
 .............
-Download the Cask Yum repo definition file as follows::
+Download the Cask Yum repo definition file::
 
   sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/downloads/centos/6/x86_64/cask.repo
 
-This will create the file ``/etc/yum.repos.d/cask.repo`` with the following contents::
+This will create the file ``/etc/yum.repos.d/cask.repo`` with::
 
   [cask]
   name=Cask Packages
@@ -313,22 +313,22 @@ This will create the file ``/etc/yum.repos.d/cask.repo`` with the following cont
   gpgcheck=1
 
 
-Add the Cask Public GPG Key to your repository as follows::
+Add the Cask Public GPG Key to your repository::
 
   sudo rpm --import http://repository.cask.co/centos/6/x86_64/releases/pubkey.gpg
 
 Debian using APT
 ................
-Download the Cask Apt repo definition file as follows::
+Download the Cask Apt repo definition file::
 
   sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/downloads/ubuntu/precise/amd64/cask.list
 
-This will create the file ``/etc/apt/sources.list.d/cask.list`` with the following contents (on one line)::
+This will create the file ``/etc/apt/sources.list.d/cask.list`` with::
 
   deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/releases precise releases
 
 
-Add the Cask Public GPG Key to your repository as follows::
+Add the Cask Public GPG Key to your repository::
 
   curl -s http://repository.cask.co/ubuntu/precise/amd64/releases/pubkey.gpg | sudo apt-key add -
 
