@@ -229,19 +229,21 @@ Deploying an application
 
 Once CDAP is Started, you can deploy the example JAR by:
 
-- Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console running at `http://localhost:9999/ <http://localhost:9999/>`__
+- Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console
+  running at `http://localhost:9999/ <http://localhost:9999/>`__
 - Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar.
 - From the example's project root run the App Manager script:
 
    - Linux: ``$./bin/app-manager.sh --action deploy``
    - Windows: ``>bin\app-manager.bat deploy``
 
-Starting an application
+Starting an Application
 .......................
 
 Once the application is deployed,
 
-- You can go to the Application view by clicking on the Application's Name. Now you can **Start** or **Stop** Process and Query components available to the application, or
+- You can go to the Application view by clicking on the Application's name. Now you can *Start* or *Stop* the Process
+  and Query of the application, or
 - From the example's project root run the App Manager script:
 
     - Linux: ``$./bin/app-manager.sh --action start``
@@ -249,10 +251,10 @@ Once the application is deployed,
 
 .. _stop-application:
 
-Stopping the Application
-........................
+Stopping an Application
+.......................
 
-- On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists or
+- On the Application detail page of the CDAP Console, click the *Stop* button on both the Process and Query lists or
 - From the example's project root run the App Manager script:
 
   - Linux: ``$./bin/app-manager.sh --action stop``

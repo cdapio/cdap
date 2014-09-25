@@ -8,7 +8,7 @@
 Spark K-Means
 -------------
 
-**A Cask Data Application Platform (CDAP) Example Demonstrating Spark**
+A Cask Data Application Platform (CDAP) Example Demonstrating Spark
 
 Overview
 ........
@@ -93,8 +93,6 @@ to the Stream named *pointsStream* in the ``SparkKMeans`` application::
 
 	$ ./bin/inject-data.sh
 
-**Note** ``[--host ]`` is not available for a *Standalone CDAP*.
-
 On Windows::
 
 	~SDK> bin\inject-data.bat
@@ -160,5 +158,6 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
 
 	   "9.1,9.1,9.1"
 
-Once done, You can stop the application as described in :ref:`Building and Running Applications <stop-application>`
+Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
+
 .. highlight:: java

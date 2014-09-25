@@ -8,7 +8,7 @@
 SparkPageRank Application Example
 ---------------------------------
 
-**A Cask Data Application Platform (CDAP) Example Demonstrating Spark**
+A Cask Data Application Platform (CDAP) Example Demonstrating Spark
 
 Overview
 ........
@@ -91,16 +91,14 @@ Injecting URL Pairs
 Run this script to inject URL pairs
 to the Stream named *backlinkURLStream* in the ``SparkPageRank`` application::
 
-	$ ./bin/inject-data.sh [--host <hostname>]
-
-:Note: ``[--host ]`` is not available for a *Standalone CDAP*.
+	$ ./bin/inject-data.sh
 
 On Windows::
 
 	~SDK> bin\inject-data.bat
 
-Running Spark program
-#####################
+Running the Spark Program
+#########################
 
 There are three ways to start the Spark program:
 
@@ -165,6 +163,6 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 
             "0.9988696312751688"
 
-Once done, You can stop the application as described in :ref:`Building and Running Applications <stop-application>`
+Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
 
 .. highlight:: java

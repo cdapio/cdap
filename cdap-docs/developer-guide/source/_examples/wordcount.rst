@@ -16,14 +16,16 @@ Overview
 This application receives words and sentences from a stream and uses flowlets to process them and
 store the results and statistics in datasets.
 
-  - The ``wordStream`` receives sentences, one event at a time
-  - The ``splitter`` flowlet reads sentences from stream and splits them into words, writes global statistics of the received words like "total words received"
-    and "total length of words received" and emits each word to the ``counter`` flowlet  and the sentence (list of words) to the  ``associator`` flowlet
-  - The ``associator`` flowlet receives the set of words and writes word association to the dataset.
-    For example, If we recevie a sentence "welcome to CDAP", there word associations are
-    {"welcome","to"} , {"welcome", "CDAP"}, and {"welcome","to"}.
-  - The ``counter`` flowlet receives a word and increments the count for this word, maintained in a Key-Value table and forwards this word to ``unique`` flowlet
-  - The ``unique`` flowlet receives a word and updates the uniqueCount table, if it sees this word for the first time
+  - The ``wordStream`` receives sentences, one event at a time.
+  - The ``splitter`` flowlet reads sentences from stream and splits them into words, writes global statistics of the
+    received words like "total words received" and "total length of words received" and emits each word to the
+    ``counter`` flowlet  and each sentence (list of words) to the ``associator`` flowlet.
+  - The ``associator`` flowlet receives the set of words and writes word associations to the ``wordAssocs`` dataset.
+    For example, if we receive a sentence "welcome to CDAP", the word associations are
+    {"welcome","to"} , {"welcome", "CDAP"}, and {"to","CDAP"}.
+  - The ``counter`` flowlet receives a word and increments the count for this word, maintained in a key-value table and
+    forwards this word to the ``unique`` flowlet.
+  - The ``unique`` flowlet receives a word and updates the ``uniqueCount`` table, if it sees this word for the first time.
 
 Let's look at some of these elements, and then run the Application and see the results.
 
@@ -60,18 +62,19 @@ of the Application are tied together by the class ``WordCount``::
 Data Storage
 ++++++++++++
 
-- wordStats table stores the global statistics of total count of words and the total length of words received
-- wordCounts table stores the word and the corresponding count in a key value table
-- uniqueCount is a custom dataset, that stores the total count of unique words received so far
-- wordAssocs is a custom dataset, that stores the count for word associations
+- ``wordStats`` stores the global statistics of total count of words and the total length of words received.
+- ``wordCounts`` stores the word and the corresponding count in a key value table.
+- ``uniqueCount`` is a custom dataset that stores the total count of unique words received so far.
+- ``wordAssocs`` is a custom dataset that stores the count for word associations.
 
 RetrieveCounts Procedure
 ++++++++++++++++++++++++
 
 This Procedure has three methods:
-- getStats(): Returns global statistics like  "total words received", "total length of words received" and "average length of words"
-- getCount(): Given a word, this returns the total count of occurrences and the top-10 associated words for this word
-- getAssoc(): Given a pair, "word1" and "word2", this returns the association count for this pair
+
+- getStats(): Returns global statistics like  "total words received", "total length of words received" and "average length of words".
+- getCount(): Given a word, this returns the total count of occurrences and the top-10 associated words for this word.
+- getAssoc(): Given a pair, "word1" and "word2", this returns the association count for this pair.
 
 Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
 
@@ -84,8 +87,8 @@ Injecting Sentences
 In the Application's detail page, under Process, click on WordCounter flow. This takes you to the flow details page.
 Now click on the "wordStream" stream on the left side of the flow visualization, which brings up a pop-up window.
 Enter a sentence "Hello CDAP" and click on the Inject button. After you close the pop-up window, you will see that the counter
-for the stream increases to 1, whereas the counters for the flowlets ``splitter`` and ``associator`` increases to 1 and
-the counters for the flowlets ``counter``  and ``unique`` increases to 2.
+for the stream increases to 1, whereas the counters for the flowlets ``splitter`` and ``associator`` increase to 1 and
+the counters for the flowlets ``counter``  and ``unique`` increase to 2.
 You can repeat this step to enter more sentences.
 
 Querying the Results
@@ -103,9 +106,7 @@ There are two ways to query the  ``RetrieveCounts`` procedure:
 	curl -v -d '{"word": "CDAP"}' \
 	  -X POST 'http://localhost:10000/v2/apps/WordCount/procedures/RetrieveCounts/methods/getCount'
 
-  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the project SDK::
-
-	  libexec\curl...
+  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the project SDK.
 
 2. Click on the ``RetrieveCounts`` in the Application page of the Console to get to the
    Procedure dialogue. Type in the method name ``getCount``, and enter a word in the parameters
@@ -126,11 +127,13 @@ Console in JSON format, for example (reformatted to fit)::
     "word": "CDAP"
   }
 
-3. You can try executing other methods available in this procedure,
-    - getStats
-    - getAssoc - For getAssoc you need to provide two words to get their association count, example: {"word1":"Hello", "word2":"CDAP"}
+3. You can try executing other methods available in this procedure:
 
-Once done, You can stop the application as described in :ref:`Building and Running Applications <stop-application>`
+    - getStats - This returns the statistics, "total words received", "total length of words received" and so on.
+    - getAssoc - For getAssoc you need to provide two words to get their association count, example: {"word1":"Hello", "word2":"CDAP"}.
+
+Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
+
 .. highlight:: java
 
 
