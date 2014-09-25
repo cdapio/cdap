@@ -179,7 +179,7 @@
       <dependency>
         <groupId>co.cask.http</groupId>
         <artifactId>netty-http</artifactId>
-        <version>0.4.0</version>
+        <version>0.4.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
