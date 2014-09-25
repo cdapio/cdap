@@ -924,7 +924,6 @@ After Installation, you can configure the daemon properties at /etc/file-tailer/
 
 **Note**: Please note that the target file must be accessible to the File Tailer user.
 
-Available at: [link]
 
 Starting and Stopping the Daemon
 ................................
