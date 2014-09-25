@@ -72,8 +72,6 @@ application template that you can modify to develop your application. You can im
 into your favorite IDE, such as Eclipse or IntelliJ, and you are ready to start developing your first
 CDAP application.
 
-.. _examples:
-
 First Steps
 ===========
 
@@ -91,12 +89,12 @@ Other Example Applications
 The SDK includes these examples:
 
 .. list-table::
-:widths: 15 60
+  :widths: 15 60
   :header-rows: 1
 
-    * - Example Name
-      - Description
-    * - :ref:`HelloWorld<hello-world>`
+  * - Example Name
+    - Description
+  * - :ref:`HelloWorld<hello-world>`
     - A Simple HelloWorld App that's written using CDAP. It introduces how Stream, Dataset, Flow and Procedure
       are used in an CDAP application.
   * - :ref:`WordCount<word-count>`
@@ -119,6 +117,9 @@ The SDK includes these examples:
   * - :ref:`SparkPageRank<spark-page-rank>`
     - An application that demonstrates streaming text analysis using a Spark program. It computes the page rank
       of URLs from an input stream.
+  * - :ref:`Web Analytics<web-analytics>`
+    - An application to generate statistics and to provide insights about web usage through the analysis
+      of web traffic.
 
 .. include:: /_examples/helloworld.rst
 .. include:: /_examples/wordcount.rst
