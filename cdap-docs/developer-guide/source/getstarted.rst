@@ -81,7 +81,7 @@ Before you start developing your own applications, it is recommended to familiar
 APIs and concepts of CDAP as well as the CDAP console using example applications that are provided together
 with the SDK. Let's take a look at one of these:
 
-[TODO: Insert tutorial #1 by Terence].
+.. include:: first-app.rst
 
 Other Example Applications
 ==========================
