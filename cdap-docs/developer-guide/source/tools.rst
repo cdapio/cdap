@@ -1211,7 +1211,7 @@ This example illustrates an Authentication Client obtaining credentials from a u
     cliConfig.getClientConfig().setAuthenticationClient(authenticationClient);
   }
 
-To see the properties supported by the Authentication Client, look at :ref:`Configuring Authentication Client <ConfiguringAuthClient>`
+To see the properties supported by the Authentication Client, look at :ref:`Configuring Authentication Client. <ConfiguringAuthClient>`
 
 .. _AuthClientPython:
 
