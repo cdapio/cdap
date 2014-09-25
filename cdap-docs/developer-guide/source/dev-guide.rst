@@ -94,7 +94,7 @@ You can create a Dataset in CDAP using either the
 You can also tell Applications to create a Dataset if it does not already
 exist by declaring the Dataset details in the Application specification.
 For example, to create a DataSet named *myCounters* of type 
-:doc:`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable>`, write::
+`KeyValueTable <javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
 
   public void configure() {
       createDataset("myCounters", KeyValueTable.class);
