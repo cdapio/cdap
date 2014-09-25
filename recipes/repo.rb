@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: repo
 #
-# Copyright (C) 2013-2014 Continuuity, Inc.
+# Copyright © 2013-2014 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ when 'rhel'
   yum_repository 'cdap' do
     description 'CDAP YUM repository'
     url node['cdap']['repo']['url']
-    ### TODO: remove this once we get packages signing configured
-    gpgcheck false
     action :add
   end
 when 'debian'
@@ -35,7 +33,6 @@ when 'debian'
     components node['cdap']['repo']['components']
     action :add
     arch 'amd64'
-    trusted true
     key "#{node['cdap']['repo']['url']}/pubkey.gpg"
   end
 end

@@ -5,9 +5,9 @@ If you want to help make the cdap cookbook better, by adding new features, fixin
  * Fork cdap_cookbook into your own GitHub repository
  * Create a topic branch with an appropriate name
  * Work on your favorite feature to your content
- * Once you are satisifed, create a pull request by going to the continuuity/cdap_cookbook project.
+ * Once you are satisifed, create a pull request by going to the caskdata/cdap_cookbook project.
  * Address all the review comments
- * Once addressed, the changes will be committed to the continuuity/cdap_cookbook repo.
+ * Once addressed, the changes will be committed to the caskdata/cdap_cookbook repo.
 
 ## License
 

@@ -8,3 +8,5 @@ HashSyntax:
   Enabled: False
 SingleSpaceBeforeFirstArg:
   Enabled: false
+AsciiComments:
+  Enabled: false

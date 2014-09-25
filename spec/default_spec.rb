@@ -5,7 +5,6 @@ describe 'cdap::default' do
     let(:chef_run) do
       ChefSpec::Runner.new(platform: 'centos', version: 6.5) do |node|
         node.automatic['domain'] = 'example.com'
-        node.default['cdap']['repo']['url'] = 'https://USER:PASS@cdap.repo/path/to/repo'
         node.default['hadoop']['hdfs_site']['dfs.datanode.max.transfer.threads'] = '4096'
         node.default['hadoop']['mapred_site']['mapreduce.framework.name'] = 'yarn'
         stub_command('update-alternatives --display cdap-conf | grep best | awk \'{print $5}\' | grep /etc/cdap/conf.chef').and_return(false)

@@ -2,7 +2,7 @@
 # Cookbook Name:: cdap
 # Recipe:: security_init
 #
-# Copyright (C) 2013-2014 Continuuity, Inc.
+# Copyright © 2013-2014 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@ execute 'create-security-server-ssl-keystore' do
   ssl_enabled = node['cdap']['cdap_site']['security.server.ssl.enabled'] || false
   password = node['cdap']['cdap_site']['security.server.ssl.keystore.password']
   path = node['cdap']['cdap_site']['security.server.ssl.keystore.path']
+  common_name = node['cdap']['security']['ssl_common_name']
 
-  command "keytool -genkey -noprompt -alias ext-auth -keysize 2048 -keyalg RSA -keystore #{path} -storepass #{password} -keypass #{password} -dname 'CN=security, OU=cdap, O=cdap, L=Palo Alto, ST=CA, C=US'"
+  command "keytool -genkey -noprompt -alias ext-auth -keysize 2048 -keyalg RSA -keystore #{path} -storepass #{password} -keypass #{password} -dname 'CN=#{common_name}, OU=cdap, O=cdap, L=Palo Alto, ST=CA, C=US'"
   not_if { File.exist?(path) }
   only_if { ssl_enabled }
 end
