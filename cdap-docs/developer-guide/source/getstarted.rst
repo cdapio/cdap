@@ -46,7 +46,7 @@ Download and Setup
 There are three ways to download the CDAP SDK: as a binary zip file, as a Virtual Machine image,
 or as a Docker image.
 
-- **The zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
+- The **zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
   Once downloaded, unzip it to a directory on your machine::
 
     $ tar -zxvf cdap-sdk-2.5.0.zip
