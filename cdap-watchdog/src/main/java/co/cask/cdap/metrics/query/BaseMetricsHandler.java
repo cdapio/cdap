@@ -63,9 +63,7 @@ public abstract class BaseMetricsHandler extends AuthenticatedHttpHandler {
     throws ServerException, MetricsPathException {
 
     // TODO: we want to check for existence of elements in the path, but be aware of overhead; for now we do only for
-    //       services. REACTOR-12
-    //       See git history for how it was implemented before: on every metrics request it went to mds and respective
-    //       services to check for the existence. Which is not good.
+    //       services. CDAP-16
 
     if (metricsRequestContext.getPathType() != null) {
       if (metricsRequestContext.getPathType().equals(MetricsRequestParser.PathType.SERVICES)) {

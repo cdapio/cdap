@@ -49,6 +49,7 @@ import jline.console.completer.Completer;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
+import javax.net.ssl.SSLHandshakeException;
 
 /**
  * Main class for the CDAP CLI.
@@ -66,7 +67,7 @@ public class CLIMain {
     this.cliConfig.addHostnameChangeListener(new CLIConfig.HostnameChangeListener() {
       @Override
       public void onHostnameChanged(String newHostname) {
-        reader.setPrompt("cdap (" + cliConfig.getHost() + ":" + cliConfig.getClientConfig().getPort() + ")> ");
+        reader.setPrompt("cdap (" + cliConfig.getURI() + ")> ");
       }
     });
     this.helpCommand = new HelpCommand(new Supplier<CommandSet>() {
@@ -114,7 +115,7 @@ public class CLIMain {
    * @throws Exception
    */
   public void startShellMode(PrintStream output) throws Exception {
-    this.reader.setPrompt("cdap (" + cliConfig.getHost() + ":" + cliConfig.getClientConfig().getPort() + ")> ");
+    this.reader.setPrompt("cdap (" + cliConfig.getURI() + ")> ");
     this.reader.setHandleUserInterrupt(true);
 
     for (Completer completer : commands.getCompleters(null)) {
@@ -142,8 +143,13 @@ public class CLIMain {
           processArgs(commandArgs, output);
         } catch (InvalidCommandException e) {
           output.println("Invalid command: " + command + " (enter 'help' to list all available commands)");
+        } catch (SSLHandshakeException e) {
+          output.println("Error: " + e.getMessage());
+          output.println(String.format("To ignore this error, set -D%s=false when starting the CLI",
+                                       CLIConfig.PROP_VERIFY_SSL_CERT));
         } catch (Exception e) {
           output.println("Error: " + e.getMessage());
+          e.printStackTrace();
         }
         output.println();
       }

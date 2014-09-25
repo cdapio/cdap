@@ -31,7 +31,9 @@ import os
 import subprocess
 
 def get_sdk_version():
+    return "2.5.0"
     # Sets the CDAP Build Version via maven
+    return "2.5.0"
     mvn_version_cmd = "mvn help:evaluate -o -Dexpression=project.version -f ../../../pom.xml | grep -v '^\['"
     version = None
     try:
@@ -57,14 +59,19 @@ def get_sdk_version():
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinxcontrib.googleanalytics',
     'sphinx.ext.todo',
     'sphinx.ext.pngmath',
     'sphinx.ext.ifconfig',
-    'rst2pdf.pdfbuilder',
+    'sphinxcontrib.googleanalytics',
+    #'rst2pdf.pdfbuilder',
 ]
 
 # Remove intersphinx as we are not linking to other peoples's docs with Sphinx
 #    'sphinx.ext.intersphinx',
+
+# Google analytics configuration
+googleanalytics_id = 'UA-27787617-1'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -134,6 +141,14 @@ highlight_language = 'java'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
+# Add Google Analytics ID, or over-ride on the command line with 
+# -D googleanalytics_id=UA-999-999-999
+googleanalytics_id = 'UA-123-123-123'
+
+# True by default, use it to turn off tracking.
+# -D googleanalytics_enabled=1
+# Turned off so unless the code and flag are passed on the command line, tracking is off.
+googleanalytics_enabled = False
 
 # -- Options for HTML output ----------------------------------------------
 

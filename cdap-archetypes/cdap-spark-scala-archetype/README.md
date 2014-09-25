@@ -6,7 +6,7 @@ This directory contains a Scala Archetype for the Cask Data Application Platform
 
 To install the archetype, enter in the CDAP root directory:
 
-> mvn clean install -f archetypes/cdap-spark-scala-archetype/pom.xml
+> mvn clean install -f cdap-archetypes/cdap-spark-scala-archetype/pom.xml
 
 # Creating
 

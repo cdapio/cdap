@@ -337,8 +337,8 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1), a(L4));
-      verify(a(C1), la(1L), myTable1.increment(R1, a(C1), la(-3L)));
-      verify(a(C2), la(2L), myTable1.increment(R1, a(C2), la(2L)));
+      verify(a(C1), la(1L), myTable1.incrementAndGet(R1, a(C1), la(-3L)));
+      verify(a(C2), la(2L), myTable1.incrementAndGet(R1, a(C2), la(2L)));
       // verify increment result visible inside tx before commit
       verify(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
       verify(L1, myTable1.get(R1, C1));
@@ -349,7 +349,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       // incrementing non-long value should fail
       myTable1.put(R1, a(C5), a(V5));
       try {
-        myTable1.increment(R1, a(C5), la(5L));
+        myTable1.incrementAndGet(R1, a(C5), la(5L));
         Assert.assertTrue(false);
       } catch (NumberFormatException e) {
         // Expected
@@ -376,7 +376,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       verify(null, myTable2.get(R1, C2));
       verify(null, myTable2.get(R1, C5));
       verify(a(), myTable2.get(R1));
-      verify(a(C1), la(55L), myTable2.increment(R1, a(C1), la(55L)));
+      verify(a(C1), la(55L), myTable2.incrementAndGet(R1, a(C1), la(55L)));
 
       // start tx3 and verify same thing again
       Transaction tx3 = txClient.startShort();
@@ -387,7 +387,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       verify(null, myTable3.get(R1, C2));
       verify(null, myTable3.get(R1, C5));
       verify(a(), myTable3.get(R1));
-      verify(a(C1), la(4L), myTable3.increment(R1, a(C1), la(4L)));
+      verify(a(C1), la(4L), myTable3.incrementAndGet(R1, a(C1), la(4L)));
 
       // * second, make tx visible
       Assert.assertTrue(txClient.commit(tx1));
@@ -422,9 +422,9 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       txClient.abort(tx3);
 
       // verify we can do some ops with tx4 based on data written with tx1
-      verify(a(C1, C2, C3), la(3L, 3L, 5L), myTable4.increment(R1, a(C1, C2, C3), la(2L, 1L, 5L)));
+      verify(a(C1, C2, C3), la(3L, 3L, 5L), myTable4.incrementAndGet(R1, a(C1, C2, C3), la(2L, 1L, 5L)));
       myTable4.delete(R1, a(C2));
-      verify(a(C4), la(3L), myTable4.increment(R1, a(C4), la(3L)));
+      verify(a(C4), la(3L), myTable4.incrementAndGet(R1, a(C4), la(3L)));
       myTable4.delete(R1, a(C1));
 
       // committing tx4
@@ -465,7 +465,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     Transaction tx = txClient.startShort();
     ((TransactionAware) myTable).startTx(tx);
 
-    myTable.incrementWrite(R1, a(C1), la(-3L));
+    myTable.increment(R1, a(C1), la(-3L));
 
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
 
@@ -474,7 +474,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     ((TransactionAware) myTable).startTx(tx);
 
     verify(Bytes.toBytes(-3L), myTable.get(R1, C1));
-    myTable.incrementWrite(R1, a(C1), la(-3L));
+    myTable.increment(R1, a(C1), la(-3L));
     verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
 
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
@@ -506,8 +506,8 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       myTable1 = getTable("myTable");
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1), a(L4));
-      myTable1.incrementWrite(R1, a(C1), la(-3L));
-      myTable1.incrementWrite(R1, a(C2), la(2L));
+      myTable1.increment(R1, a(C1), la(-3L));
+      myTable1.increment(R1, a(C2), la(2L));
       // verify increment result visible inside tx before commit
       verify(a(C1, L1, C2, L2), myTable1.get(R1, a(C1, C2)));
       verify(L1, myTable1.get(R1, C1));
@@ -518,7 +518,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       // incrementing non-long value should fail
       myTable1.put(R1, a(C5), a(V5));
       try {
-        myTable1.incrementWrite(R1, a(C5), la(5L));
+        myTable1.increment(R1, a(C5), la(5L));
         Assert.assertTrue(false);
       } catch (NumberFormatException e) {
         // Expected
@@ -545,7 +545,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       verify(null, myTable2.get(R1, C2));
       verify(null, myTable2.get(R1, C5));
       verify(a(), myTable2.get(R1));
-      myTable2.incrementWrite(R1, a(C1), la(55L));
+      myTable2.increment(R1, a(C1), la(55L));
 
       // start tx3 and verify same thing again
       Transaction tx3 = txClient.startShort();
@@ -556,7 +556,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       verify(null, myTable3.get(R1, C2));
       verify(null, myTable3.get(R1, C5));
       verify(a(), myTable3.get(R1));
-      myTable3.incrementWrite(R1, a(C1), la(4L));
+      myTable3.increment(R1, a(C1), la(4L));
 
       // * second, make tx visible
       Assert.assertTrue(txClient.commit(tx1));
@@ -591,9 +591,9 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
       txClient.abort(tx3);
 
       // verify we can do some ops with tx4 based on data written with tx1
-      myTable4.incrementWrite(R1, a(C1, C2, C3), la(2L, 1L, 5L));
+      myTable4.increment(R1, a(C1, C2, C3), la(2L, 1L, 5L));
       myTable4.delete(R1, a(C2));
-      myTable4.incrementWrite(R1, a(C4), la(3L));
+      myTable4.increment(R1, a(C4), la(3L));
       myTable4.delete(R1, a(C1));
 
       // committing tx4

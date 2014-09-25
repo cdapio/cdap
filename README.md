@@ -32,8 +32,8 @@ For more information, see our collection of
 
 Build                                                                    | Status / Version
 -------------------------------------------------------------------------|-----------------
-[Travis Continuous Integration Build](https://travis-ci.org/caskco/cdap) | ![travis](https://travis-ci.org/caskco/cdap.svg?branch=develop)
-[GitHub Version](https://github.com/caskco/cdap/releases/latest)         | ![github](http://img.shields.io/github/release/caskco/cdap.svg)
+[Continuous Integration Build](https://builds.cask.co) | ![Build](https://builds.cask.co/plugins/servlet/buildStatusImage/CDAP-DUT)
+[GitHub Version](https://github.com/caskdata/cdap/releases/latest)         | ![github](http://img.shields.io/github/release/caskdata/cdap.svg)
 
 
 ## Getting Started

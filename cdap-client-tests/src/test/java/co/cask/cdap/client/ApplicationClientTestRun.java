@@ -26,7 +26,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -39,7 +38,6 @@ import java.util.Map;
  * Test for {@link ApplicationClient}.
  */
 @Category(XSlowTests.class)
-@Ignore
 public class ApplicationClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationClientTestRun.class);

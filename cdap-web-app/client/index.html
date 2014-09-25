@@ -3,8 +3,8 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <title>Continuuity</title>
-  <link rel="shortcut icon" type="image/x-icon" href="http://www.continuuity.com/wp-content/themes/continuuity/images/favicon.ico">
+  <title>CDAP</title>
+  <link rel="shortcut icon" type="image/x-icon" href="/assets/img/favicon_16x16.ico">
 
   <meta name="description" content="">
   <meta name="author" content="Cask Data, Inc.">
@@ -128,11 +128,11 @@
     </div>
     <div id="footer" style="clear: both;"><span id="copyright">COPYRIGHT &copy; 2014 CASK DATA INC. ALL RIGHTS RESERVED.</span><br />
 
-    <a href="http://cask.co/terms" target="_blank" id="footer-terms" target="blank">Terms</a>
+    <a href="http://cask.co/company/terms" target="_blank" id="footer-terms" target="blank">Terms</a>
     <span>&nbsp;·&nbsp;</span>
-    <a href="http://cask.co/privacy" target="_blank" id="footer-terms" target="blank">Privacy</a>
+    <a href="http://cask.co/company/privacy" target="_blank" id="footer-terms" target="blank">Privacy</a>
     <span>&nbsp;·&nbsp;</span>
-    <a href="http://cask.co/contact-us" target="_blank" id="footer-contact" target="blank">Contact</a>
+    <a href="http://cask.co/company/#company-contact" target="_blank" id="footer-contact" target="blank">Contact</a>
     {{#unless C.isEnterprise}}
     <span>&nbsp;·&nbsp;</span>
     <a href="javascript:void(0)" data-uv-lightbox="classic_widget" data-uv-mode="full" data-uv-primary-color="#cc6d00" data-uv-link-color="#007dbf" data-uv-default-mode="support" data-uv-forum-id="194926" id="footer-support">Support</a>
@@ -162,7 +162,7 @@
             </ol>
 
             <p>These are the basics of Cask's Data Application Platform.</p>
-            <p>For a programming quickstart, follow the <a target="_blank" href="http://www.continuuity.com/developers/quickstart">instructions online</a> about modifying the code and redeploying the app.</p>
+            <p>For a programming quickstart, follow the <a target="_blank" href="http://www.cask.co/resources/">instructions online</a> about modifying the code and redeploying the app.</p>
 
           </div>
           <div class="modal-footer">
@@ -752,7 +752,7 @@
               <tr>
                 <td class="bolder-font">Step 1</td>
                 <td>
-                  Click blue Download button above.
+                  Click Download button above.
                 </td>
               </tr>
               <tr>
@@ -1294,9 +1294,21 @@
         </div>
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
-
     </div>
-
+    <div id="panels">
+      <div class="panel">
+        <div>
+          <div class="panel-title center-align beta-info-font">
+            {{#if showLogsMessage}}
+              <div>
+                <span> To see more details about the job, please see the <span class="logs-link" {{action "logsLinkHandler" on="click"}}> logs </span> </span>
+              </div>
+            {{/if}}
+            <div>Beta Feature: Additional components will be added in a future release. </div>
+          </div>
+        </div>
+      </div>
+    </div>
     {{outlet}}
 
   </script>
@@ -1679,8 +1691,8 @@
         <div class="flow-state"><strong>{{model.currentState}}</strong></div>
       </div>
 
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Successful" metrics="/system/apps/{parent}/procedures/{id}/query.requests"}}</div>
-      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Failed" metrics="/system/apps/{parent}/procedures/{id}/query.failures"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Request Rate" metrics="/system/apps/{parent}/procedures/{id}/query.requests"}}</div>
+      <div class="info-box sparkline-box">{{view C.Embed.Chart title="Error Rate" metrics="/system/apps/{parent}/procedures/{id}/query.failures"}}</div>
     </div>
     <div id="panels">
 
@@ -1928,7 +1940,7 @@
     <div class="tree-node">
 
       <div class="tree-chart">
-        {{view C.Embed.Chart entityIdBinding=id entityTypeBinding=type height="50" unit="bytes" listMode="true"}}
+        {{view C.Embed.Chart entityIdBinding=id entityTypeBinding=type height="50" unit="bytes" listMode="true" metrictype="memory"}}
       </div>
 
       <div class="tree-count app-list-count">{{coresLabel}}</div>

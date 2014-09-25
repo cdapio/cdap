@@ -105,9 +105,9 @@ define([], function () {
                     program = programs[type][i];
                     context = '/system/' + program.get('context') + '/';
 
-                    program.trackMetric(context + 'resources.used.memory', 'timeseries', null, true);
-                    program.trackMetric(context + 'resources.used.containers', 'currents', 'containers');
-                    program.trackMetric(context + 'resources.used.vcores', 'currents', 'cores');
+                    program.trackMetric(context + 'resources.used.memory', 'timeseries', null, 'step');
+                    program.trackMetric(context + 'resources.used.containers', 'currents', 'containers', 'step');
+                    program.trackMetric(context + 'resources.used.vcores', 'currents', 'cores', 'step');
 
                     // Tells the template-embedded chart which metric to render.
                     program.set('pleaseObserve', context + 'resources.used.memory');

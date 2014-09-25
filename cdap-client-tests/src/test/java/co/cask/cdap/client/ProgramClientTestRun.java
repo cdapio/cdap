@@ -22,19 +22,20 @@ import co.cask.cdap.client.app.FakeProcedure;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 /**
  * Test for {@link ProgramClient}.
  */
 @Category(XSlowTests.class)
-@Ignore
 public class ProgramClientTestRun extends ClientTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramClientTestRun.class);
@@ -58,6 +59,22 @@ public class ProgramClientTestRun extends ClientTestBase {
     // start, scale, and stop procedure
     LOG.info("Fetching procedure list");
     verifyProgramNames(FakeApp.PROCEDURES, procedureClient.list());
+
+    LOG.info("Fetching runtime args");
+    Map<String, String> emptyRuntimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
+                                                                        FakeProcedure.NAME);
+    Assert.assertEquals(0, emptyRuntimeArgs.size());
+
+    LOG.info("Setting runtime args");
+    programClient.setRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
+                                 FakeProcedure.NAME, ImmutableMap.of("a", "b", "c", "d"));
+
+    LOG.info("Fetching runtime args");
+    Map<String, String> runtimeArgs = programClient.getRuntimeArgs(FakeApp.NAME, ProgramType.PROCEDURE,
+                                                                   FakeProcedure.NAME);
+    Assert.assertEquals(2, runtimeArgs.size());
+    Assert.assertEquals("b", runtimeArgs.get("a"));
+    Assert.assertEquals("d", runtimeArgs.get("c"));
 
     LOG.info("Starting procedure");
     programClient.start(FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME);

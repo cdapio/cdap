@@ -65,6 +65,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -243,12 +244,15 @@ public class MapReduceProgramRunnerTest {
           expected.put("tag2", 3L);
           expected.put("tag3", 18L);
 
-          List<TimeseriesTable.Entry> agg = table.read(AggregateMetricsByTag.BY_TAGS, start, stop);
-          Assert.assertEquals(expected.size(), agg.size());
-          for (TimeseriesTable.Entry entry : agg) {
+          Iterator<TimeseriesTable.Entry> agg = table.read(AggregateMetricsByTag.BY_TAGS, start, stop);
+          int count = 0;
+          while (agg.hasNext()) {
+            TimeseriesTable.Entry entry = agg.next();
             String tag = Bytes.toString(entry.getTags()[0]);
             Assert.assertEquals((long) expected.get(tag), Bytes.toLong(entry.getValue()));
+            count++;
           }
+          Assert.assertEquals(expected.size(), count);
 
           Assert.assertArrayEquals(Bytes.toBytes("beforeSubmit:done"),
                                    beforeSubmitTable.read(Bytes.toBytes("beforeSubmit")));
@@ -307,7 +311,7 @@ public class MapReduceProgramRunnerTest {
         @Override
         public void apply() {
           // data should be rolled back todo: test that partially written is rolled back too
-          Assert.assertTrue(table.read(AggregateMetricsByTag.BY_TAGS, start, stop).isEmpty());
+          Assert.assertFalse(table.read(AggregateMetricsByTag.BY_TAGS, start, stop).hasNext());
 
           // but written beforeSubmit and onFinish is available to others
           Assert.assertArrayEquals(Bytes.toBytes("beforeSubmit:done"),

@@ -41,18 +41,19 @@ or on Windows:
 Using CDAP
 ==========
 
-Open a browser window to http://localhost:9999 to view the CDAP Console and take our
-Quick Start tour. More information about the tour can be found online:
+Open a browser window to http://localhost:9999 to view the CDAP Console.
+
+To get started with CDAP, see our online introduction:
  
-  http://docs.cask.co/cdap/current/quickstart.html
+  http://docs.cask.co/cdap/current/en/getstarted.html
 
 Documentation for CDAP can be found at our developer's website:
 
-  http://docs.cask.co/cdap/current/index.html
+  http://docs.cask.co/cdap/current/en/index.html
 
 Contacts for support, sales and general information can be found on our website at:
 
-  http://cask.co/contact-us
+  http://cask.co/company/#company-contact
   
   
 Licensing

@@ -62,7 +62,7 @@ public class SparkProgramWrapper {
   private static boolean scalaProgram;
 
   // TODO: Get around Spark's limitation of only one SparkContext in a JVM and support multiple spark context:
-  // REACTOR-950
+  // CDAP-4
   private static boolean sparkProgramSuccessful;
   private static boolean sparkProgramRunning;
 
@@ -179,7 +179,7 @@ public class SparkProgramWrapper {
 
   /**
    * Fixes the thread deadlock issue in {@link org.apache.spark.SparkContext#stop} where the {@link Selector} field
-   * in {@link ConnectionManager} waits for an interrupt. REACTOR-951
+   * in {@link ConnectionManager} waits for an interrupt.
    */
   private static void sparkContextStopBugFixer() {
     ConnectionManager connectionManager = getConnectionManager(getSparkContext());
