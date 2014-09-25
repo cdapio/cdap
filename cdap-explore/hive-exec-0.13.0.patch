@@ -1,26 +1,26 @@
-From 01913729221a0f2b00ba855fc8b9ecac83d23250 Mon Sep 17 00:00:00 2001
-From: Julien Guery <julien@continuuity.com>
-Date: Thu, 5 Jun 2014 18:34:06 -0700
-Subject: [PATCH 1/5] Fix some operations in local mode
+From a34f158c30f08ff44455ccfa34de952dd459cf67 Mon Sep 17 00:00:00 2001
+From: Terence Yim <terence@cask.co>
+Date: Wed, 24 Sep 2014 19:34:27 -0700
+Subject: [PATCH] Patch Hive-exec, deploy to oss.sonatype.
 
 ---
- ql/pom.xml                                         | 40 +++++++++++++++-------
- .../apache/hadoop/hive/ql/exec/mr/ExecDriver.java  |  8 +++--
+ ql/pom.xml                                         | 43 +++++++++++++++-------
+ .../apache/hadoop/hive/ql/exec/mr/ExecDriver.java  |  8 +++-
  .../apache/hadoop/hive/ql/exec/mr/MapRedTask.java  |  2 +-
  .../hadoop/hive/ql/exec/mr/MapredLocalTask.java    | 11 ++++++
- 4 files changed, 45 insertions(+), 16 deletions(-)
+ 4 files changed, 48 insertions(+), 16 deletions(-)
 
 diff --git a/ql/pom.xml b/ql/pom.xml
-index 3efe463..c86377f 100644
+index 3efe463..6538758 100644
 --- a/ql/pom.xml
 +++ b/ql/pom.xml
 @@ -23,7 +23,9 @@
      <relativePath>../pom.xml</relativePath>
    </parent>
  
-+  <groupId>com.continuuity</groupId>
++  <groupId>co.cask.cdap</groupId>
    <artifactId>hive-exec</artifactId>
-+  <version>0.13.0-SNAPSHOT</version>
++  <version>0.13.0</version>
    <packaging>jar</packaging>
    <name>Hive Query Language</name>
  
@@ -98,15 +98,18 @@ index 3efe463..c86377f 100644
                  </includes>
                </artifactSet>
                <relocations>
-@@ -567,4 +573,12 @@
+@@ -567,4 +573,15 @@
      </plugins>
    </build>
  
 +  <distributionManagement>
++    <repository>
++      <id>sonatype.release</id>
++      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
++    </repository>
 +    <snapshotRepository>
-+      <id>snapshots</id>
-+      <name>Internal Releases</name>
-+      <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
++      <id>sonatype.snapshots</id>
++      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
 +    </snapshotRepository>
 +  </distributionManagement>
 +
@@ -175,142 +178,5 @@ index 55ce0fc..3e2d77f 100644
        executor = Runtime.getRuntime().exec(cmdLine, env, new File(workDir));
  
 -- 
-1.8.5.2 (Apple Git-48)
-
-
-From 849af86be72c31e1ef79bd6eff71e69ecf8842ea Mon Sep 17 00:00:00 2001
-From: Julien Guery <julien@continuuity.com>
-Date: Fri, 6 Jun 2014 15:29:32 -0700
-Subject: [PATCH 2/5] Modify version number
-
----
- ql/pom.xml | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
-
-diff --git a/ql/pom.xml b/ql/pom.xml
-index c86377f..a55de0b 100644
---- a/ql/pom.xml
-+++ b/ql/pom.xml
-@@ -25,7 +25,7 @@
- 
-   <groupId>com.continuuity</groupId>
-   <artifactId>hive-exec</artifactId>
--  <version>0.13.0-SNAPSHOT</version>
-+  <version>0.13.0-continuuity-2.3.0-SNAPSHOT</version>
-   <packaging>jar</packaging>
-   <name>Hive Query Language</name>
- 
-@@ -574,6 +574,11 @@
-   </build>
- 
-   <distributionManagement>
-+    <repository>
-+      <id>continuuity-releases</id>
-+      <name>Internal Releases</name>
-+      <url>https://repository.continuuity.com/content/repositories/releases-public/</url>
-+    </repository>
-     <snapshotRepository>
-       <id>snapshots</id>
-       <name>Internal Releases</name>
--- 
-1.8.5.2 (Apple Git-48)
-
-
-From bdd525d90f917554d4ecae641490f4452aa63bae Mon Sep 17 00:00:00 2001
-From: Julien Guery <julien@continuuity.com>
-Date: Wed, 16 Jul 2014 13:50:24 -0700
-Subject: [PATCH 3/5] CDAP 2.4.0 snapshot version
-
----
- ql/pom.xml | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/ql/pom.xml b/ql/pom.xml
-index a55de0b..271a84e 100644
---- a/ql/pom.xml
-+++ b/ql/pom.xml
-@@ -25,7 +25,7 @@
- 
-   <groupId>com.continuuity</groupId>
-   <artifactId>hive-exec</artifactId>
--  <version>0.13.0-continuuity-2.3.0-SNAPSHOT</version>
-+  <version>0.13.0-continuuity-2.4.0-SNAPSHOT</version>
-   <packaging>jar</packaging>
-   <name>Hive Query Language</name>
- 
-@@ -575,9 +575,9 @@
- 
-   <distributionManagement>
-     <repository>
--      <id>continuuity-releases</id>
--      <name>Internal Releases</name>
--      <url>https://repository.continuuity.com/content/repositories/releases-public/</url>
-+      <id>nexus</id>
-+      <name>continuuity-internal</name>
-+      <url>https://repository.continuuity.com/service/local/staging/deploy/maven2</url>
-     </repository>
-     <snapshotRepository>
-       <id>snapshots</id>
--- 
-1.8.5.2 (Apple Git-48)
-
-
-From fdd05d62c76762cc8d63e67506010091f9fee713 Mon Sep 17 00:00:00 2001
-From: Julien Guery <julien@continuuity.com>
-Date: Tue, 5 Aug 2014 02:33:32 -0700
-Subject: [PATCH 4/5] cdap group id
-
----
- ql/pom.xml | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/ql/pom.xml b/ql/pom.xml
-index 271a84e..b9039e3 100644
---- a/ql/pom.xml
-+++ b/ql/pom.xml
-@@ -23,9 +23,9 @@
-     <relativePath>../pom.xml</relativePath>
-   </parent>
- 
--  <groupId>com.continuuity</groupId>
-+  <groupId>co.cask.cdap</groupId>
-   <artifactId>hive-exec</artifactId>
--  <version>0.13.0-continuuity-2.4.0-SNAPSHOT</version>
-+  <version>0.13.0</version>
-   <packaging>jar</packaging>
-   <name>Hive Query Language</name>
- 
--- 
-1.8.5.2 (Apple Git-48)
-
-
-From af0702147a6c3da015503baca772bb97cb09d81f Mon Sep 17 00:00:00 2001
-From: Julien Guery <julien@continuuity.com>
-Date: Tue, 5 Aug 2014 17:38:08 -0700
-Subject: [PATCH 5/5] Deploy hive-exec to public repo
-
----
- ql/pom.xml | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
-
-diff --git a/ql/pom.xml b/ql/pom.xml
-index b9039e3..8bde744 100644
---- a/ql/pom.xml
-+++ b/ql/pom.xml
-@@ -576,12 +576,10 @@
-   <distributionManagement>
-     <repository>
-       <id>nexus</id>
--      <name>continuuity-internal</name>
--      <url>https://repository.continuuity.com/service/local/staging/deploy/maven2</url>
-+      <url>https://repository.continuuity.com/content/repositories/releases-public</url>
-     </repository>
-     <snapshotRepository>
-       <id>snapshots</id>
--      <name>Internal Releases</name>
-       <url>https://repository.continuuity.com/content/repositories/snapshots/</url>
-     </snapshotRepository>
-   </distributionManagement>
--- 
-1.8.5.2 (Apple Git-48)
+1.9.3 (Apple Git-50)
 

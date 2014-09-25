@@ -528,6 +528,8 @@ The ``write()`` method is used to redirect all writes performed by a Reducer to 
 Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type
 parameters of the Reducer.
 
+.. _data-explore:
+
 Data Exploration
 ================
 
@@ -1786,6 +1788,8 @@ write RDD to a Dataset.
   ::
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
+
+.. _user-services:
 
 Services
 ========

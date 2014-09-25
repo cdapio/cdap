@@ -1720,6 +1720,8 @@ For Workflows, you can also retrieve:
     GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
 
+.. _loggingHTTP:
+
 Logging HTTP API
 ================
 
@@ -1772,6 +1774,7 @@ Note how the context of the log line shows the name of the Flowlet (*source*), i
 well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire
 this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
+.. _metricsHTTP:
 
 Metrics HTTP API
 ================
@@ -2101,6 +2104,8 @@ These metrics are available in the Datasets context:
      - Read operations performed
    * - ``store.writes``
      - Write operations performed
+
+.. _monitorHTTP:
 
 Monitor HTTP API
 ================

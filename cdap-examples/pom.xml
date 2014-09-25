@@ -22,7 +22,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>2.5.0-SNAPSHOT</version>
+    <version>2.5.0</version>
   </parent>
 
   <artifactId>cdap-examples</artifactId>
@@ -36,6 +36,7 @@
     <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>WebAnalytics</module>
   </modules>
 
   <repositories>
@@ -80,7 +81,7 @@
                   <exclude>**/logrotate.d/**</exclude>
                   <exclude>**/limits.d/**</exclude>
                   <exclude>**/resources/**/*.txt</exclude>
-                  <exclude>**/resources/**/*.accesslog</exclude>
+                  <exclude>**/resources/**/*.log</exclude>
                   <exclude>**/resources/**/*.css</exclude>
                   <exclude>**/resources/**/*.scss</exclude>
                   <exclude>**/resources/**/*.js</exclude>
@@ -179,7 +180,7 @@
       <dependency>
         <groupId>co.cask.http</groupId>
         <artifactId>netty-http</artifactId>
-        <version>0.4.0</version>
+        <version>0.4.1</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
