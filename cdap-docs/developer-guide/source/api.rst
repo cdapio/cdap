@@ -150,7 +150,7 @@ For CDAP-issued access tokens, the authentication scheme must always be ``Bearer
 
 Stream HTTP API
 ===============
-This interface supports creation of a Stream, sending, reading and truncating events to/from a Stream, as well as setting the TTL property of a Stream.
+This interface supports creation of a Stream; sending, reading, and truncating events to and from a Stream; and setting the TTL property of a Stream.
 
 Streams may have multiple consumers (for example, multiple Flows), each of which may be a group of different agents (for example, multiple instances of a Flowlet).
 
@@ -682,8 +682,7 @@ Query HTTP API
 ==============
 
 This interface supports submitting SQL queries over Datasets. Queries are
-processed asynchronously, therefore to obtain query results the following steps
-need to be performed:
+processed asynchronously; to obtain query results, perform these steps:
 
 - first, **submit** the query;
 - then poll for the query's **status** until it is finished;
