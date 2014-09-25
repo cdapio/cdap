@@ -32,7 +32,7 @@ For more information, see our collection of
 
 Build                                                                    | Status / Version
 -------------------------------------------------------------------------|-----------------
-[Cask Continuous Integration Build](https://builds.cask.co/browse/CDAP-DUT) | ![travis](https://builds.cask.co/plugins/servlet/buildStatusImage/CDAP-DUT)
+[Cask Continuous Integration Build](https://builds.cask.co/browse/CDAP-DUT) | ![Cask](https://builds.cask.co/plugins/servlet/buildStatusImage/CDAP-DUT)
 [GitHub Version](https://github.com/caskdata/cdap/releases/latest)         | ![github](http://img.shields.io/github/release/caskdata/cdap.svg)
 
 
