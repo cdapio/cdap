@@ -52,60 +52,10 @@ The Generator Flowlet that generates Random numbers every 1 millisecond::
     }
   }
 
-Building and Running the Application and Example
-................................................
 
-.. highlight:: console
-
-In this remainder of this document, we refer to the CDAP runtime as "CDAP", and the
-example code that is running on it as an "Application".
-
-We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
-
-In this example, you need to build the app from source and then deploy the compiled JAR file.
-You start the CDAP, deploy the app, start the Flow and see the output.
-
-When finished, stop the Application as described below.
-
-Building the CountRandom Application
-++++++++++++++++++++++++++++++++++++
-
-From the project root, build ``Purchase`` with the
-`Apache Maven <http://maven.apache.org>`__ command::
-
-	$ mvn clean package
-
-(If you modify the code and would like to rebuild the Application, you can
-skip the tests by using the command::
-
-	$ mvn -Dmaven.test.skip=true clean package
-
-Deploying and Starting the Application
-++++++++++++++++++++++++++++++++++++++
-
-Make sure an instance of the CDAP is running and available.
-From within the SDK root directory, this command will start CDAP in local mode::
-
-	$ ./bin/cdap.sh start
-
-On Windows::
-
-	~SDK> bin\cdap.bat start
-
-From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
-
-#. Drag and drop the Application .JAR file (``target/CountRandom-<version>.jar``)
-   onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
-#. Once loaded, select the ``CountRandom`` Application from the list.
-   On the Application's detail page, click the *Start* button on the *Process* list.
-
-On Windows:
-
-#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
-   Application .JAR file (``target/CountRandom-<version>.jar`` onto your browser window.
-   (Currently, the *Load App* button does not work under Windows.)
-#. To start the App, run ``~SDK> bin\app-manager.bat start``
+You can find instructions for starting CDAP console and deploying an example application here :ref:`Build, Deploy and start <convention>`
+Once Deployed, select the ``CountRandom`` Application from the list.
+On the Application's detail page, click the *Start* button on the *Process* list.
 
 Viewing the Run:
 ++++++++++++++++

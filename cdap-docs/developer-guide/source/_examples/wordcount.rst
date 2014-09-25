@@ -73,62 +73,11 @@ This Procedure has three methods,
   - getCount(): Given a word, this would return the total count of occurrence and the top-10 associated words for this word.
   - getAssoc(): Given a pair, "word1" and "word2" this would return the association count for this pair
 
-Building and Running the Application and Example
-................................................
-
-.. highlight:: console
-
-In this remainder of this document, we refer to the CDAP runtime as "CDAP", and the
-example code that is running on it as an "Application".
-
-We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
-
-In this example, you need to build the app from source and then deploy the compiled JAR file.
-You start the CDAP, deploy the app, start the Flow and then run the example by
-injecting sentence entries into the stream.
-
-When finished, stop the Application as described below.
-
-Building the WordCount Application
-++++++++++++++++++++++++++++++++++
-
-From the project root, build ``WordCount`` with the
-`Apache Maven <http://maven.apache.org>`__ command::
-
-	$ mvn clean package
-
-(If you modify the code and would like to rebuild the Application, you can
-skip the tests by using the command::
-
-	$ mvn -Dmaven.test.skip=true clean package
-
-
-Deploying and Starting the Application
-++++++++++++++++++++++++++++++++++++++
-
-Make sure an instance of the CDAP is running and available.
-From within the SDK root directory, this command will start CDAP in local mode::
-
-	$ ./bin/cdap.sh start
-
-On Windows::
-
-	~SDK> bin\cdap.bat start
-
-From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
-
-#. Drag and drop the Application .JAR file (``target/WordCount-<version>.jar``)
-   onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
+Setting Up
+++++++++++
+#. You can find instructions for starting CDAP console and deploying an example application here :ref:`Build, Deploy and start <convention>`
 #. Once loaded, select the ``WordCount`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
-
-On Windows:
-
-#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
-   Application .JAR file (``target/WordCount-<version>.jar`` onto your browser window.
-   (Currently, the *Load App* button does not work under Windows.)
-#. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 Running the Example
 +++++++++++++++++++
@@ -182,20 +131,6 @@ Console in JSON format, for example [reformatted to fit]::
 3. You can try executing other methods available in this procedure,
     - getStats
     - getAssoc - For getAssoc you need to provide two words to get their association count, Example: {"word1":"Hello", "word2":"CDAP"}
-
-Stopping the Application
-++++++++++++++++++++++++
-
-Either:
-
-- On the Application detail page of the CDAP Console,
-  click the *Stop* button on **both** the *Process* and *Query* lists;
-
-or:
-
-- Run ``$ ./bin/app-manager.sh --action stop``
-
-  On Windows, run ``~SDK> bin\app-manager.bat stop``
 
 .. highlight:: java
 

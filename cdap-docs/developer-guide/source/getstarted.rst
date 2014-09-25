@@ -120,7 +120,7 @@ The SDK includes these examples:
   * - :ref:`Web Analytics<web-analytics>`
     - An application to generate statistics and to provide insights about web usage through the analysis
       of web traffic.
-
+.. include:: /_examples/conventions.rst
 .. include:: /_examples/helloworld.rst
 .. include:: /_examples/wordcount.rst
 .. include:: /_examples/countrandom.rst

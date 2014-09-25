@@ -68,7 +68,7 @@ Note that the flowlet also emits metrics: Every time a name longer than 10 chara
 the counter ``names.longnames`` is incremented by one, and the metric ``names.bytes`` is incremented
 by the length of the name. We will see below how to retrieve these metrics using the CDAP Client API.
 
-The `` Greeting`` Procedure
+The ``Greeting`` Procedure
 +++++++++++++++++++++++++++
 
 This procedure has a single handler method called ``greet`` that does not except arguments. When invoked, it
@@ -91,65 +91,12 @@ reads the name stored by the ``NameSaver`` from the key-value table. It return a
     }
   }
 
-Building and Running the Application and Example
-................................................
-
-.. highlight:: console
-
-In the remainder of this document, we refer to the Standalone CDAP as "CDAP", and the
-example code that is running on it as an "Application".
-
-We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
-
-In this example, you need to build the app from source and then deploy the compiled JAR file.
-You start the CDAP, deploy the app, start the Flow and then run the example by
-injecting a name into the stream. Then you can invoke the procedure to recevive a greeting.
-
-When finished, stop the Application as described below.
-
-Building the Purchase Application
-+++++++++++++++++++++++++++++++++
-
-From the project root, build ``HelloWorld`` with the
-`Apache Maven <http://maven.apache.org>`__ command::
-
-	$ mvn clean package
-
-(If you modify the code and would like to rebuild the Application, you can
-skip the tests by using the command::
-
-	$ mvn -Dmaven.test.skip=true clean package
-
-
-Deploying and Starting the Application
-++++++++++++++++++++++++++++++++++++++
-
-Make sure an instance of the CDAP is running and available.
-From within the SDK root directory, this command will start CDAP in local mode::
-
-	$ ./bin/cdap.sh start
-
-On Windows::
-
-	~SDK> bin\cdap.bat start
-
-From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in local mode):
-
-#. Drag and drop the Application .JAR file (``target/HelloWorld-<version>.jar``)
-   onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
-#. Once loaded, select the ``HelloWorld`` Application from the list.
-   On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
-
-On Windows:
-
-#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy`` or drag and drop the
-   Application .JAR file (``target/HelloWorld-<version>.jar`` onto your browser window.
-   (Currently, the *Load App* button does not work under Windows.)
-#. To start the App, run ``~SDK> bin\app-manager.bat start``
-
 Running the Example
 +++++++++++++++++++
+
+You can find instructions for starting CDAP console and deploying an example application here :ref:`Build, Deploy and start <convention>`
+
+Once Deployed, Start the **WhoFlow** flow in ``Process`` and **Greeting** procedure in ``Query``.
 
 Injecting a Name
 ################
@@ -176,25 +123,4 @@ you can make an HTTP request to the Metrics API using curl::
   $ curl http://localhost:10000/v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.bytes?aggregate=true
   {"data":3}
 
-
-Stopping the Application
-++++++++++++++++++++++++
-
-Either:
-
-- On the Application detail page of the CDAP Console,
-  click the *Stop* button on **both** the *Process* and *Query* lists;
-
-or:
-
-- Run ``$ ./bin/app-manager.sh --action stop``
-
-  On Windows, run ``~SDK> bin\app-manager.bat stop``
-
-.. highlight:: java
-
-Downloading the Example
-.......................
-
-This example (and more!) is included with our `software development kit <http://cask.co/download>`__.
 

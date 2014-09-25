@@ -79,66 +79,11 @@ The calculated page rank data is stored in a second ObjectStore Dataset, *ranks*
 
 This procedure has a ``rank`` method to obtain the page rank of a given URL.
 
-
-Building and Running the Application and Example
-................................................
-
-.. highlight:: console
-
-In the remainder of this document, we refer to the CDAP runtime as "CDAP", and the
-example code that is running on it as an "Application".
-
-We show the Windows prompt as ``~SDK>`` to indicate a command prompt opened in the SDK directory.
-
-In this example, you need to build the app from source and then deploy the compiled JAR file.
-You start the CDAP, deploy the app, start the Flow and then run the example by
-injecting URL pairs into the Stream.
-
-When finished, stop the Application as described below.
-
-Building the SparkPageRank Application
-++++++++++++++++++++++++++++++++++++++
-
-From the project root, build ``SparkPageRank`` with the
-`Apache Maven <http://maven.apache.org>`__ command::
-
-	$ mvn clean package
-
-(If you modify the code and would like to rebuild the Application, you can
-skip the tests by using the command::
-
-	$ mvn -Dmaven.test.skip=true clean package
-
-
-Deploying and Starting the Application
-++++++++++++++++++++++++++++++++++++++
-
-Make sure an instance of the CDAP is running and available.
-From within the SDK root directory, this command will start CDAP in standalone mode::
-
-	$ ./bin/cdap.sh start
-
-  On Windows::
-
-	~SDK> bin\cdap.bat start
-
-From within the CDAP Console (`http://localhost:9999/ <http://localhost:9999/>`__ in standalone mode):
-
-#. Drag and drop the Application .JAR file (``target/SparkPageRank-<version>.jar``)
-   onto your browser window.
-   Alternatively, use the *Load App* button found on the *Overview* of the CDAP Console.
+Setting Up
+++++++++++
+#. You can find instructions for starting CDAP console and deploying an example application here :ref:`Build, Deploy and start <convention>`
 #. Once loaded, select the ``SparkPageRank`` Application from the list.
    On the Application's detail page, click the *Start* button on **both** the *Process* and *Query* lists.
-
-To deploy and start the Application from the command-line:
-
-#. To deploy the App JAR file, run ``$ ./bin/app-manager.sh --action deploy``
-#. To start the App, run ``$ ./bin/app-manager.sh --action start``
-
-On Windows:
-
-#. To deploy the App JAR file, run ``~SDK> bin\app-manager.bat deploy``
-#. To start the App, run ``~SDK> bin\app-manager.bat start``
 
 Running the Example
 +++++++++++++++++++
@@ -223,25 +168,4 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 
             "0.9988696312751688"
 
-
-Stopping the Application
-++++++++++++++++++++++++
-
-Either:
-
-- On the Application detail page of the CDAP Console, click the *Stop* button on **both** the *Process* and *Query* lists; 
-
-or:
-
-- Run ``$ ./bin/app-manager.sh --action stop [--host <hostname>]``
-
-:Note: ``[--host ]`` is not available for a *Standalone CDAP*.
-
-  On Windows, run ``~SDK> bin\app-manager.bat stop``
-
 .. highlight:: java
-
-Downloading the Example
-.......................
-
-This example (and more!) is included with our `software development kit <http://cask.co/download>`__.
