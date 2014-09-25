@@ -346,12 +346,12 @@ Install the CDAP packages by using either of these methods:
 
 Using Yum::
 
-  sudo yum install cdap-gateway cdap-kafka cdap-cdap-master cdap-security cdap-web-app
+  sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
 
 Using APT::
 
   sudo apt-get update
-  sudo apt-get install cdap-gateway cdap-kafka cdap-cdap-master cdap-security cdap-web-app
+  sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
 
 Do this on each of the boxes that are being used for the CDAP components; our
 recommended installation is a minimum of two boxes.
