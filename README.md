@@ -1,7 +1,7 @@
 
 # Cask Data Application Platform - CDAP
 
-![CDAP Logo](/docs/developer-guide/source/_images/CDAP.png)
+![CDAP Logo](/cdap-docs/developer-guide/source/_images/CDAP.png)
 
 **Introduction**
 
