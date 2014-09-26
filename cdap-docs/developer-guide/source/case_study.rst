@@ -18,7 +18,7 @@ like counting the number of visits made to a website in a day, the components ne
 a lot of work.
 
 Using Wise, which stands for Web Insights Engine Application, we’ll show you how to build such a system on CDAP
-that is easy, concise, and powerful. Wise extracts value from Web server access logs, counts visits made
+that is easy, concise, and powerful. Wise extracts information from web server access logs, counts visits made
 by different IP addresses seen in the logs in real-time, and computes the bounce ratio of
 each web page encountered using batch processing.
 
@@ -29,7 +29,9 @@ The Wise application uses these Cask Data Application Platform (CDAP) constructs
 - **Datasets:** Store web page visits counts and bounce ratio based on custom data access patterns
 - **MapReduce:** Computes the bounce ratio of each web page present in the log data
 - **Service:** Exposes HTTP APIs to query the page visit counts per IP address
-- **Explore:** Runs SQL queries on the data stored in Datasets
+
+On top of those, the **Explore** feature of CDAP can be used to run SQL queries on the data stored
+by Wise.
 
 .. highlight:: console
 
@@ -50,11 +52,13 @@ To deploy and start the application, make sure CDAP is running and then execute:
 
   $ bin/app-manager.sh --action deploy
   $ bin/app-manager.sh --action start
+  $ bin/app-manager.sh --action status
 
 On Windows, run::
 
-  $ bin/app-manager.bat deploy
-  $ bin/app-manager.bat start
+  $ bin\app-manager.bat deploy
+  $ bin\app-manager.bat start
+  $ bin\app-manager.bat status
 
 Overview of Wise
 ================
@@ -71,7 +75,7 @@ uses. Let's first have a look at a diagram showing an overview of the Wise appli
   Stream. It then sends the information to the second Flowlet, ``pageViewCount``, whose role is to store
   the information in a custom-defined Dataset, ``pageViewStore``.
 
-- ``WiseWorkflow`` executes a Map/Reduce job every ten minutes. The input of this job are events from the Stream
+- ``WiseWorkflow`` executes a MapReduce job every ten minutes. The input of this job are events from the Stream
   which have not yet been processed by the Workflow. For each web page recorded in the
   access logs, the MapReduce job counts the number of times people have "bounced" from it.
   A "bounce" is counted whenever a user's activity stops for a specified amount of time.
@@ -155,7 +159,7 @@ We use the underlying ``Table``'s ``increment()`` method to store this informati
 Let's look at how to make the data available through our ``pageViewStore`` Dataset::
 
   public long getCounts(String ipAddress) {
-    Row row = this.table.get(Bytes.toBytes(ipAddress));
+    Row row = this.table.get(new Get(ipAddress));
     if (row == null || row.isEmpty()) {
       return 0;
     }
@@ -178,14 +182,14 @@ of times users bounced off of them.
 Data is stored in a ``Table`` object with the pattern:
 
 - the row key is the web page URI;
-- each row has two columns: the byte arrays ``COL_VISITS`` and ``COL_BOUNCES``;
+- each row has two columns: ``COL_VISITS`` and ``COL_BOUNCES``;
 - the ``COL_VISITS`` column stores the total number of visits for the web page considered; and
 - the ``COL_BOUNCES`` column stores the number of times users bounced off the web page.
 
 Let's detail the API exposed by the ``bounceCountStore`` Dataset to store this information::
 
-  static final byte[] COL_VISITS = new byte[] { 'v' };
-  static final byte[] COL_BOUNCES = new byte[] { 'b' };
+  static final String COL_VISITS = "v";
+  static final String COL_BOUNCES = "b";
 
   /**
    * Increment a bounce count entry with the specified number of visits and bounces.
@@ -195,9 +199,8 @@ Let's detail the API exposed by the ``bounceCountStore`` Dataset to store this i
    * @param bounces number of bounces to add to the web page
    */
   public void increment(String uri, long visits, long bounces) {
-    table.increment(Bytes.toBytes(uri),
-                    new byte[][] { COL_VISITS, COL_BOUNCES },
-                    new long[] { visits, bounces });
+    table.increment(new Increment(uri, COL_VISITS, visits));
+    table.increment(new Increment(uri, COL_BOUNCES, bounces));
   }
 
 The ``increment()`` method adds to a web page the number of "visits" and "bounces", using the
@@ -212,12 +215,12 @@ To retrieve the number of "visits" and "bounces" for a particular web page, we d
    * @return the bounce counts entry associated to the web page with the {@code uri}
    */
   public PageBounce get(String uri) {
-    Row row = table.get(Bytes.toBytes(uri), new byte[][] { COL_VISITS, COL_BOUNCES });
+    Row row = table.get(new Get(uri, ImmutableList.of(COL_VISITS, COL_BOUNCES)));
     if (row.isEmpty()) {
       return new PageBounce(uri, 0, 0);
     }
-    long visits = Bytes.toLong(row.get(COL_VISITS));
-    long bounces = Bytes.toLong(row.get(COL_BOUNCES));
+    long visits = row.getLong(COL_VISITS, 0);
+    long bounces = row.getLong(COL_BOUNCES, 0);
     return new PageBounce(uri, visits, bounces);
   }
 
@@ -233,11 +236,9 @@ a simple `RESTful API <rest.html>`__ to ingest data events.
 
 .. highlight:: console
 
-In Wise, each Web server access log is injected as a Stream event to the ``logEventStream`` in this format
-(broken on two lines to fit)::
+In Wise, each web server access log is injected as a Stream event to the ``logEventStream`` in this format::
 
-  47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] "POST /index.html HTTP/1.1" 
-        404 1490 " " "Mozilla/2.0 (compatible; Ask Jeeves)"
+  47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] "POST /index.html HTTP/1.1"  404 1490 " " "Mozilla/2.0 (compatible; Ask Jeeves)"
 
 We have already prepared a sample of Web server access logs for you to inject into the ``logEventStream``.
 On Unix systems, run this command at the root of the Wise application::
@@ -262,8 +263,8 @@ This work is realized by two Flowlets, ``parser`` and ``pageViewCount``.
 
 The *parser* Flowlet
 --------------------
-``parser`` receives the raw log data from the Stream and extracts useful information from it.
-Here is its implementation::
+``parser`` receives the raw log data from the Stream and extracts the timestamp,
+the IP address and the web page visited. Here is its implementation::
 
   public static class LogEventParserFlowlet extends AbstractFlowlet {
     private static final Logger LOG = LoggerFactory.getLogger(LogEventParserFlowlet.class);
@@ -273,7 +274,7 @@ Here is its implementation::
 
     // Annotation indicates that this method can process incoming data
     @ProcessInput
-    public void processFromStream(StreamEvent event) throws CharacterCodingException {
+    public void processFromStream(StreamEvent event) {
 
       // Get a log event in String format from a StreamEvent instance
       String log = Charsets.UTF_8.decode(event.getBody()).toString();
@@ -284,13 +285,15 @@ Here is its implementation::
           output.emit(logInfo, "ip", logInfo.getIp().hashCode());
         }
       } catch (IOException e) {
-        LOG.info("Could not parse log event {}", log);
+        LOG.info("Exception while processing log event {}", log, e);
+      } catch (ParseException e) {
+        LOG.info("Could not parse log event {}", log, e);
       }
     }
   }
 
-A Flowlet class extends ``AbstractFlowlet``. The ``LogEventParserFlowlet`` class contains one method to process the
-data it receives from ``logEventStream``.
+A Flowlet class first extends the ``AbstractFlowlet`` class. The ``LogEventParserFlowlet`` class contains
+one method to process the data it receives from ``logEventStream``.
 This method can have any name; here, we call it ``processFromStream``. It has to bear the ``@ProcessInput``
 annotation indicating that the method will be used to process incoming data.
 
@@ -374,14 +377,13 @@ We also define the graph of their connections:
 Here is how ``WiseFlow`` looks in the CDAP Console:
 
 .. image:: _images/wise_flow.png
-   :width: 6in
 
 Batch Processing of Logs with WiseWorkflow
 ==========================================
-Wise executes every ten minutes a Map/Reduce job that computes the bounce counts of the web pages
+Wise executes every ten minutes a MapReduce job that computes the bounce counts of the web pages
 seen in the Web server access logs.
 
-The ``BounceCountsMapReduce`` class defines the Map/Reduce job to run. It extends
+The ``BounceCountsMapReduce`` class defines the MapReduce job to run. It extends
 ``AbstractMapReduce`` and overrides the two methods ``configure()`` and ``beforeSubmit()``.
 The ``configure()`` method is defined as::
 
@@ -395,15 +397,15 @@ The ``configure()`` method is defined as::
       .build();
   }
 
-It sets the ID of the Map/Reduce job, ``BounceCountsMapReduce``, and specifies which Datasets will be used in the job.
+It sets the ID of the MapReduce job, ``BounceCountsMapReduce``, and specifies which Datasets will be used in the job.
 This job uses the ``bounceCountsMapReduceLastRun`` system Dataset—of type ``KeyValueTable``—to
 store the time of the last successful run of ``BounceCountsMapReduce``.
 
 We will talk about the ``useOutputDataset()`` method in only a minute.
 
-Plugging the Stream to the Input of the Map/Reduce Job
-------------------------------------------------------
-Traditionally in a Map/Reduce job, a Job configuration is set before each run. This is done in the ``beforeSubmit()``
+Plugging the Stream to the Input of the MapReduce Job
+-----------------------------------------------------
+Traditionally in a MapReduce job, a Job configuration is set before each run. This is done in the ``beforeSubmit()``
 method of the ``BounceCountsMapReduce`` class::
 
   @Override
@@ -415,19 +417,20 @@ method of the ``BounceCountsMapReduce`` class::
     StreamBatchReadable.useStreamInput(context, "logEventStream", startTime, endTime);
   }
 
-As mentioned earlier, the input of the Map/Reduce job is the ``logEventStream``. This connection is made above using
+As mentioned earlier, the input of the MapReduce job is the ``logEventStream``. This connection is made above using
 the ``StreamBatchReadable.useStreamInput()`` method.
 
 The ``startTime`` is computed using the last value stored in the ``bounceCountsMapReduceLastRun`` Dataset, which can
 be accessed using the ``MapReduceContext.getDataSet()`` method.
 
-Writing to the *bounceCountStore* Dataset from the Map/Reduce Job
------------------------------------------------------------------
+Writing to the *bounceCountStore* Dataset from the MapReduce Job
+----------------------------------------------------------------
 In the ``BounceCountsMapReduce.configure()`` method seen earlier, the ``useOutputDataset`` method sets the
-Dataset with the specified ID that will be used as the output of the job.
+``bounceCountsStore`` Dataset as the output of the job.
 It means that the key/value pairs output by the reducer of the job will be directly written to that Dataset.
 
-To understand how this is possible, let's go back to the definition of the ``bounceCountStore`` Dataset::
+To allow that, the ``bounceCountsStore`` Dataset has to implement the ``BatchWritable`` interface,
+and this is how we do it::
 
   public class BounceCountsStore extends AbstractDataset
     implements BatchWritable<Void, PageBounce>, ... {
@@ -440,14 +443,18 @@ To understand how this is possible, let's go back to the definition of the ``bou
   }
 
 This ``BatchWritable`` interface, defining a ``write()`` method, is intended to allow Datasets to be the output of
-Map/Reduce jobs. The two generic types that it takes as parameters must match the types of the key
+MapReduce jobs. The two generic types that it takes as parameters must match the types of the key
 and value that the Reduce part of the job outputs. In this case, the ``bounceCountStore`` Dataset can be
-used as output of a Map/Reduce job where the output key is of type ``Void``, and the output value is of type
+used as output of a MapReduce job where the output key is of type ``Void``, and the output value is of type
 ``PageBounce``.
 
-Map/Reduce Job Structure
-------------------------
-Because the input of our Map/Reduce job is a Stream, it forces the key and value types of our Mapper to be
+MapReduce Job Structure
+-----------------------
+The Mapper of the job receives log events as input, parses them into ``LogInfo`` objects and send them to the Reducer.
+The Reducer receives the ``LogInfo`` objects grouped by IP addresses, with two logs with the same IP address sorted
+by timestamp in ascending order.
+
+Because the input of our MapReduce job is a Stream, it forces the key and value types of our Mapper to be
 ``LongWritable`` and ``Text``, respectively.
 
 Our ``Mapper`` and ``Reducer`` are standard Hadoop classes with these signatures::
@@ -471,8 +478,8 @@ Each generic parameter of the ``Mapper`` and the ``Reducer`` contains:
 - Reducer output key ``Void``: this is not used; and
 - Reducer output value ``PageBounce``: bounce counts of a web page.
 
-Scheduling the Map/Reduce Job
------------------------------
+Scheduling the MapReduce Job
+----------------------------
 To schedule the ``BounceCountsMapReduce`` job to run every ten minute, we define it in the
 ``WiseWorkflow`` as follows::
 
@@ -654,12 +661,12 @@ With this object, we can:
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals("3", Bytes.toString(response.getResponseBody()));
 
-- Start a Map/Reduce job::
+- Start a MapReduce job::
 
     MapReduceManager mrManager = appManager.startMapReduce("WiseWorkflow_BounceCountsMapReduce");
     mrManager.waitForFinish(3, TimeUnit.MINUTES);
 
-- Test the output of the Map/Reduce job::
+- Test the output of the MapReduce job::
 
     DataSetManager<BounceCountStore> dsManager = appManager.getDataSet("bounceCountStore");
     BounceCountStore bounceCountStore = dsManager.get();

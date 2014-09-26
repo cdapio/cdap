@@ -26,7 +26,7 @@ In particular, we'll use these CDAP components:
 
 * A **Stream** for web server log collection and persistence to the file system;
 * A **Flow** for real-time data analysis over collected logs; and
-* A **SQL Query** to explore and develop insights from the data.
+* **SQL Queries** to explore and develop insights from the data.
 
 .. highlight:: console
 
@@ -45,8 +45,8 @@ with these commands, executed from the ``examples/WebAnalytics`` directory of th
 On Windows, run these instead::
 
   > mvn package
-  > bin\app-manager.bat --action deploy
-  > bin\app-manager.bat --action start
+  > bin\app-manager.bat deploy
+  > bin\app-manager.bat start
 
 How It Works
 --------------
