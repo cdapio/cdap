@@ -448,7 +448,7 @@ Dataset HTTP API
 .. only:: html
 
   The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the 
-  `CDAP Developer Guide Advanced Features, Datasets section <advanced.html#datasets-system>`__
+  :ref:`CDAP Developer Guide Advanced Features, Datasets section <Datasets>`
 
 .. only:: pdf
 
