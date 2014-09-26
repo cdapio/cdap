@@ -42,10 +42,8 @@ installed, and have started an instance of CDAP.
 
 Download: `Wise - Source code <https://github.com/caskdata/cdap-apps/tree/develop/Wise>`__
 
-Unzip the directory and build the application by executing::
+Build the application by executing::
 
-  $ unzip cdap-wise-0.1.0.zip
-  $ cd cdap-wise-0.1.0
   $ mvn package
 
 To deploy and start the application, make sure CDAP is running and then execute::
