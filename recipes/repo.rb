@@ -20,8 +20,8 @@
 case node['platform_family']
 when 'rhel'
   include_recipe 'yum'
-  yum_repository 'cdap' do
-    description 'CDAP YUM repository'
+  yum_repository 'cask' do
+    description 'Cask YUM repository'
     url node['cdap']['repo']['url']
     gpgkey node['cdap']['repo']['key_url']
     gpgcheck false
@@ -29,7 +29,7 @@ when 'rhel'
   end
 when 'debian'
   include_recipe 'apt'
-  apt_repository 'cdap' do
+  apt_repository 'cask' do
     uri node['cdap']['repo']['url']
     distribution node['lsb']['codename']
     components node['cdap']['repo']['components']
