@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.test.internal;
 
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -120,18 +121,24 @@ public final class MockResponder implements HttpResponder {
   }
 
   @Override
-  public void sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {
+  public ChunkResponder sendChunkStart(HttpResponseStatus status, Multimap<String, String> headers) {
     this.status = status;
-  }
+    return new ChunkResponder() {
+      @Override
+      public void sendChunk(ByteBuffer chunk) throws IOException {
+        // No-op
+      }
 
-  @Override
-  public void sendChunk(ChannelBuffer content) {
-    // No-op
-  }
+      @Override
+      public void sendChunk(ChannelBuffer chunk) throws IOException {
+        // No-op
+      }
 
-  @Override
-  public void sendChunkEnd() {
-    // No-op
+      @Override
+      public void close() throws IOException {
+        // No-op
+      }
+    };
   }
 
   @Override
