@@ -23,7 +23,7 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.app.program.Archive;
-import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.lang.ManifestFields;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;

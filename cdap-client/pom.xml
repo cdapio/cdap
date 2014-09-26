@@ -107,6 +107,10 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-authentication-client</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-core</artifactId>
+    </dependency>
   </dependencies>
 
 </project>

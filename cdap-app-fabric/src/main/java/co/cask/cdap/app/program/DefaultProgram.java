@@ -19,6 +19,7 @@ package co.cask.cdap.app.program;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.common.lang.ApiResourceListHolder;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.ManifestFields;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.proto.Id;

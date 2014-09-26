@@ -31,6 +31,7 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -108,5 +109,39 @@ public class ApplicationClientTestRun extends ClientTestBase {
     } catch (DatasetModuleNotFoundException e) {
       // NO-OP
     }
+  }
+
+  @Test
+  public void testDeployClass() throws Exception {
+    appClient.deploy(FakeApp.class);
+    Assert.assertEquals(1, appClient.list().size());
+
+    // check program list
+    LOG.info("Checking program list for app");
+    Map<ProgramType, List<ProgramRecord>> programs = appClient.listPrograms(FakeApp.NAME);
+    verifyProgramNames(FakeApp.FLOWS, programs.get(ProgramType.FLOW));
+    verifyProgramNames(FakeApp.PROCEDURES, programs.get(ProgramType.PROCEDURE));
+    verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
+    verifyProgramNames(FakeApp.WORKFLOWS, programs.get(ProgramType.WORKFLOW));
+    // TODO: can't list services atm
+//    verifyProgramNames(FakeApp.SERVICES, programs.get(ProgramType.SERVICE));
+
+    verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
+    verifyProgramNames(FakeApp.PROCEDURES, appClient.listPrograms(FakeApp.NAME, ProgramType.PROCEDURE));
+    verifyProgramNames(FakeApp.MAPREDUCES, appClient.listPrograms(FakeApp.NAME, ProgramType.MAPREDUCE));
+    verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.WORKFLOW));
+    // TODO: can't list services atm
+//    verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(FakeApp.NAME, ProgramType.SERVICE));
+
+    verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
+    verifyProgramNames(FakeApp.PROCEDURES, appClient.listAllPrograms(ProgramType.PROCEDURE));
+    verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
+    verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
+    // TODO: can't list services atm
+//    verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
+
+    verifyProgramNames(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
+
+    appClient.delete(FakeApp.NAME);
   }
 }
