@@ -98,6 +98,8 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -482,7 +484,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }
 
       // MapReduce is part of a workflow. Query the status of the workflow instead
-      final BlockingQueue<StatusMap> statusQueue = new LinkedBlockingDeque<StatusMap>();
+      final SettableFuture<StatusMap> statusFuture = SettableFuture.create();
       workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
                                        workflowName, new WorkflowClient.Callback() {
           @Override
@@ -507,13 +509,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
             // This would make all changes in the result statusMap available to the other thread that doing
             // the take() call.
-            statusQueue.offer(result);
+            statusFuture.set(result);
           }
         }
       );
       // wait for status to come back in case we are polling mapreduce status in workflow
       // status map contains either a status or an error
-      return statusQueue.take();
+      return Futures.getUnchecked(statusFuture);
     } catch (Exception e) {
       LOG.error("Exception raised when getting program status for {} {}", id, type, e);
       return new StatusMap(null, "Failed to get program status", HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
