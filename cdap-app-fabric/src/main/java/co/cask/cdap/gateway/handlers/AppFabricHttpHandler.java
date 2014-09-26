@@ -98,6 +98,8 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -142,8 +144,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -445,69 +449,80 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    *
    * @param id The Program Id to get the status of
    * @param type The Type of the Program to get the status of
-   * @throws Throwable
+   * @throws RuntimeException if failed to determine the program status
    */
-  private StatusMap getStatus(final Id.Program id, final ProgramType type) throws Throwable {
-    // check that app exists
-    final StatusMap statusMap = new StatusMap();
-    ApplicationSpecification appSpec = store.getApplication(id.getApplication());
-    if (appSpec == null) {
-      return new StatusMap(null, "App: " + id.getApplicationId() + " not found",
-                                     HttpResponseStatus.NOT_FOUND.getCode());
+  private StatusMap getStatus(final Id.Program id, final ProgramType type) {
+    // invalid type does not exist
+    if (type == null) {
+      return new StatusMap(null, "Invalid program type provided", HttpResponseStatus.BAD_REQUEST.getCode());
     }
-    // must do it this way to allow anon function in workflow to modify status
-    if (type == ProgramType.MAPREDUCE) {
+
+    try {
+      // check that app exists
+      ApplicationSpecification appSpec = store.getApplication(id.getApplication());
+      if (appSpec == null) {
+        return new StatusMap(null, "App: " + id.getApplicationId() + " not found",
+                             HttpResponseStatus.NOT_FOUND.getCode());
+      }
+
+      // For program type other than MapReduce
+      if (type != ProgramType.MAPREDUCE) {
+        return getProgramStatus(id, type, new StatusMap());
+      }
+
+      // must do it this way to allow anon function in workflow to modify status
       // check that mapreduce exists
       if (!appSpec.getMapReduce().containsKey(id.getId())) {
         return new StatusMap(null, "Program: " + id.getId() + " not found", HttpResponseStatus.NOT_FOUND.getCode());
       }
+
+      // See if the MapReduce is part of a workflow
       String workflowName = getWorkflowName(id.getId());
-      if (workflowName != null) {
-        //mapreduce is part of a workflow
-        workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
-                                         workflowName, new WorkflowClient.Callback() {
-            @Override
-            public void handle(WorkflowClient.Status status) {
-              if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
-                statusMap.setStatus("RUNNING");
-                statusMap.setStatusCode(HttpResponseStatus.OK.getCode());
-              } else {
-                //mapreduce name might follow the same format even when its not part of the workflow.
-                try {
-                  // getProgramStatus returns program status or http response status NOT_FOUND
-                  storeProgramStatus(id, type, statusMap);
-                } catch (Exception e) {
-                  LOG.error("Got exception: ", e);
-                  // error occurred so say internal server error
-                  statusMap.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
-                  statusMap.setError(e.getMessage());
-                }
+      if (workflowName == null) {
+        // Not from workflow, treat it as simple program status
+        return getProgramStatus(id, type, new StatusMap());
+      }
+
+      // MapReduce is part of a workflow. Query the status of the workflow instead
+      final SettableFuture<StatusMap> statusFuture = SettableFuture.create();
+      workflowClient.getWorkflowStatus(id.getAccountId(), id.getApplicationId(),
+                                       workflowName, new WorkflowClient.Callback() {
+          @Override
+          public void handle(WorkflowClient.Status status) {
+            StatusMap result = new StatusMap();
+
+            if (status.getCode().equals(WorkflowClient.Status.Code.OK)) {
+              result.setStatus("RUNNING");
+              result.setStatusCode(HttpResponseStatus.OK.getCode());
+            } else {
+              //mapreduce name might follow the same format even when its not part of the workflow.
+              try {
+                // getProgramStatus returns program status or http response status NOT_FOUND
+                getProgramStatus(id, type, result);
+              } catch (Exception e) {
+                LOG.error("Exception raised when getting program status for {} {}", id, type, e);
+                // error occurred so say internal server error
+                result.setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
+                result.setError(e.getMessage());
               }
             }
+
+            // This would make all changes in the result statusMap available to the other thread that doing
+            // the take() call.
+            statusFuture.set(result);
           }
-        );
-        // wait for status to come back in case we are polling mapreduce status in workflow
-        // status map contains either a status or an error
-        while (statusMap.getStatus() == null ||
-               (statusMap.getStatus().isEmpty() && statusMap.getError().isEmpty())) {
-          Thread.sleep(1);
         }
-      } else {
-        //mapreduce is not part of a workflow
-        storeProgramStatus(id, type, statusMap);
-      }
-    } else if (type == null) {
-      // invalid type does not exist
-      return new StatusMap(null, "Invalid program type provided", HttpResponseStatus.BAD_REQUEST.getCode());
-    } else {
-      // all other programs
-      storeProgramStatus(id, type, statusMap);
+      );
+      // wait for status to come back in case we are polling mapreduce status in workflow
+      // status map contains either a status or an error
+      return Futures.getUnchecked(statusFuture);
+    } catch (Exception e) {
+      LOG.error("Exception raised when getting program status for {} {}", id, type, e);
+      return new StatusMap(null, "Failed to get program status", HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
     }
-    return statusMap;
   }
 
-  private void storeProgramStatus(final Id.Program id, final ProgramType type, final StatusMap statusMap)
-    throws Exception {
+  private StatusMap getProgramStatus(Id.Program id, ProgramType type, StatusMap statusMap) {
     // getProgramStatus returns program status or http response status NOT_FOUND
     String progStatus = getProgramStatus(id, type).getStatus();
     if (progStatus.equals(HttpResponseStatus.NOT_FOUND.toString())) {
@@ -517,6 +532,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       statusMap.setStatus(progStatus);
       statusMap.setStatusCode(HttpResponseStatus.OK.getCode());
     }
+    return statusMap;
   }
 
   /**
@@ -798,6 +814,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+
+  private boolean isRunning(Id.Program id, ProgramType type) {
+    String programStatus = getStatus(id, type).getStatus();
+    return programStatus != null && !"STOPPED".equals(programStatus);
+  }
+
   /**
    * Starts a Program.
    */
@@ -805,14 +827,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                        Map<String, String> overrides, boolean debug) {
 
     try {
-      ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(id, type);
-      if (existingRuntimeInfo != null) {
-        return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
-      }
-
       Program program = store.loadProgram(id, type);
       if (program == null) {
         return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+      }
+
+      if (isRunning(id, type)) {
+        return AppFabricServiceStatus.PROGRAM_ALREADY_RUNNING;
       }
 
       Map<String, String> userArgs = store.getRunArguments(id);
@@ -1383,9 +1404,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private ProgramStatus getProgramStatus(Id.Program id, ProgramType type)
-    throws Exception {
-
+  private ProgramStatus getProgramStatus(Id.Program id, ProgramType type) {
     try {
       ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id, type);
 
@@ -1423,7 +1442,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       return new ProgramStatus(id.getApplicationId(), id.getId(), status);
     } catch (Throwable throwable) {
       LOG.warn(throwable.getMessage(), throwable);
-      throw new Exception(throwable.getMessage());
+      throw Throwables.propagate(throwable);
     }
   }
 
@@ -2311,6 +2330,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private boolean checkAnyRunning(Predicate<Id.Program> predicate, ProgramType... types) {
     for (ProgramType type : types) {
       for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
+        ProgramController.State programState = entry.getValue().getController().getState();
+        if (programState == ProgramController.State.STOPPED || programState == ProgramController.State.ERROR) {
+          continue;
+        }
         Id.Program programId = entry.getValue().getProgramId();
         if (predicate.apply(programId)) {
           LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
