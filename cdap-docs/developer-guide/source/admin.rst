@@ -2254,7 +2254,7 @@ see the :ref:`security` section.
 
 .. _note 1:
 
-:Note 1:
+**Note 1**:
 
     ``kafka.default.replication.factor`` is used to replicate *Kafka* messages across multiple
     machines to prevent data loss in the event of a hardware failure. The recommended setting
@@ -2263,7 +2263,8 @@ see the :ref:`security` section.
 
 .. _note 2:
 
-:Note 2:
+**Note 2**:
+
     Maximum read buffer size in bytes used by the Thrift server: this value should be set to
     greater than the maximum frame sent on the RPC channel.
 
