@@ -90,6 +90,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -116,6 +119,7 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
@@ -261,31 +265,45 @@ public class TestBase {
         }
       }
     );
+
     txService = injector.getInstance(TransactionManager.class);
-    txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
-    dsOpService.startAndWait();
+    startAndWait(txService, dsOpService);
+
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+
+    exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
+    ListenableFuture<Service.State> exploreExecutorServiceState = exploreExecutorService.start();
+
+    schedulerService = injector.getInstance(SchedulerService.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    metricsCollectionService.startAndWait();
+    startAndWait(schedulerService, metricsQueryService, metricsCollectionService);
+
     AppFabricHttpHandler httpHandler = injector.getInstance(AppFabricHttpHandler.class);
     ServiceHttpHandler serviceHttpHandler = injector.getInstance(ServiceHttpHandler.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     appFabricClient = new AppFabricClient(httpHandler, serviceHttpHandler, locationFactory);
     DatasetFramework dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetFramework =
-      new NamespacedDatasetFramework(dsFramework,
-                                     new DefaultDatasetNamespace(cConf,  Namespace.USER));
-    schedulerService = injector.getInstance(SchedulerService.class);
-    schedulerService.startAndWait();
+    datasetFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf, Namespace.USER));
+
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
-    exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
+
+    Futures.getUnchecked(exploreExecutorServiceState);
+  }
+
+  private static void startAndWait(Service... services) {
+    List<ListenableFuture<Service.State>> futures = Lists.newArrayList();
+    for (Service service : services) {
+      futures.add(service.start());
+    }
+
+    for (ListenableFuture<Service.State> future : futures) {
+      Futures.getUnchecked(future);
+    }
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {
@@ -327,19 +345,27 @@ public class TestBase {
   }
 
   @AfterClass
-  public static final void finish() {
-    metricsQueryService.stopAndWait();
-    metricsCollectionService.startAndWait();
-    schedulerService.stopAndWait();
+  public static void finish() {
+    stopAndWait(metricsQueryService, metricsCollectionService, schedulerService);
     try {
       exploreClient.close();
     } catch (IOException e) {
       throw Throwables.propagate(e);
     }
-    exploreExecutorService.stopAndWait();
-    datasetService.stopAndWait();
+    stopAndWait(exploreExecutorService, datasetService);
     dsOpService.stopAndWait();
     txService.stopAndWait();
+  }
+
+  private static void stopAndWait(Service... services) {
+    List<ListenableFuture<Service.State>> futures = Lists.newArrayList();
+    for (Service service : services) {
+      futures.add(service.stop());
+    }
+
+    for (ListenableFuture<Service.State> future : futures) {
+      Futures.getUnchecked(future);
+    }
   }
 
   private static void cleanDir(File dir) {
