@@ -9,7 +9,7 @@ Vagrant.configure('2') do |config|
   # We *need* vagrant-omnibus for these box images
   config.omnibus.chef_version = '11.16.0'
 
-  config.vm.hostname = 'cdap-berkshelf'
+  config.vm.hostname = 'cdap-berkshelf.local'
 
   # Every Vagrant virtual environment requires a box to build off of.
   config.vm.box = 'opscode-centos-6.5'
