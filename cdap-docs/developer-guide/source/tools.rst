@@ -232,7 +232,7 @@ The assertion will verify that the correct result was received.
 Validating Test Data with SQL
 -----------------------------
 Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
-in the test case are record-scannable as described in :ref:`Querying Datasets with SQL. <data-explore>`
+in the test case are record-scannable as described in :ref:`data-explore`
 This can be done using a JDBC connection obtained from the test base::
 
 
@@ -647,7 +647,7 @@ Create a ``StreamWriter`` instance for writing events to the *purchaseStream*::
 
    StreamWriter streamWriter = streamClient.createWriter("purchaseStream");
 
-To write new events to the Stream,use any of these four methods from the ``StreamWriter`` interface::
+To write new events to the Stream, use any of these methods from the ``StreamWriter`` interface::
 
   ListenableFuture<Void> write(String str, Charset charset);
   ListenableFuture<Void> write(String str, Charset charset, Map<String, String> headers);
@@ -662,7 +662,7 @@ To truncate the *purchaseStream*, use::
 
   streamClient.truncate("purchaseStream");
 
-When you are finished, release all resources by calling these two methods::
+When you are finished, release all resources by calling these two methods::https://github.com/caskdata/tephra/>
 
   streamWriter.close();
   streamClient.close();
