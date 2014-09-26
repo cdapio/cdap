@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.app.Application;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.ApplicationNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
@@ -24,13 +25,17 @@ import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
+import co.cask.cdap.common.lang.ApplicationPackager;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +49,8 @@ import javax.inject.Inject;
  * Provides ways to interact with CDAP applications.
  */
 public class ApplicationClient {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ApplicationClient.class);
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -94,6 +101,35 @@ public class ApplicationClient {
 
     HttpRequest request = HttpRequest.post(url).addHeaders(headers).withBody(jarFile).build();
     restClient.upload(request, config.getAccessToken());
+  }
+
+  /**
+   * Deploys an application. This packages all dependent classes and extra files into a jar file,
+   * and then deploys the application like normal via {@link #deploy(java.io.File)}.
+   *
+   * @param applicationClass application class to deploy
+   */
+  public void deploy(Class<? extends Application> applicationClass, Map<String, File> extraFiles) throws IOException {
+    File tempDir = Files.createTempDir();
+    File jarFile = ApplicationPackager.createApplicationJar(applicationClass, extraFiles, tempDir);
+    deploy(jarFile);
+
+    if (!jarFile.delete()) {
+      LOG.warn("Could not delete jarFile: " + jarFile.getAbsolutePath());
+    }
+    if (!tempDir.delete()) {
+      LOG.warn("Could not delete tempDir: " + tempDir.getAbsolutePath());
+    }
+  }
+
+  /**
+   * Deploys an application. This packages all dependent classes and resources into a jar file,
+   * and then deploys the application like normal via {@link #deploy(java.io.File)}.
+   *
+   * @param applicationClass application class to deploy
+   */
+  public void deploy(Class<? extends Application> applicationClass) throws IOException {
+    deploy(applicationClass, ImmutableMap.<String, File>of());
   }
 
   /**

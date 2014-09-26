@@ -16,8 +16,9 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ApplicationPackager;
+import co.cask.cdap.common.lang.ManifestFields;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
@@ -26,15 +27,12 @@ import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
+import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ApplicationBundler;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
@@ -44,14 +42,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.zip.ZipException;
 
 /**
  * Client tool for AppFabricHttpHandler.
@@ -214,8 +207,13 @@ public class AppFabricClient {
 
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
-    Location deployedJar =
-      locationFactory.create(createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars).toURI());
+    Map<String, File> embeddedJars = Maps.newHashMap();
+    for (File bundleEmbeddedJar : bundleEmbeddedJars) {
+      embeddedJars.put("lib/" + bundleEmbeddedJar.getName(), bundleEmbeddedJar);
+    }
+
+    File applicationJar = ApplicationPackager.createApplicationJar(applicationClz, embeddedJars, locationFactory);
+    Location deployedJar = locationFactory.create(applicationJar.toURI());
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
@@ -242,72 +240,6 @@ public class AppFabricClient {
       is.close();
     }
     return deployedJar;
-  }
-
-  private static File createDeploymentJar(LocationFactory locationFactory, Class<?> clz, File...bundleEmbeddedJars)
-    throws IOException {
-
-    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
-                                                                         "org.apache.hadoop",
-                                                                         "org.apache.hbase",
-                                                                         "org.apache.hive"));
-    Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
-    bundler.createBundle(jarLocation, clz);
-
-    Location deployJar = locationFactory.create(clz.getName()).getTempFile(".jar");
-
-    // Creates Manifest
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, clz.getName());
-
-    // Create the program jar for deployment. It removes the "classes/" prefix as that's the convention taken
-    // by the ApplicationBundler inside Twill.
-    JarOutputStream jarOutput = new JarOutputStream(deployJar.getOutputStream(), manifest);
-    try {
-      JarInputStream jarInput = new JarInputStream(jarLocation.getInputStream());
-      try {
-        JarEntry jarEntry = jarInput.getNextJarEntry();
-        while (jarEntry != null) {
-          boolean isDir = jarEntry.isDirectory();
-          String entryName = jarEntry.getName();
-          if (!entryName.equals("classes/")) {
-            if (entryName.startsWith("classes/")) {
-              jarEntry = new JarEntry(entryName.substring("classes/".length()));
-            } else {
-              jarEntry = new JarEntry(entryName);
-            }
-
-            // TODO: this is due to manifest possibly already existing in the jar, but we also
-            // create a manifest programatically so it's possible to have a duplicate entry here
-            if ("META-INF/MANIFEST.MF".equalsIgnoreCase(jarEntry.getName())) {
-              jarEntry = jarInput.getNextJarEntry();
-              continue;
-            }
-
-            jarOutput.putNextEntry(jarEntry);
-            if (!isDir) {
-              ByteStreams.copy(jarInput, jarOutput);
-            }
-          }
-
-          jarEntry = jarInput.getNextJarEntry();
-        }
-      } finally {
-        jarInput.close();
-      }
-
-      for (File embeddedJar : bundleEmbeddedJars) {
-        JarEntry jarEntry = new JarEntry("lib/" + embeddedJar.getName());
-        jarOutput.putNextEntry(jarEntry);
-        Files.copy(embeddedJar, jarOutput);
-      }
-
-    } finally {
-      jarOutput.close();
-    }
-
-    return new File(deployJar.toURI());
   }
 
 }

@@ -17,7 +17,7 @@
 package co.cask.cdap.archive;
 
 import co.cask.cdap.WebCrawlApp;
-import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.common.lang.ManifestFields;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.lang.jar.JarResources;
 import com.google.common.base.Charsets;

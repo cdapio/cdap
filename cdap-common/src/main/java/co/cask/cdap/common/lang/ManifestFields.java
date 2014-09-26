@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.program;
+package co.cask.cdap.common.lang;
 
 import java.util.jar.Attributes;
 

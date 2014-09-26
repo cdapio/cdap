@@ -16,8 +16,8 @@
 
 package co.cask.cdap.gateway;
 
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ManifestFields;
 import co.cask.cdap.gateway.collector.NettyFlumeCollectorTest;
 import co.cask.cdap.gateway.handlers.PingHandlerTest;
 import co.cask.cdap.gateway.handlers.ProcedureHandlerTest;

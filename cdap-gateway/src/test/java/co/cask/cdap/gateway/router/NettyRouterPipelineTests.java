@@ -18,13 +18,13 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.lang.ManifestFields;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.security.auth.AccessTokenTransformer;

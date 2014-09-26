@@ -17,8 +17,8 @@
 package co.cask.cdap.internal.app.program;
 
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.archive.ArchiveBundler;
+import co.cask.cdap.common.lang.ManifestFields;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
