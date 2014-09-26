@@ -175,7 +175,7 @@ but a request may return any of these.</p>
 <p>When working with a CDAP cluster with security enabled (<tt class="docutils literal"><span class="pre">security.enabled=true</span></tt> in
 <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt>), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
 obtain an access token from the authentication server (see the <em>Client Authentication</em> section of the
-Developer Guide <a class="reference external" href="security.html#client-authentication">CDAP Security</a>).
+Developer Guide <a class="reference internal" href="admin.html#security"><em>CDAP Security.</em></a>).
 In order to authenticate, all client requests must supply this access token in the
 <tt class="docutils literal"><span class="pre">Authorization</span></tt> header of the request:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">Authorization: Bearer &lt;token&gt;</span>
@@ -604,7 +604,7 @@ The TTL property of a Stream can be changed with an HTTP PUT method to the URL:<
 <div class="section" id="dataset-http-api">
 <span id="rest-datasets"></span><h3>Dataset HTTP API<a class="headerlink" href="#dataset-http-api" title="Permalink to this headline">¶</a></h3>
 <p>The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the
-<a class="reference external" href="advanced.html#datasets-system">CDAP Developer Guide Advanced Features, Datasets section</a></p>
+<a class="reference internal" href="dev-guide.html#datasets"><em>CDAP Developer Guide Advanced Features, Datasets section</em></a></p>
 <div class="section" id="listing-all-datasets">
 <h4>Listing all Datasets<a class="headerlink" href="#listing-all-datasets" title="Permalink to this headline">¶</a></h4>
 <p>You can list all Datasets in CDAP by issuing an HTTP GET request to the URL:</p>
@@ -1907,7 +1907,7 @@ CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method:</p>
 </pre></div>
 </div>
 <p>The response is formatted in JSON; an example of this is shown in the</p>
-<p><a class="reference external" href="debugging.html#debugging-cdap-applications">CDAP Testing and Debugging Guide</a>.</p>
+<p><a class="reference internal" href="tools.html#testframework"><em>CDAP Testing and Debugging Guide.</em></a></p>
 </div>
 <div class="section" id="scale">
 <h4>Scale<a class="headerlink" href="#scale" title="Permalink to this headline">¶</a></h4>
@@ -2362,7 +2362,7 @@ metrics are the same for every Application—how many events are processed, how 
 etc.—and are thus called system or CDAP metrics.</p>
 <p>Other metrics are user-defined and differ from Application to Application.
 For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-the Developer Guide, <a class="reference external" href="operations.html">CDAP Operations Guide</a>.</p>
+the Developer Guide, <a class="reference internal" href="admin.html#admin"><em>CDAP Operations Guide.</em></a></p>
 <div class="section" id="metrics-requests">
 <h4>Metrics Requests<a class="headerlink" href="#metrics-requests" title="Permalink to this headline">¶</a></h4>
 <p>The general form of a metrics request is:</p>
@@ -3694,7 +3694,7 @@ a complete Javadoc of the CDAP Java APIs.</li>
   <h4>Next Topic</h4>
   <p class="topless"><a href="javadocs/index.html"
                         title="Next Chapter">Javadocs</a></p>
-<div id="searchbox" style="display: none" role="search">
+<div id="searchbox" style="display: none">
   <h3>Quick Search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />

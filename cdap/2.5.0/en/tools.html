@@ -290,7 +290,7 @@ the ranks:</p>
 <div class="section" id="validating-test-data-with-sql">
 <h3>Validating Test Data with SQL<a class="headerlink" href="#validating-test-data-with-sql" title="Permalink to this headline">¶</a></h3>
 <p>Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
-in the test case are record-scannable as described in <a class="reference internal" href="dev-guide.html#data-explore"><em>Querying Datasets with SQL.</em></a>
+in the test case are record-scannable as described in <a class="reference internal" href="dev-guide.html#data-explore"><em>Data Exploration</em></a>
 This can be done using a JDBC connection obtained from the test base:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Obtain a JDBC connection</span>
 <span class="n">Connection</span> <span class="n">connection</span> <span class="o">=</span> <span class="n">getQueryClient</span><span class="o">();</span>
@@ -671,7 +671,7 @@ Optional configurations that can be set:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">StreamWriter streamWriter = streamClient.createWriter(&quot;purchaseStream&quot;);</span>
 </pre></div>
 </div>
-<p>To write new events to the Stream,use any of these five methods from the <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> interface:</p>
+<p>To write new events to the Stream, use any of these methods from the <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> interface:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">ListenableFuture&lt;Void&gt; write(String str, Charset charset);</span>
 <span class="go">ListenableFuture&lt;Void&gt; write(String str, Charset charset, Map&lt;String, String&gt; headers);</span>
 <span class="go">ListenableFuture&lt;Void&gt; write(ByteBuffer buffer);</span>
@@ -686,11 +686,10 @@ Optional configurations that can be set:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">streamClient.truncate(&quot;purchaseStream&quot;);</span>
 </pre></div>
 </div>
-<p>When you are finished, release all resources by calling these two methods:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">streamWriter.close();</span>
-<span class="go">streamClient.close();</span>
-</pre></div>
-</div>
+<p>When you are finished, release all resources by calling these two methods::https://github.com/caskdata/tephra/&gt;</p>
+<blockquote>
+<div>streamWriter.close();
+streamClient.close();</div></blockquote>
 <div class="section" id="putting-it-all-together">
 <h5>Putting it All Together<a class="headerlink" href="#putting-it-all-together" title="Permalink to this headline">¶</a></h5>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">try {</span>
@@ -1466,7 +1465,7 @@ mechanisms. To create a new Authentication Client, implement the <tt class="docu
   <h4>Next Topic</h4>
   <p class="topless"><a href="admin.html"
                         title="Next Chapter">Cask Data Application Platform Administration and Operations Guide</a></p>
-<div id="searchbox" style="display: none" role="search">
+<div id="searchbox" style="display: none">
   <h3>Quick Search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />

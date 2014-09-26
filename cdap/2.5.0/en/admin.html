@@ -503,7 +503,7 @@ Hadoop cluster, run an example application.
 We provide in our SDK pre-built <tt class="docutils literal"><span class="pre">.JAR</span></tt> files for convenience:</p>
 <ol class="arabic simple">
 <li>Download and install the latest CDAP Developer Suite from
-<a class="reference external" href="http://cask.co/resources">http://cask.co/resources</a>.</li>
+<a class="reference external" href="http://cask.co/download">http://cask.co/download</a></li>
 <li>Extract to a folder (<tt class="docutils literal"><span class="pre">CDAP_HOME</span></tt>).</li>
 <li>Open a command prompt and navigate to <tt class="docutils literal"><span class="pre">CDAP_HOME/examples</span></tt>.</li>
 <li>Each example folder has a <tt class="docutils literal"><span class="pre">.jar</span></tt> file in its <tt class="docutils literal"><span class="pre">target</span></tt> directory.
@@ -1535,7 +1535,7 @@ Remember that the left pane buttons will always take you back to the initial sum
 and the version of the CDAP that you are using.</p>
 <p id="reset">The five buttons provide access to the <a class="reference external" href="http://cask.co/terms">terms of use</a>,
 the <a class="reference external" href="http://cask.co/privacy">privacy policy</a>,
-contacting <a class="reference external" href="http://cask.co/contact-us">Cask</a>,
+contacting <a class="reference external" href="http://cask.co/company/#company-contact">Cask</a>,
 contacting Cask support, and <em>Reset</em>, for resetting the CDAP.</p>
 <p><em>Reset</em> deletes all data and applications from the
 CDAP, is irreversible, and returns the CDAP to an original state. The button is only visible and
@@ -2469,26 +2469,16 @@ of the log directory on each machine</td>
 </tr>
 </tbody>
 </table>
-<table class="docutils field-list" frame="void" id="note-1" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Note 1:</th><td class="field-body"><tt class="docutils literal"><span class="pre">kafka.default.replication.factor</span></tt> is used to replicate <em>Kafka</em> messages across multiple
+<p id="note-1"><strong>Note 1</strong>:</p>
+<blockquote>
+<div><tt class="docutils literal"><span class="pre">kafka.default.replication.factor</span></tt> is used to replicate <em>Kafka</em> messages across multiple
 machines to prevent data loss in the event of a hardware failure. The recommended setting
 is to run at least two <em>Kafka</em> servers. If you are running two <em>Kafka</em> servers, set this
-value to 2; otherwise, set it to the number of <em>Kafka</em> servers</td>
-</tr>
-</tbody>
-</table>
-<table class="docutils field-list" frame="void" id="note-2" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Note 2:</th><td class="field-body">Maximum read buffer size in bytes used by the Thrift server: this value should be set to
-greater than the maximum frame sent on the RPC channel.</td>
-</tr>
-</tbody>
-</table>
+value to 2; otherwise, set it to the number of <em>Kafka</em> servers</div></blockquote>
+<p id="note-2"><strong>Note 2</strong>:</p>
+<blockquote>
+<div>Maximum read buffer size in bytes used by the Thrift server: this value should be set to
+greater than the maximum frame sent on the RPC channel.</div></blockquote>
 </div>
 <div class="section" id="appendix-cdap-security-xml">
 <h2>Appendix: <tt class="docutils literal"><span class="pre">cdap-security.xml</span></tt><a class="headerlink" href="#appendix-cdap-security-xml" title="Permalink to this headline">¶</a></h2>
@@ -2669,7 +2659,7 @@ Authentication Server</td>
   <h4>Next Topic</h4>
   <p class="topless"><a href="licenses/index.html"
                         title="Next Chapter">Cask Data Application Platform Licenses and Dependencies</a></p>
-<div id="searchbox" style="display: none" role="search">
+<div id="searchbox" style="display: none">
   <h3>Quick Search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />

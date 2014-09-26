@@ -89,10 +89,8 @@ each web page encountered using batch processing.</p>
 <div class="section" id="running-wise">
 <h2>Running Wise<a class="headerlink" href="#running-wise" title="Permalink to this headline">¶</a></h2>
 <p>Building and running Wise is straightforward. We&#8217;ll assume that you have already downloaded,
-installed, and have started an instance of CDAP. Download the <em>Wise</em> source code from:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">url</span>
-</pre></div>
-</div>
+installed, and have started an instance of CDAP.</p>
+<p>Download: <a class="reference external" href="https://github.com/caskdata/cdap-apps/tree/develop/Wise">Wise - Source code</a></p>
 <p>Unzip the directory and build the application by executing:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> unzip cdap-wise-0.1.0.zip
 <span class="gp">$</span> <span class="nb">cd </span>cdap-wise-0.1.0
@@ -271,7 +269,7 @@ a <tt class="docutils literal"><span class="pre">visits</span></tt> count and a 
 <div class="section" id="ingesting-access-logs-in-wise">
 <h2>Ingesting Access Logs in Wise<a class="headerlink" href="#ingesting-access-logs-in-wise" title="Permalink to this headline">¶</a></h2>
 <p>CDAP has an easy way to ingest data in real time into an application, using <strong>Streams</strong>. A Stream exposes
-a simple <a class="reference external" href="rest.html">RESTful API</a> to ingest data events.</p>
+a simple <a class="reference internal" href="api.html#rest-streams"><em>REST API</em></a> to ingest data events.</p>
 <p>In Wise, each Web server access log is injected as a Stream event to the <tt class="docutils literal"><span class="pre">logEventStream</span></tt> in this format
 (broken on two lines to fit):</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] &quot;POST /index.html HTTP/1.1&quot;</span>
@@ -777,7 +775,7 @@ located in both the <tt class="docutils literal"><span class="pre">/examples</sp
   <h4>Next Topic</h4>
   <p class="topless"><a href="arch.html"
                         title="Next Chapter">Cask Data Application Platform Concepts and Architecture</a></p>
-<div id="searchbox" style="display: none" role="search">
+<div id="searchbox" style="display: none">
   <h3>Quick Search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />

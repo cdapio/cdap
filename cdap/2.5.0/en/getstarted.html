@@ -83,7 +83,7 @@ can also serve as templates for developing your own applications.</li>
 </ul>
 <div class="section" id="system-requirements-and-dependencies">
 <h3>System Requirements and Dependencies<a class="headerlink" href="#system-requirements-and-dependencies" title="Permalink to this headline">¶</a></h3>
-<p>The CDAP SDK runs on Linux, Unix, MacOS and Windows, and only has three requirements:</p>
+<p>The CDAP SDK runs on Linux, MacOS and Windows, and only has three requirements:</p>
 <ul class="simple">
 <li><a class="reference external" href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">JDK 6 or JDK 7</a>
 (required to run CDAP; note that $JAVA_HOME should be set)</li>
@@ -209,14 +209,6 @@ CDAP application.</p>
 <p>Before you start developing your own applications, it is recommended that you familiarize yourself with the
 APIs and concepts of CDAP as well as the CDAP Console using the example applications that are provided
 with the SDK. Let&#8217;s take a look at one of these:</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">orphan:</th><td class="field-body"></td>
-</tr>
-</tbody>
-</table>
 <div class="section" id="web-analytics-application">
 <span id="web-analytics"></span><h3>Web Analytics Application<a class="headerlink" href="#web-analytics-application" title="Permalink to this headline">¶</a></h3>
 <p>This tutorial provides the basic steps for the development of a data application using the
@@ -255,8 +247,8 @@ with these commands, executed from the <tt class="docutils literal"><span class=
 </div>
 <p>On Windows, run these instead:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> mvn package
-<span class="gp">&gt;</span> bin<span class="se">\a</span>pp-manager.bat --action deploy
-<span class="gp">&gt;</span> bin<span class="se">\a</span>pp-manager.bat --action start
+<span class="gp">&gt;</span> bin<span class="se">\a</span>pp-manager.bat deploy
+<span class="gp">&gt;</span> bin<span class="se">\a</span>pp-manager.bat start
 </pre></div>
 </div>
 </div>
@@ -388,21 +380,11 @@ the query to finish. Once it&#8217;s finished, you can click on the result butto
 <a class="reference internal image-reference" href="_images/wa_explore_result.png"><img alt="_images/wa_explore_result.png" src="_images/wa_explore_result.png" style="width: 10in;" /></a>
 </div>
 </div>
-<div class="section" id="what-s-next">
-<h3>What&#8217;s Next<a class="headerlink" href="#what-s-next" title="Permalink to this headline">¶</a></h3>
-<p>Congratulations on successfully building and running your first CDAP application. You can learn more about developing
-data application using CDAP by:</p>
-<ul class="simple">
-<li>Exploring the Web Analytics Application source code. It includes test cases that show unit-testing an
-application.</li>
-<li>Look at a CDAP case study: <a class="reference external" href="case_study.html">Web Analytics using CDAP.</a></li>
-<li>For a detailed understanding of what CDAP is capable of, read our <a class="reference external" href="dev-guide.html">Programming Guide.</a></li>
-</ul>
-</div>
 </div>
 <div class="section" id="other-example-applications">
 <span id="examples"></span><h2>Other Example Applications<a class="headerlink" href="#other-example-applications" title="Permalink to this headline">¶</a></h2>
-<p>The SDK includes these examples:</p>
+<p>Congratulations on successfully building and running your first CDAP application.
+The SDK also includes these examples:</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -1369,6 +1351,16 @@ For example:</li>
 </div>
 </div>
 </div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next<a class="headerlink" href="#what-s-next" title="Permalink to this headline">¶</a></h2>
+<p>You can learn more about developing data application using CDAP by:</p>
+<ul class="simple">
+<li>Exploring the Web Analytics Application source code. It includes test cases that show unit-testing an
+application.</li>
+<li>Look at a CDAP case study: <a class="reference external" href="case_study.html">Web Analytics using CDAP.</a></li>
+<li>For a detailed understanding of what CDAP is capable of, read our <a class="reference external" href="dev-guide.html">Programming Guide.</a></li>
+</ul>
+</div>
 </div>
 
 
@@ -1410,7 +1402,6 @@ For example:</li>
 <li class="toctree-l3"><a class="reference internal" href="#web-analytics-application">Web Analytics Application</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#build-and-run">Build and Run</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#how-it-works">How It Works</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#what-s-next">What&#8217;s Next</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#other-example-applications">Other Example Applications</a><ul>
@@ -1423,6 +1414,7 @@ For example:</li>
 <li class="toctree-l3"><a class="reference internal" href="#sparkpagerank-application-example">SparkPageRank Application Example</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#what-s-next">What&#8217;s Next</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="case_study.html">Case Study</a></li>
@@ -1445,7 +1437,7 @@ For example:</li>
   <h4>Next Topic</h4>
   <p class="topless"><a href="case_study.html"
                         title="Next Chapter">CDAP Application Case Study</a></p>
-<div id="searchbox" style="display: none" role="search">
+<div id="searchbox" style="display: none">
   <h3>Quick Search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
