@@ -193,12 +193,3 @@ the query to finish. Once it's finished, you can click on the result button at t
 .. image:: _images/quickstart/wa_explore_result.png
    :width: 10in
 
-What's Next
------------
-Congratulations on successfully building and running your first CDAP application. You can learn more about developing
-data application using CDAP by:
-
-* Exploring the Web Analytics Application source code. It includes test cases that show unit-testing an
-  application.
-* Look at a CDAP case study: `Web Analytics using CDAP. <case_study.html>`__
-* For a detailed understanding of what CDAP is capable of, read our `Programming Guide. <dev-guide.html>`__
