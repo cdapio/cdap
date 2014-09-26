@@ -2331,13 +2331,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     for (ProgramType type : types) {
       for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
         ProgramController.State programState = entry.getValue().getController().getState();
-        if (programState != ProgramController.State.STOPPED && programState != ProgramController.State.ERROR) {
-          Id.Program programId = entry.getValue().getProgramId();
-          if (predicate.apply(programId)) {
-            LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
-                      programId.getApplicationId(), type, programId.getId(), entry.getValue().getController().getRunId());
-            return true;
-          }
+        if (programState == ProgramController.State.STOPPED || programState == ProgramController.State.ERROR) {
+          continue;
+        }
+        Id.Program programId = entry.getValue().getProgramId();
+        if (predicate.apply(programId)) {
+          LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
+                    programId.getApplicationId(), type, programId.getId(), entry.getValue().getController().getRunId());
+          return true;
         }
       }
     }
