@@ -36,9 +36,9 @@ The Wise application uses these Cask Data Application Platform (CDAP) constructs
 Running Wise
 ============
 Building and running Wise is straightforward. We'll assume that you have already downloaded, 
-installed, and have started an instance of CDAP. Download the *Wise* source code from::
+installed, and have started an instance of CDAP.
 
-  url
+Download: `Wise - Source code <https://github.com/caskdata/cdap-apps/tree/develop/Wise>`__
 
 Unzip the directory and build the application by executing::
 
@@ -229,7 +229,7 @@ a ``visits`` count and a ``bounces`` count.
 Ingesting Access Logs in Wise
 =============================
 CDAP has an easy way to ingest data in real time into an application, using **Streams**. A Stream exposes
-a simple `RESTful API <rest.html>`__ to ingest data events.
+a simple :ref:`REST API <rest-streams>` to ingest data events.
 
 .. highlight:: console
 
