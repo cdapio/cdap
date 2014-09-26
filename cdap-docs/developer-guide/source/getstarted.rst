@@ -31,7 +31,7 @@ in your development environment, either your laptop or a work station. It includ
 System Requirements and Dependencies
 ------------------------------------
 
-The CDAP SDK runs on Linux, Unix, MacOS and Windows, and only has three requirements:
+The CDAP SDK runs on Linux, MacOS and Windows, and only has three requirements:
 
 - `JDK 6 or JDK 7 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__ 
   (required to run CDAP; note that $JAVA_HOME should be set)
@@ -157,7 +157,8 @@ with the SDK. Let's take a look at one of these:
 Other Example Applications
 ==========================
 
-The SDK includes these examples:
+Congratulations on successfully building and running your first CDAP application.
+The SDK also includes these examples:
 
 .. list-table::
   :widths: 15 60
@@ -266,3 +267,13 @@ Stopping an Application
 .. include:: /_examples/purchase.rst
 .. include:: /_examples/sparkKMeans.rst
 .. include:: /_examples/sparkPageRank.rst
+
+What's Next
+===========
+
+You can learn more about developing data application using CDAP by:
+
+* Exploring the Web Analytics Application source code. It includes test cases that show unit-testing an
+  application.
+* Look at a CDAP case study: `Web Analytics using CDAP. <case_study.html>`__
+* For a detailed understanding of what CDAP is capable of, read our `Programming Guide. <dev-guide.html>`__

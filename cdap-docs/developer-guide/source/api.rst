@@ -138,7 +138,7 @@ Working with CDAP Security
 When working with a CDAP cluster with security enabled (``security.enabled=true`` in
 ``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
 obtain an access token from the authentication server (see the *Client Authentication* section of the
-Developer Guide `CDAP Security <security.html#client-authentication>`__).
+Developer Guide :ref:`CDAP Security. <security>`).
 In order to authenticate, all client requests must supply this access token in the
 ``Authorization`` header of the request::
 
@@ -448,14 +448,14 @@ Dataset HTTP API
 .. only:: html
 
   The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the 
-  `CDAP Developer Guide Advanced Features, Datasets section <advanced.html#datasets-system>`__
+  :ref:`CDAP Developer Guide Advanced Features, Datasets section <Datasets>`
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
   The Dataset API allows you to interact with Datasets through HTTP. You can list, create, delete, and truncate Datasets. For details, see the 
-  `CDAP Developer Guide Advanced Features, Datasets section <http://docs.cask.co/cdap/current/advanced.html#datasets-system>`__
+  :ref:`CDAP Developer Guide Advanced Features, Datasets section <Datasets>`
 
 
 Listing all Datasets
@@ -1445,13 +1445,13 @@ The response is formatted in JSON; an example of this is shown in the
 
 .. only:: html
 
-  `CDAP Testing and Debugging Guide <debugging.html#debugging-cdap-applications>`__.
+  :ref:`CDAP Testing and Debugging Guide. <TestFramework>`
 
 .. only:: pdf
 
 .. rst2pdf: CutStop
 
-  `CDAP Testing and Debugging Guide <http://docs.cask.co/cdap/current/debugging.html#debugging-cdap-applications>`__.
+  :ref:`CDAP Testing and Debugging Guide. <TestFramework>`
 
 
 Scale
@@ -1803,7 +1803,7 @@ etc.—and are thus called system or CDAP metrics.
 
    Other metrics are user-defined and differ from Application to Application. 
    For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-   the Developer Guide, `CDAP Operations Guide <operations.html>`__.
+   the Developer Guide, :ref:`CDAP Operations Guide. <admin>`
 
 .. only:: pdf
 
@@ -1811,7 +1811,7 @@ etc.—and are thus called system or CDAP metrics.
 
    Other metrics are user-defined and differ from Application to Application. 
    For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-   the Developer Guide, `CDAP Operations Guide <http://docs.cask.co/cdap/current/operations.html>`__.
+   the Developer Guide, :ref:`CDAP Operations Guide. <admin>`
 
 
 Metrics Requests
