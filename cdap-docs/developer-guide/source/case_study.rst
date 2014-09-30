@@ -115,7 +115,7 @@ For example, ``pageViewStore`` could contain the following entry::
   }
 
 ``pageViewStore`` uses a ``Table`` object to store this information. ``Table`` is a class provided by the CDAP
-system which has rows and columns. A row consists of a row key and one or more columns with values associated with
+system which exposes *rows*. A row consists of a row key and one or more columns with values associated with
 them. Two rows can have different sets of columns.
 Using the Java ``Map`` interface, a ``Table`` can be seen as being of type ``Map<byte[], Map<byte[], byte[]>>``.
 
@@ -201,8 +201,8 @@ Let's detail the API exposed by the ``bounceCountStore`` Dataset to store this i
     table.increment(new Increment(uri, COL_BOUNCES, bounces));
   }
 
-The ``increment()`` method adds to a web page the number of "visits" and "bounces", using the
-``Table.increment()`` method to do so.
+The ``increment()`` method modifies the counts of "visits" and "bounces" attached to a web page, by adding
+the number passed in parameters. It uses the  ``Table.increment()`` method to do so.
 
 To retrieve the number of "visits" and "bounces" for a particular web page, we define a ``get()`` method::
 
@@ -283,9 +283,9 @@ the IP address and the web page visited. Here is its implementation::
           output.emit(logInfo, "ip", logInfo.getIp().hashCode());
         }
       } catch (IOException e) {
-        LOG.info("Exception while processing log event {}", log, e);
+        LOG.warn("Exception while processing log event {}", log, e);
       } catch (ParseException e) {
-        LOG.info("Could not parse log event {}", log, e);
+        LOG.warn("Could not parse log event {}", log, e);
       }
     }
   }
@@ -427,8 +427,7 @@ In the ``BounceCountsMapReduce.configure()`` method seen earlier, the ``useOutpu
 ``bounceCountsStore`` Dataset as the output of the job.
 It means that the key/value pairs output by the reducer of the job will be directly written to that Dataset.
 
-To allow that, the ``bounceCountsStore`` Dataset has to implement the ``BatchWritable`` interface,
-and this is how we do it::
+To allow that, the ``bounceCountsStore`` Dataset has to implement the ``BatchWritable`` interface::
 
   public class BounceCountsStore extends AbstractDataset
     implements BatchWritable<Void, PageBounce>, ... {
