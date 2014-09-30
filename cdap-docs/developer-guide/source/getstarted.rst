@@ -43,76 +43,110 @@ The CDAP SDK runs on Linux, MacOS and Windows, and only has three requirements:
 Download and Setup
 ==================
 
-There are three ways to download the CDAP SDK: as a binary zip file, as a Virtual Machine image,
-or as a Docker image.
+There are three ways to download the CDAP SDK: 
 
-- The **zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
-  Once downloaded, unzip it to a directory on your machine::
+- as a `binary zip file`_;
+- as a `Virtual Machine image <#cdap-standalone-virtual-machine-image>`__; or 
+- as a `Docker image <#cdap-standalone-docker-image>`__.
+
+Binary Zip File
+---------------
+The **zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
+Once downloaded, unzip it to a directory on your machine::
 
     $ tar -zxvf cdap-sdk-2.5.0.zip
 
-- To use the **Virtual Machine image**:
+CDAP Standalone Virtual Machine Image
+-------------------------------------
 
-  + Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
-    `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
-  + Download the CDAP Standalone Virtual Machine (the .ova file) at `<http://cask.co/downloads>`__.
-  + Import the Virtual Machine into VirtualBox or VMWare Player.
-  + The CDAP Standalone Virtual Machine has been configured and setup so you can be productive immediately:
+An easy way to start experimenting with CDAP, to build your own project, and to follow the
+example applications provided, is to download the CDAP Standalone Virtual Machine. The
+following steps describe the CDAP Standalone Virtual Machine environment and how to set it up.
 
-    * CDAP VM is configured with 4GB Default RAM (recommended).
-    * The virtual machine has Ubuntu Desktop Linux installed as the operating system.
-    * No password is required to enter the virtual machine; however, should you need to install or
-      remove software, the admin user and password are both “cdap”.
-    * 10GB of disk space is available for you to build your first CDAP project.
-    * Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
-    * The CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0``.
-    * The Standalone CDAP will automatically start when the virtual machine starts.
-    * The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console
-      (http://localhost:9999). You're welcome to install your favorite browser.
-    * Maven is installed and configured to work for CDAP.
-    * The Java JDK and Node JS are both installed.
+To use the **Virtual Machine image**:
 
++ Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
+  `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
++ Download the CDAP Standalone Virtual Machine (the .ova file) at `<http://cask.co/downloads>`__.
++ Import the Virtual Machine into VirtualBox or VMWare Player.
++ The CDAP Standalone Virtual Machine has been configured and setup so you can be productive immediately:
 
-- To use the **Docker image**:
-
-  + Download and install Docker in your environment following the instructions at 
-    `Docker.com. <https://docker.com>`__
-  + Start Docker using::
-
-      boot2docker start
-      
-  + Pull down the *CDAP Docker Image* from the Docker hub using::
-  
-      docker pull caskdata/cdap-standalone
-      
-  + Identify the Docker Virtual Machine's Host Interface IP address
-    (this address will be used in a later step) with::
+  * CDAP VM is configured with 4GB Default RAM (recommended).
+  * The virtual machine has Ubuntu Desktop Linux installed as the operating system.
+  * No password is required to enter the virtual machine; however, should you need to install or
+    remove software, the admin user and password are both “cdap”:
     
-      boot2docker ip
-      
-  + Start the *Docker CDAP VM* with::
+    - Username: ``cdap``
+    - Password: ``cdap``
+    
+  * 10GB of disk space is available for you to build your first CDAP project.
+  * Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
+  * The Standalone CDAP will automatically start when the virtual machine starts.
+  * The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console
+    (http://localhost:9999). You're welcome to install your favorite browser.
+  * Maven is installed and configured to work for CDAP.
+  * The Java JDK and Node JS are both installed.
+  * The CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0``.
+  * The commands for starting and stopping the Standalone CDAP are 
+    `listed below. <#starting-and-stopping-the-standalone-cdap>`__
+
+CDAP Standalone Docker Image
+-----------------------------
+
+An alternative, and also easy way, to start immediately experimenting with CDAP, is to download from
+Docker Hub a complete image with CDAP pre­installed.
+
+To use the **Docker image**:
+
++ Docker is available for a variety of platforms. Download and install Docker in your environment by
+  following the `installation instructions <https://docs.docker.com/installation>`__
+  from `Docker.com. <https://docker.com>`__
+
+  Note: Follow your platform-specific installation instructions to verify that Docker is working and has
+  started correctly. For Mac OS X and Microsoft Windows, these are at:
+
+  * `Mac OS X Docker Installation <https://docs.docker.com/installation/mac/>`__
+  * `Microsoft Windows Docker Installation <https://docs.docker.com/installation/windows/>`__
+
+  Additional installation instructions for other platforms `are available.
+  <https://docs.docker.com/installation>`__
+
++ Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
+
+    docker pull caskdata/cdap-standalone
+    
++ Identify the Docker Virtual Machine's Host Interface IP address
+  (this address will be used in a later step) with::
   
-      docker run -t -i -p 9999:9999 caskdata/cdap-standalone
-      
-  + Once you enter the *Docker CDAP VM*, you can start CDAP with these commands::
-  
-      $ cd cdap-sdk-2.5.0 
-      $ ./bin/cdap.sh start 
-      
-  + Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
-    at http://host-ip:9999, replacing *host-ip* with the IP address you obtained earlier.
+    boot2docker ip
+    
++ Start the *Docker CDAP VM* with::
 
-  + Start a browser and enter the address to access the CDAP Console.
-  + It is recommended that you have our usually-recommended software and tools already installed
-    in your environment, in order to begin building CDAP applications:
+    docker run -t -i -p 9999:9999 caskdata/cdap-standalone
+    
++ Once you enter the *Docker CDAP VM*, you start Standalone CDAP with these commands::
 
-    * An IDE such as IntelliJ or Eclipse IDE
-    * Apache Maven 3.0+
-    * Java JDK
+    $ cd cdap-sdk-2.5.0 
+    $ ./bin/cdap.sh start 
+    
++ Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
+  at ``http://host-ip:9999``, replacing *host-ip* with the IP address you obtained earlier.
 
++ Start a browser and enter the address to access the CDAP Console.
++ The commands for starting and stopping the Standalone CDAP are 
+  `listed below. <#starting-and-stopping-the-standalone-cdap>`__
++ It is recommended that you have our usually recommended software and tools already installed
+  in your environment, in order to begin building CDAP applications:
 
-Starting the Standalone CDAP
-----------------------------
+  * An IDE such as IntelliJ or Eclipse IDE
+  * Apache Maven 3.0+
+  * Java JDK
+
++ For a full list of Docker Commands, see the `Docker Command Line Documentation.
+  <https://docs.docker.com/reference/commandline/cli/>`__
+
+Starting and Stopping the Standalone CDAP
+-----------------------------------------
 
 Use the ``cdap.sh`` script to start and stop the Standalone CDAP::
 
@@ -150,7 +184,7 @@ Before you start developing your own applications, it is recommended that you fa
 APIs and concepts of CDAP as well as the CDAP Console using the example applications that are provided
 with the SDK. Let's take a look at one of these:
 
-.. include:: /_examples/first-app.rst
+.. include:: _examples/first-app.rst
 
 .. _examples:
 
@@ -261,12 +295,12 @@ Stopping an Application
   - Linux: ``$./bin/app-manager.sh --action stop``
   - Windows: ``>bin\app-manager.bat stop``
 
-.. include:: /_examples/helloworld.rst
-.. include:: /_examples/wordcount.rst
-.. include:: /_examples/countrandom.rst
-.. include:: /_examples/purchase.rst
-.. include:: /_examples/sparkKMeans.rst
-.. include:: /_examples/sparkPageRank.rst
+.. include:: _examples/helloworld.rst
+.. include:: _examples/wordcount.rst
+.. include:: _examples/countrandom.rst
+.. include:: _examples/purchase.rst
+.. include:: _examples/sparkKMeans.rst
+.. include:: _examples/sparkPageRank.rst
 
 What's Next
 ===========
