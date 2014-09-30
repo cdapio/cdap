@@ -49,9 +49,15 @@ There are three ways to download the CDAP SDK:
 - as a `Virtual Machine image <#cdap-standalone-virtual-machine-image>`__; or 
 - as a `Docker image <#cdap-standalone-docker-image>`__.
 
+An easy way to start experimenting with CDAP, to build your own project, and to follow the
+example applications provided, is to download either the CDAP Standalone Virtual Machine or use
+the Docker image.
+
 Binary Zip File
 ---------------
 The **zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
+Click the link marked "SDK" of the *Software Development Kit (SDK).* 
+
 Once downloaded, unzip it to a directory on your machine::
 
     $ tar -zxvf cdap-sdk-2.5.0.zip
@@ -59,31 +65,25 @@ Once downloaded, unzip it to a directory on your machine::
 CDAP Standalone Virtual Machine Image
 -------------------------------------
 
-An easy way to start experimenting with CDAP, to build your own project, and to follow the
-example applications provided, is to download the CDAP Standalone Virtual Machine. The
-following steps describe the CDAP Standalone Virtual Machine environment and how to set it up.
+These steps describe the CDAP Standalone Virtual Machine environment and how to set it up.
 
 To use the **Virtual Machine image**:
 
 + Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
   `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
-+ Download the CDAP Standalone Virtual Machine (the .ova file) at `<http://cask.co/downloads>`__.
-+ Import the Virtual Machine into VirtualBox or VMWare Player.
++ Download the CDAP Standalone Virtual Machine (*Standalone VM*) at `<http://cask.co/downloads>`__.
++ Import the downloaded ``.ova`` file into either the VirtualBox or VMWare Player.
 + The CDAP Standalone Virtual Machine has been configured and setup so you can be productive immediately:
 
   * CDAP VM is configured with 4GB Default RAM (recommended).
   * The virtual machine has Ubuntu Desktop Linux installed as the operating system.
   * No password is required to enter the virtual machine; however, should you need to install or
-    remove software, the admin user and password are both “cdap”:
-    
-    - Username: ``cdap``
-    - Password: ``cdap``
-    
+    remove software, the admin user and password are both ``cdap``.
   * 10GB of disk space is available for you to build your first CDAP project.
   * Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
   * The Standalone CDAP will automatically start when the virtual machine starts.
   * The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console
-    (http://localhost:9999). You're welcome to install your favorite browser.
+    (http://localhost:9999).
   * Maven is installed and configured to work for CDAP.
   * The Java JDK and Node JS are both installed.
   * The CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0``.
@@ -93,8 +93,7 @@ To use the **Virtual Machine image**:
 CDAP Standalone Docker Image
 -----------------------------
 
-An alternative, and also easy way, to start immediately experimenting with CDAP, is to download from
-Docker Hub a complete image with CDAP pre­installed.
+Another alternative is to download from Docker Hub a complete image with CDAP pre­installed.
 
 To use the **Docker image**:
 
@@ -124,7 +123,7 @@ To use the **Docker image**:
 
     docker run -t -i -p 9999:9999 caskdata/cdap-standalone
     
-+ Once you enter the *Docker CDAP VM*, you start Standalone CDAP with these commands::
++ Once you enter the *Docker CDAP VM*, you start the Standalone CDAP with these commands::
 
     $ cd /cdap-sdk-2.5.0 
     $ ./bin/cdap.sh start 
