@@ -126,7 +126,7 @@ To use the **Docker image**:
     
 + Once you enter the *Docker CDAP VM*, you start Standalone CDAP with these commands::
 
-    $ cd cdap-sdk-2.5.0 
+    $ cd /cdap-sdk-2.5.0 
     $ ./bin/cdap.sh start 
     
 + Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
