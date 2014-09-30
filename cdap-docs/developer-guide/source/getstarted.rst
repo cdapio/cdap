@@ -85,7 +85,7 @@ To use the **Virtual Machine image**:
   * The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console
     (http://localhost:9999).
   * Maven is installed and configured to work for CDAP.
-  * The Java JDK and Node JS are both installed.
+  * Java JDK 7 and Node.js are both installed.
   * The CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0``.
   * The commands for starting and stopping the Standalone CDAP are 
     `listed below. <#starting-and-stopping-the-standalone-cdap>`__
@@ -98,11 +98,11 @@ Another alternative is to download from Docker Hub a complete image with CDAP pr
 To use the **Docker image**:
 
 + Docker is available for a variety of platforms. Download and install Docker in your environment by
-  following the `installation instructions <https://docs.docker.com/installation>`__
-  from `Docker.com. <https://docker.com>`__
-
-  Note: Follow your platform-specific installation instructions to verify that Docker is working and has
-  started correctly. For Mac OS X and Microsoft Windows, these are at:
+  following the `platform-specific installation instructions <https://docs.docker.com/installation>`__
+  from `Docker.com <https://docker.com>`__ to verify that Docker is working and has
+  started correctly. 
+  
+  For Mac OS X and Microsoft Windows, these are at:
 
   * `Mac OS X Docker Installation <https://docs.docker.com/installation/mac/>`__
   * `Microsoft Windows Docker Installation <https://docs.docker.com/installation/windows/>`__
@@ -123,23 +123,9 @@ To use the **Docker image**:
 
     docker run -t -i -p 9999:9999 caskdata/cdap-standalone
     
-+ Once you enter the *Docker CDAP VM*, you start the Standalone CDAP with these commands::
++ Once you enter the *Docker CDAP VM*, the Standalone CDAP SDK is located in the root directory::
 
-    $ cd /cdap-sdk-2.5.0 
-    $ ./bin/cdap.sh start 
-    
-+ Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
-  at ``http://host-ip:9999``, replacing *host-ip* with the IP address you obtained earlier.
-
-+ Start a browser and enter the address to access the CDAP Console.
-+ The commands for starting and stopping the Standalone CDAP are 
-  `listed below. <#starting-and-stopping-the-standalone-cdap>`__
-+ It is recommended that you have our usually recommended software and tools already installed
-  in your environment, in order to begin building CDAP applications:
-
-  * An IDE such as IntelliJ or Eclipse IDE
-  * Apache Maven 3.0+
-  * Java JDK
+    $ cd /cdap-sdk-2.5.0
 
 + For a full list of Docker Commands, see the `Docker Command Line Documentation.
   <https://docs.docker.com/reference/commandline/cli/>`__
@@ -147,7 +133,8 @@ To use the **Docker image**:
 Starting and Stopping the Standalone CDAP
 -----------------------------------------
 
-Use the ``cdap.sh`` script to start and stop the Standalone CDAP::
+Use the ``cdap.sh`` script to start and stop the Standalone CDAP 
+(the location will vary depending on where the CDAP SDK is installed)::
 
   $ cd cdap-sdk-2.5.0
   $ ./bin/cdap.sh start
@@ -158,7 +145,8 @@ Or, if you are using Windows, use the batch script ``cdap.bat`` to start and sto
 
 Once CDAP is started successfully, in a web browser you will be able to see the CDAP
 Console running at ``localhost:9999``, where you can deploy example applications and
-interact with CDAP.
+interact with CDAP. Note that in the case of the Docker image, you will need to substitute 
+the host interface IP address for ``localhost`` in the web browser address bar.
 
 Creating an Application
 =======================
