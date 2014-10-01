@@ -15,15 +15,18 @@
  */
 package co.cask.cdap.common.http;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Multimap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.InputSupplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -58,9 +61,10 @@ public final class HttpRequests {
    *
    * @param request HTTP request to execute
    * @param requestConfig configuration for the HTTP request to execute
-   * @return HTTP response
+   * @param responseHandler handles the HTTP response
    */
-  public static HttpResponse execute(HttpRequest request, HttpRequestConfig requestConfig) throws IOException {
+  public static <T> T execute(HttpRequest request, HttpRequestConfig requestConfig,
+                              HttpResponseHandler<T> responseHandler) throws Exception {
     String requestMethod = request.getMethod().name();
     URL url = request.getURL();
 
@@ -105,8 +109,8 @@ public final class HttpRequests {
 
       try {
         if (isSuccessful(conn.getResponseCode())) {
-          return new HttpResponse(conn.getResponseCode(), conn.getResponseMessage(),
-                                  ByteStreams.toByteArray(conn.getInputStream()));
+          return responseHandler.handleResponse(conn.getResponseCode(), conn.getResponseMessage(),
+                                                conn.getInputStream());
         }
       } catch (FileNotFoundException e) {
         // Server returns 404. Hence handle as error flow below. Intentional having empty catch block.
@@ -114,10 +118,42 @@ public final class HttpRequests {
 
       // Non 2xx response
       InputStream es = conn.getErrorStream();
-      byte[] content = (es == null) ? new byte[0] : ByteStreams.toByteArray(es);
-      return new HttpResponse(conn.getResponseCode(), conn.getResponseMessage(), content);
+      return responseHandler.handleResponse(conn.getResponseCode(), conn.getResponseMessage(), es);
     } finally {
       conn.disconnect();
+    }
+  }
+
+  /**
+   * Executes an HTTP request to the url provided.
+   *
+   * @param request HTTP request to execute
+   * @param responseHandler handles the HTTP response
+   */
+  public static <T> T execute(HttpRequest request, HttpResponseHandler<T> responseHandler) throws Exception {
+    return execute(request, HttpRequestConfig.DEFAULT, responseHandler);
+  }
+
+  /**
+   * Executes an HTTP request to the url provided.
+   *
+   * @param request HTTP request to execute
+   * @param requestConfig configuration for the HTTP request to execute
+   * @return HTTP response
+   */
+  public static HttpResponse execute(HttpRequest request, HttpRequestConfig requestConfig) throws IOException {
+    try {
+      return execute(request, requestConfig, new HttpResponseHandler<HttpResponse>() {
+        @Override
+        public HttpResponse handleResponse(int code, String message, InputStream content) throws Exception {
+          return new HttpResponse(code, message, ByteStreams.toByteArray(content));
+        }
+      });
+    } catch (IOException e) {
+      throw e;
+    } catch (Exception e) {
+      // Shouldn't happen since handleResponse will only throw IOException
+      throw new IllegalStateException(e);
     }
   }
 
@@ -136,7 +172,7 @@ public final class HttpRequests {
     return 200 <= responseCode && responseCode < 300;
   }
 
-  public static void disableCertCheck(HttpsURLConnection conn)
+  private static void disableCertCheck(HttpsURLConnection conn)
     throws NoSuchAlgorithmException, KeyManagementException {
     if (TRUST_ALL_SSL_FACTORY.get() == null) {
       SSLContext sslContext = SSLContext.getInstance("SSL");

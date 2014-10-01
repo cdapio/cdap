@@ -26,6 +26,7 @@ import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
+import co.cask.cdap.common.http.HttpResponseHandler;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.proto.StreamProperties;
@@ -39,8 +40,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
+import com.sun.istack.internal.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -216,44 +219,45 @@ public class StreamClient {
    * @throws IOException If fails to read from stream
    * @throws StreamNotFoundException If the given stream does not exists
    */
-  public void getEvents(String streamId, long startTime, long endTime, int limit,
-                        Function<? super StreamEvent, Boolean> callback) throws IOException, StreamNotFoundException {
+  public void getEvents(final String streamId, long startTime, long endTime, int limit,
+                        final Function<? super StreamEvent, Boolean> callback)
+    throws IOException, StreamNotFoundException {
+
     URL url = config.resolveURL(String.format("streams/%s/events?start=%d&end=%d&limit=%d",
                                               streamId, startTime, endTime, limit));
-    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-    AccessToken accessToken = config.getAccessToken();
-    if (accessToken != null) {
-      urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
-    }
-
-    if (urlConn instanceof HttpsURLConnection && !config.getDefaultConfig().isVerifySSLCert()) {
-      try {
-        HttpRequests.disableCertCheck((HttpsURLConnection) urlConn);
-      } catch (Exception e) {
-        // TODO: Log "Got exception while disabling SSL certificate check for request.getURL()"
-      }
-    }
+    HttpRequest request = HttpRequest.get(url).build();
 
     try {
-      if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-        throw new StreamNotFoundException(streamId);
-      }
-      if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NO_CONTENT) {
-        return;
-      }
+      HttpRequests.execute(request, new HttpResponseHandler<Void>() {
+        @Override
+        public Void handleResponse(int code, String message, @Nullable InputStream content) throws Exception {
+          if (code == HttpURLConnection.HTTP_NOT_FOUND) {
+            throw new StreamNotFoundException(streamId);
+          }
+          if (code == HttpURLConnection.HTTP_NO_CONTENT || content == null) {
+            return null;
+          }
 
-      // The response is an array of stream event object
-      JsonReader jsonReader = new JsonReader(new InputStreamReader(urlConn.getInputStream(), Charsets.UTF_8));
-      jsonReader.beginArray();
-      while (jsonReader.peek() != JsonToken.END_ARRAY) {
-        Boolean result = callback.apply(GSON.<StreamEvent>fromJson(jsonReader, StreamEvent.class));
-        if (result == null || !result) {
-          break;
+          // The response is an array of stream event object
+          JsonReader jsonReader = new JsonReader(new InputStreamReader(content, Charsets.UTF_8));
+          jsonReader.beginArray();
+          while (jsonReader.peek() != JsonToken.END_ARRAY) {
+            Boolean result = callback.apply(GSON.<StreamEvent>fromJson(jsonReader, StreamEvent.class));
+            if (result == null || !result) {
+              break;
+            }
+          }
+
+          return null;
         }
-      }
-      // No need to close reader, the urlConn.disconnect in finally will close all underlying streams
-    } finally {
-      urlConn.disconnect();
+      });
+    } catch (StreamNotFoundException e) {
+      throw e;
+    } catch (IOException e) {
+      throw e;
+    } catch (Exception e) {
+      // Shouldn't happen
+      throw new IllegalStateException(e);
     }
   }
 
