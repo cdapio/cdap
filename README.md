@@ -112,7 +112,7 @@ CDAP User Group and Development Discussions:
 
 ### IRC Channel
 
-CDAP IRC Channel #cask-cdap on irc.freenode.net
+CDAP IRC Channel: #cdap on irc.freenode.net
 
 
 ## License and Trademarks
