@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Default implementation of {@link ServiceWorkerSpecification}
@@ -32,26 +32,23 @@ public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecifica
   private final String name;
   private final String description;
   private final Map<String, String> properties;
+  private final Set<String> datasets;
   private final Resources resources;
+  private final int instances;
 
   /**
    * Create a new instance of ServiceWorkerSpecification.
-   * @param serviceWorker for a Service.
-   * @param name of worker.
-   * @param description of worker.
-   * @param properties of worker.
    */
-  public DefaultServiceWorkerSpecification(ServiceWorker serviceWorker, String name, String description,
-                                           Map<String, String> properties,
-                                           Resources resources) {
-    this.className = serviceWorker.getClass().getName();
+  public DefaultServiceWorkerSpecification(String className, String name, String description,
+                                           Map<String, String> properties, Set<String> datasets,
+                                           Resources resources, int instances) {
+    this.className = className;
     this.name = name;
     this.description = description;
     this.properties = ImmutableMap.copyOf(properties);
+    this.datasets = ImmutableSet.copyOf(datasets);
     this.resources = resources;
-
-    Reflections.visit(serviceWorker, TypeToken.of(serviceWorker.getClass()),
-                                      new PropertyFieldExtractor(this.properties));
+    this.instances = instances;
   }
 
   @Override
@@ -82,5 +79,15 @@ public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecifica
   @Override
   public Resources getResources() {
     return resources;
+  }
+
+  @Override
+  public Set<String> getDatasets() {
+    return datasets;
+  }
+
+  @Override
+  public int getInstances() {
+    return instances;
   }
 }

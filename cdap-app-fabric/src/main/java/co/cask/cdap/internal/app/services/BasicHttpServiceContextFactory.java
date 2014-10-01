@@ -14,10 +14,19 @@
  * the License.
  */
 
-/**
- * This package contains internal classes for supporting the CDAP API.
- * <p>
- * These should not be used directly by users of the CDAP API, as they may change in a later release without warning.
- * </p>
- */
 package co.cask.cdap.internal.app.services;
+
+import co.cask.cdap.api.service.http.HttpServiceContext;
+import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
+
+/**
+ * Factory for creating {@link BasicHttpServiceContext}.
+ */
+public interface BasicHttpServiceContextFactory {
+
+  /**
+   * Creates a new instance of {@link BasicHttpServiceContext} with the given spec.
+   */
+  BasicHttpServiceContext create(HttpServiceSpecification spec);
+}

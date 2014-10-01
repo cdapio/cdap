@@ -27,9 +27,7 @@ public final class ProgramOptionConstants {
 
   public static final String INSTANCES = "instances";
 
-  public static final String FLOWLET_INSTANCES = "flowletInstances";
-
-  public static final String RUNNABLE_INSTANCES = "serviceRunnableInstances";
+  public static final String HOST = "host";
 
   public static final String LOGICAL_START_TIME = "logicalStartTime";
 

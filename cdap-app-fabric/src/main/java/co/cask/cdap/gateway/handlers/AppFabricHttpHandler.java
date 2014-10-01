@@ -26,6 +26,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -114,7 +115,6 @@ import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.RunId;
-import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -142,13 +142,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -1070,8 +1069,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       if (args == null) {
         return;
       }
-      for (int i = 0; i < args.size(); ++i) {
-        BatchEndpointInstances requestedObj = (BatchEndpointInstances) args.get(i);
+      for (BatchEndpointInstances requestedObj : args) {
         String appId = requestedObj.getAppId();
         String programTypeStr = requestedObj.getProgramType();
         String programId = requestedObj.getProgramId();
@@ -1082,62 +1080,72 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "App: " + appId + " not found");
           continue;
         }
+
         ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
+
+        // cant get instances for things that are not flows, services, or procedures
+        if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType)) {
+          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
+                       "Program type: " + programType + " is not a valid program type to get instances");
+          continue;
+        }
+
         String runnableId;
         if (programType == ProgramType.PROCEDURE) {
           // the "runnable" for procedures has the same id as the procedure name
           runnableId = programId;
-          if (spec.getProcedures().containsKey(programId)) {
-            requested = store.getProcedureInstances(Id.Program.from(accountId, appId, programId));
-          } else {
+          if (!spec.getProcedures().containsKey(programId)) {
             addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
                          "Procedure: " + programId + " not found");
             continue;
           }
+          requested = store.getProcedureInstances(Id.Program.from(accountId, appId, programId));
+
         } else {
-          // cant get instances for things that are not flows, services, or procedures
-          if (programType != ProgramType.FLOW && programType != ProgramType.SERVICE) {
-            addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                         "Program type: " + programType + " is not a valid program type to get instances");
-            continue;
-          }
           // services and flows must have runnable id
           if (requestedObj.getRunnableId() == null) {
-            responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Must provide a string runnableId for flows/services");
-            return;
+            addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
+                         "Must provide a string runnableId for flows/services");
+            continue;
           }
+
           runnableId = requestedObj.getRunnableId();
           if (programType == ProgramType.FLOW) {
             FlowSpecification flowSpec = spec.getFlows().get(programId);
-            if (flowSpec != null) {
-              Map<String, FlowletDefinition> flowletSpecs = flowSpec.getFlowlets();
-              if (flowletSpecs != null && flowletSpecs.containsKey(runnableId)) {
-                requested = flowletSpecs.get(runnableId).getInstances();
-              } else {
-                addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                             "Flowlet: " + runnableId + " not found");
-                continue;
-              }
-            } else {
+            if (flowSpec == null) {
               addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "Flow: " + programId + " not found");
               continue;
             }
-          } else {
+
+            FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
+            if (flowletDefinition == null) {
+              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                           "Flowlet: " + runnableId + " not found");
+              continue;
+            }
+            requested = flowletDefinition.getInstances();
+
+         } else {
             // Services
             ServiceSpecification serviceSpec = spec.getServices().get(programId);
-            if (serviceSpec != null) {
-              Map<String, RuntimeSpecification> runtimeSpecs = serviceSpec.getRunnables();
-              if (runtimeSpecs != null && runtimeSpecs.containsKey(runnableId)) {
-                requested = runtimeSpecs.get(runnableId).getResourceSpecification().getInstances();
-              } else {
+            if (serviceSpec == null) {
+              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                           "Service: " + programId + " not found");
+              continue;
+            }
+
+            if (serviceSpec.getName().equals(runnableId)) {
+              // If runnable name is the same as the service name, returns the service http server instances
+              requested = serviceSpec.getInstances();
+            } else {
+              // Otherwise, get it from the worker
+              ServiceWorkerSpecification workerSpec = serviceSpec.getWorkers().get(runnableId);
+              if (workerSpec == null) {
                 addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
                              "Runnable: " + runnableId + " not found");
                 continue;
               }
-            } else {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                           "Service: " + programId + " not found");
-              continue;
+              requested = workerSpec.getInstances();
             }
           }
         }
@@ -1350,7 +1358,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         store.setFlowletInstances(programID, flowletId, instances);
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, ProgramType.FLOW);
         if (runtimeInfo != null) {
-          runtimeInfo.getController().command(ProgramOptionConstants.FLOWLET_INSTANCES,
+          runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                               ImmutableMap.of("flowlet", flowletId,
                                                               "newInstances", String.valueOf(instances),
                                                               "oldInstances", String.valueOf(oldInstances))).get();

@@ -17,6 +17,7 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.annotation.Handle;
+import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
@@ -29,12 +30,15 @@ import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.AbstractServiceWorker;
+import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.base.Throwables;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -61,7 +65,7 @@ public class AppWithServices extends AbstractApplication {
       setName("AppWithServices");
       addStream(new Stream("text"));
       addProcedure(new NoOpProcedure());
-      addService(SERVICE_NAME, new ServerService());
+      addService(new BasicService(SERVICE_NAME, new ServerService()));
       addService(new DatasetUpdateService());
       addService(new TransactionalHandlerService());
       createDataset(DATASET_NAME, KeyValueTable.class);
@@ -134,8 +138,7 @@ public class AppWithServices extends AbstractApplication {
     protected void configure() {
       setName(DATASET_WORKER_SERVICE_NAME);
       addHandler(new NoOpHandler());
-      addWorker(new DatasetUpdateWorker());
-      useDataset(DATASET_NAME);
+      addWorker("updater", new DatasetUpdateWorker(DATASET_NAME));
     }
 
     private static final class NoOpHandler extends AbstractHttpServiceHandler {
@@ -143,7 +146,24 @@ public class AppWithServices extends AbstractApplication {
     }
 
     private static final class DatasetUpdateWorker extends AbstractServiceWorker {
+
       private volatile boolean workerStopped = false;
+
+      @Property
+      private long sleepMs = 1000;
+
+      private String dataset;
+
+      public DatasetUpdateWorker(String dataset) {
+        // Remember the dataset name so that it can set in configure time.
+        // It's done like this to test the @Property is working.
+        this.dataset = dataset;
+      }
+
+      @Override
+      protected void configure() {
+        useDatasets(dataset);
+      }
 
       @Override
       public void stop() {
@@ -159,15 +179,20 @@ public class AppWithServices extends AbstractApplication {
 
       @Override
       public void run() {
-        // Run this loop till stop is called.
-        while (!workerStopped) {
-          getContext().execute(new TxRunnable() {
-            @Override
-            public void run(DataSetContext context) throws Exception {
-              KeyValueTable table = context.getDataSet(DATASET_NAME);
-              table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
-            }
-          });
+        try {
+          // Run this loop till stop is called.
+          while (!workerStopped) {
+            getContext().execute(new TxRunnable() {
+              @Override
+              public void run(DataSetContext context) throws Exception {
+                KeyValueTable table = context.getDataSet(DATASET_NAME);
+                table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
+              }
+            });
+            TimeUnit.MILLISECONDS.sleep(sleepMs);
+          }
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
         }
       }
     }
