@@ -49,15 +49,12 @@ There are three ways to download the CDAP SDK:
 - as a `Virtual Machine image <#cdap-standalone-virtual-machine-image>`__; or 
 - as a `Docker image <#cdap-standalone-docker-image>`__.
 
-An easy way to start experimenting with CDAP, to build your own project, and to follow the
-example applications provided, is to download either the CDAP Standalone Virtual Machine or use
-the Docker image.
-
-If you have a development environment already setup, the zip file is your easiest solution.
+If you already have a development environment setup, the zip file is your easiest solution.
 
 If you don't have a development environment, the Virtual Machine offers a pre-configured
 environment with CDAP pre-installed and that automatically starts applications so that you
-can be productive immediately.
+can be productive immediately. You can build your own projects or follow the provided
+example applications.
 
 The Docker image is intended for those developing on Linux.
 
