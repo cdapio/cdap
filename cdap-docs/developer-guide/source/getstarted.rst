@@ -53,6 +53,14 @@ An easy way to start experimenting with CDAP, to build your own project, and to 
 example applications provided, is to download either the CDAP Standalone Virtual Machine or use
 the Docker image.
 
+If you have a development environment already setup, the zip file is your easiest solution.
+
+If you don't have a development environment, the Virtual Machine offers a pre-configured
+environment with CDAP pre-installed and that automatically starts applications so that you
+can be productive immediately.
+
+The Docker image is intended for those developing on Linux.
+
 Binary Zip File
 ---------------
 The **zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
@@ -65,53 +73,45 @@ Once downloaded, unzip it to a directory on your machine::
 CDAP Standalone Virtual Machine Image
 -------------------------------------
 
-These steps describe the CDAP Standalone Virtual Machine environment, which is 
-pre-configured and setup so that you can be productive immediately.
-
 To use the **Virtual Machine image**:
 
 - Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
   `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
 - Download the CDAP Standalone Virtual Machine (*Standalone VM*) at `<http://cask.co/downloads>`__.
 - Import the downloaded ``.ova`` file into either the VirtualBox or VMWare Player.
-- The CDAP Standalone Virtual Machine has been setup so you can begin immediately:
 
-  * CDAP VM is configured with 4GB Default RAM (recommended).
-  * The virtual machine has Ubuntu Desktop Linux installed as the operating system.
-  * No password is required to enter the virtual machine; however, should you need to install or
-    remove software, the admin user and password are both ``cdap``.
-  * 10GB of disk space is available for you to build your first CDAP project.
-  * Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
-  * The Standalone CDAP will automatically start when the virtual machine starts.
-  * The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console
-    (http://localhost:9999).
-  * Maven is installed and configured to work for CDAP.
-  * Java JDK 7 and Node.js are both installed.
-  * The CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0``.
-  * Instructions for starting and stopping the Standalone CDAP are 
-    `listed below. <#starting-and-stopping-the-standalone-cdap>`__
+The CDAP Standalone Virtual Machine is configured with the recommended settings for CDAP:
+
+- 4 GB of RAM
+- Ubuntu Desktop Linux
+- 10 GB of disk space
+
+It has pre-installed all the software that you need to run and develop CDAP applications:
+
+- Java JDK 7 and Node.js are both installed.
+- Maven is installed and configured to work for CDAP.
+- The Standalone CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0`` and will
+  automatically start when the virtual machine starts.
+- Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
+- The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console,
+  ``http://localhost:9999``.
+
+No password is required to enter the virtual machine; however, should you need to install or
+remove software, the admin user and password are both ``cdap``.
 
 CDAP Standalone Docker Image
 -----------------------------
 
-Another alternative is to download from Docker Hub an image with CDAP pre­installed.
+A Docker image with CDAP pre-installed is available on the Docker Hub for download.
 Note that the current Docker image has limited functionality: you can connect to the 
-CDAP Console, however the REST API is not reachable. This will be addressed in a future update.
+CDAP Console; however, the REST API is not reachable. This will be addressed in a future update.
 
 To use the **Docker image**:
 
 - Docker is available for a variety of platforms. Download and install Docker in your environment by
   following the `platform-specific installation instructions <https://docs.docker.com/installation>`__
   from `Docker.com <https://docker.com>`__ to verify that Docker is working and has
-  started correctly. 
-  
-  For Mac OS X and Microsoft Windows, these are at:
-
-  * `Mac OS X Docker Installation <https://docs.docker.com/installation/mac/>`__
-  * `Microsoft Windows Docker Installation <https://docs.docker.com/installation/windows/>`__
-
-  Additional installation instructions for other platforms `are available.
-  <https://docs.docker.com/installation>`__
+  started correctly.
 
 - Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
 
@@ -132,9 +132,6 @@ To use the **Docker image**:
 
 - For a full list of Docker Commands, see the `Docker Command Line Documentation.
   <https://docs.docker.com/reference/commandline/cli/>`__
-  
-- Instructions for starting and stopping the Standalone CDAP are 
-  `listed below. <#starting-and-stopping-the-standalone-cdap>`__
 
 Starting and Stopping the Standalone CDAP
 -----------------------------------------
@@ -185,7 +182,7 @@ Other Example Applications
 ==========================
 
 Congratulations on successfully building and running your first CDAP application.
-The SDK also includes these examples:
+The SDK includes these additional examples:
 
 .. list-table::
   :widths: 15 60
