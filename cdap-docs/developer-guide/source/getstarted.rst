@@ -65,15 +65,16 @@ Once downloaded, unzip it to a directory on your machine::
 CDAP Standalone Virtual Machine Image
 -------------------------------------
 
-These steps describe the CDAP Standalone Virtual Machine environment and how to set it up.
+These steps describe the CDAP Standalone Virtual Machine environment, which is 
+pre-configured and setup so that you can be productive immediately.
 
 To use the **Virtual Machine image**:
 
-+ Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
+- Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
   `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
-+ Download the CDAP Standalone Virtual Machine (*Standalone VM*) at `<http://cask.co/downloads>`__.
-+ Import the downloaded ``.ova`` file into either the VirtualBox or VMWare Player.
-+ The CDAP Standalone Virtual Machine has been configured and setup so you can be productive immediately:
+- Download the CDAP Standalone Virtual Machine (*Standalone VM*) at `<http://cask.co/downloads>`__.
+- Import the downloaded ``.ova`` file into either the VirtualBox or VMWare Player.
+- The CDAP Standalone Virtual Machine has been setup so you can begin immediately:
 
   * CDAP VM is configured with 4GB Default RAM (recommended).
   * The virtual machine has Ubuntu Desktop Linux installed as the operating system.
@@ -87,17 +88,19 @@ To use the **Virtual Machine image**:
   * Maven is installed and configured to work for CDAP.
   * Java JDK 7 and Node.js are both installed.
   * The CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0``.
-  * The commands for starting and stopping the Standalone CDAP are 
+  * Instructions for starting and stopping the Standalone CDAP are 
     `listed below. <#starting-and-stopping-the-standalone-cdap>`__
 
 CDAP Standalone Docker Image
 -----------------------------
 
-Another alternative is to download from Docker Hub a complete image with CDAP pre­installed.
+Another alternative is to download from Docker Hub an image with CDAP pre­installed.
+Note that the current Docker image has limited functionality: you can connect to the 
+CDAP Console, however the REST API is not reachable. This will be addressed in a future update.
 
 To use the **Docker image**:
 
-+ Docker is available for a variety of platforms. Download and install Docker in your environment by
+- Docker is available for a variety of platforms. Download and install Docker in your environment by
   following the `platform-specific installation instructions <https://docs.docker.com/installation>`__
   from `Docker.com <https://docker.com>`__ to verify that Docker is working and has
   started correctly. 
@@ -110,25 +113,28 @@ To use the **Docker image**:
   Additional installation instructions for other platforms `are available.
   <https://docs.docker.com/installation>`__
 
-+ Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
+- Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
 
     docker pull caskdata/cdap-standalone
     
-+ Identify the Docker Virtual Machine's Host Interface IP address
-  (this address will be used in a later step) with::
+- Identify the Docker Virtual Machine's Host Interface IP address
+  (this address will be used when connecting a web browser to the CDAP Console) with::
   
     boot2docker ip
     
-+ Start the *Docker CDAP VM* with::
+- Start the *Docker CDAP VM* with::
 
     docker run -t -i -p 9999:9999 caskdata/cdap-standalone
     
-+ Once you enter the *Docker CDAP VM*, the Standalone CDAP SDK is located in the root directory::
+- Once you enter the *Docker CDAP VM*, the Standalone CDAP SDK is located in the root directory::
 
     $ cd /cdap-sdk-2.5.0
 
-+ For a full list of Docker Commands, see the `Docker Command Line Documentation.
+- For a full list of Docker Commands, see the `Docker Command Line Documentation.
   <https://docs.docker.com/reference/commandline/cli/>`__
+  
+- Instructions for starting and stopping the Standalone CDAP are 
+  `listed below. <#starting-and-stopping-the-standalone-cdap>`__
 
 Starting and Stopping the Standalone CDAP
 -----------------------------------------
@@ -146,7 +152,7 @@ Or, if you are using Windows, use the batch script ``cdap.bat`` to start and sto
 Once CDAP is started successfully, in a web browser you will be able to see the CDAP
 Console running at ``localhost:9999``, where you can deploy example applications and
 interact with CDAP. Note that in the case of the Docker image, you will need to substitute 
-the host interface IP address for ``localhost`` in the web browser address bar.
+the Host Interface IP address for ``localhost`` in the web browser address bar.
 
 Creating an Application
 =======================
