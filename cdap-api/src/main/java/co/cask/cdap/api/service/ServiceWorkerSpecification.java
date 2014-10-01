@@ -17,8 +17,8 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
-import org.apache.twill.api.ResourceSpecification;
 
 /**
  * Specification for user Service's {@link ServiceWorker}s.
@@ -26,8 +26,8 @@ import org.apache.twill.api.ResourceSpecification;
 public interface ServiceWorkerSpecification extends ProgramSpecification, PropertyProvider {
 
   /**
-   * @return ResourceSpecification which will be used to run the serviceWorker.
+   * @return Resources requirements which will be used to run the serviceWorker.
    */
-  ResourceSpecification getResourceSpecification();
+  Resources getResources();
 
 }
