@@ -16,24 +16,33 @@
 
 package co.cask.cdap.api.service;
 
-import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.annotation.Beta;
+import org.apache.twill.api.ResourceSpecification;
+
+import java.util.Map;
 
 /**
- * Workers for user services must implement this interface.
+ * Configures a {@link co.cask.cdap.api.service.ServiceWorker}
  */
-@Beta
-public interface ServiceWorker extends Runnable, ProgramLifecycle<ServiceWorkerContext> {
+public interface ServiceWorkerConfigurer {
+  /**
+   * Sets the ServiceWorker's name.
+   */
+  void setName(String name);
 
   /**
-   * Configures a ServiceWorker.
-   * @param configurer Collects the ServiceWorker configuration
+   * Sets the ServiceWorker's description.
    */
-  void configure(ServiceWorkerConfigurer configurer);
+  void setDescription(String description);
 
   /**
-   * Request to stop the running worker.
-   * This method will be invoked from a different thread than the one calling the {@link #run()} ) method.
+   * Sets the ServiceWorker's ResourceSpecification.
    */
-  void stop();
+  void setResourceSpecification(ResourceSpecification resourceSpecification);
+
+  /**
+   * Sets the ServiceWorker's RunTimeArguments.
+   */
+  void setProperties(Map<String, String> properties);
+
+
 }

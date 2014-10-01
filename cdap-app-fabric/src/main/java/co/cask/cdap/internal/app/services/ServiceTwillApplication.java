@@ -16,9 +16,11 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.service.DefaultServiceWorkerConfigurer;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceWorker;
+import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
@@ -54,14 +56,17 @@ public class ServiceTwillApplication implements TwillApplication {
       throw new InvalidParameterException("No handlers provided. Add handlers using configurer.");
     }
     TwillSpecification.Builder.RunnableSetter runnableSetter = TwillSpecification.Builder.with()
-                                     .setName(configurer.getName())
-                                     .withRunnable()
-                                     .add(new HttpServiceTwillRunnable(appName, configurer.getName(),
-                                                                       serviceHandlers, datasets))
-                                     .noLocalFiles();
+      .setName(configurer.getName())
+      .withRunnable()
+      .add(new HttpServiceTwillRunnable(appName, configurer.getName(),
+                                        serviceHandlers, datasets))
+      .noLocalFiles();
     for (ServiceWorker worker : configurer.getWorkers()) {
       TwillRunnable runnable = new ServiceWorkerTwillRunnable(worker, datasets);
-      runnableSetter = runnableSetter.add(runnable, worker.configure().getResourceSpecification()).noLocalFiles();
+      DefaultServiceWorkerConfigurer workerConfigurer = new DefaultServiceWorkerConfigurer(worker);
+      worker.configure(workerConfigurer);
+      ServiceWorkerSpecification workerSpecification = workerConfigurer.createServiceWorkerSpec();
+      runnableSetter = runnableSetter.add(runnable, workerSpecification.getResourceSpecification()).noLocalFiles();
     }
     return runnableSetter.anyOrder().build();
   }
