@@ -16,8 +16,8 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
-import org.apache.twill.api.ResourceSpecification;
 
 /**
  * Extend this class to add workers to a custom Service.
@@ -56,10 +56,10 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   }
 
   /**
-   * Sets the ServiceWorker's ResourceSpecification.
+   * Sets the ServiceWorker's Resources.
    */
-  public void setResourceSpecification(ResourceSpecification resourceSpecification) {
-    configurer.setResourceSpecification(resourceSpecification);
+  public void setResources(Resources resources) {
+    configurer.setResources(resources);
   }
 
   @Override

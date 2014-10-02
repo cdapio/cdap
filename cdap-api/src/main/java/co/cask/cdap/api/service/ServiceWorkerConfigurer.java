@@ -16,7 +16,7 @@
 
 package co.cask.cdap.api.service;
 
-import org.apache.twill.api.ResourceSpecification;
+import co.cask.cdap.api.Resources;
 
 import java.util.Map;
 
@@ -36,8 +36,9 @@ public interface ServiceWorkerConfigurer {
 
   /**
    * Sets the ServiceWorker's ResourceSpecification.
+   * @param resources
    */
-  void setResourceSpecification(ResourceSpecification resourceSpecification);
+  void setResources(Resources resources);
 
   /**
    * Sets the ServiceWorker's RunTimeArguments.

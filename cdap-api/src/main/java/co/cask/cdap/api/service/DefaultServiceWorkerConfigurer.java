@@ -16,9 +16,9 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.Resources;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import org.apache.twill.api.ResourceSpecification;
 
 import java.util.Map;
 
@@ -28,7 +28,7 @@ import java.util.Map;
 public class DefaultServiceWorkerConfigurer implements ServiceWorkerConfigurer {
   private String name;
   private String description;
-  private ResourceSpecification resourceSpecification;
+  private Resources resources;
   private Map<String, String> properties;
   private ServiceWorker serviceWorker;
 
@@ -36,7 +36,7 @@ public class DefaultServiceWorkerConfigurer implements ServiceWorkerConfigurer {
     this.serviceWorker = serviceWorker;
     this.name = serviceWorker.getClass().getSimpleName();
     this.description = "";
-    this.resourceSpecification = ResourceSpecification.BASIC;
+    this.resources = new Resources();
     this.properties = ImmutableMap.of();
   }
 
@@ -51,9 +51,9 @@ public class DefaultServiceWorkerConfigurer implements ServiceWorkerConfigurer {
   }
 
   @Override
-  public void setResourceSpecification(ResourceSpecification resourceSpecification) {
-    Preconditions.checkArgument(resourceSpecification != null, "resourceSpecification cannot be null.");
-    this.resourceSpecification = resourceSpecification;
+  public void setResources(Resources resources) {
+    Preconditions.checkArgument(resources != null, "resources cannot be null.");
+    this.resources = resources;
   }
 
   @Override
@@ -63,6 +63,6 @@ public class DefaultServiceWorkerConfigurer implements ServiceWorkerConfigurer {
 
   public ServiceWorkerSpecification createServiceWorkerSpec() {
     return new DefaultServiceWorkerSpecification(serviceWorker, name, description,
-                                                 properties, resourceSpecification);
+                                                 properties, resources);
   }
 }

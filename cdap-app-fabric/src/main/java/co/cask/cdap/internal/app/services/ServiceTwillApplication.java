@@ -16,12 +16,15 @@
 
 package co.cask.cdap.internal.app.services;
 
+
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.DefaultServiceWorkerConfigurer;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
@@ -66,7 +69,13 @@ public class ServiceTwillApplication implements TwillApplication {
       DefaultServiceWorkerConfigurer workerConfigurer = new DefaultServiceWorkerConfigurer(worker);
       worker.configure(workerConfigurer);
       ServiceWorkerSpecification workerSpecification = workerConfigurer.createServiceWorkerSpec();
-      runnableSetter = runnableSetter.add(runnable, workerSpecification.getResourceSpecification()).noLocalFiles();
+      Resources resources = workerSpecification.getResources();
+      runnableSetter = runnableSetter.add(runnable,
+                                          ResourceSpecification.Builder.with()
+                                            .setVirtualCores(resources.getVirtualCores())
+                                            .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
+                                            .build())
+                                           .noLocalFiles();
     }
     return runnableSetter.anyOrder().build();
   }
