@@ -18,10 +18,6 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.collect.ImmutableMap;
-import org.apache.twill.api.ResourceSpecification;
-
-import java.util.Map;
 
 /**
  * Extend this class to add workers to a custom Service.
@@ -29,48 +25,41 @@ import java.util.Map;
 @Beta
 public abstract class AbstractServiceWorker implements ServiceWorker {
   private ServiceWorkerContext context;
+  private ServiceWorkerConfigurer configurer;
+
+  /**
+   * User can optionally override this method to configure the ServiceWorker.
+   */
+  public void configure() {
+
+  }
 
   @Override
-  public ServiceWorkerSpecification configure() {
-    return new DefaultServiceWorkerSpecification(this, getName(), getDescription(), getRuntimeArguments(),
-                                                 getResources());
+  public final void configure(ServiceWorkerConfigurer configurer) {
+    this.configurer = configurer;
+
+    configure();
   }
 
   /**
-   * Get the name of the worker. Defaults to the class name.
-   *
-   * @return the name of this worker
+   * Sets the ServiceWorker's name.
    */
-  protected String getName() {
-    return getClass().getSimpleName();
+  protected void setName(String name) {
+    configurer.setName(name);
   }
 
   /**
-   * Get the description of the worker. Defaults to an empty string.
-   *
-   * @return the description of this worker, or an empty string if none
+   * Sets the ServiceWorker's description.
    */
-  protected String getDescription() {
-    return "";
+  protected void setDescription(String description) {
+    configurer.setDescription(description);
   }
 
   /**
-   * Get the runtime arguments for the worker. Defaults to an empty map.
-   *
-   * @return the runtime arguments of this worker, or an empty map if none
+   * Sets the ServiceWorker's Resources.
    */
-  protected Map<String, String> getRuntimeArguments() {
-    return ImmutableMap.of();
-  }
-
-  /**
-   * Currently defaults to {@link ResourceSpecification#BASIC}
-   * until we allow the user to specify it.
-   * 
-   * @return The resourceSpecification to be used for this serviceWorker
-   */
-  protected Resources getResources() {
-    return new Resources();
+  protected void setResources(Resources resources) {
+    configurer.setResources(resources);
   }
 
   @Override
