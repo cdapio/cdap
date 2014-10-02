@@ -44,21 +44,21 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   /**
    * Sets the ServiceWorker's name.
    */
-  public void setName(String name) {
+  protected void setName(String name) {
     configurer.setName(name);
   }
 
   /**
    * Sets the ServiceWorker's description.
    */
-  public void setDescription(String description) {
+  protected void setDescription(String description) {
     configurer.setDescription(description);
   }
 
   /**
    * Sets the ServiceWorker's Resources.
    */
-  public void setResources(Resources resources) {
+  protected void setResources(Resources resources) {
     configurer.setResources(resources);
   }
 
