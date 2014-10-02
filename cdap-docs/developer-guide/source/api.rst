@@ -60,7 +60,7 @@ All URLs referenced in this API have this base URL::
 where ``<host>`` is the host name of the CDAP server and ``<port>`` is the port that is set as the ``router.bind.port``
 in ``cdap-site.xml`` (default: ``10000``).
 
-Note that if SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
+**Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
 as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: 10443).
 
 In this API, the base URL is represented as::
@@ -129,7 +129,7 @@ Status Codes
      - ``Not Implemented``
      - A request contained a query that is not supported by this API
 
-Note these returned status codes are not necessarily included in the descriptions of the API,
+**Note:** These returned status codes are not necessarily included in the descriptions of the API,
 but a request may return any of these.
 
 
@@ -554,7 +554,7 @@ with JSON-formatted name of the dataset type and properties in the body::
      "properties":{<properties>}
   }
 
-Note the Dataset must exist, and the instance and type passed must match with the existing Dataset.
+**Note:** The Dataset must exist, and the instance and type passed must match with the existing Dataset.
 
 .. list-table::
    :widths: 20 80
@@ -1281,10 +1281,10 @@ To delete an Application together with all of its Flows, Procedures and MapReduc
    * - ``<application-name>``
      - Name of the Application to be deleted
 
-Note that the ``<application-name>`` in this URL is the name of the Application 
+**Note:** The ``<application-name>`` in this URL is the name of the Application
 as configured by the Application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the Application.
-Note also that this does not delete the Streams and Datasets associated with the Application
+Also, this does not delete the Streams and Datasets associated with the Application
 because they belong to your account, not the Application.
 
 .. rst2pdf: PageBreak
@@ -1498,7 +1498,7 @@ The response will be the same JSON array with additional parameters for each of 
      - If an error, a description of why the status was not retrieved (the specified element was not found,
        the requested JSON object was missing a parameter, etc.)
 
-Note that the ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
+**Note:** The ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
 
 Example
 .......
@@ -1628,7 +1628,7 @@ Example
 Scaling Services
 ................
 You can query or change the number of instances of a Service
-by using the ``instances`` parameter with HTTP GET and PUT methods::
+by using the ``instances`` parameter with HTTP GET or PUT methods::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
   PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
@@ -1652,7 +1652,7 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
 
-Note in this release the ``runnable-id`` is the same as the ``service-id``.
+**Note:** In this release the ``runnable-id`` is the same as the ``service-id``.
 
 Example
 .......
@@ -1787,7 +1787,7 @@ escaped. A line of the log may look like this::
   2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
         executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp; character
 
-Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as
+**Note:** The context of the log line shows the name of the Flowlet (*source*), its instance number (0) as
 well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire
 this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
@@ -2205,7 +2205,7 @@ The status of these CDAP System Services can be checked:
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
 
-Note that the Service status checks are more useful when CDAP is running in a distributed cluster mode.
+**Note:** The Service status checks are more useful when CDAP is running in a distributed cluster mode.
 
 HTTP Responses
 ..............
@@ -2256,7 +2256,7 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
      
-Note in standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
+**Note:** In standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
 
 Examples
 ........
