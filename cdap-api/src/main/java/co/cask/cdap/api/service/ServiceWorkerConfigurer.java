@@ -35,7 +35,7 @@ public interface ServiceWorkerConfigurer {
   void setDescription(String description);
 
   /**
-   * Sets the ServiceWorker's ResourceSpecification.
+   * Sets the ServiceWorker's Resources.
    * @param resources
    */
   void setResources(Resources resources);
