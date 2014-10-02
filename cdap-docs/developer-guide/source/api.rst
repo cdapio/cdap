@@ -1012,7 +1012,7 @@ Download Query Results
 ----------------------
 To download the results of a query, use::
 
-  GET <base-url>/data/explore/queries/<query-handle>
+  POST <base-url>/data/explore/queries/<query-handle>
 
 The results of the query are returned in CSV format.
 
