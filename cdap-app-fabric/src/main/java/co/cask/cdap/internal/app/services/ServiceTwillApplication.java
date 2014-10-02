@@ -75,7 +75,7 @@ public class ServiceTwillApplication implements TwillApplication {
                                             .setVirtualCores(resources.getVirtualCores())
                                             .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
                                             .build())
-                                           .noLocalFiles();
+                                     .noLocalFiles();
     }
     return runnableSetter.anyOrder().build();
   }
