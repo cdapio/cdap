@@ -45,8 +45,8 @@ public class ObjectStoreDefinition
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public ObjectStoreDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
-    super(name);
+  public ObjectStoreDefinition(String name, int version, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
+    super(name, version);
     Preconditions.checkArgument(keyValueDef != null, "KeyValueTable definition is required");
     this.tableDef = keyValueDef;
   }
@@ -55,7 +55,7 @@ public class ObjectStoreDefinition
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     Preconditions.checkArgument(properties.getProperties().containsKey("type"));
     Preconditions.checkArgument(properties.getProperties().containsKey("schema"));
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("objects", properties))
       .build();

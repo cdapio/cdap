@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
@@ -106,7 +107,11 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     InMemoryDatasetFramework mdsFramework =
       new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
                                    ImmutableMap.of("memoryTable", new InMemoryOrderedTableModule()));
-    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework, cConf);
+    DataSetInstantiator dataSetInstantiator =
+      new DataSetInstantiator(mdsFramework, cConf, RemoteDatasetFrameworkTest.class.getClassLoader(), null, null);
+
+    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework,
+                                                                      dataSetInstantiator, cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,

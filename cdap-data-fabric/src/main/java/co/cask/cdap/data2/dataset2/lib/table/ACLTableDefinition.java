@@ -38,14 +38,15 @@ public class ACLTableDefinition extends AbstractDatasetDefinition<ACLTable, Data
 
   private final DatasetDefinition<? extends IndexedObjectStore, ?> tableDefinition;
 
-  public ACLTableDefinition(String name, DatasetDefinition<? extends IndexedObjectStore, ?> tableDefinition) {
-    super(name);
+  public ACLTableDefinition(String name, int version,
+                            DatasetDefinition<? extends IndexedObjectStore, ?> tableDefinition) {
+    super(name, version);
     this.tableDefinition = tableDefinition;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .datasets(tableDefinition.configure("data", getObjectStoreProperties()))
       .build();

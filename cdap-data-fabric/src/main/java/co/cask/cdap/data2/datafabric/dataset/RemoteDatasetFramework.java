@@ -94,8 +94,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
     } else {
       typeClass = module.getClass();
     }
-
-    addModule(moduleName, typeClass);
+    addModule(moduleName, module.getVersion(), typeClass);
   }
 
   @Override
@@ -112,7 +111,14 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException {
 
-    client.addInstance(datasetInstanceName, datasetType, props);
+    client.addInstance(datasetInstanceName, 0, datasetType, props);
+  }
+
+  @Override
+  public void addInstance(String datasetType, int version, String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException {
+
+    client.addInstance(datasetInstanceName, version, datasetType, props);
   }
 
   @Override
@@ -179,12 +185,12 @@ public class RemoteDatasetFramework implements DatasetFramework {
     return (T) type.getDataset(instanceInfo.getSpec(), arguments);
   }
 
-  private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
+  private void addModule(String moduleName, int version, Class<?> typeClass) throws DatasetManagementException {
     try {
       File tempFile = File.createTempFile(typeClass.getName(), ".jar");
       try {
         Location tempJarPath = createDeploymentJar(typeClass, new LocalLocationFactory().create(tempFile.toURI()));
-        client.addModule(moduleName, typeClass.getName(), tempJarPath);
+        client.addModule(moduleName, version, typeClass.getName(), tempJarPath);
       } finally {
         tempFile.delete();
       }
@@ -300,6 +306,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
       }
     }
 
-    return (T) new DatasetType(registry.get(implementationInfo.getName()), classLoader);
+    return (T) new DatasetType(registry.get(implementationInfo.getName(), implementationInfo.getVersion()),
+                               classLoader);
   }
 }

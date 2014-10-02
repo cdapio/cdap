@@ -28,7 +28,12 @@ import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTableDefiniti
 public class LevelDBMetricsTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new LevelDBMetricsTableDefinition(LevelDBMetricsTable.class.getName()));
-    registry.add(new LevelDBMetricsTableDefinition(MetricsTable.class.getName()));
+    registry.add(new LevelDBMetricsTableDefinition(LevelDBMetricsTable.class.getName(), getVersion()), getVersion());
+    registry.add(new LevelDBMetricsTableDefinition(MetricsTable.class.getName(), getVersion()), getVersion());
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 }

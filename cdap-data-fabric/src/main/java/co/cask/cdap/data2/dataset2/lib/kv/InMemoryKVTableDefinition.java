@@ -37,13 +37,13 @@ import javax.annotation.Nullable;
 public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
   private static final Map<String, Map<byte[], byte[]>> tables = Maps.newHashMap();
 
-  public InMemoryKVTableDefinition(String name) {
-    super(name);
+  public InMemoryKVTableDefinition(String name, int version) {
+    super(name, version);
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .build();
   }
@@ -128,6 +128,11 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
     public void close() throws IOException {
       // no-op
     }
+
+    @Override
+    public int getVersion() {
+      return 0;
+    }
   }
 
   /**
@@ -136,7 +141,12 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
   public static final class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      registry.add(new InMemoryKVTableDefinition(NoTxKeyValueTable.class.getName()));
+      registry.add(new InMemoryKVTableDefinition(NoTxKeyValueTable.class.getName(), getVersion()), getVersion());
+    }
+
+    @Override
+    public int getVersion() {
+      return 0;
     }
   }
 

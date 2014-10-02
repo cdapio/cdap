@@ -46,13 +46,13 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
   @Inject
   private CConfiguration conf;
 
-  public HBaseMetricsTableDefinition(String name) {
-    super(name);
+  public HBaseMetricsTableDefinition(String name, int version) {
+    super(name, version);
   }
 
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
-    return DatasetSpecification.builder(name, getName())
+    return DatasetSpecification.builder(name, getName(), getVersion())
       .properties(properties.getProperties())
       .build();
   }

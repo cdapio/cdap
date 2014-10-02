@@ -127,5 +127,10 @@ public class SingleTypeModuleTest {
     @Override
     public void close() throws IOException {
     }
+
+    @Override
+    public int getVersion() {
+      return 0;
+    }
   }
 }

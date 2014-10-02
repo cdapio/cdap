@@ -31,17 +31,25 @@ public abstract class AbstractDatasetDefinition<D extends Dataset, A extends Dat
   implements DatasetDefinition<D, A> {
 
   private final String name;
+  private final int version;
 
   /**
    * Ctor that takes in name of this dataset type.
    * @param name this dataset type name
    */
-  protected AbstractDatasetDefinition(String name) {
+  protected AbstractDatasetDefinition(String name, int version) {
     this.name = name;
+    this.version = version;
   }
 
   @Override
   public String getName() {
     return name;
   }
+
+  @Override
+  public int getVersion() {
+    return version;
+  }
+
 }

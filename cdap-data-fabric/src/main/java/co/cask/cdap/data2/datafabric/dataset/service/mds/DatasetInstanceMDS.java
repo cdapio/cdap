@@ -38,6 +38,7 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
    *       the prefix may help us in future
    */
   private static final byte[] INSTANCE_PREFIX = Bytes.toBytes("i_");
+  private static final byte[] INSTANCE_LATEST_VERSION_PREFIX = Bytes.toBytes("lv_");
 
   public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataset("") OrderedTable table) {
     super(spec, table);
@@ -52,11 +53,25 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     put(getInstanceKey(instanceSpec.getName()), instanceSpec);
   }
 
+  public void updateVersion(String instanceName, int version) {
+    put(getInstanceLatestVersionPrefixKey(instanceName), version);
+  }
+
+  @Nullable
+  public Integer getLatestVersion(String name) {
+    return get(getInstanceLatestVersionPrefixKey(name), Integer.class);
+  }
+
   public boolean delete(String name) {
     if (get(name) == null) {
       return false;
     }
     delete(getInstanceKey(name));
+
+    if (getLatestVersion(name) == null) {
+      return false;
+    }
+    delete(getInstanceLatestVersionPrefixKey(name));
     return true;
   }
 
@@ -77,11 +92,27 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     return filtered;
   }
 
+  public Collection<DatasetSpecification> getByTypes(Set<String> typeNames, int version) {
+    List<DatasetSpecification> filtered = Lists.newArrayList();
+
+    for (DatasetSpecification spec : getAll()) {
+      if (typeNames.contains(spec.getType()) && (spec.getTypeVersion() == version)) {
+        filtered.add(spec);
+      }
+    }
+
+    return filtered;
+  }
+
   public void deleteAll() {
     deleteAll(INSTANCE_PREFIX);
   }
 
   private byte[] getInstanceKey(String name) {
     return Bytes.add(INSTANCE_PREFIX, Bytes.toBytes(name));
+  }
+
+  private byte[] getInstanceLatestVersionPrefixKey(String name) {
+    return Bytes.add(INSTANCE_LATEST_VERSION_PREFIX, Bytes.toBytes(name));
   }
 }

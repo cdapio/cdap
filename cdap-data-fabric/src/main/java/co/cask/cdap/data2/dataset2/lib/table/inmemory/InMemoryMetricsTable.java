@@ -136,4 +136,9 @@ public class InMemoryMetricsTable implements MetricsTable {
   public void close() throws IOException {
     // Do nothing
   }
+
+  @Override
+  public int getVersion() {
+    return 0;
+  }
 }

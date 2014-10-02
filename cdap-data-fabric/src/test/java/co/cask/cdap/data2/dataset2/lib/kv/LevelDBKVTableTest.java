@@ -62,7 +62,7 @@ public class LevelDBKVTableTest extends NoTxKeyValueTableTest {
       }
     });
 
-    LevelDBKVTableDefinition def = new LevelDBKVTableDefinition("foo");
+    LevelDBKVTableDefinition def = new LevelDBKVTableDefinition("foo", 0);
     injector.injectMembers(def);
     return def;
   }

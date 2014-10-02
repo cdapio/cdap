@@ -35,13 +35,13 @@ public class LevelDBOrderedTableDefinition
   @Inject
   private LevelDBOrderedTableService service;
 
-  public LevelDBOrderedTableDefinition(String name) {
-    super(name);
+  public LevelDBOrderedTableDefinition(String name, int version) {
+    super(name, version);
   }
 
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
-    return DatasetSpecification.builder(name, getName())
+    return DatasetSpecification.builder(name, getName(), getVersion())
       .properties(properties.getProperties())
       .build();
   }

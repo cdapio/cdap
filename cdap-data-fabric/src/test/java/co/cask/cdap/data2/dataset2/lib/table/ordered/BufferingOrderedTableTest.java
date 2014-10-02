@@ -460,6 +460,11 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
       super.startTx(tx);
       delegate.startTx(tx);
     }
+
+    @Override
+    public int getVersion() {
+      return 0;
+    }
   }
 
 }

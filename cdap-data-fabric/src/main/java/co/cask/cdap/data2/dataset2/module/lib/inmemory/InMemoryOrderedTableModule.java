@@ -27,8 +27,13 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableDefini
 public class InMemoryOrderedTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new InMemoryOrderedTableDefinition("orderedTable"));
+    registry.add(new InMemoryOrderedTableDefinition("orderedTable", getVersion()), getVersion());
     // so that it can be resolved via @Dataset
-    registry.add(new InMemoryOrderedTableDefinition(OrderedTable.class.getName()));
+    registry.add(new InMemoryOrderedTableDefinition(OrderedTable.class.getName(), getVersion()), getVersion());
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 }

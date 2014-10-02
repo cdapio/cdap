@@ -184,4 +184,9 @@ public class InMemoryOrderedTable extends BufferingOrderedTable {
 
     return result;
   }
+
+  @Override
+  public int getVersion() {
+    return 0;
+  }
 }

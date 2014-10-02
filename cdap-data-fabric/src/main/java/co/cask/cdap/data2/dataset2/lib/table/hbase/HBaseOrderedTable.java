@@ -240,4 +240,9 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
 
     return unwrapDeletes(rowMap);
   }
+
+  @Override
+  public int getVersion() {
+    return 0;
+  }
 }

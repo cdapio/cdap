@@ -16,10 +16,13 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InstanceConflictException;
+import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.pipeline.AbstractStage;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -34,10 +37,12 @@ import java.util.Map;
 public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLocation> {
   private static final Logger LOG = LoggerFactory.getLogger(CreateDatasetInstancesStage.class);
   private final DatasetFramework datasetFramework;
+  private final DataSetInstantiator dataSetInstantiator;
 
-  public CreateDatasetInstancesStage(DatasetFramework datasetFramework) {
+  public CreateDatasetInstancesStage(DatasetFramework datasetFramework, DataSetInstantiator dataSetInstantiator) {
     super(TypeToken.of(ApplicationSpecLocation.class));
     this.datasetFramework = datasetFramework;
+    this.dataSetInstantiator = dataSetInstantiator;
   }
 
   /**
@@ -52,10 +57,15 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
     ApplicationSpecification specification = input.getSpecification();
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
       String instanceName = instanceEntry.getKey();
+
       DatasetCreationSpec instanceSpec = instanceEntry.getValue();
+      Dataset dataset = dataSetInstantiator.getDataSet(instanceSpec.getTypeName());
+      int version = dataset.getVersion();
+
       try {
+        // todo : might want to comment the if check.
         if (!datasetFramework.hasInstance(instanceName)) {
-          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());
+          datasetFramework.addInstance(instanceSpec.getTypeName(), version, instanceName, instanceSpec.getProperties());
         }
       } catch (InstanceConflictException e) {
         // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app

@@ -26,6 +26,7 @@ import java.util.List;
  */
 public class DatasetTypeMeta {
   private final String name;
+  private final int version;
   private final List<DatasetModuleMeta> modules;
 
   /**
@@ -36,6 +37,20 @@ public class DatasetTypeMeta {
    */
   public DatasetTypeMeta(String name, List<DatasetModuleMeta> modules) {
     this.name = name;
+    this.version = 0;
+    this.modules = modules;
+  }
+
+  /**
+   * Creates instance of {@link DatasetTypeMeta}
+   * @param name name of the dataset type
+   * @param version version of the dataset type
+   * @param modules list of modules required to load this type in the same order as they must be loaded and initialized
+   *                with the last one being the module that announces this type
+   */
+  public DatasetTypeMeta(String name, int version, List<DatasetModuleMeta> modules) {
+    this.name = name;
+    this.version = version;
     this.modules = modules;
   }
 
@@ -44,6 +59,14 @@ public class DatasetTypeMeta {
    */
   public String getName() {
     return name;
+  }
+
+
+  /**
+   * @return version of this dataset type
+   */
+  public int getVersion() {
+    return version;
   }
 
   /**

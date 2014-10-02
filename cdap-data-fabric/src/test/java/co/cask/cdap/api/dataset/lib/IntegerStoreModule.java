@@ -28,8 +28,13 @@ public class IntegerStoreModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = registry.get("keyValueTable");
-    IntegerStoreDefinition definition = new IntegerStoreDefinition("integerStore", kvTableDef);
-    registry.add(definition);
+    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = registry.get("keyValueTable", getVersion());
+    IntegerStoreDefinition definition = new IntegerStoreDefinition("integerStore", getVersion(), kvTableDef);
+    registry.add(definition, getVersion());
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 }

@@ -24,6 +24,7 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
@@ -44,10 +45,12 @@ import java.util.Map;
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLocation> {
   private static final Logger LOG = LoggerFactory.getLogger(DeployDatasetModulesStage.class);
   private final DatasetFramework datasetFramework;
+  private final DataSetInstantiator dataSetInstantiator;
 
-  public DeployDatasetModulesStage(DatasetFramework datasetFramework) {
+  public DeployDatasetModulesStage(DatasetFramework datasetFramework, DataSetInstantiator dataSetInstantiator) {
     super(TypeToken.of(ApplicationSpecLocation.class));
     this.datasetFramework = datasetFramework;
+    this.dataSetInstantiator = dataSetInstantiator;
   }
 
   /**
@@ -75,12 +78,13 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
           // note: we can deploy module or create module from Dataset class
           // note: it seems dangerous to instantiate dataset module here, but this will be fine when we move deploy into
           //       isolated user's environment (e.g. separate yarn container)
+
           if (DatasetModule.class.isAssignableFrom(clazz)) {
             datasetFramework.addModule(moduleName, (DatasetModule) clazz.newInstance());
           } else if (Dataset.class.isAssignableFrom(clazz)) {
             // checking if type is in already
             if (!datasetFramework.hasType(clazz.getName())) {
-              datasetFramework.addModule(moduleName, new SingleTypeModule((Class<Dataset>) clazz));
+              datasetFramework.addModule(moduleName, new SingleTypeModule((Class<Dataset>) clazz, dataSetInstantiator));
             }
           } else {
             String msg = String.format(

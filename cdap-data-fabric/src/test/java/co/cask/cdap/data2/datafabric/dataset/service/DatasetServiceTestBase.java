@@ -25,9 +25,11 @@ import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
+import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFrameworkTest;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -123,10 +125,14 @@ public abstract class DatasetServiceTestBase {
 
     opExecutorService.startAndWait();
 
+    DataSetInstantiator dataSetInstantiator =
+      new DataSetInstantiator(dsFramework, cConf, DatasetServiceTestBase.class.getClassLoader(), null, null);
+
     MDSDatasetsRegistry mdsDatasetsRegistry =
       new MDSDatasetsRegistry(txSystemClient,
                               new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory(),
-                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES), cConf);
+                                                           DataSetServiceModules.INMEMORY_DATASET_MODULES),
+                              dataSetInstantiator, cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,

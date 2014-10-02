@@ -36,15 +36,15 @@ public class TimeseriesTableDefinition
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public TimeseriesTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name);
+  public TimeseriesTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDef) {
+    super(name, version);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     this.tableDef = tableDef;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("ts", properties))
       .build();

@@ -87,11 +87,28 @@ public interface DatasetFramework {
    * @param datasetTypeName dataset instance type name
    * @param datasetInstanceName dataset instance name
    * @param props dataset instance properties
-   * @throws InstanceConflictException if dataset instance with this name already exists
    * @throws IOException when creation of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
-  void addInstance(String datasetTypeName, String datasetInstanceName, DatasetProperties props)
+  void addInstance(String datasetTypeName,  String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException, IOException;
+
+  /**
+   * Adds information about dataset instance to the system.
+   *
+   * This uses
+   * {@link co.cask.cdap.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
+   * method to build {@link co.cask.cdap.api.dataset.DatasetSpecification} which describes dataset instance
+   * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
+   *
+   * @param datasetTypeName dataset instance type name
+   * @param version dataset instance type version
+   * @param datasetInstanceName dataset instance name
+   * @param props dataset instance properties
+   * @throws IOException when creation of dataset instance using its admin fails
+   * @throws DatasetManagementException
+   */
+  void addInstance(String datasetTypeName, int version, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException, IOException;
 
   /**
@@ -109,6 +126,7 @@ public interface DatasetFramework {
    */
   void updateInstance(String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException, IOException;
+
 
   /**
    * @return a collection of {@link co.cask.cdap.api.dataset.DatasetSpecification}s for all datasets

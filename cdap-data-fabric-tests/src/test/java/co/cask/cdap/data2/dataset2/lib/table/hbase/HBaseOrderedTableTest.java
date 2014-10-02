@@ -82,7 +82,7 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
 
   @Override
   protected HBaseOrderedTableAdmin getTableAdmin(String name, DatasetProperties props) throws IOException {
-    DatasetSpecification spec = new HBaseOrderedTableDefinition("foo").configure(name, props);
+    DatasetSpecification spec = new HBaseOrderedTableDefinition("foo", 0).configure(name, props);
     return new HBaseOrderedTableAdmin(spec, testHBase.getConfiguration(), hBaseTableUtil,
                                       CConfiguration.create(), new LocalLocationFactory(tmpFolder.newFolder()));
   }

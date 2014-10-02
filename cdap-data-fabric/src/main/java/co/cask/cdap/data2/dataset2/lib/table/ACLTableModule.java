@@ -22,6 +22,9 @@ import co.cask.cdap.api.dataset.lib.ACLTable;
 import co.cask.cdap.api.dataset.lib.IndexedObjectStore;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
+
+import java.io.IOException;
 
 /**
  * {@link DatasetModule} for {@link ACLTable}.
@@ -30,9 +33,15 @@ public class ACLTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<IndexedObjectStore, DatasetAdmin> tableDefinition =
-      registry.get(IndexedObjectStore.class.getName());
+      registry.get(IndexedObjectStore.class.getName(), getVersion());
 
-    registry.add(new ACLTableDefinition("aclTable", tableDefinition));
-    registry.add(new ACLTableDefinition(ACLTable.class.getName(), tableDefinition));
+    registry.add(new ACLTableDefinition("aclTable", getVersion(), tableDefinition), getVersion());
+    registry.add(new ACLTableDefinition(ACLTable.class.getName(), getVersion(), tableDefinition), getVersion());
   }
+
+  @Override
+  public int getVersion() {
+    return 0;
+  }
+
 }

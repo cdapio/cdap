@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.module.DatasetType;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -92,9 +93,18 @@ public class SingleTypeModule implements DatasetModule {
   private static final Logger LOG = LoggerFactory.getLogger(SingleTypeModule.class);
 
   private final Class<? extends Dataset> dataSetClass;
+  private final DataSetInstantiator dataSetInstantiator;
 
+  //todo : find usages of this constructor and see if we can pass datasetInstantiator
   public SingleTypeModule(Class<? extends Dataset> dataSetClass) {
     this.dataSetClass = dataSetClass;
+    //placeholder
+    this.dataSetInstantiator = null;
+  }
+
+  public SingleTypeModule(Class<? extends Dataset> dataSetClass, DataSetInstantiator dataSetInstantiator) {
+    this.dataSetClass = dataSetClass;
+    this.dataSetInstantiator = dataSetInstantiator;
   }
 
   public Class<? extends Dataset> getDataSetClass() {
@@ -131,7 +141,7 @@ public class SingleTypeModule implements DatasetModule {
             // default to dataset class name
             type = paramTypes[i].getName();
           }
-          DatasetDefinition def = registry.get(type);
+          DatasetDefinition def = registry.get(type, getVersion());
           if (def == null) {
             String msg = String.format("Unknown data set type used with @Dataset: " + type);
             LOG.error(msg);
@@ -144,7 +154,7 @@ public class SingleTypeModule implements DatasetModule {
       }
     }
 
-    CompositeDatasetDefinition<Dataset> def = new CompositeDatasetDefinition<Dataset>(typeName, defs) {
+    CompositeDatasetDefinition<Dataset> def = new CompositeDatasetDefinition<Dataset>(typeName, getVersion(), defs) {
       @Override
       public Dataset getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
         throws IOException {
@@ -161,7 +171,7 @@ public class SingleTypeModule implements DatasetModule {
       }
     };
 
-    registry.add(def);
+    registry.add(def, getVersion());
   }
 
   @VisibleForTesting
@@ -213,6 +223,12 @@ public class SingleTypeModule implements DatasetModule {
     }
 
     return suitableCtor;
+  }
+
+  @Override
+  public int getVersion() {
+    Dataset dataset = dataSetInstantiator.getDataSet(dataSetClass.getName());
+    return dataset.getVersion();
   }
 
   private interface DatasetCtorParam {

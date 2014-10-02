@@ -49,14 +49,15 @@ public class KeyStructValueTableDefinition
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public KeyStructValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
-    super(name);
+  public KeyStructValueTableDefinition(String name, int version,
+                                       DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
+    super(name, version);
     this.tableDef = orderedTableDefinition;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("key-value-table", properties))
       .build();
@@ -207,9 +208,15 @@ public class KeyStructValueTableDefinition
   public static class KeyStructValueTableModule implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      DatasetDefinition<Table, DatasetAdmin> table = registry.get("table");
-      KeyStructValueTableDefinition keyValueTable = new KeyStructValueTableDefinition("keyStructValueTable", table);
-      registry.add(keyValueTable);
+      DatasetDefinition<Table, DatasetAdmin> table = registry.get("table", getVersion());
+      KeyStructValueTableDefinition keyValueTable = new KeyStructValueTableDefinition("keyStructValueTable",
+                                                                                      getVersion(), table);
+      registry.add(keyValueTable, getVersion());
+    }
+
+    @Override
+    public int getVersion() {
+      return 0;
     }
   }
 

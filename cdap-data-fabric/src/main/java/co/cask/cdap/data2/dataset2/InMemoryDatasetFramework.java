@@ -79,10 +79,11 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   public synchronized void addModule(String moduleName, DatasetModule module)
     throws ModuleConflictException {
 
-    if (moduleClasses.containsKey(moduleName)) {
-      throw new ModuleConflictException("Cannot add module " + moduleName + ": it already exists.");
+    String moduleNameWithVersion = moduleName + "_" + module.getVersion();
+    if (moduleClasses.containsKey(moduleNameWithVersion)) {
+      throw new ModuleConflictException("Cannot add module " + moduleNameWithVersion + ": it already exists.");
     }
-    add(moduleName, module, false);
+    add(moduleNameWithVersion, module, false);
   }
 
   @Override
@@ -106,13 +107,22 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
-    throws InstanceConflictException, IOException {
+    throws DatasetManagementException, IOException {
+    addInstance(datasetType, 0 , datasetInstanceName, props);
+  }
+
+  @Override
+  public void addInstance(String datasetType, int version, String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException, IOException {
     if (instances.get(datasetInstanceName) != null) {
+      // check version and update the latest version
+
       throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceName);
     }
 
-    Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered", datasetType);
-    DatasetDefinition def = registry.get(datasetType);
+    Preconditions.checkArgument(registry.hasType(datasetType, version), "Dataset type '%s' is not registered",
+                                datasetType);
+    DatasetDefinition def = registry.get(datasetType, version);
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);
     def.getAdmin(spec, null).create();
@@ -128,8 +138,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       throw new InstanceConflictException("Dataset instance with name does not exist: " + datasetInstanceName);
     }
     String datasetType = oldSpec.getType();
-    Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered", datasetType);
-    DatasetDefinition def = registry.get(datasetType);
+    Preconditions.checkArgument(registry.hasType(datasetType, oldSpec.getTypeVersion()),
+                                "Dataset type '%s' is not registered", datasetType);
+    DatasetDefinition def = registry.get(datasetType, oldSpec.getTypeVersion());
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);
     def.getAdmin(spec, null).upgrade();
@@ -153,20 +164,21 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public synchronized boolean hasType(String typeName) throws DatasetManagementException {
-    return registry.hasType(typeName);
+    //todo : need to fix this, by passing correct version
+    return registry.hasType(typeName, 0);
   }
 
   @Override
   public synchronized void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
     DatasetSpecification spec = instances.remove(datasetInstanceName);
-    DatasetDefinition def = registry.get(spec.getType());
+    DatasetDefinition def = registry.get(spec.getType(), spec.getTypeVersion());
     def.getAdmin(spec, null).drop();
   }
 
   @Override
   public synchronized void deleteAllInstances() throws DatasetManagementException, IOException {
     for (DatasetSpecification spec : instances.values()) {
-      DatasetDefinition def = registry.get(spec.getType());
+      DatasetDefinition def = registry.get(spec.getType(), spec.getTypeVersion());
       def.getAdmin(spec, null).drop();
     }
     instances.clear();
@@ -181,7 +193,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     if (spec == null) {
       return null;
     }
-    DatasetDefinition impl = createRegistry(classLoader).get(spec.getType());
+    DatasetDefinition impl = createRegistry(classLoader).get(spec.getType(), spec.getTypeVersion());
     return (T) impl.getAdmin(spec, classLoader);
   }
 
@@ -195,7 +207,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     if (spec == null) {
       return null;
     }
-    DatasetDefinition def = createRegistry(classLoader).get(spec.getType());
+    DatasetDefinition def = createRegistry(classLoader).get(spec.getType(), spec.getTypeVersion());
     return (T) (def.getDataset(spec, arguments, classLoader));
   }
 
@@ -265,19 +277,19 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     }
 
     @Override
-    public void add(DatasetDefinition def) {
-      delegate.add(def);
+    public void add(DatasetDefinition def, int version) {
+      delegate.add(def, version);
       types.add(def.getName());
     }
 
     @Override
-    public <T extends DatasetDefinition> T get(String datasetTypeName) {
-      return delegate.get(datasetTypeName);
+    public <T extends DatasetDefinition> T get(String datasetTypeName, int version) {
+      return delegate.get(datasetTypeName, version);
     }
 
     @Override
-    public boolean hasType(String datasetTypeName) {
-      return delegate.hasType(datasetTypeName);
+    public boolean hasType(String datasetTypeName, int version) {
+      return delegate.hasType(datasetTypeName, version);
     }
   }
 }

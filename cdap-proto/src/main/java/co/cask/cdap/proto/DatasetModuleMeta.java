@@ -36,8 +36,11 @@ public class DatasetModuleMeta {
   private final URI jarLocation;
 
   private final List<String> types;
+  private final int version;
+
   private final List<String> usesModules;
   private final List<String> usedByModules;
+
 
   /**
    * Creates instance of {@link DatasetModuleMeta}
@@ -46,15 +49,17 @@ public class DatasetModuleMeta {
    * @param jarLocation location of the dataset module jar. {@code null} means this is "system module" which classes
    *                    always present in classpath. This helps to minimize redundant copying of jars.
    * @param types list of types announced by this module in the order they are announced
+   * @param version version of the dataset module (all types assume this version)
    * @param usesModules list of modules that this module depends on, ordered in a way they must be
    *                    loaded and initialized
    */
   public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
-                           List<String> types, List<String> usesModules) {
+                           List<String> types, int version, List<String> usesModules) {
     this.name = name;
     this.className = className;
     this.jarLocation = jarLocation;
     this.types = Collections.unmodifiableList(types);
+    this.version = version;
     this.usesModules = Collections.unmodifiableList(usesModules);
     this.usedByModules = Lists.newArrayList();
   }
@@ -64,6 +69,13 @@ public class DatasetModuleMeta {
    */
   public String getName() {
     return name;
+  }
+
+  /**
+   * @return version of the dataset module
+   */
+  public int getVersion() {
+    return version;
   }
 
   /**

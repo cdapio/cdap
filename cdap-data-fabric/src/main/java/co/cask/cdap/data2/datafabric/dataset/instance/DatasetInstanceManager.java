@@ -64,6 +64,34 @@ public class DatasetInstanceManager {
   }
 
   /**
+   * @param instanceName name of the dataset instance
+   * @return the latest version of dataset type used by the dataset instance
+   */
+  public int getLatestVersion(final String instanceName) {
+    return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Integer>() {
+      @Override
+      public Integer call(MDSDatasets datasets) throws Exception {
+        return datasets.getInstanceMDS().getLatestVersion(instanceName);
+      }
+    });
+  }
+
+  /**
+   * Updates dataset instance type version
+   * @param name of the dataset instance
+   * @param version of the dataset type
+   */
+  public void updateLatestVersion(final String name, final int version) {
+    mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Void>() {
+      @Override
+      public Void call(MDSDatasets datasets) throws Exception {
+        datasets.getInstanceMDS().updateVersion(name, version);
+        return null;
+      }
+    });
+  }
+
+  /**
    * @return collection of {@link co.cask.cdap.api.dataset.DatasetSpecification} of all dataset instances
    */
   public Collection<DatasetSpecification> getAll() {

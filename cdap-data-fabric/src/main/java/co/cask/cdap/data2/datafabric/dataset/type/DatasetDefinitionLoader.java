@@ -98,6 +98,6 @@ class DatasetDefinitionLoader {
         LOG.warn("Failed to delete directory {}", unpackedLocation, e);
       }
     }
-    return registry.get(meta.getName());
+    return registry.get(meta.getName(), meta.getVersion());
   }
 }

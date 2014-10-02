@@ -230,7 +230,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private int createInstance(String instanceName, String typeName,
                              DatasetProperties props) throws IOException {
     DatasetInstanceConfiguration creationProperties =
-      new DatasetInstanceConfiguration(typeName, props.getProperties());
+      new DatasetInstanceConfiguration(typeName, 0, props.getProperties());
 
     HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName))
       .withBody(new Gson().toJson(creationProperties)).build();
@@ -240,7 +240,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private int updateInstance(String instanceName, String typeName,
                              DatasetProperties props) throws IOException {
     DatasetInstanceConfiguration creationProperties =
-      new DatasetInstanceConfiguration(typeName, props.getProperties());
+      new DatasetInstanceConfiguration(typeName, 0, props.getProperties());
 
     HttpRequest request = HttpRequest.put(getUrl("/data/datasets/" + instanceName + "/properties"))
       .withBody(new Gson().toJson(creationProperties)).build();
@@ -265,6 +265,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private static DatasetSpecification createSpec(String instanceName, String typeName,
                                                  DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build();
+    return DatasetSpecification.builder(instanceName, typeName, 0).properties(properties.getProperties()).build();
   }
 }

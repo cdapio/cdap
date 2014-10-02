@@ -36,15 +36,15 @@ public class KeyValueTableDefinition
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name);
+  public KeyValueTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDef) {
+    super(name, version);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     this.tableDef = tableDef;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("kv", properties))
       .build();

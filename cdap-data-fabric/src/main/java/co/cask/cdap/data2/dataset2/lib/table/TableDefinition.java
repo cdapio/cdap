@@ -34,14 +34,15 @@ public class TableDefinition extends AbstractDatasetDefinition<Table, DatasetAdm
 
   private final DatasetDefinition<? extends OrderedTable, ?> tableDef;
 
-  public TableDefinition(String name, DatasetDefinition<? extends OrderedTable, ?> orderedTableDefinition) {
-    super(name);
+  public TableDefinition(String name, int version,
+                         DatasetDefinition<? extends OrderedTable, ?> orderedTableDefinition) {
+    super(name, version);
     this.tableDef = orderedTableDefinition;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("", properties))
       .build();

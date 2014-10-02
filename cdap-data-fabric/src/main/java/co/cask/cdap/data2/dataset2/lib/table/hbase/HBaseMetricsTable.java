@@ -263,4 +263,9 @@ public class HBaseMetricsTable implements MetricsTable {
   public void close() throws IOException {
     hTable.close();
   }
+
+  @Override
+  public int getVersion() {
+    return 0;
+  }
 }

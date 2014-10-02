@@ -51,13 +51,13 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Inject
   private HBaseTableUtil tableUtil;
 
-  public HBaseKVTableDefinition(String name) {
-    super(name);
+  public HBaseKVTableDefinition(String name, int version) {
+    super(name, version);
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .build();
   }
@@ -167,6 +167,11 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     public void close() throws IOException {
       table.close();
     }
+
+    @Override
+    public int getVersion() {
+      return 0;
+    }
   }
 
   /**
@@ -175,7 +180,12 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   public static final class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      registry.add(new HBaseKVTableDefinition(NoTxKeyValueTable.class.getName()));
+      registry.add(new HBaseKVTableDefinition(NoTxKeyValueTable.class.getName(), getVersion()), getVersion());
+    }
+
+    @Override
+    public int getVersion() {
+      return 0;
     }
   }
 

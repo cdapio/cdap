@@ -31,8 +31,13 @@ public class FakeDatasetModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = registry.get("keyValueTable");
-    registry.add(new FakeDatasetDefinition(FakeDataset.TYPE_NAME, kvTableDef));
-    registry.add(new FakeDatasetDefinition(FakeDataset.class.getName(), kvTableDef));
+    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = registry.get("keyValueTable", getVersion());
+    registry.add(new FakeDatasetDefinition(FakeDataset.TYPE_NAME, getVersion(), kvTableDef), getVersion());
+    registry.add(new FakeDatasetDefinition(FakeDataset.class.getName(), getVersion(), kvTableDef), getVersion());
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 }

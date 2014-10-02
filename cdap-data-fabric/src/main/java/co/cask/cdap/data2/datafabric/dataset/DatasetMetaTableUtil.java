@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -33,9 +34,11 @@ public class DatasetMetaTableUtil {
   public static final String INSTANCE_TABLE_NAME = "datasets.instance";
 
   private final DatasetFramework framework;
+  private final DataSetInstantiator dataSetInstantiator;
 
-  public DatasetMetaTableUtil(DatasetFramework framework) {
+  public DatasetMetaTableUtil(DatasetFramework framework, DataSetInstantiator dataSetInstantiator) {
     this.framework = framework;
+    this.dataSetInstantiator = dataSetInstantiator;
   }
 
   public void init() throws DatasetManagementException {

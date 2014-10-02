@@ -34,14 +34,15 @@ public class IntegerStoreDefinition
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public IntegerStoreDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueTableDefinition) {
-    super(name);
+  public IntegerStoreDefinition(String name, int version,
+                                DatasetDefinition<? extends KeyValueTable, ?> keyValueTableDefinition) {
+    super(name, version);
     this.tableDef = keyValueTableDefinition;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("table", properties))
       .build();

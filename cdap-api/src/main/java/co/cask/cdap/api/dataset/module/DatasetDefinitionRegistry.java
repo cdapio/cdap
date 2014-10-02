@@ -18,6 +18,7 @@ package co.cask.cdap.api.dataset.module;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import com.sun.tools.javac.resources.version;
 
 /**
  * Registry of dataset definitions and other components in a Datasets System.
@@ -34,7 +35,7 @@ public interface DatasetDefinitionRegistry {
    * @param def definition to add
    * @throws IllegalArgumentException if registry already contains dataset type of the same name as given definition
    */
-  void add(DatasetDefinition def);
+  void add(DatasetDefinition def, int version);
 
   /**
    * Gets {@link DatasetDefinition} previously added to the registry.
@@ -44,11 +45,11 @@ public interface DatasetDefinitionRegistry {
    * @return instance of {@link DatasetDefinition}
    * @throws IllegalArgumentException if registry does not contain dataset type of a given name
    */
-  <T extends DatasetDefinition> T get(String datasetTypeName);
+  <T extends DatasetDefinition> T get(String datasetTypeName, int version);
 
   /**
    * @param datasetTypeName name of the dataset type
    * @return true if registry contains dataset type of the given name, false otherwise
    */
-  boolean hasType(String datasetTypeName);
+  boolean hasType(String datasetTypeName, int version);
 }

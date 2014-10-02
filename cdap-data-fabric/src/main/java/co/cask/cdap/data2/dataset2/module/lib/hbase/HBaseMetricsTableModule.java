@@ -28,7 +28,12 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseMetricsTableDefinition;
 public class HBaseMetricsTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new HBaseMetricsTableDefinition(HBaseMetricsTable.class.getName()));
-    registry.add(new HBaseMetricsTableDefinition(MetricsTable.class.getName()));
+    registry.add(new HBaseMetricsTableDefinition(HBaseMetricsTable.class.getName(), getVersion()), getVersion());
+    registry.add(new HBaseMetricsTableDefinition(MetricsTable.class.getName(), getVersion()), getVersion());
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 }

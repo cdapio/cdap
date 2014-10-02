@@ -111,4 +111,9 @@ public class LevelDBOrderedTable extends BufferingOrderedTable {
   protected Scanner scanPersisted(byte[] startRow, byte[] stopRow) throws Exception {
     return core.scan(startRow, stopRow, null, null, tx);
   }
+
+  @Override
+  public int getVersion() {
+    return 0;
+  }
 }

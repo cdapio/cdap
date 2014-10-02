@@ -33,7 +33,6 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -46,16 +45,12 @@ import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -135,7 +130,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
+      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType(), spec.getTypeVersion()), null);
       responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
     }
   }
@@ -154,6 +149,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
+      /**
+       * check if the version is > latest version in MDS
+       * if so, just update the latest version in Instance MDS
+       */
+      if (existing.getTypeVersion() > instanceManager.getLatestVersion(name)) {
+        instanceManager.updateLatestVersion(name, existing.getTypeVersion());
+      }
+
       String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                      name, existing);
       LOG.warn(message);
@@ -243,7 +246,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   private boolean createDatasetInstance(DatasetInstanceConfiguration creationProperties,
                                         String name, HttpResponder responder, String operation) {
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName(),
+                                                       creationProperties.getTypeVersion());
     if (typeMeta == null) {
       String message = String.format("Cannot %s dataset %s: unknown type %s",
                                      operation, name, creationProperties.getTypeName());
@@ -360,7 +364,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return false;
     }
 
-    opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+    opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType(), spec.getTypeVersion()));
     return true;
   }
 

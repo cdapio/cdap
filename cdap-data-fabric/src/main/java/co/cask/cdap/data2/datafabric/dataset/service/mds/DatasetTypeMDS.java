@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.collect.Lists;
+import com.sun.tools.javac.resources.version;
 
 import java.util.Collection;
 import java.util.List;
@@ -56,16 +57,21 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
   }
 
   @Nullable
-  public DatasetModuleMeta getModuleByType(String typeName) {
-    String moduleName = get(getTypeKey(typeName), String.class);
+  public DatasetModuleMeta getModule(String name, int version) {
+    return get(getModuleKey(name, version), DatasetModuleMeta.class);
+  }
+
+  @Nullable
+  public DatasetModuleMeta getModuleByType(String typeName, int version) {
+    String moduleName = get(getTypeKey(typeName, version), String.class);
     if (moduleName == null) {
       return null;
     }
     return getModule(moduleName);
   }
 
-  public DatasetTypeMeta getType(String typeName) {
-    DatasetModuleMeta moduleName = getModuleByType(typeName);
+  public DatasetTypeMeta getType(String typeName, int version) {
+    DatasetModuleMeta moduleName = getModuleByType(typeName, version);
     if (moduleName == null) {
       return null;
     }
@@ -86,41 +92,45 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
   }
 
   public void write(DatasetModuleMeta moduleMeta) {
-    put(getModuleKey(moduleMeta.getName()), moduleMeta);
+    put(getModuleKey(moduleMeta.getName(), moduleMeta.getVersion()), moduleMeta);
 
     for (String type : moduleMeta.getTypes()) {
-      write(type, moduleMeta.getName());
+      write(type, moduleMeta.getVersion(), moduleMeta.getName() + "_" + moduleMeta.getVersion());
     }
   }
 
-  public void deleteModule(String name) {
-    DatasetModuleMeta module = getModule(name);
+  public void deleteModule(String name, int version) {
+    DatasetModuleMeta module = getModule(name, version);
     if (module == null) {
       // that's fine: module is not there
       return;
     }
-
-    delete(getModuleKey(module.getName()));
+    delete(getModuleKey(module.getName(), version));
 
     for (String type : module.getTypes()) {
-      delete(getTypeKey(type));
+      delete(getTypeKey(type, version));
     }
   }
 
   private DatasetTypeMeta getTypeMeta(String typeName, String moduleName) {
     DatasetModuleMeta moduleMeta = getModule(moduleName);
+    // strip the version from the typeName
+    typeName = removeVersionFromTypeName(typeName);
     return getTypeMeta(typeName, moduleMeta);
+  }
+
+  private String removeVersionFromTypeName(String typeName) {
+    return typeName.substring(0, typeName.lastIndexOf("_"));
   }
 
   private DatasetTypeMeta getTypeMeta(String typeName, DatasetModuleMeta moduleMeta) {
     List<DatasetModuleMeta> modulesToLoad = Lists.newArrayList();
     // adding first all modules we depend on, then myself
     for (String usedModule : moduleMeta.getUsesModules()) {
-      modulesToLoad.add(getModule(usedModule));
+      modulesToLoad.add(getModule(usedModule, moduleMeta.getVersion()));
     }
     modulesToLoad.add(moduleMeta);
-
-    return new DatasetTypeMeta(typeName, modulesToLoad);
+    return new DatasetTypeMeta(typeName, moduleMeta.getVersion(), modulesToLoad);
   }
 
   // type -> moduleName
@@ -129,12 +139,20 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
     return scan(prefix, String.class);
   }
 
-  private void write(String typeName, String moduleName) {
-    put(getTypeKey(typeName), moduleName);
+  private void write(String typeName, int version, String moduleName) {
+    put(getTypeKey(typeName, version), moduleName);
   }
 
   private byte[] getModuleKey(String name) {
     return Bytes.add(MODULES_PREFIX, Bytes.toBytes(name));
+  }
+
+  private byte[] getModuleKey(String name, int version) {
+    return Bytes.add(MODULES_PREFIX, Bytes.toBytes(name), Bytes.toBytes("_" + version));
+  }
+
+  private byte[] getTypeKey(String name, int version) {
+    return Bytes.add(TYPE_TO_MODULE_PREFIX, Bytes.toBytes(name), Bytes.toBytes("_" + version));
   }
 
   private byte[] getTypeKey(String name) {

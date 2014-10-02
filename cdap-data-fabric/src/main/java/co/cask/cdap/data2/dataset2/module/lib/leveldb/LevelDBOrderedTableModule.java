@@ -27,8 +27,13 @@ import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableDefiniti
 public class LevelDBOrderedTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new LevelDBOrderedTableDefinition("orderedTable"));
+    registry.add(new LevelDBOrderedTableDefinition("orderedTable", getVersion()), getVersion());
     // so that it can be resolved via @Dataset
-    registry.add(new LevelDBOrderedTableDefinition(OrderedTable.class.getName()));
+    registry.add(new LevelDBOrderedTableDefinition(OrderedTable.class.getName(), getVersion()), getVersion());
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 }

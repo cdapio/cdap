@@ -57,6 +57,8 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetTypeHandler extends AbstractHttpHandler {
   public static final String HEADER_CLASS_NAME = "X-Class-Name";
+  public static final String HEADER_VERSION_NAME = "Version";
+  public static final int DEFAULT_HEADER_VERSION = 0;
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 
@@ -115,12 +117,13 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
                        @PathParam("name") String name) throws IOException {
 
     String className = request.getHeader(HEADER_CLASS_NAME);
+    int version = Integer.parseInt(request.getHeader(HEADER_VERSION_NAME));
     Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
-    LOG.info("Adding module {}, class name: {}", name, className);
+    LOG.info("Adding module {}, class name: {}, version {}", name, className, version);
 
-    DatasetModuleMeta existing = manager.getModule(name);
+    DatasetModuleMeta existing = manager.getModule(name, version);
     if (existing != null) {
-      String message = String.format("Cannot add module %s: module with same name already exists: %s",
+      String message = String.format("Cannot add module %s: module with same name and version already exists: %s",
                                      name, existing);
       LOG.warn(message);
       responder.sendError(HttpResponseStatus.CONFLICT, message);
@@ -157,7 +160,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     }
 
     try {
-      manager.addModule(name, className, archive);
+      manager.addModule(name, version, className, archive);
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -172,7 +175,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void deleteModule(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
     boolean deleted;
     try {
-      deleted = manager.deleteModule(name);
+      deleted = manager.deleteModule(name, DEFAULT_HEADER_VERSION);
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -189,7 +192,20 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/modules/{name}")
   public void getModuleInfo(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
-    DatasetModuleMeta moduleMeta = manager.getModule(name);
+    DatasetModuleMeta moduleMeta = manager.getModule(name, 0);
+    if (moduleMeta == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, moduleMeta);
+    }
+  }
+
+  @GET
+  @Path("/data/modules/{name}/version/{vnum}")
+  public void getModuleInfoWithVersion(HttpRequest request, final HttpResponder responder,
+                                       @PathParam("name") String name, @PathParam("vnum") int version) {
+
+    DatasetModuleMeta moduleMeta = manager.getModule(name, version);
     if (moduleMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -216,7 +232,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void getTypeInfo(HttpRequest request, final HttpResponder responder,
                       @PathParam("name") String name) {
 
-    DatasetTypeMeta typeMeta = manager.getTypeInfo(name);
+    DatasetTypeMeta typeMeta = manager.getTypeInfo(name, DEFAULT_HEADER_VERSION);
     if (typeMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {

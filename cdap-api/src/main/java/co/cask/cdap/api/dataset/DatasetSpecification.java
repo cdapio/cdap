@@ -49,6 +49,8 @@ public final class DatasetSpecification {
   private final String name;
   // the name of the type of the dataset
   private final String type;
+  // the version of the type of the dataset
+  private final int version;
   // the custom properties of the dataset.
   // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
   private final SortedMap<String, String> properties;
@@ -56,12 +58,12 @@ public final class DatasetSpecification {
   // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
   private final SortedMap<String, DatasetSpecification> datasetSpecs;
 
-  public static Builder builder(String name, String typeName) {
-    return new Builder(name, typeName);
+  public static Builder builder(String name, String typeName, int version) {
+    return new Builder(name, typeName, version);
   }
 
   public static DatasetSpecification changeName(DatasetSpecification spec, String newName) {
-    return new DatasetSpecification(newName, spec.type,
+    return new DatasetSpecification(newName, spec.type, spec.version,
                                     spec.properties, spec.datasetSpecs);
   }
 
@@ -74,10 +76,12 @@ public final class DatasetSpecification {
    */
   private DatasetSpecification(String name,
                                String type,
+                               int version,
                                SortedMap<String, String> properties,
                                SortedMap<String, DatasetSpecification> datasetSpecs) {
     this.name = name;
     this.type = type;
+    this.version = version;
     this.properties = properties;
     this.datasetSpecs = datasetSpecs;
   }
@@ -96,6 +100,15 @@ public final class DatasetSpecification {
    */
   public String getType() {
     return this.type;
+  }
+
+
+  /**
+   * Returns the version of the type of the dataset.
+   * @return the version of the type of the dataset
+   */
+  public int getTypeVersion() {
+    return this.version;
   }
 
   /**
@@ -205,12 +218,14 @@ public final class DatasetSpecification {
     // private fields
     private final String name;
     private final String type;
+    private final int version;
     private final TreeMap<String, String> properties;
     private final TreeMap<String, DatasetSpecification> dataSetSpecs;
 
-    private Builder(String name, String typeName) {
+    private Builder(String name, String typeName, int version) {
       this.name = name;
       this.type = typeName;
+      this.version = version;
       this.properties = Maps.newTreeMap();
       this.dataSetSpecs = Maps.newTreeMap();
     }
@@ -263,7 +278,8 @@ public final class DatasetSpecification {
      * @return a complete DataSetSpecification
      */
     public DatasetSpecification build() {
-      return namespace(new DatasetSpecification(this.name, this.type, this.properties, this.dataSetSpecs));
+      return namespace(new DatasetSpecification(this.name, this.type, this.version,
+                                                this.properties, this.dataSetSpecs));
     }
 
     /**
@@ -297,7 +313,7 @@ public final class DatasetSpecification {
         specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
       }
 
-      return new DatasetSpecification(name, type, spec.properties, specifications);
+      return new DatasetSpecification(name, type, version, spec.properties, specifications);
     }
   }
 }

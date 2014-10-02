@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import com.google.common.collect.Maps;
+import com.sun.tools.javac.resources.version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,10 +34,11 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
   private Map<String, DatasetDefinition> datasetTypes = Maps.newHashMap();
 
   @Override
-  public <T extends DatasetDefinition> T get(String datasetType) {
-    DatasetDefinition def = datasetTypes.get(datasetType);
+  public <T extends DatasetDefinition> T get(String datasetType, int version) {
+    String datasetTypeWithVersion = getDatasetTypeWithVersion(datasetType, version);
+    DatasetDefinition def = datasetTypes.get(datasetTypeWithVersion);
     if (def == null) {
-      String msg = "Requested dataset type does NOT exist: " + datasetType;
+      String msg = String.format("Requested dataset type %s with version %s does NOT exist ", datasetType, version);
       LOG.debug(msg);
       throw new IllegalArgumentException(msg);
     }
@@ -44,16 +46,21 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
   }
 
   @Override
-  public void add(DatasetDefinition def) {
-    String typeName = def.getName();
-    if (datasetTypes.containsKey(typeName)) {
-      throw new TypeConflictException("Cannot add dataset type: it already exists: " + typeName);
+  public void add(DatasetDefinition def, int version) {
+    String typeNameWithVersion = getDatasetTypeWithVersion(def.getName(), version);
+    if (datasetTypes.containsKey(typeNameWithVersion)) {
+      throw new TypeConflictException(String.format("Cannot add dataset type: %s it already exists:%s ",
+                                                    def.getName(), version));
     }
-    datasetTypes.put(typeName, def);
+    datasetTypes.put(typeNameWithVersion, def);
   }
 
   @Override
-  public boolean hasType(String typeName) {
-    return datasetTypes.containsKey(typeName);
+  public boolean hasType(String typeName, int version) {
+    return datasetTypes.containsKey(getDatasetTypeWithVersion(typeName, version));
+  }
+
+  private String getDatasetTypeWithVersion(String datasetType, int version) {
+    return datasetType + "_" + version;
   }
 }

@@ -34,15 +34,15 @@ public class FakeDatasetDefinition extends AbstractDatasetDefinition<FakeDataset
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public FakeDatasetDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
-    super(name);
+  public FakeDatasetDefinition(String name, int version, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
+    super(name, version);
     Preconditions.checkArgument(keyValueDef != null, "KeyValueTable definition is required");
     this.tableDef = keyValueDef;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName())
+    return DatasetSpecification.builder(instanceName, getName(), getVersion())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("objects", properties))
       .build();

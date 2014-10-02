@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service.mds;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -40,19 +41,22 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
   private final DatasetFramework dsFramework;
 
   private DatasetMetaTableUtil util;
+  private DataSetInstantiator dataSetInstantiator;
 
   @Inject
   public MDSDatasetsRegistry(TransactionSystemClient txClient,
                              @Named("datasetMDS") DatasetFramework framework,
+                             DataSetInstantiator dataSetInstantiator,
                              CConfiguration conf) {
     super(txClient);
+    this.dataSetInstantiator = dataSetInstantiator;
     this.dsFramework =
       new NamespacedDatasetFramework(framework, new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
   }
 
   @Override
   public void startUp() throws Exception {
-    this.util = new DatasetMetaTableUtil(dsFramework);
+    this.util = new DatasetMetaTableUtil(dsFramework, dataSetInstantiator);
     this.util.init();
   }
 

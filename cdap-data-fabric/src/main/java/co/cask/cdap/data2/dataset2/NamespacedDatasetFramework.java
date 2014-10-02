@@ -60,8 +60,13 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   @Override
   public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException, IOException {
-
     delegate.addInstance(datasetType, namespace(datasetInstanceName), props);
+  }
+
+  @Override
+  public void addInstance(String datasetTypeName, int version, String datasetInstanceName, DatasetProperties props)
+    throws DatasetManagementException, IOException {
+    delegate.addInstance(datasetTypeName, version, namespace(datasetInstanceName), props);
   }
 
   @Override
