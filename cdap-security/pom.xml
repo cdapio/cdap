@@ -43,6 +43,10 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>cglib</groupId>
+      <artifactId>cglib</artifactId>
+    </dependency>
+    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-common-unit-test</artifactId>
       <version>${project.version}</version>

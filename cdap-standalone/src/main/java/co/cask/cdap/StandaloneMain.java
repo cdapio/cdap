@@ -51,6 +51,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
+import co.cask.cdap.security.guice.SecurityClientModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
@@ -378,6 +379,7 @@ public class StandaloneMain {
       new IOModule(),
       new MetricsHandlerModule(),
       new AuthModule(),
+      new SecurityClientModule(),
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new LocationRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),

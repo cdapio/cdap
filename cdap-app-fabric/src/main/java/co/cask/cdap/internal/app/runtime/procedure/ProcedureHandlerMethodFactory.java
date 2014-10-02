@@ -21,6 +21,7 @@ import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
+import co.cask.cdap.security.authorization.AuthorizationProxyFactory;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Throwables;
@@ -52,11 +53,13 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
   private final Program program;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
   private final BasicProcedureContextFactory contextFactory;
+  private final AuthorizationProxyFactory authorizationProxyFactory;
 
   private Thread runThread;
 
   ProcedureHandlerMethodFactory(Program program, DataFabricFacadeFactory dataFabricFacadeFactory,
-                                BasicProcedureContextFactory contextFactory) {
+                                BasicProcedureContextFactory contextFactory,
+                                AuthorizationProxyFactory authorizationProxyFactory) {
 
     Map<WeakReference<HandlerMethod>, ProcedureEntry> map = Maps.newIdentityHashMap();
     procedures = Collections.synchronizedMap(map);
@@ -65,6 +68,7 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
     this.program = program;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.contextFactory = contextFactory;
+    this.authorizationProxyFactory = authorizationProxyFactory;
   }
 
   @Override
@@ -75,7 +79,8 @@ final class ProcedureHandlerMethodFactory extends AbstractExecutionThreadService
       DataFabricFacade dataFabricFacade = disableTransaction ?
         dataFabricFacadeFactory.createNoTransaction(program, context.getDatasetInstantiator()) :
         dataFabricFacadeFactory.create(program, context.getDatasetInstantiator());
-      ProcedureHandlerMethod handlerMethod = new ProcedureHandlerMethod(program, dataFabricFacade, context);
+      ProcedureHandlerMethod handlerMethod = authorizationProxyFactory.wrap(
+        new ProcedureHandlerMethod(program, dataFabricFacade, context));
       handlerMethod.init();
 
       procedures.put(new WeakReference<HandlerMethod>(handlerMethod, refQueue),

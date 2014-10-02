@@ -48,6 +48,11 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
+      <artifactId>security</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-watchdog</artifactId>
       <version>${project.version}</version>
     </dependency>

@@ -34,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.authorization.AuthorizationProxyFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -82,6 +83,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework dsFramework;
   private final CConfiguration conf;
+  private final AuthorizationProxyFactory authorizationProxyFactory;
 
   private ProcedureHandlerMethodFactory handlerMethodFactory;
 
@@ -95,7 +97,8 @@ public final class ProcedureProgramRunner implements ProgramRunner {
                                 @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                                 MetricsCollectionService metricsCollectionService,
                                 DiscoveryServiceClient discoveryServiceClient,
-                                DatasetFramework dsFramework, CConfiguration conf) {
+                                DatasetFramework dsFramework, CConfiguration conf,
+                                AuthorizationProxyFactory authorizationProxyFactory) {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
@@ -103,6 +106,7 @@ public final class ProcedureProgramRunner implements ProgramRunner {
     this.discoveryServiceClient = discoveryServiceClient;
     this.dsFramework = dsFramework;
     this.conf = conf;
+    this.authorizationProxyFactory = authorizationProxyFactory;
   }
 
   @Inject(optional = true)
@@ -151,7 +155,8 @@ public final class ProcedureProgramRunner implements ProgramRunner {
                                                    options.getUserArguments(), procedureSpec, metricsCollectionService,
                                                    discoveryServiceClient, dsFramework, conf);
 
-      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, dataFabricFacadeFactory, contextFactory);
+      handlerMethodFactory = new ProcedureHandlerMethodFactory(program, dataFabricFacadeFactory,
+                                                               contextFactory, authorizationProxyFactory);
       handlerMethodFactory.startAndWait();
 
       channelGroup = new DefaultChannelGroup();
