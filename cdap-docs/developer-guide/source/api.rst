@@ -1477,7 +1477,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"programId"``
      - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
    * - ``"runnableId"``
-     - Name of the *Flowlet* or *Service Handler/Worker* if querying either a *Flow* or *User Service*. This parameter
+     - Name of the *Flowlet* or *Service* if querying either a *Flow* or *User Service*. This parameter
        does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -1627,7 +1627,7 @@ Example
 
 Scaling Services
 ................
-You can query or change the number of instances of a Service's Handler/Worker
+You can query or change the number of instances of a Service
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
@@ -1648,9 +1648,11 @@ with the arguments as a JSON string in the body::
    * - ``<service-id>``
      - Name of the Service
    * - ``<runnable-id>``
-     - Name of the Service Handler/Worker
+     - Name of the Service
    * - ``<quantity>``
      - Number of instances to be used
+
+Note in this release the ``runnable-id`` is the same as the ``service-id``.
 
 Example
 .......
@@ -1659,9 +1661,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables`` ``/WhoRunnable/instances``
+     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookup/runnables/CatalogLookup/instances``
    * - Description
-     - Retrieve the number of instances of the Service Worker *WhoRunnable* of the Service *WhoService*
+     - Retrieve the number of instances of the Service *CatalogLookup* in the application *PurchaseHistory*.
 
 .. rst2pdf: PageBreak
 
