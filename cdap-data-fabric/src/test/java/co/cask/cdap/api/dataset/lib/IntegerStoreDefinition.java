@@ -34,9 +34,8 @@ public class IntegerStoreDefinition
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public IntegerStoreDefinition(String name, int version,
-                                DatasetDefinition<? extends KeyValueTable, ?> keyValueTableDefinition) {
-    super(name, version);
+  public IntegerStoreDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueTableDefinition) {
+    super(name);
     this.tableDef = keyValueTableDefinition;
   }
 

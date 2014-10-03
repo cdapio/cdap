@@ -56,6 +56,18 @@ public interface DatasetFramework {
    *         with a same name as one of the already registered by another module types
    * @throws DatasetManagementException in case of problems
    */
+  void addModule(String moduleName, int version, DatasetModule module)
+    throws DatasetManagementException;
+
+
+  /**
+   * Adds dataset types by adding dataset module to the system.
+   * @param moduleName dataset module name
+   * @param module dataset module
+   * @throws ModuleConflictException when module with same name is already registered or this module registers a type
+   *         with a same name as one of the already registered by another module types
+   * @throws DatasetManagementException in case of problems
+   */
   void addModule(String moduleName, DatasetModule module)
     throws DatasetManagementException;
 
@@ -91,24 +103,6 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    */
   void addInstance(String datasetTypeName,  String datasetInstanceName, DatasetProperties props)
-    throws DatasetManagementException, IOException;
-
-  /**
-   * Adds information about dataset instance to the system.
-   *
-   * This uses
-   * {@link co.cask.cdap.api.dataset.DatasetDefinition#configure(String, DatasetProperties)}
-   * method to build {@link co.cask.cdap.api.dataset.DatasetSpecification} which describes dataset instance
-   * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
-   *
-   * @param datasetTypeName dataset instance type name
-   * @param version dataset instance type version
-   * @param datasetInstanceName dataset instance name
-   * @param props dataset instance properties
-   * @throws IOException when creation of dataset instance using its admin fails
-   * @throws DatasetManagementException
-   */
-  void addInstance(String datasetTypeName, int version, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException, IOException;
 
   /**

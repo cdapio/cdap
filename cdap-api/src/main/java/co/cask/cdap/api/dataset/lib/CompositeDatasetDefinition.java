@@ -46,8 +46,8 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
    * @param name this dataset type name
    * @param delegates map of [dataset instance name] -> [dataset definition] to use for this instance name
    */
-  protected CompositeDatasetDefinition(String name, int version, Map<String, ? extends DatasetDefinition> delegates) {
-    super(name, version);
+  protected CompositeDatasetDefinition(String name, Map<String, ? extends DatasetDefinition> delegates) {
+    super(name);
     this.delegates = delegates;
   }
 

@@ -33,15 +33,9 @@ public class ACLTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<IndexedObjectStore, DatasetAdmin> tableDefinition =
-      registry.get(IndexedObjectStore.class.getName(), getVersion());
+      registry.get(IndexedObjectStore.class.getName());
 
-    registry.add(new ACLTableDefinition("aclTable", getVersion(), tableDefinition), getVersion());
-    registry.add(new ACLTableDefinition(ACLTable.class.getName(), getVersion(), tableDefinition), getVersion());
+    registry.add(new ACLTableDefinition("aclTable", tableDefinition));
+    registry.add(new ACLTableDefinition(ACLTable.class.getName(), tableDefinition));
   }
-
-  @Override
-  public int getVersion() {
-    return 0;
-  }
-
 }

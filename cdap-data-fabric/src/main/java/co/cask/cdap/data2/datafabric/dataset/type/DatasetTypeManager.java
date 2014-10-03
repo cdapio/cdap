@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.data2.dataset2.tx.TxCallable;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.DatasetTypeVersionInfo;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -51,7 +52,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +63,8 @@ import javax.annotation.Nullable;
  */
 public class DatasetTypeManager extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeManager.class);
+  private static final int DEFAULT_MODULE_VERSION = 0;
+  private static final int DEFAULT_TYPE_VERSION = 0;
 
   private final MDSDatasetsRegistry mdsDatasets;
   private final LocationFactory locationFactory;
@@ -105,7 +107,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
         @Override
         public Void call(MDSDatasets datasets) throws DatasetModuleConflictException {
-          DatasetModuleMeta existing = datasets.getTypeMDS().getModule(name, version);
+          DatasetModuleMeta existing = datasets.getTypeMDS().getModule(name);
           if (existing != null) {
             String msg = String.format("cannot add module %s, module with the same name already exists: %s",
                                        name, existing);
@@ -144,7 +146,7 @@ public class DatasetTypeManager extends AbstractIdleService {
           // NOTE: we use set to avoid duplicated dependencies
           // NOTE: we use LinkedHashSet to preserve order in which dependencies must be loaded
           Set<String> moduleDependencies = Sets.newLinkedHashSet();
-          for (DatasetModuleTypeVersionInfo usedType : reg.getUsedTypes()) {
+          for (DatasetTypeVersionInfo usedType : reg.getUsedTypes()) {
             DatasetModuleMeta usedModule = datasets.getTypeMDS().getModuleByType(usedType.getName(),
                                                                                  usedType.getVersion());
             // adding all used types and the module itself, in this very order to keep the order of loading modules
@@ -160,7 +162,7 @@ public class DatasetTypeManager extends AbstractIdleService {
 
           DatasetModuleMeta moduleMeta = new DatasetModuleMeta(name, className,
                                                                jarLocation == null ? null : jarLocation.toURI(),
-                                                               reg.getTypes(), version,
+                                                               reg.getTypes(),
                                                                Lists.newArrayList(moduleDependencies));
           datasets.getTypeMDS().write(moduleMeta);
 
@@ -229,11 +231,11 @@ public class DatasetTypeManager extends AbstractIdleService {
    * @return dataset module info or {@code null} if module with given name does NOT exist
    */
   @Nullable
-  public DatasetModuleMeta getModule(final String name, final int version) {
+  public DatasetModuleMeta getModule(final String name) {
     return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, DatasetModuleMeta>() {
       @Override
       public DatasetModuleMeta call(MDSDatasets datasets) throws Exception {
-        return datasets.getTypeMDS().getModule(name, version);
+        return datasets.getTypeMDS().getModule(name);
       }
     });
   }
@@ -251,7 +253,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       return mdsDatasets.execute(new TxCallable<MDSDatasets, Boolean>() {
         @Override
         public Boolean call(MDSDatasets datasets) throws DatasetModuleConflictException {
-          DatasetModuleMeta module = datasets.getTypeMDS().getModule(name, version);
+          DatasetModuleMeta module = datasets.getTypeMDS().getModule(name);
 
           if (module == null) {
             return false;
@@ -265,7 +267,7 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
 
           Collection<DatasetSpecification> dependentInstances =
-            datasets.getInstanceMDS().getByTypes(ImmutableSet.copyOf(module.getTypes()), module.getVersion());
+            datasets.getInstanceMDS().getByTypes(ImmutableSet.copyOf(module.getTypes()));
           // cannot delete when there's instance that uses it
           if (dependentInstances.size() > 0) {
             String msg =
@@ -275,12 +277,12 @@ public class DatasetTypeManager extends AbstractIdleService {
 
           // remove it from "usedBy" from other modules
           for (String usedModuleName : module.getUsesModules()) {
-            DatasetModuleMeta usedModule = datasets.getTypeMDS().getModule(usedModuleName, version);
+            DatasetModuleMeta usedModule = datasets.getTypeMDS().getModule(usedModuleName);
             usedModule.removeUsedByModule(name);
             datasets.getTypeMDS().write(usedModule);
           }
 
-          datasets.getTypeMDS().deleteModule(name, version);
+          datasets.getTypeMDS().deleteModule(name);
 
           return true;
         }
@@ -305,11 +307,11 @@ public class DatasetTypeManager extends AbstractIdleService {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
         @Override
         public Void call(MDSDatasets datasets) throws DatasetModuleConflictException {
-          List<DatasetModuleTypeVersionInfo> modulesToDelete = Lists.newArrayList();
-          Set<String> typesToDelete = Sets.newHashSet();
+          List<String> modulesToDelete = Lists.newArrayList();
+          Set<DatasetTypeVersionInfo> typesToDelete = Sets.newHashSet();
           for (DatasetModuleMeta module : datasets.getTypeMDS().getModules()) {
             if (!defaultModules.containsKey(module.getName())) {
-              modulesToDelete.add(new DatasetModuleTypeVersionInfo(module.getName(), module.getVersion()));
+              modulesToDelete.add(module.getName());
               typesToDelete.addAll(module.getTypes());
             }
           }
@@ -323,8 +325,8 @@ public class DatasetTypeManager extends AbstractIdleService {
             throw new DatasetModuleConflictException(msg);
           }
 
-          for (DatasetModuleTypeVersionInfo module : modulesToDelete) {
-            datasets.getTypeMDS().deleteModule(module.getName(), module.getVersion());
+          for (String module : modulesToDelete) {
+            datasets.getTypeMDS().deleteModule(module);
           }
 
           return null;
@@ -347,7 +349,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     for (Map.Entry<String, DatasetModule> module : defaultModules.entrySet()) {
       try {
         // NOTE: we assume default modules are always in classpath, hence passing null for jar location
-        addModule(module.getKey(), module.getValue().getVersion(), module.getValue().getClass().getName(), null);
+        addModule(module.getKey(), DEFAULT_MODULE_VERSION, module.getValue().getClass().getName(), null);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
         LOG.info("Not adding " + module.getKey() + " module: it already exists");
@@ -362,34 +364,35 @@ public class DatasetTypeManager extends AbstractIdleService {
     private final MDSDatasets datasets;
     private final InMemoryDatasetDefinitionRegistry registry;
 
-    private final List<String> types = Lists.newArrayList();
-    private final LinkedHashSet<DatasetModuleTypeVersionInfo> usedTypes = Sets.newLinkedHashSet();
+    private final List<DatasetTypeVersionInfo> types = Lists.newArrayList();
+    private final LinkedHashSet<DatasetTypeVersionInfo> usedTypes = Sets.newLinkedHashSet();
 
     public DependencyTrackingRegistry(MDSDatasets datasets) {
       this.datasets = datasets;
       this.registry = new InMemoryDatasetDefinitionRegistry();
     }
 
-    public List<String> getTypes() {
+    public List<DatasetTypeVersionInfo> getTypes() {
       return types;
     }
 
-    public Set<DatasetModuleTypeVersionInfo> getUsedTypes() {
+    public Set<DatasetTypeVersionInfo> getUsedTypes() {
       return usedTypes;
     }
 
     @Override
-    public void add(DatasetDefinition def, int version) {
+    public void add(DatasetDefinition def) {
       String typeName = def.getName();
-      if (datasets.getTypeMDS().getType(typeName, version) != null) {
+      if (datasets.getTypeMDS().getType(typeName, def.getVersion()) != null) {
         String msg = "Cannot add dataset type: it already exists: " + typeName;
         LOG.error(msg);
         throw new TypeConflictException(msg);
       }
       //assuming the version will be same among the types in a module
-      types.add(typeName);
-      registry.add(def, version);
+      types.add(new DatasetTypeVersionInfo(typeName, def.getVersion()));
+      registry.add(def);
     }
+
 
     @Override
     public <T extends DatasetDefinition> T get(String datasetTypeName, int version) {
@@ -407,29 +410,23 @@ public class DatasetTypeManager extends AbstractIdleService {
           throw Throwables.propagate(e);
         }
       }
-      usedTypes.add(new DatasetModuleTypeVersionInfo(datasetTypeName, version));
+      usedTypes.add(new DatasetTypeVersionInfo(datasetTypeName, version));
       return def;
+    }
+
+    @Override
+    public <T extends DatasetDefinition> T get(String datasetTypeName) {
+      return get(datasetTypeName, DEFAULT_TYPE_VERSION);
     }
 
     @Override
     public boolean hasType(String datasetTypeName, int version) {
       return datasets.getTypeMDS().getType(datasetTypeName, version) != null;
     }
-  }
 
-  private class DatasetModuleTypeVersionInfo {
-    private final String name;
-    private final int version;
-
-    public DatasetModuleTypeVersionInfo(String name, int version) {
-      this.name = name;
-      this.version = version;
-    }
-    public String getName() {
-      return name;
-    }
-    public int getVersion() {
-      return version;
+    @Override
+    public boolean hasType(String datasetTypeName) {
+      return hasType(datasetTypeName, DEFAULT_TYPE_VERSION);
     }
   }
 }

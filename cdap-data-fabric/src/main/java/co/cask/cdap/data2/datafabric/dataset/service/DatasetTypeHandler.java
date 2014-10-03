@@ -121,7 +121,14 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
     LOG.info("Adding module {}, class name: {}, version {}", name, className, version);
 
-    DatasetModuleMeta existing = manager.getModule(name, version);
+    DatasetModuleMeta existing = manager.getModule(name);
+    /**
+     * Get the version object from the MDS, check if (passed) version is greater than current version
+     * If greater and (checksum is different) then extract the jar, update the module_version
+     * value with new {version,checksum} in MDS.
+     */
+
+
     if (existing != null) {
       String message = String.format("Cannot add module %s: module with same name and version already exists: %s",
                                      name, existing);

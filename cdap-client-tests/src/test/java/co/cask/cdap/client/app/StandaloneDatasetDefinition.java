@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import com.google.common.base.Preconditions;
+import com.sun.tools.javac.resources.version;
 
 import java.io.IOException;
 import java.util.Map;
@@ -34,9 +35,8 @@ public class StandaloneDatasetDefinition extends AbstractDatasetDefinition<Stand
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public StandaloneDatasetDefinition(String name, int version,
-                                     DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
-    super(name, version);
+  public StandaloneDatasetDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
+    super(name);
     Preconditions.checkArgument(keyValueDef != null, "KeyValueTable definition is required");
     this.tableDef = keyValueDef;
   }

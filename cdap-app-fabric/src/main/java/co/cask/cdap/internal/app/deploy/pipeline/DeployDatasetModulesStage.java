@@ -44,6 +44,8 @@ import java.util.Map;
  */
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLocation> {
   private static final Logger LOG = LoggerFactory.getLogger(DeployDatasetModulesStage.class);
+  private static final int DEFAULT_MODULE_VERSION = 1;
+
   private final DatasetFramework datasetFramework;
   private final DataSetInstantiator dataSetInstantiator;
 
@@ -80,11 +82,12 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
           //       isolated user's environment (e.g. separate yarn container)
 
           if (DatasetModule.class.isAssignableFrom(clazz)) {
-            datasetFramework.addModule(moduleName, (DatasetModule) clazz.newInstance());
+            datasetFramework.addModule(moduleName, DEFAULT_MODULE_VERSION, (DatasetModule) clazz.newInstance());
           } else if (Dataset.class.isAssignableFrom(clazz)) {
             // checking if type is in already
             if (!datasetFramework.hasType(clazz.getName())) {
-              datasetFramework.addModule(moduleName, new SingleTypeModule((Class<Dataset>) clazz, dataSetInstantiator));
+              Dataset dataset = dataSetInstantiator.getDataSet(clazz.getName());
+              datasetFramework.addModule(moduleName, dataset.getVersion(), new SingleTypeModule((Class<Dataset>) clazz));
             }
           } else {
             String msg = String.format(

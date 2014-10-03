@@ -36,8 +36,8 @@ public class KeyValueTableDefinition
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public KeyValueTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name, version);
+  public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+    super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     this.tableDef = tableDef;
   }

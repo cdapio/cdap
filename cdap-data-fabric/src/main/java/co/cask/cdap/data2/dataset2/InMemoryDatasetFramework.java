@@ -32,6 +32,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.sun.tools.javac.resources.version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,14 +77,17 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized void addModule(String moduleName, DatasetModule module)
+  public synchronized void addModule(String moduleName, int version, DatasetModule module)
     throws ModuleConflictException {
-
-    String moduleNameWithVersion = moduleName + "_" + module.getVersion();
-    if (moduleClasses.containsKey(moduleNameWithVersion)) {
-      throw new ModuleConflictException("Cannot add module " + moduleNameWithVersion + ": it already exists.");
+    if (moduleClasses.containsKey(moduleName)) {
+      throw new ModuleConflictException("Cannot add module " + moduleName + ": it already exists.");
     }
-    add(moduleNameWithVersion, module, false);
+    add(moduleName, module, false);
+  }
+
+  @Override
+  public void addModule(String moduleName, DatasetModule module) throws DatasetManagementException {
+    addModule(moduleName, 0, module);
   }
 
   @Override
@@ -108,21 +112,14 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   @Override
   public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException, IOException {
-    addInstance(datasetType, 0 , datasetInstanceName, props);
-  }
-
-  @Override
-  public void addInstance(String datasetType, int version, String datasetInstanceName, DatasetProperties props)
-    throws DatasetManagementException, IOException {
     if (instances.get(datasetInstanceName) != null) {
       // check version and update the latest version
-
       throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceName);
     }
 
-    Preconditions.checkArgument(registry.hasType(datasetType, version), "Dataset type '%s' is not registered",
+    Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered",
                                 datasetType);
-    DatasetDefinition def = registry.get(datasetType, version);
+    DatasetDefinition def = registry.get(datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);
     def.getAdmin(spec, null).create();
@@ -138,9 +135,9 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       throw new InstanceConflictException("Dataset instance with name does not exist: " + datasetInstanceName);
     }
     String datasetType = oldSpec.getType();
-    Preconditions.checkArgument(registry.hasType(datasetType, oldSpec.getTypeVersion()),
+    Preconditions.checkArgument(registry.hasType(datasetType),
                                 "Dataset type '%s' is not registered", datasetType);
-    DatasetDefinition def = registry.get(datasetType, oldSpec.getTypeVersion());
+    DatasetDefinition def = registry.get(datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);
     def.getAdmin(spec, null).upgrade();
@@ -164,21 +161,20 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public synchronized boolean hasType(String typeName) throws DatasetManagementException {
-    //todo : need to fix this, by passing correct version
-    return registry.hasType(typeName, 0);
+    return registry.hasType(typeName);
   }
 
   @Override
   public synchronized void deleteInstance(String datasetInstanceName) throws InstanceConflictException, IOException {
     DatasetSpecification spec = instances.remove(datasetInstanceName);
-    DatasetDefinition def = registry.get(spec.getType(), spec.getTypeVersion());
+    DatasetDefinition def = registry.get(spec.getType());
     def.getAdmin(spec, null).drop();
   }
 
   @Override
   public synchronized void deleteAllInstances() throws DatasetManagementException, IOException {
     for (DatasetSpecification spec : instances.values()) {
-      DatasetDefinition def = registry.get(spec.getType(), spec.getTypeVersion());
+      DatasetDefinition def = registry.get(spec.getType());
       def.getAdmin(spec, null).drop();
     }
     instances.clear();
@@ -193,7 +189,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     if (spec == null) {
       return null;
     }
-    DatasetDefinition impl = createRegistry(classLoader).get(spec.getType(), spec.getTypeVersion());
+    DatasetDefinition impl = createRegistry(classLoader).get(spec.getType());
     return (T) impl.getAdmin(spec, classLoader);
   }
 
@@ -207,7 +203,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     if (spec == null) {
       return null;
     }
-    DatasetDefinition def = createRegistry(classLoader).get(spec.getType(), spec.getTypeVersion());
+    DatasetDefinition def = createRegistry(classLoader).get(spec.getType());
     return (T) (def.getDataset(spec, arguments, classLoader));
   }
 
@@ -277,19 +273,19 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     }
 
     @Override
-    public void add(DatasetDefinition def, int version) {
-      delegate.add(def, version);
+    public void add(DatasetDefinition def) {
+      delegate.add(def);
       types.add(def.getName());
     }
 
     @Override
-    public <T extends DatasetDefinition> T get(String datasetTypeName, int version) {
-      return delegate.get(datasetTypeName, version);
+    public <T extends DatasetDefinition> T get(String datasetTypeName) {
+      return delegate.get(datasetTypeName);
     }
 
     @Override
-    public boolean hasType(String datasetTypeName, int version) {
-      return delegate.hasType(datasetTypeName, version);
+    public boolean hasType(String datasetTypeName) {
+      return delegate.hasType(datasetTypeName);
     }
   }
 }

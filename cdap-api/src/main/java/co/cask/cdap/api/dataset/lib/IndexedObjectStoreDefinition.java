@@ -38,10 +38,9 @@ public class IndexedObjectStoreDefinition
   private final DatasetDefinition<? extends Table, ?> tableDef;
   private final DatasetDefinition<? extends ObjectStore, ?> objectStoreDef;
 
-  public IndexedObjectStoreDefinition(String name, int version,
-                                      DatasetDefinition<? extends Table, ?> tableDef,
+  public IndexedObjectStoreDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef,
                                       DatasetDefinition<? extends ObjectStore, ?> objectStoreDef) {
-    super(name, version);
+    super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     Preconditions.checkArgument(objectStoreDef != null, "ObjectStore definition is required");
     this.tableDef = tableDef;

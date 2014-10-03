@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import com.sun.tools.javac.resources.version;
 
 /**
  * Basic abstract implementation of {@link DatasetDefinition}.
@@ -31,15 +32,13 @@ public abstract class AbstractDatasetDefinition<D extends Dataset, A extends Dat
   implements DatasetDefinition<D, A> {
 
   private final String name;
-  private final int version;
 
   /**
    * Ctor that takes in name of this dataset type.
    * @param name this dataset type name
    */
-  protected AbstractDatasetDefinition(String name, int version) {
+  protected AbstractDatasetDefinition(String name) {
     this.name = name;
-    this.version = version;
   }
 
   @Override
@@ -47,9 +46,10 @@ public abstract class AbstractDatasetDefinition<D extends Dataset, A extends Dat
     return name;
   }
 
+  // for dataset specification to have version information.
   @Override
   public int getVersion() {
-    return version;
+    return 0;
   }
 
 }

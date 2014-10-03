@@ -36,8 +36,8 @@ public class CounterTimeseriesTableDefinition
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public CounterTimeseriesTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name, version);
+  public CounterTimeseriesTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+    super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     this.tableDef = tableDef;
   }

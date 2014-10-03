@@ -35,14 +35,9 @@ public class PrefixedTableModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = registry.get("keyValueTable", getVersion());
-    DatasetDefinition definition = new PrefixedTableDefinition("prefixedTable", getVersion(), kvTableDef);
-    registry.add(definition, getVersion());
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
+    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = registry.get("keyValueTable");
+    DatasetDefinition definition = new PrefixedTableDefinition("prefixedTable", kvTableDef);
+    registry.add(definition);
   }
 }
 
@@ -50,8 +45,8 @@ class PrefixedTableDefinition extends AbstractDatasetDefinition<PrefixedTable, D
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public PrefixedTableDefinition(String name, int version, DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef) {
-    super(name, version);
+  public PrefixedTableDefinition(String name, DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef) {
+    super(name);
     this.tableDef = kvTableDef;
   }
 

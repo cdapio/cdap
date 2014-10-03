@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.DatasetTypeVersionInfo;
 import com.google.common.collect.Lists;
 import com.sun.tools.javac.resources.version;
 
@@ -57,11 +58,6 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
   }
 
   @Nullable
-  public DatasetModuleMeta getModule(String name, int version) {
-    return get(getModuleKey(name, version), DatasetModuleMeta.class);
-  }
-
-  @Nullable
   public DatasetModuleMeta getModuleByType(String typeName, int version) {
     String moduleName = get(getTypeKey(typeName, version), String.class);
     if (moduleName == null) {
@@ -75,7 +71,7 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
     if (moduleName == null) {
       return null;
     }
-    return getTypeMeta(typeName, moduleName);
+    return getTypeMeta(typeName, version, moduleName);
   }
 
   public Collection<DatasetModuleMeta> getModules() {
@@ -92,45 +88,48 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
   }
 
   public void write(DatasetModuleMeta moduleMeta) {
-    put(getModuleKey(moduleMeta.getName(), moduleMeta.getVersion()), moduleMeta);
+    put(getModuleKey(moduleMeta.getName()), moduleMeta);
 
-    for (String type : moduleMeta.getTypes()) {
-      write(type, moduleMeta.getVersion(), moduleMeta.getName() + "_" + moduleMeta.getVersion());
+    for (DatasetTypeVersionInfo type : moduleMeta.getTypes()) {
+      write(type.getName(), type.getVersion(), moduleMeta.getName());
     }
   }
 
-  public void deleteModule(String name, int version) {
-    DatasetModuleMeta module = getModule(name, version);
+  public void deleteModule(String name) {
+    DatasetModuleMeta module = getModule(name);
     if (module == null) {
       // that's fine: module is not there
       return;
     }
-    delete(getModuleKey(module.getName(), version));
+    delete(getModuleKey(module.getName()));
 
-    for (String type : module.getTypes()) {
-      delete(getTypeKey(type, version));
+    for (DatasetTypeVersionInfo type : module.getTypes()) {
+      delete(getTypeKey(type.getName(), type.getVersion()));
     }
   }
 
   private DatasetTypeMeta getTypeMeta(String typeName, String moduleName) {
     DatasetModuleMeta moduleMeta = getModule(moduleName);
-    // strip the version from the typeName
-    typeName = removeVersionFromTypeName(typeName);
-    return getTypeMeta(typeName, moduleMeta);
+    // split the string into type name and version separately
+    int versionIndex = getVersionIndexInTypeName(typeName);
+    typeName = typeName.substring(0, versionIndex);
+    int version = Integer.parseInt(typeName.substring(versionIndex + 1));
+    return getTypeMeta(typeName, version, moduleMeta);
   }
 
-  private String removeVersionFromTypeName(String typeName) {
-    return typeName.substring(0, typeName.lastIndexOf("_"));
+
+  private int getVersionIndexInTypeName(String typeName) {
+    return typeName.lastIndexOf("_");
   }
 
-  private DatasetTypeMeta getTypeMeta(String typeName, DatasetModuleMeta moduleMeta) {
+  private DatasetTypeMeta getTypeMeta(String typeName, int version, DatasetModuleMeta moduleMeta) {
     List<DatasetModuleMeta> modulesToLoad = Lists.newArrayList();
     // adding first all modules we depend on, then myself
     for (String usedModule : moduleMeta.getUsesModules()) {
-      modulesToLoad.add(getModule(usedModule, moduleMeta.getVersion()));
+      modulesToLoad.add(getModule(usedModule));
     }
     modulesToLoad.add(moduleMeta);
-    return new DatasetTypeMeta(typeName, moduleMeta.getVersion(), modulesToLoad);
+    return new DatasetTypeMeta(typeName, version, modulesToLoad);
   }
 
   // type -> moduleName
@@ -145,10 +144,6 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
 
   private byte[] getModuleKey(String name) {
     return Bytes.add(MODULES_PREFIX, Bytes.toBytes(name));
-  }
-
-  private byte[] getModuleKey(String name, int version) {
-    return Bytes.add(MODULES_PREFIX, Bytes.toBytes(name), Bytes.toBytes("_" + version));
   }
 
   private byte[] getTypeKey(String name, int version) {

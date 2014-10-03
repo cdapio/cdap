@@ -46,11 +46,16 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
   }
 
   @Override
-  public void add(DatasetDefinition def, int version) {
-    String typeNameWithVersion = getDatasetTypeWithVersion(def.getName(), version);
+  public <T extends DatasetDefinition> T get(String datasetTypeName) {
+    return get(datasetTypeName, 0);
+  }
+
+  @Override
+  public void add(DatasetDefinition def) {
+    String typeNameWithVersion = getDatasetTypeWithVersion(def.getName(), def.getVersion());
     if (datasetTypes.containsKey(typeNameWithVersion)) {
       throw new TypeConflictException(String.format("Cannot add dataset type: %s it already exists:%s ",
-                                                    def.getName(), version));
+                                                    def.getName(), def.getVersion()));
     }
     datasetTypes.put(typeNameWithVersion, def);
   }
@@ -58,6 +63,11 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
   @Override
   public boolean hasType(String typeName, int version) {
     return datasetTypes.containsKey(getDatasetTypeWithVersion(typeName, version));
+  }
+
+  @Override
+  public boolean hasType(String datasetTypeName) {
+    return hasType(datasetTypeName, 0);
   }
 
   private String getDatasetTypeWithVersion(String datasetType, int version) {

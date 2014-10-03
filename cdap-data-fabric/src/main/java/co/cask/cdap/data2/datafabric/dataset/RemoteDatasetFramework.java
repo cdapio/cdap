@@ -61,10 +61,12 @@ import javax.annotation.Nullable;
  */
 public class RemoteDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
+  private static final int DEFAULT_MODULE_VERSION = 1;
 
   private final DatasetServiceClient client;
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final DatasetTypeClassLoaderFactory typeLoader;
+
 
   @Inject
   public RemoteDatasetFramework(DiscoveryServiceClient discoveryClient,
@@ -77,7 +79,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(String moduleName, DatasetModule module)
+  public void addModule(String moduleName, int version, DatasetModule module)
     throws DatasetManagementException {
 
     // We support easier APIs for custom datasets: user can implement dataset and make it available for others to use
@@ -94,7 +96,12 @@ public class RemoteDatasetFramework implements DatasetFramework {
     } else {
       typeClass = module.getClass();
     }
-    addModule(moduleName, module.getVersion(), typeClass);
+    addModule(moduleName, version, typeClass);
+  }
+
+  @Override
+  public void addModule(String moduleName, DatasetModule module) throws DatasetManagementException {
+    addModule(moduleName, DEFAULT_MODULE_VERSION, module);
   }
 
   @Override
@@ -110,15 +117,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException {
-
-    client.addInstance(datasetInstanceName, 0, datasetType, props);
-  }
-
-  @Override
-  public void addInstance(String datasetType, int version, String datasetInstanceName, DatasetProperties props)
-    throws DatasetManagementException {
-
-    client.addInstance(datasetInstanceName, version, datasetType, props);
+    client.addInstance(datasetInstanceName, datasetType, props);
   }
 
   @Override
@@ -306,7 +305,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
       }
     }
 
-    return (T) new DatasetType(registry.get(implementationInfo.getName(), implementationInfo.getVersion()),
-                               classLoader);
+    return (T) new DatasetType(registry.get(implementationInfo.getName()), classLoader);
   }
 }

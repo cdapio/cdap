@@ -23,21 +23,15 @@ import java.util.Map;
  */
 public final class DatasetInstanceConfiguration {
   private final String typeName;
-  private final int version;
   private final Map<String, String> properties;
 
-  public DatasetInstanceConfiguration(String typeName, int version, Map<String, String> properties) {
+  public DatasetInstanceConfiguration(String typeName, Map<String, String> properties) {
     this.typeName = typeName;
-    this.version = version;
     this.properties = properties;
   }
 
   public String getTypeName() {
     return typeName;
-  }
-
-  public int getTypeVersion() {
-    return version;
   }
 
   public Map<String, String> getProperties() {

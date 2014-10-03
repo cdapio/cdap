@@ -44,8 +44,8 @@ public class IndexedTableDefinition
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public IndexedTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name, version);
+  public IndexedTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+    super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     this.tableDef = tableDef;
   }

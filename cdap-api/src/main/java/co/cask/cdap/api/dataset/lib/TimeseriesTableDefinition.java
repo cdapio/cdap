@@ -36,8 +36,8 @@ public class TimeseriesTableDefinition
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public TimeseriesTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name, version);
+  public TimeseriesTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+    super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     this.tableDef = tableDef;
   }

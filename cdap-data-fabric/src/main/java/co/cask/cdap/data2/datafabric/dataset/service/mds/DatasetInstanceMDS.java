@@ -20,7 +20,9 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.proto.DatasetTypeVersionInfo;
 import com.google.common.collect.Lists;
+import com.sun.tools.javac.resources.version;
 
 import java.util.Collection;
 import java.util.List;
@@ -80,23 +82,12 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     return instances.values();
   }
 
-  public Collection<DatasetSpecification> getByTypes(Set<String> typeNames) {
+  public Collection<DatasetSpecification> getByTypes(Set<DatasetTypeVersionInfo> typeNames) {
     List<DatasetSpecification> filtered = Lists.newArrayList();
 
     for (DatasetSpecification spec : getAll()) {
-      if (typeNames.contains(spec.getType())) {
-        filtered.add(spec);
-      }
-    }
-
-    return filtered;
-  }
-
-  public Collection<DatasetSpecification> getByTypes(Set<String> typeNames, int version) {
-    List<DatasetSpecification> filtered = Lists.newArrayList();
-
-    for (DatasetSpecification spec : getAll()) {
-      if (typeNames.contains(spec.getType()) && (spec.getTypeVersion() == version)) {
+      DatasetTypeVersionInfo specDatasetType = new DatasetTypeVersionInfo(spec.getType(), spec.getTypeVersion());
+      if (typeNames.contains(specDatasetType)) {
         filtered.add(spec);
       }
     }

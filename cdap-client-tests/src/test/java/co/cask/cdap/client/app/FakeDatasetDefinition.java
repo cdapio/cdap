@@ -34,8 +34,8 @@ public class FakeDatasetDefinition extends AbstractDatasetDefinition<FakeDataset
 
   private final DatasetDefinition<? extends KeyValueTable, ?> tableDef;
 
-  public FakeDatasetDefinition(String name, int version, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
-    super(name, version);
+  public FakeDatasetDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> keyValueDef) {
+    super(name);
     Preconditions.checkArgument(keyValueDef != null, "KeyValueTable definition is required");
     this.tableDef = keyValueDef;
   }

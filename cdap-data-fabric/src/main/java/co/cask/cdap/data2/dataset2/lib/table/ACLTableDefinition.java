@@ -38,9 +38,8 @@ public class ACLTableDefinition extends AbstractDatasetDefinition<ACLTable, Data
 
   private final DatasetDefinition<? extends IndexedObjectStore, ?> tableDefinition;
 
-  public ACLTableDefinition(String name, int version,
-                            DatasetDefinition<? extends IndexedObjectStore, ?> tableDefinition) {
-    super(name, version);
+  public ACLTableDefinition(String name, DatasetDefinition<? extends IndexedObjectStore, ?> tableDefinition) {
+    super(name);
     this.tableDefinition = tableDefinition;
   }
 

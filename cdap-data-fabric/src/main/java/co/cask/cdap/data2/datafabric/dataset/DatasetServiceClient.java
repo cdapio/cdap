@@ -126,9 +126,9 @@ class DatasetServiceClient {
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), DatasetTypeMeta.class);
   }
 
-  public void addInstance(String datasetInstanceName, int version, String datasetType, DatasetProperties props)
+  public void addInstance(String datasetInstanceName, String datasetType, DatasetProperties props)
     throws DatasetManagementException {
-    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(datasetType, version,
+    DatasetInstanceConfiguration creationProperties = new DatasetInstanceConfiguration(datasetType,
                                                                                        props.getProperties());
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName, GSON.toJson(creationProperties));
@@ -147,8 +147,7 @@ class DatasetServiceClient {
     throws DatasetManagementException {
     DatasetMeta meta = getInstance(datasetInstanceName);
     DatasetInstanceConfiguration creationProperties =
-      new DatasetInstanceConfiguration(meta.getSpec().getType(), meta.getSpec().getTypeVersion(),
-                                       props.getProperties());
+      new DatasetInstanceConfiguration(meta.getSpec().getType(), props.getProperties());
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName + "/properties", GSON.toJson(creationProperties));
 
