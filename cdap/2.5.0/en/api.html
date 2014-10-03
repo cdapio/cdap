@@ -89,7 +89,7 @@ Procedures, MapReduce Jobs, Workflows, and Custom Services</li>
 </div>
 <p>where <tt class="docutils literal"><span class="pre">&lt;host&gt;</span></tt> is the host name of the CDAP server and <tt class="docutils literal"><span class="pre">&lt;port&gt;</span></tt> is the port that is set as the <tt class="docutils literal"><span class="pre">router.bind.port</span></tt>
 in <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt> (default: <tt class="docutils literal"><span class="pre">10000</span></tt>).</p>
-<p>Note that if SSL is enabled for CDAP, then the base URL uses <tt class="docutils literal"><span class="pre">https</span></tt> and <tt class="docutils literal"><span class="pre">&lt;port&gt;</span></tt> becomes the port that is set
+<p><strong>Note:</strong> If SSL is enabled for CDAP, then the base URL uses <tt class="docutils literal"><span class="pre">https</span></tt> and <tt class="docutils literal"><span class="pre">&lt;port&gt;</span></tt> becomes the port that is set
 as the <tt class="docutils literal"><span class="pre">router.ssl.bind.port</span></tt> in <tt class="docutils literal"><span class="pre">cdap-site.xml</span></tt> (default: 10443).</p>
 <p>In this API, the base URL is represented as:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;base-url&gt;</span>
@@ -167,7 +167,7 @@ and that you are to replace it with your value, perhaps in this case <em>mystrea
 </tr>
 </tbody>
 </table>
-<p>Note these returned status codes are not necessarily included in the descriptions of the API,
+<p><strong>Note:</strong> These returned status codes are not necessarily included in the descriptions of the API,
 but a request may return any of these.</p>
 </div>
 <div class="section" id="working-with-cdap-security">
@@ -720,7 +720,7 @@ The TTL property of a Stream can be changed with an HTTP PUT method to the URL:<
 <span class="go">}</span>
 </pre></div>
 </div>
-<p>Note the Dataset must exist, and the instance and type passed must match with the existing Dataset.</p>
+<p><strong>Note:</strong> The Dataset must exist, and the instance and type passed must match with the existing Dataset.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="20%" />
@@ -1339,7 +1339,7 @@ results that are less than offset if cursor is <tt class="docutils literal"><spa
 <div class="section" id="download-query-results">
 <h4>Download Query Results<a class="headerlink" href="#download-query-results" title="Permalink to this headline">¶</a></h4>
 <p>To download the results of a query, use:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/data/explore/queries/&lt;query-handle&gt;</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/data/explore/queries/&lt;query-handle&gt;/download</span>
 </pre></div>
 </div>
 <p>The results of the query are returned in CSV format.</p>
@@ -1705,10 +1705,10 @@ However, be sure to stop all of its Flows, Procedures and MapReduce jobs before 
 </tr>
 </tbody>
 </table>
-<p>Note that the <tt class="docutils literal"><span class="pre">&lt;application-name&gt;</span></tt> in this URL is the name of the Application
+<p><strong>Note:</strong> The <tt class="docutils literal"><span class="pre">&lt;application-name&gt;</span></tt> in this URL is the name of the Application
 as configured by the Application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the Application.
-Note also that this does not delete the Streams and Datasets associated with the Application
+Also, this does not delete the Streams and Datasets associated with the Application
 because they belong to your account, not the Application.</p>
 </div>
 <div class="section" id="start-stop-status-and-runtime-arguments">
@@ -1938,7 +1938,7 @@ different element types using an HTTP POST method:</p>
 <td>Name of the element (<em>Flow</em>, <em>Procedure</em>, or <em>Custom Service</em>) being called</td>
 </tr>
 <tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&quot;runnableId&quot;</span></tt></td>
-<td>Name of the <em>Flowlet</em> or <em>Service Handler/Worker</em> if querying either a <em>Flow</em> or <em>User Service</em>. This parameter
+<td>Name of the <em>Flowlet</em> or <em>Service</em> if querying either a <em>Flow</em> or <em>User Service</em>. This parameter
 does not apply to <em>Procedures</em> because the <tt class="docutils literal"><span class="pre">programId</span></tt> is the same as the <tt class="docutils literal"><span class="pre">runnableId</span></tt> for a <em>Procedure</em></td>
 </tr>
 </tbody>
@@ -1970,7 +1970,7 @@ the requested JSON object was missing a parameter, etc.)</td>
 </tr>
 </tbody>
 </table>
-<p>Note that the <tt class="docutils literal"><span class="pre">requested</span></tt> and <tt class="docutils literal"><span class="pre">provisioned</span></tt> fields are mutually exclusive of the <tt class="docutils literal"><span class="pre">error</span></tt> field.</p>
+<p><strong>Note:</strong> The <tt class="docutils literal"><span class="pre">requested</span></tt> and <tt class="docutils literal"><span class="pre">provisioned</span></tt> fields are mutually exclusive of the <tt class="docutils literal"><span class="pre">error</span></tt> field.</p>
 <div class="section" id="id43">
 <h5>Example<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h5>
 <table border="1" class="docutils">
@@ -2137,8 +2137,8 @@ in the Application <em>HelloWorld</em></td>
 </div>
 <div class="section" id="scaling-services">
 <h5>Scaling Services<a class="headerlink" href="#scaling-services" title="Permalink to this headline">¶</a></h5>
-<p>You can query or change the number of instances of a Service&#8217;s Handler/Worker
-by using the <tt class="docutils literal"><span class="pre">instances</span></tt> parameter with HTTP GET and PUT methods:</p>
+<p>You can query or change the number of instances of a Service
+by using the <tt class="docutils literal"><span class="pre">instances</span></tt> parameter with HTTP GET or PUT methods:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/runnables/&lt;runnable-id&gt;/instances</span>
 <span class="go">PUT &lt;base-url&gt;/apps/&lt;app-id&gt;/services/&lt;service-id&gt;/runnables/&lt;runnable-id&gt;/instances</span>
 </pre></div>
@@ -2165,13 +2165,14 @@ by using the <tt class="docutils literal"><span class="pre">instances</span></tt
 <td>Name of the Service</td>
 </tr>
 <tr class="row-even"><td><tt class="docutils literal"><span class="pre">&lt;runnable-id&gt;</span></tt></td>
-<td>Name of the Service Handler/Worker</td>
+<td>Name of the Service</td>
 </tr>
 <tr class="row-odd"><td><tt class="docutils literal"><span class="pre">&lt;quantity&gt;</span></tt></td>
 <td>Number of instances to be used</td>
 </tr>
 </tbody>
 </table>
+<p><strong>Note:</strong> In this release the <tt class="docutils literal"><span class="pre">runnable-id</span></tt> is the same as the <tt class="docutils literal"><span class="pre">service-id</span></tt>.</p>
 </div>
 <div class="section" id="id46">
 <h5>Example<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h5>
@@ -2182,10 +2183,10 @@ by using the <tt class="docutils literal"><span class="pre">instances</span></tt
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">HTTP Method</th>
-<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/apps/HelloWorld/services/WhoService/runnables</span></tt> <tt class="docutils literal"><span class="pre">/WhoRunnable/instances</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">GET</span> <span class="pre">&lt;base-url&gt;/apps/PurchaseHistory/services/CatalogLookup/runnables/CatalogLookup/instances</span></tt></td>
 </tr>
 <tr class="row-even"><th class="stub">Description</th>
-<td>Retrieve the number of instances of the Service Worker <em>WhoRunnable</em> of the Service <em>WhoService</em></td>
+<td>Retrieve the number of instances of the Service <em>CatalogLookup</em> in the application <em>PurchaseHistory</em>.</td>
 </tr>
 </tbody>
 </table>
@@ -2349,7 +2350,7 @@ escaped. A line of the log may look like this:</p>
 <span class="go">      executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp;amp; character</span>
 </pre></div>
 </div>
-<p>Note how the context of the log line shows the name of the Flowlet (<em>source</em>), its instance number (0) as
+<p><strong>Note:</strong> The context of the log line shows the name of the Flowlet (<em>source</em>), its instance number (0) as
 well as the original line in the Application code. The character <em>&amp;</em> is escaped as <tt class="docutils literal"><span class="pre">&amp;amp;</span></tt>; if you don’t desire
 this escaping, you can turn it off by adding the parameter <tt class="docutils literal"><span class="pre">&amp;escape=false</span></tt> to the request URL.</p>
 </div>
@@ -2880,7 +2881,7 @@ note that you cannot aggregate over this metric</td>
 </tr>
 </tbody>
 </table>
-<p>Note that the Service status checks are more useful when CDAP is running in a distributed cluster mode.</p>
+<p><strong>Note:</strong> The Service status checks are more useful when CDAP is running in a distributed cluster mode.</p>
 <div class="section" id="id55">
 <h5>HTTP Responses<a class="headerlink" href="#id55" title="Permalink to this headline">¶</a></h5>
 <table border="1" class="docutils">
@@ -2952,7 +2953,7 @@ can be queried and changed by using these commands:</p>
 </tr>
 </tbody>
 </table>
-<p>Note in standalone CDAP, trying to set the instances of system services will return a Status Code <tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt>.</p>
+<p><strong>Note:</strong> In standalone CDAP, trying to set the instances of system services will return a Status Code <tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt>.</p>
 <div class="section" id="id57">
 <h5>Examples<a class="headerlink" href="#id57" title="Permalink to this headline">¶</a></h5>
 <table border="1" class="docutils">
@@ -3694,7 +3695,7 @@ a complete Javadoc of the CDAP Java APIs.</li>
   <h4>Next Topic</h4>
   <p class="topless"><a href="javadocs/index.html"
                         title="Next Chapter">Javadocs</a></p>
-<div id="searchbox" style="display: none">
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick Search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />

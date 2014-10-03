@@ -73,7 +73,7 @@ the system should expose ways to retrieve it. Even in this case where the system
 like counting the number of visits made to a website in a day, the components needed to make it possible demand
 a lot of work.</p>
 <p>Using Wise, which stands for Web Insights Engine Application, we’ll show you how to build such a system on CDAP
-that is easy, concise, and powerful. Wise extracts value from Web server access logs, counts visits made
+that is easy, concise, and powerful. Wise extracts information from web server access logs, counts visits made
 by different IP addresses seen in the logs in real-time, and computes the bounce ratio of
 each web page encountered using batch processing.</p>
 <p>The Wise application uses these Cask Data Application Platform (CDAP) constructs to analyze web server logs:</p>
@@ -83,28 +83,29 @@ each web page encountered using batch processing.</p>
 <li><strong>Datasets:</strong> Store web page visits counts and bounce ratio based on custom data access patterns</li>
 <li><strong>MapReduce:</strong> Computes the bounce ratio of each web page present in the log data</li>
 <li><strong>Service:</strong> Exposes HTTP APIs to query the page visit counts per IP address</li>
-<li><strong>Explore:</strong> Runs SQL queries on the data stored in Datasets</li>
 </ul>
+<p>On top of those, the <strong>Explore</strong> feature of CDAP can be used to run SQL queries on the data stored
+by Wise.</p>
 </div>
 <div class="section" id="running-wise">
 <h2>Running Wise<a class="headerlink" href="#running-wise" title="Permalink to this headline">¶</a></h2>
 <p>Building and running Wise is straightforward. We&#8217;ll assume that you have already downloaded,
 installed, and have started an instance of CDAP.</p>
 <p>Download: <a class="reference external" href="https://github.com/caskdata/cdap-apps/tree/develop/Wise">Wise - Source code</a></p>
-<p>Unzip the directory and build the application by executing:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> unzip cdap-wise-0.1.0.zip
-<span class="gp">$</span> <span class="nb">cd </span>cdap-wise-0.1.0
-<span class="gp">$</span> mvn package
+<p>Build the application by executing:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn package
 </pre></div>
 </div>
 <p>To deploy and start the application, make sure CDAP is running and then execute:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> bin/app-manager.sh --action deploy
 <span class="gp">$</span> bin/app-manager.sh --action start
+<span class="gp">$</span> bin/app-manager.sh --action status
 </pre></div>
 </div>
 <p>On Windows, run:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> bin/app-manager.bat deploy
-<span class="gp">$</span> bin/app-manager.bat start
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> bin<span class="se">\a</span>pp-manager.bat deploy
+<span class="gp">$</span> bin<span class="se">\a</span>pp-manager.bat start
+<span class="gp">$</span> bin<span class="se">\a</span>pp-manager.bat status
 </pre></div>
 </div>
 </div>
@@ -119,7 +120,7 @@ it receives to two CDAP components: the <tt class="docutils literal"><span class
 <li><tt class="docutils literal"><span class="pre">WiseFlow</span></tt> has two Flowlets. The first, <tt class="docutils literal"><span class="pre">parser</span></tt>, extracts information from the logs received from the
 Stream. It then sends the information to the second Flowlet, <tt class="docutils literal"><span class="pre">pageViewCount</span></tt>, whose role is to store
 the information in a custom-defined Dataset, <tt class="docutils literal"><span class="pre">pageViewStore</span></tt>.</li>
-<li><tt class="docutils literal"><span class="pre">WiseWorkflow</span></tt> executes a Map/Reduce job every ten minutes. The input of this job are events from the Stream
+<li><tt class="docutils literal"><span class="pre">WiseWorkflow</span></tt> executes a MapReduce job every ten minutes. The input of this job are events from the Stream
 which have not yet been processed by the Workflow. For each web page recorded in the
 access logs, the MapReduce job counts the number of times people have &#8220;bounced&#8221; from it.
 A &#8220;bounce&#8221; is counted whenever a user&#8217;s activity stops for a specified amount of time.
@@ -158,7 +159,7 @@ For example, <tt class="docutils literal"><span class="pre">pageViewStore</span>
 </pre></div>
 </div>
 <p><tt class="docutils literal"><span class="pre">pageViewStore</span></tt> uses a <tt class="docutils literal"><span class="pre">Table</span></tt> object to store this information. <tt class="docutils literal"><span class="pre">Table</span></tt> is a class provided by the CDAP
-system which has rows and columns. A row consists of a row key and one or more columns with values associated with
+system which exposes <em>rows</em>. A row consists of a row key and one or more columns with values associated with
 them. Two rows can have different sets of columns.
 Using the Java <tt class="docutils literal"><span class="pre">Map</span></tt> interface, a <tt class="docutils literal"><span class="pre">Table</span></tt> can be seen as being of type <tt class="docutils literal"><span class="pre">Map&lt;byte[],</span> <span class="pre">Map&lt;byte[],</span> <span class="pre">byte[]&gt;&gt;</span></tt>.</p>
 <p><tt class="docutils literal"><span class="pre">pageViewStore</span></tt> uses a <tt class="docutils literal"><span class="pre">Table</span></tt> object with this pattern:</p>
@@ -195,7 +196,7 @@ in—-IP address, timestamp, and web page-—and increments the number of visits
 We use the underlying <tt class="docutils literal"><span class="pre">Table</span></tt>&#8216;s <tt class="docutils literal"><span class="pre">increment()</span></tt> method to store this information.</p>
 <p>Let&#8217;s look at how to make the data available through our <tt class="docutils literal"><span class="pre">pageViewStore</span></tt> Dataset:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kt">long</span> <span class="nf">getCounts</span><span class="o">(</span><span class="n">String</span> <span class="n">ipAddress</span><span class="o">)</span> <span class="o">{</span>
-  <span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">table</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">ipAddress</span><span class="o">));</span>
+  <span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">table</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="n">ipAddress</span><span class="o">));</span>
   <span class="k">if</span> <span class="o">(</span><span class="n">row</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">row</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
     <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
   <span class="o">}</span>
@@ -218,13 +219,13 @@ of times users bounced off of them.</p>
 <p>Data is stored in a <tt class="docutils literal"><span class="pre">Table</span></tt> object with the pattern:</p>
 <ul class="simple">
 <li>the row key is the web page URI;</li>
-<li>each row has two columns: the byte arrays <tt class="docutils literal"><span class="pre">COL_VISITS</span></tt> and <tt class="docutils literal"><span class="pre">COL_BOUNCES</span></tt>;</li>
+<li>each row has two columns: <tt class="docutils literal"><span class="pre">COL_VISITS</span></tt> and <tt class="docutils literal"><span class="pre">COL_BOUNCES</span></tt>;</li>
 <li>the <tt class="docutils literal"><span class="pre">COL_VISITS</span></tt> column stores the total number of visits for the web page considered; and</li>
 <li>the <tt class="docutils literal"><span class="pre">COL_BOUNCES</span></tt> column stores the number of times users bounced off the web page.</li>
 </ul>
 <p>Let&#8217;s detail the API exposed by the <tt class="docutils literal"><span class="pre">bounceCountStore</span></tt> Dataset to store this information:</p>
-<div class="highlight-java"><div class="highlight"><pre><span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">COL_VISITS</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[]</span> <span class="o">{</span> <span class="sc">&#39;v&#39;</span> <span class="o">};</span>
-<span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">COL_BOUNCES</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[]</span> <span class="o">{</span> <span class="sc">&#39;b&#39;</span> <span class="o">};</span>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">COL_VISITS</span> <span class="o">=</span> <span class="s">&quot;v&quot;</span><span class="o">;</span>
+<span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">COL_BOUNCES</span> <span class="o">=</span> <span class="s">&quot;b&quot;</span><span class="o">;</span>
 
 <span class="cm">/**</span>
 <span class="cm"> * Increment a bounce count entry with the specified number of visits and bounces.</span>
@@ -234,14 +235,13 @@ of times users bounced off of them.</p>
 <span class="cm"> * @param bounces number of bounces to add to the web page</span>
 <span class="cm"> */</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">increment</span><span class="o">(</span><span class="n">String</span> <span class="n">uri</span><span class="o">,</span> <span class="kt">long</span> <span class="n">visits</span><span class="o">,</span> <span class="kt">long</span> <span class="n">bounces</span><span class="o">)</span> <span class="o">{</span>
-  <span class="n">table</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">uri</span><span class="o">),</span>
-                  <span class="k">new</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="o">{</span> <span class="n">COL_VISITS</span><span class="o">,</span> <span class="n">COL_BOUNCES</span> <span class="o">},</span>
-                  <span class="k">new</span> <span class="kt">long</span><span class="o">[]</span> <span class="o">{</span> <span class="n">visits</span><span class="o">,</span> <span class="n">bounces</span> <span class="o">});</span>
+  <span class="n">table</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="n">uri</span><span class="o">,</span> <span class="n">COL_VISITS</span><span class="o">,</span> <span class="n">visits</span><span class="o">));</span>
+  <span class="n">table</span><span class="o">.</span><span class="na">increment</span><span class="o">(</span><span class="k">new</span> <span class="n">Increment</span><span class="o">(</span><span class="n">uri</span><span class="o">,</span> <span class="n">COL_BOUNCES</span><span class="o">,</span> <span class="n">bounces</span><span class="o">));</span>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>The <tt class="docutils literal"><span class="pre">increment()</span></tt> method adds to a web page the number of &#8220;visits&#8221; and &#8220;bounces&#8221;, using the
-<tt class="docutils literal"><span class="pre">Table.increment()</span></tt> method to do so.</p>
+<p>The <tt class="docutils literal"><span class="pre">increment()</span></tt> method modifies the counts of &#8220;visits&#8221; and &#8220;bounces&#8221; attached to a web page, by adding
+the number passed in parameters. It uses the  <tt class="docutils literal"><span class="pre">Table.increment()</span></tt> method to do so.</p>
 <p>To retrieve the number of &#8220;visits&#8221; and &#8220;bounces&#8221; for a particular web page, we define a <tt class="docutils literal"><span class="pre">get()</span></tt> method:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="cm">/**</span>
 <span class="cm"> * Retrieve a bounce counts entry from this {@link BounceCountsStore}.</span>
@@ -250,12 +250,12 @@ of times users bounced off of them.</p>
 <span class="cm"> * @return the bounce counts entry associated to the web page with the {@code uri}</span>
 <span class="cm"> */</span>
 <span class="kd">public</span> <span class="n">PageBounce</span> <span class="nf">get</span><span class="o">(</span><span class="n">String</span> <span class="n">uri</span><span class="o">)</span> <span class="o">{</span>
-  <span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">Bytes</span><span class="o">.</span><span class="na">toBytes</span><span class="o">(</span><span class="n">uri</span><span class="o">),</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[][]</span> <span class="o">{</span> <span class="n">COL_VISITS</span><span class="o">,</span> <span class="n">COL_BOUNCES</span> <span class="o">});</span>
+  <span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="k">new</span> <span class="n">Get</span><span class="o">(</span><span class="n">uri</span><span class="o">,</span> <span class="n">ImmutableList</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">COL_VISITS</span><span class="o">,</span> <span class="n">COL_BOUNCES</span><span class="o">)));</span>
   <span class="k">if</span> <span class="o">(</span><span class="n">row</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">())</span> <span class="o">{</span>
     <span class="k">return</span> <span class="k">new</span> <span class="nf">PageBounce</span><span class="o">(</span><span class="n">uri</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
   <span class="o">}</span>
-  <span class="kt">long</span> <span class="n">visits</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toLong</span><span class="o">(</span><span class="n">row</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">COL_VISITS</span><span class="o">));</span>
-  <span class="kt">long</span> <span class="n">bounces</span> <span class="o">=</span> <span class="n">Bytes</span><span class="o">.</span><span class="na">toLong</span><span class="o">(</span><span class="n">row</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">COL_BOUNCES</span><span class="o">));</span>
+  <span class="kt">long</span> <span class="n">visits</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="n">COL_VISITS</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+  <span class="kt">long</span> <span class="n">bounces</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getLong</span><span class="o">(</span><span class="n">COL_BOUNCES</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
   <span class="k">return</span> <span class="k">new</span> <span class="nf">PageBounce</span><span class="o">(</span><span class="n">uri</span><span class="o">,</span> <span class="n">visits</span><span class="o">,</span> <span class="n">bounces</span><span class="o">);</span>
 <span class="o">}</span>
 </pre></div>
@@ -270,10 +270,8 @@ a <tt class="docutils literal"><span class="pre">visits</span></tt> count and a 
 <h2>Ingesting Access Logs in Wise<a class="headerlink" href="#ingesting-access-logs-in-wise" title="Permalink to this headline">¶</a></h2>
 <p>CDAP has an easy way to ingest data in real time into an application, using <strong>Streams</strong>. A Stream exposes
 a simple <a class="reference internal" href="api.html#rest-streams"><em>REST API</em></a> to ingest data events.</p>
-<p>In Wise, each Web server access log is injected as a Stream event to the <tt class="docutils literal"><span class="pre">logEventStream</span></tt> in this format
-(broken on two lines to fit):</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] &quot;POST /index.html HTTP/1.1&quot;</span>
-<span class="go">      404 1490 &quot; &quot; &quot;Mozilla/2.0 (compatible; Ask Jeeves)&quot;</span>
+<p>In Wise, each web server access log is injected as a Stream event to the <tt class="docutils literal"><span class="pre">logEventStream</span></tt> in this format:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">47.41.156.173 - - [18/Sep/2014:12:52:52 -0400] &quot;POST /index.html HTTP/1.1&quot;  404 1490 &quot; &quot; &quot;Mozilla/2.0 (compatible; Ask Jeeves)&quot;</span>
 </pre></div>
 </div>
 <p>We have already prepared a sample of Web server access logs for you to inject into the <tt class="docutils literal"><span class="pre">logEventStream</span></tt>.
@@ -295,8 +293,8 @@ number of visits they made to different web pages.</p>
 <p>This work is realized by two Flowlets, <tt class="docutils literal"><span class="pre">parser</span></tt> and <tt class="docutils literal"><span class="pre">pageViewCount</span></tt>.</p>
 <div class="section" id="the-parser-flowlet">
 <h3>The <em>parser</em> Flowlet<a class="headerlink" href="#the-parser-flowlet" title="Permalink to this headline">¶</a></h3>
-<p><tt class="docutils literal"><span class="pre">parser</span></tt> receives the raw log data from the Stream and extracts useful information from it.
-Here is its implementation:</p>
+<p><tt class="docutils literal"><span class="pre">parser</span></tt> receives the raw log data from the Stream and extracts the timestamp,
+the IP address and the web page visited. Here is its implementation:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">LogEventParserFlowlet</span> <span class="kd">extends</span> <span class="n">AbstractFlowlet</span> <span class="o">{</span>
   <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Logger</span> <span class="n">LOG</span> <span class="o">=</span> <span class="n">LoggerFactory</span><span class="o">.</span><span class="na">getLogger</span><span class="o">(</span><span class="n">LogEventParserFlowlet</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 
@@ -305,7 +303,7 @@ Here is its implementation:</p>
 
   <span class="c1">// Annotation indicates that this method can process incoming data</span>
   <span class="nd">@ProcessInput</span>
-  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">processFromStream</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">event</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">CharacterCodingException</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">processFromStream</span><span class="o">(</span><span class="n">StreamEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
 
     <span class="c1">// Get a log event in String format from a StreamEvent instance</span>
     <span class="n">String</span> <span class="n">log</span> <span class="o">=</span> <span class="n">Charsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">.</span><span class="na">decode</span><span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getBody</span><span class="o">()).</span><span class="na">toString</span><span class="o">();</span>
@@ -316,14 +314,16 @@ Here is its implementation:</p>
         <span class="n">output</span><span class="o">.</span><span class="na">emit</span><span class="o">(</span><span class="n">logInfo</span><span class="o">,</span> <span class="s">&quot;ip&quot;</span><span class="o">,</span> <span class="n">logInfo</span><span class="o">.</span><span class="na">getIp</span><span class="o">().</span><span class="na">hashCode</span><span class="o">());</span>
       <span class="o">}</span>
     <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-      <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Could not parse log event {}&quot;</span><span class="o">,</span> <span class="n">log</span><span class="o">);</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Exception while processing log event {}&quot;</span><span class="o">,</span> <span class="n">log</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ParseException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Could not parse log event {}&quot;</span><span class="o">,</span> <span class="n">log</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
     <span class="o">}</span>
   <span class="o">}</span>
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>A Flowlet class extends <tt class="docutils literal"><span class="pre">AbstractFlowlet</span></tt>. The <tt class="docutils literal"><span class="pre">LogEventParserFlowlet</span></tt> class contains one method to process the
-data it receives from <tt class="docutils literal"><span class="pre">logEventStream</span></tt>.
+<p>A Flowlet class first extends the <tt class="docutils literal"><span class="pre">AbstractFlowlet</span></tt> class. The <tt class="docutils literal"><span class="pre">LogEventParserFlowlet</span></tt> class contains
+one method to process the data it receives from <tt class="docutils literal"><span class="pre">logEventStream</span></tt>.
 This method can have any name; here, we call it <tt class="docutils literal"><span class="pre">processFromStream</span></tt>. It has to bear the <tt class="docutils literal"><span class="pre">&#64;ProcessInput</span></tt>
 annotation indicating that the method will be used to process incoming data.</p>
 <p>Because the <tt class="docutils literal"><span class="pre">parser</span></tt> Flowlet receives data from a Stream, the <tt class="docutils literal"><span class="pre">processFromStream</span></tt> method has to take one and only
@@ -399,14 +399,14 @@ they are connected together and to <tt class="docutils literal"><span class="pre
 <li><tt class="docutils literal"><span class="pre">parser</span></tt> Flowlet is connected to the <tt class="docutils literal"><span class="pre">pageViewCount</span></tt> Flowlet.</li>
 </ul>
 <p>Here is how <tt class="docutils literal"><span class="pre">WiseFlow</span></tt> looks in the CDAP Console:</p>
-<a class="reference internal image-reference" href="_images/wise_flow.png"><img alt="_images/wise_flow.png" src="_images/wise_flow.png" style="width: 6in;" /></a>
+<img alt="_images/wise_flow.png" src="_images/wise_flow.png" />
 </div>
 </div>
 <div class="section" id="batch-processing-of-logs-with-wiseworkflow">
 <h2>Batch Processing of Logs with WiseWorkflow<a class="headerlink" href="#batch-processing-of-logs-with-wiseworkflow" title="Permalink to this headline">¶</a></h2>
-<p>Wise executes every ten minutes a Map/Reduce job that computes the bounce counts of the web pages
+<p>Wise executes every ten minutes a MapReduce job that computes the bounce counts of the web pages
 seen in the Web server access logs.</p>
-<p>The <tt class="docutils literal"><span class="pre">BounceCountsMapReduce</span></tt> class defines the Map/Reduce job to run. It extends
+<p>The <tt class="docutils literal"><span class="pre">BounceCountsMapReduce</span></tt> class defines the MapReduce job to run. It extends
 <tt class="docutils literal"><span class="pre">AbstractMapReduce</span></tt> and overrides the two methods <tt class="docutils literal"><span class="pre">configure()</span></tt> and <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt>.
 The <tt class="docutils literal"><span class="pre">configure()</span></tt> method is defined as:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
@@ -420,13 +420,13 @@ The <tt class="docutils literal"><span class="pre">configure()</span></tt> metho
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>It sets the ID of the Map/Reduce job, <tt class="docutils literal"><span class="pre">BounceCountsMapReduce</span></tt>, and specifies which Datasets will be used in the job.
+<p>It sets the ID of the MapReduce job, <tt class="docutils literal"><span class="pre">BounceCountsMapReduce</span></tt>, and specifies which Datasets will be used in the job.
 This job uses the <tt class="docutils literal"><span class="pre">bounceCountsMapReduceLastRun</span></tt> system Dataset—of type <tt class="docutils literal"><span class="pre">KeyValueTable</span></tt>—to
 store the time of the last successful run of <tt class="docutils literal"><span class="pre">BounceCountsMapReduce</span></tt>.</p>
 <p>We will talk about the <tt class="docutils literal"><span class="pre">useOutputDataset()</span></tt> method in only a minute.</p>
-<div class="section" id="plugging-the-stream-to-the-input-of-the-map-reduce-job">
-<h3>Plugging the Stream to the Input of the Map/Reduce Job<a class="headerlink" href="#plugging-the-stream-to-the-input-of-the-map-reduce-job" title="Permalink to this headline">¶</a></h3>
-<p>Traditionally in a Map/Reduce job, a Job configuration is set before each run. This is done in the <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt>
+<div class="section" id="plugging-the-stream-to-the-input-of-the-mapreduce-job">
+<h3>Plugging the Stream to the Input of the MapReduce Job<a class="headerlink" href="#plugging-the-stream-to-the-input-of-the-mapreduce-job" title="Permalink to this headline">¶</a></h3>
+<p>Traditionally in a MapReduce job, a Job configuration is set before each run. This is done in the <tt class="docutils literal"><span class="pre">beforeSubmit()</span></tt>
 method of the <tt class="docutils literal"><span class="pre">BounceCountsMapReduce</span></tt> class:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="nd">@Override</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">beforeSubmit</span><span class="o">(</span><span class="n">MapReduceContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
@@ -438,17 +438,17 @@ method of the <tt class="docutils literal"><span class="pre">BounceCountsMapRedu
 <span class="o">}</span>
 </pre></div>
 </div>
-<p>As mentioned earlier, the input of the Map/Reduce job is the <tt class="docutils literal"><span class="pre">logEventStream</span></tt>. This connection is made above using
+<p>As mentioned earlier, the input of the MapReduce job is the <tt class="docutils literal"><span class="pre">logEventStream</span></tt>. This connection is made above using
 the <tt class="docutils literal"><span class="pre">StreamBatchReadable.useStreamInput()</span></tt> method.</p>
 <p>The <tt class="docutils literal"><span class="pre">startTime</span></tt> is computed using the last value stored in the <tt class="docutils literal"><span class="pre">bounceCountsMapReduceLastRun</span></tt> Dataset, which can
 be accessed using the <tt class="docutils literal"><span class="pre">MapReduceContext.getDataSet()</span></tt> method.</p>
 </div>
-<div class="section" id="writing-to-the-bouncecountstore-dataset-from-the-map-reduce-job">
-<h3>Writing to the <em>bounceCountStore</em> Dataset from the Map/Reduce Job<a class="headerlink" href="#writing-to-the-bouncecountstore-dataset-from-the-map-reduce-job" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="writing-to-the-bouncecountstore-dataset-from-the-mapreduce-job">
+<h3>Writing to the <em>bounceCountStore</em> Dataset from the MapReduce Job<a class="headerlink" href="#writing-to-the-bouncecountstore-dataset-from-the-mapreduce-job" title="Permalink to this headline">¶</a></h3>
 <p>In the <tt class="docutils literal"><span class="pre">BounceCountsMapReduce.configure()</span></tt> method seen earlier, the <tt class="docutils literal"><span class="pre">useOutputDataset</span></tt> method sets the
-Dataset with the specified ID that will be used as the output of the job.
+<tt class="docutils literal"><span class="pre">bounceCountsStore</span></tt> Dataset as the output of the job.
 It means that the key/value pairs output by the reducer of the job will be directly written to that Dataset.</p>
-<p>To understand how this is possible, let&#8217;s go back to the definition of the <tt class="docutils literal"><span class="pre">bounceCountStore</span></tt> Dataset:</p>
+<p>To allow that, the <tt class="docutils literal"><span class="pre">bounceCountsStore</span></tt> Dataset has to implement the <tt class="docutils literal"><span class="pre">BatchWritable</span></tt> interface:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BounceCountsStore</span> <span class="kd">extends</span> <span class="n">AbstractDataset</span>
   <span class="kd">implements</span> <span class="n">BatchWritable</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">,</span> <span class="n">PageBounce</span><span class="o">&gt;,</span> <span class="o">...</span> <span class="o">{</span>
   <span class="o">...</span>
@@ -461,14 +461,17 @@ It means that the key/value pairs output by the reducer of the job will be direc
 </pre></div>
 </div>
 <p>This <tt class="docutils literal"><span class="pre">BatchWritable</span></tt> interface, defining a <tt class="docutils literal"><span class="pre">write()</span></tt> method, is intended to allow Datasets to be the output of
-Map/Reduce jobs. The two generic types that it takes as parameters must match the types of the key
+MapReduce jobs. The two generic types that it takes as parameters must match the types of the key
 and value that the Reduce part of the job outputs. In this case, the <tt class="docutils literal"><span class="pre">bounceCountStore</span></tt> Dataset can be
-used as output of a Map/Reduce job where the output key is of type <tt class="docutils literal"><span class="pre">Void</span></tt>, and the output value is of type
+used as output of a MapReduce job where the output key is of type <tt class="docutils literal"><span class="pre">Void</span></tt>, and the output value is of type
 <tt class="docutils literal"><span class="pre">PageBounce</span></tt>.</p>
 </div>
-<div class="section" id="map-reduce-job-structure">
-<h3>Map/Reduce Job Structure<a class="headerlink" href="#map-reduce-job-structure" title="Permalink to this headline">¶</a></h3>
-<p>Because the input of our Map/Reduce job is a Stream, it forces the key and value types of our Mapper to be
+<div class="section" id="mapreduce-job-structure">
+<h3>MapReduce Job Structure<a class="headerlink" href="#mapreduce-job-structure" title="Permalink to this headline">¶</a></h3>
+<p>The Mapper of the job receives log events as input, parses them into <tt class="docutils literal"><span class="pre">LogInfo</span></tt> objects and send them to the Reducer.
+The Reducer receives the <tt class="docutils literal"><span class="pre">LogInfo</span></tt> objects grouped by IP addresses, with two logs with the same IP address sorted
+by timestamp in ascending order.</p>
+<p>Because the input of our MapReduce job is a Stream, it forces the key and value types of our Mapper to be
 <tt class="docutils literal"><span class="pre">LongWritable</span></tt> and <tt class="docutils literal"><span class="pre">Text</span></tt>, respectively.</p>
 <p>Our <tt class="docutils literal"><span class="pre">Mapper</span></tt> and <tt class="docutils literal"><span class="pre">Reducer</span></tt> are standard Hadoop classes with these signatures:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">BounceCountsMapper</span> <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">LogInfo</span><span class="o">,</span> <span class="n">IntWritable</span><span class="o">&gt;</span> <span class="o">{</span>
@@ -492,8 +495,8 @@ don&#8217;t use its content;</li>
 <li>Reducer output value <tt class="docutils literal"><span class="pre">PageBounce</span></tt>: bounce counts of a web page.</li>
 </ul>
 </div>
-<div class="section" id="scheduling-the-map-reduce-job">
-<h3>Scheduling the Map/Reduce Job<a class="headerlink" href="#scheduling-the-map-reduce-job" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="scheduling-the-mapreduce-job">
+<h3>Scheduling the MapReduce Job<a class="headerlink" href="#scheduling-the-mapreduce-job" title="Permalink to this headline">¶</a></h3>
 <p>To schedule the <tt class="docutils literal"><span class="pre">BounceCountsMapReduce</span></tt> job to run every ten minute, we define it in the
 <tt class="docutils literal"><span class="pre">WiseWorkflow</span></tt> as follows:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WiseWorkflow</span> <span class="kd">implements</span> <span class="n">Workflow</span> <span class="o">{</span>
@@ -670,13 +673,13 @@ The first step is to obtain an <tt class="docutils literal"><span class="pre">Ap
 </pre></div>
 </div>
 </li>
-<li><p class="first">Start a Map/Reduce job:</p>
+<li><p class="first">Start a MapReduce job:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">MapReduceManager</span> <span class="n">mrManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startMapReduce</span><span class="o">(</span><span class="s">&quot;WiseWorkflow_BounceCountsMapReduce&quot;</span><span class="o">);</span>
 <span class="n">mrManager</span><span class="o">.</span><span class="na">waitForFinish</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MINUTES</span><span class="o">);</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Test the output of the Map/Reduce job:</p>
+<li><p class="first">Test the output of the MapReduce job:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="n">DataSetManager</span><span class="o">&lt;</span><span class="n">BounceCountStore</span><span class="o">&gt;</span> <span class="n">dsManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">getDataSet</span><span class="o">(</span><span class="s">&quot;bounceCountStore&quot;</span><span class="o">);</span>
 <span class="n">BounceCountStore</span> <span class="n">bounceCountStore</span> <span class="o">=</span> <span class="n">dsManager</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
 <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="k">new</span> <span class="n">PageBounce</span><span class="o">(</span><span class="s">&quot;/product.html&quot;</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="mi">2</span><span class="o">),</span> <span class="n">bounceCountStore</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;/product.html&quot;</span><span class="o">));</span>
@@ -743,10 +746,10 @@ located in both the <tt class="docutils literal"><span class="pre">/examples</sp
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#batch-processing-of-logs-with-wiseworkflow">Batch Processing of Logs with WiseWorkflow</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#plugging-the-stream-to-the-input-of-the-map-reduce-job">Plugging the Stream to the Input of the Map/Reduce Job</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#writing-to-the-bouncecountstore-dataset-from-the-map-reduce-job">Writing to the <em>bounceCountStore</em> Dataset from the Map/Reduce Job</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#map-reduce-job-structure">Map/Reduce Job Structure</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#scheduling-the-map-reduce-job">Scheduling the Map/Reduce Job</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugging-the-stream-to-the-input-of-the-mapreduce-job">Plugging the Stream to the Input of the MapReduce Job</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#writing-to-the-bouncecountstore-dataset-from-the-mapreduce-job">Writing to the <em>bounceCountStore</em> Dataset from the MapReduce Job</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mapreduce-job-structure">MapReduce Job Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scheduling-the-mapreduce-job">Scheduling the MapReduce Job</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#accessing-wise-data-through-wiseservice">Accessing Wise Data through WiseService</a></li>
@@ -775,7 +778,7 @@ located in both the <tt class="docutils literal"><span class="pre">/examples</sp
   <h4>Next Topic</h4>
   <p class="topless"><a href="arch.html"
                         title="Next Chapter">Cask Data Application Platform Concepts and Architecture</a></p>
-<div id="searchbox" style="display: none">
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick Search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />

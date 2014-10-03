@@ -193,7 +193,6 @@ interact with CDAP.</p>
 <h2>Creating an Application<a class="headerlink" href="#creating-an-application" title="Permalink to this headline">¶</a></h2>
 <p>The best way to start developing a CDAP application is by using the Maven archetype:</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> mvn archetype:generate <span class="se">\</span>
-<span class="go">  -DarchetypeCatalog=https://repository.cask.co/content/groups/releases/archetype-catalog.xml \</span>
 <span class="go">  -DarchetypeGroupId=co.cask.cdap \</span>
 <span class="go">  -DarchetypeArtifactId=cdap-app-archetype \</span>
 <span class="go">  -DarchetypeVersion=2.5.0</span>
@@ -231,7 +230,7 @@ In particular, we&#8217;ll use these CDAP components:</p>
 <ul class="simple">
 <li>A <strong>Stream</strong> for web server log collection and persistence to the file system;</li>
 <li>A <strong>Flow</strong> for real-time data analysis over collected logs; and</li>
-<li>A <strong>SQL Query</strong> to explore and develop insights from the data.</li>
+<li><strong>SQL Queries</strong> to explore and develop insights from the data.</li>
 </ul>
 </div>
 <div class="section" id="build-and-run">
@@ -1437,7 +1436,7 @@ application.</li>
   <h4>Next Topic</h4>
   <p class="topless"><a href="case_study.html"
                         title="Next Chapter">CDAP Application Case Study</a></p>
-<div id="searchbox" style="display: none">
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick Search</h3>
     <form class="search" action="search.html" method="get">
       <input type="text" name="q" />
