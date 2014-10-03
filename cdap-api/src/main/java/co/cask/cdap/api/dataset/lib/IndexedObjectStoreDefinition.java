@@ -38,7 +38,8 @@ public class IndexedObjectStoreDefinition
   private final DatasetDefinition<? extends Table, ?> tableDef;
   private final DatasetDefinition<? extends ObjectStore, ?> objectStoreDef;
 
-  public IndexedObjectStoreDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef,
+  public IndexedObjectStoreDefinition(String name,
+                                      DatasetDefinition<? extends Table, ?> tableDef,
                                       DatasetDefinition<? extends ObjectStore, ?> objectStoreDef) {
     super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
@@ -49,7 +50,7 @@ public class IndexedObjectStoreDefinition
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("index", properties),
                 objectStoreDef.configure("data", properties))

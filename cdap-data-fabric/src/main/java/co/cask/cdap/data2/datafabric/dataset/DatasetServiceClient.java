@@ -42,7 +42,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.sun.tools.javac.resources.version;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -135,11 +134,11 @@ class DatasetServiceClient {
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                         datasetInstanceName, getDetails(response)));
+                                                        datasetInstanceName, getDetails(response)));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                          datasetInstanceName, getDetails(response)));
+                                                         datasetInstanceName, getDetails(response)));
     }
   }
 
@@ -292,5 +291,35 @@ class DatasetServiceClient {
     InetSocketAddress addr = discoverable.getSocketAddress();
     return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);
+  }
+
+  public void addApplicationVersionInfo(String applicationName, String instanceName, int version)
+    throws DatasetManagementException {
+
+    HttpResponse response = doRequest(HttpMethod.PUT, "datasets/" + instanceName + "/version",
+                                      ImmutableMap.of("Application-Name", applicationName,
+                                                      "Version", String.valueOf(version)));
+
+    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
+      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
+                                                        instanceName, getDetails(response)));
+    }
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
+                                                         instanceName, getDetails(response)));
+    }
+  }
+
+  private HttpResponse doRequest(HttpMethod method, String resource, ImmutableMap<String, String> headers)
+    throws DatasetManagementException {
+    String url = resolve(resource);
+    try {
+      return HttpRequests.execute(HttpRequest.builder(method, new URL(url)).addHeaders(headers).build());
+    } catch (IOException e) {
+      throw new DatasetManagementException(
+        String.format("Error during talking to Dataset Service at %s while doing %s with headers %s",
+                      url, method,
+                      headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers)), e);
+    }
   }
 }

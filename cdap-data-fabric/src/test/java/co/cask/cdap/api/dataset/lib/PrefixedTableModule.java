@@ -52,7 +52,7 @@ class PrefixedTableDefinition extends AbstractDatasetDefinition<PrefixedTable, D
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("table", properties))
       .build();

@@ -44,7 +44,7 @@ public class KeyValueTableDefinition
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("kv", properties))
       .build();

@@ -69,7 +69,7 @@ public class LevelDBOrderedTableTest extends BufferingOrderedTableTest<LevelDBOr
   @Override
   protected LevelDBOrderedTableAdmin getTableAdmin(String name, DatasetProperties ignored) throws IOException {
     DatasetSpecification spec =
-      new LevelDBOrderedTableDefinition("foo", 0).configure(name, DatasetProperties.EMPTY);
+      new LevelDBOrderedTableDefinition("foo").configure(name, DatasetProperties.EMPTY);
     return new LevelDBOrderedTableAdmin(spec, service);
   }
 

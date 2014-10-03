@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import com.google.common.collect.Lists;
-import com.sun.tools.javac.resources.version;
 
 import java.io.IOException;
 import java.util.List;
@@ -82,7 +81,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
       specs.add(impl.getValue().configure(impl.getKey(), properties));
     }
 
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(specs)
       .build();

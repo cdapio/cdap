@@ -20,11 +20,11 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeVersion;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.DatasetTypeVersionInfo;
 import com.google.common.collect.Lists;
-import com.sun.tools.javac.resources.version;
 
 import java.util.Collection;
 import java.util.List;
@@ -48,6 +48,11 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
    */
   private static final byte[] TYPE_TO_MODULE_PREFIX = Bytes.toBytes("t_");
 
+  /**
+   * Prefix for rows containing module -> version Info mapping
+   */
+  private static final byte[] MODULE_TO_VERSION_PREFIX = Bytes.toBytes("v_");
+
   public DatasetTypeMDS(DatasetSpecification spec, @EmbeddedDataset("") OrderedTable table) {
     super(spec, table);
   }
@@ -58,20 +63,25 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
   }
 
   @Nullable
-  public DatasetModuleMeta getModuleByType(String typeName, int version) {
-    String moduleName = get(getTypeKey(typeName, version), String.class);
+  public DatasetTypeVersion getVersionInfo(String name) {
+    return get(getVersionKey(name), DatasetTypeVersion.class);
+  }
+
+  @Nullable
+  public DatasetModuleMeta getModuleByType(String typeName) {
+    String moduleName = get(getTypeKey(typeName), String.class);
     if (moduleName == null) {
       return null;
     }
     return getModule(moduleName);
   }
 
-  public DatasetTypeMeta getType(String typeName, int version) {
-    DatasetModuleMeta moduleName = getModuleByType(typeName, version);
+  public DatasetTypeMeta getType(String typeName) {
+    DatasetModuleMeta moduleName = getModuleByType(typeName);
     if (moduleName == null) {
       return null;
     }
-    return getTypeMeta(typeName, version, moduleName);
+    return getTypeMeta(typeName, moduleName);
   }
 
   public Collection<DatasetModuleMeta> getModules() {
@@ -90,9 +100,14 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
   public void write(DatasetModuleMeta moduleMeta) {
     put(getModuleKey(moduleMeta.getName()), moduleMeta);
 
-    for (DatasetTypeVersionInfo type : moduleMeta.getTypes()) {
-      write(type.getName(), type.getVersion(), moduleMeta.getName());
+    for (String type : moduleMeta.getTypes()) {
+      write(type, moduleMeta.getName());
     }
+  }
+
+
+  public void write(DatasetTypeVersion versionInfo) {
+    put(getVersionKey(versionInfo.getModuleName()), versionInfo);
   }
 
   public void deleteModule(String name) {
@@ -101,35 +116,28 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
       // that's fine: module is not there
       return;
     }
+
     delete(getModuleKey(module.getName()));
 
-    for (DatasetTypeVersionInfo type : module.getTypes()) {
-      delete(getTypeKey(type.getName(), type.getVersion()));
+    for (String type : module.getTypes()) {
+      delete(getTypeKey(type));
     }
   }
 
   private DatasetTypeMeta getTypeMeta(String typeName, String moduleName) {
     DatasetModuleMeta moduleMeta = getModule(moduleName);
-    // split the string into type name and version separately
-    int versionIndex = getVersionIndexInTypeName(typeName);
-    typeName = typeName.substring(0, versionIndex);
-    int version = Integer.parseInt(typeName.substring(versionIndex + 1));
-    return getTypeMeta(typeName, version, moduleMeta);
+    return getTypeMeta(typeName, moduleMeta);
   }
 
-
-  private int getVersionIndexInTypeName(String typeName) {
-    return typeName.lastIndexOf("_");
-  }
-
-  private DatasetTypeMeta getTypeMeta(String typeName, int version, DatasetModuleMeta moduleMeta) {
+  private DatasetTypeMeta getTypeMeta(String typeName, DatasetModuleMeta moduleMeta) {
     List<DatasetModuleMeta> modulesToLoad = Lists.newArrayList();
     // adding first all modules we depend on, then myself
     for (String usedModule : moduleMeta.getUsesModules()) {
       modulesToLoad.add(getModule(usedModule));
     }
     modulesToLoad.add(moduleMeta);
-    return new DatasetTypeMeta(typeName, version, modulesToLoad);
+
+    return new DatasetTypeMeta(typeName, modulesToLoad);
   }
 
   // type -> moduleName
@@ -138,16 +146,16 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
     return scan(prefix, String.class);
   }
 
-  private void write(String typeName, int version, String moduleName) {
-    put(getTypeKey(typeName, version), moduleName);
+  private void write(String typeName, String moduleName) {
+    put(getTypeKey(typeName), moduleName);
   }
 
   private byte[] getModuleKey(String name) {
     return Bytes.add(MODULES_PREFIX, Bytes.toBytes(name));
   }
 
-  private byte[] getTypeKey(String name, int version) {
-    return Bytes.add(TYPE_TO_MODULE_PREFIX, Bytes.toBytes(name), Bytes.toBytes("_" + version));
+  private byte[] getVersionKey(String name) {
+    return Bytes.add(MODULE_TO_VERSION_PREFIX, Bytes.toBytes(name));
   }
 
   private byte[] getTypeKey(String name) {

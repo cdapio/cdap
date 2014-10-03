@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -37,13 +38,13 @@ import javax.annotation.Nullable;
 public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyValueTable, DatasetAdmin> {
   private static final Map<String, Map<byte[], byte[]>> tables = Maps.newHashMap();
 
-  public InMemoryKVTableDefinition(String name, int version) {
-    super(name, version);
+  public InMemoryKVTableDefinition(String name) {
+    super(name);
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .build();
   }
@@ -131,7 +132,7 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
 
     @Override
     public int getVersion() {
-      return 0;
+      return Constants.DEFAULT_DATATYPE_VERSION;
     }
   }
 
@@ -141,12 +142,7 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
   public static final class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      registry.add(new InMemoryKVTableDefinition(NoTxKeyValueTable.class.getName(), getVersion()), getVersion());
-    }
-
-    @Override
-    public int getVersion() {
-      return 0;
+      registry.add(new InMemoryKVTableDefinition(NoTxKeyValueTable.class.getName()));
     }
   }
 

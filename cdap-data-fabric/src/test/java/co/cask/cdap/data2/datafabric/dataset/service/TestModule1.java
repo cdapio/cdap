@@ -36,10 +36,10 @@ import java.util.Map;
 public class TestModule1 implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(createDefinition("datasetType1", getVersion()), getVersion());
+    registry.add(createDefinition("datasetType1"));
   }
-  private DatasetDefinition createDefinition(String name, int version) {
-    return new AbstractDatasetDefinition(name, version) {
+  private DatasetDefinition createDefinition(String name) {
+    return new AbstractDatasetDefinition(name) {
       @Override
       public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
         return createSpec(instanceName, getName(), properties);
@@ -58,13 +58,7 @@ public class TestModule1 implements DatasetModule {
   }
   private DatasetSpecification createSpec(String instanceName, String typeName,
                                           DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, typeName,
-                                        getVersion()).properties(properties.getProperties()).build();
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
+    return DatasetSpecification.builder(instanceName, typeName).properties(properties.getProperties()).build();
   }
 }
 

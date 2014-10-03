@@ -26,6 +26,6 @@ public class InMemoryKVTableTest extends NoTxKeyValueTableTest {
 
   @Override
   protected DatasetDefinition<? extends NoTxKeyValueTable, ? extends DatasetAdmin> getDefinition() {
-    return new InMemoryKVTableDefinition("foo", 0);
+    return new InMemoryKVTableDefinition("foo");
   }
 }

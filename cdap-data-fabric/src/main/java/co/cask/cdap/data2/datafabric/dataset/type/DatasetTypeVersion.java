@@ -22,12 +22,18 @@ package co.cask.cdap.data2.datafabric.dataset.type;
  * Dataset Type Version and checksum information
  */
 public class DatasetTypeVersion {
+  String moduleName;
   int version;
   String checksum; //this should be byte array or something else
 
-  public DatasetTypeVersion(int version, String checksum) {
+  public DatasetTypeVersion(String moduleName, int version, String checksum) {
+    this.moduleName = moduleName;
     this.version = version;
     this.checksum = checksum;
+  }
+
+  public String getModuleName() {
+    return moduleName;
   }
 
   public int getVersion() {

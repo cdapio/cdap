@@ -32,24 +32,4 @@ public class DefaultDatasetDefinitionRegistry extends InMemoryDatasetDefinitionR
     injector.injectMembers(def);
     super.add(def);
   }
-
-  @Override
-  public <T extends DatasetDefinition> T get(String datasetTypeName, int version) {
-    return null;
-  }
-
-  @Override
-  public <T extends DatasetDefinition> T get(String datasetTypeName) {
-    return null;
-  }
-
-  @Override
-  public boolean hasType(String datasetTypeName, int version) {
-    return false;
-  }
-
-  @Override
-  public boolean hasType(String datasetTypeName) {
-    return false;
-  }
 }

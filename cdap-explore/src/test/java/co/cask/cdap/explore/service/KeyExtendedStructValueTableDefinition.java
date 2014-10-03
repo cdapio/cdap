@@ -49,15 +49,15 @@ public class KeyExtendedStructValueTableDefinition extends
   private static final Gson GSON = new Gson();
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public KeyExtendedStructValueTableDefinition(String name, int version,
+  public KeyExtendedStructValueTableDefinition(String name,
                                                DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
-    super(name, version);
+    super(name);
     this.tableDef = orderedTableDefinition;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("key-value-table", properties))
       .build();
@@ -176,15 +176,10 @@ public class KeyExtendedStructValueTableDefinition extends
   public static class KeyExtendedStructValueTableModule implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      DatasetDefinition<Table, DatasetAdmin> table = registry.get("table", getVersion());
+      DatasetDefinition<Table, DatasetAdmin> table = registry.get("table");
       KeyExtendedStructValueTableDefinition keyExtendedValueTable =
-        new KeyExtendedStructValueTableDefinition("keyExtendedStructValueTable", getVersion(), table);
-      registry.add(keyExtendedValueTable, getVersion());
-    }
-
-    @Override
-    public int getVersion() {
-      return 0;
+        new KeyExtendedStructValueTableDefinition("keyExtendedStructValueTable", table);
+      registry.add(keyExtendedValueTable);
     }
   }
 

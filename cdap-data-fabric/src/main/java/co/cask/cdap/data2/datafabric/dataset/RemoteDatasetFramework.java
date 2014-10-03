@@ -100,6 +100,12 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public void addApplicationVersionInfo(String applicationName, String instanceName, int version)
+    throws DatasetManagementException {
+    client.addApplicationVersionInfo(applicationName, instanceName, version);
+  }
+
+  @Override
   public void addModule(String moduleName, DatasetModule module) throws DatasetManagementException {
     addModule(moduleName, DEFAULT_MODULE_VERSION, module);
   }

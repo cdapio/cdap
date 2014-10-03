@@ -33,6 +33,7 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -130,7 +131,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     if (spec == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType(), spec.getTypeVersion()), null);
+      DatasetMeta info = new DatasetMeta(spec, implManager.getTypeInfo(spec.getType()), null);
       responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
     }
   }
@@ -149,13 +150,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
-      /**
-       * check if the version is > latest version in MDS
-       * if so, just update the latest version in Instance MDS
-       */
-      if (existing.getTypeVersion() > instanceManager.getLatestVersion(name)) {
-        instanceManager.updateLatestVersion(name, existing.getTypeVersion());
-      }
+
+      // get application name, dataset type name , dataset version number
+      // then store it in the instance MDS.
 
       String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                      name, existing);
@@ -182,6 +179,40 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     }
     responder.sendStatus(HttpResponseStatus.OK);
   }
+
+  /**
+   * Writes version information for application->version which uses the dataset instance
+   */
+  @PUT
+  @Path("/data/datasets/{name}/version")
+  public void writeVersionInfo(HttpRequest request, final HttpResponder responder,
+                     @PathParam("name") String name) {
+    // Get the application name and version information from headers
+    String applicationName = request.getHeader("Application-Name");
+    int version = Integer.parseInt(request.getHeader("Version"));
+    Preconditions.checkNotNull(applicationName, " Required header 'Application-Name' is absent");
+    Preconditions.checkNotNull(version, " Required header 'version' is absent");
+    LOG.info("Adding Application {}, version: {}, Information for instance {}", applicationName, version, name);
+
+    // write to instance MDS the application->version mapping for this instance
+    DatasetSpecification existing = instanceManager.get(name);
+    Preconditions.checkNotNull(existing, "Dataset Instance is not present, " +
+      "cannot write Application->Version information");
+    instanceManager.updateInstanceApplicationVersionMap(name, applicationName, version);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+
+  /**
+   * Get version information for application->version which uses the dataset instance
+   */
+  @GET
+  @Path("/data/datasets/{name}/version")
+  public void getVersionInfo(HttpRequest request, final HttpResponder responder,
+                               @PathParam("name") String name) {
+    responder.sendJson(HttpResponseStatus.OK, instanceManager.getInstanceMap(name));
+  }
+
 
   /**
    * Updates an existing Dataset specification properties  {@link DatasetInstanceConfiguration}
@@ -246,8 +277,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   private boolean createDatasetInstance(DatasetInstanceConfiguration creationProperties,
                                         String name, HttpResponder responder, String operation) {
-    DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName(),
-                                                       creationProperties.getTypeVersion());
+    DatasetTypeMeta typeMeta = implManager.getTypeInfo(creationProperties.getTypeName());
     if (typeMeta == null) {
       String message = String.format("Cannot %s dataset %s: unknown type %s",
                                      operation, name, creationProperties.getTypeName());
@@ -364,7 +394,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return false;
     }
 
-    opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType(), spec.getTypeVersion()));
+    opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
     return true;
   }
 

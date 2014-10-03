@@ -190,8 +190,8 @@ public class AppsWithDataset {
   static class KeyValueTableDefinition
     extends CompositeDatasetDefinition<KeyValueTableDefinition.KeyValueTable> {
 
-    public KeyValueTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDefinition) {
-      super(name, version, ImmutableMap.of("data", tableDefinition));
+    public KeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDefinition) {
+      super(name, ImmutableMap.of("data", tableDefinition));
     }
 
     @Override
@@ -255,15 +255,9 @@ public class AppsWithDataset {
     public static class Module implements DatasetModule {
       @Override
       public void register(DatasetDefinitionRegistry registry) {
-        DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table", getVersion());
-        KeyValueTableDefinition keyValueTable = new KeyValueTableDefinition("myKeyValueTable", getVersion(),
-                                                                            tableDefinition);
-        registry.add(keyValueTable, getVersion());
-      }
-
-      @Override
-      public int getVersion() {
-        return 0;
+        DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table");
+        KeyValueTableDefinition keyValueTable = new KeyValueTableDefinition("myKeyValueTable", tableDefinition);
+        registry.add(keyValueTable);
       }
     }
   }

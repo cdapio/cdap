@@ -45,46 +45,36 @@ public class CoreDatasetsModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<OrderedTable, DatasetAdmin> orderedTableDef = registry.get("orderedTable", getVersion());
+    DatasetDefinition<OrderedTable, DatasetAdmin> orderedTableDef = registry.get("orderedTable");
 
-    DatasetDefinition<Table, DatasetAdmin> tableDef = new TableDefinition("table", getVersion(), orderedTableDef);
-    registry.add(tableDef, getVersion());
-    registry.add(new TableDefinition(Table.class.getName(), getVersion(), orderedTableDef), getVersion());
+    DatasetDefinition<Table, DatasetAdmin> tableDef = new TableDefinition("table", orderedTableDef);
+    registry.add(tableDef);
+    registry.add(new TableDefinition(Table.class.getName(), orderedTableDef));
 
-    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef =
-      new KeyValueTableDefinition("keyValueTable", getVersion(), tableDef);
-    registry.add(kvTableDef, getVersion());
-    registry.add(new KeyValueTableDefinition(KeyValueTable.class.getName(), getVersion(), tableDef), getVersion());
+    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = new KeyValueTableDefinition("keyValueTable", tableDef);
+    registry.add(kvTableDef);
+    registry.add(new KeyValueTableDefinition(KeyValueTable.class.getName(), tableDef));
 
-    DatasetDefinition<ObjectStore, DatasetAdmin> objectStoreDef = new
-      ObjectStoreDefinition("objectStore", getVersion(), kvTableDef);
-    registry.add(new ObjectStoreDefinition("objectStore", getVersion(), kvTableDef), getVersion());
-    registry.add(new ObjectStoreDefinition(ObjectStore.class.getName(), getVersion(), kvTableDef), getVersion());
+    DatasetDefinition<ObjectStore, DatasetAdmin> objectStoreDef = new ObjectStoreDefinition("objectStore", kvTableDef);
+    registry.add(new ObjectStoreDefinition("objectStore", kvTableDef));
+    registry.add(new ObjectStoreDefinition(ObjectStore.class.getName(), kvTableDef));
 
-    registry.add(new IndexedObjectStoreDefinition("indexedObjectStore", getVersion(), tableDef, objectStoreDef),
-                 getVersion());
-    registry.add(new IndexedObjectStoreDefinition(
-                   IndexedObjectStore.class.getName(), getVersion(), tableDef, objectStoreDef), getVersion());
+    registry.add(new IndexedObjectStoreDefinition("indexedObjectStore", tableDef, objectStoreDef));
+    registry.add(new IndexedObjectStoreDefinition(IndexedObjectStore.class.getName(), tableDef, objectStoreDef));
 
-    registry.add(new IndexedTableDefinition("indexedTable", getVersion(), tableDef), getVersion());
-    registry.add(new IndexedTableDefinition(IndexedTable.class.getName(), getVersion(), tableDef), getVersion());
+    registry.add(new IndexedTableDefinition("indexedTable", tableDef));
+    registry.add(new IndexedTableDefinition(IndexedTable.class.getName(), tableDef));
 
-    registry.add(new TimeseriesTableDefinition("timeseriesTable", getVersion(), tableDef), getVersion());
-    registry.add(new TimeseriesTableDefinition(TimeseriesTable.class.getName(), getVersion(), tableDef), getVersion());
+    registry.add(new TimeseriesTableDefinition("timeseriesTable", tableDef));
+    registry.add(new TimeseriesTableDefinition(TimeseriesTable.class.getName(), tableDef));
 
-    registry.add(new CounterTimeseriesTableDefinition("counterTimeseriesTable", getVersion(), tableDef), getVersion());
-    registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(),
-                                                      getVersion(), tableDef), getVersion());
+    registry.add(new CounterTimeseriesTableDefinition("counterTimeseriesTable", tableDef));
+    registry.add(new CounterTimeseriesTableDefinition(CounterTimeseriesTable.class.getName(), tableDef));
 
     // in-memory table
-    InMemoryOrderedTableDefinition inMemoryOrderedTable = new InMemoryOrderedTableDefinition("inMemoryOrderedTable",
-                                                                                             getVersion());
-    registry.add(new TableDefinition(MemoryTable.class.getName(), getVersion(), inMemoryOrderedTable), getVersion());
-    registry.add(new TableDefinition("memoryTable", getVersion(), inMemoryOrderedTable), getVersion());
+    InMemoryOrderedTableDefinition inMemoryOrderedTable = new InMemoryOrderedTableDefinition("inMemoryOrderedTable");
+    registry.add(new TableDefinition(MemoryTable.class.getName(), inMemoryOrderedTable));
+    registry.add(new TableDefinition("memoryTable", inMemoryOrderedTable));
   }
 
-  @Override
-  public int getVersion() {
-    return 0;
-  }
 }

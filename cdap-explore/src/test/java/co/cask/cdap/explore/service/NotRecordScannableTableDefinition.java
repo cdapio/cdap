@@ -45,15 +45,15 @@ public class NotRecordScannableTableDefinition
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public NotRecordScannableTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name, version);
+  public NotRecordScannableTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+    super(name);
     Preconditions.checkArgument(tableDef != null, "Table definition is required");
     this.tableDef = tableDef;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
         .properties(properties.getProperties())
         .datasets(tableDef.configure("kv", properties))
         .build();
@@ -155,15 +155,10 @@ public class NotRecordScannableTableDefinition
   public static class NotRecordScannableTableModule implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      DatasetDefinition<Table, DatasetAdmin> table = registry.get("table", getVersion());
+      DatasetDefinition<Table, DatasetAdmin> table = registry.get("table");
       NotRecordScannableTableDefinition tableDefinition =
-          new NotRecordScannableTableDefinition("NotRecordScannableTableDef", getVersion(), table);
-      registry.add(tableDefinition, getVersion());
-    }
-
-    @Override
-    public int getVersion() {
-      return 0;
+          new NotRecordScannableTableDefinition("NotRecordScannableTableDef", table);
+      registry.add(tableDefinition);
     }
   }
 }

@@ -45,8 +45,8 @@ import java.util.Map;
 public class MyKeyValueTableDefinition
   extends CompositeDatasetDefinition<MyKeyValueTableDefinition.KeyValueTable> {
 
-  public MyKeyValueTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDefinition) {
-    super(name, version, ImmutableMap.of("table", tableDefinition));
+  public MyKeyValueTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDefinition) {
+    super(name, ImmutableMap.of("table", tableDefinition));
   }
 
   @Override
@@ -117,15 +117,9 @@ public class MyKeyValueTableDefinition
   public static class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table", getVersion());
-      MyKeyValueTableDefinition keyValueTable = new MyKeyValueTableDefinition("myKeyValueTable", getVersion(),
-                                                                              tableDefinition);
-      registry.add(keyValueTable, getVersion());
-    }
-
-    @Override
-    public int getVersion() {
-      return 0;
+      DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table");
+      MyKeyValueTableDefinition keyValueTable = new MyKeyValueTableDefinition("myKeyValueTable", tableDefinition);
+      registry.add(keyValueTable);
     }
   }
 }

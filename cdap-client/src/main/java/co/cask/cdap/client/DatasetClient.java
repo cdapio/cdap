@@ -104,13 +104,7 @@ public class DatasetClient {
    */
   public void create(String datasetName, String typeName)
     throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
-    //todo -- need to update cdap client to support version
-    create(datasetName, new DatasetInstanceConfiguration(typeName, 0, ImmutableMap.<String, String>of()));
-  }
-
-  public void create(String datasetName, int version, String typeName)
-    throws DatasetTypeNotFoundException, DatasetAlreadyExistsException, IOException, UnAuthorizedAccessTokenException {
-    create(datasetName, new DatasetInstanceConfiguration(typeName, version, ImmutableMap.<String, String>of()));
+    create(datasetName, new DatasetInstanceConfiguration(typeName, ImmutableMap.<String, String>of()));
   }
 
   /**

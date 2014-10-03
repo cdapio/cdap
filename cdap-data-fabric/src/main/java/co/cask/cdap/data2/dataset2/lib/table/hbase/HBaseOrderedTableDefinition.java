@@ -46,13 +46,13 @@ public class HBaseOrderedTableDefinition
   @Inject
   private CConfiguration conf;
 
-  public HBaseOrderedTableDefinition(String name, int version) {
-    super(name, version);
+  public HBaseOrderedTableDefinition(String name) {
+    super(name);
   }
 
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
-    return DatasetSpecification.builder(name, getName(), getVersion())
+    return DatasetSpecification.builder(name, getName())
       .properties(properties.getProperties())
       .build();
   }

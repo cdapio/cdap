@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import com.google.common.base.Preconditions;
-import com.sun.tools.javac.resources.version;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,7 +42,7 @@ public class StandaloneDatasetDefinition extends AbstractDatasetDefinition<Stand
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(tableDef.configure("objects", properties))
       .build();

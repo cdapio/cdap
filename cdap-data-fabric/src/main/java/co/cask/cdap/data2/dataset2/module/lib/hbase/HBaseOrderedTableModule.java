@@ -27,13 +27,8 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTableDefinition;
 public class HBaseOrderedTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new HBaseOrderedTableDefinition("orderedTable", getVersion()), getVersion());
+    registry.add(new HBaseOrderedTableDefinition("orderedTable"));
     // so that it can be resolved via @Dataset
-    registry.add(new HBaseOrderedTableDefinition(OrderedTable.class.getName(), getVersion()), getVersion());
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
+    registry.add(new HBaseOrderedTableDefinition(OrderedTable.class.getName()));
   }
 }

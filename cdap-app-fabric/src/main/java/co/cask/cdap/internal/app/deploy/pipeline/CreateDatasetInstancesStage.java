@@ -63,9 +63,9 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
       int version = dataset.getVersion();
 
       try {
-        // todo : might want to comment the if check.
         if (!datasetFramework.hasInstance(instanceName)) {
-          datasetFramework.addInstance(instanceSpec.getTypeName(), version, instanceName, instanceSpec.getProperties());
+          datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());
+          datasetFramework.addApplicationVersionInfo(specification.getName(), instanceName, version);
         }
       } catch (InstanceConflictException e) {
         // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app

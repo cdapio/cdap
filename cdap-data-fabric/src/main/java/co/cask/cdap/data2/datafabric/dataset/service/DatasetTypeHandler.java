@@ -20,8 +20,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeVersion;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
+import co.cask.cdap.proto.DatasetTypeVersionInfo;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
@@ -122,20 +124,6 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     LOG.info("Adding module {}, class name: {}, version {}", name, className, version);
 
     DatasetModuleMeta existing = manager.getModule(name);
-    /**
-     * Get the version object from the MDS, check if (passed) version is greater than current version
-     * If greater and (checksum is different) then extract the jar, update the module_version
-     * value with new {version,checksum} in MDS.
-     */
-
-
-    if (existing != null) {
-      String message = String.format("Cannot add module %s: module with same name and version already exists: %s",
-                                     name, existing);
-      LOG.warn(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
-      return;
-    }
 
     ChannelBuffer content = request.getContent();
     if (content == null) {
@@ -166,8 +154,29 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       inputStream.close();
     }
 
+
+    if (existing != null) {
+      /**
+       * Get the version object from the MDS, check if (passed) version is greater than current version
+       * If greater and (checksum is different) then extract the jar, update the module_version
+       * value with new {version,checksum} in MDS.
+       */
+      DatasetTypeVersion versionInfo = manager.getVersionInfo(name);
+
+      if ((versionInfo.getVersion() > version) ||
+        ((versionInfo.getVersion() == version) && versionInfo.getChecksum().equals(calculateChecksum(archive)))) {
+        // not the latest version, newer version already exists, fail.
+        String message = String.format("Cannot add module %s: module, newer version %s already exists: %s",
+                                       name, versionInfo.getVersion());
+        LOG.warn(message);
+        responder.sendError(HttpResponseStatus.CONFLICT, message);
+        return;
+      }
+    }
+
     try {
-      manager.addModule(name, version, className, archive);
+      manager.addModule(name, className, archive);
+      manager.writeVersionInfo(new DatasetTypeVersion(name, version, calculateChecksum(archive)));
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -177,12 +186,16 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  private String calculateChecksum(Location archive) {
+    return null;
+  }
+
   @DELETE
   @Path("/data/modules/{name}")
   public void deleteModule(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
     boolean deleted;
     try {
-      deleted = manager.deleteModule(name, DEFAULT_HEADER_VERSION);
+      deleted = manager.deleteModule(name);
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -199,7 +212,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/modules/{name}")
   public void getModuleInfo(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
-    DatasetModuleMeta moduleMeta = manager.getModule(name, 0);
+    DatasetModuleMeta moduleMeta = manager.getModule(name);
     if (moduleMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -212,7 +225,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void getModuleInfoWithVersion(HttpRequest request, final HttpResponder responder,
                                        @PathParam("name") String name, @PathParam("vnum") int version) {
 
-    DatasetModuleMeta moduleMeta = manager.getModule(name, version);
+    DatasetModuleMeta moduleMeta = manager.getModule(name);
     if (moduleMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
@@ -239,7 +252,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   public void getTypeInfo(HttpRequest request, final HttpResponder responder,
                       @PathParam("name") String name) {
 
-    DatasetTypeMeta typeMeta = manager.getTypeInfo(name, DEFAULT_HEADER_VERSION);
+    DatasetTypeMeta typeMeta = manager.getTypeInfo(name);
     if (typeMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {

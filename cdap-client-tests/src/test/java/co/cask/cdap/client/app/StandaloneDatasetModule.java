@@ -31,14 +31,8 @@ public class StandaloneDatasetModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = registry.get("keyValueTable", getVersion());
-    registry.add(new StandaloneDatasetDefinition(StandaloneDataset.TYPE_NAME, getVersion(), kvTableDef), getVersion());
-    registry.add(new StandaloneDatasetDefinition(StandaloneDataset.class.getName(),
-                                                 getVersion(), kvTableDef), getVersion());
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
+    DatasetDefinition<KeyValueTable, DatasetAdmin> kvTableDef = registry.get("keyValueTable");
+    registry.add(new StandaloneDatasetDefinition(StandaloneDataset.TYPE_NAME, kvTableDef));
+    registry.add(new StandaloneDatasetDefinition(StandaloneDataset.class.getName(), kvTableDef));
   }
 }

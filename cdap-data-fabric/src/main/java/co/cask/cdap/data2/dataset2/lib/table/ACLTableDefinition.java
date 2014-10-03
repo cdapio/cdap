@@ -45,7 +45,7 @@ public class ACLTableDefinition extends AbstractDatasetDefinition<ACLTable, Data
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .datasets(tableDefinition.configure("data", getObjectStoreProperties()))
       .build();

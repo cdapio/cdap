@@ -28,12 +28,7 @@ import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTableDefini
 public class InMemoryMetricsTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    registry.add(new InMemoryMetricsTableDefinition(InMemoryMetricsTable.class.getName(), getVersion()), getVersion());
-    registry.add(new InMemoryMetricsTableDefinition(MetricsTable.class.getName(), getVersion()), getVersion());
-  }
-
-  @Override
-  public int getVersion() {
-    return 0;
+    registry.add(new InMemoryMetricsTableDefinition(InMemoryMetricsTable.class.getName()));
+    registry.add(new InMemoryMetricsTableDefinition(MetricsTable.class.getName()));
   }
 }

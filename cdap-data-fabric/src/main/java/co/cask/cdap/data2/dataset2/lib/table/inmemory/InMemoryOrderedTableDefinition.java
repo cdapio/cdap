@@ -31,13 +31,13 @@ import java.util.Map;
 public class InMemoryOrderedTableDefinition
   extends AbstractDatasetDefinition<OrderedTable, InMemoryOrderedTableAdmin> {
 
-  public InMemoryOrderedTableDefinition(String name, int version) {
-    super(name, version);
+  public InMemoryOrderedTableDefinition(String name) {
+    super(name);
   }
 
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
-    return DatasetSpecification.builder(name, getName(), getVersion())
+    return DatasetSpecification.builder(name, getName())
       .properties(properties.getProperties())
       .build();
   }

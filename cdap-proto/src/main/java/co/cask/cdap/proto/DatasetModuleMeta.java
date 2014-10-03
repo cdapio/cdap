@@ -19,12 +19,13 @@ package co.cask.cdap.proto;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
-import com.sun.tools.javac.resources.version;
+import com.google.common.collect.Sets;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -36,11 +37,9 @@ public class DatasetModuleMeta {
   // TODO: change type to Location
   private final URI jarLocation;
 
-  private final List<DatasetTypeVersionInfo> types;
-
+  private final List<String> types;
   private final List<String> usesModules;
-  private final List<String> usedByModules;
-
+  private final Set<String> usedByModules;
 
   /**
    * Creates instance of {@link DatasetModuleMeta}
@@ -53,13 +52,13 @@ public class DatasetModuleMeta {
    *                    loaded and initialized
    */
   public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
-                           List<DatasetTypeVersionInfo> types, List<String> usesModules) {
+                           List<String> types, List<String> usesModules) {
     this.name = name;
     this.className = className;
     this.jarLocation = jarLocation;
     this.types = Collections.unmodifiableList(types);
     this.usesModules = Collections.unmodifiableList(usesModules);
-    this.usedByModules = Lists.newArrayList();
+    this.usedByModules = Sets.newLinkedHashSet();
   }
 
   /**
@@ -88,7 +87,7 @@ public class DatasetModuleMeta {
   /**
    * @return list of types announced by this module in the order they are announced
    */
-  public List<DatasetTypeVersionInfo> getTypes() {
+  public List<String> getTypes() {
     return types;
   }
 

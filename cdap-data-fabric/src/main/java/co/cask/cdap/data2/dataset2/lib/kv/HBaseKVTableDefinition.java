@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
@@ -51,13 +52,13 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   @Inject
   private HBaseTableUtil tableUtil;
 
-  public HBaseKVTableDefinition(String name, int version) {
-    super(name, version);
+  public HBaseKVTableDefinition(String name) {
+    super(name);
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .build();
   }
@@ -170,7 +171,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
 
     @Override
     public int getVersion() {
-      return 0;
+      return Constants.DEFAULT_DATATYPE_VERSION;
     }
   }
 
@@ -180,12 +181,7 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
   public static final class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      registry.add(new HBaseKVTableDefinition(NoTxKeyValueTable.class.getName(), getVersion()), getVersion());
-    }
-
-    @Override
-    public int getVersion() {
-      return 0;
+      registry.add(new HBaseKVTableDefinition(NoTxKeyValueTable.class.getName()));
     }
   }
 

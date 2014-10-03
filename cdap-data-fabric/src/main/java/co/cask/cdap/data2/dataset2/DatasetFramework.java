@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import com.sun.tools.javac.resources.version;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -59,6 +60,15 @@ public interface DatasetFramework {
   void addModule(String moduleName, int version, DatasetModule module)
     throws DatasetManagementException;
 
+  /**
+   * Adds information on dataset version used by Application to the MDS
+   * @param applicationName Name of the application
+   * @param instanceName dataset Instance name
+   * @param version version of dataset type
+   * @throws DatasetManagementException in case of problems
+   */
+  void addApplicationVersionInfo(String applicationName, String instanceName, int version)
+    throws DatasetManagementException;
 
   /**
    * Adds dataset types by adding dataset module to the system.

@@ -86,6 +86,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public void addApplicationVersionInfo(String applicationName, String instanceName, int version)
+    throws DatasetManagementException {
+    return;
+  }
+
+  @Override
   public void addModule(String moduleName, DatasetModule module) throws DatasetManagementException {
     addModule(moduleName, 0, module);
   }

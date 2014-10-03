@@ -20,9 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.OrderedTable;
-import co.cask.cdap.proto.DatasetTypeVersionInfo;
 import com.google.common.collect.Lists;
-import com.sun.tools.javac.resources.version;
+import com.google.common.reflect.TypeToken;
 
 import java.util.Collection;
 import java.util.List;
@@ -40,7 +39,7 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
    *       the prefix may help us in future
    */
   private static final byte[] INSTANCE_PREFIX = Bytes.toBytes("i_");
-  private static final byte[] INSTANCE_LATEST_VERSION_PREFIX = Bytes.toBytes("lv_");
+  private static final byte[] INSTANCE_APP_VERSION_PREFIX = Bytes.toBytes("lv_");
 
   public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataset("") OrderedTable table) {
     super(spec, table);
@@ -55,10 +54,15 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     put(getInstanceKey(instanceSpec.getName()), instanceSpec);
   }
 
-  public void updateVersion(String instanceName, int version) {
-    put(getInstanceLatestVersionPrefixKey(instanceName), version);
+  public void updateVersion(String instanceName, Map<String, Integer> appVersionMap) {
+    put(getInstanceLatestVersionPrefixKey(instanceName), appVersionMap);
   }
 
+  @Nullable
+  public Map<String, Integer> getAppVersionMap(String instanceName) {
+    return (Map<String, Integer>) get(getInstanceLatestVersionPrefixKey(instanceName),
+               new TypeToken<Map<String, Integer>>() { }.getRawType());
+  }
   @Nullable
   public Integer getLatestVersion(String name) {
     return get(getInstanceLatestVersionPrefixKey(name), Integer.class);
@@ -82,12 +86,11 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     return instances.values();
   }
 
-  public Collection<DatasetSpecification> getByTypes(Set<DatasetTypeVersionInfo> typeNames) {
+  public Collection<DatasetSpecification> getByTypes(Set<String> typeNames) {
     List<DatasetSpecification> filtered = Lists.newArrayList();
 
     for (DatasetSpecification spec : getAll()) {
-      DatasetTypeVersionInfo specDatasetType = new DatasetTypeVersionInfo(spec.getType(), spec.getTypeVersion());
-      if (typeNames.contains(specDatasetType)) {
+      if (typeNames.contains(spec.getType())) {
         filtered.add(spec);
       }
     }
@@ -104,6 +107,6 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
   }
 
   private byte[] getInstanceLatestVersionPrefixKey(String name) {
-    return Bytes.add(INSTANCE_LATEST_VERSION_PREFIX, Bytes.toBytes(name));
+    return Bytes.add(INSTANCE_APP_VERSION_PREFIX, Bytes.toBytes(name));
   }
 }

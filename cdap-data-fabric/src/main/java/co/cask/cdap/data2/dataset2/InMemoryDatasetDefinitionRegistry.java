@@ -34,11 +34,10 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
   private Map<String, DatasetDefinition> datasetTypes = Maps.newHashMap();
 
   @Override
-  public <T extends DatasetDefinition> T get(String datasetType, int version) {
-    String datasetTypeWithVersion = getDatasetTypeWithVersion(datasetType, version);
-    DatasetDefinition def = datasetTypes.get(datasetTypeWithVersion);
+  public <T extends DatasetDefinition> T get(String datasetType) {
+    DatasetDefinition def = datasetTypes.get(datasetType);
     if (def == null) {
-      String msg = String.format("Requested dataset type %s with version %s does NOT exist ", datasetType, version);
+      String msg = String.format("Requested dataset type %s with version %s does NOT exist ", datasetType);
       LOG.debug(msg);
       throw new IllegalArgumentException(msg);
     }
@@ -46,31 +45,17 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
   }
 
   @Override
-  public <T extends DatasetDefinition> T get(String datasetTypeName) {
-    return get(datasetTypeName, 0);
-  }
-
-  @Override
   public void add(DatasetDefinition def) {
-    String typeNameWithVersion = getDatasetTypeWithVersion(def.getName(), def.getVersion());
-    if (datasetTypes.containsKey(typeNameWithVersion)) {
-      throw new TypeConflictException(String.format("Cannot add dataset type: %s it already exists:%s ",
-                                                    def.getName(), def.getVersion()));
-    }
-    datasetTypes.put(typeNameWithVersion, def);
+
+    //    if (datasetTypes.containsKey(typeNameWithVersion)) {
+    //      throw new TypeConflictException(String.format("Cannot add dataset type: %s it already exists:%s ",
+    //                                                    def.getName(), def.getVersion()));
+    //    }
+    datasetTypes.put(def.getName(), def);
   }
 
   @Override
-  public boolean hasType(String typeName, int version) {
-    return datasetTypes.containsKey(getDatasetTypeWithVersion(typeName, version));
-  }
-
-  @Override
-  public boolean hasType(String datasetTypeName) {
-    return hasType(datasetTypeName, 0);
-  }
-
-  private String getDatasetTypeWithVersion(String datasetType, int version) {
-    return datasetType + "_" + version;
+  public boolean hasType(String typeName) {
+    return datasetTypes.containsKey(typeName);
   }
 }

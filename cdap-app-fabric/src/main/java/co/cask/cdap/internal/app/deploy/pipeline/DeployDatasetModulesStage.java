@@ -87,7 +87,8 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
             // checking if type is in already
             if (!datasetFramework.hasType(clazz.getName())) {
               Dataset dataset = dataSetInstantiator.getDataSet(clazz.getName());
-              datasetFramework.addModule(moduleName, dataset.getVersion(), new SingleTypeModule((Class<Dataset>) clazz));
+              datasetFramework.addModule(moduleName, dataset.getVersion(),
+                                         new SingleTypeModule((Class<Dataset>) clazz));
             }
           } else {
             String msg = String.format(

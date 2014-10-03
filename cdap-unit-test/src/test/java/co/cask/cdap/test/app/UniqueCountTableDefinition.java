@@ -34,8 +34,8 @@ import java.util.Map;
 public class UniqueCountTableDefinition
   extends CompositeDatasetDefinition<UniqueCountTableDefinition.UniqueCountTable> {
 
-  public UniqueCountTableDefinition(String name, int version, DatasetDefinition<? extends Table, ?> tableDef) {
-    super(name, version, ImmutableMap.of("entryCountTable", tableDef,
+  public UniqueCountTableDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
+    super(name, ImmutableMap.of("entryCountTable", tableDef,
                                 "uniqueCountTable", tableDef));
   }
 
@@ -80,15 +80,9 @@ public class UniqueCountTableDefinition
   public static class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table", getVersion());
-      UniqueCountTableDefinition keyValueTable = new UniqueCountTableDefinition("uniqueCountTable", getVersion(),
-                                                                                tableDefinition);
-      registry.add(keyValueTable, getVersion());
-    }
-
-    @Override
-    public int getVersion() {
-      return 0;
+      DatasetDefinition<Table, DatasetAdmin> tableDefinition = registry.get("table");
+      UniqueCountTableDefinition keyValueTable = new UniqueCountTableDefinition("uniqueCountTable", tableDefinition);
+      registry.add(keyValueTable);
     }
   }
 }

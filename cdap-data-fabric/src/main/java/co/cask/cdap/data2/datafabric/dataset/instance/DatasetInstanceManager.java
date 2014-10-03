@@ -20,9 +20,12 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasets;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.tx.TxCallable;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.sun.tools.javac.resources.version;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Manages dataset instances metadata
@@ -81,12 +84,31 @@ public class DatasetInstanceManager {
    * @param name of the dataset instance
    * @param version of the dataset type
    */
-  public void updateLatestVersion(final String name, final int version) {
+  public void updateInstanceApplicationVersionMap(final String name, final String applicationName, final int version) {
     mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Void>() {
       @Override
       public Void call(MDSDatasets datasets) throws Exception {
-        datasets.getInstanceMDS().updateVersion(name, version);
+        Map<String, Integer> appVersionMap = datasets.getInstanceMDS().getAppVersionMap(name);
+        if (appVersionMap == null) {
+          appVersionMap = Maps.newHashMap();
+        }
+        appVersionMap.put(applicationName, version);
+        datasets.getInstanceMDS().updateVersion(name, appVersionMap);
         return null;
+      }
+    });
+  }
+
+  /**
+   * Gets dataset instance type version
+   * @param name of the dataset instance
+   * @return Map<String, Integer> Map of application Name -> version
+   */
+  public Map<String, Integer> getInstanceMap(final String name) {
+    return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Map<String, Integer>>() {
+      @Override
+      public Map<String, Integer> call(MDSDatasets datasets) throws Exception {
+        return datasets.getInstanceMDS().getAppVersionMap(name);
       }
     });
   }

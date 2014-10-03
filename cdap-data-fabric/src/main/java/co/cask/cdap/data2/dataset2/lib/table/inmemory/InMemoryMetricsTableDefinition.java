@@ -31,13 +31,13 @@ import java.util.Map;
 public class InMemoryMetricsTableDefinition
   extends AbstractDatasetDefinition<MetricsTable, DatasetAdmin> {
 
-  public InMemoryMetricsTableDefinition(String name, int version) {
-    super(name, version);
+  public InMemoryMetricsTableDefinition(String name) {
+    super(name);
   }
 
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
-    return DatasetSpecification.builder(name, getName(), getVersion())
+    return DatasetSpecification.builder(name, getName())
       .properties(properties.getProperties())
       .build();
   }

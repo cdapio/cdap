@@ -57,8 +57,8 @@ public final class DatasetSpecification {
   // NOTE: we need the map to be ordered because we compare serialized to JSON form as Strings during deploy validation
   private final SortedMap<String, DatasetSpecification> datasetSpecs;
 
-  public static Builder builder(String name, String typeName, int version) {
-    return new Builder(name, typeName, version);
+  public static Builder builder(String name, String typeName) {
+    return new Builder(name, typeName);
   }
 
   public static DatasetSpecification changeName(DatasetSpecification spec, String newName) {
@@ -208,7 +208,7 @@ public final class DatasetSpecification {
     private final TreeMap<String, String> properties;
     private final TreeMap<String, DatasetSpecification> dataSetSpecs;
 
-    private Builder(String name, String typeName, int version) {
+    private Builder(String name, String typeName) {
       this.name = name;
       this.type = typeName;
       this.properties = Maps.newTreeMap();

@@ -65,7 +65,7 @@ public class HBaseKVTableTest extends NoTxKeyValueTableTest {
       }
     });
 
-    HBaseKVTableDefinition def = new HBaseKVTableDefinition("foo", 0);
+    HBaseKVTableDefinition def = new HBaseKVTableDefinition("foo");
     injector.injectMembers(def);
     return def;
   }

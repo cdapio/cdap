@@ -40,13 +40,13 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
   @Inject
   private LevelDBOrderedTableService service;
 
-  public LevelDBKVTableDefinition(String name, int version) {
-    super(name, version);
+  public LevelDBKVTableDefinition(String name) {
+    super(name);
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
       .build();
   }
@@ -164,12 +164,7 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
   public static final class Module implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      registry.add(new LevelDBKVTableDefinition(NoTxKeyValueTable.class.getName(), getVersion()), getVersion());
-    }
-
-    @Override
-    public int getVersion() {
-      return 0;
+      registry.add(new LevelDBKVTableDefinition(NoTxKeyValueTable.class.getName()));
     }
   }
 

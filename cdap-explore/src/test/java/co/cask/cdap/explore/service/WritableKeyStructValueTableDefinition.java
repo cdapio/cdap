@@ -44,15 +44,15 @@ public class WritableKeyStructValueTableDefinition extends
 
   private final DatasetDefinition<? extends Table, ?> tableDef;
 
-  public WritableKeyStructValueTableDefinition(String name, int version,
+  public WritableKeyStructValueTableDefinition(String name,
                                                DatasetDefinition<? extends Table, ?> orderedTableDefinition) {
-    super(name, version);
+    super(name);
     this.tableDef = orderedTableDefinition;
   }
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    return DatasetSpecification.builder(instanceName, getName(), getVersion())
+    return DatasetSpecification.builder(instanceName, getName())
     .properties(properties.getProperties())
     .datasets(tableDef.configure("key-value-table", properties))
     .build();
@@ -193,15 +193,10 @@ public class WritableKeyStructValueTableDefinition extends
   public static class KeyStructValueTableModule implements DatasetModule {
     @Override
     public void register(DatasetDefinitionRegistry registry) {
-      DatasetDefinition<Table, DatasetAdmin> table = registry.get("table", getVersion());
+      DatasetDefinition<Table, DatasetAdmin> table = registry.get("table");
       KeyStructValueTableDefinition keyValueTable = new KeyStructValueTableDefinition("writableKeyStructValueTable",
-                                                                                      getVersion(), table);
-      registry.add(keyValueTable, getVersion());
-    }
-
-    @Override
-    public int getVersion() {
-      return 0;
+                                                                                      table);
+      registry.add(keyValueTable);
     }
   }
 
