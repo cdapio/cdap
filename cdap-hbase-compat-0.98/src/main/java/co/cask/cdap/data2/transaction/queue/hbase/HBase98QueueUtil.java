@@ -16,24 +16,17 @@
 
 package co.cask.cdap.data2.transaction.queue.hbase;
 
-import co.cask.cdap.data2.util.hbase.HBaseVersionSpecificFactory;
+import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.data2.queue.ConsumerConfig;
+import org.apache.hadoop.hbase.client.HTable;
 
 /**
- * Factory for HBase version-specific instances of {@link HBaseQueueUtil}.
+ * HBase 0.98 implementation of {@link HBaseQueueUtil}.
  */
-public class HBaseQueueUtilFactory extends HBaseVersionSpecificFactory<HBaseQueueUtil> {
+public class HBase98QueueUtil extends HBaseQueueUtil {
   @Override
-  protected String getHBase94Classname() {
-    return "co.cask.cdap.data2.transaction.queue.hbase.HBase94QueueUtil";
-  }
-
-  @Override
-  protected String getHBase96Classname() {
-    return "co.cask.cdap.data2.transaction.queue.hbase.HBase96QueueUtil";
-  }
-
-  @Override
-  protected String getHBase98Classname() {
-    return "co.cask.cdap.data2.transaction.queue.hbase.HBase98QueueUtil";
+  public HBaseQueueConsumer getQueueConsumer(ConsumerConfig consumerConfig, HTable hTable, QueueName queueName,
+                                              HBaseConsumerState consumerState, HBaseConsumerStateStore stateStore) {
+    return new HBase98QueueConsumer(consumerConfig, hTable, queueName, consumerState, stateStore);
   }
 }
