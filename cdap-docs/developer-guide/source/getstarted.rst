@@ -133,7 +133,6 @@ Creating an Application
 The best way to start developing a CDAP application is by using the Maven archetype::
 
   $ mvn archetype:generate \
-    -DarchetypeCatalog=https://repository.cask.co/content/groups/releases/archetype-catalog.xml \
     -DarchetypeGroupId=co.cask.cdap \
     -DarchetypeArtifactId=cdap-app-archetype \
     -DarchetypeVersion=2.5.0
