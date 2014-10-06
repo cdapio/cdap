@@ -96,6 +96,8 @@ It has pre-installed all the software that you need to run and develop CDAP appl
 No password is required to enter the virtual machine; however, should you need to install or
 remove software, the admin user and password are both ``cdap``.
 
+.. _docker:
+
 CDAP Standalone Docker Image
 -----------------------------
 
@@ -109,24 +111,43 @@ To use the **Docker image**:
   following the `platform-specific installation instructions <https://docs.docker.com/installation>`__
   from `Docker.com <https://docker.com>`__ to verify that Docker is working and has
   started correctly.
+  
+  Start Docker using::
+  
+    $ boot2docker start
 
 - Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
 
-    docker pull caskdata/cdap-standalone
+    $ docker pull caskdata/cdap-standalone
     
 - Identify the Docker Virtual Machine's Host Interface IP address
   (this address will be used when connecting a web browser to the CDAP Console) with::
   
-    boot2docker ip
+    $ boot2docker ip
     
-- Start the *Docker CDAP VM* with::
+- Start the *Docker CDAP Virtual Machine* with::
 
-    docker run -t -i -p 9999:9999 caskdata/cdap-standalone
+    $ docker run -t -i -p 9999:9999 –p 10000:10000 caskdata/cdap-standalone
     
-- Once you enter the *Docker CDAP VM*, the Standalone CDAP SDK is located in the root directory::
+- CDAP will start automatically once the CDAP Virtual Machine starts.
 
-    $ cd /cdap-sdk-2.5.0
+  - CDAP’s Software Directory is under /Software/ cdap-sdk-2.5.0
+  - CDAP can also be stopped and started from within the machine using::
 
+      $ cd /Software/cdap-sdk-2.5.0
+      $ ./bin/cdap.sh stop|start
+    
+- Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
+  at ``http://host-ip:9999``, replacing ``host-ip`` with the IP address you obtained
+  earlier. Start a browser and enter the address to access the CDAP Console.
+
+- We recommend that you have these software and tools already installed in your
+  environment in order to begin building CDAP applications:
+
+  - An IDE such as IntelliJ or Eclipse IDE
+  - Apache Maven 3.0+
+  - Java JDK
+    
 - For a full list of Docker Commands, see the `Docker Command Line Documentation.
   <https://docs.docker.com/reference/commandline/cli/>`__
 
