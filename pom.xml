@@ -1457,6 +1457,11 @@
         <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.5</version>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
             <version>2.2.1</version>
           </plugin>
@@ -1604,11 +1609,6 @@
 
         <!-- Generate the package version. If it has -SNAPSHOT, replace it with build time. -->
         <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
-          </plugin>
           <!-- Generate a timestamp property -->
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
