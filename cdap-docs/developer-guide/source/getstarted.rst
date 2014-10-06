@@ -77,7 +77,7 @@ To use the **Virtual Machine image**:
 - Download the CDAP Standalone Virtual Machine (*Standalone VM*) at `<http://cask.co/downloads>`__.
 - Import the downloaded ``.ova`` file into either the VirtualBox or VMWare Player.
 
-The CDAP Standalone Virtual Machine is configured with the recommended settings for CDAP:
+The CDAP Standalone Virtual Machine is configured with the recommended settings for Standalone CDAP:
 
 - 4 GB of RAM
 - Ubuntu Desktop Linux
@@ -118,6 +118,14 @@ To use the **Docker image**:
     
   to determine the Docker VM's IP address. You will need to use that address as the host
   name when either connecting to the Console or making an HTTP request.
+  
+  When you run boot2docker start, it will print a message on the screen similar to::
+
+    To connect the Docker client to the Docker daemon, please set:
+    export DOCKER_HOST=tcp://192.168.59.103:2375
+
+  It is essential to run this export command. Otherwise, subsequent Docker commands will
+  fail because they can't tell how to connect to the Docker VM.
 
 - Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
 
@@ -127,18 +135,13 @@ To use the **Docker image**:
 
     $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
     
-- CDAP will start automatically once the CDAP Virtual Machine starts.
-
-  - CDAP’s Software Directory is under /Software/cdap-sdk-2.5.0
-  - CDAP can also be stopped and started from within the machine using::
-
-      $ cd /Software/cdap-sdk-2.5.0
-      $ ./bin/cdap.sh stop|start
-    
+- CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
+  Directory is under ``/Software/cdap-sdk-2.5.0``.
+  
 - Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
   at ``http://<virtual-hostname>:9999``, such as ``http://6f0162922c37:9999``. Replace
-  ``<virtual-hostname>`` with the IP address you obtained earlier. Start a browser and enter
-  the address to access the CDAP Console.
+  ``<virtual-hostname>`` with the Docker VM's IP address you obtained earlier. Start a browser 
+  and enter the address to access the CDAP Console.
 
 - In order to begin building CDAP applications, have our `recommended software and tools
   <#system-requirements-and-dependencies>`__ installed in your environment.
@@ -159,10 +162,13 @@ Use the ``cdap.sh`` script to start and stop the Standalone CDAP
 
 Or, if you are using Windows, use the batch script ``cdap.bat`` to start and stop the SDK.
 
+Note that starting CDAP is not necessary if you use either the Virtual Machine or the
+Docker image, as they both start the Standalone CDAP automatically on startup.
+
 Once CDAP is started successfully, in a web browser you will be able to see the CDAP
 Console running at ``localhost:9999``, where you can deploy example applications and
 interact with CDAP. Note that in the case of the Docker image, you will need to substitute 
-the Host Interface IP address for ``localhost`` in the web browser address bar.
+the Docker VM's IP address for ``localhost`` in the web browser address bar.
 
 Creating an Application
 =======================
