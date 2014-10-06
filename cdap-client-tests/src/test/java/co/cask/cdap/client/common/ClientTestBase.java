@@ -23,8 +23,6 @@ import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.security.authentication.client.AuthenticationClient;
-import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -47,9 +45,7 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-    authenticationClient.setConnectionInfo(HOSTNAME, PORT, false);
-    clientConfig = new ClientConfig(HOSTNAME, authenticationClient);
+    clientConfig = new ClientConfig(HOSTNAME, null);
   }
 
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
@@ -72,8 +68,8 @@ public abstract class ClientTestBase extends StandaloneTestBase {
   }
 
   protected void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
-                                          int numInstances) throws IOException, NotFoundException,
-    UnAuthorizedAccessTokenException {
+                                          int numInstances)
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     int actualInstances;
     int numTries = 0;
@@ -86,8 +82,7 @@ public abstract class ClientTestBase extends StandaloneTestBase {
   }
 
   protected void assertFlowletInstances(ProgramClient programClient, String appId, String flowId,
-                                        String flowletId, int numInstances) throws IOException, NotFoundException,
-    UnAuthorizedAccessTokenException {
+                                        String flowletId, int numInstances) throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     int actualInstances;
     int numTries = 0;
@@ -100,16 +95,14 @@ public abstract class ClientTestBase extends StandaloneTestBase {
   }
 
   protected void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId) throws IOException, ProgramNotFoundException,
-    UnAuthorizedAccessTokenException {
+                                      String programId) throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
   }
 
 
   protected void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId) throws IOException, ProgramNotFoundException,
-    UnAuthorizedAccessTokenException {
+                                      String programId) throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
   }
