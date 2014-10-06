@@ -110,42 +110,39 @@ To use the **Docker image**:
   from `Docker.com <https://docker.com>`__ to verify that Docker is working and has
   started correctly.
   
-  Start Docker using::
+  If you are not running on Linux, you need to start the Docker Virtual Machine (VM) before you
+  can use containers. For example, on MacOS, use:: 
   
     $ boot2docker start
+    $ boot2docker ip
+    
+  to determine the Docker VM's IP address. You will need to use that address as the host
+  name when either connecting to the Console or making an HTTP request.
 
 - Once Docker has started, pull down the *CDAP Docker Image* from the Docker hub using::
 
     $ docker pull caskdata/cdap-standalone
     
-- Identify the Docker Virtual Machine's Host Interface IP address
-  (this address will be used when connecting a web browser to the CDAP Console) with::
-  
-    $ boot2docker ip
-    
 - Start the *Docker CDAP Virtual Machine* with::
 
-    $ docker run -t -i -p 9999:9999 –p 10000:10000 caskdata/cdap-standalone
+    $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
     
 - CDAP will start automatically once the CDAP Virtual Machine starts.
 
-  - CDAP’s Software Directory is under /Software/ cdap-sdk-2.5.0
+  - CDAP’s Software Directory is under /Software/cdap-sdk-2.5.0
   - CDAP can also be stopped and started from within the machine using::
 
       $ cd /Software/cdap-sdk-2.5.0
       $ ./bin/cdap.sh stop|start
     
 - Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
-  at ``http://host-ip:9999``, replacing ``host-ip`` with the IP address you obtained
-  earlier. Start a browser and enter the address to access the CDAP Console.
+  at ``http://<virtual-hostname>:9999``, such as ``http://6f0162922c37:9999``. Replace
+  ``<virtual-hostname>`` with the IP address you obtained earlier. Start a browser and enter
+  the address to access the CDAP Console.
 
-- We recommend that you have these software and tools already installed in your
-  environment in order to begin building CDAP applications:
+- In order to begin building CDAP applications, have our `recommended software and tools
+  <#system-requirements-and-dependencies>`__ installed in your environment.
 
-  - An IDE such as IntelliJ or Eclipse IDE
-  - Apache Maven 3.0+
-  - Java JDK
-    
 - For a full list of Docker Commands, see the `Docker Command Line Documentation.
   <https://docs.docker.com/reference/commandline/cli/>`__
 
