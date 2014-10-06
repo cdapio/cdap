@@ -102,8 +102,6 @@ CDAP Standalone Docker Image
 -----------------------------
 
 A Docker image with CDAP pre-installed is available on the Docker Hub for download.
-Note that the current Docker image has limited functionality: you can connect to the 
-CDAP Console; however, the REST API is not reachable. This will be addressed in a future update.
 
 To use the **Docker image**:
 
