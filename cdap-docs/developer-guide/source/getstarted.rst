@@ -63,9 +63,9 @@ Binary Zip File
 The **zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
 Click the link marked "SDK" of the *Software Development Kit (SDK).* 
 
-Once downloaded, unzip it to a directory on your machine::
+Once downloaded, unzip it to a directory on your machine (substitute the current CDAP version for *<version>*)::
 
-    $ tar -zxvf cdap-sdk-2.5.0.zip
+    $ tar -zxvf cdap-sdk-<version>.zip
 
 CDAP Standalone Virtual Machine Image
 -------------------------------------
@@ -87,8 +87,9 @@ It has pre-installed all the software that you need to run and develop CDAP appl
 
 - Java JDK 7 and Node.js are both installed.
 - Maven is installed and configured to work for CDAP.
-- The Standalone CDAP SDK is installed under ``/Software/cdap-sdk-2.5.0`` and will
-  automatically start when the virtual machine starts.
+- The Standalone CDAP SDK is installed under ``/Software/cdap-sdk-<version>`` (substitute
+  the current CDAP version for *<version>*) and will automatically start when the virtual
+  machine starts.
 - Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
 - The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console,
   ``http://localhost:9999``.
@@ -136,7 +137,7 @@ To use the **Docker image**:
     $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
     
 - CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
-  Directory is under ``/Software/cdap-sdk-2.5.0``.
+  Directory is under ``/Software/cdap-sdk-<version>``; substitute the current CDAP version for *<version>*.
   
 - Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
   at ``http://<virtual-hostname>:9999``, such as ``http://6f0162922c37:9999``. Replace
@@ -153,9 +154,10 @@ Starting and Stopping the Standalone CDAP
 -----------------------------------------
 
 Use the ``cdap.sh`` script to start and stop the Standalone CDAP 
-(the location will vary depending on where the CDAP SDK is installed)::
+(the location will vary depending on where the CDAP SDK is installed; substitute the
+current CDAP version for *<version>*)::
 
-  $ cd cdap-sdk-2.5.0
+  $ cd cdap-sdk-<version>
   $ ./bin/cdap.sh start
   ...
   $ ./bin/cdap.sh stop
@@ -173,12 +175,13 @@ the Docker VM's IP address for ``localhost`` in the web browser address bar.
 Creating an Application
 =======================
 
-The best way to start developing a CDAP application is by using the Maven archetype::
+The best way to start developing a CDAP application is by using the Maven archetype,
+substituting the current CDAP version for *<version>*::
 
   $ mvn archetype:generate \
     -DarchetypeGroupId=co.cask.cdap \
     -DarchetypeArtifactId=cdap-app-archetype \
-    -DarchetypeVersion=2.5.0
+    -DarchetypeVersion=<version>
 
 This creates a Maven project with all required dependencies, Maven plugins, and a simple
 application template for the development of your application. You can import this Maven project
