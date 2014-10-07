@@ -383,7 +383,6 @@ public class DatasetTypeManager extends AbstractIdleService {
     }
   }
 
-
   private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {
     private final MDSDatasets datasets;
     private final InMemoryDatasetDefinitionRegistry registry;

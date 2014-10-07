@@ -23,7 +23,6 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeVersion;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.DatasetTypeVersionInfo;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
@@ -31,6 +30,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import com.sun.tools.javac.resources.version;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -163,8 +163,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
        */
       DatasetTypeVersion versionInfo = manager.getVersionInfo(name);
 
-      if ((versionInfo.getVersion() > version) ||
-        ((versionInfo.getVersion() == version) && versionInfo.getChecksum().equals(calculateChecksum(archive)))) {
+      if (versionInfo.getVersion() > version) {
+        //((versionInfo.getVersion() == version) && versionInfo.getChecksum().equals(calculateChecksum(archive)))) {
         // not the latest version, newer version already exists, fail.
         String message = String.format("Cannot add module %s: module, newer version %s already exists: %s",
                                        name, versionInfo.getVersion());
@@ -186,8 +186,19 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  @GET
+  @Path("/data/modules/{name}/version")
+  public void getLatestVersion(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
+    DatasetTypeVersion versionInfo = manager.getVersionInfo(name);
+    if (versionInfo != null) {
+      responder.sendJson(HttpResponseStatus.OK, versionInfo.getVersion());
+      return;
+    }
+    responder.sendError(HttpResponseStatus.BAD_REQUEST, "Requested dataset module does not exist");
+  }
+
   private String calculateChecksum(Location archive) {
-    return null;
+    return "test" + archive.getName();
   }
 
   @DELETE
@@ -205,7 +216,6 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
-
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -259,5 +269,4 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, typeMeta);
     }
   }
-
 }

@@ -20,7 +20,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.sun.tools.javac.resources.version;
 
 import java.util.Collection;
 import java.util.Collections;

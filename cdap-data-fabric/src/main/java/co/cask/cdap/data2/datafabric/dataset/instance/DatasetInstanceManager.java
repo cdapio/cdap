@@ -67,19 +67,6 @@ public class DatasetInstanceManager {
   }
 
   /**
-   * @param instanceName name of the dataset instance
-   * @return the latest version of dataset type used by the dataset instance
-   */
-  public int getLatestVersion(final String instanceName) {
-    return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Integer>() {
-      @Override
-      public Integer call(MDSDatasets datasets) throws Exception {
-        return datasets.getInstanceMDS().getLatestVersion(instanceName);
-      }
-    });
-  }
-
-  /**
    * Updates dataset instance type version
    * @param name of the dataset instance
    * @param version of the dataset type

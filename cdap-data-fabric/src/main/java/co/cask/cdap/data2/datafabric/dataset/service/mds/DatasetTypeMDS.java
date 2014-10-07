@@ -23,7 +23,6 @@ import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeVersion;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.DatasetTypeVersionInfo;
 import com.google.common.collect.Lists;
 
 import java.util.Collection;
@@ -136,8 +135,7 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
       modulesToLoad.add(getModule(usedModule));
     }
     modulesToLoad.add(moduleMeta);
-
-    return new DatasetTypeMeta(typeName, modulesToLoad);
+    return new DatasetTypeMeta(typeName, getVersionInfo(moduleMeta.getName()).getVersion(), modulesToLoad);
   }
 
   // type -> moduleName

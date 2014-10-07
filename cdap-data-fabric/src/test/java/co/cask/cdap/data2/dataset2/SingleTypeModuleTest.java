@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
+import co.cask.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -130,7 +131,7 @@ public class SingleTypeModuleTest {
 
     @Override
     public int getVersion() {
-      return 0;
+      return Constants.DEFAULT_DATATYPE_VERSION;
     }
   }
 }

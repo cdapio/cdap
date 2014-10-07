@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Maps;
@@ -463,7 +464,7 @@ public abstract class BufferingOrderedTableTest<T extends BufferingOrderedTable>
 
     @Override
     public int getVersion() {
-      return 0;
+      return Constants.DEFAULT_DATATYPE_VERSION;
     }
   }
 

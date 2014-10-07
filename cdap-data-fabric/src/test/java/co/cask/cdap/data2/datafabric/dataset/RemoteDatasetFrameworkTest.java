@@ -110,8 +110,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DataSetInstantiator dataSetInstantiator =
       new DataSetInstantiator(mdsFramework, cConf, RemoteDatasetFrameworkTest.class.getClassLoader(), null, null);
 
-    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework,
-                                                                      dataSetInstantiator, cConf);
+    MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework, cConf);
 
     service = new DatasetService(cConf,
                                  locationFactory,

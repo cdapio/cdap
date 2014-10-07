@@ -63,10 +63,6 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     return (Map<String, Integer>) get(getInstanceLatestVersionPrefixKey(instanceName),
                new TypeToken<Map<String, Integer>>() { }.getRawType());
   }
-  @Nullable
-  public Integer getLatestVersion(String name) {
-    return get(getInstanceLatestVersionPrefixKey(name), Integer.class);
-  }
 
   public boolean delete(String name) {
     if (get(name) == null) {
@@ -74,8 +70,9 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     }
     delete(getInstanceKey(name));
 
-    if (getLatestVersion(name) == null) {
-      return false;
+    if (getAppVersionMap(name) == null) {
+      //todo should return false
+      return true;
     }
     delete(getInstanceLatestVersionPrefixKey(name));
     return true;

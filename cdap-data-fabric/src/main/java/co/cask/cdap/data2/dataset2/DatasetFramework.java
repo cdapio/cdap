@@ -53,13 +53,26 @@ public interface DatasetFramework {
    * Adds dataset types by adding dataset module to the system.
    * @param moduleName dataset module name
    * @param module dataset module
-   * @throws ModuleConflictException when module with same name is already registered or this module registers a type
-   *         with a same name as one of the already registered by another module types
    * @throws DatasetManagementException in case of problems
    */
   void addModule(String moduleName, int version, DatasetModule module)
     throws DatasetManagementException;
 
+  /**
+   * Gets the latest version of dataset module , given the dataset name
+   * @param moduleName dataset module name
+   * @throws DatasetManagementException in case of problems
+   * @return version
+   */
+  int getLatestModuleVersion(String moduleName) throws DatasetManagementException;
+
+  /**
+   * Given the type name , returns true if its a default system dataset type, false otherwise.
+   * @param typeName
+   * @return boolean
+   * @throws DatasetManagementException
+   */
+  boolean isDefaultType(String typeName) throws DatasetManagementException;
   /**
    * Adds information on dataset version used by Application to the MDS
    * @param applicationName Name of the application
@@ -68,6 +81,14 @@ public interface DatasetFramework {
    * @throws DatasetManagementException in case of problems
    */
   void addApplicationVersionInfo(String applicationName, String instanceName, int version)
+    throws DatasetManagementException;
+
+  /**
+   * Returns the map of Application and the version they are using for this particular dataset type of dataset instance.
+   * @param instanceName dataset Instance name
+   * @throws DatasetManagementException in case of problems
+   */
+  Map<String, Integer> getIntanceVersionInfo(String instanceName)
     throws DatasetManagementException;
 
   /**
@@ -112,7 +133,8 @@ public interface DatasetFramework {
    * @throws IOException when creation of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
-  void addInstance(String datasetTypeName,  String datasetInstanceName, DatasetProperties props)
+  void addInstance(String datasetTypeName,  String datasetInstanceName,
+                   DatasetProperties props)
     throws DatasetManagementException, IOException;
 
   /**

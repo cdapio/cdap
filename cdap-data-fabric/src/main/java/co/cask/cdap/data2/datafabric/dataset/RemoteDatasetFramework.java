@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
@@ -35,9 +36,12 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.sun.tools.javac.resources.version;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -66,6 +70,10 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private final DatasetServiceClient client;
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final DatasetTypeClassLoaderFactory typeLoader;
+  private final Set<String> defaultTypes = Sets.newHashSet();
+
+  private Map<String, ? extends DatasetModule> defaultModules;
+
 
 
   @Inject
@@ -100,9 +108,19 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public int getLatestModuleVersion(String moduleName) throws DatasetManagementException {
+    return client.getLatestVersion(moduleName);
+  }
+
+  @Override
   public void addApplicationVersionInfo(String applicationName, String instanceName, int version)
     throws DatasetManagementException {
     client.addApplicationVersionInfo(applicationName, instanceName, version);
+  }
+
+  @Override
+  public Map<String, Integer> getIntanceVersionInfo(String instanceName) throws DatasetManagementException {
+    return client.getInstanceVersionDetails(instanceName);
   }
 
   @Override
@@ -121,7 +139,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
+  public void addInstance(String datasetType, String datasetInstanceName,
+                          DatasetProperties props)
     throws DatasetManagementException {
     client.addInstance(datasetInstanceName, datasetType, props);
   }
@@ -312,5 +331,18 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     return (T) new DatasetType(registry.get(implementationInfo.getName()), classLoader);
+  }
+
+  @Override
+  public boolean isDefaultType(String typeName) throws DatasetManagementException {
+    // default system modules have jarLocation as null, and the module that announces this type is the last module
+    // in the list, we are using that information in determining if the type belongs to default module
+    if (client.getType(typeName) != null) {
+      DatasetTypeMeta meta = client.getType(typeName);
+      List<DatasetModuleMeta> metaList = meta.getModules();
+      DatasetModuleMeta moduleMeta = metaList.get(metaList.size() - 1);
+      return (moduleMeta.getJarLocation() == null);
+    }
+    return false;
   }
 }

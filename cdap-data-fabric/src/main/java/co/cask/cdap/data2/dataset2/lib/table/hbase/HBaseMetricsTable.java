@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.StatusCode;
@@ -266,6 +267,6 @@ public class HBaseMetricsTable implements MetricsTable {
 
   @Override
   public int getVersion() {
-    return 0;
+    return Constants.DEFAULT_DATATYPE_VERSION;
   }
 }

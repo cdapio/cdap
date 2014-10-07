@@ -16,14 +16,13 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InstanceConflictException;
-import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.pipeline.AbstractStage;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,12 +36,10 @@ import java.util.Map;
 public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLocation> {
   private static final Logger LOG = LoggerFactory.getLogger(CreateDatasetInstancesStage.class);
   private final DatasetFramework datasetFramework;
-  private final DataSetInstantiator dataSetInstantiator;
 
-  public CreateDatasetInstancesStage(DatasetFramework datasetFramework, DataSetInstantiator dataSetInstantiator) {
+  public CreateDatasetInstancesStage(DatasetFramework datasetFramework) {
     super(TypeToken.of(ApplicationSpecLocation.class));
     this.datasetFramework = datasetFramework;
-    this.dataSetInstantiator = dataSetInstantiator;
   }
 
   /**
@@ -55,25 +52,29 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
   public void process(ApplicationSpecLocation input) throws Exception {
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
+
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
       String instanceName = instanceEntry.getKey();
-
       DatasetCreationSpec instanceSpec = instanceEntry.getValue();
-      Dataset dataset = dataSetInstantiator.getDataSet(instanceSpec.getTypeName());
-      int version = dataset.getVersion();
 
       try {
+        int version = getDatasetVersion(input.getArchive(), instanceSpec.getTypeName());
         if (!datasetFramework.hasInstance(instanceName)) {
           datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());
-          datasetFramework.addApplicationVersionInfo(specification.getName(), instanceName, version);
+        } else if (!datasetFramework.getDatasetSpec(instanceName).getType().equals(instanceSpec.getTypeName())) {
+          //type mismatch
+          throw new InstanceConflictException("Dataset type mismatch from existing dataset instance");
         }
+        datasetFramework.addApplicationVersionInfo(specification.getName(), instanceName, version);
+      } catch (DataSetInstantiationException e) {
+        LOG.error("Dataset instantiation Error", e);
+        throw Throwables.propagate(e);
       } catch (InstanceConflictException e) {
         // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app
         // TODO: verify that the created instance is from this app
         LOG.warn("Couldn't create dataset instance '" + instanceName + "' of type '" + instanceSpec.getTypeName(), e);
       }
     }
-
     // Emit the input to next stage.
     emit(input);
   }

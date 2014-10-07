@@ -34,9 +34,12 @@ import java.util.Collection;
  * logic to each dataset in a list when possible.
  */
 public abstract class AbstractDataset implements Dataset, MeteredDataset, TransactionAware, Versioned {
+  private static final int DEFAULT_DATASET_VERSION = 1;
+
   private final String instanceName;
   private final Collection<Dataset> underlying;
   private final TransactionAware txAwares;
+
 
   public AbstractDataset(String instanceName, Dataset embedded, Dataset... otherEmbedded) {
     this.instanceName = instanceName;
@@ -59,7 +62,7 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
 
   @Override
   public int getVersion() {
-    return 0;
+    return DEFAULT_DATASET_VERSION;
   }
 
   // metering stuff

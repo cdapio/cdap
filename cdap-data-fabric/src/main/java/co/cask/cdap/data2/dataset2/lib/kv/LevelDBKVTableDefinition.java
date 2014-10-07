@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.KeyValue;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBOrderedTableService;
 import com.google.common.base.Throwables;
@@ -154,7 +155,7 @@ public class LevelDBKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyV
 
     @Override
     public int getVersion() {
-      return 0;
+      return Constants.DEFAULT_DATATYPE_VERSION;
     }
   }
 

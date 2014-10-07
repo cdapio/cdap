@@ -42,6 +42,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.sun.tools.javac.resources.version;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -310,6 +311,22 @@ class DatasetServiceClient {
     }
   }
 
+  public Map<String, Integer> getInstanceVersionDetails(String instanceName) throws DatasetManagementException {
+
+    HttpResponse response = doRequest(HttpMethod.GET, "datasets/" + instanceName + "/version");
+
+    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
+      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
+                                                        instanceName, getDetails(response)));
+    }
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
+                                                         instanceName, getDetails(response)));
+    }
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
+                         new TypeToken<Map<String, Integer>>() { }.getType());
+  }
+
   private HttpResponse doRequest(HttpMethod method, String resource, ImmutableMap<String, String> headers)
     throws DatasetManagementException {
     String url = resolve(resource);
@@ -322,4 +339,30 @@ class DatasetServiceClient {
                       headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers)), e);
     }
   }
+
+  public int getLatestVersion(String moduleName) throws DatasetManagementException {
+    HttpResponse response = doRequest(HttpMethod.GET, "modules/" + moduleName + "/version");
+
+    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
+      throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
+                                                      moduleName, getDetails(response)));
+    }
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to add module %s, details: %s",
+                                                         moduleName, getDetails(response)));
+    }
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), Integer.class);
+  }
+
+  public boolean isDefaultType(String typeName) throws DatasetManagementException {
+    HttpResponse response = doRequest(HttpMethod.GET, "type/" + typeName + "/default");
+
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to get type %s, details: %s",
+                                                         typeName, getDetails(response)));
+    }
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), Boolean.class);
+  }
+
+
 }

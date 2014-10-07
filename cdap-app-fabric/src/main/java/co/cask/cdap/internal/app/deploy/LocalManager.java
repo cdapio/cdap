@@ -63,7 +63,6 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final ProgramTerminator programTerminator;
 
   private final DatasetFramework datasetFramework;
-  private final DataSetInstantiator dataSetInstantiator;
 
 
   @Inject
@@ -72,7 +71,6 @@ public class LocalManager<I, O> implements Manager<I, O> {
                       StreamConsumerFactory streamConsumerFactory,
                       QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework datasetFramework,
-                      DataSetInstantiator dataSetInstantiator,
                       @Assisted ProgramTerminator programTerminator) {
 
     this.configuration = configuration;
@@ -86,7 +84,6 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework,
                                      new DefaultDatasetNamespace(configuration, Namespace.USER));
-    this.dataSetInstantiator = dataSetInstantiator;
   }
 
   @Override
@@ -94,8 +91,8 @@ public class LocalManager<I, O> implements Manager<I, O> {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArchiveLoaderStage(id, appId));
     pipeline.addLast(new VerificationStage(datasetFramework));
-    pipeline.addLast(new DeployDatasetModulesStage(datasetFramework, dataSetInstantiator));
-    pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework, dataSetInstantiator));
+    pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
+    pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));

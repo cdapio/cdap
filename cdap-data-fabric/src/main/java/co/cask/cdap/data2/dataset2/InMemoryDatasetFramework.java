@@ -51,6 +51,7 @@ import javax.annotation.Nullable;
  */
 public class InMemoryDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetFramework.class);
+  private static final int DEFAULT_DATASET_VERSION = 1;
 
   private DatasetDefinitionRegistryFactory registryFactory;
   private Map<String, ? extends DatasetModule> defaultModules;
@@ -86,9 +87,25 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public int getLatestModuleVersion(String moduleName) throws DatasetManagementException {
+    return DEFAULT_DATASET_VERSION;
+  }
+
+  @Override
+  public boolean isDefaultType(String typeName) throws DatasetManagementException {
+    //used only internally now
+    return true;
+  }
+
+  @Override
   public void addApplicationVersionInfo(String applicationName, String instanceName, int version)
     throws DatasetManagementException {
     return;
+  }
+
+  @Override
+  public Map<String, Integer> getIntanceVersionInfo(String instanceName) throws DatasetManagementException {
+    return null;
   }
 
   @Override

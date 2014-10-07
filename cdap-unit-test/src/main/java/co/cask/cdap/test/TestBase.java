@@ -50,7 +50,11 @@ import co.cask.cdap.data.stream.service.StreamServiceModule;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeVersion;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -115,7 +119,9 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
@@ -376,6 +382,17 @@ public class TestBase {
     datasetFramework.addModule(moduleName, datasetModule.newInstance());
   }
 
+
+  protected final int getDatasetVersion(String moduleName)
+    throws Exception {
+    return datasetFramework.getLatestModuleVersion(moduleName);
+  }
+
+
+  protected final Map<String, Integer> getDatasetVersionMap(String instanceName)
+    throws Exception {
+    return datasetFramework.getIntanceVersionInfo(instanceName);
+  }
 
   /**
    * Adds an instance of a dataset.

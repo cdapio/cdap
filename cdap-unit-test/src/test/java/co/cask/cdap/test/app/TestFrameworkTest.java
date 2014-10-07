@@ -17,6 +17,7 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
@@ -371,6 +372,32 @@ public class TestFrameworkTest extends TestBase {
 
     procedureManager.stop();
     LOG.info("DatasetUpdateService Stopped");
+  }
+
+
+  @Category(SlowTests.class)
+  @Test
+  public void testAppWithDatasetVersions() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithDatasetVersion1.class);
+    LOG.info("Deployed.");
+    DataSetManager<FakeDataset> dataSetManager = applicationManager.getDataSet(AppWithDatasetVersion1.DS_NAME);
+    Assert.assertEquals(1, getDatasetVersion(FakeDataset.class.getName()));
+    dataSetManager.get().put(Bytes.toBytes("Test"), Bytes.toBytes("Test"));
+
+    ApplicationManager applicationManager2 = deployApplication(AppWithDatasetVersion2.class);
+
+    //get the version map and check both applications are present in them
+    Map<String, Integer> applicationVersionMap = getDatasetVersionMap(AppWithDatasetVersion1.DS_NAME);
+    Assert.assertEquals(2, applicationVersionMap.size());
+
+    int app1version = applicationVersionMap.get(AppWithDatasetVersion1.NAME);
+    Assert.assertEquals(1, app1version);
+
+    int app2version = applicationVersionMap.get(AppWithDatasetVersion2.NAME);
+    Assert.assertEquals(1, app2version);
+
+    applicationManager.stopAll();
+    applicationManager2.stopAll();
   }
 
   @Test

@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.IncrementValue;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.PutValue;
@@ -114,6 +115,6 @@ public class LevelDBOrderedTable extends BufferingOrderedTable {
 
   @Override
   public int getVersion() {
-    return 0;
+    return Constants.DEFAULT_DATATYPE_VERSION;
   }
 }
