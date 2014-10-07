@@ -421,7 +421,8 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
    It is located on port ``9999`` of the box where you installed CDAP.
 #. On the Console, click the button *Load an App*.
 #. Find the pre-built ``WordCount-<version>.jar`` using the dialog box to navigate to
-   ``CDAP_HOME/examples/WordCount/target/`` (substitute the current version in the filename)
+   ``CDAP_HOME/examples/WordCount/target/``  (substitute the current CDAP version
+   |italic-version| for *<version>*). 
 #. Once the application is deployed, instructions on running the example can be found at the
    :ref:`WordCount example<word-count>`.
 #. You should be able to start the application, inject sentences,

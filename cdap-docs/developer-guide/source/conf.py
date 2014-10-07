@@ -101,6 +101,12 @@ release = version # get_sdk_version() # '2.4.0'
 language = 'en_CDAP'
 locale_dirs = ['_locale/']
 
+# A string of reStructuredText that will be included at the end of every source file that
+# is read. This is the right place to add substitutions that should be available in every
+# file. 
+rst_epilog = """
+.. |italic-version| replace:: *%(version)s*
+""" % {'version': version}
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
