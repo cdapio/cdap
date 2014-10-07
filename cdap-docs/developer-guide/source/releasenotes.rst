@@ -12,6 +12,36 @@ Cask Data Application Platform Release Notes
 ============================================
 .. _release-notes:
 
+Release 2.5.1
+=============
+
+Major CDAP Bug Fixes
+--------------------
+
+- Improved the documentation of the CDAP Authentication and Stream Clients, both Java and Python APIs.
+- Fixed problems with the CDAP Command Line Interface (CLI):
+
+  - Did not work in non-interactive mode;
+  - Printed excessive debug log messages;
+  - Changed to the CDAP home directory unnecessarily; and 
+  - Failed to execute SQL queries.
+
+- Updated the documentation for the CDAP Client HTTP API: 
+
+  - Corrected the *HelloWorld* example; and
+  - Added note about *service-id* and *runnable-id* currently being identical when scaling services.
+  
+- Removed dependencies on SNAPSHOT artifacts for *netty-http* and *auth-clients*. 
+- Corrected an error in the message printed by the startup script ``cdap.sh``.
+- Corrected issues with the Docker Image posted at the Docker Hub.
+- Corrected an error in the documentation of the endpoint for downloading query results using the RESTful API.
+- Corrected errors in the documentation of the CDAP Application Case Study.
+
+Known Issues
+------------
+See *Known Issues* of `the previous version. <#known-issues-251>`_
+
+
 Release 2.5.0
 =============
 
@@ -77,11 +107,8 @@ Major CDAP Bug Fixes
 - Fixed an issue with the Dataset size metric showing data operations size instead of resource usage
 
 
-Other CDAP Changes
-------------------
-- `A list of deprecated Interfaces, Classes and Methods <javadocs/deprecated-list.html>`__ 
-  is included in the Javadocs
-  
+.. _known-issues-251:
+
 Known Issues
 ------------
 - Metrics for MapReduce jobs aren't populated on secure Hadoop clusters
