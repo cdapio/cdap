@@ -1,10 +1,10 @@
 :orphan:
 
 .. :author: Cask Data, Inc.
-   :version: 2.5.0
+   :version: 2.5.1
 
 =================================================
-Cask Data Application Platform 2.5.0
+Cask Data Application Platform 2.5.1
 =================================================
 
 Cask Data Application Platform Level 1 Dependencies
