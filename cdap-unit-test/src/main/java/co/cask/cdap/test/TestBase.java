@@ -161,7 +161,7 @@ public class TestBase {
         Application app = (Application) appInstance;
         DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
         app.configure(configurer, new ApplicationContext());
-        appSpec = configurer.createApplicationSpec();
+        appSpec = configurer.createSpecification();
       } else {
         throw new IllegalArgumentException("Application class does not represent application: "
                                              + applicationClz.getName());

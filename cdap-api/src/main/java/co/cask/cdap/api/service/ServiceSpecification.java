@@ -17,11 +17,33 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramSpecification;
-import org.apache.twill.api.TwillSpecification;
+import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.service.http.HttpServiceSpecification;
+
+import java.util.Map;
 
 /**
  * Provide the specification of a custom TwillApplication.
  */
-public interface ServiceSpecification extends ProgramSpecification, TwillSpecification {
+public interface ServiceSpecification extends ProgramSpecification {
 
+  /**
+   * Returns an immutable map from handler name to handler specification.
+   */
+  Map<String, HttpServiceSpecification> getHandlers();
+
+  /**
+   * Returns an immutable map from worker name to worker specification.
+   */
+  Map<String, ServiceWorkerSpecification> getWorkers();
+
+  /**
+   * Returns the resources requirements for the service handler.
+   */
+  Resources getResources();
+
+  /**
+   * Returns the number of instances for the service handler.
+   */
+  int getInstances();
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
+import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.data2.OperationException;
@@ -193,24 +194,41 @@ public interface Store {
   int getProcedureInstances(Id.Program id) throws OperationException;
 
   /**
-   * Sets the number of instances of a service runnable.
+   * Sets the number of instances of a service.
    *
    * @param id program id
-   * @param runnableName name of the runnable
    * @param instances number of instances
-   * @throws OperationException
+   * @throws OperationException If failed to set the instances
    */
-  void setServiceRunnableInstances(Id.Program id, String runnableName, int instances) throws OperationException;
+  void setServiceInstances(Id.Program id, int instances) throws OperationException;
 
   /**
-   * Gets runnable instances of service.
-   *
+   * Returns the number of instances of a service.
    * @param id program id
-   * @param runnableName name of the runnable
    * @return number of instances
    * @throws OperationException
    */
-  int getServiceRunnableInstances(Id.Program id, String runnableName) throws OperationException;
+  int getServiceInstances(Id.Program id) throws OperationException;
+
+  /**
+   * Sets the number of instances of a {@link ServiceWorker}.
+   *
+   * @param id program id
+   * @param workerName name of the {@link ServiceWorker}
+   * @param instances number of instances
+   * @throws OperationException
+   */
+  void setServiceWorkerInstances(Id.Program id, String workerName, int instances) throws OperationException;
+
+  /**
+   * Returns the number of instances of a {@link ServiceWorker}.
+   *
+   * @param id program id
+   * @param workerName name of the {@link ServiceWorker}.
+   * @return number of instances
+   * @throws OperationException
+   */
+  int getServiceWorkerInstances(Id.Program id, String workerName) throws OperationException;
 
   /**
    * Removes all program under the given application and also the application itself.

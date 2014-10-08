@@ -19,6 +19,9 @@ package co.cask.cdap.api.service;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.service.http.HttpServiceHandler;
+
+import java.util.Set;
 
 /**
  * Specification for user Service's {@link ServiceWorker}s.
@@ -30,4 +33,14 @@ public interface ServiceWorkerSpecification extends ProgramSpecification, Proper
    */
   Resources getResources();
 
+  /**
+   * @return An immutable set of {@link co.cask.cdap.api.dataset.Dataset Datasets} name that
+   *         used by the {@link HttpServiceHandler}.
+   */
+  Set<String> getDatasets();
+
+  /**
+   * @return Number of instances for the worker.
+   */
+  int getInstances();
 }
