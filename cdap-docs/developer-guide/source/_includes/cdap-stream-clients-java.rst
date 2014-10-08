@@ -59,8 +59,14 @@ Optional configurations that can be set (and their default values):
    Client <https://github.com/caskdata/cdap-clients/tree/develop/cdap-authentication-clients/java>`__
    to interact with a secure CDAP instance)
 
-   StreamClient streamClient = new RestStreamClient.Builder("localhost",
-   10000) .ssl(true) .authClient(authenticationClient) .build();
+Example:
+
+::
+
+    StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000)
+                                                    .ssl(true)
+                                                    .authClient(authenticationClient)
+                                                    .build();
 
 Create Stream
 ~~~~~~~~~~~~~
