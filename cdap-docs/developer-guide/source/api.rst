@@ -2663,22 +2663,23 @@ or, on Windows::
 
 The executable should bring you into a shell, with this prompt::
 
-  cdap (localhost:10000)>
+  cdap (http://localhost:10000)>
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
 There are two ways to interact with a different CDAP server:
 
 - To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
 - To change the current CDAP server, run the command ``connect example.com``.
+- To connect to an SSL-enabled CDAP server, run the command ``connect https://example.com``.
 
-For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
+For example, with ``CDAP_HOST`` set to ``example.com``, the CLI would be interacting with
 a CDAP instance at ``example.com``, port ``10000``::
 
-  cdap (example.com:10000)>
+  cdap (http://example.com:10000)>
 
 To list all of the available commands, enter ``help``::
 
-  cdap (localhost:10000)> help
+  cdap (http://localhost:10000)> help
 
 Non-Interactive Mode
 --------------------
@@ -2687,6 +2688,15 @@ To run the CLI in non-interactive mode, run the ``cdap-cli.sh`` executable, pass
 as the argument. For example, to list all applications currently deployed to CDAP, execute::
 
   cdap-cli.sh list apps
+
+Connecting to Secure CDAP Instances
+-----------------------------------
+
+When connecting to secure CDAP instances, the CLI will look for an access token located at
+~/.cdap.accesstoken.<hostname> and use it if it exists and is valid. If not, the CLI will prompt
+you for the required credentials to acquire an access token from the CDAP instance. Once acquired,
+the CLI will save it to ~/.cdap.accesstoken.<hostname> for later use and use it for the rest of
+the current CLI session.
 
 Available Commands
 ==================
