@@ -1,0 +1,74 @@
+Cask Data Application Platform Software Development Kit - ${project.version}
+================================================================================
+
+The Cask Data Application Platform (CDAP) Development Kit includes a Standalone
+CDAP: a fully-functioning, standalone edition of the CDAP runtime. You can use this
+edition to write, debug and test your Big Data applications before deploying them to a
+remote staging or production CDAP.
+
+
+Installation
+============
+
+To install and use CDAP and the included examples there are a few simple
+prerequisites:
+
+  1. JDK 6 or JDK 7 (required to run CDAP, note: $JAVA_HOME should be set)
+  2. Node.js 0.8.16+ (required to run the CDAP Console)
+  3. Apache Maven 3.0+ (required to build the example applications)
+
+Once you have installed the prerequisites, unzip the SDK to a suitable directory:
+
+  %> cd <path to SDK>
+  %> unzip /tmp/cdap-sdk-${project.version}.zip
+
+
+Starting CDAP
+=============
+
+You are now ready to start CDAP. Do so by running the 'cdap' 
+script in the $CDAP/bin folder:
+
+  %> cd ~/<path to SDK>/cdap-sdk-${project.version}
+  %> ./bin/cdap.sh start
+  
+or on Windows:
+  
+  > cd ~\<path to SDK>\cdap-sdk-${project.version}
+  > bin\cdap.bat start
+  
+
+Using CDAP
+==========
+
+Open a browser window to http://localhost:9999 to view the CDAP Console.
+
+To get started with CDAP, see our online introduction:
+ 
+  http://docs.cask.co/cdap/current/en/getstarted.html
+
+Documentation for CDAP can be found at our developer's website:
+
+  http://docs.cask.co/cdap/current/en/index.html
+
+Contacts for support, sales and general information can be found on our website at:
+
+  http://cask.co/company/#company-contact
+  
+  
+Licensing
+=========
+  
+Copyright © 2014 Cask Data, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

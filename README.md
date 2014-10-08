@@ -1,24 +1,23 @@
 
 # Cask Data Application Platform - CDAP
 
-![CDAP Logo](/docs/developer-guide/source/_images/CDAP.png)
+![CDAP Logo](cdap-docs/developer-guide/source/_images/CDAP.png)
 
 **Introduction**
 
-The Cask Data Application Platform (CDAP) is an application server providing such a
-platform for the development, deployment and management of data applications and the
-management of data.
+The Cask Data Application Platform (CDAP) is an application server that provides a
+comprehensive platform for the development, deployment and management of data applications 
+and the management of data.
 
-Out-of-the-box, its features include transaction management, dataset abstractions, QoS,
-performance, scalability, security, metrics and log collection, service discovery and a 
-web-based management dashboard.
+Out-of-the-box, its features include transaction management, dataset abstractions, QoS (quality-of-service),
+performance, scalability, security, metrics and log collection, and a web-based management console.
 
 CDAP provides data virtualization and application containerization for your data and application
-needs. With CDAP you do not require understanding the implementation or the complexity of Apache 
-Hadoop&trade;, HBase or Zookeeper. It provides independence of Hadoop versions and runs on any 
-distribution of Hadoop. CDAP's container model allows for the integration of different processing 
-paradigms with these features. It provides a common environment, the abstraction of a unified API, 
-the lifecycle management and a programming model for data applications and their data. You can package, 
+needs. With CDAP, you do not need to understand the implementation or the complexity of Apache 
+Hadoop&trade;, HBase or Zookeeper. CDAP provides independence from Hadoop versions and runs on any 
+distribution of Hadoop. Its container model allows for the integration of different processing 
+paradigms with CDAP's features. It provides a common environment, the abstraction of a unified API, 
+lifecycle management and a programming model for both data applications and their data. You can package, 
 deploy and manage applications as a single unit.
 
 You can run applications ranging from simple MapReduce Jobs through complete ETL (extract, transform, and load) 
@@ -27,19 +26,11 @@ Developers can build and test their applications end-to-end in a full-stack, sin
 installation. CDAP can be run either standalone, deployed within the Enterprise or hosted in the Cloud.
 
 For more information, see our collection of 
-[Developer Guides and other documentation](http://cask.co/docs/cdap/current/en/index.html).
-
-## Is It Building?
-
-Build                                                                    | Status / Version
--------------------------------------------------------------------------|-----------------
-[Travis Continuous Integration Build](https://travis-ci.org/caskco/cdap) | ![travis](https://travis-ci.org/caskco/cdap.svg?branch=develop)
-[GitHub Version](ttps://github.com/caskco/cdap/releases/latest)          | ![github](http://img.shields.io/github/release/caskco/cdap.svg)
-
+[Developer Guides and other documentation](http://docs.cask.co/cdap/current/en/index.html).
 
 ## Getting Started
 
-### Prerequiste
+### Prerequisites
 
 To install and use CDAP and its included examples, there are a few simple prerequisites:
 
@@ -52,7 +43,7 @@ To install and use CDAP and its included examples, there are a few simple prereq
 You can get started with CDAP by building directly from the latest source code::
 
 ```
-  git clone https://github.com/cask/cdap.git
+  git clone https://github.com/caskdata/cdap.git
   cd cdap
   mvn clean package
 ```
@@ -62,24 +53,22 @@ After the build completes, you will have a distribution of the CDAP standalone u
 
 Take the `cdap-<version>.tar.gz` file and unzip it into a suitable location.
 
-For more build options please refer [here](BUILD.md)
+For more build options, please refer to the [build instructions](BUILD.md).
 
-## Quick Start
+## Getting Started
 
-Visit our web site for a [Quick Start](http://cask.co/docs/cdap/current/en/quickstart.html)
-that will guide you through installing CDAP, running an example that counts HTTP status codes and then
-modifying the example’s Java code to include counting client IP addresses.  
-
+Visit our web site for a [Getting Started](http://docs.cask.co/cdap/current/en/getstarted.html)
+document that will guide you through installing CDAP and running an example application.  
 
 ## Where to Go Next
 
 Now that you've had a look at the CDAP SDK, take a look at:
 
-- Examples, located in the `/examples` directory of the CDAP SDK;
-- [Selected Examples](http://cask.co/docs/cdap/current/en/examples.html) 
+- Examples, located in the `cdap-examples` directory of the CDAP SDK;
+- [Selected Examples](http://docs.cask.co/cdap/current/en/getstarted.html#examples) 
   (demonstrating basic features of the CDAP) are located on-line; and
-- Developer Guides, located in the source distribution in `/docs/developer-guide/source`
-  or [online](http://cask.co/docs/cdap/current/en/index.html).
+- Developer Guides, located in the source distribution in `cdap-docs/developer-guide/source`
+  or [online](http://docs.cask.co/cdap/current/en/index.html).
 
 
 ## How to Contribute
@@ -87,6 +76,8 @@ Now that you've had a look at the CDAP SDK, take a look at:
 Interested in helping to improve CDAP? We welcome all contributions, whether in filing detailed
 bug reports, submitting pull requests for code changes and improvements, or by asking questions and
 assisting others on the mailing list.
+
+For quick guide to getting your system setup to contribute to CDAP, take a look at our [Contributor Quickstart Guide](DEVELOPERS.md).
 
 ### Bug Reports & Feature Requests
 
@@ -110,6 +101,9 @@ features, or fixing bugs, here's how to do it:
    repository.
 
 Thanks for helping to improve CDAP!
+
+### Filing Issues
+JIRA for filing [Issues](http://issues.cask.co)
 
 ### Mailing List
 
