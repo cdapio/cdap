@@ -62,7 +62,7 @@ public class QueryClientTestRun extends ClientTestBase {
     }
 
     Assert.assertNotNull(status);
-    Assert.assertFalse(status.hasResults());
+    Assert.assertTrue(status.hasResults());
     Assert.assertNotNull(queryClient.getSchema(queryHandle));
     Assert.assertNotNull(queryClient.getResults(queryHandle, 20));
     queryClient.delete(queryHandle);
