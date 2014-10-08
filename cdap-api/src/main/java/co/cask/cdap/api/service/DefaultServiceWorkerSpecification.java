@@ -16,11 +16,11 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
-import org.apache.twill.api.ResourceSpecification;
 
 import java.util.Map;
 
@@ -32,7 +32,7 @@ public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecifica
   private final String name;
   private final String description;
   private final Map<String, String> properties;
-  private final ResourceSpecification resourceSpecification;
+  private final Resources resources;
 
   /**
    * Create a new instance of ServiceWorkerSpecification.
@@ -43,12 +43,12 @@ public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecifica
    */
   public DefaultServiceWorkerSpecification(ServiceWorker serviceWorker, String name, String description,
                                            Map<String, String> properties,
-                                           ResourceSpecification resourceSpecification) {
+                                           Resources resources) {
     this.className = serviceWorker.getClass().getName();
     this.name = name;
     this.description = description;
     this.properties = ImmutableMap.copyOf(properties);
-    this.resourceSpecification = resourceSpecification;
+    this.resources = resources;
 
     Reflections.visit(serviceWorker, TypeToken.of(serviceWorker.getClass()),
                                       new PropertyFieldExtractor(this.properties));
@@ -80,7 +80,7 @@ public class DefaultServiceWorkerSpecification implements ServiceWorkerSpecifica
   }
 
   @Override
-  public ResourceSpecification getResourceSpecification() {
-    return resourceSpecification;
+  public Resources getResources() {
+    return resources;
   }
 }

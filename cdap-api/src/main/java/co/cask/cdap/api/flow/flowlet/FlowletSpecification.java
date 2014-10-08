@@ -16,7 +16,7 @@
 
 package co.cask.cdap.api.flow.flowlet;
 
-import co.cask.cdap.api.ResourceSpecification;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import com.google.common.base.Preconditions;
@@ -71,9 +71,9 @@ public interface FlowletSpecification extends PropertyProvider {
   Set<String> getDataSets();
 
   /**
-   * @return The {@link ResourceSpecification} for the flowlet.
+   * @return The {@link Resources} requirements for the flowlet.
    */
-  ResourceSpecification getResources();
+  Resources getResources();
 
   /**
    * Builder for creating instance of {@link FlowletSpecification}. The builder instance is
@@ -87,7 +87,7 @@ public interface FlowletSpecification extends PropertyProvider {
     private FailurePolicy failurePolicy = FailurePolicy.RETRY;
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
     private Map<String, String> arguments;
-    private ResourceSpecification resources = ResourceSpecification.BASIC;
+    private Resources resources = new Resources();
 
     /**
      * Creates a {@link Builder} for building instance of this class.
@@ -166,9 +166,9 @@ public interface FlowletSpecification extends PropertyProvider {
         return this;
       }
 
-      public AfterDescription withResources(ResourceSpecification resourceSpec) {
-        Preconditions.checkArgument(resourceSpec != null, "Resources cannot be null.");
-        resources = resourceSpec;
+      public AfterDescription withResources(Resources resources) {
+        Preconditions.checkArgument(resources != null, "Resources cannot be null.");
+        Builder.this.resources = resources;
         return this;
       }
 

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.ResourceSpecification;
@@ -32,7 +33,7 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
   @Override
   public ServiceWorkerSpecification configure() {
     return new DefaultServiceWorkerSpecification(this, getName(), getDescription(), getRuntimeArguments(),
-                                                 getResourceSpecification());
+                                                 getResources());
   }
 
   /**
@@ -68,8 +69,8 @@ public abstract class AbstractServiceWorker implements ServiceWorker {
    * 
    * @return The resourceSpecification to be used for this serviceWorker
    */
-  protected ResourceSpecification getResourceSpecification() {
-    return ResourceSpecification.BASIC;
+  protected Resources getResources() {
+    return new Resources();
   }
 
   @Override

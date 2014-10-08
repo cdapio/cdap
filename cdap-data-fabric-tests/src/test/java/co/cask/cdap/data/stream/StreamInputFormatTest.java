@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -285,7 +286,13 @@ public class StreamInputFormatTest {
   /**
    * StreamInputFormat for testing.
    */
-  private static final class TestStreamInputFormat extends TextStreamInputFormat {
+  private static final class TestStreamInputFormat extends StreamInputFormat<LongWritable, Text> {
+
+    @Override
+    protected StreamEventDecoder<LongWritable, Text> createStreamEventDecoder(Configuration conf) {
+      return new TextStreamEventDecoder();
+    }
+
     @Override
     protected long getCurrentTime() {
       return CURRENT_TIME;

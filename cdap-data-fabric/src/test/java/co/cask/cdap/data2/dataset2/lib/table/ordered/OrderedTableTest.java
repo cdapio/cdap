@@ -102,6 +102,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     Assert.assertTrue(admin.exists());
     // creation of non-existing table should do nothing
     admin.create();
+    admin.drop();
   }
 
   @Test
@@ -486,6 +487,7 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
     verify(Bytes.toBytes(-6L), myTable.get(R1, C1));
 
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
+    admin.drop();
   }
 
   private void commitAndAssertSuccess(Transaction tx, TransactionAware txAware) throws Exception {

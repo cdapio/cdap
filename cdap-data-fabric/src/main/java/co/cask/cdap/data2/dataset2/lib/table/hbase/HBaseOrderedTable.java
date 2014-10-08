@@ -66,7 +66,7 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
 
   public HBaseOrderedTable(String name, ConflictDetection level, Configuration hConf, boolean enableReadlessIncrements)
     throws IOException {
-    super(name, level);
+    super(name, level, enableReadlessIncrements);
 
     hTableName = HBaseTableUtil.getHBaseTableName(name);
     HTable hTable = new HTable(hConf, hTableName);

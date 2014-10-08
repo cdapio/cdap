@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.flowlet;
 
-import co.cask.cdap.api.ResourceSpecification;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import com.google.common.collect.ImmutableMap;
@@ -36,18 +36,18 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   private final FailurePolicy failurePolicy;
   private final Set<String> dataSets;
   private final Map<String, String> properties;
-  private final ResourceSpecification resources;
+  private final Resources resources;
 
   public DefaultFlowletSpecification(String name, String description,
                                      FailurePolicy failurePolicy, Set<String> dataSets,
-                                     Map<String, String> properties, ResourceSpecification resources) {
+                                     Map<String, String> properties, Resources resources) {
     this(null, name, description, failurePolicy, dataSets, properties, resources);
   }
 
   public DefaultFlowletSpecification(String className, String name,
                                      String description, FailurePolicy failurePolicy,
                                      Set<String> dataSets, Map<String, String> properties,
-                                     ResourceSpecification resources) {
+                                     Resources resources) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -93,7 +93,7 @@ public final class DefaultFlowletSpecification implements FlowletSpecification {
   }
 
   @Override
-  public ResourceSpecification getResources() {
+  public Resources getResources() {
     return resources;
   }
 }

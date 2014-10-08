@@ -19,7 +19,6 @@ package co.cask.cdap.batch.stream;
 import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -33,6 +32,7 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -84,17 +84,20 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
     }
   }
 
-  public static class StreamTestBatchMapper extends Mapper<LongWritable, Text, Text, Text> {
+  public static class StreamTestBatchMapper extends Mapper<LongWritable, BytesWritable, Text, Text> {
     @Override
-    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-      context.write(new Text(""), value);
+    protected void map(LongWritable key, BytesWritable value,
+                       Context context) throws IOException, InterruptedException {
+      Text output = new Text(value.copyBytes());
+      context.write(output, output);
     }
   }
   public static class StreamTestBatchReducer extends Reducer<Text, Text, byte[], byte[]> {
     @Override
     protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
       for (Text value : values) {
-        context.write(value.getBytes(), Bytes.toBytes(""));
+        byte[] bytes = value.copyBytes();
+        context.write(bytes, bytes);
       }
     }
   }
