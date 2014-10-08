@@ -137,11 +137,6 @@ div.sphinxsidebar a {
     color: #444;
 }
 
-div.sphinxsidebar a.scroll-active {
-  color: black;
-  font-weight: bold;
-}
-
 div.sphinxsidebar input {
     border: 1px solid #ccc;
     font-family: sans-serif;
