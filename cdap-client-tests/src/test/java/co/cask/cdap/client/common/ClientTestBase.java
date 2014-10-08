@@ -81,8 +81,9 @@ public abstract class ClientTestBase extends StandaloneTestBase {
     Assert.assertEquals(numInstances, actualInstances);
   }
 
-  protected void assertFlowletInstances(ProgramClient programClient, String appId, String flowId,
-                                        String flowletId, int numInstances) throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
+  protected void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
+                                        int numInstances)
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     int actualInstances;
     int numTries = 0;
@@ -95,14 +96,16 @@ public abstract class ClientTestBase extends StandaloneTestBase {
   }
 
   protected void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId) throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+                                      String programId)
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
   }
 
 
   protected void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
-                                      String programId) throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+                                      String programId)
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
   }
