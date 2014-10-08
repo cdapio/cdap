@@ -112,7 +112,7 @@ locale_dirs = ['_locale/']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_examples']
+exclude_patterns = ['_examples', '_includes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
