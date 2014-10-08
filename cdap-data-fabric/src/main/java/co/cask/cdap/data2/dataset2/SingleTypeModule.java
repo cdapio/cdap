@@ -168,36 +168,12 @@ public class SingleTypeModule implements DatasetModule {
   public int getVersion() throws IllegalAccessException, InvocationTargetException, InstantiationException {
     final Constructor ctor = findSuitableCtorOrFail(dataSetClass);
 
-    DatasetType typeAnn = dataSetClass.getAnnotation(DatasetType.class);
-    // default type name to dataset class name
-    String typeName = typeAnn != null ? typeAnn.value() : dataSetClass.getName();
-
-    final Map<String, DatasetDefinition> defs = Maps.newHashMap();
-
     Class<?>[] paramTypes = ctor.getParameterTypes();
-    Annotation[][] paramAnns = ctor.getParameterAnnotations();
-
-    // computing parameters for dataset constructor:
-    // if param is of type DatasetSpecification we'll need to set spec as a value
-    // if param has EmbeddedDataset annotation we need to set instance of embedded dataset as a value
-    final DatasetCtorParam[] ctorParams = new DatasetCtorParam[paramTypes.length];
-    for (int i = 0; i < paramTypes.length; i++) {
-      if (DatasetSpecification.class.isAssignableFrom(paramTypes[i])) {
-        ctorParams[i] = new DatasetSpecificationParam();
-        continue;
-      }
-      for (Annotation ann : paramAnns[i]) {
-        if (ann instanceof EmbeddedDataset) {
-          ctorParams[i] = new DatasetParam(((EmbeddedDataset) ann).value());
-          break;
-        }
-      }
-    }
-
-    Object[] params = new Object[ctorParams.length];
-    params[0] = DatasetSpecification.builder("Dummy", "Table.class")
-      .build();
-    for (int i = 1; i < ctorParams.length; i++) {
+    // we initialize specification with a dummy spec and set null value to other paratmeters, so we can initialize
+    // and call getVersion on the dataset type.
+    Object[] params = new Object[paramTypes.length];
+    params[0] = DatasetSpecification.builder("Dummy", "Table.class").build();
+    for (int i = 1; i < paramTypes.length; i++) {
       params[i] = null;
     }
     Dataset versionDataset = (Dataset) ctor.newInstance(params);

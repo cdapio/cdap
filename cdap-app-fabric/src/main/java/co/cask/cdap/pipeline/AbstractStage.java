@@ -107,10 +107,9 @@ public abstract class AbstractStage<T> implements Stage {
                                                                             parentClassLoader);
         datasetType = programClassLoader.loadClass(typeName);
       } catch (ClassNotFoundException e) {
-        // we cannot load the type from JAR, if the type is a part of module it cannot be loaded,
-        // right now we are using this only in test and internally, so returning DEFAULT_MODULE_VERSION for now.
+        // we cannot load the type from JAR, if the type is a part of module, it cannot be loaded,
+        // we are using this only internally, so returning DEFAULT_MODULE_VERSION.
         return  DEFAULT_MODULE_VERSION;
-
       }
       if (Dataset.class.isAssignableFrom(datasetType)) {
         SingleTypeModule module = new SingleTypeModule((Class<? extends Dataset>) datasetType);

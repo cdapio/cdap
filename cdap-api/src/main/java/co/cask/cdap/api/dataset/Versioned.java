@@ -18,8 +18,6 @@
 
 package co.cask.cdap.api.dataset;
 
-import java.io.Closeable;
-
 /**
  * Dataset has to implement this interface to support Versions
  */
