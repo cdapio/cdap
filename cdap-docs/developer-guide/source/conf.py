@@ -31,7 +31,7 @@ import os
 import subprocess
 
 def get_sdk_version():
-    # Sets the CDAP Build Version
+    # Sets the Build Version
     grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
     version = None
     try:
