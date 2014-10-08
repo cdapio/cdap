@@ -18,6 +18,7 @@ package co.cask.cdap.proto;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.sun.tools.javac.resources.version;
 
 import java.util.List;
 
@@ -26,19 +27,16 @@ import java.util.List;
  */
 public class DatasetTypeMeta {
   private final String name;
-  private final int version;
   private final List<DatasetModuleMeta> modules;
 
   /**
    * Creates instance of {@link DatasetTypeMeta}
    * @param name name of the dataset type
-   * @param version version of the dataset type
    * @param modules list of modules required to load this type in the same order as they must be loaded and initialized
    *                with the last one being the module that announces this type
    */
-  public DatasetTypeMeta(String name, int version, List<DatasetModuleMeta> modules) {
+  public DatasetTypeMeta(String name, List<DatasetModuleMeta> modules) {
     this.name = name;
-    this.version = version;
     this.modules = modules;
   }
 
@@ -47,14 +45,6 @@ public class DatasetTypeMeta {
    */
   public String getName() {
     return name;
-  }
-
-
-  /**
-   * @return version of this dataset type
-   */
-  public int getVersion() {
-    return version;
   }
 
   /**

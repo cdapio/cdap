@@ -28,7 +28,10 @@ import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.sun.tools.javac.resources.version;
 import org.apache.twill.filesystem.Location;
@@ -39,7 +42,10 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.IOUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -154,7 +160,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       inputStream.close();
     }
 
-
+    String archiveChecksum = calculateChecksum(archive);
     if (existing != null) {
       /**
        * Get the version object from the MDS, check if (passed) version is greater than current version
@@ -163,10 +169,11 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
        */
       DatasetTypeVersion versionInfo = manager.getVersionInfo(name);
 
-      if (versionInfo.getVersion() > version) {
+      if ((versionInfo.getVersion() > version) || ((versionInfo.getVersion() == version) &&
+        (archiveChecksum.equals(versionInfo.getChecksum())))) {
         //((versionInfo.getVersion() == version) && versionInfo.getChecksum().equals(calculateChecksum(archive)))) {
         // not the latest version, newer version already exists, fail.
-        String message = String.format("Cannot add module %s: module, newer version %s already exists: %s",
+        String message = String.format("Cannot add module %s module, newer version %s already exists",
                                        name, versionInfo.getVersion());
         LOG.warn(message);
         responder.sendError(HttpResponseStatus.CONFLICT, message);
@@ -176,7 +183,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
     try {
       manager.addModule(name, className, archive);
-      manager.writeVersionInfo(new DatasetTypeVersion(name, version, calculateChecksum(archive)));
+      manager.writeVersionInfo(new DatasetTypeVersion(name, version, archiveChecksum));
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -197,8 +204,13 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     responder.sendError(HttpResponseStatus.BAD_REQUEST, "Requested dataset module does not exist");
   }
 
-  private String calculateChecksum(Location archive) {
-    return "test" + archive.getName();
+  private String calculateChecksum(Location archive) throws IOException {
+//    HashCode md5 = Files.hash(new File(archive.toURI()), Hashing.md5());
+//    return md5.toString();
+    FileInputStream fis = new FileInputStream(new File(archive.toURI()));
+    String md5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
+    fis.close();
+    return md5;
   }
 
   @DELETE
@@ -222,19 +234,6 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/modules/{name}")
   public void getModuleInfo(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
-    DatasetModuleMeta moduleMeta = manager.getModule(name);
-    if (moduleMeta == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, moduleMeta);
-    }
-  }
-
-  @GET
-  @Path("/data/modules/{name}/version/{vnum}")
-  public void getModuleInfoWithVersion(HttpRequest request, final HttpResponder responder,
-                                       @PathParam("name") String name, @PathParam("vnum") int version) {
-
     DatasetModuleMeta moduleMeta = manager.getModule(name);
     if (moduleMeta == null) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);

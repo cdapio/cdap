@@ -135,7 +135,7 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
       modulesToLoad.add(getModule(usedModule));
     }
     modulesToLoad.add(moduleMeta);
-    return new DatasetTypeMeta(typeName, getVersionInfo(moduleMeta.getName()).getVersion(), modulesToLoad);
+    return new DatasetTypeMeta(typeName, modulesToLoad);
   }
 
   // type -> moduleName

@@ -26,12 +26,17 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -77,8 +82,6 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
     // cannot deploy same module again
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class));
-    // cannot deploy module with same types
-    Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("not-module1", TestModule1.class));
 
     // deploy another module which depends on the first one
     Assert.assertEquals(HttpStatus.SC_OK, deployModule("module2", TestModule2.class));
@@ -195,5 +198,24 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
     List<DatasetModuleMeta> modules = getModules().getResponseObject();
     Assert.assertEquals(0, modules.size());
+  }
+
+  private String calculateChecksum(File archive) throws IOException {
+    HashCode md5 = Files.hash(new File(archive.toURI()), Hashing.md5());
+    return md5.toString();
+//    FileInputStream fis = new FileInputStream(archive);
+//    String md5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
+//    fis.close();
+//    return md5;
+  }
+
+  @Test
+  public void testCheckSum() throws Exception {
+    //Get jar of TestModule1
+    String module1Jar = JarFinder.getJar(TestModule1.class);
+    String checksum1 = calculateChecksum(new File(module1Jar));
+    String module2Jar = JarFinder.getJar(TestModule1.class);
+    String checksum2 = calculateChecksum(new File(module2Jar));
+    Assert.assertEquals(checksum1, checksum2);
   }
 }
