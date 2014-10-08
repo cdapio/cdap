@@ -18,32 +18,17 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.RecordScannable;
-import co.cask.cdap.api.data.batch.RecordScanner;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
-import co.cask.cdap.api.dataset.table.Get;
-import co.cask.cdap.api.dataset.table.Table;
-import com.sun.tools.javac.resources.version;
-
-import java.lang.reflect.Type;
-import java.util.List;
 
 /**
  *
  */
 
 public class FakeDataset extends AbstractDataset {
-
   private KeyValueTable uniqueCountTable;
-
 
   public FakeDataset(DatasetSpecification spec,
                           @EmbeddedDataset("unique") KeyValueTable uniqueCountTable) {

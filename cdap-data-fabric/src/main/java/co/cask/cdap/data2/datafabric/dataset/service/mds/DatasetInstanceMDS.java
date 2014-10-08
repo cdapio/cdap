@@ -70,11 +70,9 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     }
     delete(getInstanceKey(name));
 
-    if (getAppVersionMap(name) == null) {
-      //todo should return false
-      return true;
+    if (getAppVersionMap(name) != null) {
+      delete(getInstanceLatestVersionPrefixKey(name));
     }
-    delete(getInstanceLatestVersionPrefixKey(name));
     return true;
   }
 

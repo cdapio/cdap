@@ -20,7 +20,6 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
