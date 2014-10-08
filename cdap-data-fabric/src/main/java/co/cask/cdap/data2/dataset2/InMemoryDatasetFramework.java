@@ -32,7 +32,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import com.sun.tools.javac.resources.version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +92,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public boolean isDefaultType(String typeName) throws DatasetManagementException {
-    //used only internally now
+    //since InMemoryDatasetFramework is used only internally this will always be true.
     return true;
   }
 

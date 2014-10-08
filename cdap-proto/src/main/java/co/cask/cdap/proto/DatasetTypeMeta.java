@@ -18,7 +18,6 @@ package co.cask.cdap.proto;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
-import com.sun.tools.javac.resources.version;
 
 import java.util.List;
 

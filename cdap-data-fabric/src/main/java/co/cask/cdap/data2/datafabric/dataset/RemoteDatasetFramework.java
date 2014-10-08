@@ -18,7 +18,6 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
@@ -36,12 +35,9 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import com.sun.tools.javac.resources.version;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -70,11 +66,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
   private final DatasetServiceClient client;
   private final DatasetDefinitionRegistryFactory registryFactory;
   private final DatasetTypeClassLoaderFactory typeLoader;
-  private final Set<String> defaultTypes = Sets.newHashSet();
-
-  private Map<String, ? extends DatasetModule> defaultModules;
-
-
 
   @Inject
   public RemoteDatasetFramework(DiscoveryServiceClient discoveryClient,
@@ -118,6 +109,9 @@ public class RemoteDatasetFramework implements DatasetFramework {
     client.addApplicationVersionInfo(applicationName, instanceName, version);
   }
 
+
+  // for the given dataset instance, this method returns the application and the corresponding dataset version
+  // they are using for this instance
   @Override
   public Map<String, Integer> getIntanceVersionInfo(String instanceName) throws DatasetManagementException {
     return client.getInstanceVersionDetails(instanceName);
@@ -287,7 +281,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
   public <T extends DatasetType> T getDatasetType(DatasetTypeMeta implementationInfo,
                                                   ClassLoader classLoader)
     throws DatasetManagementException {
-
 
     if (classLoader == null) {
       classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());

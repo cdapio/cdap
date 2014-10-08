@@ -150,10 +150,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     DatasetSpecification existing = instanceManager.get(name);
     if (existing != null) {
-
-      // get application name, dataset type name , dataset version number
-      // then store it in the instance MDS.
-
       String message = String.format("Cannot create dataset %s: instance with same name already exists %s",
                                      name, existing);
       LOG.warn(message);

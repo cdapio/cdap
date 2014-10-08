@@ -19,7 +19,6 @@ package co.cask.cdap.data2.dataset2;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import com.google.common.collect.Maps;
-import com.sun.tools.javac.resources.version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +36,7 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
   public <T extends DatasetDefinition> T get(String datasetType) {
     DatasetDefinition def = datasetTypes.get(datasetType);
     if (def == null) {
-      String msg = String.format("Requested dataset type %s with version %s does NOT exist ", datasetType);
+      String msg = String.format("Requested dataset type %s does NOT exist ", datasetType);
       LOG.debug(msg);
       throw new IllegalArgumentException(msg);
     }
@@ -46,11 +45,6 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
 
   @Override
   public void add(DatasetDefinition def) {
-
-    //    if (datasetTypes.containsKey(typeNameWithVersion)) {
-    //      throw new TypeConflictException(String.format("Cannot add dataset type: %s it already exists:%s ",
-    //                                                    def.getName(), def.getVersion()));
-    //    }
     datasetTypes.put(def.getName(), def);
   }
 

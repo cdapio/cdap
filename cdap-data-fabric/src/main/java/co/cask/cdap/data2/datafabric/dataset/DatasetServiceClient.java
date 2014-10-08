@@ -42,7 +42,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.sun.tools.javac.resources.version;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -363,6 +362,4 @@ class DatasetServiceClient {
     }
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), Boolean.class);
   }
-
-
 }

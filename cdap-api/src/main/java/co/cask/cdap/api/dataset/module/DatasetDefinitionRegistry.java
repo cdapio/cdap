@@ -51,5 +51,4 @@ public interface DatasetDefinitionRegistry {
    * @return true if registry contains dataset type of the given name, false otherwise
    */
   boolean hasType(String datasetTypeName);
-
 }

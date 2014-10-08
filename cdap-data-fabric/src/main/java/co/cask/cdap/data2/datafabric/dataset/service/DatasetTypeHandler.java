@@ -28,12 +28,8 @@ import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.hash.HashCode;
-import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.inject.Inject;
-import com.sun.tools.javac.resources.version;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -42,7 +38,6 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -164,14 +159,13 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     if (existing != null) {
       /**
        * Get the version object from the MDS, check if (passed) version is greater than current version
-       * If greater and (checksum is different) then extract the jar, update the module_version
+       * If equal but (checksum is different) then extract the jar, update the module_version
        * value with new {version,checksum} in MDS.
        */
       DatasetTypeVersion versionInfo = manager.getVersionInfo(name);
 
       if ((versionInfo.getVersion() > version) || ((versionInfo.getVersion() == version) &&
         (archiveChecksum.equals(versionInfo.getChecksum())))) {
-        //((versionInfo.getVersion() == version) && versionInfo.getChecksum().equals(calculateChecksum(archive)))) {
         // not the latest version, newer version already exists, fail.
         String message = String.format("Cannot add module %s module, newer version %s already exists",
                                        name, versionInfo.getVersion());
@@ -205,8 +199,6 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   }
 
   private String calculateChecksum(Location archive) throws IOException {
-//    HashCode md5 = Files.hash(new File(archive.toURI()), Hashing.md5());
-//    return md5.toString();
     FileInputStream fis = new FileInputStream(new File(archive.toURI()));
     String md5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
     fis.close();
@@ -228,6 +220,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
+
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -268,4 +261,5 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, typeMeta);
     }
   }
+
 }

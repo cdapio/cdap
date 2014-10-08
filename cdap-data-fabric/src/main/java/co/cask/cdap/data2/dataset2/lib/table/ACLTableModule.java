@@ -22,9 +22,6 @@ import co.cask.cdap.api.dataset.lib.ACLTable;
 import co.cask.cdap.api.dataset.lib.IndexedObjectStore;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
-
-import java.io.IOException;
 
 /**
  * {@link DatasetModule} for {@link ACLTable}.

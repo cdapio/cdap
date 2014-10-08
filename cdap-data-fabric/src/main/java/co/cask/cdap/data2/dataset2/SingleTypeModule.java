@@ -133,7 +133,6 @@ public class SingleTypeModule implements DatasetModule {
             type = paramTypes[i].getName();
           }
           DatasetDefinition def = registry.get(type);
-
           if (def == null) {
             String msg = String.format("Unknown data set type used with @Dataset: " + type);
             LOG.error(msg);

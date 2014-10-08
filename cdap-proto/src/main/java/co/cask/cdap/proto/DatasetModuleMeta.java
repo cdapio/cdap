@@ -39,6 +39,7 @@ public class DatasetModuleMeta {
 
   private final List<String> types;
   private final List<String> usesModules;
+  // using set to avoid adding types from multiple versions
   private final Set<String> usedByModules;
 
   /**
