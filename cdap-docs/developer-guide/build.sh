@@ -59,6 +59,13 @@ fi
 # PROJECT_JAVADOCS="$PROJECT_PATH/target/site/apidocs"
 SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 
+TEST_INCLUDES_LOCAL="local"
+if [ "x$3" == "x" ]; then
+  TEST_INCLUDES="remote"
+else
+  TEST_INCLUDES="local"
+fi
+
 ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
 
@@ -94,6 +101,7 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
+  echo "    test_includes  local or remote (default: remote); must also specify source if used"
   echo " "
   exit 1
 }
@@ -274,42 +282,9 @@ function build_includes() {
 function pandoc_includes() {
   # Uses pandoc to translate the README markdown files to rst in the target directory
   INCLUDES_DIR=$1
-  TYPE="local"
-#   if [ $TYPE="local" ]; then
-#   #   authentication-client java
-#     pandoc -t rst -r markdown ../../../cdap-clients/cdap-authentication-clients/java/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-java.rst
-#   #   authentication-client python
-#     pandoc -t rst -r markdown ../../../cdap-clients/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
-#   #   file-drop-zone
-#     pandoc -t rst -r markdown ../../../cdap-ingest/cdap-file-drop-zone/README.md  -o $INCLUDES_DIR/cdap-file-drop-zone.rst
-#   #   file-tailer
-#     pandoc -t rst -r markdown ../../../cdap-ingest/cdap-file-tailer/README.md  -o $INCLUDES_DIR/cdap-file-tailer.rst
-#   #   flume
-#     pandoc -t rst -r markdown ../../../cdap-ingest/cdap-flume/README.md  -o $INCLUDES_DIR/cdap-flume.rst
-#   #   stream-client java
-#     pandoc -t rst -r markdown ../../../cdap-ingest/cdap-stream-clients/java/README.md  -o $INCLUDES_DIR/cdap-stream-clients-java.rst
-#   #   stream-client python
-#     pandoc -t rst -r markdown ../../../cdap-ingest/cdap-stream-clients/python/README.md  -o $INCLUDES_DIR/cdap-stream-clients-python.rst
-#   else
-#   # Remote
-#   GITHUB="https://raw.githubusercontent.com/caskdata"
-#   #   authentication-client java
-#     pandoc -t rst -r markdown $GITHUB/cdap-clients/$VERSION/cdap-authentication-clients/java/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-java.rst
-#   #   authentication-client python
-#     pandoc -t rst -r markdown $GITHUB/cdap-clients/$VERSION/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
-#   #   file-drop-zone
-#     pandoc -t rst -r markdown $GITHUB/cdap-ingest/$VERSION/cdap-file-drop-zone/README.md  -o $INCLUDES_DIR/cdap-file-drop-zone.rst
-#   #   file-tailer
-#     pandoc -t rst -r markdown $GITHUB/cdap-ingest/$VERSION/cdap-file-tailer/README.md  -o $INCLUDES_DIR/cdap-file-tailer.rst
-#   #   flume
-#     pandoc -t rst -r markdown $GITHUB/cdap-ingest/$VERSION/cdap-flume/README.md  -o $INCLUDES_DIR/cdap-flume.rst
-#   #   stream-client java
-#     pandoc -t rst -r markdown $GITHUB/cdap-ingest/$VERSION/cdap-stream-clients/java/README.md  -o $INCLUDES_DIR/cdap-stream-clients-java.rst
-#   #   stream-client python
-#     pandoc -t rst -r markdown $GITHUB/cdap-ingest/$VERSION/cdap-stream-clients/python/README.md  -o $INCLUDES_DIR/cdap-stream-clients-python.rst
-#   fi
+  TEST_INCLUDES=$TEST_INCLUDES_LOCAL
   
-  if [ $TYPE="local" ]; then
+  if [ $TEST_INCLUDES=$TEST_INCLUDES_LOCAL ]; then
     MD_CLIENTS="../../../cdap-clients"
     MD_INGEST="../../../cdap-ingest"
   else
