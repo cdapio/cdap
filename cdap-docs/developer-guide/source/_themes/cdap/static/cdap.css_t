@@ -47,13 +47,11 @@ div.body {
     color: #3E4349;
     padding: 0 30px 30px 30px;
     font-size: 0.9em;
-    min-height: 1200px;
 }
 
 div.footer {
     color: #ccc;
-    width: 100%;
-    padding: 13px 0;
+    padding: 13px 0 13px 270px;
     text-align: center;
     font-size: 75%;
 }
@@ -89,12 +87,13 @@ div.sphinxsidebar {
     font-size: 0.75em;
     line-height: 1.5em;
     width: 270px;
-    top: 30px;
+    top: 32px;
     bottom: 0;
     margin: 0;
     position: fixed;
     overflow: auto;
     height: auto;
+    background-color: #eee;
 }
 
 div.sphinxsidebarwrapper{
@@ -120,7 +119,6 @@ div.sphinxsidebar h3 a {
     color: #444;
 }
 
-
 div.sphinxsidebar p {
     color: #888;
     padding: 5px 20px;
@@ -137,6 +135,11 @@ div.sphinxsidebar ul {
 
 div.sphinxsidebar a {
     color: #444;
+}
+
+div.sphinxsidebar a.scroll-active {
+  color: black;
+  font-weight: bold;
 }
 
 div.sphinxsidebar input {
