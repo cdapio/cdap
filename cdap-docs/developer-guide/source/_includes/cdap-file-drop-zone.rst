@@ -66,9 +66,9 @@ To stop the daemon, execute the command:
 
     sudo service file-drop-zone stop
 
-File DropZone stores log files in the /var/log/file-drop-zone directory.
-PID, states and statistics are stored in the /var/run/file-drop-zone
-directory
+File DropZone stores log files in the ``/var/log/file-drop-zone``
+directory. PID, states and statistics are stored in the
+``/var/run/file-drop-zone`` directory
 
 Uploading A File Directly
 -------------------------

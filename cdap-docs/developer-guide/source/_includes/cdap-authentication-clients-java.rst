@@ -81,9 +81,11 @@ Set the CDAP connection information
 -  port
 -  boolean flag, true if SSL is enabled
 
-   ::
+Example:
 
-       authenticationClient.setConnectionInfo("localhost", 10000, false);
+::
+
+    authenticationClient.setConnectionInfo("localhost", 10000, false);
 
 This method should be called only once for every
 ``AuthenticationClient`` object.
@@ -113,8 +115,8 @@ once for every ``AuthenticationClient`` object).
    -  ``security.auth.client.username=username``
    -  ``security.auth.client.password=password``
 
--  When SSL is enabled, to suspend certificate checks to allow
-   self-signed certificates set
+-  When SSL is enabled, to suspend certificate checks and allow
+   self-signed certificates, set
    ``security.auth.client.verify.ssl.cert=false``.
 -  For non-interactive applications, user credentials will come from a
    configuration file.
