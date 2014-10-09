@@ -55,10 +55,6 @@ while [ -h "$PRG" ] ; do
     fi
 done
 
-SAVED="`pwd`"
-cd "`dirname \"$PRG\"`/.."
-APP_HOME="`pwd -P`"
-
 if [ "$CLASSPATH" = "" ]; then
   CLASSPATH=${lib}/co.cask.cdap.cdap-cli-2.5.0.jar
 else
@@ -72,5 +68,4 @@ elif [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.shell.CLIMain "$@"
