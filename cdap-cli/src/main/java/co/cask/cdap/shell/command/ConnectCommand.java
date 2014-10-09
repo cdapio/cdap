@@ -77,13 +77,13 @@ public class ConnectCommand extends AbstractCommand {
       }
     }
 
-    tryConnect(output, hostname, port, ssl, getAccessToken(hostname));
+    tryConnect(output, hostname, port, ssl, getAccessToken(hostname), true);
   }
 
   /**
    * Tries to read cdap-site.xml to set host and port. Otherwise, uses default values.
    */
-  public void tryDefaultConnection(PrintStream output) {
+  public void tryDefaultConnection(PrintStream output, boolean verbose) {
     CConfiguration cConf = CConfiguration.create();
     boolean sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED, false);
     String hostname = cConf.get(Constants.Router.ADDRESS, "localhost");
@@ -92,14 +92,14 @@ public class ConnectCommand extends AbstractCommand {
       cConf.getInt(Constants.Router.ROUTER_PORT, 10000);
 
     try {
-      tryConnect(output, hostname, port, sslEnabled, getAccessToken(hostname));
+      tryConnect(output, hostname, port, sslEnabled, getAccessToken(hostname), verbose);
     } catch (Exception e) {
       // NO-OP
     }
   }
 
   private void tryConnect(PrintStream output, String hostname, int port, boolean ssl,
-                          String accessTokenString) throws Exception {
+                          String accessTokenString, boolean verbose) throws Exception {
     if (!SocketUtil.isAvailable(hostname, port)) {
       throw new IOException(String.format("Host %s on port %d could not be reached", hostname, port));
     }
@@ -146,13 +146,17 @@ public class ConnectCommand extends AbstractCommand {
       }
 
       if (saveAccessToken(accessToken, hostname)) {
-        output.printf("Saved access token to %s\n", getAccessTokenFile(hostname).getAbsolutePath());
+        if (verbose) {
+          output.printf("Saved access token to %s\n", getAccessTokenFile(hostname).getAbsolutePath());
+        }
       }
       cliConfig.getClientConfig().setAccessToken(accessToken);
     }
 
     cliConfig.setConnection(hostname, port, ssl);
-    output.printf("Successfully connected CDAP instance at %s:%d\n", hostname, port);
+    if (verbose) {
+      output.printf("Successfully connected CDAP instance at %s:%d\n", hostname, port);
+    }
   }
 
   private String getAccessToken(String hostname) {
