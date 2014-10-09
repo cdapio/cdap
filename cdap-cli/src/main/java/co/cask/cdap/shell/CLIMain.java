@@ -152,7 +152,6 @@ public class CLIMain {
                                        CLIConfig.PROP_VERIFY_SSL_CERT));
         } catch (Exception e) {
           output.println("Error: " + e.getMessage());
-          e.printStackTrace();
         }
         output.println();
       }
