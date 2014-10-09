@@ -56,9 +56,6 @@ public class GrantAccessToken {
 
   /**
    * Create a new GrantAccessToken object to generate tokens for authorized users.
-   * @param tokenManager
-   * @param tokenCodec
-   * @param cConfiguration
    */
   @Inject
   public GrantAccessToken(TokenManager tokenManager,
@@ -95,11 +92,6 @@ public class GrantAccessToken {
 
   /**
    * Get an AccessToken.
-   * @param request
-   * @param response
-   * @return
-   * @throws IOException
-   * @throws ServletException
    */
   @Path(Paths.GET_TOKEN)
   @GET
@@ -112,11 +104,6 @@ public class GrantAccessToken {
 
   /**
    * Get a long lasting Access Token.
-   * @param request
-   * @param response
-   * @return
-   * @throws IOException
-   * @throws ServletException
    */
   @Path(Paths.GET_EXTENDED_TOKEN)
   @GET
