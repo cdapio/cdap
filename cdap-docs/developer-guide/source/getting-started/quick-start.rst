@@ -167,10 +167,10 @@ You may recall that before we started injected data into the Stream, we started 
 *WiseFlow* to process these events in real-time. You can observe the Flow while it is
 processing events by retrieving metrics about how many events it has processed. For that, we
 need to know the name of the Flowlet inside the *WiseFlow* that performs the actual
-processing. In this case, it is a Flowlet named *pageViewCount*. Here is a curl command to
+processing. In this case, it is a Flowlet named *parser*. Here is a curl command to
 retreive the number of events it has processed::
 
-  $ curl localhost:10000/v2/metrics/system/apps/Wise/flows/WiseFlow/flowlets/pageViewCount/\
+  $ curl localhost:10000/v2/metrics/system/apps/Wise/flows/WiseFlow/flowlets/parser/\
   > process.events.processed\?aggregate=true
   {"data":3000}
 
@@ -181,7 +181,7 @@ the Flow, annotated with its realtime metrics:
    :width: 600px
 
 In this screenshot, we see that the Stream has about three thousand events and all of them
-have been processed by both Flowlets. You can see how these metrics update in realtime, by
+have been processed by both Flowlets. You can watch these metrics update in realtime by
 repeating the injection of events into the Stream::
 
   $ bin/inject-data.sh
