@@ -38,6 +38,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -61,9 +62,8 @@ public class RESTClientTest {
   private RESTClient restClient;
 
   @Before
-  public void setUp() {
-    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-    ClientConfig clientConfig = new ClientConfig("loclhost", authenticationClient);
+  public void setUp() throws IOException {
+    ClientConfig clientConfig = new ClientConfig("localhost", null);
     restClient = RESTClient.create(clientConfig);
     httpService = new TestHttpService();
     httpService.startAndWait();

@@ -81,8 +81,8 @@ public class StreamClientTestRun extends ClientTestBase {
    * Tests for the get events call
    */
   @Test
-  public void testStreamEvents() throws IOException, BadRequestException, StreamNotFoundException,
-    UnAuthorizedAccessTokenException {
+  public void testStreamEvents() throws IOException, BadRequestException,
+    StreamNotFoundException, UnAuthorizedAccessTokenException {
 
     String streamId = "testEvents";
 

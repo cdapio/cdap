@@ -87,9 +87,12 @@ public class CLIMain {
       }
     );
 
+    ConnectCommand connectCommand = injector.getInstance(ConnectCommand.class);
+    connectCommand.tryDefaultConnection(System.out, false);
+
     this.commands = CommandSet.builder(null)
       .addCommand(helpCommand)
-      .addCommand(injector.getInstance(ConnectCommand.class))
+      .addCommand(connectCommand)
       .addCommand(injector.getInstance(VersionCommand.class))
       .addCommand(injector.getInstance(ExitCommand.class))
       .addCommand(injector.getInstance(CallCommandSet.class))

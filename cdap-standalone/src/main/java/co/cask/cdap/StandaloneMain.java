@@ -189,15 +189,15 @@ public class StandaloneMain {
     int dashboardPort = sslEnabled ?
       configuration.getInt(Constants.Dashboard.SSL_BIND_PORT) :
       configuration.getInt(Constants.Dashboard.BIND_PORT);
-    System.out.println("Application Server started successfully");
-    System.out.printf("Connect to dashboard at %s://%s:%d\n", protocol, hostname, dashboardPort);
+    System.out.println("Standalone CDAP started successfully.");
+    System.out.printf("Connect to the Console at %s://%s:%d\n", protocol, hostname, dashboardPort);
   }
 
   /**
    * Shutdown the service.
    */
   public void shutDown() {
-    LOG.info("Shutting down the Application Server");
+    LOG.info("Shutting down Standalone CDAP");
 
     try {
       // order matters: first shut down web app 'cause it will stop working after router is down
@@ -289,8 +289,8 @@ public class StandaloneMain {
       main = create(webAppPath);
       main.startUp();
     } catch (Throwable e) {
-      System.err.println("Failed to start server. " + e.getMessage());
-      LOG.error("Failed to start server", e);
+      System.err.println("Failed to start Standalone CDAP. " + e.getMessage());
+      LOG.error("Failed to start Standalone CDAP", e);
       if (main != null) {
         main.shutDown();
       }

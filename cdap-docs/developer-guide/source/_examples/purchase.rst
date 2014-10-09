@@ -36,7 +36,7 @@ and write to another.
   - Execute the ``PurchaseProcedure`` procedure to query the *history* Dataset to discover the
     purchase history of each user.
   - Execute a SQL query over the *history* Dataset. You can do this using a series of ``curl``
-    calls, or more conveniently using the ``send-query`` script.
+    calls, or more conveniently using the ``cdap-cli``.
 
 **Note:** Because the PurchaseHistoryWorkFlow is only scheduled to run at 4:00 A.M.,
 you should not start it manually until after entering the first customers' purchases, or the
@@ -180,11 +180,11 @@ Exploring the Results Using SQL
 
 You can use SQL to formulate ad-hoc queries over the *history* Dataset. This is done by a series of
 ``curl`` calls, as described in the RESTful API section of the Developer Guide. For your convenience, the SDK
-includes a script, ``bin/send-query.sh``, that will execute a series of calls.
+includes a script, ``bin/cdap-cli.sh``, that can execute the series of calls.
 
 From within the SDK root directory::
 
-  send-query.sh --query  "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
+  bin/cdap-cli.sh execute SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')
 
 This will submit the query, using the *History* table in the ``cdap_user`` namespace, wait for its completion and 
 then retrieve and print all results, one by one::
