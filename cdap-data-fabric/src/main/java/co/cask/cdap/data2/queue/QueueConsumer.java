@@ -31,7 +31,6 @@ public interface QueueConsumer {
 
   /**
    * Returns the configuration of this consumer.
-   * @return
    */
   ConsumerConfig getConfig();
 

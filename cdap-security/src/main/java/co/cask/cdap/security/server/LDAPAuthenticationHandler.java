@@ -38,8 +38,6 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
 
   /**
    * Create a new Authentication handler to use LDAP for external authentication.
-   * @param configuration
-   * @throws Exception
    */
   @Inject
   public LDAPAuthenticationHandler(CConfiguration configuration) throws Exception {
@@ -48,7 +46,6 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
 
   /**
    * Create a configuration from properties. Allows optional configurables.
-   * @return
    */
   @Override
   protected Configuration getLoginModuleConfiguration() {

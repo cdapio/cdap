@@ -432,8 +432,7 @@ public abstract class ClientToolBase {
    * @param statusCode the status code of the http request
    * @param statusLine the status line which is printed
    * @param errorStream the error stream for handling unauthorized requests
-   * @param expected the expeced status codes
-   * @return
+   * @param expected the expected status codes
    */
   protected boolean checkHttpStatus(int statusCode, String statusLine,
                                     InputStream errorStream,

@@ -21,7 +21,7 @@ import com.google.common.base.Objects;
 import java.util.UUID;
 
 /**
- * Represents an operation that is submitted for execution to {@link Explore}.
+ * Represents a submitted query operation.
  */
 public class QueryHandle {
 

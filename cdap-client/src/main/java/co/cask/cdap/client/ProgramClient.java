@@ -27,6 +27,7 @@ import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -133,7 +134,7 @@ public class ProgramClient {
    * @param appId ID of the application that the program belongs to
    * @param programType type of the program
    * @param programName name of the program
-   * @return {@ProgramLiveInfo} of the program
+   * @return {@link ProgramLiveInfo} of the program
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
