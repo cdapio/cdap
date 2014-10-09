@@ -180,7 +180,11 @@ public class CLIMain {
     if (args.length == 0) {
       shell.startShellMode(System.out);
     } else {
-      shell.processArgs(args, System.out);
+      try {
+        shell.processArgs(args, System.out);
+      } catch (Exception e) {
+        System.out.println("Error: " + e.getMessage());
+      }
     }
   }
 }
