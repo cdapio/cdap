@@ -15,7 +15,7 @@ CDAP. Selected applications include:
 - `WISE <https://github.com/caskdata/cdap-apps/tree/develop/Wise/>`__: Web analytics application
 
   Web Insights Engine analyzes the behavior of users of a website by processing Apache web logs. 
-  Refer to `the online tutorial <case_study.html>`__ to learn how to build it from scratch.
+  Refer to `the online tutorial <case-study.html>`__ to learn how to build it from scratch.
 
 - `Netlens <https://github.com/caskdata/cdap-apps/tree/develop/Netlens/>`__: Network analytics application
 
