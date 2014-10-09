@@ -113,7 +113,7 @@ function build_docs_google() {
 
 function build_javadocs_full() {
   cd $PROJECT_PATH
-  mvn clean site -DskipTests
+  MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
 function build_javadocs_sdk() {
