@@ -549,8 +549,8 @@ from IP ``255.255.255.207``::
 
   $ curl http://localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/255.255.255.207/count
 
-The ``PageViewCountHandler`` has another endpoint for getting page view count of a particular page from a specific IP
-address. For example, to query page view count of page ``/index.html`` from IP ``255.255.255.154``::
+The ``PageViewCountHandler`` has another endpoint for getting the page view count of a particular page from
+a specific IP address. For example, to query the page view count of page ``/index.html`` from IP ``255.255.255.154``::
 
   $ curl -d /index.html http://localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/255.255.255.154/count
 
