@@ -40,12 +40,12 @@ Running Wise
 Building and running Wise is straightforward. We'll assume that you have already downloaded, 
 installed, and have started an instance of CDAP.
 
-Download: `Wise - Source code <http://repository.cask.co/downloads/co/cask/cdap/apps/0.1.0/cdap-wise-0.1.0.zip>`__
+Download: `Wise - Source code <http://repository.cask.co/downloads/co/cask/cdap/apps/0.2.0/cdap-wise-0.2.0.zip>`__
 
 Unzip and build the application by executing::
 
-  $ unzip cdap-wise-0.1.0.zip
-  $ cd cdap-wise-0.1.0
+  $ unzip cdap-wise-0.2.0.zip
+  $ cd cdap-wise-0.2.0
   $ mvn package
 
 To deploy and start the application, make sure CDAP is running and then execute::
@@ -544,16 +544,15 @@ The ``PageViewCountHandler`` class is registered in the ``WiseService`` class, w
 - The ``PageViewCountHandler`` that responds to the HTTP endpoint exposed by the Service is 
   specified by the ``addHandler()`` method.
 
-We have created a script to query the HTTP endpoints defined by the ``WiseService``. In the root of the ``Wise``
-application, execute::
+You can use the ``curl`` command to make calls to the service URL. For example, to query total page view count
+from IP ``255.255.255.207``::
 
-  $ bin/call-service.sh --ip 255.255.255.154
-  $ bin/call-service.sh --ip 255.255.255.154 --uri /index.html
+  $ curl http://localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/255.255.255.207/count
 
-On Windows, execute::
+The ``PageViewCountHandler`` has another endpoint for getting page view count of a particular page from a specific IP
+address. For example, to query page view count of page ``/index.html`` from IP ``255.255.255.154``::
 
-  $ bin/call-service.bat 255.255.255.154
-  $ bin/call-service.bat 255.255.255.154 /index.html
+  $ curl -d /index.html http://localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/255.255.255.154/count
 
 Exploring Wise Datasets through SQL
 ===================================
