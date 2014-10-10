@@ -200,18 +200,6 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-core_2.10</artifactId>
-        <version>${spark.core.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
         <groupId>co.cask.cdap</groupId>
         <artifactId>power-pack</artifactId>
         <version>${power.pack.version}</version>
