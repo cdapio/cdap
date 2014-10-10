@@ -10,8 +10,8 @@ Cask Data Application Platform Documentation
    :maxdepth: 3
    
    Introduction </intro>
-   Getting Started 1 </getstarted>
    Getting Started </getting-started/index>
+   Getting Started (Original) </getstarted>
    Case Study </case-study>
    Concepts and Architecture </arch>
    Developer Guide </dev-guide>

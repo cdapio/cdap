@@ -35,7 +35,7 @@ Where to Go Next
 ================
 Now that you've had an introduction to CDAP, take a look at:
 
-- :ref:`get-started`,
+- :doc:`Getting Started with CDAP <getting-started/index>`,
   which guides you through installing the CDAP SDK, setting up your development environment,
   and building and running an example application.
 

@@ -24,9 +24,10 @@ view on the same site.)
 
 Download, Install and Start CDAP
 ================================
-If you haven't already, download, install and start CDAP `following these instructions.
-<insert-link>`__
+If you haven't already, download, install and start CDAP 
+:doc:`following these instructions. <standalone/index>`
 
+.. highlight:: console
 
 Downloading the Application
 ===========================

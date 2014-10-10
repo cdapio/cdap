@@ -3,6 +3,6 @@
    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
-Introduction
+Apps and Packs
 ============================================
 
