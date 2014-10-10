@@ -152,7 +152,6 @@ public class CLIMain {
                                        CLIConfig.PROP_VERIFY_SSL_CERT));
         } catch (Exception e) {
           output.println("Error: " + e.getMessage());
-          e.printStackTrace();
         }
         output.println();
       }
@@ -181,7 +180,11 @@ public class CLIMain {
     if (args.length == 0) {
       shell.startShellMode(System.out);
     } else {
-      shell.processArgs(args, System.out);
+      try {
+        shell.processArgs(args, System.out);
+      } catch (Exception e) {
+        System.out.println("Error: " + e.getMessage());
+      }
     }
   }
 }
