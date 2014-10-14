@@ -30,6 +30,8 @@ SOURCE="source"
 BUILD="build"
 BUILD_PDF="build-pdf"
 HTML="html"
+INCLUDES="_includes"
+
 API="cdap-api"
 APIDOCS="apidocs"
 JAVADOCS="javadocs"
@@ -57,6 +59,13 @@ fi
 # PROJECT_JAVADOCS="$PROJECT_PATH/target/site/apidocs"
 SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 
+TEST_INCLUDES_LOCAL="local"
+if [ "x$3" == "x" ]; then
+  TEST_INCLUDES="remote"
+else
+  TEST_INCLUDES="$3"
+fi
+
 ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
 
@@ -75,21 +84,24 @@ function usage() {
   echo "Usage: $SCRIPT < option > [source]"
   echo ""
   echo "  Options (select one)"
-  echo "    build         Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
-  echo "    build-github  Clean build and zip for placing on GitHub"
-  echo "    build-web     Clean build and zip for placing on docs.cask.co webserver"
+  echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
+  echo "    build-includes Clean conversion of linked markdown to _includes directory reST files"
+  echo "    build-github   Clean build and zip for placing on GitHub"
+  echo "    build-web      Clean build and zip for placing on docs.cask.co webserver"
   echo ""
-  echo "    docs          Clean build of docs"
-  echo "    javadocs      Clean build of javadocs ($API module only) for SDK and website"
-  echo "    javadocs-full Clean build of javadocs for all modules"
-  echo "    rest-pdf      Clean build of REST PDF"
-  echo "    license-pdfs  Clean build of License Dependency PDFs"
-  echo "    zip           Zips docs into $ZIP"
+  echo "    docs           Clean build of docs"
+  echo "    javadocs       Clean build of javadocs ($API module only) for SDK and website"
+  echo "    javadocs-full  Clean build of javadocs for all modules"
+  echo "    rest-pdf       Clean build of REST PDF"
+  echo "    license-pdfs   Clean build of License Dependency PDFs"
+  echo "    zip            Zips docs into $ZIP"
   echo ""
-  echo "    depends       Build Site listing dependencies"
-  echo "    sdk           Build SDK"
+  echo "    check-includes Check if included files have changed from source"
+  echo "    depends        Build Site listing dependencies"
+  echo "    sdk            Build SDK"
   echo "  with"
-  echo "    source        Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
+  echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
+  echo "    test_includes  local or remote (default: remote); must specify source if used"
   echo " "
   exit 1
 }
@@ -97,17 +109,20 @@ function usage() {
 function clean() {
   cd $SCRIPT_PATH
   rm -rf $SCRIPT_PATH/$BUILD
+  mkdir $SCRIPT_PATH/$BUILD
 }
 
 function build_docs() {
   clean
   cd $SCRIPT_PATH
+  check_includes
   sphinx-build -b html -d build/doctrees source build/html
 }
 
 function build_docs_google() {
   clean
   cd $SCRIPT_PATH
+  check_includes
   sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees source build/html
 }
 
@@ -219,6 +234,83 @@ function build_rest_pdf() {
   python $DOC_GEN_PY -g pdf -o $REST_PDF $REST_SOURCE
 }
 
+function check_includes() {
+  if hash pandoc 2>/dev/null; then
+    echo "pandoc is installed; checking the README includes."
+    # Build includes
+    BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
+    rm -rf $BUILD_INCLUDES_DIR
+    mkdir $BUILD_INCLUDES_DIR
+    pandoc_includes $BUILD_INCLUDES_DIR
+    # Test included files
+    test_include cdap-authentication-clients-java.rst
+    test_include cdap-authentication-clients-python.rst
+    test_include cdap-file-drop-zone.rst
+    test_include cdap-file-tailer.rst
+    test_include cdap-flume.rst
+    test_include cdap-stream-clients-java.rst
+    test_include cdap-stream-clients-python.rst
+  else
+    echo "WARNING: pandoc not installed; checked-in README includes will be used instead."
+  fi
+}
+
+function test_include() {
+  BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
+  SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
+  EXAMPLE=$1
+  if diff -q $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1 2>/dev/null; then
+    echo "Tested $1; matches checked-in include file."
+  else
+    echo "WARNING: Tested $1; does not match checked-in include file. Copying to source directory."
+    cp -f $BUILD_INCLUDES_DIR/$1 $SOURCE_INCLUDES_DIR/$1
+  fi
+}
+
+function build_includes() {
+  if hash pandoc 2>/dev/null; then
+    echo "pandoc is installed; rebuilding the README includes."
+    SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
+    rm -rf $SOURCE_INCLUDES_DIR
+    mkdir $SOURCE_INCLUDES_DIR
+    pandoc_includes $SOURCE_INCLUDES_DIR
+  else
+    echo "WARNING: pandoc not installed; checked-in README includes will be used instead."
+  fi
+}
+
+function pandoc_includes() {
+  # Uses pandoc to translate the README markdown files to rst in the target directory
+  INCLUDES_DIR=$1
+  
+  if [ $TEST_INCLUDES == $TEST_INCLUDES_LOCAL ]; then
+    MD_CLIENTS="../../../cdap-clients"
+    MD_INGEST="../../../cdap-ingest"
+  else
+    GITHUB="https://raw.githubusercontent.com/caskdata"
+#     VERSION="release/1.0.0" # for development
+    VERSION="v1.0.1" # after tagging
+    MD_CLIENTS="$GITHUB/cdap-clients/$VERSION"
+    MD_INGEST="$GITHUB/cdap-ingest/$VERSION"
+  fi
+
+  echo "Using $TEST_INCLUDES includes..."
+  #   authentication-client java
+  pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-java.rst
+  #   authentication-client python
+  pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
+  #   file-drop-zone
+  pandoc -t rst -r markdown $MD_INGEST/cdap-file-drop-zone/README.md  -o $INCLUDES_DIR/cdap-file-drop-zone.rst
+  #   file-tailer
+  pandoc -t rst -r markdown $MD_INGEST/cdap-file-tailer/README.md  -o $INCLUDES_DIR/cdap-file-tailer.rst
+  #   flume
+  pandoc -t rst -r markdown $MD_INGEST/cdap-flume/README.md  -o $INCLUDES_DIR/cdap-flume.rst
+  #   stream-client java
+  pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md  -o $INCLUDES_DIR/cdap-stream-clients-java.rst
+  #   stream-client python
+  pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md  -o $INCLUDES_DIR/cdap-stream-clients-python.rst
+}
+
 function build_standalone() {
   cd $PROJECT_PATH
   MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples && mvn package -pl standalone -am -DskipTests -P dist,release
@@ -270,8 +362,10 @@ fi
 
 case "$1" in
   build )             build; exit 1;;
+  build-includes )    build_includes; exit 1;;
   build-github )      build_github; exit 1;;
   build-web )         build_web; exit 1;;
+  check-includes )    check_includes; exit 1;;
   docs )              build_docs; exit 1;;
   license-pdfs )      build_license_pdfs; exit 1;;
   build-standalone )  build_standalone; exit 1;;

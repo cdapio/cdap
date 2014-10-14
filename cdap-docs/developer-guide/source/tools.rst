@@ -1,15 +1,19 @@
 .. :author: Cask Data, Inc.
    :description: Cask Data Application Platform - Tools
-         :copyright: Copyright © 2014 Cask Data, Inc.
+   :copyright: Copyright © 2014 Cask Data, Inc.
+
+.. Note: because this file imports Pandoc-generated includes, the title underlining is
+..       different than other files to match the included files' format.
 
 ================================================
 Cask Data Application Platform - Available Tools
 ================================================
 
 Tools Overview
-==============
-CDAP comes with a bunch of tools to make developer's life easier. These tools offers various features including,
-helping to debug CDAP applications, interact with them and ingest data into them,etc:
+##############
+CDAP comes with a number of tools to make a developer's life easier. These tools
+help with debugging CDAP applications, interacting with applications,
+ingesting data into CDAP, and fetching access tokens:
 
 .. list-table::
     :widths: 15 60
@@ -25,17 +29,19 @@ helping to debug CDAP applications, interact with them and ingest data into them
     * - :ref:`Transactions Debugger<TxDebugger>`
       - Snapshot and inspect the state of Transaction Manager.
     * - :ref:`Ingestion Tools<Ingest>`
-      - Ways to ingest data into CDAP.
+      - Tools for ingesting data into CDAP.
+    * - :ref:`Authentication Clients<authentication-clients>`
+      - Tools for fetching access tokens from the authentication service.
 
 .. highlight:: java
 
 .. _TestFramework:
 
 Testing CDAP
-============
+############
 
 Strategies in Testing Applications
-----------------------------------
+==================================
 
 CDAP comes with a convenient way to unit test your Applications.
 The base for these tests is ``TestBase``, which is packaged
@@ -54,7 +60,7 @@ CDAP run-time. To build your test case, extend the
 ``TestBase`` class.
 
 Strategies in Testing Flows
----------------------------
+===========================
 Let’s write a test case for the *WordCount* example::
 
   public class WordCountTest extends TestBase {
@@ -125,7 +131,7 @@ as a response, and the value types in the top-level map are not uniform::
       Assert.assertTrue(assocs.containsKey("hello"));
 
 Strategies in Testing MapReduce Jobs
-------------------------------------
+====================================
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
@@ -180,7 +186,7 @@ the counts::
 The assertion will verify that the correct result was received.
 
 Strategies in Testing Spark Programs
-------------------------------------
+====================================
 Let's write a test case for an application that uses a Spark program.
 Complete source code for this test can be found at :ref:`Spark PageRank<spark-page-rank>`.
 
@@ -230,7 +236,7 @@ The assertion will verify that the correct result was received.
 
 
 Validating Test Data with SQL
------------------------------
+=============================
 Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
 in the test case are record-scannable as described in :ref:`data-explore`
 This can be done using a JDBC connection obtained from the test base::
@@ -259,10 +265,10 @@ or prepare statements and execute queries, then iterate over the results set and
 .. _DebugCDAP:
 
 Debugging CDAP
-==============
+##############
 
 Debugging an Application in Standalone CDAP
--------------------------------------------
+===========================================
 Any CDAP Application can be debugged in the Standalone CDAP
 by attaching a remote debugger to the CDAP JVM. To enable remote
 debugging:
@@ -282,7 +288,7 @@ For more information, see `Attaching a Debugger`_.
 **Note:** Currently, debugging is not supported under Windows.
 
 Debugging an Application in Distributed CDAP
---------------------------------------------
+============================================
 
 .. highlight:: console
 
@@ -357,10 +363,10 @@ Analysis of the response would give you the host names and debugging ports for a
 .. highlight:: java
 
 Attaching a Debugger
---------------------
+====================
 
 Debugging with IntelliJ
-.......................
+-----------------------
 
 *Note:* These instructions were developed with *IntelliJ v13.1.2.*
 You may need to adjust them for your installation or version.
@@ -388,7 +394,7 @@ You may need to adjust them for your installation or version.
 
 
 Debugging with Eclipse
-......................
+----------------------
 
 *Note:* These instructions were developed with *Eclipse IDE for Java Developers v4.4.0.*
 You may need to adjust them for your installation or version.
@@ -422,7 +428,7 @@ You may need to adjust them for your installation or version.
 .. _TxDebugger:
 
 Debugging the Transaction Manager (Advanced Use)
-------------------------------------------------
+================================================
 In this advanced use section, we will explain in depth how transactions work internally.
 Transactions are introduced in the :ref:`Transaction System <transaction-system>`
 
@@ -436,7 +442,7 @@ The `Transaction Manager` (or TM) uses the write pointers to implement `Optimist
 by maintaining state for all transactions that could be facing concurrency issues.
 
 Transaction Manager States
-..........................
+--------------------------
 The `state` of the TM is defined by these structures and rules:
 
 - The `in-progress set`, which contains all the write pointers of transactions
@@ -459,7 +465,7 @@ The `state` of the TM is defined by these structures and rules:
 
 
 Transaction Lifecycle States
-............................
+----------------------------
 Here are the states a transaction goes through in its lifecycle:
 
 - When a transaction starts, the TM creates a new write pointer
@@ -519,7 +525,7 @@ and the transaction stays longer in the `in-progress set`. The whole transaction
 system can become slow if such a situation occurs.
 
 Dumping the Transaction Manager
-...............................
+-------------------------------
 
 .. highlight:: console
 
@@ -573,759 +579,67 @@ from the concerned Tables.
 .. _Ingest:
 
 Ingesting Data
-==============
+##############
 
 .. highlight:: console
 
 Introduction
-------------
+============
 
 One of the first tasks of actually working with Big Data applications is getting the data in.
 As data ingestion is a fundamental issue, and as one tool often does not fit all needs,
 we have assembled a set of tools and applications to assist in ingesting data into CDAP:
+
 - Java and Python APIs for controlling and writing to Streams;
 - a drop zone for bulk ingestion of files ;
 - a File Tailer daemon to tail local files; and
 - an Apache Flume Sink implementation for writing events received from a source.
 
-Stream Client
--------------
 
-The stream client is for managing Streams via external applications. The stream client is currently available in Java and Python.
+.. highlight:: console
 
-Supported Actions
-.................
+.. include:: _includes/cdap-stream-clients-java.rst
+   
+.. highlight:: console
 
-- Create a stream with a specified *stream-name*
-- Retrieve or update the TTL (time-to-live) for an existing stream with a specified *stream-name*
-- Truncate an existing stream (the deletion of all events that were written to the stream)
-- Write an event to an existing stream
+.. include:: _includes/cdap-stream-clients-python.rst
 
-Java API
-........
+.. highlight:: console
 
-Download: `Java Stream Client <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
+.. include:: _includes/cdap-file-drop-zone.rst
 
-Create a StreamClient instance, specifying the fields 'host' and 'port' of the CDAP instance.
-Optional configurations that can be set:
+.. highlight:: console
 
-- SSL: true or false, default - false
-- WriterPoolSize: max thread pool size for writing events to the stream , default - 10
-- Version: CDAP instance version, used as a part of the base URI, default - 'v2'
-- AuthToken: If SSL is enabled, need to specify to authenticate client requests, default - null
-- APIKey: If SSL is enabled, need to specify to authenticate client requests, default - null
+.. include:: _includes/cdap-file-tailer.rst
 
-::
+.. highlight:: console
 
-   StreamClient streamClient = new RestStreamClient.Builder("localhost", 10000)
-                                                  .apiKey("apiKey")
-                                                  .authToken("token")
-                                                  .ssl(false)
-                                                  .version("v2")
-                                                  .writerPoolSize(10)
-                                                  .build();
+.. include:: _includes/cdap-flume.rst
 
 
-Create a new Stream with the *stream-name* "purchaseStream"::
+.. _authentication-clients:
 
-  streamClient.create("purchaseStream");
+Authentication Clients
+######################
 
-**Note** Stream Name *<stream-name>*:
+.. highlight:: console
 
-- The *stream-name* should only contain ASCII letters, digits and hyphens.
-- If the Stream already exists, no error is returned, and the existing Stream remains in place.
+Introduction
+============
 
-Update TTL for the *purchaseStream*; TTL is a long value and is specified in seconds::
+The Authentication Client Tools fetch access tokens from the authentication service. Two APIs
+are currently available: `Java <#cdap-authentication-client-for-java>`__ and 
+`Python. <#cdap-authentication-client-for-python>`__
 
-  streamClient.setTTL("purchaseStream", newTTL);
+.. highlight:: console
 
-Get the current TTL value(seconds) for the *purchaseStream*::
+.. include:: _includes/cdap-authentication-clients-java.rst
 
-  long ttl = streamClient.getTTL("purchaseStream");
+.. highlight:: console
 
-Create a ``StreamWriter`` instance for writing events to the *purchaseStream*::
+.. include:: _includes/cdap-authentication-clients-python.rst
 
-   StreamWriter streamWriter = streamClient.createWriter("purchaseStream");
-
-To write new events to the Stream, use any of these methods from the ``StreamWriter`` interface::
-
-  ListenableFuture<Void> write(String str, Charset charset);
-  ListenableFuture<Void> write(String str, Charset charset, Map<String, String> headers);
-  ListenableFuture<Void> write(ByteBuffer buffer);
-  ListenableFuture<Void> write(ByteBuffer buffer, Map<String, String> headers);
-
-Example::
-
-  streamWriter.write("New log event", Charsets.UTF_8).get();
-
-To truncate the *purchaseStream*, use::
-
-  streamClient.truncate("purchaseStream");
-
-When you are finished, release all resources by calling these two methods::https://github.com/caskdata/tephra/>
-
-  streamWriter.close();
-  streamClient.close();
-
-Putting it All Together
-+++++++++++++++++++++++
-
-::
-
-    try {
-      // Create StreamClient instance with mandatory fields 'host' and 'port'.
-      StreamClient streamClient = RestStreamClient.builder("localhost", 10000).build();
-
-      try {
-        // Create a stream named "purchaseStream"
-        streamClient.create("purchaseStream");
-
-        // Create StreamWriter Instance
-        StreamWriter streamWriter = streamClient.createWriter("purchaseStream");
-
-        // Get current Stream TTL value
-        long currentTTL = streamClient.getTTL("purchaseStream");
-        LOG.info("Current TTL value for stream {} is: {} seconds", "purchaseStream", currentTTL);
-        long newTTL = 18000;
-
-        // Update TTL value for Stream
-        streamClient.setTTL("purchaseStream", newTTL);
-        LOG.info("Setting new TTL: {} seconds for stream: {}", newTTL, "purchaseStream");
-
-
-        String event = "192.0.2.0 - - [09/Apr/2012:08:40:43 -0400] \"GET /NoteBook/ HTTP/1.0\" 201 809 \"-\" " +
-          "\"Example v0.0.0 (www.example.org)\"";
-
-        // Write stream event to server
-        ListenableFuture<Void> future = streamWriter.write(event, null);
-
-        Futures.addCallback(future, new FutureCallback<Void>() {
-          @Override
-          public void onSuccess(Void contents) {
-            LOG.info("Successfully written to stream {}", "purchaseStream");
-          }
-
-          @Override
-          public void onFailure(Throwable throwable) {
-            LOG.error("Exception while writing to stream", throwable);
-          }
-        });
-      } finally {
-        // Releasing all resources
-        streamWriter.close();
-        streamClient.close();
-      }
-    } catch (Exception e) {
-      LOG.error("Exception while writing to stream", e);
-    }
-
-Also look at :ref:`Note on Stream Client <note_stream_client>`
-
-You can refer to  :ref:`Authentication Client Usage for Java. <AuthClientJava>`
-
-
-Python API
-..........
-
-Download: `Python Stream Client <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
-
-Usage
-+++++
-
-To use the Stream Client Python API, include these imports in your
-Python script:
-
-::
-
-        from config import Config
-        from streamclient import StreamClient
-
-Configuring and Creating a Stream
-+++++++++++++++++++++++++++++++++
-
-For Creating a ``StreamClient`` instance you would need a ``config`` object:
-
-You can create the ``config`` object by manually configuring the config options or you can read the config options
-from an existing file.
-
-1. Creating ``config`` object and configuring it manually
-::
-
-  def createStreamClient():
-    config = Config()
-    config.host = localhost
-    config.port = 10000
-    config.ssl = False
-    streamClient = StreamClient(config)
-
-2. using an existing configuration file in JSON format :ref:`Configuration-Json <JsonConfig>` to create a ``config`` object
-::
-
-   def createStreamClient():
-    config = Config.read_from_file('/path/to/config.json')
-    streamClient = StreamClient(config)
-
-
-3. Once we have configured the stream client, we can create a stream by calling create with a stream-name
-::
-
-  streamClient.create("purchaseStream");
-
-:ref:`Note on Stream Name <StreamName>`
-
-Updating Time-to-Live
-+++++++++++++++++++++
-
-Update TTL for the "purchaseStream"; ``newTTL`` is a long value specified in seconds::
-
-  streamClient.set_ttl("purchaseStream", newTTL)
-
-Get the current TTL value for the "purchaseStream"::
-
-  ttl = streamClient.get_ttl("purchaseStream")
-
-Writing Events to Stream
-++++++++++++++++++++++++
-
-Create a ``StreamWriter`` instance for writing events to the Stream.
-
-Once you have a ``StreamWriter`` instance you can write events to the stream using the ``write()`` method
-
-Putting it All Together
-+++++++++++++++++++++++
-::
-
-  def createStreamClient():
-    config = Config.read_from_file('/path/to/config.json')
-    streamClient = StreamClient(config)
-    streamWriter = streamClient.create_writer("purchaseStream")
-    streamPromise = streamWriter.write("New log Event") #async
-    streamPromise.onResponse(onOKHandler, onErrorHandler)
-
-  def onOkHandler(httpResponse): #will be executed after successful write to stream
-    ...
-    parse response
-    return "Success"
-    ...
-
-  def onErrorHandler(httpResponse): #will be executed if stream write fails
-    ...
-    parse response
-    return "Failure"
-    ...
-
-.. _JsonConfig:
-
-Config file structure in JSON format::
-
-  {
-    hostname: 'localhost',    - CDAP Instance hostname
-    port: 10000,              - CDAP instance port
-    SSL: false                - is SSL enabled
-  }
-
-.. _StreamName:
-
-Stream name:
-  -  The name can only contain ASCII letters, digits and hyphens.
-  -  If the stream already exists, no error is returned, and the existing stream remains in place.
-
-Also look at: :ref:`Note on Stream Client <note_stream_client>`
-
-You can refer to  - :ref:`Authentication Client Usage for Python <AuthClientPython>`
-
-
-.. _note_stream_client:
-
-Note on Stream Client
-.....................
-
-All methods from the ``StreamClient`` and ``StreamWriter`` throw
-exceptions using response code analysis from the CDAP instance. These
-exceptions help determine if the request was processed successfully or
-not.
-
-.. list-table::
-    :widths: 40 60
-    :header-rows: 1
-
-    * - Response Code
-      - Exception
-    * - ``400 Bad Request``
-      - javax.ws.rs.BadRequestException
-    * - ``401 Unauthorized``
-      - javax.ws.rs.NotAuthorizedException
-    * - ``403 Forbidden``
-      - javax.ws.rs.ForbiddenException
-    * - ``404 Not Found``
-      - javax.ws.rs.NotFoundException/co.cask.cdap.client.exception.NotFoundException
-    * - ``405 Method Not Allowed``
-      - javax.ws.rs.NotAcceptableException
-    * - ``409 Conflict``
-      - javax.ws.rs.NotAcceptableException
-    * - ``500 Internal Server Error``
-      - javax.ws.rs.ServerErrorException
-    * - ``501 Not Implemented``
-      - javax.ws.rs.NotSupportedException
-
-In the case of a 200 OK response, no exception will be thrown.
-
-File Tailer
------------
-
-File Tailer is a daemon process that performs tailing of sets of local files.
-As soon as a new record has been appended to the end of a file that the daemon is monitoring,
-it will send it to a Stream via the REST API.
-
-Features
-........
-
-- Distributed as Debian and RPM packages
-- Loads properties from a configuration file
-- Supports rotation of log files
-- Persists state and is able to resume from first unsent record
-- Writes statistics info
-
-Getting the File Tailer
-.......................
-Download: `File Tailer <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
-
-Installing File Tailer
-......................
-
-  on Debian/Ubuntu:
-  ``apt-get install file-tailer.deb``
-
-  on RHEL/Cent OS:
-  ``rpm -ivh --force file-tailer.rpm``
-
-Configuring File Tailer
-.......................
-
-After Installation, you can configure the daemon properties at /etc/file-tailer/conf/file-tailer.properties::
-
-     # General pipe properties
-     # Comma-separated list of pipes to be configured
-     pipes=app1pipe,app2pipe
-
-     # Pipe 1 source properties
-     # Working directory (where to monitor files)
-     pipes.app1pipe.source.work_dir=/var/log/app1
-     # Name of log file
-     pipes.app1pipe.source.file_name=app1.log
-
-     # Pipe 1 sink properties
-     # Name of the stream
-     pipes.app1pipe.sink.stream_name=app1Stream
-     # Host name that is used by stream client
-     pipes.app1pipe.sink.host=cdap_host.example.com
-     # Host port that is used by stream client
-     pipes.app1pipe.sink.port=10000
-
-**Note**: Please note that the target file must be accessible to the File Tailer user.
-
-
-Starting and Stopping the Daemon
-................................
-
-To start a File Tailer daemon execute:
-  ``service file-tailer start``
-
-To stop a File Tailer daemon execute:
-  ``service file-tailer start``
-
-**Note**: File Tailer stores log files in the /var/log/file-tailer directory. PID, states and statistics are stored in the /var/run/file-tailer directory.
-
-Configuring Authentication Client for File Tailer
-.................................................
-
-Authentication client parameters:
-  - pipes.<pipe-name>.sink.auth_client - fully qualified class name of the authentication client.
-  - pipes.<pipe-name>.sink.auth_client_properties - path to authentication client properties file , sample file is
-    located at ``/etc/file-tailer/conf/auth-client.properties``
-
-You can refer to :ref:`Authentication Client Usage for Java. <AuthClientJava>`
-
-
-Description of Configuration Properties
-.......................................
-
-.. list-table::
-    :widths: 30 60
-    :header-rows: 1
-
-    * - Property
-      - Description
-    * - pipes.<pipename>.name
-      - ``name of the pipe``
-    * - pipes.<pipename>.state_file
-      - ``name of file, used to save state``
-    * - pipes.<pipename>.statistics_file
-      - ``name of file, used to save statistics``
-    * - pipes.<pipename>.queue_size
-      - ``size of queue (default 1000), of stored log records, before sending them to Stream``
-    * - pipes.<pipename>.source.work_dir
-      - ``path to directory being monitored for target log files``
-    * - pipes.<pipename>.source.file_name
-      - ``name of target log file``
-    * - pipes.<pipename>.source.rotated_file_name_pattern
-      - ``log file rollover pattern (default "(.*)" )``
-    * - pipes.<pipename>.source.charset_name
-      - ``name of charset used by Stream Client for sending logs (default "UT``
-    * - pipes.<pipename>.source.record_separator
-      - ``symbol that separates each log record (default "\n")``
-    * - pipes.<pipename>.source.sleep_interval
-      - ``interval to sleep after reading all log data (default 3000 ms)``
-    * - pipes.<pipename>.source.failure_retry_limit
-      - ``number of attempts to retry reading a log, if an error occurred while reading file data (default value is 0 for unlimited attempts)``
-    * - pipes.<pipename>.source.failure_sleep_interval
-      - ``interval to sleep if an error occurred while reading the file data (default 60000 ms)``
-    * - pipes.<pipename>.sink.stream_name
-      - ``name of target stream``
-    * - pipes.<pipename>.sink.host
-      - ``server host``
-    * - pipes.<pipename>.sink.port
-      - ``server port``
-    * - pipes.<pipename>.sink.ssl
-      - ``Secure Socket Layer mode [true|false] (default false)``
-    * - pipes.<pipename>.sink.apiKey
-      - ``SSL security key``
-    * - pipes.<pipename>.sink.writerPoolSize
-      - ``number of threads with which Stream Client sends events (default 10)``
-    * - pipes.<pipename>.sink.version
-      - ``CDAP server version (default "v2")``
-    * - pipes.<pipename>.sink.packSize
-      - ``number of logs sent at a time (default 1)``
-    * - pipes.<pipename>.sink.failure_retry_limit
-      - ``number of attempts to retry sending logs, if an error occurred while reading file data (default value is 0 for unlimited attempts)``
-    * - pipes.<pipename>.sink.failure_sleep_interval
-      - ``interval to sleep if an error occurred while sending the logs (default 60000 ms)``
-
-
-Flume Sink
-----------
-
-The CDAP Sink is a `Apache Flume Sink <https://flume.apache.org>`__ implementation using the
-RESTStreamWriter to write events received from a source. For example, you can configure the Flume Sink's
-Agent to read data from a log file by tailing it and putting them into CDAP.
-
-Building the Flume Sink Jar
-...........................
-
-Download: `Flume Sink <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
-
-.. list-table::
-    :widths: 20 30 50
-    :header-rows: 1
-
-    * - Property
-      - Value
-      - Description
-    * - a1.sinks.sink1.type
-      - ``co.cask.cdap.flume.StreamSink``
-      - Copy the CDAP sink jar to Flume lib directory and specify the fully qualified class name for this property.
-    * - a1.sinks.sink1.host
-      - ``host-name``
-      - Host name used by the Stream client
-    * - a1.sinks.sink1.streamName
-      - ``Stream-name``
-      - Target stream name
-    * - a1.sinks.sink1.port
-      - ``10000``
-      - This parameter is optional; the default port is 10000
-    * - a1.sinks.sink1.sslEnabled
-      - ``false``
-      - This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false
-    * - a1.sinks.sink1.writerPoolSize
-      - ``10``
-      - Number of threads to which the stream client can send events
-    * - a1.sinks.sink1.version
-      - ``v2``
-      - CDAP Router server version
-
-Authentication Client
-.....................
-
-To use authentication, add these authentication client configuration parameters to the sink configuration file:
-  - a1.sinks.sink1.authClientClass - co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient,
-    fully qualified class name of the client class
-  - a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is
-    located at ``/usr/local/apache-flume/conf/auth_client.conf``
-
-You can refer to :ref:`Authentication Client Usage for Java. <AuthClientJava>`
-
-Flume Sink Example
-..................
-
-::
-
-   a1.sources = r1
-   a1.channels = c1
-   a1.sources.r1.type = exec
-   a1.sources.r1.command = tail -F /tmp/log
-   a1.sources.r1.channels = c1
-   a1.sinks = k1
-   a1.sinks.k1.type = co.cask.cdap.flume.StreamSink
-   a1.sinks.k1.channel = c1
-   a1.sinks.k1.host  = 127.0.0.1
-   a1.sinks.k1.port = 10000
-   a1.sinks.k1.streamName = logEventStream
-   a1.channels.c1.type = memory
-   a1.channels.c1.capacity = 1000
-   a1.channels.c1.transactionCapacity = 100
-
-
-
-File DropZone
--------------
-
-The File DropZone application allows you to easily perform the bulk ingestion of local files.
-Files can either be directly uploaded, or they can be copied to a *work_dir*,
-where they will automatically be ingested by a daemon process.
-
-Features
-........
-
-- Distributed as Debian and RPM packages
-- Loads properties from configuration file
-- Supports multiple observers/topics
-- Able to survive restart and resume, sending from the first unsent record of each of the existing files
-- Cleanup of files that are completely sent
-
-Getting File DropZone
-.....................
-
-Download: `File DropZone <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0>`__
-
-Installing File DropZone
-........................
-  on Debian/Ubuntu:
-    ``apt-get install file-drop-zone.deb``
-
-  on RHEL/Cent OS:
-    ``rpm -ivh --force file-drop-zone.rpm``
-
-Configuring File DropZone
-.........................
-After Installation, you can configure the daemon properties at /etc/file-drop-zone/conf/file-drop-zone.properties::
-
-     # Polling directories interval in milliseconds
-     polling_interval=5000
-
-     # Comma-separated list of directories observers to be configured
-     observers=obs1
-
-     #Path to work directory
-     work_dir=/var/file-drop-zone/
-
-     # General observer configurations
-     # Pipe is used for loading data from the file to the Stream
-     observers.obs1.pipe=pipe1
-
-     # Pipe sink properties
-     # Name of the stream
-     pipes.pipe1.sink.stream_name=logEventStream
-     # Host name that is used by stream client
-     pipes.pipe1.sink.host=localhost
-     # Host port that is used by stream client
-     pipes.pipe1.sink.port=10000
-
-
-Starting and Stopping the Daemon
-................................
-To start a file DropZone daemon execute:
-  ``service file-drop-zone start``
-
-To stop a file DropZone daemon execute:
-  ``service file-drop-zone stop``
-
-Note:  File DropZone stores log files in the /var/log/file-drop-zone directory. PID, states and statistics are stored in the /var/run/file-drop-zone directory
-
-Manual Upload of files
-......................
-If you would like to manually upload a file use::
-
-  file-drop-zone load <file-path> <observer>
-
-You can refer to :ref:`Authentication Client Usage for Java. <AuthClientJava>`
-
-.. _AuthClientJava:
-
-Authentication Client - Java
-............................
-The Authentication Client Java API fetches access tokens from the authentication service.
-
-Supported Actions
-+++++++++++++++++
-
-- Fetch an access token from the authentication service with credentials supported by the active authentication mechanism
-- Check that authentication is enabled in the CDAP instance
-
-The current implementation supports three authentication mechanisms:
-  - Basic Authentication
-  - LDAP
-  - JASPI
-
-It is also possible to extend existing logic and implement a custom client for any other authentication
-mechanisms. To create a new Authentication Client, implement the ``AuthenticationClient`` interface.
-
-Download
-++++++++
-
-Download: `Authentication Client - Java <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/java>`__
-
-Build
-+++++
-
-To build the Authentication Client Java API jar, use::
-
-  mvn clean package
-
-Usage
-+++++
-
-To use the Authentication Client Java API, include this Maven dependency in your project's ``pom.xml`` file::
-
- <dependency>
-  <groupId>co.cask.cdap</groupId>
-  <artifactId>cdap-authentication-client</artifactId>
-  <version>1.0.0</version>
- </dependency>
-
-Examples
-........
-
-This example creates a ``BasicAuthenticationClient`` to retrieve an access token::
-
-  String authClientClassName = "co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient";
-  AuthenticationClient authenticationClient = configuration.getClassByName(authClientClassName);
-
-  // Set the CDAP instance connection info: hostname, port and flag to indicate if SSL is enabled or not
-  authenticationClient.setConnectionInfo("localhost", 10000, false);
-
-  // If you have additional properties, you can include them for configuration using the following
-  authenticationClient.configure(properties);
-
-  // Check if authentication is enabled
-  boolean isEnabled = authenticationClient.isAuthEnabled();
-
-  // Get the access token for the user from the authentication service
-  // If access token is not available an IOException will be thrown
-  String token = authenticationClient.getAccessToken();
-
-This example illustrates an Authentication Client obtaining credentials from a user and then using them for configuration::
-
-  authenticationClient.setConnectionInfo(hostname, port, ssl);
-  Properties properties = new Properties();
-  if (authenticationClient.isAuthEnabled()) {
-    ConsoleReader reader = new ConsoleReader();
-    for (Credential credential : authenticationClient.getRequiredCredentials()) {
-      String credentialValue;
-      output.printf("Please, specify "  credential.getDescription()  "> ");
-      if (credential.isSecret()) {
-          credentialValue = reader.readLine(prompt, '*');
-      } else {
-        credentialValue = reader.readLine(prompt);
-      }
-      properties.put(credential.getName(), credentialValue);
-    }
-    authenticationClient.configure(properties);
-    cliConfig.getClientConfig().setAuthenticationClient(authenticationClient);
-  }
-
-To see the properties supported by the Authentication Client, look at :ref:`Configuring Authentication Client. <ConfiguringAuthClient>`
-
-.. _AuthClientPython:
-
-Authentication Client - Python
-..............................
-
-Download
-++++++++
-
-Download: `Authentication Client - Python <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/python>`__
-
-Example Usage
-+++++++++++++
-
-1) Read the configuration from Json and retrieve an AccessToken::
-
-    # Include these imports in your Python script
-    from Config import Config
-    from BasicAuthenticationClient import BasicAuthenticationClient
-
-    # Create a BasicAuthenticationClient instance
-    authentication_client = BasicAuthenticationClient()
-
-    # Set the connection parameters: authentication service host, port and SSL mode
-    authentication_client.set_connection_info('localhost', 10000, False)
-
-    # Load configuration from JSON File
-    config = Config().read_from_file('auth_config.json')
-
-    # Configure the Authentication Client with the Config object
-    authentication_client.configure(config)
-
-    # Check if authentication is enabled in the CDAP instance
-    is_enabled = authentication_client.is_auth_enabled()
-
-    # Retrieve the access token from the authentication service:
-    token = authentication_client.get_access_token()
-
-
-   Sample config JSON file::
-
-      {
-        "security_auth_client_username": "admin",
-        "security_auth_client_password": "secret",
-        "security_ssl_cert_check": true
-      }
-
-2) Create a configuration object and configure it manually::
-
-    # Include these imports in your Python script
-    from Config import Config
-    from BasicAuthenticationClient import BasicAuthenticationClient
-
-    # Create a BasicAuthenticationClient instance
-    authentication_client = BasicAuthenticationClient()
-
-    # Set the connection parameters: authentication service host, port, SSL mode
-    authentication_client.set_connection_info('localhost', 10000, False)
-
-    # Load configuration from JSON File
-    config = Config()
-    config.security_auth_client_username = "admin"
-    config.security_auth_client_password = "secret"
-    config.security_ssl_cert_check = True
-
-    # Configure the Authentication Client with the Config object
-    authentication_client.configure(config)
-
-    # Check if authentication is enabled in the CDAP instance
-    is_enabled = authentication_client.is_auth_enabled()
-
-    # Retrieve the access token from the authentication service:
-    token = authentication_client.get_access_token()
-
-To see the properties supported by the Authentication Client, look at ConfiguringAuthClient_
-
-.. _ConfiguringAuthClient:
-
-Authentication Client Configuration
-...................................
-
-.. list-table::
-    :widths: 50 50
-    :header-rows: 1
-
-    * - Property
-      - Description
-    * - security.auth.client.username
-      - authorized user name
-    * - security.auth.client.password
-      - password used for authenticating the user
-    * - security.auth.client.verify.ssl.cert
-      - When SSL is enabled , if you want to allow self-signed certificates set this to false - this will disable the certificate check.
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
+
+
