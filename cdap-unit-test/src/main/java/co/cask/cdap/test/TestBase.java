@@ -120,10 +120,12 @@ import java.util.HashMap;
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
  */
-public class TestBase {
+public abstract class TestBase {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  protected static final CConfiguration cConf = CConfiguration.create();
 
   private static Injector injector;
   private static MetricsQueryService metricsQueryService;
@@ -154,10 +156,10 @@ public class TestBase {
     Preconditions.checkNotNull(applicationClz, "Application class cannot be null.");
 
     try {
-      Object appInstance = applicationClz.newInstance();
+      Application appInstance = applicationClz.newInstance();
       ApplicationSpecification appSpec;
 
-      if (appInstance instanceof Application) {
+      if (appInstance != null) {
         Application app = (Application) appInstance;
         DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
         app.configure(configurer, new ApplicationContext());
@@ -189,7 +191,6 @@ public class TestBase {
   @BeforeClass
   public static void init() throws Exception {
     File localDataDir = tmpFolder.newFolder();
-    CConfiguration cConf = CConfiguration.create();
 
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
     cConf.set(MetricsConstants.ConfigKeys.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
@@ -283,7 +284,9 @@ public class TestBase {
     schedulerService.startAndWait();
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
-    exploreExecutorService.startAndWait();
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED, false)) {
+      exploreExecutorService.startAndWait();
+    }
     exploreClient = injector.getInstance(ExploreClient.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
   }
@@ -327,7 +330,7 @@ public class TestBase {
   }
 
   @AfterClass
-  public static final void finish() {
+  public static void finish() {
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
     schedulerService.stopAndWait();
@@ -340,6 +343,7 @@ public class TestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
+    cConf.clear();
   }
 
   private static void cleanDir(File dir) {
