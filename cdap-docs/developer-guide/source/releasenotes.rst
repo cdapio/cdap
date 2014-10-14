@@ -37,7 +37,9 @@ CDAP Bug Fixes
 Other Changes
 -------------
 
-- The script ``send-query.sh`` has been replaced with the CDAP Command Line Interface, ``cdap-cli.sh``.
+- The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
+  `CDAP Command Line Interface, <apis.html#cli>`__ ``cdap-cli.sh``.
+- The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The Docker Image posted at the Docker Hub has been updated to CDAP 2.5.1.
 
 Known Issues
