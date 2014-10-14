@@ -61,7 +61,7 @@ SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 
 TEST_INCLUDES_LOCAL="local"
 if [ "x$3" == "x" ]; then
-  TEST_INCLUDES="local"
+  TEST_INCLUDES="remote"
 else
   TEST_INCLUDES="$3"
 fi
@@ -101,7 +101,7 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
-  echo "    test_includes  local or remote (default: local); must specify source if used"
+  echo "    test_includes  local or remote (default: remote); must specify source if used"
   echo " "
   exit 1
 }
