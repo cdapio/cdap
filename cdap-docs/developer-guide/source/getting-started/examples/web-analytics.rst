@@ -5,6 +5,8 @@
 Web Analytics Application
 =========================
 
+A Cask Data Application Platform (CDAP) Tutorial Demonstrating Spark and page ranking.
+
 This tutorial provides the basic steps for the development of a data application using the
 Cask Data Application Platform (CDAP). We will use a Web Analytics Application to
 demonstrate how to develop with CDAP and how CDAP helps when building data applications

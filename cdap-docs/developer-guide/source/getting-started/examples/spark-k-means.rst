@@ -5,13 +5,13 @@
 Spark K-Means
 -------------
 
-A Cask Data Application Platform (CDAP) Example Demonstrating Spark
+A Cask Data Application Platform (CDAP) Example Demonstrating Spark.
 
 Overview
 ........
 
 This example demonstrates a Spark application performing streaming analysis, computing the centers of points from an
-input stream using the KMeans Clustering method.
+input stream using the K-Means Clustering method.
 
 Data from a sample file is sent to CDAP by the external script *inject-data* to the *pointsStream*. This data is
 processed by the ``PointsFlow``, which stores the points coordinates event in its entirety in *points*, an ObjectStore Dataset.
@@ -37,7 +37,7 @@ of the Application are tied together by the class ``SparkKMeansApp``::
     @Override
     public void configure() {
       setName("SparkKMeans");
-      setDescription("Spark KMeans app");
+      setDescription("Spark K-Means app");
 
       // Ingest data into the Application via a Stream
       addStream(new Stream("pointsStream"));

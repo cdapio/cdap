@@ -2,10 +2,10 @@
      :Description: Cask Data Application Platform SparkPageRank Application
      :Copyright: Copyright © 2014 Cask Data, Inc.
 
-SparkPageRank Application Example
+Spark Page Rank Example
 ---------------------------------
 
-A Cask Data Application Platform (CDAP) Example Demonstrating Spark
+A Cask Data Application Platform (CDAP) Example Demonstrating Spark and page ranking.
 
 Overview
 ........

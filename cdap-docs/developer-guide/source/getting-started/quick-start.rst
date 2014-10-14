@@ -12,7 +12,8 @@ CDAP is a platform for developing and running big data applications. To get star
 have a collection of pre-built applications available that will allow you to quickly
 experience the power of CDAP.
 
-In this example, we will be completing a very common big data use case: log analytics.
+In this example, we will use one of these applications to complete a very common big data
+use case: log analytics.
 
 The log analytics application will show you how CDAP can aggregate logs, perform
 real-time and batch analytics of the logs ingested, and expose the results using multiple
@@ -49,8 +50,8 @@ application with these commands::
 In both cases, the packaged application is in the ``target/`` directory and the file name is
 ``Wise-0.2.0.jar``.
 
-*Learn More:* A detailed description of the application and its implementation is
-available in the `Web Analytics Application documentation. <insert-link>`__
+**Learn More:** *A detailed description of the application and its implementation is
+available in the* :doc:`Web Analytics Application documentation. <examples/web-analytics>`
 
 
 Deploying the Application
@@ -65,7 +66,7 @@ or using curl to directly make an HTTP request::
   $ curl -v -H "X-Archive-Name: Wise-0.2.0.jar" -X POST localhost:10000/v2/apps \
        --data-binary @target/Wise-0.2.0.jar
 
-*Learn More:* You can also deploy apps `using the CDAP Console. <insert-link>`__
+**Learn More:** *You can also deploy apps* :doc:`using the CDAP Console. <../admin>`
 
 
 Starting Realtime Processing

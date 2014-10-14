@@ -2,10 +2,10 @@
    :Description: Cask Data Application Platform Hello World Application
    :Copyright: Copyright © 2014 Cask Data, Inc.
 
-HelloWorld
-----------
+Hello World
+-----------
 
-The most simple Cask Data Application Platform (CDAP) Example.
+The simplest Cask Data Application Platform (CDAP) Example.
 
 Overview
 ........

@@ -5,7 +5,7 @@
 Count Random
 ------------
 
-A Cask Data Application Platform (CDAP) Example demonstrating the @Tick feature of Flows.
+A Cask Data Application Platform (CDAP) Example demonstrating the ``@Tick`` feature of Flows.
 
 Overview
 ........
