@@ -168,6 +168,15 @@ public class CLIMain {
     commands.process(args, output);
   }
 
+  /**
+   * Processes a command and writes to the provided output
+   * @param input the command string (e.g. "start flow SomeApp.SomeFlow")
+   * @throws Exception
+   */
+  public void processInput(String input, PrintStream output) throws Exception {
+    commands.process(Iterables.toArray(Splitter.on(" ").split(input), String.class), output);
+  }
+
   private CommandSet getCommands() {
     return commands;
   }
