@@ -20,6 +20,7 @@ import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.shell.AbstractCommand;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.completer.Completable;
+import co.cask.cdap.shell.util.FilePathResolver;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import jline.console.completer.Completer;
@@ -36,19 +37,21 @@ import javax.inject.Inject;
 public class DeployDatasetModuleCommand extends AbstractCommand implements Completable {
 
   private final DatasetModuleClient datasetModuleClient;
+  private final FilePathResolver resolver;
 
   @Inject
-  public DeployDatasetModuleCommand(DatasetModuleClient datasetModuleClient) {
+  public DeployDatasetModuleCommand(DatasetModuleClient datasetModuleClient, FilePathResolver resolver) {
     super("module", "<module-jar-file> <module-name> <module-jar-classname>",
           "Deploys a " + ElementType.DATASET_MODULE.getPrettyName());
     this.datasetModuleClient = datasetModuleClient;
+    this.resolver = resolver;
   }
 
   @Override
   public void process(String[] args, PrintStream output) throws Exception {
     super.process(args, output);
 
-    File moduleJarFile = new File(args[0]);
+    File moduleJarFile = resolver.resolvePathToFile(args[0]);
     Preconditions.checkArgument(moduleJarFile.exists(),
                                 "Module jar file '" + moduleJarFile.getAbsolutePath() + "' does not exist");
     Preconditions.checkArgument(moduleJarFile.canRead());
