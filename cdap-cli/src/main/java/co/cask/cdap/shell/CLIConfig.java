@@ -18,16 +18,20 @@ package co.cask.cdap.shell;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.http.HttpRequestConfig;
+import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.authentication.client.AuthenticationClient;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.shell.command.VersionCommand;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -40,6 +44,7 @@ import java.util.List;
 public class CLIConfig {
 
   public static final String PROP_VERIFY_SSL_CERT = "verify.ssl.cert";
+  public static final String ENV_ACCESSTOKEN = "ACCESS_TOKEN";
 
   private static final int DEFAULT_PORT = 10000;
   private static final int DEFAULT_SSL_PORT = 10443;
@@ -68,13 +73,12 @@ public class CLIConfig {
     authenticationClient.setConnectionInfo(hostname, port, DEFAULT_SSL);
     this.clientConfig = new ClientConfig(hostname, port,
                                          new HttpRequestConfig(15000, 15000, verifySSLCert),
-                                         new HttpRequestConfig(0, 0, verifySSLCert),
-                                         authenticationClient);
+                                         new HttpRequestConfig(0, 0, verifySSLCert), null);
     this.version = tryGetVersion();
     this.hostnameChangeListeners = Lists.newArrayList();
   }
 
-  private static String tryGetVersion() {
+  private String tryGetVersion() {
     try {
       InputSupplier<? extends InputStream> versionFileSupplier = new InputSupplier<InputStream>() {
         @Override

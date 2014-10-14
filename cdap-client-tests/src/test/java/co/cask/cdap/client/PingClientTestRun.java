@@ -13,27 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.conf;
+
+package co.cask.cdap.client;
+
+import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.test.XSlowTests;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
+import java.io.IOException;
 
 /**
- * A listener for watching changes in {@link PropertyStore}.
- *
- * @param <T> Type of property
+ * Test for {@link PingClient}.
  */
-public interface PropertyChangeListener<T> {
+@Category(XSlowTests.class)
+public class PingClientTestRun extends ClientTestBase {
 
-  /**
-   * Invoked when the property changed.
-   *
-   * @param name Name of the property
-   * @param property The updated property or {@code null} if the property is deleted.
-   */
-  void onChange(String name, T property);
-
-  /**
-   * Invoked when there is failure when listening for changes.
-   *
-   * @param failureCause The cause of the failure
-   */
-  void onError(String name, Throwable failureCause);
+  @Test
+  public void testAll() throws IOException, UnAuthorizedAccessTokenException {
+    PingClient pingClient = new PingClient(clientConfig);
+    pingClient.ping();
+  }
 }

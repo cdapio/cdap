@@ -51,17 +51,18 @@ public class QueryClientTestRun extends ClientTestBase {
     appClient.deploy(createAppJarFile(FakeApp.class));
 
     QueryHandle queryHandle = queryClient.execute("select * from cdap_user_" + FakeApp.DS_NAME);
-    QueryStatus status = new QueryStatus(null, false);
+    QueryStatus status;
 
-    while (QueryStatus.OpStatus.RUNNING == status.getStatus() ||
-      QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
-      QueryStatus.OpStatus.PENDING == status.getStatus()) {
-
-      Thread.sleep(1000);
+    while (true) {
       status = queryClient.getStatus(queryHandle);
+      if (status.getStatus().isDone()) {
+        break;
+      }
+      Thread.sleep(1000);
     }
 
-    Assert.assertFalse(status.hasResults());
+    Assert.assertNotNull(status);
+    Assert.assertTrue(status.hasResults());
     Assert.assertNotNull(queryClient.getSchema(queryHandle));
     Assert.assertNotNull(queryClient.getResults(queryHandle, 20));
     queryClient.delete(queryHandle);

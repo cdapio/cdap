@@ -17,7 +17,8 @@
 package co.cask.cdap.common.lang;
 
 import com.google.common.base.Predicate;
-import sun.misc.CompoundEnumeration;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 
 import java.io.IOException;
 import java.net.URL;
@@ -70,7 +71,7 @@ public class FilterClassLoader extends ClassLoader {
       return super.findResources(name);
     }
 
-    return new CompoundEnumeration<URL>(new Enumeration[0]);
+    return Iterators.asEnumeration(ImmutableList.<URL>of().iterator());
   }
 
   private String classNameToResourceName(String className) {
