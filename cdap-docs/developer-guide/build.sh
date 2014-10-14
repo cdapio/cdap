@@ -61,9 +61,9 @@ SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 
 TEST_INCLUDES_LOCAL="local"
 if [ "x$3" == "x" ]; then
-  TEST_INCLUDES="remote"
-else
   TEST_INCLUDES="local"
+else
+  TEST_INCLUDES="$3"
 fi
 
 ZIP_FILE_NAME=$HTML
@@ -101,7 +101,7 @@ function usage() {
   echo "    sdk            Build SDK"
   echo "  with"
   echo "    source         Path to $PROJECT source for javadocs, if not $PROJECT_PATH"
-  echo "    test_includes  local or remote (default: remote); must also specify source if used"
+  echo "    test_includes  local or remote (default: local); must specify source if used"
   echo " "
   exit 1
 }
@@ -282,19 +282,19 @@ function build_includes() {
 function pandoc_includes() {
   # Uses pandoc to translate the README markdown files to rst in the target directory
   INCLUDES_DIR=$1
-  TEST_INCLUDES=$TEST_INCLUDES_LOCAL
   
-  if [ $TEST_INCLUDES=$TEST_INCLUDES_LOCAL ]; then
+  if [ $TEST_INCLUDES == $TEST_INCLUDES_LOCAL ]; then
     MD_CLIENTS="../../../cdap-clients"
     MD_INGEST="../../../cdap-ingest"
   else
     GITHUB="https://raw.githubusercontent.com/caskdata"
-    VERSION="release/1.0.0" # for development
-    #   VERSION="v1.0.1"
+#     VERSION="release/1.0.0" # for development
+    VERSION="v1.0.1" # after tagging
     MD_CLIENTS="$GITHUB/cdap-clients/$VERSION"
     MD_INGEST="$GITHUB/cdap-ingest/$VERSION"
   fi
-    
+
+  echo "Using $TEST_INCLUDES includes..."
   #   authentication-client java
   pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-java.rst
   #   authentication-client python
@@ -309,7 +309,6 @@ function pandoc_includes() {
   pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md  -o $INCLUDES_DIR/cdap-stream-clients-java.rst
   #   stream-client python
   pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md  -o $INCLUDES_DIR/cdap-stream-clients-python.rst
- 
 }
 
 function build_standalone() {
