@@ -33,12 +33,15 @@ CDAP Bug Fixes
 - Corrected an error in the message printed by the startup script ``cdap.sh``.
 - Corrected an error in the documentation of the endpoint for downloading query results using the RESTful API.
 - Corrected errors in the documentation of the CDAP Application Case Study.
+- Resolved a problem with the reading of the properties file by the CDAP Flume Client of CDAP Ingest library
+  without first checking if authentication was enabled.
+- Updated the documentation of the CDAP Flume Client to include the ``verfiySSLCert`` parameter.
 
 Other Changes
 -------------
 
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
-  `CDAP Command Line Interface, <apis.html#cli>`__ ``cdap-cli.sh``.
+  `CDAP Command Line Interface, <api.html#cli>`__ ``cdap-cli.sh``.
 - The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The Docker Image posted at the Docker Hub has been updated to CDAP 2.5.1.
 
