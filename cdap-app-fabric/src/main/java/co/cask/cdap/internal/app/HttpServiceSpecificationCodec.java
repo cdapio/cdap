@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
 import com.google.gson.JsonDeserializationContext;
@@ -42,8 +43,10 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     String description = jsonObj.get("description").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
+    Set<ExposedServiceEndpoint> endpointsExposed = deserializeSet(jsonObj.get("endpointsExposed"), context,
+                                                           ExposedServiceEndpoint.class);
 
-    return new DefaultHttpServiceSpecification(className, name, description, properties, datasets);
+    return new DefaultHttpServiceSpecification(className, name, description, properties, datasets, endpointsExposed);
   }
 
   @Override
@@ -54,6 +57,7 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     json.addProperty("description", src.getDescription());
     json.add("properties", serializeMap(src.getProperties(), context, String.class));
     json.add("datasets", serializeSet(src.getDatasets(), context, String.class));
+    json.add("endpointsExposed", serializeSet(src.getEndpoints(), context, ExposedServiceEndpoint.class));
 
     return json;
   }

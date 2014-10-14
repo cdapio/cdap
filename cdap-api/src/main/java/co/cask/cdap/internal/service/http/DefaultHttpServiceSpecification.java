@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.service.http;
 
+import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -32,18 +33,20 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   private final String description;
   private final Map<String, String> properties;
   private final Set<String> datasets;
+  private final Set<ExposedServiceEndpoint> endpoints;
 
   /**
    * Instantiate this class
    */
   public DefaultHttpServiceSpecification(String className, String name,
                                          String description, Map<String, String> properties,
-                                         Set<String> datasets) {
+                                         Set<String> datasets, Set<ExposedServiceEndpoint> endpoints) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = ImmutableMap.copyOf(properties);
     this.datasets = ImmutableSet.copyOf(datasets);
+    this.endpoints = ImmutableSet.copyOf(endpoints);
   }
 
   /**
@@ -90,5 +93,10 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   @Override
   public Set<String> getDatasets() {
     return datasets;
+  }
+
+  @Override
+  public Set<ExposedServiceEndpoint> getEndpoints() {
+    return endpoints;
   }
 }

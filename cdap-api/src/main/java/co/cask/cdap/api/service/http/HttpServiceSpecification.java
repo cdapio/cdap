@@ -18,6 +18,7 @@ package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Set;
 
@@ -27,8 +28,12 @@ import java.util.Set;
 public interface HttpServiceSpecification extends PropertyProvider, ProgramSpecification {
 
   /**
-   * @return An immutable set of {@link co.cask.cdap.api.dataset.Dataset Datasets} name that
-   *         used by the {@link HttpServiceHandler}.
+   * @return An immutable set of {@link Dataset} names that are used by the {@link HttpServiceHandler}.
    */
   Set<String> getDatasets();
+
+  /**
+   * @return An immutable set of {@link ExposedServiceEndpoint}s that are exposed by the {@link HttpServiceHandler}.
+   */
+  Set<ExposedServiceEndpoint> getEndpoints();
 }

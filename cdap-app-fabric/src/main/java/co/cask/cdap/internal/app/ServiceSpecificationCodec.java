@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import co.cask.cdap.internal.app.services.DefaultServiceWorkerSpecification;
 import co.cask.cdap.internal.service.DefaultServiceSpecification;
@@ -117,13 +118,14 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
       Map<String, String> properties = GSON.fromJson(spec.get("properties"),
                                                      new TypeToken<Map<String, String>>() { }.getType());
 
-      // Reconstruct the HttpServiceSpecification. However there is no way to determine the datasets as it is
-      // not recorded in old spec. It's ok since the spec is only used to load data from MDS during redeploy.
+      // Reconstruct the HttpServiceSpecification. However there is no way to determine the datasets or endpoints
+      // as it is not recorded in old spec. It's ok since the spec is only used to load data from MDS during redeploy.
       handlers.put(spec.get("name").getAsString(),
                    new DefaultHttpServiceSpecification(handlerClass,
                                                        spec.get("name").getAsString(),
                                                        spec.get("description").getAsString(),
-                                                       properties, ImmutableSet.<String>of()));
+                                                       properties, ImmutableSet.<String>of(),
+                                                       ImmutableSet.<ExposedServiceEndpoint>of()));
     }
 
     // Generates worker specs.
