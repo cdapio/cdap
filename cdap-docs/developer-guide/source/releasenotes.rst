@@ -25,17 +25,12 @@ CDAP Bug Fixes
   - Printed excessive debug log messages;
   - Relative paths did not work as expected; and 
   - Failed to execute SQL queries.
-
-- Updated the documentation for the CDAP HTTP RESTful API, adding a note about *service-id* and *runnable-id*
-  currently being identical when scaling services.
   
 - Removed dependencies on SNAPSHOT artifacts for *netty-http* and *auth-clients*. 
 - Corrected an error in the message printed by the startup script ``cdap.sh``.
-- Corrected an error in the documentation of the endpoint for downloading query results using the RESTful API.
 - Corrected errors in the documentation of the CDAP Application Case Study.
 - Resolved a problem with the reading of the properties file by the CDAP Flume Client of CDAP Ingest library
   without first checking if authentication was enabled.
-- Updated the documentation of the CDAP Flume Client to include the ``verfiySSLCert`` parameter.
 
 Other Changes
 -------------
@@ -43,7 +38,6 @@ Other Changes
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
   `CDAP Command Line Interface, <api.html#cli>`__ ``cdap-cli.sh``.
 - The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
-- The Docker Image posted at the Docker Hub has been updated to CDAP 2.5.1.
 - The `CDAP Java Stream Client <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0/cdap-stream-clients/java>`__ 
   now allows empty String events to be sent.
 - The `CDAP Python Authentication Client's <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/python>`__ 
