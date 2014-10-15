@@ -37,10 +37,8 @@ Other Changes
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
   `CDAP Command Line Interface, <api.html#cli>`__ ``cdap-cli.sh``.
 - The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
-- The `CDAP Java Stream Client <https://github.com/caskdata/cdap-ingest/tree/release/1.0.0/cdap-stream-clients/java>`__ 
-  now allows empty String events to be sent.
-- The `CDAP Python Authentication Client's <https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/python>`__ 
-  ``configure()`` method now takes a dictionary rather than a filepath.
+- The CDAP Java Stream Client now allows empty String events to be sent.
+- The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.
 
 Known Issues
 ------------
