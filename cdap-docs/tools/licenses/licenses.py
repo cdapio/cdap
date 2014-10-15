@@ -28,7 +28,7 @@ import os
 import subprocess
 import sys
 
-VERSION = "0.0.5"
+VERSION = "0.0.6"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
 
@@ -367,8 +367,10 @@ def print_dependencies(title, file_base, header, widths, data_list):
     RST_HEADER=""".. :author: Cask Data, Inc.
    :version: %(version)s
 
+:orphan:
+
 =================================================
-Cask Data Application Platform %(version)s
+Cask Data Application Platform |version|
 =================================================
 
 Cask Data Application Platform %(title)s Dependencies

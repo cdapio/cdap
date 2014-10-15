@@ -79,7 +79,7 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
    * @param startRow start row inclusive. {@code null} means start from first row of the table
    * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
    * @return {@link co.cask.cdap.api.dataset.lib.CloseableIterator} over
-   * {@link co.cask.cdap.api.dataset.lib.KeyValue<byte[], T>}
+   * {@link KeyValue KeyValue&lt;byte[], T&gt;}
    */
   CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow);
 

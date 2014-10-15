@@ -26,7 +26,7 @@ public interface PropertyChangeListener<T> {
    * Invoked when the property changed.
    *
    * @param name Name of the property
-   * @param property The updated property or {@link null} if the property is deleted.
+   * @param property The updated property or {@code null} if the property is deleted.
    */
   void onChange(String name, T property);
 

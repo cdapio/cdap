@@ -192,7 +192,7 @@ public class KeyValueTable extends AbstractDataset implements
    * @param startRow start row inclusive. {@code null} means start from first row of the table
    * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
    * @return {@link co.cask.cdap.api.dataset.lib.CloseableIterator} of
-   * {@link co.cask.cdap.api.dataset.lib.KeyValue<byte[],byte[]>}
+   * {@link KeyValue KeyValue&lt;byte[], byte[]&gt;}
    */
   public CloseableIterator<KeyValue<byte[], byte[]>> scan(byte[] startRow, byte[] stopRow) {
     final Scanner scanner = table.scan(startRow, stopRow);

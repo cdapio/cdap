@@ -182,13 +182,17 @@ div.body h1 { border-top: 20px solid white; margin-top: 0; font-size: 180%; font
 div.body h2 { font-size: 150%; font-weight:bold;}
 div.body h3 { font-size: 120%; }
 div.body h4 { font-size: 110%; font-weight:normal;}
-div.body h5 { font-size: 100%; background-color: #F2F2F2; }
-div.body h6 { font-size: 100%; background-color: #F2F2F2; }
+div.body h5 { font-size: 100%; font-weight:normal; background-color: #F2F2F2; }
+div.body h6 { font-size: 100%; font-weight:normal; background-color: #F2F2F2; }
 
 div.body h1 { background-color: #E0E0E0; }
 div.body h2 { background-color: #E0E0E0; }
 div.body h3 { background-color: #E0E0E0; }
 div.body h4 { 
+    background-color: #F2F2F2;
+    margin: 30px 0px 10px 0px;
+}
+div.body h5 { 
     background-color: #F2F2F2;
     margin: 30px 0px 10px 0px;
 }
