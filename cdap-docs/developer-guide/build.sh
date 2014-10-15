@@ -196,7 +196,11 @@ function make_zip_html() {
 function make_zip() {
 # This creates a zip that unpacks to the same name
   version
-  ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
+  if [ "x$1" == "x" ]; then
+    ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION"
+  else
+    ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
+  fi  
   cd $SCRIPT_PATH/$BUILD
   mkdir $ZIP_DIR_NAME
   mv $HTML $ZIP_DIR_NAME/en
@@ -283,7 +287,7 @@ function test_include() {
 
 function build_includes() {
   if hash pandoc 2>/dev/null; then
-    echo "pandoc is installed; rebuilding the README includes."
+    echo "Confirmed that pandoc is installed; rebuilding the README includes."
     SOURCE_INCLUDES_DIR=$SCRIPT_PATH/$SOURCE/$INCLUDES
     rm -rf $SOURCE_INCLUDES_DIR
     mkdir $SOURCE_INCLUDES_DIR
