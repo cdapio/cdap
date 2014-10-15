@@ -226,6 +226,14 @@ To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
 
   #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
 
+- Set ``router.server.address`` property in ``conf/cdap-site.xml`` to the hostname of CDAP Router. The CDAP Console uses
+  this property to connect to Router::
+
+      <property>
+        <name>router.server.address</name>
+        <value>{router-host-name}</value>
+      </property>
+
 - To use the ad-hoc querying capabilities of CDAP, enable the CDAP Explore Service in
   ``conf/cdap-site.xml`` (by default, it is disabled)::
 
