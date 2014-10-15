@@ -86,6 +86,8 @@
               <mainClass>${main.class}</mainClass>
             </transformer>
           </transformers>
+          <outputDirectory>${project.build.directory}</outputDirectory>
+          <finalName>${project.artifactId}-${project.version}-uber</finalName>
         </configuration>
         <executions>
           <execution>
