@@ -56,9 +56,9 @@ while [ -h "$PRG" ] ; do
 done
 
 if [ "$CLASSPATH" = "" ]; then
-  CLASSPATH=${lib}/co.cask.cdap.cdap-cli-2.5.0.jar
+  CLASSPATH=${lib}/co.cask.cdap.cdap-cli-2.5.1.jar
 else
-  CLASSPATH=$CLASSPATH:${lib}/co.cask.cdap.cdap-cli-2.5.0.jar
+  CLASSPATH=$CLASSPATH:${lib}/co.cask.cdap.cdap-cli-2.5.1.jar
 fi
 
 # Load the configuration too.
