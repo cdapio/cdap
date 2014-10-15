@@ -77,6 +77,23 @@ WEB="web"
 GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
 GITHUB="github"
 
+REDIRECT_EN_HTML=`cat <<EOF
+<!DOCTYPE HTML>
+<html lang="en-US">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="refresh" content="0;url=en/index.html">
+        <script type="text/javascript">
+            window.location.href = "en/index.html"
+        </script>
+        <title></title>
+    </head>
+    <body>
+    </body>
+</html>
+EOF`
+
+
 function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
@@ -128,7 +145,7 @@ function build_docs_google() {
 
 function build_javadocs_full() {
   cd $PROJECT_PATH
-  mvn clean site -DskipTests
+  MAVEN_OPTS="-Xmx512m" mvn clean site -DskipTests
 }
 
 function build_javadocs_sdk() {
@@ -181,7 +198,9 @@ function make_zip() {
   version
   ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$1"
   cd $SCRIPT_PATH/$BUILD
-  mv $HTML $ZIP_DIR_NAME
+  mkdir $ZIP_DIR_NAME
+  mv $HTML $ZIP_DIR_NAME/en
+  echo "$REDIRECT_EN_HTML" > $ZIP_DIR_NAME/index.html
   zip -r $ZIP_DIR_NAME.zip $ZIP_DIR_NAME/*
 }
 
@@ -192,6 +211,8 @@ function make_zip_localized() {
   cd $SCRIPT_PATH/$BUILD
   mkdir $PROJECT_VERSION
   mv $HTML $PROJECT_VERSION/en
+  # Add a redirect index.html file
+  echo "$REDIRECT_EN_HTML" > $PROJECT_VERSION/index.html
   zip -r $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
 }
 
@@ -204,8 +225,6 @@ function build() {
 }
 
 function build_web() {
-# This is used to stage files at cdap-integration10031-1000.dev.continuuity.net
-# desired path is 2.5.0-SNAPSHOT/en/*
   build_docs_google $GOOGLE_ANALYTICS_WEB
   build_javadocs_sdk
   copy_javadocs_sdk
@@ -214,21 +233,16 @@ function build_web() {
 }
 
 function build_github() {
-  # GitHub requires a .nojekyll file at the root to allow for Sphinx's directories beginning with underscores
   build_docs_google $GOOGLE_ANALYTICS_GITHUB
   build_javadocs_sdk
   copy_javadocs_sdk
   copy_license_pdfs
-  make_zip $GITHUB
-  ZIP_DIR_NAME="$PROJECT-docs-$PROJECT_VERSION-$GITHUB"
-  cd $SCRIPT_PATH/$BUILD
-  touch $ZIP_DIR_NAME/.nojekyll
-  zip $ZIP_DIR_NAME.zip $ZIP_DIR_NAME/.nojekyll
+  make_zip_localized $GITHUB
 }
 
 function build_rest_pdf() {
   cd $SCRIPT_PATH
-#   version # version is not needed because the renaming is done by the pom.xml file
+  # version is not needed because the renaming is done by the pom.xml file
   rm -rf $SCRIPT_PATH/$BUILD_PDF
   mkdir $SCRIPT_PATH/$BUILD_PDF
   python $DOC_GEN_PY -g pdf -o $REST_PDF $REST_SOURCE
@@ -236,7 +250,7 @@ function build_rest_pdf() {
 
 function check_includes() {
   if hash pandoc 2>/dev/null; then
-    echo "pandoc is installed; checking the README includes."
+    echo "Confirmed that pandoc is installed; checking the README includes."
     # Build includes
     BUILD_INCLUDES_DIR=$SCRIPT_PATH/$BUILD/$INCLUDES
     rm -rf $BUILD_INCLUDES_DIR
@@ -251,7 +265,7 @@ function check_includes() {
     test_include cdap-stream-clients-java.rst
     test_include cdap-stream-clients-python.rst
   else
-    echo "WARNING: pandoc not installed; checked-in README includes will be used instead."
+    echo "WARNING: pandoc is not installed; checked-in README includes will be used instead."
   fi
 }
 
@@ -287,11 +301,10 @@ function pandoc_includes() {
     MD_CLIENTS="../../../cdap-clients"
     MD_INGEST="../../../cdap-ingest"
   else
-    GITHUB="https://raw.githubusercontent.com/caskdata"
-#     VERSION="release/1.0.0" # for development
+    GITHUB_URL="https://raw.githubusercontent.com/caskdata"
     VERSION="v1.0.1" # after tagging
-    MD_CLIENTS="$GITHUB/cdap-clients/$VERSION"
-    MD_INGEST="$GITHUB/cdap-ingest/$VERSION"
+    MD_CLIENTS="$GITHUB_URL/cdap-clients/$VERSION"
+    MD_INGEST="$GITHUB_URL/cdap-ingest/$VERSION"
   fi
 
   echo "Using $TEST_INCLUDES includes..."
@@ -328,8 +341,6 @@ function build_dependencies() {
 
 function version() {
   cd $PROJECT_PATH
-#   PROJECT_VERSION=`mvn help:evaluate -o -Dexpression=project.version | grep -v '^\['`
-#   PROJECT_VERSION="2.5.0"
   PROJECT_VERSION=`grep "<version>" pom.xml`
   PROJECT_VERSION=${PROJECT_VERSION#*<version>}
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
@@ -348,10 +359,10 @@ function test() {
   echo "Test..."
   echo "Version..."
   print_version
-  echo "Build all docs..."
-  build
-  echo "Build SDK..."
-  build_sdk
+#   echo "Build all docs..."
+#   build
+#   echo "Build SDK..."
+#   build_sdk
   echo "Test completed."
 }
 

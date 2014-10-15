@@ -65,7 +65,7 @@ Click the link marked "SDK" of the *Software Development Kit (SDK).*
 
 Once downloaded, unzip it to a directory on your machine::
 
-    $ tar -zxvf cdap-sdk-2.5.1.zip
+    $ unzip cdap-sdk-2.5.1.zip
 
 CDAP Standalone Virtual Machine Image
 -------------------------------------
