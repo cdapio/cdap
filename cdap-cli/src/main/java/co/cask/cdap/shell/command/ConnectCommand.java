@@ -26,6 +26,7 @@ import co.cask.cdap.security.authentication.client.Credential;
 import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.cdap.shell.AbstractCommand;
 import co.cask.cdap.shell.CLIConfig;
+import co.cask.cdap.shell.util.FilePathResolver;
 import co.cask.cdap.shell.util.SocketUtil;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
@@ -44,15 +45,15 @@ import javax.inject.Inject;
  */
 public class ConnectCommand extends AbstractCommand {
 
-  private static final String ENV_HOME = System.getProperty("user.home");
-
   private final CLIConfig cliConfig;
+  private final FilePathResolver resolver;
 
   @Inject
-  public ConnectCommand(CLIConfig cliConfig) {
+  public ConnectCommand(CLIConfig cliConfig, FilePathResolver resolver) {
     super("connect", "<cdap-hostname>", "Connects to a CDAP instance. <credential(s)> "
       + "parameter(s) could be used if authentication is enabled in the gateway server.");
     this.cliConfig = cliConfig;
+    this.resolver = resolver;
   }
 
   @Override
@@ -174,10 +175,10 @@ public class ConnectCommand extends AbstractCommand {
   private File getAccessTokenFile(String hostname) {
     String accessTokenEnv = System.getenv(CLIConfig.ENV_ACCESSTOKEN);
     if (accessTokenEnv != null) {
-      return new File(accessTokenEnv);
+      return resolver.resolvePathToFile(accessTokenEnv);
     }
 
-    return new File(new File(ENV_HOME), ".cdap.accesstoken." + hostname);
+    return resolver.resolvePathToFile("~/.cdap.accesstoken." + hostname);
   }
 
   private boolean saveAccessToken(AccessToken accessToken, String hostname) {

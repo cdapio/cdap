@@ -19,6 +19,7 @@ package co.cask.cdap.shell.command;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.shell.Command;
 import co.cask.cdap.shell.CommandSet;
+import co.cask.cdap.shell.util.FilePathResolver;
 import com.google.common.collect.Lists;
 
 import javax.inject.Inject;
@@ -29,9 +30,9 @@ import javax.inject.Inject;
 public class DeployDatasetCommandSet extends CommandSet {
 
   @Inject
-  public DeployDatasetCommandSet(DatasetModuleClient datasetModuleClient) {
+  public DeployDatasetCommandSet(DatasetModuleClient datasetModuleClient, FilePathResolver resolver) {
     super("dataset", Lists.<Command>newArrayList(
-      new DeployDatasetModuleCommand(datasetModuleClient)
+      new DeployDatasetModuleCommand(datasetModuleClient, resolver)
     ));
   }
 }
