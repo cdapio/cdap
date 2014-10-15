@@ -20,9 +20,10 @@ REM ############################################################################
 
 SET CDAP_HOME=%~dp0
 SET CDAP_HOME=%CDAP_HOME:~0,-5%
+SET LIB=%CDAP_HOME%\lib
 SET JAVACMD=%JAVA_HOME%\bin\java.exe
 
-SET CLASSPATH=%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-2.5.1.jar;%CDAP_HOME%\conf\
+SET CLASSPATH=%CDAP_HOME%\conf\;%LIB%\aopalliance.aopalliance-1.0.jar;%LIB%\co.cask.cdap.cdap-api-2.5.1.jar;%LIB%\co.cask.cdap.cdap-authentication-client-1.0.1.jar;%LIB%\co.cask.cdap.cdap-cli-2.5.1.jar;%LIB%\co.cask.cdap.cdap-client-2.5.1.jar;%LIB%\co.cask.cdap.cdap-common-2.5.1.jar;%LIB%\co.cask.cdap.cdap-proto-2.5.1.jar;%LIB%\co.cask.tephra.tephra-api-0.3.0.jar;%LIB%\com.google.code.findbugs.jsr305-2.0.1.jar;%LIB%\com.google.code.gson.gson-2.2.4.jar;%LIB%\com.google.guava.guava-13.0.1.jar;%LIB%\com.google.inject.extensions.guice-assistedinject-3.0.jar;%LIB%\com.google.inject.extensions.guice-multibindings-3.0.jar;%LIB%\com.google.inject.guice-3.0.jar;%LIB%\com.googlecode.concurrent-trees.concurrent-trees-2.4.0.jar;%LIB%\commons-codec.commons-codec-1.6.jar;%LIB%\commons-logging.commons-logging-1.1.1.jar;%LIB%\javax.inject.javax.inject-1.jar;%LIB%\javax.ws.rs.javax.ws.rs-api-2.0.jar;%LIB%\jline.jline-2.12.jar;%LIB%\org.apache.httpcomponents.httpclient-4.2.5.jar;%LIB%\org.apache.httpcomponents.httpcore-4.2.5.jar;%LIB%\org.slf4j.slf4j-api-1.7.5.jar;%LIB%\org.slf4j.slf4j-nop-1.7.5.jar
 
 REM Check for 64-bit version of OS. Currently not supporting 32-bit Windows
 IF NOT EXIST "%PROGRAMFILES(X86)%" (
