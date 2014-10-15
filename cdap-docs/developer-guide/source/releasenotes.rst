@@ -28,7 +28,6 @@ CDAP Bug Fixes
   
 - Removed dependencies on SNAPSHOT artifacts for *netty-http* and *auth-clients*. 
 - Corrected an error in the message printed by the startup script ``cdap.sh``.
-- Corrected errors in the documentation of the CDAP Application Case Study.
 - Resolved a problem with the reading of the properties file by the CDAP Flume Client of CDAP Ingest library
   without first checking if authentication was enabled.
 
