@@ -1,0 +1,1504 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    <title>Cask Data Application Platform - Available Tools &mdash; Cask Data Application Platform 2.5.0 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 2.5.0 Documentation" href="index.html" />
+    <link rel="next" title="Cask Data Application Platform Administration and Operations Guide" href="admin.html" />
+    <link rel="prev" title="Javadocs" href="javadocs/index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="admin.html" title="Cask Data Application Platform Administration and Operations Guide"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="javadocs/index.html" title="Javadocs"
+             accesskey="P">Previous</a> |</li>
+        <li><a href="index.html">Cask Data Application Platform 2.5.0 Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cask-data-application-platform-available-tools">
+<h1>Cask Data Application Platform - Available Tools<a class="headerlink" href="#cask-data-application-platform-available-tools" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="tools-overview">
+<h2>Tools Overview<a class="headerlink" href="#tools-overview" title="Permalink to this headline">¶</a></h2>
+<p>CDAP comes with a bunch of tools to make developer&#8217;s life easier. These tools offers various features including,
+helping to debug CDAP applications, interact with them and ingest data into them,etc:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Tool Name</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><a class="reference internal" href="#testframework"><em>Test Framework</em></a></td>
+<td>How you can take advantage of the test framework to test your CDAP applications before deploying.
+This makes catching bugs early and easy.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#debugcdap"><em>Debugging</em></a></td>
+<td>How you can debug CDAP applications in standalone mode and app containers in distributed mode.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#txdebugger"><em>Transactions Debugger</em></a></td>
+<td>Snapshot and inspect the state of Transaction Manager.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#ingest"><em>Ingestion Tools</em></a></td>
+<td>Ways to ingest data into CDAP.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="testing-cdap">
+<span id="testframework"></span><h2>Testing CDAP<a class="headerlink" href="#testing-cdap" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="strategies-in-testing-applications">
+<h3>Strategies in Testing Applications<a class="headerlink" href="#strategies-in-testing-applications" title="Permalink to this headline">¶</a></h3>
+<p>CDAP comes with a convenient way to unit test your Applications.
+The base for these tests is <tt class="docutils literal"><span class="pre">TestBase</span></tt>, which is packaged
+separately from the API in its own artifact because it depends on the
+CDAP’s runtime classes. You can include it in your test dependencies
+in one of two ways:</p>
+<ul class="simple">
+<li>include all JAR files in the <tt class="docutils literal"><span class="pre">lib</span></tt> directory of the CDAP SDK installation,
+or</li>
+<li>include the <tt class="docutils literal"><span class="pre">cdap-unit-test</span></tt> artifact in your Maven test dependencies
+(see the <tt class="docutils literal"><span class="pre">pom.xml</span></tt> file of the <em>WordCount</em> example).</li>
+</ul>
+<p>Note that for building an application, you only need to include the
+CDAP API in your dependencies. For testing, however, you need the
+CDAP run-time. To build your test case, extend the
+<tt class="docutils literal"><span class="pre">TestBase</span></tt> class.</p>
+</div>
+<div class="section" id="strategies-in-testing-flows">
+<h3>Strategies in Testing Flows<a class="headerlink" href="#strategies-in-testing-flows" title="Permalink to this headline">¶</a></h3>
+<p>Let’s write a test case for the <em>WordCount</em> example:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">WordCountTest</span> <span class="kd">extends</span> <span class="n">TestBase</span> <span class="o">{</span>
+  <span class="nd">@Test</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">testWordCount</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</pre></div>
+</div>
+<p>The first thing we do in this test is deploy the application,
+then we’ll start the Flow and the Procedure:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Deploy the Application</span>
+<span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">WordCount</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+
+<span class="c1">// Start the Flow and the Procedure</span>
+<span class="n">FlowManager</span> <span class="n">flowManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startFlow</span><span class="o">(</span><span class="s">&quot;WordCounter&quot;</span><span class="o">);</span>
+<span class="n">ProcedureManager</span> <span class="n">procManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startProcedure</span><span class="o">(</span><span class="s">&quot;RetrieveCount&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Now that the Flow is running, we can send some events to the Stream:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Send a few events to the Stream</span>
+<span class="n">StreamWriter</span> <span class="n">writer</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">getStreamWriter</span><span class="o">(</span><span class="s">&quot;wordStream&quot;</span><span class="o">);</span>
+<span class="n">writer</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;hello world&quot;</span><span class="o">);</span>
+<span class="n">writer</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;a wonderful world&quot;</span><span class="o">);</span>
+<span class="n">writer</span><span class="o">.</span><span class="na">send</span><span class="o">(</span><span class="s">&quot;the world says hello&quot;</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>To wait for all events to be processed, we can get a metrics observer
+for the last Flowlet in the pipeline (the &#8220;word associator&#8221;) and wait for
+its processed count to either reach 3 or time out after 5 seconds:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Wait for the events to be processed, or at most 5 seconds</span>
+<span class="n">RuntimeMetrics</span> <span class="n">metrics</span> <span class="o">=</span> <span class="n">RuntimeStats</span><span class="o">.</span>
+  <span class="n">getFlowletMetrics</span><span class="o">(</span><span class="s">&quot;WordCount&quot;</span><span class="o">,</span> <span class="s">&quot;WordCounter&quot;</span><span class="o">,</span> <span class="s">&quot;associator&quot;</span><span class="o">);</span>
+<span class="n">metrics</span><span class="o">.</span><span class="na">waitForProcessed</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Now we can start verifying that the processing was correct by obtaining
+a client for the Procedure, and then submitting a query for the global
+statistics:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Call the Procedure</span>
+<span class="n">ProcedureClient</span> <span class="n">client</span> <span class="o">=</span> <span class="n">procManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">();</span>
+
+<span class="c1">// Query global statistics</span>
+<span class="n">String</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;getStats&quot;</span><span class="o">,</span> <span class="n">Collections</span><span class="o">.</span><span class="na">EMPTY_MAP</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>If the query fails for any reason this method would throw an exception.
+In case of success, the response is a JSON string. We must deserialize
+the JSON string to verify the results:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">map</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="n">stringMapType</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;9&quot;</span><span class="o">,</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;totalWords&quot;</span><span class="o">));</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;6&quot;</span><span class="o">,</span> <span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;uniqueWords&quot;</span><span class="o">));</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(((</span><span class="kt">double</span><span class="o">)</span><span class="mi">42</span><span class="o">)/</span><span class="mi">9</span><span class="o">,</span>
+  <span class="o">(</span><span class="kt">double</span><span class="o">)</span><span class="n">Double</span><span class="o">.</span><span class="na">valueOf</span><span class="o">(</span><span class="n">map</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;averageLength&quot;</span><span class="o">)),</span> <span class="mf">0.001</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Then we ask for the statistics of one of the words in the test events.
+The verification is a little more complex, because we have a nested map
+as a response, and the value types in the top-level map are not uniform:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Verify some statistics for one of the words</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;getCount&quot;</span><span class="o">,</span> <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">,</span><span class="s">&quot;world&quot;</span><span class="o">));</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span> <span class="n">omap</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Gson</span><span class="o">().</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="n">objectMapType</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;world&quot;</span><span class="o">,</span> <span class="n">omap</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;word&quot;</span><span class="o">));</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="mf">3.0</span><span class="o">,</span> <span class="n">omap</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;count&quot;</span><span class="o">));</span>
+
+<span class="c1">// The associations are a map within the map</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;</span> <span class="n">assocs</span> <span class="o">=</span> <span class="o">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Double</span><span class="o">&gt;)</span> <span class="n">omap</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;assocs&quot;</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="mf">2.0</span><span class="o">,</span> <span class="o">(</span><span class="kt">double</span><span class="o">)</span><span class="n">assocs</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="s">&quot;hello&quot;</span><span class="o">),</span> <span class="mf">0.000001</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertTrue</span><span class="o">(</span><span class="n">assocs</span><span class="o">.</span><span class="na">containsKey</span><span class="o">(</span><span class="s">&quot;hello&quot;</span><span class="o">));</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="strategies-in-testing-mapreduce-jobs">
+<h3>Strategies in Testing MapReduce Jobs<a class="headerlink" href="#strategies-in-testing-mapreduce-jobs" title="Permalink to this headline">¶</a></h3>
+<p>In a fashion similar to <a class="reference internal" href="#strategies-in-testing-flows">Strategies in Testing Flows</a>, we can write
+unit testing for MapReduce jobs. Let&#8217;s write a test case for an
+application that uses MapReduce. Complete source code and test can be
+found in the <a class="reference internal" href="getstarted.html#purchase"><em>Purchase Example</em></a> included in the CDAP SDK.</p>
+<p>The <tt class="docutils literal"><span class="pre">PurchaseTest</span></tt> class should extend from
+<tt class="docutils literal"><span class="pre">TestBase</span></tt> similar to <cite>Strategies in Testing Flows</cite>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PurchaseTest</span> <span class="kd">extends</span> <span class="n">TestBase</span> <span class="o">{</span>
+  <span class="nd">@Test</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">test</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">PurchaseApp</span></tt> application can be deployed using the <tt class="docutils literal"><span class="pre">deployApplication</span></tt>
+method from the <tt class="docutils literal"><span class="pre">TestBase</span></tt> class:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Deploy an Application</span>
+<span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">PurchaseApp</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The MapReduce job reads from the <tt class="docutils literal"><span class="pre">purchases</span></tt> Dataset. As a first
+step, the data to the <tt class="docutils literal"><span class="pre">purchases</span></tt> should be populated by running
+the <tt class="docutils literal"><span class="pre">PurchaseFlow</span></tt> and sending the data to the <tt class="docutils literal"><span class="pre">purchaseStream</span></tt>
+Stream:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">FlowManager</span> <span class="n">flowManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startFlow</span><span class="o">(</span><span class="s">&quot;PurchaseFlow&quot;</span><span class="o">);</span>
+<span class="c1">// Send data to the Stream</span>
+<span class="n">sendData</span><span class="o">(</span><span class="n">appManager</span><span class="o">,</span> <span class="n">now</span><span class="o">);</span>
+
+<span class="c1">// Wait for the last Flowlet to process 3 events or at most 5 seconds</span>
+<span class="n">RuntimeMetrics</span> <span class="n">metrics</span> <span class="o">=</span> <span class="n">RuntimeStats</span><span class="o">.</span>
+    <span class="n">getFlowletMetrics</span><span class="o">(</span><span class="s">&quot;PurchaseApp&quot;</span><span class="o">,</span> <span class="s">&quot;PurchaseFlow&quot;</span><span class="o">,</span> <span class="s">&quot;collector&quot;</span><span class="o">);</span>
+<span class="n">metrics</span><span class="o">.</span><span class="na">waitForProcessed</span><span class="o">(</span><span class="mi">3</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Start the MapReduce job and wait for a maximum of 60 seconds:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Start the MapReduce job.</span>
+<span class="n">MapReduceManager</span> <span class="n">mrManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startMapReduce</span><span class="o">(</span><span class="s">&quot;PurchaseHistoryBuilder&quot;</span><span class="o">);</span>
+<span class="n">mrManager</span><span class="o">.</span><span class="na">waitForFinish</span><span class="o">(</span><span class="mi">60</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>We can start verifying that the MapReduce job was run correctly by
+obtaining a client for the Procedure, and then submitting a query for
+the counts:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ProcedureClient</span> <span class="n">client</span> <span class="o">=</span> <span class="n">procedureManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">();</span>
+
+<span class="c1">// Verify the query.</span>
+<span class="n">String</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;history&quot;</span><span class="o">,</span> <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;customer&quot;</span><span class="o">,</span> <span class="s">&quot;joe&quot;</span><span class="o">));</span>
+
+<span class="c1">// Deserialize the JSON string.</span>
+<span class="n">PurchaseHistory</span> <span class="n">result</span> <span class="o">=</span> <span class="n">GSON</span><span class="o">.</span><span class="na">fromJson</span><span class="o">(</span><span class="n">response</span><span class="o">,</span> <span class="n">PurchaseHistory</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="mi">2</span><span class="o">,</span> <span class="n">result</span><span class="o">.</span><span class="na">getPurchases</span><span class="o">().</span><span class="na">size</span><span class="o">());</span>
+</pre></div>
+</div>
+<p>The assertion will verify that the correct result was received.</p>
+</div>
+<div class="section" id="strategies-in-testing-spark-programs">
+<h3>Strategies in Testing Spark Programs<a class="headerlink" href="#strategies-in-testing-spark-programs" title="Permalink to this headline">¶</a></h3>
+<p>Let&#8217;s write a test case for an application that uses a Spark program.
+Complete source code for this test can be found at <a class="reference internal" href="getstarted.html#spark-page-rank"><em>Spark PageRank</em></a>.</p>
+<p>The <tt class="docutils literal"><span class="pre">SparkPageRankTest</span></tt> class should extend from
+<tt class="docutils literal"><span class="pre">TestBase</span></tt> similar to <cite>Strategies in Testing Flows</cite>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SparkPageRankTest</span> <span class="kd">extends</span> <span class="n">TestBase</span> <span class="o">{</span>
+  <span class="nd">@Test</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">test</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">SparkPageRankTest</span></tt> application can be deployed using the <tt class="docutils literal"><span class="pre">deployApplication</span></tt>
+method from the <tt class="docutils literal"><span class="pre">TestBase</span></tt> class:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Deploy an Application</span>
+<span class="n">ApplicationManager</span> <span class="n">appManager</span> <span class="o">=</span> <span class="n">deployApplication</span><span class="o">(</span><span class="n">SparkPageRankApp</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The Spark program reads from the <tt class="docutils literal"><span class="pre">backlinkURLs</span></tt> Dataset. As a first
+step, data in the <tt class="docutils literal"><span class="pre">backlinkURLs</span></tt> should be populated by running
+the <tt class="docutils literal"><span class="pre">BackLinkFlow</span></tt> and sending the data to the Stream <tt class="docutils literal"><span class="pre">backlinkURLStream</span></tt>:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">FlowManager</span> <span class="n">flowManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startFlow</span><span class="o">(</span><span class="s">&quot;BackLinkFlow&quot;</span><span class="o">);</span>
+<span class="c1">// Send data to the Stream</span>
+<span class="n">sendData</span><span class="o">(</span><span class="n">appManager</span><span class="o">);</span>
+
+<span class="c1">// Wait for the last Flowlet to process 4 events or at most 5 seconds</span>
+<span class="n">RuntimeMetrics</span> <span class="n">metrics</span> <span class="o">=</span> <span class="n">RuntimeStats</span><span class="o">.</span>
+    <span class="n">getFlowletMetrics</span><span class="o">(</span><span class="s">&quot;SparkPageRank&quot;</span><span class="o">,</span> <span class="s">&quot;BackLinkFlow&quot;</span><span class="o">,</span> <span class="s">&quot;reader&quot;</span><span class="o">);</span>
+<span class="n">metrics</span><span class="o">.</span><span class="na">waitForProcessed</span><span class="o">(</span><span class="mi">4</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>Start the Spark program and wait for a maximum of 60 seconds:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Start the Spark program.</span>
+<span class="n">SparkManager</span> <span class="n">sparkManager</span> <span class="o">=</span> <span class="n">appManager</span><span class="o">.</span><span class="na">startSpark</span><span class="o">(</span><span class="s">&quot;SparkPageRankProgram&quot;</span><span class="o">);</span>
+<span class="n">sparkManager</span><span class="o">.</span><span class="na">waitForFinish</span><span class="o">(</span><span class="mi">60</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>We verify that the Spark program ran correctly by
+obtaining a client for the Procedure, and then submitting a query for
+the ranks:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">ProcedureClient</span> <span class="n">client</span> <span class="o">=</span> <span class="n">procedureManager</span><span class="o">.</span><span class="na">getClient</span><span class="o">();</span>
+
+<span class="c1">// Verify the query.</span>
+<span class="n">String</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="na">query</span><span class="o">(</span><span class="s">&quot;rank&quot;</span><span class="o">,</span> <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">&quot;url&quot;</span><span class="o">,</span> <span class="s">&quot;http://example.com/page1&quot;</span><span class="o">));</span>
+<span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;1.3690036520596678&quot;</span><span class="o">,</span> <span class="n">response</span><span class="o">);</span>
+</pre></div>
+</div>
+<p>The assertion will verify that the correct result was received.</p>
+</div>
+<div class="section" id="validating-test-data-with-sql">
+<h3>Validating Test Data with SQL<a class="headerlink" href="#validating-test-data-with-sql" title="Permalink to this headline">¶</a></h3>
+<p>Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
+in the test case are record-scannable as described in <a class="reference internal" href="dev-guide.html#data-explore"><em>Data Exploration</em></a>
+This can be done using a JDBC connection obtained from the test base:</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="c1">// Obtain a JDBC connection</span>
+<span class="n">Connection</span> <span class="n">connection</span> <span class="o">=</span> <span class="n">getQueryClient</span><span class="o">();</span>
+<span class="k">try</span> <span class="o">{</span>
+  <span class="c1">// Run a query over the dataset</span>
+  <span class="n">results</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="na">prepareStatement</span><span class="o">(</span><span class="s">&quot;SELECT key FROM mytable WHERE value = &#39;1&#39;&quot;</span><span class="o">).</span><span class="na">executeQuery</span><span class="o">();</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertTrue</span><span class="o">(</span><span class="n">results</span><span class="o">.</span><span class="na">next</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;a&quot;</span><span class="o">,</span> <span class="n">results</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertTrue</span><span class="o">(</span><span class="n">results</span><span class="o">.</span><span class="na">next</span><span class="o">());</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="s">&quot;c&quot;</span><span class="o">,</span> <span class="n">results</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+  <span class="n">Assert</span><span class="o">.</span><span class="na">assertFalse</span><span class="o">(</span><span class="n">results</span><span class="o">.</span><span class="na">next</span><span class="o">());</span>
+
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+  <span class="n">results</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+  <span class="n">connection</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+<span class="o">}</span>
+</pre></div>
+</div>
+<p>The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
+will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
+or prepare statements and execute queries, then iterate over the results set and validate its correctness.</p>
+</div>
+</div>
+<div class="section" id="debugging-cdap">
+<span id="debugcdap"></span><h2>Debugging CDAP<a class="headerlink" href="#debugging-cdap" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="debugging-an-application-in-standalone-cdap">
+<h3>Debugging an Application in Standalone CDAP<a class="headerlink" href="#debugging-an-application-in-standalone-cdap" title="Permalink to this headline">¶</a></h3>
+<p>Any CDAP Application can be debugged in the Standalone CDAP
+by attaching a remote debugger to the CDAP JVM. To enable remote
+debugging:</p>
+<ol class="arabic">
+<li><p class="first">Start the Standalone CDAP with <tt class="docutils literal"><span class="pre">--enable-debug</span></tt>, optionally specifying a port (default is <tt class="docutils literal"><span class="pre">5005</span></tt>).</p>
+<p>The CDAP should confirm that the debugger port is open with a message such as
+<tt class="docutils literal"><span class="pre">Remote</span> <span class="pre">debugger</span> <span class="pre">agent</span> <span class="pre">started</span> <span class="pre">on</span> <span class="pre">port</span> <span class="pre">5005</span></tt>.</p>
+</li>
+<li><p class="first">Deploy (for example) the <em>HelloWorld</em> Application to the CDAP by dragging and dropping the
+<tt class="docutils literal"><span class="pre">HelloWorld.jar</span></tt> file from the <tt class="docutils literal"><span class="pre">/examples/HelloWorld</span></tt> directory onto the CDAP Console.</p>
+</li>
+<li><p class="first">Open the <em>HelloWorld</em> Application in an IDE and connect to the remote debugger.</p>
+</li>
+</ol>
+<p>For more information, see <a class="reference internal" href="#attaching-a-debugger">Attaching a Debugger</a>.</p>
+<p><strong>Note:</strong> Currently, debugging is not supported under Windows.</p>
+</div>
+<div class="section" id="debugging-an-application-in-distributed-cdap">
+<h3>Debugging an Application in Distributed CDAP<a class="headerlink" href="#debugging-an-application-in-distributed-cdap" title="Permalink to this headline">¶</a></h3>
+<p>In distributed mode, an application does not run in a single JVM. Instead, its programs
+are dispersed over multiple—if not many—containers in the Hadoop cluster. There is no
+single place to debug the entire application.</p>
+<p>You can, however, debug every individual container by attaching a remote debugger to it.
+This is supported for each Flowlet of a Flow and each instance of a Procedure. In order
+to debug a container, you need to start the element with debugging enabled by making
+an HTTP request to the element’s URL. For example, the following will start a Flow for debugging:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/apps/WordCount/flows/WordCounter/debug</span>
+</pre></div>
+</div>
+<p>Note that this URL differs from the URL for starting the Flow only by the last path
+component (<tt class="docutils literal"><span class="pre">debug</span></tt> instead of <tt class="docutils literal"><span class="pre">start</span></tt>; see
+<a class="reference internal" href="api.html#cdap-client-http-api"><em>CDAP Client HTTP API</em></a>). You can pass in
+runtime arguments in the exact same way as you normally would start a Flow.</p>
+<p>Once the Flow is running, each Flowlet will detect an available port in its container
+and open that port for attaching a debugger.
+To find out the address of a container’s host and the container’s debug port, you can query
+the CDAP for a Procedure or Flow’s live info via HTTP:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/apps/WordCount/flows/WordCounter/live-info</span>
+</pre></div>
+</div>
+<p>The response is formatted in JSON and—pretty-printed— would look similar to this:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;app&quot;: &quot;WordCount&quot;,</span>
+<span class="go">  &quot;containers&quot;: [</span>
+<span class="go">    {</span>
+<span class="go">      &quot;container&quot;: &quot;container_1397069870124_0010_01_000002&quot;,</span>
+<span class="go">      &quot;debugPort&quot;: 42071,</span>
+<span class="go">      &quot;host&quot;: &quot;node-1004.my.cluster.net&quot;,</span>
+<span class="go">      &quot;instance&quot;: 0,</span>
+<span class="go">      &quot;memory&quot;: 512,</span>
+<span class="go">      &quot;name&quot;: &quot;unique&quot;,</span>
+<span class="go">      &quot;type&quot;: &quot;flowlet&quot;,</span>
+<span class="go">      &quot;virtualCores&quot;: 1</span>
+<span class="go">    },</span>
+<span class="go">    ...</span>
+<span class="go">    {</span>
+<span class="go">      &quot;container&quot;: &quot;container_1397069870124_0010_01_000005&quot;,</span>
+<span class="go">      &quot;debugPort&quot;: 37205,</span>
+<span class="go">      &quot;host&quot;: &quot;node-1003.my.cluster.net&quot;,</span>
+<span class="go">      &quot;instance&quot;: 0,</span>
+<span class="go">      &quot;memory&quot;: 512,</span>
+<span class="go">      &quot;name&quot;: &quot;splitter&quot;,</span>
+<span class="go">      &quot;type&quot;: &quot;flowlet&quot;,</span>
+<span class="go">      &quot;virtualCores&quot;: 1</span>
+<span class="go">    }</span>
+<span class="go">  ],</span>
+<span class="go">  &quot;id&quot;: &quot;WordCounter&quot;,</span>
+<span class="go">  &quot;runtime&quot;: &quot;distributed&quot;,</span>
+<span class="go">  &quot;type&quot;: &quot;Flow&quot;,</span>
+<span class="go">  &quot;yarnAppId&quot;: &quot;application_1397069870124_0010&quot;</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>You see the YARN application id and the YARN container IDs of each Flowlet. More importantly, you
+can see the host name and debugging port for each Flowlet. For example, the only instance of the
+splitter Flowlet is running on <tt class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></tt> and the debugging port is 37205. You can now
+attach your debugger to the container’s JVM (see <a class="reference internal" href="#attaching-a-debugger">Attaching a Debugger</a>).</p>
+<p>The corresponding HTTP requests for the <tt class="docutils literal"><span class="pre">RetrieveCounts</span></tt> Procedure of this application would be:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">POST &lt;base-url&gt;/apps/WordCount/procedures/RetrieveCounts/debug</span>
+<span class="go">GET &lt;base-url&gt;/apps/WordCount/procedures/RetrieveCounts/live-info</span>
+</pre></div>
+</div>
+<p>Analysis of the response would give you the host names and debugging ports for all instances of the Procedure.</p>
+</div>
+<div class="section" id="attaching-a-debugger">
+<h3>Attaching a Debugger<a class="headerlink" href="#attaching-a-debugger" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="debugging-with-intellij">
+<h4>Debugging with IntelliJ<a class="headerlink" href="#debugging-with-intellij" title="Permalink to this headline">¶</a></h4>
+<p><em>Note:</em> These instructions were developed with <em>IntelliJ v13.1.2.</em>
+You may need to adjust them for your installation or version.</p>
+<ol class="arabic">
+<li><p class="first">From the <em>IntelliJ</em> toolbar, select <tt class="docutils literal"><span class="pre">Run</span> <span class="pre">-&gt;</span> <span class="pre">Edit</span> <span class="pre">Configurations</span></tt>.</p>
+</li>
+<li><p class="first">Click <tt class="docutils literal"><span class="pre">+</span></tt> and choose <tt class="docutils literal"><span class="pre">Remote</span></tt>:</p>
+<img alt="_images/intellij_1.png" src="_images/intellij_1.png" />
+</li>
+<li><p class="first">Create a debug configuration by entering a name, for example, <tt class="docutils literal"><span class="pre">CDAP</span></tt>.</p>
+</li>
+<li><p class="first">Enter the host name, for example, <tt class="docutils literal"><span class="pre">localhost</span></tt> or <tt class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></tt>
+in the Host field.</p>
+</li>
+<li><p class="first">Enter the debugging port, for example, <tt class="docutils literal"><span class="pre">5005</span></tt> in the Port field:</p>
+<img alt="_images/intellij_2.png" src="_images/intellij_2.png" />
+</li>
+<li><p class="first">To start the debugger, select <tt class="docutils literal"><span class="pre">Run</span> <span class="pre">-&gt;</span> <span class="pre">Debug</span> <span class="pre">-&gt;</span> <span class="pre">CDAP</span></tt>.</p>
+</li>
+<li><p class="first">Set a breakpoint in any code block, for example, a Flowlet method:</p>
+<img alt="_images/intellij_3.png" src="_images/intellij_3.png" />
+</li>
+<li><p class="first">Start the Flow in the Console.</p>
+</li>
+<li><p class="first">Send an event to the Stream. The control will stop at the breakpoint
+and you can proceed with debugging.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="debugging-with-eclipse">
+<h4>Debugging with Eclipse<a class="headerlink" href="#debugging-with-eclipse" title="Permalink to this headline">¶</a></h4>
+<p><em>Note:</em> These instructions were developed with <em>Eclipse IDE for Java Developers v4.4.0.</em>
+You may need to adjust them for your installation or version.</p>
+<ol class="arabic">
+<li><p class="first">In Eclipse, select <tt class="docutils literal"><span class="pre">Run-&gt;</span> <span class="pre">Debug</span></tt> configurations.</p>
+</li>
+<li><p class="first">In the list on the left of the window, double-click <tt class="docutils literal"><span class="pre">Remote</span> <span class="pre">Java</span> <span class="pre">Application</span></tt> to create
+a new launch configuration.</p>
+<img alt="_images/eclipse_1.png" src="_images/eclipse_1.png" />
+</li>
+<li><p class="first">Enter a name and project, for example, <tt class="docutils literal"><span class="pre">CDAP</span></tt>.</p>
+<img alt="_images/eclipse_2.png" src="_images/eclipse_2.png" />
+</li>
+<li><p class="first">Enter the host name, for example, <tt class="docutils literal"><span class="pre">localhost</span></tt> or <tt class="docutils literal"><span class="pre">node-1003.my.cluster.net</span></tt>
+in the Port field:</p>
+</li>
+<li><p class="first">Enter the debugging port, for example, <tt class="docutils literal"><span class="pre">5005</span></tt> in the Port field:</p>
+</li>
+<li><p class="first">In your project, click <tt class="docutils literal"><span class="pre">Debug</span></tt> to start the debugger.</p>
+</li>
+<li><p class="first">Set a breakpoint in any code block, for example, a Flowlet method:</p>
+<img alt="_images/eclipse_3.png" src="_images/eclipse_3.png" />
+</li>
+<li><p class="first">Start the Flow in the Console.</p>
+</li>
+<li><p class="first">Send an event to the Stream.</p>
+</li>
+<li><p class="first">The control stops at the breakpoint and you can proceed with debugging.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="debugging-the-transaction-manager-advanced-use">
+<span id="txdebugger"></span><h3>Debugging the Transaction Manager (Advanced Use)<a class="headerlink" href="#debugging-the-transaction-manager-advanced-use" title="Permalink to this headline">¶</a></h3>
+<p>In this advanced use section, we will explain in depth how transactions work internally.
+Transactions are introduced in the <a class="reference internal" href="dev-guide.html#transaction-system"><em>Transaction System</em></a></p>
+<p>A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
+of its creation. This identifier—also called the <cite>write pointer</cite>—represents the version
+that this transaction will use for all of its writes. It is also used to determine
+the order between transactions. A transaction with a smaller write pointer than
+another transaction must have been started earlier.</p>
+<p>The <cite>Transaction Manager</cite> (or TM) uses the write pointers to implement <cite>Optimistic Concurrency Control</cite>
+by maintaining state for all transactions that could be facing concurrency issues.</p>
+<div class="section" id="transaction-manager-states">
+<h4>Transaction Manager States<a class="headerlink" href="#transaction-manager-states" title="Permalink to this headline">¶</a></h4>
+<p>The <cite>state</cite> of the TM is defined by these structures and rules:</p>
+<ul class="simple">
+<li>The <cite>in-progress set</cite>, which contains all the write pointers of transactions
+which have neither committed nor aborted.</li>
+<li>The <cite>invalid set</cite>, which contains the write pointers of the transactions
+considered invalid, and which will never be committed. A transaction
+becomes invalid only if either it times out or, for a long-running transaction,
+it is being aborted.</li>
+<li>A transaction&#8217;s write pointer cannot be in the <cite>in-progress set</cite>
+and in the <cite>invalid set</cite> at the same time.</li>
+<li>The <cite>invalid set</cite> and the <cite>in-progress set</cite> together form the <cite>excluded set</cite>.
+When a transaction starts, a copy of this set is given to the transaction so that
+it excludes from its reads any writes performed by transactions in that set.</li>
+<li>The <cite>committing change sets</cite>, which maps write pointers of the transactions
+which have requested to commit their writes and which have passed a first round of
+conflict check to a list of keys in which they have performed those writes.</li>
+<li>The <cite>committed change sets</cite>, which has the same structure as the <cite>committing change sets</cite>,
+but where the write pointers refer to transactions which are already committed and
+which have passed a second round of conflict check.</li>
+</ul>
+</div>
+<div class="section" id="transaction-lifecycle-states">
+<h4>Transaction Lifecycle States<a class="headerlink" href="#transaction-lifecycle-states" title="Permalink to this headline">¶</a></h4>
+<p>Here are the states a transaction goes through in its lifecycle:</p>
+<ul class="simple">
+<li>When a transaction starts, the TM creates a new write pointer
+and saves it in the <cite>in-progress set</cite>.
+A copy of the current excluded set is given to the transaction,
+as well as a <cite>read pointer</cite>. The pointer
+is an upper bound for the version of writes the transaction is allowed to read.
+It prevents the transaction from reading committed writes performed after the transaction
+started.</li>
+<li>The transaction then performs writes to one or more rows, with the version of those writes
+being the write pointer of the transaction.</li>
+<li>When the transaction wants to commit its writes, it passes to the TM all the keys where
+those writes took place. If the transaction is not in the <cite>excluded set</cite>, the
+TM will use the <cite>committed change sets</cite> structure to detect
+a conflict. A conflict happens in cases where the transaction tries to modify a
+row which, after the start of the transaction, has been modified by one
+of the transactions present in the structure.</li>
+<li>If there are no conflicts, all the writes of the transaction along with its write pointer
+are stored in the <cite>committing change sets</cite> structure.</li>
+<li>The client—namely, a Dataset—can then ask the TM to commit the writes. These are retrieved from the
+<cite>committing change sets</cite> structure. Since the <cite>committed change sets</cite> structure might
+have evolved since the last conflict check, another one is performed. If the
+transaction is in the <cite>excluded set</cite>, the commit will fail regardless
+of conflicts.</li>
+<li>If the second conflict check finds no overlapping transactions, the transaction&#8217;s
+write pointer is removed from the <cite>in-progress set</cite>, and it is placed in
+the <cite>committed change sets</cite> structure, along with the keys it has
+written to. The writes of this transaction will now be seen by all new transactions.</li>
+<li>If something went wrong in one or other of the committing steps, we distinguish
+between normal and long-running transactions:<ul>
+<li>For a normal transaction, the cause could be that the transaction
+was found in the excluded set or that a conflict was detected.
+The client ensures rolling back the writes the transaction has made,
+and it then asks the TM to abort the transaction.
+This will remove the transaction&#8217;s write pointer from either the
+<cite>in-progress set</cite> or the <cite>excluded set</cite>, and optionally from the
+<cite>committing change sets</cite> structure.</li>
+<li>For a long-running transaction, the only possible cause is that a conflict
+was detected. Since it is assumed that the writes will not be rolled back
+by the client, the TM aborts the transaction by storing its
+write pointer into the <cite>excluded set</cite>. It is the only way to
+make other transactions exclude the writes performed by this transaction.</li>
+</ul>
+</li>
+</ul>
+<p>The <cite>committed change sets</cite> structure determines how fast conflict detections
+are performed. Fortunately, not all the committed writes need to be
+remembered; only those which may create a conflict with in-progress
+transactions. This is why only the writes committed after the start of the oldest,
+in-progress, not-long-running transaction are stored in this structure,
+and why transactions which participate in conflict detection must remain
+short in duration. The older they are, the bigger the <cite>committed change sets</cite>
+structure will be and the longer conflict detection will take.</p>
+<p>When conflict detection takes longer, so does committing a transaction
+and the transaction stays longer in the <cite>in-progress set</cite>. The whole transaction
+system can become slow if such a situation occurs.</p>
+</div>
+<div class="section" id="dumping-the-transaction-manager">
+<h4>Dumping the Transaction Manager<a class="headerlink" href="#dumping-the-transaction-manager" title="Permalink to this headline">¶</a></h4>
+<p>CDAP comes bundled with a script that allows you to dump the state of the internal
+transaction manager into a local file to allow further investigation. If your CDAP Instance
+tends to become slow, you can use this tool to detect the incriminating transactions.
+This script is called <tt class="docutils literal"><span class="pre">tx-debugger</span></tt> (on Windows, it is <tt class="docutils literal"><span class="pre">tx-debugger.bat</span></tt>).</p>
+<p>To download a snapshot of the state of the TM of the CDAP, use the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> tx-debugger view --host &lt;name&gt; <span class="o">[</span>--save &lt;filename&gt;<span class="o">]</span>
+</pre></div>
+</div>
+<p>where <cite>name</cite> is the host name of your CDAP instance, and the optional <cite>filename</cite>
+specifies where the snapshot should be saved. This command will
+print statistics about all the structures that define the state of the TM.</p>
+<p>You can also load a snapshot that has already been saved locally
+with the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> tx-debugger view --filename &lt;filename&gt;
+</pre></div>
+</div>
+<p>where <cite>filename</cite> specifies the location where the snapshot has been saved.</p>
+<p>Here are options that you can use with the <tt class="docutils literal"><span class="pre">tx-debugger</span> <span class="pre">view</span></tt> commands:</p>
+<ul class="simple">
+<li>Use the <tt class="docutils literal"><span class="pre">--ids</span></tt> option to print all the transaction write pointers
+that are stored in the different structures.</li>
+<li>Use the <tt class="docutils literal"><span class="pre">--transaction</span> <span class="pre">&lt;writePtr&gt;</span></tt> option to specify the write pointer
+of a transaction you would like information on. If the transaction is found
+in the committing change sets or the committed change sets
+structures, this will print the keys where the transaction has
+performed writes.</li>
+</ul>
+<p>While transactions don&#8217;t inform you about the tasks that launched them—whether
+it was a Flowlet, a MapReduce job, etc.—you can match the time
+they were started with the activity of your CDAP to track potential
+issues.</p>
+<p>If you really know what you are doing and you spot a transaction in the
+in-progress set that should be in the excluded set, you can
+use this command to invalidate it:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> tx-debugger invalidate --host &lt;name&gt; --transaction &lt;writePtr&gt;
+</pre></div>
+</div>
+<p>Invalidating a transaction when we know for sure that its writes should
+be invalidated is useful, because those writes will then be removed
+from the concerned Tables.</p>
+</div>
+</div>
+</div>
+<div class="section" id="ingesting-data">
+<span id="ingest"></span><h2>Ingesting Data<a class="headerlink" href="#ingesting-data" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="introduction">
+<h3>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h3>
+<p>One of the first tasks of actually working with Big Data applications is getting the data in.
+As data ingestion is a fundamental issue, and as one tool often does not fit all needs,
+we have assembled a set of tools and applications to assist in ingesting data into CDAP:
+- Java and Python APIs for controlling and writing to Streams;
+- a drop zone for bulk ingestion of files ;
+- a File Tailer daemon to tail local files; and
+- an Apache Flume Sink implementation for writing events received from a source.</p>
+</div>
+<div class="section" id="stream-client">
+<h3>Stream Client<a class="headerlink" href="#stream-client" title="Permalink to this headline">¶</a></h3>
+<p>The stream client is for managing Streams via external applications. The stream client is currently available in Java and Python.</p>
+<div class="section" id="supported-actions">
+<h4>Supported Actions<a class="headerlink" href="#supported-actions" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Create a stream with a specified <em>stream-name</em></li>
+<li>Retrieve or update the TTL (time-to-live) for an existing stream with a specified <em>stream-name</em></li>
+<li>Truncate an existing stream (the deletion of all events that were written to the stream)</li>
+<li>Write an event to an existing stream</li>
+</ul>
+</div>
+<div class="section" id="java-api">
+<h4>Java API<a class="headerlink" href="#java-api" title="Permalink to this headline">¶</a></h4>
+<p>Download: <a class="reference external" href="https://github.com/caskdata/cdap-ingest/tree/release/1.0.0">Java Stream Client</a></p>
+<p>Create a StreamClient instance, specifying the fields &#8216;host&#8217; and &#8216;port&#8217; of the CDAP instance.
+Optional configurations that can be set:</p>
+<ul class="simple">
+<li>SSL: true or false, default - false</li>
+<li>WriterPoolSize: max thread pool size for writing events to the stream , default - 10</li>
+<li>Version: CDAP instance version, used as a part of the base URI, default - &#8216;v2&#8217;</li>
+<li>AuthToken: If SSL is enabled, need to specify to authenticate client requests, default - null</li>
+<li>APIKey: If SSL is enabled, need to specify to authenticate client requests, default - null</li>
+</ul>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">StreamClient streamClient = new RestStreamClient.Builder(&quot;localhost&quot;, 10000)</span>
+<span class="go">                                               .apiKey(&quot;apiKey&quot;)</span>
+<span class="go">                                               .authToken(&quot;token&quot;)</span>
+<span class="go">                                               .ssl(false)</span>
+<span class="go">                                               .version(&quot;v2&quot;)</span>
+<span class="go">                                               .writerPoolSize(10)</span>
+<span class="go">                                               .build();</span>
+</pre></div>
+</div>
+<p>Create a new Stream with the <em>stream-name</em> &#8220;purchaseStream&#8221;:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamClient.create(&quot;purchaseStream&quot;);</span>
+</pre></div>
+</div>
+<p><strong>Note</strong> Stream Name <em>&lt;stream-name&gt;</em>:</p>
+<ul class="simple">
+<li>The <em>stream-name</em> should only contain ASCII letters, digits and hyphens.</li>
+<li>If the Stream already exists, no error is returned, and the existing Stream remains in place.</li>
+</ul>
+<p>Update TTL for the <em>purchaseStream</em>; TTL is a long value and is specified in seconds:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamClient.setTTL(&quot;purchaseStream&quot;, newTTL);</span>
+</pre></div>
+</div>
+<p>Get the current TTL value(seconds) for the <em>purchaseStream</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">long ttl = streamClient.getTTL(&quot;purchaseStream&quot;);</span>
+</pre></div>
+</div>
+<p>Create a <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> instance for writing events to the <em>purchaseStream</em>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">StreamWriter streamWriter = streamClient.createWriter(&quot;purchaseStream&quot;);</span>
+</pre></div>
+</div>
+<p>To write new events to the Stream, use any of these methods from the <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> interface:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">ListenableFuture&lt;Void&gt; write(String str, Charset charset);</span>
+<span class="go">ListenableFuture&lt;Void&gt; write(String str, Charset charset, Map&lt;String, String&gt; headers);</span>
+<span class="go">ListenableFuture&lt;Void&gt; write(ByteBuffer buffer);</span>
+<span class="go">ListenableFuture&lt;Void&gt; write(ByteBuffer buffer, Map&lt;String, String&gt; headers);</span>
+</pre></div>
+</div>
+<p>Example:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamWriter.write(&quot;New log event&quot;, Charsets.UTF_8).get();</span>
+</pre></div>
+</div>
+<p>To truncate the <em>purchaseStream</em>, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamClient.truncate(&quot;purchaseStream&quot;);</span>
+</pre></div>
+</div>
+<p>When you are finished, release all resources by calling these two methods::https://github.com/caskdata/tephra/&gt;</p>
+<blockquote>
+<div>streamWriter.close();
+streamClient.close();</div></blockquote>
+<div class="section" id="putting-it-all-together">
+<h5>Putting it All Together<a class="headerlink" href="#putting-it-all-together" title="Permalink to this headline">¶</a></h5>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">try {</span>
+<span class="go">  // Create StreamClient instance with mandatory fields &#39;host&#39; and &#39;port&#39;.</span>
+<span class="go">  StreamClient streamClient = RestStreamClient.builder(&quot;localhost&quot;, 10000).build();</span>
+
+<span class="go">  try {</span>
+<span class="go">    // Create a stream named &quot;purchaseStream&quot;</span>
+<span class="go">    streamClient.create(&quot;purchaseStream&quot;);</span>
+
+<span class="go">    // Create StreamWriter Instance</span>
+<span class="go">    StreamWriter streamWriter = streamClient.createWriter(&quot;purchaseStream&quot;);</span>
+
+<span class="go">    // Get current Stream TTL value</span>
+<span class="go">    long currentTTL = streamClient.getTTL(&quot;purchaseStream&quot;);</span>
+<span class="go">    LOG.info(&quot;Current TTL value for stream {} is: {} seconds&quot;, &quot;purchaseStream&quot;, currentTTL);</span>
+<span class="go">    long newTTL = 18000;</span>
+
+<span class="go">    // Update TTL value for Stream</span>
+<span class="go">    streamClient.setTTL(&quot;purchaseStream&quot;, newTTL);</span>
+<span class="go">    LOG.info(&quot;Setting new TTL: {} seconds for stream: {}&quot;, newTTL, &quot;purchaseStream&quot;);</span>
+
+
+<span class="go">    String event = &quot;192.0.2.0 - - [09/Apr/2012:08:40:43 -0400] \&quot;GET /NoteBook/ HTTP/1.0\&quot; 201 809 \&quot;-\&quot; &quot; +</span>
+<span class="go">      &quot;\&quot;Example v0.0.0 (www.example.org)\&quot;&quot;;</span>
+
+<span class="go">    // Write stream event to server</span>
+<span class="go">    ListenableFuture&lt;Void&gt; future = streamWriter.write(event, null);</span>
+
+<span class="go">    Futures.addCallback(future, new FutureCallback&lt;Void&gt;() {</span>
+<span class="go">      @Override</span>
+<span class="go">      public void onSuccess(Void contents) {</span>
+<span class="go">        LOG.info(&quot;Successfully written to stream {}&quot;, &quot;purchaseStream&quot;);</span>
+<span class="go">      }</span>
+
+<span class="go">      @Override</span>
+<span class="go">      public void onFailure(Throwable throwable) {</span>
+<span class="go">        LOG.error(&quot;Exception while writing to stream&quot;, throwable);</span>
+<span class="go">      }</span>
+<span class="go">    });</span>
+<span class="go">  } finally {</span>
+<span class="go">    // Releasing all resources</span>
+<span class="go">    streamWriter.close();</span>
+<span class="go">    streamClient.close();</span>
+<span class="go">  }</span>
+<span class="go">} catch (Exception e) {</span>
+<span class="go">  LOG.error(&quot;Exception while writing to stream&quot;, e);</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>Also look at <a class="reference internal" href="#note-stream-client"><em>Note on Stream Client</em></a></p>
+<p>You can refer to  <a class="reference internal" href="#authclientjava"><em>Authentication Client Usage for Java.</em></a></p>
+</div>
+</div>
+<div class="section" id="python-api">
+<h4>Python API<a class="headerlink" href="#python-api" title="Permalink to this headline">¶</a></h4>
+<p>Download: <a class="reference external" href="https://github.com/caskdata/cdap-ingest/tree/release/1.0.0">Python Stream Client</a></p>
+<div class="section" id="usage">
+<h5>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h5>
+<p>To use the Stream Client Python API, include these imports in your
+Python script:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">from config import Config</span>
+<span class="go">from streamclient import StreamClient</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuring-and-creating-a-stream">
+<h5>Configuring and Creating a Stream<a class="headerlink" href="#configuring-and-creating-a-stream" title="Permalink to this headline">¶</a></h5>
+<p>For Creating a <tt class="docutils literal"><span class="pre">StreamClient</span></tt> instance you would need a <tt class="docutils literal"><span class="pre">config</span></tt> object:</p>
+<p>You can create the <tt class="docutils literal"><span class="pre">config</span></tt> object by manually configuring the config options or you can read the config options
+from an existing file.</p>
+<p>1. Creating <tt class="docutils literal"><span class="pre">config</span></tt> object and configuring it manually</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">def createStreamClient():</span>
+<span class="go">  config = Config()</span>
+<span class="go">  config.host = localhost</span>
+<span class="go">  config.port = 10000</span>
+<span class="go">  config.ssl = False</span>
+<span class="go">  streamClient = StreamClient(config)</span>
+</pre></div>
+</div>
+<p>2. using an existing configuration file in JSON format <a class="reference internal" href="#jsonconfig"><em>Configuration-Json</em></a> to create a <tt class="docutils literal"><span class="pre">config</span></tt> object</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">def createStreamClient():</span>
+<span class="go"> config = Config.read_from_file(&#39;/path/to/config.json&#39;)</span>
+<span class="go"> streamClient = StreamClient(config)</span>
+</pre></div>
+</div>
+<p>3. Once we have configured the stream client, we can create a stream by calling create with a stream-name</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamClient.create(&quot;purchaseStream&quot;);</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#streamname"><em>Note on Stream Name</em></a></p>
+</div>
+<div class="section" id="updating-time-to-live">
+<h5>Updating Time-to-Live<a class="headerlink" href="#updating-time-to-live" title="Permalink to this headline">¶</a></h5>
+<p>Update TTL for the &#8220;purchaseStream&#8221;; <tt class="docutils literal"><span class="pre">newTTL</span></tt> is a long value specified in seconds:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">streamClient.set_ttl(&quot;purchaseStream&quot;, newTTL)</span>
+</pre></div>
+</div>
+<p>Get the current TTL value for the &#8220;purchaseStream&#8221;:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">ttl = streamClient.get_ttl(&quot;purchaseStream&quot;)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="writing-events-to-stream">
+<h5>Writing Events to Stream<a class="headerlink" href="#writing-events-to-stream" title="Permalink to this headline">¶</a></h5>
+<p>Create a <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> instance for writing events to the Stream.</p>
+<p>Once you have a <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> instance you can write events to the stream using the <tt class="docutils literal"><span class="pre">write()</span></tt> method</p>
+</div>
+<div class="section" id="id1">
+<h5>Putting it All Together<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h5>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">def createStreamClient():</span>
+<span class="go">  config = Config.read_from_file(&#39;/path/to/config.json&#39;)</span>
+<span class="go">  streamClient = StreamClient(config)</span>
+<span class="go">  streamWriter = streamClient.create_writer(&quot;purchaseStream&quot;)</span>
+<span class="go">  streamPromise = streamWriter.write(&quot;New log Event&quot;) #async</span>
+<span class="go">  streamPromise.onResponse(onOKHandler, onErrorHandler)</span>
+
+<span class="go">def onOkHandler(httpResponse): #will be executed after successful write to stream</span>
+<span class="go">  ...</span>
+<span class="go">  parse response</span>
+<span class="go">  return &quot;Success&quot;</span>
+<span class="go">  ...</span>
+
+<span class="go">def onErrorHandler(httpResponse): #will be executed if stream write fails</span>
+<span class="go">  ...</span>
+<span class="go">  parse response</span>
+<span class="go">  return &quot;Failure&quot;</span>
+<span class="go">  ...</span>
+</pre></div>
+</div>
+<p id="jsonconfig">Config file structure in JSON format:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  hostname: &#39;localhost&#39;,    - CDAP Instance hostname</span>
+<span class="go">  port: 10000,              - CDAP instance port</span>
+<span class="go">  SSL: false                - is SSL enabled</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<dl class="docutils" id="streamname">
+<dt>Stream name:</dt>
+<dd><ul class="first last simple">
+<li>The name can only contain ASCII letters, digits and hyphens.</li>
+<li>If the stream already exists, no error is returned, and the existing stream remains in place.</li>
+</ul>
+</dd>
+</dl>
+<p>Also look at: <a class="reference internal" href="#note-stream-client"><em>Note on Stream Client</em></a></p>
+<p>You can refer to  - <a class="reference internal" href="#authclientpython"><em>Authentication Client Usage for Python</em></a></p>
+</div>
+</div>
+<div class="section" id="note-on-stream-client">
+<span id="note-stream-client"></span><h4>Note on Stream Client<a class="headerlink" href="#note-on-stream-client" title="Permalink to this headline">¶</a></h4>
+<p>All methods from the <tt class="docutils literal"><span class="pre">StreamClient</span></tt> and <tt class="docutils literal"><span class="pre">StreamWriter</span></tt> throw
+exceptions using response code analysis from the CDAP instance. These
+exceptions help determine if the request was processed successfully or
+not.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Response Code</th>
+<th class="head">Exception</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">400</span> <span class="pre">Bad</span> <span class="pre">Request</span></tt></td>
+<td>javax.ws.rs.BadRequestException</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">401</span> <span class="pre">Unauthorized</span></tt></td>
+<td>javax.ws.rs.NotAuthorizedException</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">403</span> <span class="pre">Forbidden</span></tt></td>
+<td>javax.ws.rs.ForbiddenException</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">404</span> <span class="pre">Not</span> <span class="pre">Found</span></tt></td>
+<td>javax.ws.rs.NotFoundException/co.cask.cdap.client.exception.NotFoundException</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">405</span> <span class="pre">Method</span> <span class="pre">Not</span> <span class="pre">Allowed</span></tt></td>
+<td>javax.ws.rs.NotAcceptableException</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">409</span> <span class="pre">Conflict</span></tt></td>
+<td>javax.ws.rs.NotAcceptableException</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">500</span> <span class="pre">Internal</span> <span class="pre">Server</span> <span class="pre">Error</span></tt></td>
+<td>javax.ws.rs.ServerErrorException</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">501</span> <span class="pre">Not</span> <span class="pre">Implemented</span></tt></td>
+<td>javax.ws.rs.NotSupportedException</td>
+</tr>
+</tbody>
+</table>
+<p>In the case of a 200 OK response, no exception will be thrown.</p>
+</div>
+</div>
+<div class="section" id="file-tailer">
+<h3>File Tailer<a class="headerlink" href="#file-tailer" title="Permalink to this headline">¶</a></h3>
+<p>File Tailer is a daemon process that performs tailing of sets of local files.
+As soon as a new record has been appended to the end of a file that the daemon is monitoring,
+it will send it to a Stream via the REST API.</p>
+<div class="section" id="features">
+<h4>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Distributed as Debian and RPM packages</li>
+<li>Loads properties from a configuration file</li>
+<li>Supports rotation of log files</li>
+<li>Persists state and is able to resume from first unsent record</li>
+<li>Writes statistics info</li>
+</ul>
+</div>
+<div class="section" id="getting-the-file-tailer">
+<h4>Getting the File Tailer<a class="headerlink" href="#getting-the-file-tailer" title="Permalink to this headline">¶</a></h4>
+<p>Download: <a class="reference external" href="https://github.com/caskdata/cdap-ingest/tree/release/1.0.0">File Tailer</a></p>
+</div>
+<div class="section" id="installing-file-tailer">
+<h4>Installing File Tailer<a class="headerlink" href="#installing-file-tailer" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><p>on Debian/Ubuntu:
+<tt class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">file-tailer.deb</span></tt></p>
+<p>on RHEL/Cent OS:
+<tt class="docutils literal"><span class="pre">rpm</span> <span class="pre">-ivh</span> <span class="pre">--force</span> <span class="pre">file-tailer.rpm</span></tt></p>
+</div></blockquote>
+</div>
+<div class="section" id="configuring-file-tailer">
+<h4>Configuring File Tailer<a class="headerlink" href="#configuring-file-tailer" title="Permalink to this headline">¶</a></h4>
+<p>After Installation, you can configure the daemon properties at /etc/file-tailer/conf/file-tailer.properties:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> General pipe properties
+<span class="gp">#</span> Comma-separated list of pipes to be configured
+<span class="go">pipes=app1pipe,app2pipe</span>
+
+<span class="gp">#</span> Pipe 1 <span class="nb">source </span>properties
+<span class="gp">#</span> Working directory <span class="o">(</span>where to monitor files<span class="o">)</span>
+<span class="go">pipes.app1pipe.source.work_dir=/var/log/app1</span>
+<span class="gp">#</span> Name of log file
+<span class="go">pipes.app1pipe.source.file_name=app1.log</span>
+
+<span class="gp">#</span> Pipe 1 sink properties
+<span class="gp">#</span> Name of the stream
+<span class="go">pipes.app1pipe.sink.stream_name=app1Stream</span>
+<span class="gp">#</span> Host name that is used by stream client
+<span class="go">pipes.app1pipe.sink.host=cdap_host.example.com</span>
+<span class="gp">#</span> Host port that is used by stream client
+<span class="go">pipes.app1pipe.sink.port=10000</span>
+</pre></div>
+</div>
+<p><strong>Note</strong>: Please note that the target file must be accessible to the File Tailer user.</p>
+</div>
+<div class="section" id="starting-and-stopping-the-daemon">
+<h4>Starting and Stopping the Daemon<a class="headerlink" href="#starting-and-stopping-the-daemon" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt>To start a File Tailer daemon execute:</dt>
+<dd><tt class="docutils literal"><span class="pre">service</span> <span class="pre">file-tailer</span> <span class="pre">start</span></tt></dd>
+<dt>To stop a File Tailer daemon execute:</dt>
+<dd><tt class="docutils literal"><span class="pre">service</span> <span class="pre">file-tailer</span> <span class="pre">start</span></tt></dd>
+</dl>
+<p><strong>Note</strong>: File Tailer stores log files in the /var/log/file-tailer directory. PID, states and statistics are stored in the /var/run/file-tailer directory.</p>
+</div>
+<div class="section" id="configuring-authentication-client-for-file-tailer">
+<h4>Configuring Authentication Client for File Tailer<a class="headerlink" href="#configuring-authentication-client-for-file-tailer" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt>Authentication client parameters:</dt>
+<dd><ul class="first last simple">
+<li>pipes.&lt;pipe-name&gt;.sink.auth_client - fully qualified class name of the authentication client.</li>
+<li>pipes.&lt;pipe-name&gt;.sink.auth_client_properties - path to authentication client properties file , sample file is
+located at <tt class="docutils literal"><span class="pre">/etc/file-tailer/conf/auth-client.properties</span></tt></li>
+</ul>
+</dd>
+</dl>
+<p>You can refer to <a class="reference internal" href="#authclientjava"><em>Authentication Client Usage for Java.</em></a></p>
+</div>
+<div class="section" id="description-of-configuration-properties">
+<h4>Description of Configuration Properties<a class="headerlink" href="#description-of-configuration-properties" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="67%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.name</td>
+<td><tt class="docutils literal"><span class="pre">name</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">pipe</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.state_file</td>
+<td><tt class="docutils literal"><span class="pre">name</span> <span class="pre">of</span> <span class="pre">file,</span> <span class="pre">used</span> <span class="pre">to</span> <span class="pre">save</span> <span class="pre">state</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.statistics_file</td>
+<td><tt class="docutils literal"><span class="pre">name</span> <span class="pre">of</span> <span class="pre">file,</span> <span class="pre">used</span> <span class="pre">to</span> <span class="pre">save</span> <span class="pre">statistics</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.queue_size</td>
+<td><tt class="docutils literal"><span class="pre">size</span> <span class="pre">of</span> <span class="pre">queue</span> <span class="pre">(default</span> <span class="pre">1000),</span> <span class="pre">of</span> <span class="pre">stored</span> <span class="pre">log</span> <span class="pre">records,</span> <span class="pre">before</span> <span class="pre">sending</span> <span class="pre">them</span> <span class="pre">to</span> <span class="pre">Stream</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.source.work_dir</td>
+<td><tt class="docutils literal"><span class="pre">path</span> <span class="pre">to</span> <span class="pre">directory</span> <span class="pre">being</span> <span class="pre">monitored</span> <span class="pre">for</span> <span class="pre">target</span> <span class="pre">log</span> <span class="pre">files</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.source.file_name</td>
+<td><tt class="docutils literal"><span class="pre">name</span> <span class="pre">of</span> <span class="pre">target</span> <span class="pre">log</span> <span class="pre">file</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.source.rotated_file_name_pattern</td>
+<td><tt class="docutils literal"><span class="pre">log</span> <span class="pre">file</span> <span class="pre">rollover</span> <span class="pre">pattern</span> <span class="pre">(default</span> <span class="pre">&quot;(.*)&quot;</span> <span class="pre">)</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.source.charset_name</td>
+<td><tt class="docutils literal"><span class="pre">name</span> <span class="pre">of</span> <span class="pre">charset</span> <span class="pre">used</span> <span class="pre">by</span> <span class="pre">Stream</span> <span class="pre">Client</span> <span class="pre">for</span> <span class="pre">sending</span> <span class="pre">logs</span> <span class="pre">(default</span> <span class="pre">&quot;UT</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.source.record_separator</td>
+<td><tt class="docutils literal"><span class="pre">symbol</span> <span class="pre">that</span> <span class="pre">separates</span> <span class="pre">each</span> <span class="pre">log</span> <span class="pre">record</span> <span class="pre">(default</span> <span class="pre">&quot;\n&quot;)</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.source.sleep_interval</td>
+<td><tt class="docutils literal"><span class="pre">interval</span> <span class="pre">to</span> <span class="pre">sleep</span> <span class="pre">after</span> <span class="pre">reading</span> <span class="pre">all</span> <span class="pre">log</span> <span class="pre">data</span> <span class="pre">(default</span> <span class="pre">3000</span> <span class="pre">ms)</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.source.failure_retry_limit</td>
+<td><tt class="docutils literal"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">attempts</span> <span class="pre">to</span> <span class="pre">retry</span> <span class="pre">reading</span> <span class="pre">a</span> <span class="pre">log,</span> <span class="pre">if</span> <span class="pre">an</span> <span class="pre">error</span> <span class="pre">occurred</span> <span class="pre">while</span> <span class="pre">reading</span> <span class="pre">file</span> <span class="pre">data</span> <span class="pre">(default</span> <span class="pre">value</span> <span class="pre">is</span> <span class="pre">0</span> <span class="pre">for</span> <span class="pre">unlimited</span> <span class="pre">attempts)</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.source.failure_sleep_interval</td>
+<td><tt class="docutils literal"><span class="pre">interval</span> <span class="pre">to</span> <span class="pre">sleep</span> <span class="pre">if</span> <span class="pre">an</span> <span class="pre">error</span> <span class="pre">occurred</span> <span class="pre">while</span> <span class="pre">reading</span> <span class="pre">the</span> <span class="pre">file</span> <span class="pre">data</span> <span class="pre">(default</span> <span class="pre">60000</span> <span class="pre">ms)</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.sink.stream_name</td>
+<td><tt class="docutils literal"><span class="pre">name</span> <span class="pre">of</span> <span class="pre">target</span> <span class="pre">stream</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.sink.host</td>
+<td><tt class="docutils literal"><span class="pre">server</span> <span class="pre">host</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.sink.port</td>
+<td><tt class="docutils literal"><span class="pre">server</span> <span class="pre">port</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.sink.ssl</td>
+<td><tt class="docutils literal"><span class="pre">Secure</span> <span class="pre">Socket</span> <span class="pre">Layer</span> <span class="pre">mode</span> <span class="pre">[true|false]</span> <span class="pre">(default</span> <span class="pre">false)</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.sink.apiKey</td>
+<td><tt class="docutils literal"><span class="pre">SSL</span> <span class="pre">security</span> <span class="pre">key</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.sink.writerPoolSize</td>
+<td><tt class="docutils literal"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">threads</span> <span class="pre">with</span> <span class="pre">which</span> <span class="pre">Stream</span> <span class="pre">Client</span> <span class="pre">sends</span> <span class="pre">events</span> <span class="pre">(default</span> <span class="pre">10)</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.sink.version</td>
+<td><tt class="docutils literal"><span class="pre">CDAP</span> <span class="pre">server</span> <span class="pre">version</span> <span class="pre">(default</span> <span class="pre">&quot;v2&quot;)</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.sink.packSize</td>
+<td><tt class="docutils literal"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">logs</span> <span class="pre">sent</span> <span class="pre">at</span> <span class="pre">a</span> <span class="pre">time</span> <span class="pre">(default</span> <span class="pre">1)</span></tt></td>
+</tr>
+<tr class="row-even"><td>pipes.&lt;pipename&gt;.sink.failure_retry_limit</td>
+<td><tt class="docutils literal"><span class="pre">number</span> <span class="pre">of</span> <span class="pre">attempts</span> <span class="pre">to</span> <span class="pre">retry</span> <span class="pre">sending</span> <span class="pre">logs,</span> <span class="pre">if</span> <span class="pre">an</span> <span class="pre">error</span> <span class="pre">occurred</span> <span class="pre">while</span> <span class="pre">reading</span> <span class="pre">file</span> <span class="pre">data</span> <span class="pre">(default</span> <span class="pre">value</span> <span class="pre">is</span> <span class="pre">0</span> <span class="pre">for</span> <span class="pre">unlimited</span> <span class="pre">attempts)</span></tt></td>
+</tr>
+<tr class="row-odd"><td>pipes.&lt;pipename&gt;.sink.failure_sleep_interval</td>
+<td><tt class="docutils literal"><span class="pre">interval</span> <span class="pre">to</span> <span class="pre">sleep</span> <span class="pre">if</span> <span class="pre">an</span> <span class="pre">error</span> <span class="pre">occurred</span> <span class="pre">while</span> <span class="pre">sending</span> <span class="pre">the</span> <span class="pre">logs</span> <span class="pre">(default</span> <span class="pre">60000</span> <span class="pre">ms)</span></tt></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="flume-sink">
+<h3>Flume Sink<a class="headerlink" href="#flume-sink" title="Permalink to this headline">¶</a></h3>
+<p>The CDAP Sink is a <a class="reference external" href="https://flume.apache.org">Apache Flume Sink</a> implementation using the
+RESTStreamWriter to write events received from a source. For example, you can configure the Flume Sink&#8217;s
+Agent to read data from a log file by tailing it and putting them into CDAP.</p>
+<div class="section" id="building-the-flume-sink-jar">
+<h4>Building the Flume Sink Jar<a class="headerlink" href="#building-the-flume-sink-jar" title="Permalink to this headline">¶</a></h4>
+<p>Download: <a class="reference external" href="https://github.com/caskdata/cdap-ingest/tree/release/1.0.0">Flume Sink</a></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="30%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>a1.sinks.sink1.type</td>
+<td><tt class="docutils literal"><span class="pre">co.cask.cdap.flume.StreamSink</span></tt></td>
+<td>Copy the CDAP sink jar to Flume lib directory and specify the fully qualified class name for this property.</td>
+</tr>
+<tr class="row-odd"><td>a1.sinks.sink1.host</td>
+<td><tt class="docutils literal"><span class="pre">host-name</span></tt></td>
+<td>Host name used by the Stream client</td>
+</tr>
+<tr class="row-even"><td>a1.sinks.sink1.streamName</td>
+<td><tt class="docutils literal"><span class="pre">Stream-name</span></tt></td>
+<td>Target stream name</td>
+</tr>
+<tr class="row-odd"><td>a1.sinks.sink1.port</td>
+<td><tt class="docutils literal"><span class="pre">10000</span></tt></td>
+<td>This parameter is optional; the default port is 10000</td>
+</tr>
+<tr class="row-even"><td>a1.sinks.sink1.sslEnabled</td>
+<td><tt class="docutils literal"><span class="pre">false</span></tt></td>
+<td>This parameter is used to specify if SSL is enabled, the auth client will be used if SSL is enabled, by default this value is false</td>
+</tr>
+<tr class="row-odd"><td>a1.sinks.sink1.writerPoolSize</td>
+<td><tt class="docutils literal"><span class="pre">10</span></tt></td>
+<td>Number of threads to which the stream client can send events</td>
+</tr>
+<tr class="row-even"><td>a1.sinks.sink1.version</td>
+<td><tt class="docutils literal"><span class="pre">v2</span></tt></td>
+<td>CDAP Router server version</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="authentication-client">
+<h4>Authentication Client<a class="headerlink" href="#authentication-client" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt>To use authentication, add these authentication client configuration parameters to the sink configuration file:</dt>
+<dd><ul class="first last simple">
+<li>a1.sinks.sink1.authClientClass - co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient,
+fully qualified class name of the client class</li>
+<li>a1.sinks.sink1.authClientProperties - path to authentication client properties file , sample file is
+located at <tt class="docutils literal"><span class="pre">/usr/local/apache-flume/conf/auth_client.conf</span></tt></li>
+</ul>
+</dd>
+</dl>
+<p>You can refer to <a class="reference internal" href="#authclientjava"><em>Authentication Client Usage for Java.</em></a></p>
+</div>
+<div class="section" id="flume-sink-example">
+<h4>Flume Sink Example<a class="headerlink" href="#flume-sink-example" title="Permalink to this headline">¶</a></h4>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">a1.sources = r1</span>
+<span class="go">a1.channels = c1</span>
+<span class="go">a1.sources.r1.type = exec</span>
+<span class="go">a1.sources.r1.command = tail -F /tmp/log</span>
+<span class="go">a1.sources.r1.channels = c1</span>
+<span class="go">a1.sinks = k1</span>
+<span class="go">a1.sinks.k1.type = co.cask.cdap.flume.StreamSink</span>
+<span class="go">a1.sinks.k1.channel = c1</span>
+<span class="go">a1.sinks.k1.host  = 127.0.0.1</span>
+<span class="go">a1.sinks.k1.port = 10000</span>
+<span class="go">a1.sinks.k1.streamName = logEventStream</span>
+<span class="go">a1.channels.c1.type = memory</span>
+<span class="go">a1.channels.c1.capacity = 1000</span>
+<span class="go">a1.channels.c1.transactionCapacity = 100</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="file-dropzone">
+<h3>File DropZone<a class="headerlink" href="#file-dropzone" title="Permalink to this headline">¶</a></h3>
+<p>The File DropZone application allows you to easily perform the bulk ingestion of local files.
+Files can either be directly uploaded, or they can be copied to a <em>work_dir</em>,
+where they will automatically be ingested by a daemon process.</p>
+<div class="section" id="id2">
+<h4>Features<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>Distributed as Debian and RPM packages</li>
+<li>Loads properties from configuration file</li>
+<li>Supports multiple observers/topics</li>
+<li>Able to survive restart and resume, sending from the first unsent record of each of the existing files</li>
+<li>Cleanup of files that are completely sent</li>
+</ul>
+</div>
+<div class="section" id="getting-file-dropzone">
+<h4>Getting File DropZone<a class="headerlink" href="#getting-file-dropzone" title="Permalink to this headline">¶</a></h4>
+<p>Download: <a class="reference external" href="https://github.com/caskdata/cdap-ingest/tree/release/1.0.0">File DropZone</a></p>
+</div>
+<div class="section" id="installing-file-dropzone">
+<h4>Installing File DropZone<a class="headerlink" href="#installing-file-dropzone" title="Permalink to this headline">¶</a></h4>
+<blockquote>
+<div><dl class="docutils">
+<dt>on Debian/Ubuntu:</dt>
+<dd><tt class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">file-drop-zone.deb</span></tt></dd>
+<dt>on RHEL/Cent OS:</dt>
+<dd><tt class="docutils literal"><span class="pre">rpm</span> <span class="pre">-ivh</span> <span class="pre">--force</span> <span class="pre">file-drop-zone.rpm</span></tt></dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="configuring-file-dropzone">
+<h4>Configuring File DropZone<a class="headerlink" href="#configuring-file-dropzone" title="Permalink to this headline">¶</a></h4>
+<p>After Installation, you can configure the daemon properties at /etc/file-drop-zone/conf/file-drop-zone.properties:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> Polling directories interval in milliseconds
+<span class="go">polling_interval=5000</span>
+
+<span class="gp">#</span> Comma-separated list of directories observers to be configured
+<span class="go">observers=obs1</span>
+
+<span class="gp">#</span>Path to work directory
+<span class="go">work_dir=/var/file-drop-zone/</span>
+
+<span class="gp">#</span> General observer configurations
+<span class="gp">#</span> Pipe is used <span class="k">for </span>loading data from the file to the Stream
+<span class="go">observers.obs1.pipe=pipe1</span>
+
+<span class="gp">#</span> Pipe sink properties
+<span class="gp">#</span> Name of the stream
+<span class="go">pipes.pipe1.sink.stream_name=logEventStream</span>
+<span class="gp">#</span> Host name that is used by stream client
+<span class="go">pipes.pipe1.sink.host=localhost</span>
+<span class="gp">#</span> Host port that is used by stream client
+<span class="go">pipes.pipe1.sink.port=10000</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h4>Starting and Stopping the Daemon<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<dl class="docutils">
+<dt>To start a file DropZone daemon execute:</dt>
+<dd><tt class="docutils literal"><span class="pre">service</span> <span class="pre">file-drop-zone</span> <span class="pre">start</span></tt></dd>
+<dt>To stop a file DropZone daemon execute:</dt>
+<dd><tt class="docutils literal"><span class="pre">service</span> <span class="pre">file-drop-zone</span> <span class="pre">stop</span></tt></dd>
+</dl>
+<p>Note:  File DropZone stores log files in the /var/log/file-drop-zone directory. PID, states and statistics are stored in the /var/run/file-drop-zone directory</p>
+</div>
+<div class="section" id="manual-upload-of-files">
+<h4>Manual Upload of files<a class="headerlink" href="#manual-upload-of-files" title="Permalink to this headline">¶</a></h4>
+<p>If you would like to manually upload a file use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">file-drop-zone load &lt;file-path&gt; &lt;observer&gt;</span>
+</pre></div>
+</div>
+<p>You can refer to <a class="reference internal" href="#authclientjava"><em>Authentication Client Usage for Java.</em></a></p>
+</div>
+<div class="section" id="authentication-client-java">
+<span id="authclientjava"></span><h4>Authentication Client - Java<a class="headerlink" href="#authentication-client-java" title="Permalink to this headline">¶</a></h4>
+<p>The Authentication Client Java API fetches access tokens from the authentication service.</p>
+<div class="section" id="id4">
+<h5>Supported Actions<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h5>
+<ul class="simple">
+<li>Fetch an access token from the authentication service with credentials supported by the active authentication mechanism</li>
+<li>Check that authentication is enabled in the CDAP instance</li>
+</ul>
+<dl class="docutils">
+<dt>The current implementation supports three authentication mechanisms:</dt>
+<dd><ul class="first last simple">
+<li>Basic Authentication</li>
+<li>LDAP</li>
+<li>JASPI</li>
+</ul>
+</dd>
+</dl>
+<p>It is also possible to extend existing logic and implement a custom client for any other authentication
+mechanisms. To create a new Authentication Client, implement the <tt class="docutils literal"><span class="pre">AuthenticationClient</span></tt> interface.</p>
+</div>
+<div class="section" id="download">
+<h5>Download<a class="headerlink" href="#download" title="Permalink to this headline">¶</a></h5>
+<p>Download: <a class="reference external" href="https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/java">Authentication Client - Java</a></p>
+</div>
+<div class="section" id="build">
+<h5>Build<a class="headerlink" href="#build" title="Permalink to this headline">¶</a></h5>
+<p>To build the Authentication Client Java API jar, use:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">mvn clean package</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h5>Usage<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h5>
+<p>To use the Authentication Client Java API, include this Maven dependency in your project&#8217;s <tt class="docutils literal"><span class="pre">pom.xml</span></tt> file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">&lt;dependency&gt;</span>
+<span class="go"> &lt;groupId&gt;co.cask.cdap&lt;/groupId&gt;</span>
+<span class="go"> &lt;artifactId&gt;cdap-authentication-client&lt;/artifactId&gt;</span>
+<span class="go"> &lt;version&gt;1.0.0&lt;/version&gt;</span>
+<span class="go">&lt;/dependency&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="examples">
+<h4>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h4>
+<p>This example creates a <tt class="docutils literal"><span class="pre">BasicAuthenticationClient</span></tt> to retrieve an access token:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">String authClientClassName = &quot;co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient&quot;;</span>
+<span class="go">AuthenticationClient authenticationClient = configuration.getClassByName(authClientClassName);</span>
+
+<span class="go">// Set the CDAP instance connection info: hostname, port and flag to indicate if SSL is enabled or not</span>
+<span class="go">authenticationClient.setConnectionInfo(&quot;localhost&quot;, 10000, false);</span>
+
+<span class="go">// If you have additional properties, you can include them for configuration using the following</span>
+<span class="go">authenticationClient.configure(properties);</span>
+
+<span class="go">// Check if authentication is enabled</span>
+<span class="go">boolean isEnabled = authenticationClient.isAuthEnabled();</span>
+
+<span class="go">// Get the access token for the user from the authentication service</span>
+<span class="go">// If access token is not available an IOException will be thrown</span>
+<span class="go">String token = authenticationClient.getAccessToken();</span>
+</pre></div>
+</div>
+<p>This example illustrates an Authentication Client obtaining credentials from a user and then using them for configuration:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">authenticationClient.setConnectionInfo(hostname, port, ssl);</span>
+<span class="go">Properties properties = new Properties();</span>
+<span class="go">if (authenticationClient.isAuthEnabled()) {</span>
+<span class="go">  ConsoleReader reader = new ConsoleReader();</span>
+<span class="go">  for (Credential credential : authenticationClient.getRequiredCredentials()) {</span>
+<span class="go">    String credentialValue;</span>
+<span class="go">    output.printf(&quot;Please, specify &quot;  credential.getDescription()  &quot;&gt; &quot;);</span>
+<span class="go">    if (credential.isSecret()) {</span>
+<span class="go">        credentialValue = reader.readLine(prompt, &#39;*&#39;);</span>
+<span class="go">    } else {</span>
+<span class="go">      credentialValue = reader.readLine(prompt);</span>
+<span class="go">    }</span>
+<span class="go">    properties.put(credential.getName(), credentialValue);</span>
+<span class="go">  }</span>
+<span class="go">  authenticationClient.configure(properties);</span>
+<span class="go">  cliConfig.getClientConfig().setAuthenticationClient(authenticationClient);</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+<p>To see the properties supported by the Authentication Client, look at <a class="reference internal" href="#configuringauthclient"><em>Configuring Authentication Client.</em></a></p>
+</div>
+<div class="section" id="authentication-client-python">
+<span id="authclientpython"></span><h4>Authentication Client - Python<a class="headerlink" href="#authentication-client-python" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id6">
+<h5>Download<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h5>
+<p>Download: <a class="reference external" href="https://github.com/caskdata/cdap-clients/tree/release/1.0.0/cdap-authentication-clients/python">Authentication Client - Python</a></p>
+</div>
+<div class="section" id="example-usage">
+<h5>Example Usage<a class="headerlink" href="#example-usage" title="Permalink to this headline">¶</a></h5>
+<ol class="arabic">
+<li><p class="first">Read the configuration from Json and retrieve an AccessToken:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> Include these imports in your Python script
+<span class="go">from Config import Config</span>
+<span class="go">from BasicAuthenticationClient import BasicAuthenticationClient</span>
+
+<span class="gp">#</span> Create a BasicAuthenticationClient instance
+<span class="go">authentication_client = BasicAuthenticationClient()</span>
+
+<span class="gp">#</span> Set the connection parameters: authentication service host, port and SSL mode
+<span class="go">authentication_client.set_connection_info(&#39;localhost&#39;, 10000, False)</span>
+
+<span class="gp">#</span> Load configuration from JSON File
+<span class="go">config = Config().read_from_file(&#39;auth_config.json&#39;)</span>
+
+<span class="gp">#</span> Configure the Authentication Client with the Config object
+<span class="go">authentication_client.configure(config)</span>
+
+<span class="gp">#</span> Check <span class="k">if </span>authentication is enabled in the CDAP instance
+<span class="go">is_enabled = authentication_client.is_auth_enabled()</span>
+
+<span class="gp">#</span> Retrieve the access token from the authentication service:
+<span class="go">token = authentication_client.get_access_token()</span>
+</pre></div>
+</div>
+<p>Sample config JSON file:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<span class="go">  &quot;security_auth_client_username&quot;: &quot;admin&quot;,</span>
+<span class="go">  &quot;security_auth_client_password&quot;: &quot;secret&quot;,</span>
+<span class="go">  &quot;security_ssl_cert_check&quot;: true</span>
+<span class="go">}</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Create a configuration object and configure it manually:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">#</span> Include these imports in your Python script
+<span class="go">from Config import Config</span>
+<span class="go">from BasicAuthenticationClient import BasicAuthenticationClient</span>
+
+<span class="gp">#</span> Create a BasicAuthenticationClient instance
+<span class="go">authentication_client = BasicAuthenticationClient()</span>
+
+<span class="gp">#</span> Set the connection parameters: authentication service host, port, SSL mode
+<span class="go">authentication_client.set_connection_info(&#39;localhost&#39;, 10000, False)</span>
+
+<span class="gp">#</span> Load configuration from JSON File
+<span class="go">config = Config()</span>
+<span class="go">config.security_auth_client_username = &quot;admin&quot;</span>
+<span class="go">config.security_auth_client_password = &quot;secret&quot;</span>
+<span class="go">config.security_ssl_cert_check = True</span>
+
+<span class="gp">#</span> Configure the Authentication Client with the Config object
+<span class="go">authentication_client.configure(config)</span>
+
+<span class="gp">#</span> Check <span class="k">if </span>authentication is enabled in the CDAP instance
+<span class="go">is_enabled = authentication_client.is_auth_enabled()</span>
+
+<span class="gp">#</span> Retrieve the access token from the authentication service:
+<span class="go">token = authentication_client.get_access_token()</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>To see the properties supported by the Authentication Client, look at <a class="reference internal" href="#configuringauthclient">ConfiguringAuthClient</a></p>
+</div>
+</div>
+<div class="section" id="authentication-client-configuration">
+<span id="configuringauthclient"></span><h4>Authentication Client Configuration<a class="headerlink" href="#authentication-client-configuration" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>security.auth.client.username</td>
+<td>authorized user name</td>
+</tr>
+<tr class="row-odd"><td>security.auth.client.password</td>
+<td>password used for authenticating the user</td>
+</tr>
+<tr class="row-even"><td>security.auth.client.verify.ssl.cert</td>
+<td>When SSL is enabled , if you want to allow self-signed certificates set this to false - this will disable the certificate check.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><!--
+  Copyright © 2014 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<h3><a href="index.html">Table of Contents</a></h3>
+<nav>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getstarted.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="case_study.html">Case Study</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arch.html">Concepts and Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-guide.html">Developer Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="apps-packs.html">Apps and Packs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">APIs and Clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="javadocs/index.html">Javadocs</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#tools-overview">Tools Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing-cdap">Testing CDAP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#strategies-in-testing-applications">Strategies in Testing Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#strategies-in-testing-flows">Strategies in Testing Flows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#strategies-in-testing-mapreduce-jobs">Strategies in Testing MapReduce Jobs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#strategies-in-testing-spark-programs">Strategies in Testing Spark Programs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#validating-test-data-with-sql">Validating Test Data with SQL</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#debugging-cdap">Debugging CDAP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#debugging-an-application-in-standalone-cdap">Debugging an Application in Standalone CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debugging-an-application-in-distributed-cdap">Debugging an Application in Distributed CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#attaching-a-debugger">Attaching a Debugger</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debugging-the-transaction-manager-advanced-use">Debugging the Transaction Manager (Advanced Use)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ingesting-data">Ingesting Data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stream-client">Stream Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#file-tailer">File Tailer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flume-sink">Flume Sink</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#file-dropzone">File DropZone</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Administration and Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="licenses/index.html">Licenses and Dependencies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq/index.html">FAQ</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="javadocs/index.html"
+                        title="Previous Chapter">Javadocs</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="admin.html"
+                        title="Next Chapter">Cask Data Application Platform Administration and Operations Guide</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >Index</a></li>
+        <li class="right" >
+          <a href="admin.html" title="Cask Data Application Platform Administration and Operations Guide"
+             >Next</a> |</li>
+        <li class="right" >
+          <a href="javadocs/index.html" title="Javadocs"
+             >Previous</a> |</li>
+        <li><a href="index.html">Cask Data Application Platform 2.5.0 Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2014 Cask Data, Inc.
+    </div>
+  </body>
+</html>
