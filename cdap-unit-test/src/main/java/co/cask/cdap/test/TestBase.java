@@ -383,8 +383,6 @@ public class TestBase {
    * @param datasetInstanceName instance name
    * @param props properties
    * @param <T> type of the dataset admin
-   * @return
-   * @throws Exception
    */
   @Beta
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
@@ -400,8 +398,6 @@ public class TestBase {
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
-   * @return
-   * @throws Exception
    */
   @Beta
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,

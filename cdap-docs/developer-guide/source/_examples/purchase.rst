@@ -184,24 +184,25 @@ includes a script, ``bin/cdap-cli.sh``, that can execute the series of calls.
 
 From within the SDK root directory::
 
-  bin/cdap-cli.sh execute SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')
+  $ ./bin/cdap-cli.sh execute "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
 
 This will submit the query, using the *History* table in the ``cdap_user`` namespace, wait for its completion and 
 then retrieve and print all results, one by one::
 
-  Query handle is ad004d63-7e8d-44f8-b53a-33f3cf3bd5c8.
-  ["Alice","[{\"customer\":\"Alice\",\"product\":\"grapefruit\",\"quantity\":12,\"price\":10
-    \"purchasetime\":1403737694225}]"]
-  ["Bob","[{\"customer\":\"Bob\",\"product\":\"orange\",\"quantity\":6,\"price\":12
-    \"purchasetime\":1403737694226}]"]
-  . . .
+  +=====================================================================================================================================================================================================================================================================+
+  | cdap_user_history.customer: STRING | cdap_user_history.purchases: array<struct<customer:string,product:string,quantity:int,price:int,purchasetime:bigint,catalogid:string>>                                                                                         |
+  +=====================================================================================================================================================================================================================================================================+
+  | Alice                              | [{"customer":"Alice","product":"coconut","quantity":2,"price":5,"purchasetime":1413399429579,"catalogid":""},{"customer":"Alice","product":"grapefruit","quantity":12,"price":10,"purchasetime":1413399429575,"catalogid":""}] |
+  | Bob                                | [{"customer":"Bob","product":"coffee","quantity":1,"price":1,"purchasetime":1413399429600,"catalogid":""},{"customer":"Bob","product":"orange","quantity":6,"price":12,"purchasetime":1413399429578,"catalogid":""}]           |
+  +=====================================================================================================================================================================================================================================================================+
+
 
 If you prefer to use ``curl`` directly, here is the sequence of steps to execute:
 
 First, submit the query for execution::
 
-  curl -v -d '{"query": "'"SELECT * FROM cask_user_history WHERE customer IN ('Alice','Bob')"'"}'
-    -X POST http://localhost:10000/v2/data/queries
+  curl -v -d '{"query": "'"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"'"}'
+    -X POST http://localhost:10000/v2/data/explore/queries
 
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
 correctly at the shell command prompt. On success, this will return a handle for the query, such as::
@@ -211,7 +212,7 @@ correctly at the shell command prompt. On success, this will return a handle for
 This handle is needed to inquire about the status of the query and to retrieve query results. To get the
 status, issue a GET to the query's URL using the handle::
 
-  curl -v -X GET http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
+  curl -v -X GET http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
 
 Because a SQL query can run for several minutes, you may have to repeat the call until it returns a status of *finished*::
 
@@ -219,9 +220,9 @@ Because a SQL query can run for several minutes, you may have to repeat the call
 
 Once execution has finished, you can retrieve the results of the query using the handle::
 
-  curl -v -X POST http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
+  curl -v -X POST http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
 
-This will return—up to a limited number of—the results in JSON format::
+This will return—up to a limited number—the results in JSON format::
 
   [{"columns":["Alice","[{\"customer\":\"Alice\",\"product\":\"grapefruit\",\"quantity\":12,\"price\":10
     \"purchasetime\":1403737694225}]"]},
@@ -230,7 +231,7 @@ This will return—up to a limited number of—the results in JSON format::
 
 You repeat this step until the ``curl`` call returns an empty list. That means you have retrieved all of the results and you can now close the query::
 
-  curl -v -X DELETE http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782
+  curl -v -X DELETE http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782
 
 
 Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.

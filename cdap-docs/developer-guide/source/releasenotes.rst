@@ -12,6 +12,39 @@ Cask Data Application Platform Release Notes
 ============================================
 .. _release-notes:
 
+Release 2.5.1
+=============
+
+CDAP Bug Fixes
+--------------
+
+- Improved the documentation of the CDAP Authentication and Stream Clients, both Java and Python APIs.
+- Fixed problems with the CDAP Command Line Interface (CLI):
+
+  - Did not work in non-interactive mode;
+  - Printed excessive debug log messages;
+  - Relative paths did not work as expected; and 
+  - Failed to execute SQL queries.
+  
+- Removed dependencies on SNAPSHOT artifacts for *netty-http* and *auth-clients*. 
+- Corrected an error in the message printed by the startup script ``cdap.sh``.
+- Resolved a problem with the reading of the properties file by the CDAP Flume Client of CDAP Ingest library
+  without first checking if authentication was enabled.
+
+Other Changes
+-------------
+
+- The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
+  `CDAP Command Line Interface, <api.html#cli>`__ ``cdap-cli.sh``.
+- The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
+- The CDAP Java Stream Client now allows empty String events to be sent.
+- The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.
+
+Known Issues
+------------
+See *Known Issues* of `the previous version. <#known-issues-251>`_
+
+
 Release 2.5.0
 =============
 
@@ -77,11 +110,8 @@ Major CDAP Bug Fixes
 - Fixed an issue with the Dataset size metric showing data operations size instead of resource usage
 
 
-Other CDAP Changes
-------------------
-- `A list of deprecated Interfaces, Classes and Methods <javadocs/deprecated-list.html>`__ 
-  is included in the Javadocs
-  
+.. _known-issues-251:
+
 Known Issues
 ------------
 - Metrics for MapReduce jobs aren't populated on secure Hadoop clusters

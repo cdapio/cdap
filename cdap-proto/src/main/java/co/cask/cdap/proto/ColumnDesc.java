@@ -19,7 +19,7 @@ package co.cask.cdap.proto;
 import com.google.common.base.Objects;
 
 /**
- * Describes a column being returned by {@link Explore}.
+ * Represents a column inside a query result.
  */
 public class ColumnDesc {
   private final String name;

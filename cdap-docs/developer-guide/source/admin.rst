@@ -226,6 +226,14 @@ To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
 
   #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
 
+- Set the ``router.server.address`` property in ``conf/cdap-site.xml`` to the hostname of the CDAP Router.
+  The CDAP Console uses this property to connect to the Router::
+
+      <property>
+        <name>router.server.address</name>
+        <value>{router-host-name}</value>
+      </property>
+
 - To use the ad-hoc querying capabilities of CDAP, enable the CDAP Explore Service in
   ``conf/cdap-site.xml`` (by default, it is disabled)::
 
@@ -420,8 +428,8 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
 #. Open a web browser to the CDAP Console.
    It is located on port ``9999`` of the box where you installed CDAP.
 #. On the Console, click the button *Load an App*.
-#. Find the pre-built ``WordCount-2.5.0.jar`` using the dialog box to navigate to
-   ``CDAP_HOME/examples/WordCount/target/``
+#. Find the pre-built ``WordCount-2.5.1.jar`` using the dialog box to navigate to
+   ``CDAP_HOME/examples/WordCount/target/``. 
 #. Once the application is deployed, instructions on running the example can be found at the
    :ref:`WordCount example<word-count>`.
 #. You should be able to start the application, inject sentences,

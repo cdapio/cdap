@@ -19,7 +19,7 @@ package co.cask.cdap.proto;
 import com.google.common.base.Objects;
 
 /**
- * Represents the status of an operation submitted to {@link Explore}.
+ * Represents the status of a submitted query operation.
  */
 public class QueryStatus {
 
