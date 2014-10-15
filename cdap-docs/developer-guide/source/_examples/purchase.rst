@@ -189,12 +189,13 @@ From within the SDK root directory::
 This will submit the query, using the *History* table in the ``cdap_user`` namespace, wait for its completion and 
 then retrieve and print all results, one by one::
 
-  Query handle is ad004d63-7e8d-44f8-b53a-33f3cf3bd5c8.
-  ["Alice","[{\"customer\":\"Alice\",\"product\":\"grapefruit\",\"quantity\":12,\"price\":10
-    \"purchasetime\":1403737694225}]"]
-  ["Bob","[{\"customer\":\"Bob\",\"product\":\"orange\",\"quantity\":6,\"price\":12
-    \"purchasetime\":1403737694226}]"]
-  . . .
+  +=====================================================================================================================================================================================================================================================================+
+  | cdap_user_history.customer: STRING | cdap_user_history.purchases: array<struct<customer:string,product:string,quantity:int,price:int,purchasetime:bigint,catalogid:string>>                                                                                         |
+  +=====================================================================================================================================================================================================================================================================+
+  | Alice                              | [{"customer":"Alice","product":"coconut","quantity":2,"price":5,"purchasetime":1413399429579,"catalogid":""},{"customer":"Alice","product":"grapefruit","quantity":12,"price":10,"purchasetime":1413399429575,"catalogid":""}] |
+  | Bob                                | [{"customer":"Bob","product":"coffee","quantity":1,"price":1,"purchasetime":1413399429600,"catalogid":""},{"customer":"Bob","product":"orange","quantity":6,"price":12,"purchasetime":1413399429578,"catalogid":""}]           |
+  +=====================================================================================================================================================================================================================================================================+
+
 
 If you prefer to use ``curl`` directly, here is the sequence of steps to execute:
 
