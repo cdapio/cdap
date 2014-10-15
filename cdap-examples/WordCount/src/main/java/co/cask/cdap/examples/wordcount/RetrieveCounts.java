@@ -116,7 +116,7 @@ public class RetrieveCounts extends AbstractProcedure {
     String word1 = request.getArgument("word1");
     String word2 = request.getArgument("word2");
     if (word1 == null || word2 == null) {
-      responder.error(Code.CLIENT_ERROR, "Method 'getCount' requires arguments 'word1' and 'word2'");
+      responder.error(Code.CLIENT_ERROR, "Method 'getAssoc' requires arguments 'word1' and 'word2'");
       return;
     }
     // Read the top associated words
