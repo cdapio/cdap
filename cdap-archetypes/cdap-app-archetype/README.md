@@ -16,7 +16,7 @@ To create a project from the archetype, use this script as an example:
  mvn archetype:generate 					
   -DarchetypeGroupId=co.cask.cdap 			
   -DarchetypeArtifactId=cdap-app-archetype 	
-  -DarchetypeVersion=2.5.0
+  -DarchetypeVersion=2.5.1
   -DgroupId=com.example
   -DartifactId=MyExample
   -Dversion=1.0						

@@ -48,7 +48,7 @@ import javax.security.auth.login.LoginException;
 /* ---------------------------------------------------- */
 /** JAASLoginService
  *
- * @org.apache.xbean.XBean element="jaasUserRealm" description="Creates a UserRealm suitable for use with JAAS"
+ * Creates a UserRealm suitable for use with JAAS
  */
 public class JAASLoginService extends AbstractLifeCycle implements LoginService {
   private static final Logger LOG = Log.getLogger(JAASLoginService.class);
