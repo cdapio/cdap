@@ -2415,24 +2415,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       switch (type) {
         case FLOW:
-          //Stop the flow if it not running
-          ProgramRuntimeService.RuntimeInfo flowRunInfo = findRuntimeInfo(programId.getAccountId(),
-                                                                          programId.getApplicationId(),
-                                                                          programId.getId(),
-                                                                          type);
-          if (flowRunInfo != null) {
-            doStop(flowRunInfo);
-          }
+          stopProgramIfRunning(programId, type);
           break;
         case PROCEDURE:
-          //Stop the procedure if it not running
-          ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(programId.getAccountId(),
-                                                                               programId.getApplicationId(),
-                                                                               programId.getId(),
-                                                                               type);
-          if (procedureRunInfo != null) {
-            doStop(procedureRunInfo);
-          }
+          stopProgramIfRunning(programId, type);
           break;
         case WORKFLOW:
           List<String> scheduleIds = scheduler.getScheduleIds(programId, type);
@@ -2441,9 +2427,23 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         case MAPREDUCE:
           //no-op
           break;
+        case SERVICE:
+          stopProgramIfRunning(programId, type);
+          break;
       }
     } catch (InterruptedException e) {
       throw new ExecutionException(e);
+    }
+  }
+
+  private void stopProgramIfRunning(Id.Program programId, ProgramType type)
+    throws InterruptedException, ExecutionException {
+    ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                        programId.getApplicationId(),
+                                                                        programId.getId(),
+                                                                        type);
+    if (programRunInfo != null) {
+      doStop(programRunInfo);
     }
   }
 
