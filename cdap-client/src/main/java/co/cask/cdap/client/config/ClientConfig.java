@@ -18,9 +18,7 @@ package co.cask.cdap.client.config;
 
 import co.cask.cdap.common.http.HttpRequestConfig;
 import co.cask.cdap.security.authentication.client.AccessToken;
-import co.cask.cdap.security.authentication.client.AuthenticationClient;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -46,7 +44,7 @@ public class ClientConfig {
   private URI baseURI;
   private String hostname;
   private int port;
-  private AuthenticationClient authenticationClient;
+  private AccessToken accessToken;
 
   /**
    * @param hostname Hostname of the CDAP instance (e.g. example.com)
@@ -55,50 +53,51 @@ public class ClientConfig {
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
    */
   public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig,
-                      AuthenticationClient authenticationClient) {
-    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_IS_SSL_ENABLED, authenticationClient);
+                      AccessToken accessToken) {
+    this(hostname, port, defaultConfig, uploadConfig, DEFAULT_IS_SSL_ENABLED, accessToken);
   }
 
   /**
-   * @param hostname Hostname of the CDAP instance (e.g. example.com)
-   * @param port Port of the CDAP server (e.g. 10000)
+   * @param hostname hostname of the CDAP instance (e.g. example.com)
+   * @param port port of the CDAP server (e.g. 10000)
    * @param defaultConfig {@link HttpRequestConfig} to use by default
    * @param uploadConfig {@link HttpRequestConfig} to use when uploading a file
    * @param isSslEnabled true, if SSL is enabled in the gateway server
+   * @param accessToken access token to use when executing requests
    */
   public ClientConfig(String hostname, int port, HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig,
-                      boolean isSslEnabled, AuthenticationClient authenticationClient) {
+                      boolean isSslEnabled, AccessToken accessToken) {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
     this.hostname = hostname;
     this.port = port;
     this.protocol = isSslEnabled ? HTTPS : HTTP;
-    this.authenticationClient = authenticationClient;
+    this.accessToken = accessToken;
     this.baseURI = URI.create(String.format("%s://%s:%d", protocol, hostname, port));
   }
 
   /**
    * @param uri URI of the CDAP instance (e.g. http://example.com:10000)
-   * @param authenticationClient the authenticationClient to set
+   * @param accessToken the authenticationClient to set
    */
-  public ClientConfig(URI uri, AuthenticationClient authenticationClient) {
+  public ClientConfig(URI uri, AccessToken accessToken) {
     this(uri.getHost(), uri.getPort(), DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG,
-         "https".equals(uri.getScheme()), authenticationClient);
+         "https".equals(uri.getScheme()), accessToken);
   }
 
   /**
    * @param hostname Hostname of the CDAP instance (i.e. example.com)
    * @param port Port of the CDAP server (e.g. 10000)
    */
-  public ClientConfig(String hostname, int port, AuthenticationClient authenticationClient) {
-    this(hostname, port, DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG, authenticationClient);
+  public ClientConfig(String hostname, int port, AccessToken accessToken) {
+    this(hostname, port, DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG, accessToken);
   }
 
   /**
    * @param hostname Hostname of the CDAP instance (e.g. example.com)
    */
-  public ClientConfig(String hostname, AuthenticationClient authenticationClient) {
-    this(hostname, DEFAULT_PORT, DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG, authenticationClient);
+  public ClientConfig(String hostname, AccessToken accessToken) {
+    this(hostname, DEFAULT_PORT, DEFAULT_CONFIG, DEFAULT_UPLOAD_CONFIG, accessToken);
   }
 
   /**
@@ -161,19 +160,15 @@ public class ClientConfig {
   /**
    * @return the accessToken
    */
-  public AccessToken getAccessToken() throws IOException {
-    return (authenticationClient.isAuthEnabled()) ? authenticationClient.getAccessToken() : null;
+  public AccessToken getAccessToken() {
+    return accessToken;
   }
 
   /**
-   * @param authenticationClient the authenticationClient to set
+   * @param accessToken the access token to set
    */
-  public void setAuthenticationClient(AuthenticationClient authenticationClient) {
-    this.authenticationClient = authenticationClient;
-  }
-
-  public AuthenticationClient getAuthenticationClient() {
-    return authenticationClient;
+  public void setAccessToken(AccessToken accessToken) {
+    this.accessToken = accessToken;
   }
 
   /**

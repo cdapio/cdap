@@ -153,7 +153,7 @@ public class QueueEntryRow {
   }
 
   /**
-   * Returns {@code true} if the given {@link byte[]} is a state column qualifier in queue entry row.
+   * Returns {@code true} if the given {@code byte[]} is a state column qualifier in queue entry row.
    */
   public static boolean isStateColumn(byte[] qualifierBuffer, int qualifierOffset) {
     return columnHasPrefix(qualifierBuffer, qualifierOffset, STATE_COLUMN_PREFIX);
@@ -167,7 +167,7 @@ public class QueueEntryRow {
   }
 
   /**
-   * Returns {@code true} if the given {@link byte[]} is a meta column qualifier in queue entry row.
+   * Returns {@code true} if the given {@code byte[]} is a meta column qualifier in queue entry row.
    */
   public static boolean isMetaColumn(byte[] qualifierBuffer, int qualifierOffset) {
     return columnHasPrefix(qualifierBuffer, qualifierOffset, META_COLUMN);
@@ -181,7 +181,7 @@ public class QueueEntryRow {
   }
 
   /**
-   * Returns {@code true} if the given {@link byte[]} is a data column qualifier in queue entry row.
+   * Returns {@code true} if the given {@code byte[]} is a data column qualifier in queue entry row.
    */
   public static boolean isDataColumn(byte[] qualifierBuffer, int qualifierOffset) {
     return columnHasPrefix(qualifierBuffer, qualifierOffset, DATA_COLUMN);

@@ -68,25 +68,21 @@ public abstract class AbstractAuthenticationHandler extends ConstraintSecurityHa
 
   /**
    * Get a {@link org.eclipse.jetty.security.LoginService} for the handler.
-   * @return
    */
   protected abstract LoginService getHandlerLoginService();
 
   /**
    * Get an {@link org.eclipse.jetty.security.Authenticator} for the handler.
-   * @return
    */
   protected abstract Authenticator getHandlerAuthenticator();
 
   /**
    * Get an {@link org.eclipse.jetty.security.IdentityService} for the handler.
-   * @return
    */
   protected abstract IdentityService getHandlerIdentityService();
 
   /**
    * Get configuration for the LoginModule.
-   * @return
    */
   protected abstract Configuration getLoginModuleConfiguration();
 }

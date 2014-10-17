@@ -60,7 +60,7 @@ All URLs referenced in this API have this base URL::
 where ``<host>`` is the host name of the CDAP server and ``<port>`` is the port that is set as the ``router.bind.port``
 in ``cdap-site.xml`` (default: ``10000``).
 
-Note that if SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
+**Note:** If SSL is enabled for CDAP, then the base URL uses ``https`` and ``<port>`` becomes the port that is set
 as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: 10443).
 
 In this API, the base URL is represented as::
@@ -129,7 +129,7 @@ Status Codes
      - ``Not Implemented``
      - A request contained a query that is not supported by this API
 
-Note these returned status codes are not necessarily included in the descriptions of the API,
+**Note:** These returned status codes are not necessarily included in the descriptions of the API,
 but a request may return any of these.
 
 
@@ -554,7 +554,7 @@ with JSON-formatted name of the dataset type and properties in the body::
      "properties":{<properties>}
   }
 
-Note the Dataset must exist, and the instance and type passed must match with the existing Dataset.
+**Note:** The Dataset must exist, and the instance and type passed must match with the existing Dataset.
 
 .. list-table::
    :widths: 20 80
@@ -1012,7 +1012,7 @@ Download Query Results
 ----------------------
 To download the results of a query, use::
 
-  GET <base-url>/data/explore/queries/<query-handle>
+  POST <base-url>/data/explore/queries/<query-handle>/download
 
 The results of the query are returned in CSV format.
 
@@ -1281,10 +1281,10 @@ To delete an Application together with all of its Flows, Procedures and MapReduc
    * - ``<application-name>``
      - Name of the Application to be deleted
 
-Note that the ``<application-name>`` in this URL is the name of the Application 
+**Note:** The ``<application-name>`` in this URL is the name of the Application
 as configured by the Application Specification,
 and not necessarily the same as the name of the JAR file that was used to deploy the Application.
-Note also that this does not delete the Streams and Datasets associated with the Application
+Also, this does not delete the Streams and Datasets associated with the Application
 because they belong to your account, not the Application.
 
 .. rst2pdf: PageBreak
@@ -1477,7 +1477,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"programId"``
      - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
    * - ``"runnableId"``
-     - Name of the *Flowlet* or *Service Handler/Worker* if querying either a *Flow* or *User Service*. This parameter
+     - Name of the *Flowlet* or *Service* if querying either a *Flow* or *User Service*. This parameter
        does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -1498,7 +1498,7 @@ The response will be the same JSON array with additional parameters for each of 
      - If an error, a description of why the status was not retrieved (the specified element was not found,
        the requested JSON object was missing a parameter, etc.)
 
-Note that the ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
+**Note:** The ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
 
 Example
 .......
@@ -1627,8 +1627,8 @@ Example
 
 Scaling Services
 ................
-You can query or change the number of instances of a Service's Handler/Worker
-by using the ``instances`` parameter with HTTP GET and PUT methods::
+You can query or change the number of instances of a Service
+by using the ``instances`` parameter with HTTP GET or PUT methods::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
   PUT <base-url>/apps/<app-id>/services/<service-id>/runnables/<runnable-id>/instances
@@ -1648,9 +1648,11 @@ with the arguments as a JSON string in the body::
    * - ``<service-id>``
      - Name of the Service
    * - ``<runnable-id>``
-     - Name of the Service Handler/Worker
+     - Name of the Service
    * - ``<quantity>``
      - Number of instances to be used
+
+**Note:** In this release the ``runnable-id`` is the same as the ``service-id``.
 
 Example
 .......
@@ -1659,9 +1661,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/runnables`` ``/WhoRunnable/instances``
+     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookup/runnables/CatalogLookup/instances``
    * - Description
-     - Retrieve the number of instances of the Service Worker *WhoRunnable* of the Service *WhoService*
+     - Retrieve the number of instances of the Service *CatalogLookup* in the application *PurchaseHistory*.
 
 .. rst2pdf: PageBreak
 
@@ -1785,7 +1787,7 @@ escaped. A line of the log may look like this::
   2013-10-23 18:03:09,793 - INFO [FlowletProcessDriver-source-0-
         executor:c.c.e.c.StreamSource@-1] – source: Emitting line: this is an &amp; character
 
-Note how the context of the log line shows the name of the Flowlet (*source*), its instance number (0) as
+**Note:** The context of the log line shows the name of the Flowlet (*source*), its instance number (0) as
 well as the original line in the Application code. The character *&* is escaped as ``&amp;``; if you don’t desire
 this escaping, you can turn it off by adding the parameter ``&escape=false`` to the request URL.
 
@@ -2203,7 +2205,7 @@ The status of these CDAP System Services can be checked:
      - ``explore.service``
      - Service that handles all HTTP requests for ad-hoc data exploration
 
-Note that the Service status checks are more useful when CDAP is running in a distributed cluster mode.
+**Note:** The Service status checks are more useful when CDAP is running in a distributed cluster mode.
 
 HTTP Responses
 ..............
@@ -2254,7 +2256,7 @@ with the arguments as a JSON string in the body::
    * - ``<quantity>``
      - Number of instances to be used
      
-Note in standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
+**Note:** In standalone CDAP, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
 
 Examples
 ........
@@ -2661,22 +2663,23 @@ or, on Windows::
 
 The executable should bring you into a shell, with this prompt::
 
-  cdap (localhost:10000)>
+  cdap (http://localhost:10000)>
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
 There are two ways to interact with a different CDAP server:
 
 - To interact with a different CDAP server by default, set the environment variable ``CDAP_HOST`` to a hostname.
 - To change the current CDAP server, run the command ``connect example.com``.
+- To connect to an SSL-enabled CDAP server, run the command ``connect https://example.com``.
 
-For example, with ``CDAP_HOST`` set to ``example.com``, the Shell Client would be interacting with
+For example, with ``CDAP_HOST`` set to ``example.com``, the CLI would be interacting with
 a CDAP instance at ``example.com``, port ``10000``::
 
-  cdap (example.com:10000)>
+  cdap (http://example.com:10000)>
 
 To list all of the available commands, enter ``help``::
 
-  cdap (localhost:10000)> help
+  cdap (http://localhost:10000)> help
 
 Non-Interactive Mode
 --------------------
@@ -2685,6 +2688,15 @@ To run the CLI in non-interactive mode, run the ``cdap-cli.sh`` executable, pass
 as the argument. For example, to list all applications currently deployed to CDAP, execute::
 
   cdap-cli.sh list apps
+
+Connecting to Secure CDAP Instances
+-----------------------------------
+
+When connecting to secure CDAP instances, the CLI will look for an access token located at
+~/.cdap.accesstoken.<hostname> and use it if it exists and is valid. If not, the CLI will prompt
+you for the required credentials to acquire an access token from the CDAP instance. Once acquired,
+the CLI will save it to ~/.cdap.accesstoken.<hostname> for later use and use it for the rest of
+the current CLI session.
 
 Available Commands
 ==================

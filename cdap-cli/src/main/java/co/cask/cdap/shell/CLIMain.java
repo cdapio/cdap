@@ -87,9 +87,12 @@ public class CLIMain {
       }
     );
 
+    ConnectCommand connectCommand = injector.getInstance(ConnectCommand.class);
+    connectCommand.tryDefaultConnection(System.out, false);
+
     this.commands = CommandSet.builder(null)
       .addCommand(helpCommand)
-      .addCommand(injector.getInstance(ConnectCommand.class))
+      .addCommand(connectCommand)
       .addCommand(injector.getInstance(VersionCommand.class))
       .addCommand(injector.getInstance(ExitCommand.class))
       .addCommand(injector.getInstance(CallCommandSet.class))
@@ -149,7 +152,6 @@ public class CLIMain {
                                        CLIConfig.PROP_VERIFY_SSL_CERT));
         } catch (Exception e) {
           output.println("Error: " + e.getMessage());
-          e.printStackTrace();
         }
         output.println();
       }
@@ -178,7 +180,11 @@ public class CLIMain {
     if (args.length == 0) {
       shell.startShellMode(System.out);
     } else {
-      shell.processArgs(args, System.out);
+      try {
+        shell.processArgs(args, System.out);
+      } catch (Exception e) {
+        System.out.println("Error: " + e.getMessage());
+      }
     }
   }
 }
