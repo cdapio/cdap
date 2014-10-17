@@ -22,3 +22,14 @@ This creates a Maven project with all required dependencies, Maven plugins, and 
 application template for the development of your application. You can import this Maven project
 into your preferred IDE—such as Eclipse or IntelliJ—and start developing your first
 CDAP application.
+
+Using IntelliJ
+=======================
+
+Instructions for using IntelliJ
+
+
+Using Eclipse
+=======================
+
+Instructions for using Eclipse

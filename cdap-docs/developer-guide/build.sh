@@ -34,6 +34,7 @@ INCLUDES="_includes"
 
 API="cdap-api"
 APIDOCS="apidocs"
+APIS="apis"
 JAVADOCS="javadocs"
 LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
@@ -54,7 +55,7 @@ REST_PDF="$SCRIPT_PATH/$BUILD_PDF/rest.pdf"
 if [ "x$2" == "x" ]; then
   PROJECT_PATH="$SCRIPT_PATH/../../"
 else
-  PROJECT_PATH="$2"
+  PROJECT_PATH="$SCRIPT_PATH/../../../$2"
 fi
 # PROJECT_JAVADOCS="$PROJECT_PATH/target/site/apidocs"
 SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
@@ -154,7 +155,7 @@ function build_javadocs_sdk() {
 }
 
 function copy_javadocs_sdk() {
-  cd $BUILD_PATH/$HTML
+  cd $BUILD_PATH/$HTML/$APIS
   rm -rf $JAVADOCS
   cp -r $SDK_JAVADOCS .
   mv -f $APIDOCS $JAVADOCS

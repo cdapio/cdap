@@ -156,12 +156,15 @@ a.current {
 
 a {
     color: #005B81;
+    color: #ff6600;
     text-decoration: none;
 }
 
 a:hover {
     color: #E32E00;
+    color: #005B81;
     text-decoration: underline;
+    font-weight: bold;
 }
 
 div.body h1,

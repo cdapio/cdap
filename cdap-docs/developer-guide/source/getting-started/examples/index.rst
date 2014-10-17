@@ -55,80 +55,15 @@ The SDK includes these additional examples:
       of web traffic.
 
 
-Building and Running Applications
----------------------------------
-
-.. highlight:: console
-
-In the examples, we refer to the Standalone CDAP as "CDAP", and the
-example code that is running on it as an "Application".
-
-
-Building the Application
-........................
-
-From the example's project root, build an example with the
-`Apache Maven <http://maven.apache.org>`__ command::
-
-	$ mvn clean package
-
-Starting CDAP
-.............
-
-Before running the Example Applications, check that an instance of CDAP is running and available.
-From within the SDK root directory, this command will start the Standalone CDAP::
-
-	$ ./bin/cdap.sh start
-
-On Windows::
-
-	> bin\cdap.bat start
-
-If you can reach the CDAP Console through a browser at `http://localhost:9999/ <http://localhost:9999/>`__, CDAP is running.
-
-Deploying an application
-........................
-
-Once CDAP is Started, you can deploy the example JAR by any of these methds:
-
-- Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console
-  running at `http://localhost:9999/ <http://localhost:9999/>`__; or
-- Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar; or
-- From the example's project root run the App Manager script:
-
-  - Linux: ``$./bin/app-manager.sh --action deploy``
-  - Windows: ``>bin\app-manager.bat deploy``
-
-Starting an Application
-.......................
-
-Once the application is deployed:
-
-- You can go to the Application view by clicking on the Application's name. Now you can *Start* or *Stop* the Process
-  and Query of the application; or
-- From the example's project root run the App Manager script:
-
-  - Linux: ``$./bin/app-manager.sh --action start``
-  - Windows: ``>bin\app-manager.bat start``
-
-Stopping an Application
-.......................
-
-Once the application is deployed:
-
-- On the Application detail page of the CDAP Console, click the *Stop* button on both the Process and Query lists; or
-- From the example's project root run the App Manager script:
-
-  - Linux: ``$./bin/app-manager.sh --action stop``
-  - Windows: ``>bin\app-manager.bat stop``
-
 
 What's Next
 ===========
 
 You can learn more about developing data application using CDAP by:
 
-- Exploring the Web Analytics Application source code. It includes test cases that show unit-testing an
-  application.
-- Look at a CDAP case study: `Web Analytics using CDAP. <case-study.html>`__
-- For a detailed understanding of what CDAP is capable of, read our `Programming Guide. <dev-guide.html>`__
+- Look at a CDAP case study: :doc:`Web Analytics using CDAP. </case-study>`
+- Exploring the Web Analytics Application :doc:`source code.</case-study>` It includes 
+  test cases that show unit-testing an application.
+- :doc:`Additional Resources </getting-started/resources>` has *How-to Guides* and *Tutorials.* 
+- For a detailed understanding of what CDAP is capable of, read our :doc:`Overview </overview>` and 
+  :doc:`CDAP Components. </components>`

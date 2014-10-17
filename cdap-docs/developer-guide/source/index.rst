@@ -53,8 +53,8 @@ Where to Go Next
 .. |arch| replace:: **Concepts and Architecture:**
 .. _arch: arch.html
 
-- |arch|_ **The overall architecture and technology behind CDAP** are covered in the :doc:`CDAP
-  Concepts and Architecture <arch>`, including virtualization of data and applications,
+- |arch|_ **The overall architecture and technology behind CDAP** is covered in :doc:`CDAP
+  Concepts and Architecture <arch>`, including the virtualization of data and applications,
   programming interfaces, CDAP components and their interactions, and the anatomy of a basic
   Big Data application.
 
@@ -83,7 +83,7 @@ Where to Go Next
 .. _javadoc: javadoc/index.html
 
 - |javadoc|_ :doc:`Javadocs <javadocs/index>` is the reference to **the Java APIs** that developers can
-  :use in building their CDAP applications.
+  use in building their CDAP applications.
 
 .. |tools| replace:: **Tools:**
 .. _tools: tools.html
@@ -94,10 +94,10 @@ Where to Go Next
 .. |admin| replace:: **Administration and Operations:**
 .. _admin: admin.html
 
-- |admin|_ The :doc:`Administration and Operations Guide <admin>` covers everything from
-  **installation, configuration, security, monitoring, troubleshooting, through to putting
-  CDAP into production,** using the CDAP Console, logging, metrics, and runtime arguments.
-  Two appendices cover the XML files used to configure CDAP installations.
+- |admin|_ The :doc:`Administration and Operations Guide <admin>` covers 
+  **installation, configuration, security, monitoring, troubleshooting, putting CDAP into
+  production, using the CDAP Console, logging, metrics, and runtime arguments.** Two
+  appendices cover the XML files used to configure CDAP installations.
 
 .. |remaining| replace:: **Remaining Sections:**
 

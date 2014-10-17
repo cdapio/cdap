@@ -1,0 +1,24 @@
+.. :author: Cask Data, Inc.
+   :description: placeholder
+   :copyright: Copyright © 2014 Cask Data, Inc.
+
+============================================
+CDAP Operations
+============================================
+
+.. toctree::
+   :maxdepth: 1
+   
+    Logging <logging>
+    Metrics <metrics>
+    Runtime Arguments <runtime-arguments>
+    Scaling Instances <scaling-instances>
+    Appendix: cdap-site.xml <cdap-site>
+    Appendix: cdap-security.xml <cdap-security>
+    
+    
+Command-Line Interface
+======================
+
+Most of the administrative operations are also available more conveniently through the
+Command Line Interface. See this :ref:`section<CLI>` for details.

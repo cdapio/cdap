@@ -29,13 +29,15 @@ example applications.
 
 The Docker image is intended for those developing on Linux.
 
-Starting and Stopping the Standalone CDAP
------------------------------------------
+Starting and Stopping CDAP
+--------------------------
+
+.. highlight:: console
 
 Use the ``cdap.sh`` script to start and stop the Standalone CDAP 
 (the location will vary depending on where the CDAP SDK is installed)::
 
-  $ cd cdap-sdk-2.5.0
+  $ cd cdap-sdk-2.5.1
   $ ./bin/cdap.sh start
   ...
   $ ./bin/cdap.sh stop

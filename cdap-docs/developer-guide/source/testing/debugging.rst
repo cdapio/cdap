@@ -2,270 +2,11 @@
    :description: Cask Data Application Platform - Tools
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. Note: because this file imports Pandoc-generated includes, the title underlining is
-..       different than other files to match the included files' format.
-
 ================================================
-Cask Data Application Platform - Available Tools
+Debugging a CDAP Application
 ================================================
-
-Tools Overview
-##############
-CDAP comes with a number of tools to make a developer's life easier. These tools
-help with debugging CDAP applications, interacting with applications,
-ingesting data into CDAP, and fetching access tokens:
-
-.. list-table::
-    :widths: 15 60
-    :header-rows: 1
-
-    * - Tool Name
-      - Description
-    * - :ref:`Test Framework<TestFramework>`
-      - How you can take advantage of the test framework to test your CDAP applications before deploying.
-        This makes catching bugs early and easy.
-    * - :ref:`Debugging<DebugCDAP>`
-      - How you can debug CDAP applications in standalone mode and app containers in distributed mode.
-    * - :ref:`Transactions Debugger<TxDebugger>`
-      - Snapshot and inspect the state of Transaction Manager.
-    * - :ref:`Ingestion Tools<Ingest>`
-      - Tools for ingesting data into CDAP.
-    * - :ref:`Authentication Clients<authentication-clients>`
-      - Tools for fetching access tokens from the authentication service.
-
-.. highlight:: java
-
-.. _TestFramework:
-
-Testing CDAP
-############
-
-Strategies in Testing Applications
-==================================
-
-CDAP comes with a convenient way to unit test your Applications.
-The base for these tests is ``TestBase``, which is packaged
-separately from the API in its own artifact because it depends on the
-CDAP’s runtime classes. You can include it in your test dependencies
-in one of two ways:
-
-- include all JAR files in the ``lib`` directory of the CDAP SDK installation,
-  or
-- include the ``cdap-unit-test`` artifact in your Maven test dependencies
-  (see the ``pom.xml`` file of the *WordCount* example).
-
-Note that for building an application, you only need to include the
-CDAP API in your dependencies. For testing, however, you need the
-CDAP run-time. To build your test case, extend the
-``TestBase`` class.
-
-Strategies in Testing Flows
-===========================
-Let’s write a test case for the *WordCount* example::
-
-  public class WordCountTest extends TestBase {
-    @Test
-    public void testWordCount() throws Exception {
-
-
-The first thing we do in this test is deploy the application,
-then we’ll start the Flow and the Procedure::
-
-      // Deploy the Application
-      ApplicationManager appManager = deployApplication(WordCount.class);
-
-      // Start the Flow and the Procedure
-      FlowManager flowManager = appManager.startFlow("WordCounter");
-      ProcedureManager procManager = appManager.startProcedure("RetrieveCount");
-
-Now that the Flow is running, we can send some events to the Stream::
-
-      // Send a few events to the Stream
-      StreamWriter writer = appManager.getStreamWriter("wordStream");
-      writer.send("hello world");
-      writer.send("a wonderful world");
-      writer.send("the world says hello");
-
-To wait for all events to be processed, we can get a metrics observer
-for the last Flowlet in the pipeline (the "word associator") and wait for
-its processed count to either reach 3 or time out after 5 seconds::
-
-      // Wait for the events to be processed, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.
-        getFlowletMetrics("WordCount", "WordCounter", "associator");
-      metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
-
-Now we can start verifying that the processing was correct by obtaining
-a client for the Procedure, and then submitting a query for the global
-statistics::
-
-      // Call the Procedure
-      ProcedureClient client = procManager.getClient();
-
-      // Query global statistics
-      String response = client.query("getStats", Collections.EMPTY_MAP);
-
-If the query fails for any reason this method would throw an exception.
-In case of success, the response is a JSON string. We must deserialize
-the JSON string to verify the results::
-
-      Map<String, String> map = new Gson().fromJson(response, stringMapType);
-      Assert.assertEquals("9", map.get("totalWords"));
-      Assert.assertEquals("6", map.get("uniqueWords"));
-      Assert.assertEquals(((double)42)/9,
-        (double)Double.valueOf(map.get("averageLength")), 0.001);
-
-Then we ask for the statistics of one of the words in the test events.
-The verification is a little more complex, because we have a nested map
-as a response, and the value types in the top-level map are not uniform::
-
-      // Verify some statistics for one of the words
-      response = client.query("getCount", ImmutableMap.of("word","world"));
-      Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
-      Assert.assertEquals("world", omap.get("word"));
-      Assert.assertEquals(3.0, omap.get("count"));
-
-      // The associations are a map within the map
-      Map<String, Double> assocs = (Map<String, Double>) omap.get("assocs");
-      Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
-      Assert.assertTrue(assocs.containsKey("hello"));
-
-Strategies in Testing MapReduce Jobs
-====================================
-In a fashion similar to `Strategies in Testing Flows`_, we can write
-unit testing for MapReduce jobs. Let's write a test case for an
-application that uses MapReduce. Complete source code and test can be
-found in the :ref:`Purchase Example <purchase>` included in the CDAP SDK.
-
-The ``PurchaseTest`` class should extend from
-``TestBase`` similar to `Strategies in Testing Flows`::
-
-  public class PurchaseTest extends TestBase {
-    @Test
-    public void test() throws Exception {
-
-The ``PurchaseApp`` application can be deployed using the ``deployApplication``
-method from the ``TestBase`` class::
-
-      // Deploy an Application
-      ApplicationManager appManager = deployApplication(PurchaseApp.class);
-
-The MapReduce job reads from the ``purchases`` Dataset. As a first
-step, the data to the ``purchases`` should be populated by running
-the ``PurchaseFlow`` and sending the data to the ``purchaseStream``
-Stream::
-
-      FlowManager flowManager = appManager.startFlow("PurchaseFlow");
-      // Send data to the Stream
-      sendData(appManager, now);
-
-      // Wait for the last Flowlet to process 3 events or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.
-          getFlowletMetrics("PurchaseApp", "PurchaseFlow", "collector");
-      metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
-
-Start the MapReduce job and wait for a maximum of 60 seconds::
-
-      // Start the MapReduce job.
-      MapReduceManager mrManager = appManager.startMapReduce("PurchaseHistoryBuilder");
-      mrManager.waitForFinish(60, TimeUnit.SECONDS);
-
-We can start verifying that the MapReduce job was run correctly by
-obtaining a client for the Procedure, and then submitting a query for
-the counts::
-
-      ProcedureClient client = procedureManager.getClient();
-
-      // Verify the query.
-      String response = client.query("history", ImmutableMap.of("customer", "joe"));
-
-      // Deserialize the JSON string.
-      PurchaseHistory result = GSON.fromJson(response, PurchaseHistory.class);
-      Assert.assertEquals(2, result.getPurchases().size());
-
-The assertion will verify that the correct result was received.
-
-Strategies in Testing Spark Programs
-====================================
-Let's write a test case for an application that uses a Spark program.
-Complete source code for this test can be found at :ref:`Spark PageRank<spark-page-rank>`.
-
-The ``SparkPageRankTest`` class should extend from
-``TestBase`` similar to `Strategies in Testing Flows`::
-
-  public class SparkPageRankTest extends TestBase {
-    @Test
-    public void test() throws Exception {
-
-The ``SparkPageRankTest`` application can be deployed using the ``deployApplication``
-method from the ``TestBase`` class::
-
-  // Deploy an Application
-  ApplicationManager appManager = deployApplication(SparkPageRankApp.class);
-
-The Spark program reads from the ``backlinkURLs`` Dataset. As a first
-step, data in the ``backlinkURLs`` should be populated by running
-the ``BackLinkFlow`` and sending the data to the Stream ``backlinkURLStream``::
-
-  FlowManager flowManager = appManager.startFlow("BackLinkFlow");
-  // Send data to the Stream
-  sendData(appManager);
-
-  // Wait for the last Flowlet to process 4 events or at most 5 seconds
-  RuntimeMetrics metrics = RuntimeStats.
-      getFlowletMetrics("SparkPageRank", "BackLinkFlow", "reader");
-  metrics.waitForProcessed(4, 5, TimeUnit.SECONDS);
-
-Start the Spark program and wait for a maximum of 60 seconds::
-
-  // Start the Spark program.
-  SparkManager sparkManager = appManager.startSpark("SparkPageRankProgram");
-  sparkManager.waitForFinish(60, TimeUnit.SECONDS);
-
-We verify that the Spark program ran correctly by
-obtaining a client for the Procedure, and then submitting a query for
-the ranks::
-
-  ProcedureClient client = procedureManager.getClient();
-
-  // Verify the query.
-  String response = client.query("rank", ImmutableMap.of("url", "http://example.com/page1"));
-  Assert.assertEquals("1.3690036520596678", response);
-
-The assertion will verify that the correct result was received.
-
-
-Validating Test Data with SQL
-=============================
-Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
-in the test case are record-scannable as described in :ref:`data-explore`
-This can be done using a JDBC connection obtained from the test base::
-
-
-  // Obtain a JDBC connection
-  Connection connection = getQueryClient();
-  try {
-    // Run a query over the dataset
-    results = connection.prepareStatement("SELECT key FROM mytable WHERE value = '1'").executeQuery();
-    Assert.assertTrue(results.next());
-    Assert.assertEquals("a", results.getString(1));
-    Assert.assertTrue(results.next());
-    Assert.assertEquals("c", results.getString(1));
-    Assert.assertFalse(results.next());
-
-  } finally {
-    results.close();
-    connection.close();
-  }
-
-The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
-will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
-or prepare statements and execute queries, then iterate over the results set and validate its correctness.
 
 .. _DebugCDAP:
-
-Debugging CDAP
-##############
 
 Debugging an Application in Standalone CDAP
 ===========================================
@@ -374,19 +115,19 @@ You may need to adjust them for your installation or version.
 #. From the *IntelliJ* toolbar, select ``Run -> Edit Configurations``.
 #. Click ``+`` and choose ``Remote``:
 
-   .. image:: _images/debugging/intellij_1.png
+   .. image:: ../_images/debugging/intellij_1.png
 
 #. Create a debug configuration by entering a name, for example, ``CDAP``.
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
    in the Host field.
 #. Enter the debugging port, for example, ``5005`` in the Port field:
 
-   .. image:: _images/debugging/intellij_2.png
+   .. image:: ../_images/debugging/intellij_2.png
 
 #. To start the debugger, select ``Run -> Debug -> CDAP``.
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-   .. image:: _images/debugging/intellij_3.png
+   .. image:: ../_images/debugging/intellij_3.png
 
 #. Start the Flow in the Console.
 #. Send an event to the Stream. The control will stop at the breakpoint
@@ -403,11 +144,11 @@ You may need to adjust them for your installation or version.
 #. In the list on the left of the window, double-click ``Remote Java Application`` to create
    a new launch configuration.
 
-   .. image:: _images/debugging/eclipse_1.png
+   .. image:: ../_images/debugging/eclipse_1.png
 
 #. Enter a name and project, for example, ``CDAP``.
 
-   .. image:: _images/debugging/eclipse_2.png
+   .. image:: ../_images/debugging/eclipse_2.png
 
 #. Enter the host name, for example, ``localhost`` or ``node-1003.my.cluster.net``
    in the Port field:
@@ -418,7 +159,7 @@ You may need to adjust them for your installation or version.
 
 #. Set a breakpoint in any code block, for example, a Flowlet method:
 
-   .. image:: _images/debugging/eclipse_3.png
+   .. image:: ../_images/debugging/eclipse_3.png
 
 #. Start the Flow in the Console.
 #. Send an event to the Stream.
@@ -573,73 +314,4 @@ use this command to invalidate it::
 Invalidating a transaction when we know for sure that its writes should
 be invalidated is useful, because those writes will then be removed
 from the concerned Tables.
-
-.. highlight:: java
-
-.. _Ingest:
-
-Ingesting Data
-##############
-
-.. highlight:: console
-
-Introduction
-============
-
-One of the first tasks of actually working with Big Data applications is getting the data in.
-As data ingestion is a fundamental issue, and as one tool often does not fit all needs,
-we have assembled a set of tools and applications to assist in ingesting data into CDAP:
-
-- Java and Python APIs for controlling and writing to Streams;
-- a drop zone for bulk ingestion of files ;
-- a File Tailer daemon to tail local files; and
-- an Apache Flume Sink implementation for writing events received from a source.
-
-
-.. highlight:: console
-
-.. include:: _includes/cdap-stream-clients-java.rst
-   
-.. highlight:: console
-
-.. include:: _includes/cdap-stream-clients-python.rst
-
-.. highlight:: console
-
-.. include:: _includes/cdap-file-drop-zone.rst
-
-.. highlight:: console
-
-.. include:: _includes/cdap-file-tailer.rst
-
-.. highlight:: console
-
-.. include:: _includes/cdap-flume.rst
-
-
-.. _authentication-clients:
-
-Authentication Clients
-######################
-
-.. highlight:: console
-
-Introduction
-============
-
-The Authentication Client Tools fetch access tokens from the authentication service. Two APIs
-are currently available: `Java <#cdap-authentication-client-for-java>`__ and 
-`Python. <#cdap-authentication-client-for-python>`__
-
-.. highlight:: console
-
-.. include:: _includes/cdap-authentication-clients-java.rst
-
-.. highlight:: console
-
-.. include:: _includes/cdap-authentication-clients-python.rst
-
-
-.. |(TM)| unicode:: U+2122 .. trademark sign
-
 

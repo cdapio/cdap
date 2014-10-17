@@ -65,7 +65,7 @@ Overview of Wise
 Throughout this case study, we will present and explain the different constructs that the Wise application
 uses. Let's first have a look at a diagram showing an overview of the Wise application's architecture:
 
-.. image:: _images/wise_architecture_diagram.png
+.. image:: ../_images/wise_architecture_diagram.png
 
 
 - The Wise application has one Stream, ``logEventStream``, which receives Web server access logs. It sends the events
@@ -376,7 +376,7 @@ We also define the graph of their connections:
 
 Here is how ``WiseFlow`` looks in the CDAP Console:
 
-.. image:: _images/wise_flow.png
+.. image:: ../_images/wise_flow.png
 
 Batch Processing of Logs with WiseWorkflow
 ==========================================
@@ -562,12 +562,12 @@ can be accessed through the CDAP Console:
 #. After deploying Wise in your Standalone CDAP instance, go to the **Store** page,
    which is one of the five pages you can access from the left pane of CDAP Console:
 
-   .. image:: _images/wise_store_page.png
+   .. image:: ../_images/wise_store_page.png
 
 
 #. Click on the **Explore** button in the top-right corner of the page. You will land on this page:
 
-   .. image:: _images/wise_explore_page.png
+   .. image:: ../_images/wise_explore_page.png
 
 
 This is the *Explore* page, where you can run ad-hoc SQL queries and see information about the Datasets that expose

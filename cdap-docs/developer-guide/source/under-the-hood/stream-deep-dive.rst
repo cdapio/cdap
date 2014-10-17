@@ -1,8 +1,9 @@
 .. :author: Cask Data, Inc.
-   :description: Index document
+   :description: placeholder
    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
-Creating a New App
+A Deep Dive into Streams
 ============================================
+
 
