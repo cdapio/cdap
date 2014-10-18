@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.client.common;
+package co.cask.cdap.test.standalone;
 
 import co.cask.cdap.StandaloneMain;
 import co.cask.cdap.common.conf.CConfiguration;

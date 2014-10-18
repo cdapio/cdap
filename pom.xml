@@ -157,12 +157,14 @@
     <module>cdap-explore-jdbc</module>
     <module>cdap-explore</module>
     <module>cdap-unit-test</module>
+    <module>cdap-unit-test-standalone</module>
     <module>cdap-master</module>
     <module>cdap-web-app</module>
     <module>cdap-proto</module>
     <module>cdap-client</module>
     <module>cdap-client-tests</module>
     <module>cdap-cli</module>
+    <module>cdap-cli-tests</module>
     <module>cdap-standalone</module>
     <module>cdap-distributions</module>
     <module>cdap-archetypes</module>
