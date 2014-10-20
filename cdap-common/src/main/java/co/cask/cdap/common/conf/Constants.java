@@ -258,11 +258,6 @@ public final class Constants {
     public static final String WORKER_THREADS = "gateway.worker.threads";
     public static final String CONFIG_AUTHENTICATION_REQUIRED = "gateway.authenticate";
     public static final String CLUSTER_NAME = "gateway.cluster.name";
-    public static final String NUM_CORES = "gateway.num.cores";
-    public static final String NUM_INSTANCES = "gateway.num.instances";
-    public static final String MEMORY_MB = "gateway.memory.mb";
-    public static final String STREAM_FLUME_THREADS = "stream.flume.threads";
-    public static final String STREAM_FLUME_PORT = "stream.flume.port";
     /**
      * Defaults.
      */
@@ -273,11 +268,6 @@ public final class Constants {
     public static final int DEFAULT_WORKER_THREADS = 10;
     public static final boolean CONFIG_AUTHENTICATION_REQUIRED_DEFAULT = false;
     public static final String CLUSTER_NAME_DEFAULT = "localhost";
-    public static final int DEFAULT_NUM_CORES = 2;
-    public static final int DEFAULT_NUM_INSTANCES = 1;
-    public static final int DEFAULT_MEMORY_MB = 2048;
-    public static final int DEFAULT_STREAM_FLUME_THREADS = 10;
-    public static final int DEFAULT_STREAM_FLUME_PORT = 10004;
 
 
     /**
@@ -286,7 +276,6 @@ public final class Constants {
     public static final String GATEWAY_VERSION = "/v2";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
-    public static final String HEADER_DESTINATION_STREAM = "X-Destination";
     public static final String API_KEY = "X-ApiKey";
     public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
   }

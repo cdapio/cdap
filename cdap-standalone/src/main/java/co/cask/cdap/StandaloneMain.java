@@ -38,12 +38,9 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.gateway.Gateway;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.collector.NettyFlumeCollector;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
-import co.cask.cdap.gateway.runtime.GatewayModule;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -81,9 +78,7 @@ public class StandaloneMain {
 
   private final WebCloudAppService webCloudAppService;
   private final NettyRouter router;
-  private final Gateway gatewayV2;
   private final MetricsQueryService metricsQueryService;
-  private final NettyFlumeCollector flumeCollector;
   private final AppFabricServer appFabricServer;
   private final StreamHttpService streamHttpService;
 
@@ -107,9 +102,7 @@ public class StandaloneMain {
     Injector injector = Guice.createInjector(modules);
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
-    gatewayV2 = injector.getInstance(Gateway.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
@@ -167,10 +160,8 @@ public class StandaloneMain {
       throw new Exception("Failed to start Application Fabric");
     }
 
-    gatewayV2.startAndWait();
     metricsQueryService.startAndWait();
     router.startAndWait();
-    flumeCollector.startAndWait();
     if (webCloudAppService != null) {
       webCloudAppService.startAndWait();
     }
@@ -204,10 +195,8 @@ public class StandaloneMain {
       if (webCloudAppService != null) {
         webCloudAppService.stopAndWait();
       }
-      //  shut down router, gateway and flume, to stop all incoming traffic
+      //  shut down router to stop all incoming traffic
       router.stopAndWait();
-      gatewayV2.stopAndWait();
-      flumeCollector.stopAndWait();
       // now the stream writer and the explore service (they need tx)
       streamHttpService.stopAndWait();
       if (exploreExecutorService != null) {
@@ -382,7 +371,6 @@ public class StandaloneMain {
       new LocationRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new GatewayModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule(),
       new DataSetServiceModules().getLocalModule(),

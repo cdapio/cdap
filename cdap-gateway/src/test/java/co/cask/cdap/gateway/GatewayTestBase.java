@@ -34,7 +34,6 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
-import co.cask.cdap.gateway.runtime.GatewayModule;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -85,7 +84,6 @@ public abstract class GatewayTestBase {
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
-  private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf;
@@ -158,7 +156,6 @@ public abstract class GatewayTestBase {
           }
         },
         new InMemorySecurityModule(),
-        new GatewayModule().getInMemoryModules(),
         new AppFabricTestModule(conf),
         new StreamServiceRuntimeModule().getStandaloneModules()
       ).with(new AbstractModule() {
@@ -183,7 +180,6 @@ public abstract class GatewayTestBase {
       })
     );
 
-    gateway = injector.getInstance(Gateway.class);
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -196,12 +192,8 @@ public abstract class GatewayTestBase {
     appFabricServer.startAndWait();
     metrics.startAndWait();
     streamHttpService.startAndWait();
-    gateway.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
-    gateway.stopAndWait();
-    gateway = injector.getInstance(Gateway.class);
-    gateway.startAndWait();
     router = injector.getInstance(NettyRouter.class);
     router.startAndWait();
     Map<String, Integer> serviceMap = Maps.newHashMap();
@@ -214,7 +206,6 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) {
-    gateway.stopAndWait();
     appFabricServer.stopAndWait();
     metrics.stopAndWait();
     streamHttpService.stopAndWait();
