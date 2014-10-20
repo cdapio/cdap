@@ -2146,23 +2146,21 @@
           </tbody>
         </table>
     {{/if}}
-    {{#if C.isLocal}}
-        {{#if elements.Spark.length}}
-          <table class="table">
-              <thead>
-                <th style="padding-left: 14px;">Spark</th>
-              </thead>
-              <tbody>
-              {{#each elements.Spark.content }}
-                <tr>
-                  <td class="app-list-name">
-                  <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
-                  </td>
-                </tr>
-              {{/each}}
-              </tbody>
-            </table>
-        {{/if}}
+    {{#if elements.Spark.length}}
+      <table class="table">
+        <thead>
+          <th style="padding-left: 14px;">Spark</th>
+        </thead>
+        <tbody>
+          {{#each elements.Spark.content }}
+            <tr>
+              <td class="app-list-name">
+                <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
     {{/if}}
     {{#if elements.Workflow.length}}
       <table class="table">
