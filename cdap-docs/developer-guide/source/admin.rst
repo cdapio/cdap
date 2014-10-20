@@ -2009,15 +2009,6 @@ see the :ref:`security` section.
    * - ``gateway.max.cached.stream.events.num``
      - ``10000``
      - Maximum number of stream events cached before flushing
-   * - ``gateway.memory.mb``
-     - ``2048``
-     - Memory in MB for Gateway process in YARN
-   * - ``gateway.num.cores``
-     - ``2``
-     - Cores requested per Gateway container in YARN
-   * - ``gateway.num.instances``
-     - ``1``
-     - Number of Gateway instances in YARN
    * - ``gateway.stream.callback.exec.num.threads``
      - ``5``
      - Number of threads in stream events callback executor
@@ -2213,12 +2204,6 @@ see the :ref:`security` section.
    * - ``ssl.enabled``
      - ``false``
      - True to enable SSL
-   * - ``stream.flume.port``
-     - ``10004``
-     -
-   * - ``stream.flume.threads``
-     - ``20``
-     -
    * - ``thrift.max.read.buffer``
      - ``16777216``
      - Maximum read buffer size in bytes used by the Thrift server [`Note 2`_]
