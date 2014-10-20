@@ -21,6 +21,7 @@ import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
+import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
@@ -29,6 +30,7 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.security.authorization.RequiresPermissions;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Throwables;
@@ -117,6 +119,7 @@ final class ProcedureHandlerMethod implements HandlerMethod {
   }
 
   @Override
+  @RequiresPermissions({ PermissionType.EXECUTE })
   public void handle(ProcedureRequest request, ProcedureResponder responder) {
     context.getProgramMetrics().increment("query.requests", 1);
     HandlerMethod handlerMethod = handlers.get(request.getMethod());

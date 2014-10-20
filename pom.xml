@@ -97,6 +97,7 @@
     <commons.codec.version>1.6</commons.codec.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
     <cdap.hive.version>0.13.0</cdap.hive.version>
+    <cglib.version>3.0</cglib.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
     <geronimo.version>2.0.0</geronimo.version>
@@ -275,6 +276,11 @@
         <groupId>org.jboss.resteasy</groupId>
         <artifactId>resteasy-guice</artifactId>
         <version>${resteasy.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>cglib</groupId>
+        <artifactId>cglib</artifactId>
+        <version>${cglib.version}</version>
       </dependency>
       <dependency>
         <groupId>jline</groupId>
