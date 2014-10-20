@@ -27,6 +27,7 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
@@ -44,10 +45,8 @@ import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
-import co.cask.cdap.internal.app.ForwardingResourceSpecification;
-import co.cask.cdap.internal.app.ForwardingRuntimeSpecification;
-import co.cask.cdap.internal.app.ForwardingTwillSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
+import co.cask.cdap.internal.app.services.DefaultServiceWorkerSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.internal.service.DefaultServiceSpecification;
 import co.cask.cdap.proto.Id;
@@ -70,9 +69,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -377,22 +373,9 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public int getServiceRunnableInstances(final Id.Program id, final String runnable) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
-      @Override
-      public Integer apply(AppMds mds) throws Exception {
-        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
-        ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
-        RuntimeSpecification runtimeSpec = getRunnableSpecOrFail(id, serviceSpec, runnable);
-        return runtimeSpec.getResourceSpecification().getInstances();
-      }
-    });
-  }
-
-  @Override
-  public void setServiceRunnableInstances(final Id.Program id, final String runnable, final int count) {
-
-    Preconditions.checkArgument(count > 0, "cannot change number of program instances to negative number: " + count);
+  public void setServiceInstances(final Id.Program id, final int instances) throws OperationException {
+    Preconditions.checkArgument(instances > 0,
+                                "cannot change number of program instances to negative number: %s", instances);
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
@@ -400,19 +383,13 @@ public class DefaultStore implements Store {
         ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
         ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
 
-        RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnable);
-        if (runtimeSpec == null) {
-          throw new IllegalArgumentException(String.format("Runnable not found, app: %s, service: %s, runnable %s",
-                                                           id.getApplication(), id.getId(), runnable));
-        }
+        // Create a new spec copy from the old one, except with updated instances number
+        serviceSpec = new DefaultServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
+                                                      serviceSpec.getDescription(), serviceSpec.getHandlers(),
+                                                      serviceSpec.getWorkers(), serviceSpec.getResources(),
+                                                      instances);
 
-        ResourceSpecification resourceSpec = replaceInstanceCount(runtimeSpec.getResourceSpecification(), count);
-        RuntimeSpecification newRuntimeSpec = replaceResourceSpec(runtimeSpec, resourceSpec);
-
-        Preconditions.checkNotNull(newRuntimeSpec);
-
-        ApplicationSpecification newAppSpec =
-          replaceServiceSpec(appSpec, id.getId(), replaceRuntimeSpec(runnable, serviceSpec, newRuntimeSpec));
+        ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
 
         mds.apps.updateAppSpec(id.getAccountId(), id.getApplicationId(), newAppSpec);
@@ -420,9 +397,72 @@ public class DefaultStore implements Store {
       }
     });
 
-    LOG.trace("Setting program instances: account: {}, application: {}, service: {}, runnable: {}," +
-                " new instances count: {}",
-              id.getAccountId(), id.getApplicationId(), id.getId(), runnable, count);
+    LOG.trace("Setting program instances: account: {}, application: {}, service: {}, new instances count: {}",
+              id.getAccountId(), id.getApplicationId(), id.getId(), instances);
+  }
+
+  @Override
+  public int getServiceInstances(final Id.Program id) throws OperationException {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
+      @Override
+      public Integer apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
+        return serviceSpec.getInstances();
+      }
+    });
+  }
+
+  @Override
+  public void setServiceWorkerInstances(final Id.Program id,
+                                        final String workerName, final int instances) throws OperationException {
+    Preconditions.checkArgument(instances > 0,
+                                "cannot change number of program instances to negative number: %s", instances);
+
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
+        ServiceWorkerSpecification workerSpec = getServiceWorkerSpecOrFail(id, serviceSpec, workerName);
+
+        // Create a new worker spec copy from the old one, except with updated instances number
+        workerSpec = new DefaultServiceWorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
+                                                           workerSpec.getDescription(), workerSpec.getProperties(),
+                                                           workerSpec.getDatasets(), workerSpec.getResources(),
+                                                           instances);
+
+        // Create a new spec copy from the old one, except with updated worker spec
+        Map<String, ServiceWorkerSpecification> updatedWorkers = Maps.newHashMap(serviceSpec.getWorkers());
+        updatedWorkers.put(workerName, workerSpec);
+        serviceSpec = new DefaultServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
+                                                      serviceSpec.getDescription(), serviceSpec.getHandlers(),
+                                                      updatedWorkers, serviceSpec.getResources(),
+                                                      serviceSpec.getInstances());
+
+        ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
+        replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
+
+        mds.apps.updateAppSpec(id.getAccountId(), id.getApplicationId(), newAppSpec);
+        return null;
+      }
+    });
+
+    LOG.trace("Setting program instances: account: {}, application: {}, service: {}, new instances count: {}",
+              id.getAccountId(), id.getApplicationId(), id.getId(), instances);
+  }
+
+  @Override
+  public int getServiceWorkerInstances(final Id.Program id, final String workerName) throws OperationException {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Integer>() {
+      @Override
+      public Integer apply(AppMds mds) throws Exception {
+        ApplicationSpecification appSpec = getAppSpecOrFail(mds, id);
+        ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
+        ServiceWorkerSpecification workerSpec = getServiceWorkerSpecOrFail(id, serviceSpec, workerName);
+        return workerSpec.getInstances();
+      }
+    });
   }
 
   @Override
@@ -657,48 +697,9 @@ public class DefaultStore implements Store {
     return meta == null ? null : meta.getSpec();
   }
 
-  private static ResourceSpecification replaceInstanceCount(final ResourceSpecification spec,
-                                                     final int instanceCount) {
-    return new ResourceSpecificationWithChangedInstances(spec, instanceCount);
-  }
-
-  private static class ResourceSpecificationWithChangedInstances extends ForwardingResourceSpecification {
-    private final int instanceCount;
-
-    private ResourceSpecificationWithChangedInstances(ResourceSpecification specification, int instanceCount) {
-      super(specification);
-      this.instanceCount = instanceCount;
-    }
-
-    @Override
-    public int getInstances() {
-      return instanceCount;
-    }
-  }
-
-  private static RuntimeSpecification replaceResourceSpec(final RuntimeSpecification runtimeSpec,
-                                                   final ResourceSpecification resourceSpec) {
-    return new RuntimeSpecificationWithChangedResources(runtimeSpec, resourceSpec);
-  }
-
-  private static final class RuntimeSpecificationWithChangedResources extends ForwardingRuntimeSpecification {
-    private final ResourceSpecification resourceSpec;
-
-    private RuntimeSpecificationWithChangedResources(RuntimeSpecification delegate,
-                                                     ResourceSpecification resourceSpec) {
-      super(delegate);
-      this.resourceSpec = resourceSpec;
-    }
-
-    @Override
-    public ResourceSpecification getResourceSpecification() {
-      return resourceSpec;
-    }
-  }
-
-  private static ApplicationSpecification replaceServiceSpec(final ApplicationSpecification appSpec,
-                                                      final String serviceName,
-                                                      final ServiceSpecification serviceSpecification) {
+  private static ApplicationSpecification replaceServiceSpec(ApplicationSpecification appSpec,
+                                                             String serviceName,
+                                                             ServiceSpecification serviceSpecification) {
     return new ApplicationSpecificationWithChangedServices(appSpec, serviceName, serviceSpecification);
   }
 
@@ -718,32 +719,6 @@ public class DefaultStore implements Store {
       Map<String, ServiceSpecification> services = Maps.newHashMap(super.getServices());
       services.put(serviceName, serviceSpecification);
       return services;
-    }
-  }
-
-  private static ServiceSpecification replaceRuntimeSpec(final String runnable, final ServiceSpecification spec,
-                                                  final RuntimeSpecification runtimeSpec) {
-    return new DefaultServiceSpecification(spec.getName(),
-                                           new TwillSpecificationWithChangedRunnable(spec, runnable, runtimeSpec));
-  }
-
-  private static final class TwillSpecificationWithChangedRunnable extends ForwardingTwillSpecification {
-    private final String runnable;
-    private final RuntimeSpecification runtimeSpec;
-
-    private TwillSpecificationWithChangedRunnable(TwillSpecification specification,
-                                                  String runnable, RuntimeSpecification runtimeSpec) {
-      super(specification);
-      this.runnable = runnable;
-      this.runtimeSpec = runtimeSpec;
-    }
-
-    @Override
-    public Map<String, RuntimeSpecification> getRunnables() {
-      Map<String, RuntimeSpecification> specs = Maps.newHashMap(
-        super.getRunnables());
-      specs.put(runnable, runtimeSpec);
-      return specs;
     }
   }
 
@@ -775,14 +750,16 @@ public class DefaultStore implements Store {
     }
   }
 
-  private RuntimeSpecification getRunnableSpecOrFail(final Id.Program id, ServiceSpecification serviceSpec,
-                                                     String runnable) {
-    RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnable);
-    if (runtimeSpec == null) {
-      throw new NoSuchElementException(String.format("Runnable not found, app: %s, service: %s, runnable %s",
-                                                     id.getApplication(), id.getId(), runnable));
+  private ServiceWorkerSpecification getServiceWorkerSpecOrFail(Id.Program id, ServiceSpecification serviceSpec,
+                                                                String workerName) {
+    ServiceWorkerSpecification workerSpec = serviceSpec.getWorkers().get(workerName);
+    if (workerSpec == null) {
+      throw new NoSuchElementException("no such worker @ account id: " + id.getAccountId() +
+                                         ", app id: " + id.getApplication() +
+                                         ", service id: " + id.getId() +
+                                         ", worker id: " + workerName);
     }
-    return runtimeSpec;
+    return workerSpec;
   }
 
   private static FlowletDefinition getFlowletDefinitionOrFail(FlowSpecification flowSpec,
@@ -792,7 +769,7 @@ public class DefaultStore implements Store {
       throw new NoSuchElementException("no such flowlet @ account id: " + id.getAccountId() +
                                            ", app id: " + id.getApplication() +
                                            ", flow id: " + id.getId() +
-                                           ", flowlet id: " + id.getId());
+                                           ", flowlet id: " + flowletId);
     }
     return flowletDef;
   }

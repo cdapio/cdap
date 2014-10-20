@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * {@link co.cask.cdap.api.dataset.DatasetDefinition} for {@link co.cask.cdap.api.dataset.lib.KeyValueTable}.
+ * {@link co.cask.cdap.api.dataset.DatasetDefinition} for {@link co.cask.cdap.api.dataset.lib.TimeseriesTable}.
  */
 @Beta
 public class TimeseriesTableDefinition

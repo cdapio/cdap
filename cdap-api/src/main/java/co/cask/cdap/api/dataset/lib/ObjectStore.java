@@ -20,6 +20,10 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.table.Delete;
+
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A dataset that stores objects of a particular class into a table.
@@ -69,4 +73,19 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
    * @return the object if found, or null if not found
    */
   T read(byte[] key);
+
+  /**
+   * Scans table.
+   * @param startRow start row inclusive. {@code null} means start from first row of the table
+   * @param stopRow stop row exclusive. {@code null} means scan all rows to the end of the table
+   * @return {@link co.cask.cdap.api.dataset.lib.CloseableIterator} over
+   * {@link KeyValue KeyValue&lt;byte[], T&gt;}
+   */
+  CloseableIterator<KeyValue<byte[], T>> scan(byte[] startRow, byte[] stopRow);
+
+  /**
+   * Delete the object for the specified key.
+   * @param key key of the object to be deleted
+   */
+  void delete(byte[] key);
 }

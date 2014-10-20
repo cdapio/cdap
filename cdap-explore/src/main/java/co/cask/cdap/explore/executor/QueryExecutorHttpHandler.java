@@ -26,12 +26,14 @@ import co.cask.cdap.proto.QueryInfo;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.http.AbstractHttpHandler;
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -283,21 +285,20 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
       }
 
-      try {
-        responder.sendChunkStart(HttpResponseStatus.OK, null);
-        responseStarted = true;
-        while (!results.isEmpty()) {
-          for (QueryResult result : results) {
-            appendCSVRow(sb, result);
-            sb.append('\n');
-          }
-          responder.sendChunk(ChannelBuffers.wrappedBuffer(sb.toString().getBytes("UTF-8")));
-          sb.delete(0, sb.length());
-          results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
+      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK, null);
+      responseStarted = true;
+      while (!results.isEmpty()) {
+        for (QueryResult result : results) {
+          appendCSVRow(sb, result);
+          sb.append('\n');
         }
-      } finally {
-        responder.sendChunkEnd();
+        // If failed to send to client, just propagate the IOException and let netty-http to handle
+        chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(sb.toString().getBytes("UTF-8")));
+        sb.delete(0, sb.length());
+        results = exploreService.nextResults(handle, DOWNLOAD_FETCH_CHUNK_SIZE);
       }
+      Closeables.closeQuietly(chunkResponder);
+
     } catch (IllegalArgumentException e) {
       LOG.debug("Got exception:", e);
       // We can't send another response if sendChunkStart has been called

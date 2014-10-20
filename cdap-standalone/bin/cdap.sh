@@ -165,7 +165,7 @@ check_for_updates() {
   l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`
   if [ $l -eq 3 ]
   then
-    new=`curl 'http://cask.co/cdap/version' 2>/dev/null`
+    new=`curl 'http://s3.amazonaws.com/cdap-docs/VERSION' 2>/dev/null`
     if [[ "x${new}" != "x" ]]; then
      current=`cat ${APP_HOME}/VERSION`
      compare_versions $new $current
@@ -173,7 +173,7 @@ check_for_updates() {
        0);;
        1) echo ""
           echo "UPDATE: There is a newer version of the CDAP SDK available."
-          echo "        Download it from http://cask.co/cdap/download"
+          echo "        Download it from http://cask.co/downloads"
           echo "";;
        2);;
      esac
@@ -268,7 +268,7 @@ start() {
     echo $! > $pid
 
     check_for_updates
-    echo -n "Starting CDAP ..."
+    echo -n "Starting Standalone CDAP ..."
 
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
@@ -294,17 +294,19 @@ start() {
       echo "Failed to start, please check logs for more information."
     fi
 
-    nux_enabled
+    # Disabling NUX
+    # TODO: Enable NUX with new example, see CDAP-22
+    #nux_enabled
 
-    NUX_ENABLED=$?
-    if [ "x$NUX_ENABLED" == "x0" ]; then
-      nux
-      exit 0;
-    fi
+    #NUX_ENABLED=$?
+    #if [ "x$NUX_ENABLED" == "x0" ]; then
+    #  nux
+    #  exit 0;
+    #fi
 }
 
 stop() {
-    echo -n "Stopping CDAP ..."
+    echo -n "Stopping Standalone CDAP ..."
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
@@ -321,7 +323,7 @@ stop() {
       fi
       rm -f $pid
       echo ""
-      echo "CDAP stopped successfully"
+      echo "Standalone CDAP stopped successfully."
     fi
     echo
 }

@@ -17,6 +17,7 @@
 package co.cask.cdap.test;
 
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Managing the running Service in an application.
@@ -49,7 +50,18 @@ public interface ServiceManager {
 
   /**
    * Used to discover the Service managed by this ServiceManager.
-   * @return URL of the Service
+   * @return URL of the Service or {@code null} if the service is not available
    */
   URL getServiceURL();
+
+
+  /**
+   * Used to discover the Service managed by this ServiceManager which allows a custom timeout
+   * value to wait for the service to be available.
+   *
+   * @param timeout how long to wait before giving up, in unit of {@code timeoutUnit}
+   * @param timeoutUnit a {@link TimeUnit} to interpret the value of {@code timeout}
+   * @return URL of the service or {@code null} if the service is not available
+   */
+  URL getServiceURL(long timeout, TimeUnit timeoutUnit);
 }

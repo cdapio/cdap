@@ -45,7 +45,7 @@ final class ServiceTwillProgramController extends AbstractTwillProgramController
   @SuppressWarnings("unchecked")
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    if (!ProgramOptionConstants.RUNNABLE_INSTANCES.equals(name) || !(value instanceof Map)) {
+    if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
       return;
     }
 

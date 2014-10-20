@@ -21,7 +21,6 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.Sets;
@@ -30,7 +29,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.SortedSet;
 
@@ -76,11 +77,11 @@ public class KeyValueTableTest extends AbstractDatasetTest {
         Assert.assertArrayEquals(VAL2, kvTable.read(KEY1));
 
         // attempt to swap, expecting old value
-        Assert.assertFalse(kvTable.swap(KEY1, VAL1, VAL3));
+        Assert.assertFalse(kvTable.compareAndSwap(KEY1, VAL1, VAL3));
         Assert.assertArrayEquals(VAL2, kvTable.read(KEY1));
 
         // swap the value and read it back
-        Assert.assertTrue(kvTable.swap(KEY1, VAL2, VAL3));
+        Assert.assertTrue(kvTable.compareAndSwap(KEY1, VAL2, VAL3));
         Assert.assertArrayEquals(VAL3, kvTable.read(KEY1));
 
         // delete the value and verify its gone
@@ -135,7 +136,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // write a swap, this should fail
-        Assert.assertFalse(kvTable.swap(KEY2, VAL1, VAL3));
+        Assert.assertFalse(kvTable.compareAndSwap(KEY2, VAL1, VAL3));
         Assert.assertArrayEquals(VAL2, kvTable.read(KEY2));
       }
     });
@@ -145,7 +146,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
       @Override
       public void apply() throws Exception {
         // swap the value
-        Assert.assertTrue(kvTable.swap(KEY2, VAL2, VAL3));
+        Assert.assertTrue(kvTable.compareAndSwap(KEY2, VAL2, VAL3));
       }
     });
 
@@ -215,7 +216,7 @@ public class KeyValueTableTest extends AbstractDatasetTest {
     }
 
     // add a swap for a third table that should fail
-    Assert.assertFalse(kvTable.swap(KEY3, VAL1, VAL1));
+    Assert.assertFalse(kvTable.compareAndSwap(KEY3, VAL1, VAL1));
 
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -239,6 +240,63 @@ public class KeyValueTableTest extends AbstractDatasetTest {
 
     deleteInstance("t1");
     deleteInstance("t2");
+  }
+
+  @Test
+  public void testScanning() throws Exception {
+    createInstance("keyValueTable", "tScan", DatasetProperties.EMPTY);
+
+    final KeyValueTable t = getInstance("tScan");
+    TransactionExecutor txnl = newTransactionExecutor(t);
+
+    // start a transaction
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // write 0..1000 to the table
+        for (int i = 0; i < 1000; i++) {
+          byte[] key = Bytes.toBytes(i);
+          t.write(key, key);
+        }
+      }
+    });
+
+    // start a transaction, verify scan
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // scan with start row '0' and end row '1000' and make sure we have 1000 records
+        Iterator<KeyValue<byte[], byte[]>> keyValueIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(1000));
+        int rowCount = 0;
+        while (keyValueIterator.hasNext()) {
+          rowCount++;
+          keyValueIterator.next();
+        }
+        Assert.assertEquals(1000, rowCount);
+      }
+    });
+
+    // start a transaction, scan part of them elements using scanner, close the scanner,
+    // then call next() on scanner, it should fail
+    txnl.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // scan with start row '0' and end row '1000' and make sure we have 1000 records
+        CloseableIterator<KeyValue<byte[], byte[]>> keyValueIterator = t.scan(Bytes.toBytes(0), Bytes.toBytes(200));
+        int rowCount = 0;
+        while (keyValueIterator.hasNext() && (rowCount < 100)) {
+          rowCount++;
+          keyValueIterator.next();
+        }
+        keyValueIterator.close();
+        try {
+          keyValueIterator.next();
+          Assert.fail("Reading after closing Scanner returned result.");
+        } catch (NoSuchElementException e) {
+        }
+      }
+    });
+    deleteInstance("tScan");
   }
 
   @Test

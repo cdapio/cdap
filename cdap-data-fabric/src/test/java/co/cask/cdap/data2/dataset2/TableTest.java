@@ -26,8 +26,15 @@ import java.util.Map;
  */
 public class TableTest {
 
+  public static void verifyRow(Row result, byte[] expectedRow, byte[][] columns, byte[][] expected) {
+    Assert.assertNotNull(result);
+    Assert.assertArrayEquals(expectedRow, result.getRow());
+    verifyColumns(result, columns, expected);
+  }
+
   public static void verifyColumns(Row result, byte[][] columns, byte[][] expected) {
     Assert.assertEquals(columns.length, expected.length);
+    Assert.assertNotNull(result);
     Assert.assertFalse(result.isEmpty());
     Map<byte[], byte[]> colsMap = result.getColumns();
     Assert.assertNotNull(colsMap);

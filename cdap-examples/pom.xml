@@ -36,6 +36,7 @@
     <module>WordCount</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>WebAnalytics</module>
   </modules>
 
   <repositories>
@@ -47,6 +48,7 @@
 
   <properties>
     <hadoop.version>2.3.0</hadoop.version>
+    <netty.http.version>0.5.0</netty.http.version>
     <spark.core.version>1.1.0</spark.core.version>
     <power.pack.version>[2.0.0,)</power.pack.version>
   </properties>
@@ -80,7 +82,7 @@
                   <exclude>**/logrotate.d/**</exclude>
                   <exclude>**/limits.d/**</exclude>
                   <exclude>**/resources/**/*.txt</exclude>
-                  <exclude>**/resources/**/*.accesslog</exclude>
+                  <exclude>**/resources/**/*.log</exclude>
                   <exclude>**/resources/**/*.css</exclude>
                   <exclude>**/resources/**/*.scss</exclude>
                   <exclude>**/resources/**/*.js</exclude>
@@ -179,7 +181,7 @@
       <dependency>
         <groupId>co.cask.http</groupId>
         <artifactId>netty-http</artifactId>
-        <version>0.4.0-SNAPSHOT</version>
+        <version>${netty.http.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.commons</groupId>
@@ -187,18 +189,6 @@
         <version>1.3.2</version>
       </dependency>
       <dependency> <!-- Spark dependency -->
-        <groupId>org.apache.spark</groupId>
-        <artifactId>spark-core_2.10</artifactId>
-        <version>${spark.core.version}</version>
-        <scope>provided</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-core_2.10</artifactId>
         <version>${spark.core.version}</version>

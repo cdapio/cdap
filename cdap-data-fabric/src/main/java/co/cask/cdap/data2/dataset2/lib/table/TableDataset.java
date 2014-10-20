@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
@@ -178,7 +179,7 @@ class TableDataset extends AbstractDataset implements Table {
   @Override
   public long incrementAndGet(byte[] row, byte[] column, long amount) {
     try {
-      return table.increment(row, column, amount);
+      return table.incrementAndGet(row, column, amount);
     } catch (NumberFormatException e) {
       LOG.debug("increment failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw e;
@@ -192,7 +193,7 @@ class TableDataset extends AbstractDataset implements Table {
   public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
     Map<byte[], Long> incResult;
     try {
-      incResult = table.increment(row, columns, amounts);
+      incResult = table.incrementAndGet(row, columns, amounts);
     } catch (NumberFormatException e) {
       LOG.debug("increment failed for table: " + getTransactionAwareName() + ", row: " + Bytes.toStringBinary(row), e);
       throw e;
@@ -227,22 +228,22 @@ class TableDataset extends AbstractDataset implements Table {
   @Override
   public void increment(byte[] row, byte[] column, long amount) {
     try {
-      table.incrementWrite(row, column, amount);
+      table.increment(row, column, amount);
     } catch (Exception e) {
-      LOG.debug("incrementWrite failed for table: " + getTransactionAwareName() +
+      LOG.debug("increment failed for table: " + getTransactionAwareName() +
                   ", row: " + Bytes.toStringBinary(row), e);
-      throw new DataSetException("incrementWrite failed", e);
+      throw new DataSetException("increment failed", e);
     }
   }
 
   @Override
   public void increment(byte[] row, byte[][] columns, long[] amounts) {
     try {
-      table.incrementWrite(row, columns, amounts);
+      table.increment(row, columns, amounts);
     } catch (Exception e) {
-      LOG.debug("incrementWrite failed for table: " + getTransactionAwareName() +
+      LOG.debug("increment failed for table: " + getTransactionAwareName() +
                   ", row: " + Bytes.toStringBinary(row), e);
-      throw new DataSetException("incrementWrite failed", e);
+      throw new DataSetException("increment failed", e);
     }
   }
 

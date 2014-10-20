@@ -50,8 +50,6 @@ public final class HBaseConsumerState {
 
   /**
    * Creates a list of {@link HBaseConsumerState} instance based on the given state map.
-   * @param stateMap
-   * @return
    */
   public static List<HBaseConsumerState> create(SortedMap<byte[], byte[]> stateMap) {
     List<HBaseConsumerState> states = new ArrayList<HBaseConsumerState>(stateMap.size());

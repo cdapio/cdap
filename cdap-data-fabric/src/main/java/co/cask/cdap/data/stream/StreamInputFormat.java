@@ -17,6 +17,7 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -70,7 +71,7 @@ import java.util.List;
  * @param <K> Key type of input
  * @param <V> Value type of input
  */
-public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
+public class StreamInputFormat<K, V> extends InputFormat<K, V> {
 
   private static final String EVENT_START_TIME = "input.streaminputformat.event.starttime";
   private static final String EVENT_END_TIME = "input.streaminputformat.event.endtime";
@@ -78,6 +79,7 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
   private static final String STREAM_TTL = "input.streaminputformat.stream.event.ttl";
   private static final String MAX_SPLIT_SIZE = "input.streaminputformat.max.splits.size";
   private static final String MIN_SPLIT_SIZE = "input.streaminputformat.min.splits.size";
+  private static final String DECODER_TYPE = "input.streaminputformat.decoder.type";
 
   /**
    * Sets the TTL for the stream events.
@@ -135,12 +137,26 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
     job.getConfiguration().setLong(MIN_SPLIT_SIZE, minSplits);
   }
 
+
   /**
-   * Factory method for creating {@link co.cask.cdap.api.stream.StreamEventDecoder} to decode stream event.
+   * Sets the class name for the {@link StreamEventDecoder}.
    *
-   * @return An instance of {@link co.cask.cdap.api.stream.StreamEventDecoder}.
+   * @param job The job to modify.
+   * @param decoderType Class name of the decoder class
    */
-  protected abstract StreamEventDecoder<K, V> createStreamEventDecoder();
+  public static void setDecoderType(Job job, String decoderType) {
+    job.getConfiguration().set(DECODER_TYPE, decoderType);
+  }
+
+  /**
+   * Returns the {@link StreamEventDecoder} class as specified in the job configuration.
+   *
+   * @param conf The job configuration
+   * @return The {@link StreamEventDecoder} class or {@code null} if it is not set.
+   */
+  public static Class<? extends StreamEventDecoder> getDecoderClass(Configuration conf) {
+    return conf.getClass(DECODER_TYPE, null, StreamEventDecoder.class);
+  }
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
@@ -191,7 +207,7 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
   @Override
   public RecordReader<K, V> createRecordReader(InputSplit split,
                                                TaskAttemptContext context) throws IOException, InterruptedException {
-    return new StreamRecordReader<K, V>(createStreamEventDecoder());
+    return new StreamRecordReader<K, V>(createStreamEventDecoder(context.getConfiguration()));
   }
 
   protected long getCurrentTime() {
@@ -210,5 +226,16 @@ public abstract class StreamInputFormat<K, V> extends InputFormat<K, V> {
       }
     }
     return builder.build();
+  }
+
+  @SuppressWarnings("unchecked")
+  protected StreamEventDecoder<K, V> createStreamEventDecoder(Configuration conf) {
+    Class<? extends StreamEventDecoder> decoderClass = getDecoderClass(conf);
+    Preconditions.checkNotNull(decoderClass, "Failed to load stream event decoder %s", conf.get(DECODER_TYPE));
+    try {
+      return (StreamEventDecoder<K, V>) decoderClass.newInstance();
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }

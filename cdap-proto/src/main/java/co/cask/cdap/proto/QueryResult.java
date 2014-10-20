@@ -21,7 +21,7 @@ import com.google.common.base.Objects;
 import java.util.List;
 
 /**
- * Defines the rows returned by {@link Explore}.
+ * Represents query result.
  */
 public class QueryResult {
   private final List<Object> columns;

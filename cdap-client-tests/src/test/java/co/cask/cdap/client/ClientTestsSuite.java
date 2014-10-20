@@ -16,8 +16,8 @@
 
 package co.cask.cdap.client;
 
-import co.cask.cdap.client.common.StandaloneTestBase;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.cdap.test.standalone.StandaloneTestBase;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;

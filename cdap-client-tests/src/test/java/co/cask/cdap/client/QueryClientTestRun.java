@@ -20,7 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
@@ -67,17 +66,17 @@ public class QueryClientTestRun extends ClientTestBase {
     Thread.sleep(3000);
 
     QueryHandle queryHandle = queryClient.execute("select * from cdap_user_" + FakeApp.DS_NAME);
-    QueryStatus status = new QueryStatus(null, false);
+    QueryStatus status;
 
-    while (null == status.getStatus() ||
-      QueryStatus.OpStatus.RUNNING == status.getStatus() ||
-      QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
-      QueryStatus.OpStatus.PENDING == status.getStatus()) {
-
-      Thread.sleep(1000);
+    while (true) {
       status = queryClient.getStatus(queryHandle);
+      if (status.getStatus().isDone()) {
+        break;
+      }
+      Thread.sleep(1000);
     }
 
+    Assert.assertNotNull(status);
     Assert.assertTrue(status.hasResults());
     Assert.assertNotNull(queryClient.getSchema(queryHandle));
     List<QueryResult> results = queryClient.getResults(queryHandle, 20);

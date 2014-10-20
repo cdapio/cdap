@@ -33,6 +33,7 @@ import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -55,7 +56,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
-import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -221,7 +221,8 @@ public class DefaultStoreTest {
       addStream(new Stream("stream3"));
       createDataset("dataset2", KeyValueTable.class);
 
-      createDataset("dataset3", IndexedTable.class, DatasetProperties.builder().add("columnToIndex", "foo").build());
+      createDataset("dataset3", IndexedTable.class,
+                    DatasetProperties.builder().add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "foo").build());
       addFlow(new FlowImpl("flow2"));
       addFlow(new FlowImpl("flow3"));
       addProcedure(new ProcedureImpl("procedure2"));
@@ -339,31 +340,31 @@ public class DefaultStoreTest {
   }
 
   @Test
-  public void testServiceRunnableInstances() throws Exception {
+  public void testServiceInstances() throws Exception {
     AppFabricTestHelper.deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
     app.configure(appConfigurer, new ApplicationContext());
 
-    ApplicationSpecification appSpec = appConfigurer.createApplicationSpec();
+    ApplicationSpecification appSpec = appConfigurer.createSpecification();
     Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), appSpec.getName());
     store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservices"));
 
+    // Test setting of service instances
     Id.Program programId = Id.Program.from(appId, "NoOpService");
-    int count = store.getServiceRunnableInstances(programId, "NoOpService");
+    int count = store.getServiceInstances(programId);
     Assert.assertEquals(1, count);
 
-    store.setServiceRunnableInstances(programId, "NoOpService", 10);
-    count = store.getServiceRunnableInstances(programId, "NoOpService");
+    store.setServiceInstances(programId, 10);
+    count = store.getServiceInstances(programId);
     Assert.assertEquals(10, count);
 
     ApplicationSpecification newSpec = store.getApplication(appId);
     Map<String, ServiceSpecification> services = newSpec.getServices();
     Assert.assertEquals(1, services.size());
 
-    Map<String, RuntimeSpecification> runtimeSpecs = services.get("NoOpService").getRunnables();
-    Assert.assertEquals(1, runtimeSpecs.size());
-    Assert.assertEquals(10, runtimeSpecs.get("NoOpService").getResourceSpecification().getInstances());
+    ServiceSpecification serviceSpec = services.get("NoOpService");
+    Assert.assertEquals(10, serviceSpec.getInstances());
   }
 
   @Test

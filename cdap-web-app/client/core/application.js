@@ -119,7 +119,7 @@ function(Components, Embeddables, HTTP, Util) {
 					if (display && C.get('isLocal')) {
 						$('#warning .warning-text').html('New version available: ' + newest.major +
 							'.' + newest.minor + '.' + newest.revision +
-							'<br /><a target="_blank" href="https://www.continuuity.com/download">' +
+							'<br /><a target="_blank" href="https://www.cask.co/downloads/">' +
 							'Click here to download</a>.');
 						$('#warning').show();
 
@@ -202,7 +202,7 @@ function(Components, Embeddables, HTTP, Util) {
 			C.Env.set('nux', !!env.nux);
       C.Env.set('security_enabled', env.security_enabled);
 
-			$('title').text(env.product_name + ' » Continuuity');
+			$('title').text(env.product_name + ' » CDAP');
 
 			if (env.account) {
 
@@ -210,7 +210,7 @@ function(Components, Embeddables, HTTP, Util) {
 				C.Env.set('user', env.account);
 				C.Env.set('cluster', env.cluster.info);
 
-				$('title').text(C.Env.cluster.vpc_label + ' » Continuuity');
+				$('title').text(C.Env.cluster.vpc_label + ' » CDAP');
 
 				C.set('WATCH_LATENCY', true);
 

@@ -76,6 +76,8 @@ final class WebCloudAppService extends AbstractExecutionThreadService {
   @Inject
   public WebCloudAppService(@Named("web-app-path")String webAppPath, CConfiguration cConf, SConfiguration sConf) {
     this.webAppPath = new File(webAppPath);
+    Preconditions.checkArgument(this.webAppPath.exists(),
+                                "webAppPath file does not exist: " + this.webAppPath.getAbsolutePath());
     // This is ok since this class is only used in standalone, the path is always [base]/server/local/main.js
     // However, this could change if the layer of web-app changed, which require adjustment to this class anyway
     this.webAppBase = this.webAppPath.getParentFile().getParentFile().getParentFile();

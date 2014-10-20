@@ -51,7 +51,6 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.passport.http.client.PassportClient;
-import co.cask.cdap.security.authorization.ACLService;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
@@ -97,7 +96,6 @@ public class StandaloneMain {
   private final CConfiguration configuration;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
-  private ACLService aclService;
   private final DatasetService datasetService;
 
   private ExploreExecutorService exploreExecutorService;
@@ -126,7 +124,6 @@ public class StandaloneMain {
     securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
-      aclService = injector.getInstance(ACLService.class);
     }
 
     boolean exploreEnabled = configuration.getBoolean(Constants.Explore.EXPLORE_ENABLED);
@@ -180,7 +177,6 @@ public class StandaloneMain {
     streamHttpService.startAndWait();
 
     if (securityEnabled) {
-      aclService.startAndWait();
       externalAuthenticationServer.startAndWait();
     }
 
@@ -193,15 +189,15 @@ public class StandaloneMain {
     int dashboardPort = sslEnabled ?
       configuration.getInt(Constants.Dashboard.SSL_BIND_PORT) :
       configuration.getInt(Constants.Dashboard.BIND_PORT);
-    System.out.println("Application Server started successfully");
-    System.out.printf("Connect to dashboard at %s://%s:%d\n", protocol, hostname, dashboardPort);
+    System.out.println("Standalone CDAP started successfully.");
+    System.out.printf("Connect to the Console at %s://%s:%d\n", protocol, hostname, dashboardPort);
   }
 
   /**
    * Shutdown the service.
    */
   public void shutDown() {
-    LOG.info("Shutting down the Application Server");
+    LOG.info("Shutting down Standalone CDAP");
 
     try {
       // order matters: first shut down web app 'cause it will stop working after router is down
@@ -228,7 +224,6 @@ public class StandaloneMain {
       if (securityEnabled) {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
-        aclService.stopAndWait();
       }
       logAppenderInitializer.close();
 
@@ -294,8 +289,8 @@ public class StandaloneMain {
       main = create(webAppPath);
       main.startUp();
     } catch (Throwable e) {
-      System.err.println("Failed to start server. " + e.getMessage());
-      LOG.error("Failed to start server", e);
+      System.err.println("Failed to start Standalone CDAP. " + e.getMessage());
+      LOG.error("Failed to start Standalone CDAP", e);
       if (main != null) {
         main.shutDown();
       }

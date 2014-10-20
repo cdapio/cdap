@@ -24,6 +24,7 @@ import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpRequests;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
@@ -43,9 +44,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.List;
 import javax.inject.Inject;
+import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.core.HttpHeaders;
 
 /**
@@ -221,6 +225,15 @@ public class StreamClient {
     if (accessToken != null) {
       urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
     }
+
+    if (urlConn instanceof HttpsURLConnection && !config.getDefaultConfig().isVerifySSLCert()) {
+      try {
+        HttpRequests.disableCertCheck((HttpsURLConnection) urlConn);
+      } catch (Exception e) {
+        // TODO: Log "Got exception while disabling SSL certificate check for request.getURL()"
+      }
+    }
+
     try {
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
         throw new StreamNotFoundException(streamId);

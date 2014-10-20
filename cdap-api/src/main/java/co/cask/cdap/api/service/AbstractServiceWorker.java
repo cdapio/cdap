@@ -16,10 +16,12 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.collect.ImmutableMap;
-import org.apache.twill.api.ResourceSpecification;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,49 +29,84 @@ import java.util.Map;
  */
 @Beta
 public abstract class AbstractServiceWorker implements ServiceWorker {
+
+  private ServiceWorkerConfigurer configurer;
   private ServiceWorkerContext context;
 
   @Override
-  public ServiceWorkerSpecification configure() {
-    return new DefaultServiceWorkerSpecification(this, getName(), getDescription(), getRuntimeArguments(),
-                                                 getResourceSpecification());
+  public final void configure(ServiceWorkerConfigurer configurer) {
+    this.configurer = configurer;
+    configure();
   }
 
   /**
-   * Get the name of the worker. Defaults to the class name.
+   * Set description of the {@link ServiceWorker}.
+   * @param description the description
+   */
+  protected void setDescription(String description) {
+    configurer.setDescription(description);
+  }
+
+  /**
+   * Sets the resources requirements for the {@link ServiceWorker}.
+   * @param resources The requirements.
+   */
+  protected void setResources(Resources resources) {
+    configurer.setResources(resources);
+  }
+
+  /**
+   * Sets the number of instances needed for the {@link ServiceWorker}.
+   * @param instances Number of instances, must be > 0.
+   */
+  protected void setInstances(int instances) {
+    configurer.setInstances(instances);
+  }
+
+  /**
+   * Sets a set of properties that will be available through the {@link ServiceWorkerSpecification#getProperties()}
+   * at runtime.
    *
-   * @return the name of this worker
+   * @param properties the properties to set
    */
-  protected String getName() {
-    return getClass().getSimpleName();
+  protected void setProperties(Map<String, String> properties) {
+    configurer.setProperties(properties);
   }
 
   /**
-   * Get the description of the worker. Defaults to an empty string.
+   * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the worker.
    *
-   * @return the description of this worker, or an empty string if none
+   * @param dataset Dataset name
+   * @param datasets more Dataset names.
    */
-  protected String getDescription() {
-    return "";
+  protected void useDatasets(String dataset, String...datasets) {
+    List<String> datasetList = new ArrayList<String>();
+    datasetList.add(dataset);
+    datasetList.addAll(Arrays.asList(datasets));
+    useDatasets(datasetList);
   }
 
   /**
-   * Get the runtime arguments for the worker. Defaults to an empty map.
+   * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the worker.
    *
-   * @return the runtime arguments of this worker, or an empty map if none
+   * @param datasets Dataset names.
    */
-  protected Map<String, String> getRuntimeArguments() {
-    return ImmutableMap.of();
+  protected void useDatasets(Iterable<String> datasets) {
+    configurer.useDatasets(datasets);
   }
 
   /**
-   * Currently defaults to {@link ResourceSpecification#BASIC}
-   * until we allow the user to specify it.
-   * 
-   * @return The resourceSpecification to be used for this serviceWorker
+   * Returns the {@link ServiceWorkerConfigurer} used for configuration. Only available during configuration time.
    */
-  protected ResourceSpecification getResourceSpecification() {
-    return ResourceSpecification.BASIC;
+  protected final ServiceWorkerConfigurer getConfigurer() {
+    return configurer;
+  }
+
+  /**
+   * Configures the worker.
+   */
+  protected void configure() {
+
   }
 
   @Override

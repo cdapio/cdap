@@ -35,7 +35,7 @@ public interface ProgramRunnerFactory {
     WORKFLOW,
     WEBAPP,
     SERVICE,
-    RUNNABLE
+    SERVICE_COMPONENT
   }
 
   ProgramRunner create(Type programType);

@@ -71,12 +71,6 @@ public final class Constants {
    * App Fabric Configuration.
    */
   public static final class AppFabric {
-    /**
-     * Default constants for common.
-     */
-
-    //TODO: THis temp
-    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
     /**
      * App Fabric Server.

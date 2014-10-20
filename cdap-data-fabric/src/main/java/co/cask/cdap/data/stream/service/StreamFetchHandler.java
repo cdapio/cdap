@@ -31,10 +31,12 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonWriter;
@@ -127,8 +129,9 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
       }
 
       // Send with chunk response, as we don't want to buffer all events in memory to determine the content-length.
-      responder.sendChunkStart(HttpResponseStatus.OK,
-                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json; charset=utf-8"));
+      ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
+                                                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE,
+                                                                                    "application/json; charset=utf-8"));
       ChannelBuffer buffer = ChannelBuffers.dynamicBuffer();
       JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(new ChannelBufferOutputStream(buffer),
                                                                     Charsets.UTF_8));
@@ -143,8 +146,10 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
           // If exceeded chunk size limit, send a new chunk.
           if (buffer.readableBytes() >= CHUNK_SIZE) {
-            // No way to know if it is ok to send chunk or not. See ENG-4168
-            responder.sendChunk(buffer);
+            // If the connect is closed, sendChunk will throw IOException.
+            // No need to handle the exception as it will just propagated back to the netty-http library
+            // and it will handle it.
+            chunkResponder.sendChunk(buffer);
             buffer.clear();
           }
         }
@@ -159,9 +164,9 @@ public final class StreamFetchHandler extends AuthenticatedHttpHandler {
 
       // Send the last chunk that still has data
       if (buffer.readable()) {
-        responder.sendChunk(buffer);
+        chunkResponder.sendChunk(buffer);
       }
-      responder.sendChunkEnd();
+      Closeables.closeQuietly(chunkResponder);
     } finally {
       reader.close();
     }

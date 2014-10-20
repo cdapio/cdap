@@ -16,8 +16,13 @@
 
 package co.cask.cdap.api.service;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
@@ -54,7 +59,7 @@ public abstract class AbstractService implements Service {
    * @param handler to serve requests with.
    */
   protected void addHandler(HttpServiceHandler handler) {
-    configurer.addHandler(handler);
+    addHandlers(Arrays.asList(handler));
   }
 
   /**
@@ -70,33 +75,60 @@ public abstract class AbstractService implements Service {
    * @param worker for the service.
    */
   @Beta
-  protected void addWorker(ServiceWorker worker) {
-    configurer.addWorker(worker);
+  protected void addWorker(String name, ServiceWorker worker) {
+    Map<String, ServiceWorker> workers = new HashMap<String, ServiceWorker>();
+    workers.put(name, worker);
+    addWorkers(workers);
   }
 
   /**
+   * Adds workers to the Service. The worker simple class name is used as the worker name.
+   *
+   * @param worker The worker to add
+   * @param workers More workers to add.
+   */
+  @Beta
+   protected void addWorkers(ServiceWorker worker, ServiceWorker...workers) {
+    Map<String, ServiceWorker> workerMap = new HashMap<String, ServiceWorker>();
+    workerMap.put(worker.getClass().getSimpleName(), worker);
+    for (ServiceWorker serviceWorker : workers) {
+      workerMap.put(serviceWorker.getClass().getName(), serviceWorker);
+    }
+    addWorkers(workerMap);
+   }
+
+
+   /**
    * Add a list of workers to the Service.
    * @param workers for the service.
    */
   @Beta
-  protected void addWorkers(Iterable<? extends ServiceWorker> workers) {
+  protected void addWorkers(Map<String, ServiceWorker> workers) {
     configurer.addWorkers(workers);
   }
 
   /**
-   * Specify a dataset that will be used by the Service.
-   * @param dataset name of dataset.
+   * Sets the number of instances needed for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * @param instances Number of instances, must be > 0.
    */
-  protected void useDataset(String dataset) {
-    configurer.useDataset(dataset);
+  protected void setInstances(int instances) {
+    configurer.setInstances(instances);
   }
 
   /**
-   * Specify a list of datasets that will be used by the Service.
-   * @param datasets names of datasets.
+   * Sets the resources requirements for the server that runs all {@link HttpServiceHandler}s of this Service.
+   * @param resources The requirements.
    */
-  protected void useDatasets(Iterable<String> datasets) {
-    configurer.useDatasets(datasets);
+  protected void setResources(Resources resources) {
+    configurer.setResources(resources);
+  }
+
+  /**
+   * Returns the {@link ServiceConfigurer}, only available at configuration time.
+   * @return
+   */
+  protected final ServiceConfigurer getConfigurer() {
+    return configurer;
   }
 
   /**
@@ -104,5 +136,4 @@ public abstract class AbstractService implements Service {
    * and workers.
    */
   protected abstract void configure();
-
 }

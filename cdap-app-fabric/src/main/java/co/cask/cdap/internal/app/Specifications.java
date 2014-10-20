@@ -30,6 +30,6 @@ public final class Specifications {
   public static ApplicationSpecification from(Application app) {
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
     app.configure(appConfigurer, new ApplicationContext());
-    return appConfigurer.createApplicationSpec();
+    return appConfigurer.createSpecification();
   }
 }

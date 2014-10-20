@@ -149,7 +149,7 @@ public class SandboxJVM {
       // Now, we call configure, which returns application specification.
       DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
       app.configure(configurer, new ApplicationContext());
-      ApplicationSpecification specification = configurer.createApplicationSpec();
+      ApplicationSpecification specification = configurer.createSpecification();
 
       // Convert the specification to JSON.
       // We write the Application specification to output file in JSON format.

@@ -20,6 +20,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.shell.AbstractCommand;
 import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.completer.Completable;
+import co.cask.cdap.shell.util.FilePathResolver;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import jline.console.completer.Completer;
@@ -36,18 +37,20 @@ import javax.inject.Inject;
 public class DeployAppCommand extends AbstractCommand implements Completable {
 
   private final ApplicationClient applicationClient;
+  private final FilePathResolver resolver;
 
   @Inject
-  public DeployAppCommand(ApplicationClient applicationClient) {
+  public DeployAppCommand(ApplicationClient applicationClient, FilePathResolver resolver) {
     super("app", "<app-jar-file>", "Deploys an " + ElementType.APP.getPrettyName());
     this.applicationClient = applicationClient;
+    this.resolver = resolver;
   }
 
   @Override
   public void process(String[] args, PrintStream output) throws Exception {
     super.process(args, output);
 
-    File file = new File(args[0]);
+    File file = resolver.resolvePathToFile(args[0]);
     Preconditions.checkArgument(file.exists(), "File " + file.getAbsolutePath() + " does not exist");
     Preconditions.checkArgument(file.canRead(), "File " + file.getAbsolutePath() + " is not readable");
     applicationClient.deploy(file);
