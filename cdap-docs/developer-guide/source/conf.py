@@ -61,15 +61,10 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.pngmath',
     'sphinx.ext.ifconfig',
-    'sphinxcontrib.googleanalytics',
-    #'rst2pdf.pdfbuilder',
 ]
 
 # Remove intersphinx as we are not linking to other peoples's docs with Sphinx
 #    'sphinx.ext.intersphinx',
-
-# Google analytics configuration
-googleanalytics_id = 'UA-27787617-1'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

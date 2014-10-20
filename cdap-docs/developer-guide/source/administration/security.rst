@@ -17,11 +17,11 @@ clients.
 
 Authentication in CDAP consists of two components:
 
-- **Authentication Server** - the authentication server integrates with different authentication
+- **Authentication Server:** the authentication server integrates with different authentication
   backends (LDAP, JASPI plugins) using a plugin API.  Clients must first authenticate with the
   authentication server through this configured backend.  Once authenticated, clients are issued
   an access token representing their identity.
-- **CDAP Router** - the CDAP router serves as the secured host in the perimeter security
+- **CDAP Router:** the CDAP router serves as the secured host in the perimeter security
   model.  All client calls to the cluster go through the router, and must present a valid access
   token when security is enabled.
 
@@ -41,92 +41,91 @@ Enabling Security
 -----------------
 To enable security in CDAP, add these properties to ``cdap-site.xml``:
 
-==========================================  ==============
-   Property                                   Value
-==========================================  ==============
-security.enabled                              true
-security.auth.server.address                  <hostname>
-==========================================  ==============
+============================================= ===============================================================
+   Property                                     Value
+============================================= ===============================================================
+security.enabled                                true
+security.auth.server.address                    <hostname>
+============================================= ===============================================================
 
 Running Servers with SSL
 ........................
 
 To enable running servers with SSL in CDAP, add this property to ``cdap-site.xml``:
 
-==========================================  ==============
-   Property                                   Value
-==========================================  ==============
-ssl.enabled                                   true
-==========================================  ==============
+============================================= ===============================================================
+   Property                                     Value
+============================================= ===============================================================
+ssl.enabled                                     true
+============================================= ===============================================================
 
 Default Ports
 .............
+
 Without SSL:
 
-=======================================   =================
-   Property                               Default Value
-=======================================   =================
-router.bind.port                            10000
-security.auth.server.bind.port              10009
-dashboard.bind.port                         9999
-=======================================   =================
+============================================= ===============================================================
+   Property                                     Default Value
+============================================= ===============================================================
+router.bind.port                                10000
+security.auth.server.bind.port                  10009
+dashboard.bind.port                             9999
+============================================= ===============================================================
 
 With SSL:
 
-==========================================  =================
-   Property                                  Default Value
-==========================================  =================
-router.ssl.bind.port                          10443
-security.auth.server.ssl.bind.port            10010
-dashboard.ssl.bind.port                       9443
-==========================================  =================
+============================================= ===============================================================
+   Property                                     Default Value
+============================================= ===============================================================
+router.ssl.bind.port                            10443
+security.auth.server.ssl.bind.port              10010
+dashboard.ssl.bind.port                         9443
+============================================= ===============================================================
 
 
 Configuring SSL for the Authentication Server
 .............................................
 To configure the granting of ``AccessToken``\s via SSL, add these properties to ``cdap-security.xml``:
 
-=============================================     =====================     =======================================
-   Property                                        Default Value                Description
-=============================================     =====================     =======================================
-security.auth.server.ssl.keystore.path              None                      Keystore file location. The file should
-                                                                              be owned and readable only by the
-                                                                              CDAP user
-security.auth.server.ssl.keystore.password          None                      Keystore password
-security.auth.server.ssl.keystore.keypassword       None                      Keystore key password
-security.auth.server.ssl.keystore.type              JKS                       Keystore file type
-=============================================     =====================     =======================================
+============================================= ===================== =========================================
+   Property                                     Default Value         Description
+============================================= ===================== =========================================
+security.auth.server.ssl.keystore.path              None              Keystore file location; the file should
+                                                                      be owned and readable only by the
+                                                                      CDAP user
+security.auth.server.ssl.keystore.password          None              Keystore password
+security.auth.server.ssl.keystore.keypassword       None              Keystore key password
+security.auth.server.ssl.keystore.type              JKS               Keystore file type
+============================================= ===================== =========================================
 
 
 Configuring SSL for the Router
 ..............................
 To configure SSL for the Router, add these properties to ``cdap-security.xml``:
 
-================================    =======================      ================================================
-   Property                           Default Value                Description
-================================    =======================      ================================================
-router.ssl.keystore.path              None                         Keystore file location. The file should
-                                                                   be owned and readable only by the
-                                                                   CDAP user
-router.ssl.keystore.password          None                         Keystore password
-router.ssl.keystore.keypassword       None                         Keystore key password
-router.ssl.keystore.type              JKS                          Keystore file type
-================================    =======================      ================================================
+============================================= ===================== =========================================
+   Property                                     Default Value         Description
+============================================= ===================== =========================================
+router.ssl.keystore.path                             None             Keystore file location; the file should
+                                                                      be owned and readable only by the
+                                                                      CDAP user
+router.ssl.keystore.password                         None             Keystore password
+router.ssl.keystore.keypassword                      None             Keystore key password
+router.ssl.keystore.type                             JKS              Keystore file type
+============================================= ===================== =========================================
 
 Configuring SSL for UI
 ......................
 To enable SSL for the Web-UI, add these properties to ``cdap-security.xml``:
 
-=======================================          ============================================
-   Property                                        Description
-=======================================          ============================================
-dashboard.ssl.cert                                  SSL cert file location. The file should
-                                                    be owned and readable only by the CDAP
-                                                    user
-dashboard.ssl.key                                   SSL key file location. The file should
-                                                    be owned and readable only by the CDAP
-                                                    user
-=======================================          ============================================
+============================================= ===============================================================
+   Property                                     Default Value
+============================================= ===============================================================
+dashboard.ssl.cert                             SSL cert file location; the file should
+                                               be owned and readable only by the CDAP user
+dashboard.ssl.key                              SSL key file location; the file should
+                                               be owned and readable only by the CDAP user
+============================================= ===============================================================
 
 **Note:** To allow self signed certificates, set dashboard.ssl.disable.cert.check field to true in cdap-site.xml
 
@@ -134,14 +133,14 @@ Configuring Kerberos (required)
 ...............................
 To configure Kerberos authentication for various CDAP services, add these properties to ``cdap-site.xml``:
 
-==========================================  ========================  ==========================================
-   Property                                   Default Value            Description
-==========================================  ========================  ==========================================
-kerberos.auth.enabled                         ``security.enabled``     true to enable Kerberos authentication
-cdap.master.kerberos.keytab                   None                     Kerberos keytab file location
-cdap.master.kerberos.principal                None                     Kerberos principal associated with
-                                                                       the keytab
-==========================================  ========================  ==========================================
+============================================= ===================== =========================================
+   Property                                     Default Value         Description
+============================================= ===================== =========================================
+kerberos.auth.enabled                          ``security.enabled``   true to enable Kerberos authentication
+cdap.master.kerberos.keytab                    None                   Kerberos keytab file location
+cdap.master.kerberos.principal                 None                   Kerberos principal associated with
+                                                                      the keytab
+============================================= ===================== =========================================
 
 Configuring Zookeeper (required)
 ................................
@@ -212,19 +211,24 @@ You may also configure the file being logged to by changing the path under ``<fi
 
 Configuring Authentication Mechanisms
 -------------------------------------
-CDAP provides several ways to authenticate a user's identity.
+CDAP provides several ways to authenticate a user's identity:
+
+- `Basic Authentication`_
+- `LDAP Authentication`_
+- `Java Authentication Service Provider Interface (JASPI) Authentication`_
+- `Custom Authentication`_
 
 Basic Authentication
---------------------
+....................
 The simplest way to identity a user is to authenticate against a realm file.
 To configure basic authentication add the following properties to ``cdap-site.xml``:
 
-==========================================  ===========
-   Property                                   Value
-==========================================  ===========
-security.authentication.handlerClassName     co.cask.cdap.security.server.BasicAuthenticationHandler
-security.authentication.basic.realmfile      <path>
-==========================================  ===========
+===================================================== ==================================================================
+   Property                                             Value
+===================================================== ==================================================================
+security.authentication.handlerClassName                co.cask.cdap.security.server.BasicAuthenticationHandler
+security.authentication.basic.realmfile                 <path>
+===================================================== ==================================================================
 
 The realm file is of the following format::
 
@@ -238,24 +242,24 @@ LDAP Authentication
 You can configure CDAP to authenticate against an LDAP instance by adding these
 properties to ``cdap-site.xml``:
 
-================================================  ===========
-   Property                                         Value
-================================================  ===========
-security.authentication.handlerClassName            co.cask.cdap.security.server.LDAPAuthenticationHandler
-security.authentication.loginmodule.className       org.eclipse.jetty.plus.jaas.spi.LdapLoginModule
-security.authentication.handler.debug               true/false
-security.authentication.handler.hostname            <hostname>
-security.authentication.handler.port                <port>
-security.authentication.handler.userBaseDn          <userBaseDn>
-security.authentication.handler.userRdnAttribute    <userRdnAttribute>
-security.authentication.handler.userObjectClass     <userObjectClass>
-================================================  ===========
+===================================================== ==================================================================
+   Property                                             Value
+===================================================== ==================================================================
+security.authentication.handlerClassName                co.cask.cdap.security.server.LDAPAuthenticationHandler
+security.authentication.loginmodule.className           org.eclipse.jetty.plus.jaas.spi.LdapLoginModule
+security.authentication.handler.debug                   true/false
+security.authentication.handler.hostname                <hostname>
+security.authentication.handler.port                    <port>
+security.authentication.handler.userBaseDn              <userBaseDn>
+security.authentication.handler.userRdnAttribute        <userRdnAttribute>
+security.authentication.handler.userObjectClass         <userObjectClass>
+===================================================== ==================================================================
 
 In addition, you may also configure these optional properties:
 
-=====================================================  ===========
+===================================================== ==================================================================
    Property                                               Value
-=====================================================  ===========
+===================================================== ==================================================================
 security.authentication.handler.bindDn                  <bindDn>
 security.authentication.handler.bindPassword            <bindPassword>
 security.authentication.handler.userIdAttribute         <userIdAttribute>
@@ -264,18 +268,18 @@ security.authentication.handler.roleBaseDn              <roleBaseDn>
 security.authentication.handler.roleNameAttribute       <roleNameAttribute>
 security.authentication.handler.roleMemberAttribute     <roleMemberAttribute>
 security.authentication.handler.roleObjectClass         <roleObjectClass>
-=====================================================  ===========
+===================================================== ==================================================================
 
 Java Authentication Service Provider Interface (JASPI) Authentication
 .....................................................................
 To authenticate a user using JASPI add the following properties to ``cdap-site.xml``:
 
-================================================  ===========
-   Property                                         Value
-================================================  ===========
-security.authentication.handlerClassName            co.cask.cdap.security.server.JASPIAuthenticationHandler
-security.authentication.loginmodule.className       <custom-login-module>
-================================================  ===========
+===================================================== ==================================================================
+   Property                                             Value
+===================================================== ==================================================================
+security.authentication.handlerClassName                co.cask.cdap.security.server.JASPIAuthenticationHandler
+security.authentication.loginmodule.className           <custom-login-module>
+===================================================== ==================================================================
 
 In addition, any properties with the prefix ``security.authentication.handler.``,
 such as ``security.authentication.handler.hostname``, will also be used by the handler.
@@ -513,14 +517,13 @@ Success Response Fields
      - The Access Token issued for the client.  The serialized token contents are base-64 encoded
        for safe transport over HTTP.
    * - ``token_type``
-     - In order to conform with the OAuth 2.0 Bearer Token Usage specification (`RFC 6750`__), this
+     - In order to conform with the OAuth 2.0 Bearer Token Usage specification (`RFC 6750`_), this
        value must be "Bearer".
    * - ``expires_in``
      - Token validity lifetime in seconds.
 
-.. _rfc6750: http://tools.ietf.org/html/rfc6750
+.. _RFC 6750: http://tools.ietf.org/html/rfc6750
 
-__ rfc6750_
 
 Example
 +++++++
@@ -548,9 +551,7 @@ Sample response::
 
 Comments
 ++++++++
-- Only ``Bearer`` tokens (`RFC 6750`__) are currently supported
-
-__ rfc6750_
+- Only ``Bearer`` tokens (`RFC 6750`_) are currently supported
 
 
 Authentication with RESTful Endpoints

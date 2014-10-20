@@ -66,7 +66,7 @@ or using curl to directly make an HTTP request::
   $ curl -v -H "X-Archive-Name: Wise-0.2.0.jar" -X POST localhost:10000/v2/apps \
        --data-binary @target/Wise-0.2.0.jar
 
-**Learn More:** *You can also deploy apps* :doc:`using the CDAP Console. <../admin>`
+**Learn More:** *You can also deploy apps* :doc:`using the CDAP Console. </user-interface>`
 
 
 Starting Realtime Processing

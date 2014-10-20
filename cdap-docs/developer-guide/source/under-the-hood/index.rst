@@ -3,7 +3,7 @@
    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
-Under-the-hood of CDAP
+Under-the-Hood of CDAP
 ============================================
 
 .. toctree::

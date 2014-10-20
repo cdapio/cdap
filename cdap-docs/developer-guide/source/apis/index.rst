@@ -8,7 +8,7 @@ API References
 .. toctree::
    :maxdepth: 1
    
-    HTTP RESTful API <http-restful-api>
+    HTTP RESTful API <http-restful-api/index>
     Javadocs <javadocs/index>
     Java Client API <java-client-api>
     Command Line Interface API <cli-api>

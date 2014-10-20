@@ -1,5 +1,4 @@
 .. :author: Cask Data, Inc.
-   :description: placeholder
    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
@@ -12,7 +11,7 @@ CDAP Components
     Core Virtualizations <core>
     Application <applications>
     Streams <streams>
-    Datasets <datasets>
+    Datasets <datasets/index>
     Flows and Flowlets <flows-flowlets/index>
     MapReduce Jobs<mapreduce-jobs>
     Workflows <workflows>
@@ -27,9 +26,9 @@ and Services. This section details how to work with these abstractions to build 
 applications.
 
 For a high-level view of the concepts of the Cask Data Application Platform,
-please see :doc:`Concepts and Architecture </arch>`.
+please see :doc:`Platform Overview. </overview/index>`
 
-For more information beyond this section, see the :doc:`Javadocs </javadocs/index>` and
+For more information beyond this section, see the :doc:`Javadocs </apis/javadocs/index>` and
 the code in the :ref:`Examples <examples>` directory, both of which are on the `Cask.co
 <http://cask.co>`_ `resources page <http://cask.co/resources>`_ as well as in your CDAP
 installation directory.

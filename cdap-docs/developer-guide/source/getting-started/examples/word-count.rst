@@ -1,6 +1,8 @@
 .. :Author: Cask Data, Inc.
    :Description: Cask Data Application Platform WordCount Application
-     :copyright: Copyright © 2014 Cask Data, Inc.
+   :copyright: Copyright © 2014 Cask Data, Inc.
+
+.. _word-count:
 
 Word Count
 ----------

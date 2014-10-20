@@ -12,7 +12,7 @@ Cask Data Application Platform Documentation
     Getting Started </getting-started/index>
     Overview </overview/index>
     CDAP Components </components/index>
-    Under-the-hood <under-the-hood/index>
+    Under-the-Hood <under-the-hood/index>
     API References </apis/index>
     Testing, Debugging, and Packaging</testing/index>
     Tools </tools/index>
