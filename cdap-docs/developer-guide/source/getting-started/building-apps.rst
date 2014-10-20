@@ -37,7 +37,7 @@ If you can reach the CDAP Console through a browser at `http://localhost:9999/ <
 Deploying an Application
 ------------------------
 
-Once CDAP is Started, you can deploy the example JAR by any of these methds:
+Once CDAP is started, you can deploy the example JAR by any of these methds:
 
 - Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console
   running at `http://localhost:9999/ <http://localhost:9999/>`__; or
