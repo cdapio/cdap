@@ -37,7 +37,6 @@ import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
@@ -48,7 +47,6 @@ import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -112,8 +110,6 @@ public abstract class GatewayTestBase {
     conf.setInt(Constants.Gateway.PORT, 0);
     conf.set(Constants.Gateway.ADDRESS, hostname);
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
-    conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
     conf.set(Constants.Router.ADDRESS, hostname);
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
@@ -138,13 +134,6 @@ public abstract class GatewayTestBase {
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(PassportClient.class).toProvider(
-              new Provider<PassportClient>() {
-                @Override
-                public PassportClient get() {
-                  return new MockedPassportClient(keysAndClusters);
-                }
-              });
           }
 
           @Provides

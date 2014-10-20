@@ -256,8 +256,6 @@ public final class Constants {
     public static final String EXEC_THREADS = "gateway.exec.threads";
     public static final String BOSS_THREADS = "gateway.boss.threads";
     public static final String WORKER_THREADS = "gateway.worker.threads";
-    public static final String CONFIG_AUTHENTICATION_REQUIRED = "gateway.authenticate";
-    public static final String CLUSTER_NAME = "gateway.cluster.name";
     /**
      * Defaults.
      */
@@ -266,8 +264,6 @@ public final class Constants {
     public static final int DEFAULT_EXEC_THREADS = 20;
     public static final int DEFAULT_BOSS_THREADS = 1;
     public static final int DEFAULT_WORKER_THREADS = 10;
-    public static final boolean CONFIG_AUTHENTICATION_REQUIRED_DEFAULT = false;
-    public static final String CLUSTER_NAME_DEFAULT = "localhost";
 
 
     /**
@@ -277,7 +273,6 @@ public final class Constants {
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String API_KEY = "X-ApiKey";
-    public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
   }
 
   /**

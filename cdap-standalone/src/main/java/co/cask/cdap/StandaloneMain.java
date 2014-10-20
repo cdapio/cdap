@@ -47,7 +47,6 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
@@ -57,7 +56,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
@@ -344,20 +342,10 @@ public class StandaloneMain {
 
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
-    String passportUri = configuration.get(Constants.Gateway.CFG_PASSPORT_SERVER_URI);
-    final PassportClient client = passportUri == null || passportUri.isEmpty() ? new PassportClient()
-      : PassportClient.create(passportUri);
-
     return ImmutableList.of(
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
-            @Override
-            public PassportClient get() {
-              return client;
-            }
-          });
           if (webAppPath != null) {
             bindConstant().annotatedWith(Names.named("web-app-path")).to(webAppPath);
           }
