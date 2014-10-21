@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.internal.app.services.DefaultServiceWorkerSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -48,8 +47,7 @@ public class ServiceWorkerSpecificationCodec extends AbstractSpecificationCodec<
     JsonElement instanceElem = jsonObj.get("instances");
     int instances = (instanceElem == null || instanceElem.isJsonNull()) ? 1 : jsonObj.get("instances").getAsInt();
 
-    return new DefaultServiceWorkerSpecification(className, name, description,
-                                                 properties, datasets, resources, instances);
+    return new ServiceWorkerSpecification(className, name, description, properties, datasets, resources, instances);
   }
 
   @Override

@@ -24,7 +24,6 @@ import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
-import co.cask.cdap.internal.service.DefaultServiceSpecification;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -108,6 +107,6 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   public ServiceSpecification createSpecification() {
     Preconditions.checkArgument(!handlers.isEmpty(), "Cannot define a Service without handler.");
-    return new DefaultServiceSpecification(className, name, description, handlers, workers, resources, instances);
+    return new ServiceSpecification(className, name, description, handlers, workers, resources, instances);
   }
 }

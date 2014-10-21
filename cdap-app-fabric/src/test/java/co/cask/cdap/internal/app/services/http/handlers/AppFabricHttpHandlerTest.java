@@ -28,6 +28,10 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
+import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
+import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -35,6 +39,9 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
+import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
+import co.cask.cdap.internal.app.ServiceSpecificationCodec;
+import co.cask.cdap.internal.app.ServiceWorkerSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
@@ -50,7 +57,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -1368,6 +1377,34 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
     waitState("services", "AppWithServices", "NoOpService", "STOPPED");
 
+  }
+
+
+  @Test
+  public void testServiceSpecification() throws Exception {
+    deploy(AppWithServices.class);
+    HttpResponse response = doGet("/v2/apps/AppWithServices/services/NoOpService/");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    Set<ExposedServiceEndpoint> expectedEndpoints = ImmutableSet.of(new ExposedServiceEndpoint("GET", "/ping"),
+                                                                    new ExposedServiceEndpoint("POST", "/v1/ping"),
+                                                                    new ExposedServiceEndpoint("GET", "/v1/ping"));
+
+    GsonBuilder gsonBuidler = new GsonBuilder();
+    gsonBuidler.registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec());
+    gsonBuidler.registerTypeAdapter(HttpServiceSpecification.class, new HttpServiceSpecificationCodec());
+    gsonBuidler.registerTypeAdapter(ServiceWorkerSpecification.class, new ServiceWorkerSpecificationCodec());
+    Gson gson = gsonBuidler.create();
+    ServiceSpecification specification = readResponse(response, ServiceSpecification.class, gson);
+
+    Set<ExposedServiceEndpoint> returnedEndpoints = Sets.newHashSet();
+    for (HttpServiceSpecification httpServiceSpecification : specification.getHandlers().values()) {
+      returnedEndpoints.addAll(httpServiceSpecification.getEndpoints());
+    }
+
+    Assert.assertEquals("NoOpService", specification.getName());
+    Assert.assertTrue(returnedEndpoints.equals(expectedEndpoints));
+    Assert.assertEquals(0, specification.getWorkers().values().size());
   }
 
 }

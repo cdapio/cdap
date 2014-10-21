@@ -16,11 +16,11 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeService;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ServiceMeta;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,13 +46,14 @@ public class ServiceClientTestRun extends ClientTestBase {
   }
 
   @Test
-  public void testGetServiceMeta() throws Exception {
+  public void testGetServiceSpecification() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
     programClient.start(FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
     assertProgramRunning(programClient, FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
 
-    ServiceMeta serviceMeta = serviceClient.get(FakeApp.NAME, FakeService.NAME);
-    assertEquals(serviceMeta.getName(), FakeService.NAME);
-    assertEquals(serviceMeta.getRunnables().size(), 1);
+    ServiceSpecification serviceSpecification = serviceClient.get(FakeApp.NAME, FakeService.NAME);
+    assertEquals(serviceSpecification.getName(), FakeService.NAME);
+    assertEquals(serviceSpecification.getHandlers().size(), 1);
+    assertEquals(serviceSpecification.getWorkers().size(), 0);
   }
 }

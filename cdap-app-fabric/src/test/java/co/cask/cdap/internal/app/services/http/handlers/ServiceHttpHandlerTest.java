@@ -17,10 +17,8 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithServices;
-import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import com.google.common.collect.Sets;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -30,7 +28,6 @@ import org.junit.Test;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Tests for {@link ServiceHttpHandler}.
@@ -85,20 +82,5 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
     Map<String, String> returnedBody = readResponse(response, typeToken);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals(numRequested, returnedBody.get("requested"));
-  }
-
-  @Test
-  public void testEndpointsExposed() throws Exception {
-    deploy(AppWithServices.class);
-    HttpResponse response = doGet("/v2/apps/AppWithServices/services/NoOpService/endpoints-exposed");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    Type typeToken = new TypeToken<Set<ExposedServiceEndpoint>>() { }.getType();
-    Set<ExposedServiceEndpoint> returnedBody = readResponse(response, typeToken);
-
-    Set<ExposedServiceEndpoint> expectedEndpoints = Sets.newHashSet(new ExposedServiceEndpoint("GET", "/ping"),
-                                                                    new ExposedServiceEndpoint("POST", "/v1/ping"),
-                                                                    new ExposedServiceEndpoint("GET", "/v1/ping"));
-    Assert.assertTrue(returnedBody.equals(expectedEndpoints));
   }
 }

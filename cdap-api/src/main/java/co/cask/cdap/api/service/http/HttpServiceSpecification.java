@@ -20,20 +20,89 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * The specification for {@link HttpServiceHandler}.
+ * Specification for a {@link HttpServiceSpecification}.
  */
-public interface HttpServiceSpecification extends PropertyProvider, ProgramSpecification {
+public final class HttpServiceSpecification implements PropertyProvider, ProgramSpecification {
+
+  private final String className;
+  private final String name;
+  private final String description;
+  private final Map<String, String> properties;
+  private final Set<String> datasets;
+  private final List<ExposedServiceEndpoint> endpoints;
+
+  /**
+   * Create an instance of {@link HttpServiceSpecification}.
+   */
+  public HttpServiceSpecification(String className, String name,
+                                  String description, Map<String, String> properties,
+                                  Set<String> datasets, List<ExposedServiceEndpoint> endpoints) {
+    this.className = className;
+    this.name = name;
+    this.description = description;
+    this.properties = Collections.unmodifiableMap(properties);
+    this.datasets = Collections.unmodifiableSet(datasets);
+    this.endpoints = Collections.unmodifiableList(endpoints);
+  }
+
+  /**
+   * @return the class name
+   */
+  @Override
+  public String getClassName() {
+    return className;
+  }
+
+  /**
+   * @return the name
+   */
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  /**
+   * @return the description
+   */
+  @Override
+  public String getDescription() {
+    return description;
+  }
+
+  /**
+   * @return the properties
+   */
+  @Override
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  /**
+   * @param key for getting specific property value
+   * @return the property value
+   */
+  @Override
+  public String getProperty(String key) {
+    return properties.get(key);
+  }
 
   /**
    * @return An immutable set of {@link Dataset} names that are used by the {@link HttpServiceHandler}.
    */
-  Set<String> getDatasets();
+  public Set<String> getDatasets() {
+    return datasets;
+  }
 
   /**
    * @return An immutable set of {@link ExposedServiceEndpoint}s that are exposed by the {@link HttpServiceHandler}.
    */
-  Set<ExposedServiceEndpoint> getEndpoints();
+  public List<ExposedServiceEndpoint> getEndpoints() {
+    return endpoints;
+  }
 }

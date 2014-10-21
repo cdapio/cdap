@@ -21,9 +21,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
-import co.cask.cdap.internal.app.services.DefaultServiceWorkerSpecification;
-import co.cask.cdap.internal.service.DefaultServiceSpecification;
-import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -77,7 +75,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     int instances = jsonObj.get("instances").getAsInt();
 
-    return new DefaultServiceSpecification(className, name, description, handlers, workers, resources, instances);
+    return new ServiceSpecification(className, name, description, handlers, workers, resources, instances);
   }
 
   @Override
@@ -121,11 +119,11 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
       // Reconstruct the HttpServiceSpecification. However there is no way to determine the datasets or endpoints
       // as it is not recorded in old spec. It's ok since the spec is only used to load data from MDS during redeploy.
       handlers.put(spec.get("name").getAsString(),
-                   new DefaultHttpServiceSpecification(handlerClass,
-                                                       spec.get("name").getAsString(),
-                                                       spec.get("description").getAsString(),
-                                                       properties, ImmutableSet.<String>of(),
-                                                       ImmutableSet.<ExposedServiceEndpoint>of()));
+                   new HttpServiceSpecification(handlerClass,
+                                                 spec.get("name").getAsString(),
+                                                 spec.get("description").getAsString(),
+                                                 properties, ImmutableSet.<String>of(),
+                                                 ImmutableList.<ExposedServiceEndpoint>of()));
     }
 
     // Generates worker specs.
@@ -134,7 +132,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
       Set<String> datasets = GSON.fromJson(runnableSpec.getConfigs().get("service.datasets"),
                                            new TypeToken<Set<String>>() { }.getType());
       ResourceSpecification resourceSpec = entry.getValue().getResourceSpecification();
-      ServiceWorkerSpecification workerSpec = new DefaultServiceWorkerSpecification(
+      ServiceWorkerSpecification workerSpec = new ServiceWorkerSpecification(
         runnableSpec.getConfigs().get("service.class.name"),
         runnableSpec.getName(), runnableSpec.getName(),
         runnableSpec.getConfigs(), datasets,
@@ -144,9 +142,8 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     }
 
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();
-    return new DefaultServiceSpecification(className, twillSpec.getName(), twillSpec.getName(),
-                                           handlers, workers,
-                                           new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
-                                           resourceSpec.getInstances());
+    return new ServiceSpecification(className, twillSpec.getName(), twillSpec.getName(), handlers, workers,
+                                    new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
+                                    resourceSpec.getInstances());
   }
 }

@@ -21,16 +21,16 @@ import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
-import co.cask.cdap.internal.specification.ServiceEndpointExtractor;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,7 +44,7 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   private String name;
   private Map<String, String> properties;
   private Set<String> datasets;
-  private Set<ExposedServiceEndpoint> endpoints;
+  private List<ExposedServiceEndpoint> endpoints;
 
   /**
    * Instantiates the class with the given {@link HttpServiceHandler}.
@@ -58,7 +58,7 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
     this.name = handler.getClass().getSimpleName();
     this.properties = ImmutableMap.of();
     this.datasets = Sets.newHashSet();
-    this.endpoints = Sets.newHashSet();
+    this.endpoints = Lists.newArrayList();
 
     // Inspect the handler to grab all @UseDataset, @Property and endpoints exposed.
     Reflections.visit(handler, TypeToken.of(handler.getClass()),
@@ -90,6 +90,6 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   public HttpServiceSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new DefaultHttpServiceSpecification(className, name, "", properties, datasets, endpoints);
+    return new HttpServiceSpecification(className, name, "", properties, datasets, endpoints);
   }
 }

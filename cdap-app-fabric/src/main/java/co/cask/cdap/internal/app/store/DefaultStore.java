@@ -46,9 +46,7 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
-import co.cask.cdap.internal.app.services.DefaultServiceWorkerSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.internal.service.DefaultServiceSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -384,10 +382,9 @@ public class DefaultStore implements Store {
         ServiceSpecification serviceSpec = getServiceSpecOrFail(id, appSpec);
 
         // Create a new spec copy from the old one, except with updated instances number
-        serviceSpec = new DefaultServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
-                                                      serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                                      serviceSpec.getWorkers(), serviceSpec.getResources(),
-                                                      instances);
+        serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
+                                               serviceSpec.getDescription(), serviceSpec.getHandlers(),
+                                               serviceSpec.getWorkers(), serviceSpec.getResources(), instances);
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
@@ -427,18 +424,17 @@ public class DefaultStore implements Store {
         ServiceWorkerSpecification workerSpec = getServiceWorkerSpecOrFail(id, serviceSpec, workerName);
 
         // Create a new worker spec copy from the old one, except with updated instances number
-        workerSpec = new DefaultServiceWorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
-                                                           workerSpec.getDescription(), workerSpec.getProperties(),
-                                                           workerSpec.getDatasets(), workerSpec.getResources(),
-                                                           instances);
+        workerSpec = new ServiceWorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
+                                                    workerSpec.getDescription(), workerSpec.getProperties(),
+                                                    workerSpec.getDatasets(), workerSpec.getResources(),
+                                                    instances);
 
         // Create a new spec copy from the old one, except with updated worker spec
         Map<String, ServiceWorkerSpecification> updatedWorkers = Maps.newHashMap(serviceSpec.getWorkers());
         updatedWorkers.put(workerName, workerSpec);
-        serviceSpec = new DefaultServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
-                                                      serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                                      updatedWorkers, serviceSpec.getResources(),
-                                                      serviceSpec.getInstances());
+        serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
+                                               serviceSpec.getDescription(), serviceSpec.getHandlers(),
+                                               updatedWorkers, serviceSpec.getResources(), serviceSpec.getInstances());
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);

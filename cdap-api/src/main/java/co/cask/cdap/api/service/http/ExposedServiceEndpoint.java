@@ -22,7 +22,7 @@ import com.google.common.base.Objects;
 /**
  * Describes an endpoint that a {@link Service} exposes.
  */
-public class ExposedServiceEndpoint {
+public final class ExposedServiceEndpoint {
 
   private final String method;
   private final String path;
@@ -58,7 +58,7 @@ public class ExposedServiceEndpoint {
     if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
-    final ExposedServiceEndpoint other = (ExposedServiceEndpoint) obj;
+    ExposedServiceEndpoint other = (ExposedServiceEndpoint) obj;
     return Objects.equal(this.method, other.method) && Objects.equal(this.path, other.path);
   }
 }

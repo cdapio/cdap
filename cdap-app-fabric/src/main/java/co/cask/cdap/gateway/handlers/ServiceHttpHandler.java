@@ -18,8 +18,6 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -38,14 +36,11 @@ import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.ServiceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -55,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -104,36 +98,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       } else {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Return the service details of a given service.
-   */
-  @Path("/apps/{app-id}/services/{service-id}")
-  @GET
-  public void getService(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") String appId,
-                         @PathParam("service-id") String serviceId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ServiceSpecification spec = getServiceSpecification(accountId, appId, serviceId);
-      if (spec == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      responder.sendJson(HttpResponseStatus.OK,
-                         new ServiceMeta(spec.getName(), spec.getName(), spec.getDescription(),
-                                         ImmutableSet.<String>builder().add(spec.getName())
-                                                                       .addAll(spec.getWorkers().keySet()).build()));
-
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -261,32 +225,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
                                                     ProgramType.SERVICE
                          )
       );
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}/endpoints-exposed")
-  public void endpointsExposed(HttpRequest request, HttpResponder responder,
-                       @PathParam("app-id") String appId,
-                       @PathParam("service-id") String serviceId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ServiceSpecification serviceSpecification = getServiceSpecification(accountId, appId, serviceId);
-      if (serviceSpecification == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-      Set<ExposedServiceEndpoint> endpointsExposed = Sets.newHashSet();
-      for (HttpServiceSpecification httpServiceSpecification : serviceSpecification.getHandlers().values()) {
-        endpointsExposed.addAll(httpServiceSpecification.getEndpoints());
-      }
-
-      responder.sendJson(HttpResponseStatus.OK, endpointsExposed);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

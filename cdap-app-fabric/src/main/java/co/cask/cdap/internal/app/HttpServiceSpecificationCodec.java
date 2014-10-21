@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
-import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -26,6 +25,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,10 +43,10 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     String description = jsonObj.get("description").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
-    Set<ExposedServiceEndpoint> endpointsExposed = deserializeSet(jsonObj.get("endpointsExposed"), context,
-                                                           ExposedServiceEndpoint.class);
+    List<ExposedServiceEndpoint> endpointsExposed = deserializeList(jsonObj.get("endpoints"), context,
+                                                                    ExposedServiceEndpoint.class);
 
-    return new DefaultHttpServiceSpecification(className, name, description, properties, datasets, endpointsExposed);
+    return new HttpServiceSpecification(className, name, description, properties, datasets, endpointsExposed);
   }
 
   @Override
@@ -57,7 +57,7 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     json.addProperty("description", src.getDescription());
     json.add("properties", serializeMap(src.getProperties(), context, String.class));
     json.add("datasets", serializeSet(src.getDatasets(), context, String.class));
-    json.add("endpointsExposed", serializeSet(src.getEndpoints(), context, ExposedServiceEndpoint.class));
+    json.add("endpoints", serializeList(src.getEndpoints(), context, ExposedServiceEndpoint.class));
 
     return json;
   }

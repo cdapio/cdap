@@ -20,30 +20,74 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
- * Provide the specification of a custom TwillApplication.
+ * Specification for a {@link Service}.
  */
-public interface ServiceSpecification extends ProgramSpecification {
+public final class ServiceSpecification implements ProgramSpecification {
+  private final String className;
+  private final String name;
+  private final String description;
+  private final Map<String, HttpServiceSpecification> handlers;
+  private final Map<String, ServiceWorkerSpecification> workers;
+  private final Resources resources;
+  private final int instances;
+
+  public ServiceSpecification(String className, String name, String description,
+                              Map<String, HttpServiceSpecification> handlers,
+                              Map<String, ServiceWorkerSpecification> workers,
+                              Resources resources, int instances) {
+    this.className = className;
+    this.name = name;
+    this.description = description;
+    this.handlers = Collections.unmodifiableMap(handlers);
+    this.workers = Collections.unmodifiableMap(workers);
+    this.resources = resources;
+    this.instances = instances;
+  }
+
+  @Override
+  public String getClassName() {
+    return className;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getDescription() {
+    return description;
+  }
 
   /**
    * Returns an immutable map from handler name to handler specification.
    */
-  Map<String, HttpServiceSpecification> getHandlers();
-
-  /**
-   * Returns an immutable map from worker name to worker specification.
-   */
-  Map<String, ServiceWorkerSpecification> getWorkers();
-
-  /**
-   * Returns the resources requirements for the service handler.
-   */
-  Resources getResources();
+  public Map<String, HttpServiceSpecification> getHandlers() {
+    return handlers;
+  }
 
   /**
    * Returns the number of instances for the service handler.
    */
-  int getInstances();
+  public int getInstances() {
+    return instances;
+  }
+
+  /**
+   * Returns an immutable map from worker name to worker specification.
+   */
+  public Map<String, ServiceWorkerSpecification> getWorkers() {
+    return workers;
+  }
+
+  /**
+   * Returns the resources requirements for the service handler.
+   */
+  public Resources getResources() {
+    return resources;
+  }
 }
