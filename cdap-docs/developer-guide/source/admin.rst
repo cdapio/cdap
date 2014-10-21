@@ -1991,31 +1991,16 @@ see the :ref:`security` section.
    * - ``explore.inactive.operation.timeout.secs``
      - ``3600``
      - Timeout value in seconds for a SQL operation which has no more results to be fetched
-   * - ``gateway.boss.threads``
+   * - ``app.boss.threads``
      - ``1``
      - Number of Netty server boss threads
-   * - ``gateway.connection.backlog``
+   * - ``app.connection.backlog``
      - ``20000``
-     - Maximum connection backlog of Gateway
-   * - ``gateway.exec.threads``
+     - Maximum connection backlog of AppFabricServer
+   * - ``app.exec.threads``
      - ``20``
      - Number of Netty server executor threads
-   * - ``gateway.max.cached.events.per.stream.num``
-     - ``5000``
-     - Maximum number of a single stream's events cached before flushing
-   * - ``gateway.max.cached.stream.events.bytes``
-     - ``52428800``
-     - Maximum size (in bytes) of stream events cached before flushing
-   * - ``gateway.max.cached.stream.events.num``
-     - ``10000``
-     - Maximum number of stream events cached before flushing
-   * - ``gateway.stream.callback.exec.num.threads``
-     - ``5``
-     - Number of threads in stream events callback executor
-   * - ``gateway.stream.events.flush.interval.ms``
-     - ``150``
-     - Interval at which cached stream events get flushed
-   * - ``gateway.worker.threads``
+   * - ``app.worker.threads``
      - ``10``
      - Number of Netty server worker threads
    * - ``hdfs.lib.dir``

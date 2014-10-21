@@ -96,14 +96,14 @@ public final class AppFabricServer extends AbstractIdleService {
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.APP_FABRIC_HTTP)))
       .addHttpHandlers(handlers)
-      .setConnectionBacklog(configuration.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
-                                                 Constants.Gateway.DEFAULT_BACKLOG))
-      .setExecThreadPoolSize(configuration.getInt(Constants.Gateway.EXEC_THREADS,
-                                                  Constants.Gateway.DEFAULT_EXEC_THREADS))
-      .setBossThreadPoolSize(configuration.getInt(Constants.Gateway.BOSS_THREADS,
-                                                  Constants.Gateway.DEFAULT_BOSS_THREADS))
-      .setWorkerThreadPoolSize(configuration.getInt(Constants.Gateway.WORKER_THREADS,
-                                                    Constants.Gateway.DEFAULT_WORKER_THREADS))
+      .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
+                                                 Constants.AppFabric.DEFAULT_BACKLOG))
+      .setExecThreadPoolSize(configuration.getInt(Constants.AppFabric.EXEC_THREADS,
+                                                  Constants.AppFabric.DEFAULT_EXEC_THREADS))
+      .setBossThreadPoolSize(configuration.getInt(Constants.AppFabric.BOSS_THREADS,
+                                                  Constants.AppFabric.DEFAULT_BOSS_THREADS))
+      .setWorkerThreadPoolSize(configuration.getInt(Constants.AppFabric.WORKER_THREADS,
+                                                    Constants.AppFabric.DEFAULT_WORKER_THREADS))
       .build();
 
     // Add a listener so that when the service started, register with service discovery.

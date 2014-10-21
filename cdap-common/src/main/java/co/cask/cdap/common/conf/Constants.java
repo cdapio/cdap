@@ -80,6 +80,18 @@ public final class Constants {
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
+    public static final String BACKLOG_CONNECTIONS = "app.connection.backlog";
+    public static final String EXEC_THREADS = "app.exec.threads";
+    public static final String BOSS_THREADS = "app.boss.threads";
+    public static final String WORKER_THREADS = "app.worker.threads";
+
+    /**
+     * Defaults.
+     */
+    public static final int DEFAULT_BACKLOG = 20000;
+    public static final int DEFAULT_EXEC_THREADS = 20;
+    public static final int DEFAULT_BOSS_THREADS = 1;
+    public static final int DEFAULT_WORKER_THREADS = 10;
 
     /**
      * Query parameter to indicate start time.
@@ -250,25 +262,6 @@ public final class Constants {
    * Gateway Configurations.
    */
   public static final class Gateway {
-    public static final String ADDRESS = "gateway.bind.address";
-    public static final String PORT = "gateway.bind.port";
-    public static final String BACKLOG_CONNECTIONS = "gateway.connection.backlog";
-    public static final String EXEC_THREADS = "gateway.exec.threads";
-    public static final String BOSS_THREADS = "gateway.boss.threads";
-    public static final String WORKER_THREADS = "gateway.worker.threads";
-    /**
-     * Defaults.
-     */
-    public static final int DEFAULT_PORT = 10000;
-    public static final int DEFAULT_BACKLOG = 20000;
-    public static final int DEFAULT_EXEC_THREADS = 20;
-    public static final int DEFAULT_BOSS_THREADS = 1;
-    public static final int DEFAULT_WORKER_THREADS = 10;
-
-
-    /**
-     * Others.
-     */
     public static final String GATEWAY_VERSION = "/v2";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;

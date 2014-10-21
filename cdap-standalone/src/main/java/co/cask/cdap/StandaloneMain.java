@@ -321,9 +321,6 @@ public class StandaloneMain {
       System.load(userDir + "/lib/native/hadoop.dll");
     }
 
-    //Run gateway on random port and forward using router.
-    cConf.setInt(Constants.Gateway.PORT, 0);
-
     //Run dataset service on random port
     List<Module> modules = createPersistentModules(cConf, hConf, webAppPath);
 

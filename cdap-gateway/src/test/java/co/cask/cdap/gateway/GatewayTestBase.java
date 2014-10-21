@@ -107,8 +107,6 @@ public abstract class GatewayTestBase {
     }
     tmpFolder.create();
     conf = CConfiguration.create();
-    conf.setInt(Constants.Gateway.PORT, 0);
-    conf.set(Constants.Gateway.ADDRESS, hostname);
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.set(Constants.Router.ADDRESS, hostname);
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
