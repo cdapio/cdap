@@ -37,8 +37,8 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
-import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.internal.spark.DefaultSparkSpecification;
@@ -147,7 +147,10 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    MapReduceSpecification spec = new DefaultMapReduceSpecification(mapReduce);
+    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce);
+    mapReduce.configure(configurer);
+
+    MapReduceSpecification spec = configurer.createSpecification();
     mapReduces.put(spec.getName(), spec);
   }
 

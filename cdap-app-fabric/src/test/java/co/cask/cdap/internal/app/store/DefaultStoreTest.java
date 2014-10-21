@@ -40,7 +40,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -281,11 +280,9 @@ public class DefaultStoreTest {
     }
 
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName(name)
-        .setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here for testing MDS")
-        .build();
+    public void configure() {
+      setName(name);
+      setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here for testing MDS");
     }
   }
 

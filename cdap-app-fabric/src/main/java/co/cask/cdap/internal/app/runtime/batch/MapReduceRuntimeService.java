@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -72,6 +73,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -131,18 +133,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Job job = Job.getInstance(new Configuration(hConf));
     Configuration mapredConf = job.getConfiguration();
 
-    int mapperMemory = specification.getMapperMemoryMB();
-    int reducerMemory = specification.getReducerMemoryMB();
-    // this will determine how much memory the yarn container will run with
-    if (mapperMemory > 0) {
-      mapredConf.setInt(Job.MAP_MEMORY_MB, mapperMemory);
+    Resources mapperResources = specification.getMapperResources();
+    Resources reducerResources = specification.getReducerResources();
+
+    // this will determine how much memory and vcores the yarn container will run with
+    if (mapperResources != null) {
+      mapredConf.setInt(Job.MAP_MEMORY_MB, mapperResources.getMemoryMB());
       // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperMemory * 0.8) + "m");
+      mapredConf.set(Job.MAP_JAVA_OPTS, "-Xmx" + (int) (mapperResources.getMemoryMB() * 0.8) + "m");
+      setVirtualCores(mapredConf, mapperResources.getVirtualCores(), "MAP");
     }
-    if (reducerMemory > 0) {
-      mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerMemory);
+    if (reducerResources != null) {
+      mapredConf.setInt(Job.REDUCE_MEMORY_MB, reducerResources.getMemoryMB());
       // Also set the Xmx to be smaller than the container memory.
-      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerMemory * 0.8) + "m");
+      mapredConf.set(Job.REDUCE_JAVA_OPTS, "-Xmx" + (int) (reducerResources.getMemoryMB() * 0.8) + "m");
+      setVirtualCores(mapredConf, reducerResources.getVirtualCores(), "REDUCE");
     }
 
     // Prefer our job jar in the classpath
@@ -322,6 +327,25 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         t.start();
       }
     };
+  }
+
+  /**
+   * Sets mapper/reducer virtual cores into job configuration if the platform supports it.
+   *
+   * @param conf The job configuration
+   * @param vcores Number of virtual cores to use
+   * @param type Either {@code MAP} or {@code REDUCE}.
+   */
+  private void setVirtualCores(Configuration conf, int vcores, String type) {
+    // Try to set virtual cores if the platform supports it
+    try {
+      String fieldName = type + "_CPU_VCORES";
+      Field field = Job.class.getField(fieldName);
+      conf.setInt(field.get(null).toString(), vcores);
+    } catch (Exception e) {
+      // OK to ignore
+      // Some older version of hadoop-mr-client doesn't has the VCORES field as vcores was not supported in YARN.
+    }
   }
 
   /**

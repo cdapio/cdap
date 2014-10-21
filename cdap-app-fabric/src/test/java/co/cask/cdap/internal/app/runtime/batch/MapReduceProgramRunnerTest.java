@@ -291,7 +291,7 @@ public class MapReduceProgramRunnerTest {
                                                                                          TEMP_FOLDER_SUPPLIER);
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
-    final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
+    final TimeseriesTable table = dataSetInstantiator.getDataSet("timeSeries");
     final KeyValueTable beforeSubmitTable = dataSetInstantiator.getDataSet("beforeSubmit");
     final KeyValueTable onFinishTable = dataSetInstantiator.getDataSet("onFinish");
     final Table counters = dataSetInstantiator.getDataSet("counters");

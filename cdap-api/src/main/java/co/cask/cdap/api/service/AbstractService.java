@@ -97,8 +97,7 @@ public abstract class AbstractService implements Service {
     addWorkers(workerMap);
    }
 
-
-   /**
+  /**
    * Add a list of workers to the Service.
    * @param workers for the service.
    */
@@ -125,15 +124,13 @@ public abstract class AbstractService implements Service {
 
   /**
    * Returns the {@link ServiceConfigurer}, only available at configuration time.
-   * @return
    */
   protected final ServiceConfigurer getConfigurer() {
     return configurer;
   }
 
   /**
-   * Implement this method and use a {@link ServiceConfigurer} to add a request handler
-   * and workers.
+   * Implements this method to configure this Service.
    */
   protected abstract void configure();
 }
