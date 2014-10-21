@@ -15,10 +15,12 @@
  */
 package co.cask.cdap.internal.batch;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -71,13 +73,15 @@ public abstract class ForwardingMapReduceSpecification implements MapReduceSpeci
     return delegate.getDescription();
   }
 
+  @Nullable
   @Override
-  public int getMapperMemoryMB() {
-    return delegate.getMapperMemoryMB();
+  public Resources getMapperResources() {
+    return delegate.getMapperResources();
   }
 
+  @Nullable
   @Override
-  public int getReducerMemoryMB() {
-    return delegate.getReducerMemoryMB();
+  public Resources getReducerResources() {
+    return delegate.getReducerResources();
   }
 }
