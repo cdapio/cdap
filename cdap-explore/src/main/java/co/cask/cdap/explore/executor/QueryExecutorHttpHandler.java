@@ -76,18 +76,18 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final ExploreService exploreService;
-  private final boolean startHiveOnDemand;
+  private final boolean startOnDemand;
 
   @Inject
   public QueryExecutorHttpHandler(ExploreService exploreService, CConfiguration cConf) {
     this.exploreService = exploreService;
-    this.startHiveOnDemand = cConf.getBoolean(Constants.Explore.START_ON_DEMAND);
+    this.startOnDemand = cConf.getBoolean(Constants.Explore.START_ON_DEMAND);
   }
 
   @POST
   @Path("data/explore/queries")
   public void query(HttpRequest request, HttpResponder responder) {
-    startHiveIfNeeded();
+    startOnDemand();
 
     try {
       Map<String, String> args = decodeArguments(request);
@@ -113,7 +113,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
                          @PathParam("id") final String id) {
     QueryHandle handle = QueryHandle.fromId(id);
     if (!handle.equals(QueryHandle.NO_OP)) {
-      startHiveIfNeeded();
+      startOnDemand();
     }
 
     try {
@@ -138,7 +138,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
                              @PathParam("id") final String id) {
     QueryHandle handle = QueryHandle.fromId(id);
     if (!handle.equals(QueryHandle.NO_OP)) {
-      startHiveIfNeeded();
+      startOnDemand();
     }
 
     try {
@@ -170,7 +170,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
                                     @PathParam("id") final String id) {
     QueryHandle handle = QueryHandle.fromId(id);
     if (!handle.equals(QueryHandle.NO_OP)) {
-      startHiveIfNeeded();
+      startOnDemand();
     }
 
     try {
@@ -201,7 +201,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     QueryHandle handle = QueryHandle.fromId(id);
     if (!handle.equals(QueryHandle.NO_OP)) {
-      startHiveIfNeeded();
+      startOnDemand();
     }
 
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
@@ -233,7 +233,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/explore/queries")
   public void getQueryLiveHandles(HttpRequest request, HttpResponder responder) {
-    startHiveIfNeeded();
+    startOnDemand();
 
     try {
       Map<String, List<String>> args = new QueryStringDecoder(request.getUri()).getParameters();
@@ -258,7 +258,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     QueryHandle handle = QueryHandle.fromId(id);
     if (!handle.equals(QueryHandle.NO_OP)) {
-      startHiveIfNeeded();
+      startOnDemand();
     }
 
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
@@ -294,7 +294,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   public void downloadQueryResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
     QueryHandle handle = QueryHandle.fromId(id);
     if (!handle.equals(QueryHandle.NO_OP)) {
-      startHiveIfNeeded();
+      startOnDemand();
     }
 
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
@@ -358,8 +358,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private void startHiveIfNeeded() {
-    if (startHiveOnDemand) {
+  private void startOnDemand() {
+    if (startOnDemand) {
       exploreService.startAndWait();
     }
   }

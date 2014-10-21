@@ -659,13 +659,8 @@ public class TestFrameworkTest extends TestBase {
     }
   }
 
-  @Test(timeout = 60000L)
+  @Test(timeout = 90000L)
   public void testSQLQuery() throws Exception {
-    // TODO: fix
-    // need to explicitly start explore service b/c TestBase uses Explore.START_ON_DEMAND,
-    // but using SQL driver to execute a query currently doesn't start the explore service
-    startExploreService();
-
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
