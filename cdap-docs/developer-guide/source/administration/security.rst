@@ -37,6 +37,8 @@ In cases where secure Hadoop is not or cannot be used, it is inherently insecure
 running on the cluster are effectively "trusted”. Though there is still value in having the perimeter access
 be authenticated in that situation, whenever possible a secure Hadoop cluster should be employed with CDAP security.
 
+.. _enabling-security:
+
 Enabling Security
 -----------------
 To enable security in CDAP, add these properties to ``cdap-site.xml``:

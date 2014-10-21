@@ -376,5 +376,8 @@ Congratulations! You've just successfully run your first big data log analytics 
 
 You can deploy the same application on a real cluster and experience the power of CDAP.
 
-Additional tutorial and guides for building applications on CDAP are described in 
-`our documentation. <add-link>`__
+Additional examples, guides and tutorials on building CDAP applications
+:ref:`are available. <examples-guides-tutorials>`
+
+As  a next step, we recommend reviewing the :ref:`summary of the documentation resources <introduction>`
+and then continue with the remainder of the :ref:`Getting Started <getting-started-index>` section.

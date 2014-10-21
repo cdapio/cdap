@@ -1,11 +1,11 @@
 .. :author: Cask Data, Inc.
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _cli:
+
 ============================================
 Command Line Interface API
 ============================================
-
-.. _CLI:
 
 Introduction
 ============

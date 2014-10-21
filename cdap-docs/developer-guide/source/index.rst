@@ -2,6 +2,8 @@
    :description: Introduction to the Cask Data Application Platform
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _introduction:
+
 ==================================================
 Introduction to the Cask Data Application Platform
 ==================================================
@@ -37,18 +39,17 @@ Where to Go Next
 .. |getting-started| replace:: **Getting Started:**
 .. _getting-started: getting-started/index.html
 
-- |getting-started|_ **For a quick, hands-on introduction to CDAP,** see :doc:`Getting Started with CDAP,
-  <getting-started/index>` which guides you through installing the CDAP SDK, setting up your
-  development environment, and building and running an example application.
+- |getting-started|_ **A quick, hands-on introduction to CDAP,**  which guides you through
+  installing the CDAP SDK, setting up your development environment, starting and stopping CDAP, 
+  and building and running example applications.
 
 
 .. |overview| replace:: **Overview:**
 .. _overview: overview/index.html
 
-- |overview|_ **The overall architecture and technology behind CDAP** is covered in :doc:`CDAP
-  Overview <overview/index>`, including the virtualization of data and applications,
-  CDAP concepts, components and their interactions, and the anatomy of a basic
-  Big Data application.
+- |overview|_ Covers the **overall architecture and technology behind CDAP,** including
+  the virtualization of data and applications, CDAP concepts, components and their
+  interactions, and the anatomy of a basic Big Data application.
 
 
 .. |components| replace:: **CDAP Components:**
@@ -61,7 +62,7 @@ Where to Go Next
   to build Big Data applications.
 
 
-.. |examples| replace:: **Examples, Guides, and Tutorials:**
+.. |examples| replace:: **Examples, Guides, Tutorials:**
 .. _examples: examples-guide-tutorials/index.html
 
 - |examples|_ **Examples included with the SDK** range from a simple introductory *Hello
@@ -73,50 +74,50 @@ Where to Go Next
   recommendation systems. 
 
 
-.. |under-the-hood| replace:: **Under-the-Hood of CDAP:**
+.. |under-the-hood| replace:: **Under-the-Hood:**
 .. _under-the-hood: under-the-hood/index.html
 
 - |under-the-hood|_ Covers **advanced topics on CDAP** that will be of interest to
   developers who want a deeper dive into CDAP, with presentations on the Transaction System,
-  Data Exploration, Streams, Client Authentication for Secure CDAP Instances, and Best Practices for CDAP development.
+  Data Exploration of Datasets, Deep-dive into Streams, Client Authentication for Secure
+  CDAP Instances, and Best Practices for CDAP development.
 
 
 .. |apis| replace:: **API References:**
 .. _apis: apis/index.html
 
-- |apis|_ documents four APIs of CDAP: **the HTTP RESTful API, the Java APIs (Javadocs), the Java
-  Client API and the Command-Line Interface;** the latter provides methods for interacting with the 
+- |apis|_ documents four APIs of CDAP: the **HTTP RESTful API,** the **Java APIs (Javadocs),** the **Java
+  Client API** and the **Command-Line Interface;** the latter provides methods for interacting with the 
   CDAP server from within a shell.
 
 
-.. |testing| replace:: **Testing, Debugging, and Packaging:**
+.. |testing| replace:: **Testing, Debugging, Packaging:**
 .. _testing: testing/index.html
 
-- |testing|_ CDAP has Test Framework that developers can use with their applications, debugging procedures
-  and tools, and recommendations on packaging your completed application prior to deployment.
+- |testing|_ CDAP has a **test framework** that developers can use with their applications, **debugging procedures
+  and tools,** and recommendations on **packaging your completed application** prior to deployment.
 
 
 .. |tools| replace:: **Tools:**
 .. _tools: tools/index.html
 
 - |tools|_ CDAP comes with a number of tools to make a developer’s life easier. These
-  tools help with: interacting with applications; ingesting data into CDAP; authenticating clients and fetching
-  access tokens; and the CDAP Console, the browser-based management application
+  tools help with: **interacting with applications;** **ingesting data** into CDAP; **authenticating clients and fetching
+  access tokens;** and the **CDAP Console,** the browser-based management application
   that allows you to control, manage and explore a CDAP instance.
 
 
 .. |admin| replace:: **Administration:**
 .. _admin: administration/index.html
 
-- |admin|_ covers **putting CDAP into production, with installation, configuration, security setup, and
+- |admin|_ Covers **putting CDAP into production, with installation, configuration, security setup, and
   monitoring.** Appendices cover the XML files used to configure the CDAP installation and security configurations.
 
 
 .. |ops| replace:: **Operations:**
 .. _ops: operations/index.html
 
-- |ops|_ The :doc:`Operations Guide <operations/index>` covers 
-  **security, monitoring, logging, metrics, runtime arguments, and scaling instances.** 
+- |ops|_ Covers **security, monitoring, logging, metrics, runtime arguments, and scaling instances.** 
 
 
 .. |remaining| replace:: **Remaining Sections:**

@@ -1,6 +1,7 @@
 .. :author: Cask Data, Inc.
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _examples-guides-tutorials:
 
 ============================================
 Examples, Guides, and Tutorials

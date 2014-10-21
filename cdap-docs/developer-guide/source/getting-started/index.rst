@@ -15,7 +15,8 @@ Getting Started with CDAP
    Quick Start <quick-start>
    Standalone Setup <standalone/index>
    Development Environment Setup <dev-env>
-   Building Applications <building-apps>
+   Starting and Stopping CDAP <start-stop-cdap>
+   Building and Running Applications <building-apps>
 
 
 The CDAP Software Development Kit (SDK) is all that is needed to develop CDAP applications

@@ -14,9 +14,11 @@ Tools
     Authentication Clients <authentication-clients>
     CDAP Console <cdap-console>
 
-CDAP comes with a number of tools to make a developer's life easier. These tools help with
-interacting with applications, ingesting data into CDAP, and fetching access tokens:
-
+CDAP comes with a number of tools to make a developer’s life easier. These tools help
+with: interacting with applications; ingesting data into CDAP; authenticating clients and
+fetching access tokens; and the CDAP Console, the browser-based management application
+that allows you to control, manage and explore a CDAP instance.
+  
 .. list-table::
     :widths: 15 60
     :header-rows: 1

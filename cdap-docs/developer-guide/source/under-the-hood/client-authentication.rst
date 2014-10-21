@@ -7,6 +7,10 @@
 Client Authentication
 ============================================
 
+Cask Data Application Platform (CDAP) supports securing clusters using a perimeter
+security model. Details of a secure CDAP instance, its installation and configuration, are
+covered in :ref:`CDAP Security. <security>`
+
 CDAP provides support for authenticating clients using OAuth 2 Bearer tokens, which are issued
 by the CDAP authentication server.  The authentication server provides the integration point
 for all external authentication systems.  Clients authenticate with the authentication server as

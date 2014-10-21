@@ -344,8 +344,12 @@ Using APT::
 Do this on each of the boxes that are being used for the CDAP components; our
 recommended installation is a minimum of two boxes.
 
-This will download and install the latest version of CDAP
-with all of its dependencies. When all the packages and dependencies have been installed,
+This will download and install the latest version of CDAP with all of its dependencies. 
+
+For instructions on enabling CDAP Security, see :doc:`CDAP Security; <security>`
+and in particular, see the instructions for :ref:`configuring the properties of cdap-site.xml. <enabling-security>`
+
+When all the packages and dependencies have been installed,
 you can start the services on each of the CDAP boxes by running this command::
 
   for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done

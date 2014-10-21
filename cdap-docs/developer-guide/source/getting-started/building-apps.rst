@@ -28,14 +28,8 @@ From the example's project root, build an example with the
 Starting CDAP
 ------------------------
 
-Before running an Example Applications, check that an instance of CDAP is running and available.
-From within the SDK root directory, this command will start the Standalone CDAP::
-
-	$ ./bin/cdap.sh start
-
-On Windows::
-
-	> bin\cdap.bat start
+Before running an Example Applications, check that an instance of CDAP is running and available; if not
+follow the instructions for `Starting and Stopping Standalone CDAP. <start-stop-cdap>`
 
 If you can reach the CDAP Console through a browser at `http://localhost:9999/ <http://localhost:9999/>`__, CDAP is running.
 

@@ -15,7 +15,7 @@ Cask Data Application Platform Documentation
     Examples, Guides, Tutorials <examples-guides-tutorials/index>
     Under-the-Hood <under-the-hood/index>
     API References </apis/index>
-    Testing, Debugging, and Packaging</testing/index>
+    Testing, Debugging, Packaging</testing/index>
     Tools </tools/index>
     Administration </administration/index>
     Operations </operations/index>
