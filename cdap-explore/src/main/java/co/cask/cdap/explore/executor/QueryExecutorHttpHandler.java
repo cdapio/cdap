@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.executor;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
@@ -76,19 +75,15 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final ExploreService exploreService;
-  private final boolean startOnDemand;
 
   @Inject
-  public QueryExecutorHttpHandler(ExploreService exploreService, CConfiguration cConf) {
+  public QueryExecutorHttpHandler(ExploreService exploreService) {
     this.exploreService = exploreService;
-    this.startOnDemand = cConf.getBoolean(Constants.Explore.START_ON_DEMAND);
   }
 
   @POST
   @Path("data/explore/queries")
   public void query(HttpRequest request, HttpResponder responder) {
-    startOnDemand();
-
     try {
       Map<String, String> args = decodeArguments(request);
       String query = args.get("query");
@@ -99,8 +94,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (SQLException e) {
       LOG.debug("Got exception:", e);
-      responder.sendError(HttpResponseStatus.BAD_REQUEST,
-                          String.format("[SQLState %s] %s", e.getSQLState(), e.getMessage()));
+      responder.sendError(HttpResponseStatus.BAD_REQUEST, String.format("[SQLState %s] %s",
+                                                                        e.getSQLState(), e.getMessage()));
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -111,12 +106,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/queries/{id}")
   public void closeQuery(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                          @PathParam("id") final String id) {
-    QueryHandle handle = QueryHandle.fromId(id);
-    if (!handle.equals(QueryHandle.NO_OP)) {
-      startOnDemand();
-    }
-
     try {
+      QueryHandle handle = QueryHandle.fromId(id);
       if (!handle.equals(QueryHandle.NO_OP)) {
         exploreService.close(handle);
       }
@@ -136,12 +127,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/queries/{id}/status")
   public void getQueryStatus(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("id") final String id) {
-    QueryHandle handle = QueryHandle.fromId(id);
-    if (!handle.equals(QueryHandle.NO_OP)) {
-      startOnDemand();
-    }
-
     try {
+      QueryHandle handle = QueryHandle.fromId(id);
       QueryStatus status;
       if (!handle.equals(QueryHandle.NO_OP)) {
         status = exploreService.getStatus(handle);
@@ -168,12 +155,8 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/queries/{id}/schema")
   public void getQueryResultsSchema(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                                     @PathParam("id") final String id) {
-    QueryHandle handle = QueryHandle.fromId(id);
-    if (!handle.equals(QueryHandle.NO_OP)) {
-      startOnDemand();
-    }
-
     try {
+      QueryHandle handle = QueryHandle.fromId(id);
       List<ColumnDesc> schema;
       if (!handle.equals(QueryHandle.NO_OP)) {
         schema = exploreService.getResultSchema(handle);
@@ -199,13 +182,9 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("data/explore/queries/{id}/next")
   public void getQueryNextResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
-    QueryHandle handle = QueryHandle.fromId(id);
-    if (!handle.equals(QueryHandle.NO_OP)) {
-      startOnDemand();
-    }
-
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
+      QueryHandle handle = QueryHandle.fromId(id);
       List<QueryResult> results;
       if (handle.equals(QueryHandle.NO_OP)) {
         results = Lists.newArrayList();
@@ -233,8 +212,6 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/data/explore/queries")
   public void getQueryLiveHandles(HttpRequest request, HttpResponder responder) {
-    startOnDemand();
-
     try {
       Map<String, List<String>> args = new QueryStringDecoder(request.getUri()).getParameters();
 
@@ -256,13 +233,9 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/data/explore/queries/{id}/preview")
   public void getQueryResultPreview(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
-    QueryHandle handle = QueryHandle.fromId(id);
-    if (!handle.equals(QueryHandle.NO_OP)) {
-      startOnDemand();
-    }
-
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     try {
+      QueryHandle handle = QueryHandle.fromId(id);
       List<QueryResult> results;
       if (handle.equals(QueryHandle.NO_OP)) {
         results = Lists.newArrayList();
@@ -292,14 +265,10 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/data/explore/queries/{id}/download")
   public void downloadQueryResults(HttpRequest request, HttpResponder responder, @PathParam("id") final String id) {
-    QueryHandle handle = QueryHandle.fromId(id);
-    if (!handle.equals(QueryHandle.NO_OP)) {
-      startOnDemand();
-    }
-
     // NOTE: this call is a POST because it is not idempotent: cursor of results is moved
     boolean responseStarted = false;
     try {
+      QueryHandle handle = QueryHandle.fromId(id);
       if (handle.equals(QueryHandle.NO_OP) ||
           !exploreService.getStatus(handle).getStatus().equals(QueryStatus.OpStatus.FINISHED)) {
         responder.sendStatus(HttpResponseStatus.CONFLICT);
@@ -355,12 +324,6 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
       if (!responseStarted) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
-    }
-  }
-
-  private void startOnDemand() {
-    if (startOnDemand) {
-      exploreService.startAndWait();
     }
   }
 

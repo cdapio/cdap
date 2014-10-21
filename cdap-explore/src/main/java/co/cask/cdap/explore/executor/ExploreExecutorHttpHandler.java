@@ -20,7 +20,6 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.service.ExploreService;
@@ -54,14 +53,11 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private final ExploreService exploreService;
   private final DatasetFramework datasetFramework;
-  private final boolean startOnDemand;
 
   @Inject
-  public ExploreExecutorHttpHandler(ExploreService exploreService, DatasetFramework datasetFramework,
-                                    CConfiguration cConf) {
+  public ExploreExecutorHttpHandler(ExploreService exploreService, DatasetFramework datasetFramework) {
     this.exploreService = exploreService;
     this.datasetFramework = datasetFramework;
-    this.startOnDemand = cConf.getBoolean(Constants.Explore.START_ON_DEMAND);
   }
 
   /**
@@ -71,8 +67,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/datasets/{dataset}/enable")
   public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("dataset") final String datasetName) {
-    startOnDemand();
-
     try {
       Dataset dataset;
       try {
@@ -148,8 +142,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   @Path("data/explore/datasets/{dataset}/disable")
   public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("dataset") final String datasetName) {
-    startOnDemand();
-
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
 
@@ -201,12 +193,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   public static String generateDeleteStatement(String name) {
     return String.format("DROP TABLE IF EXISTS %s", getHiveTableName(name));
-  }
-
-  private void startOnDemand() {
-    if (startOnDemand) {
-      exploreService.startAndWait();
-    }
   }
 
   /**
