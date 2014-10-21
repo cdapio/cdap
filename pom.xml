@@ -96,6 +96,7 @@
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
+    <cask.common.cli.version>0.1.0-SNAPSHOT</cask.common.cli.version>
     <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
@@ -181,6 +182,11 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-nop</artifactId>
         <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-cli</artifactId>
+        <version>${cask.common.cli.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.ws.rs</groupId>
