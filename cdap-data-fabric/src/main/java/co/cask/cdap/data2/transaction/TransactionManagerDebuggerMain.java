@@ -129,7 +129,7 @@ public class TransactionManagerDebuggerMain {
     options.addOption(null, TRANSACTION_OPTION, true, "To specify a transaction ID. Mandatory in invalidate mode, " +
                                                       "optional in view mode");
     options.addOption(null, PORT_OPTION, true, "To specify the port to use. The default value is --port " +
-                                               Constants.Gateway.DEFAULT_PORT);
+                                               Constants.Router.DEFAULT_ROUTER_PORT);
     options.addOption(null, HELP_OPTION, false, "To print this message");
     options.addOption(null, TOKEN_OPTION, true, "To specify the access token for secure connections");
     options.addOption(null, TOKEN_FILE_OPTION, true, "Alternative to --token, to specify a file that contains " +
@@ -161,7 +161,7 @@ public class TransactionManagerDebuggerMain {
       tokenFile = line.hasOption(TOKEN_FILE_OPTION) ? line.getOptionValue(TOKEN_FILE_OPTION).replaceAll("(\r|\n)", "")
         : null;
       portNumber = line.hasOption(PORT_OPTION) ? Integer.valueOf(line.getOptionValue(PORT_OPTION)) :
-                   conf.getInt(Constants.Gateway.PORT, Constants.Gateway.DEFAULT_PORT);
+                   conf.getInt(Constants.Router.ROUTER_PORT, Integer.getInteger(Constants.Router.DEFAULT_ROUTER_PORT));
 
       // if both tokenfile and accessToken are given, just use the access token
       if (tokenFile != null) {

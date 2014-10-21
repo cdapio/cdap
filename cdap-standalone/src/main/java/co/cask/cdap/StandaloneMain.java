@@ -38,19 +38,15 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
-import co.cask.cdap.gateway.Gateway;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.gateway.collector.NettyFlumeCollector;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
-import co.cask.cdap.gateway.runtime.GatewayModule;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
@@ -60,7 +56,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.counters.Limits;
@@ -81,9 +76,7 @@ public class StandaloneMain {
 
   private final WebCloudAppService webCloudAppService;
   private final NettyRouter router;
-  private final Gateway gatewayV2;
   private final MetricsQueryService metricsQueryService;
-  private final NettyFlumeCollector flumeCollector;
   private final AppFabricServer appFabricServer;
   private final StreamHttpService streamHttpService;
 
@@ -107,9 +100,7 @@ public class StandaloneMain {
     Injector injector = Guice.createInjector(modules);
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
-    gatewayV2 = injector.getInstance(Gateway.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    flumeCollector = injector.getInstance(NettyFlumeCollector.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
@@ -167,10 +158,8 @@ public class StandaloneMain {
       throw new Exception("Failed to start Application Fabric");
     }
 
-    gatewayV2.startAndWait();
     metricsQueryService.startAndWait();
     router.startAndWait();
-    flumeCollector.startAndWait();
     if (webCloudAppService != null) {
       webCloudAppService.startAndWait();
     }
@@ -204,10 +193,8 @@ public class StandaloneMain {
       if (webCloudAppService != null) {
         webCloudAppService.stopAndWait();
       }
-      //  shut down router, gateway and flume, to stop all incoming traffic
+      //  shut down router to stop all incoming traffic
       router.stopAndWait();
-      gatewayV2.stopAndWait();
-      flumeCollector.stopAndWait();
       // now the stream writer and the explore service (they need tx)
       streamHttpService.stopAndWait();
       if (exploreExecutorService != null) {
@@ -334,9 +321,6 @@ public class StandaloneMain {
       System.load(userDir + "/lib/native/hadoop.dll");
     }
 
-    //Run gateway on random port and forward using router.
-    cConf.setInt(Constants.Gateway.PORT, 0);
-
     //Run dataset service on random port
     List<Module> modules = createPersistentModules(cConf, hConf, webAppPath);
 
@@ -355,20 +339,10 @@ public class StandaloneMain {
 
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
-    String passportUri = configuration.get(Constants.Gateway.CFG_PASSPORT_SERVER_URI);
-    final PassportClient client = passportUri == null || passportUri.isEmpty() ? new PassportClient()
-      : PassportClient.create(passportUri);
-
     return ImmutableList.of(
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(PassportClient.class).toProvider(new Provider<PassportClient>() {
-            @Override
-            public PassportClient get() {
-              return client;
-            }
-          });
           if (webAppPath != null) {
             bindConstant().annotatedWith(Names.named("web-app-path")).to(webAppPath);
           }
@@ -382,7 +356,6 @@ public class StandaloneMain {
       new LocationRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new GatewayModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule(),
       new DataSetServiceModules().getLocalModule(),

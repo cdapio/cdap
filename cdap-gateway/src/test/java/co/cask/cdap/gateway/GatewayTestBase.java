@@ -34,11 +34,9 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileAdmin;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
-import co.cask.cdap.gateway.runtime.GatewayModule;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.passport.http.client.PassportClient;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
@@ -49,7 +47,6 @@ import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -85,7 +82,6 @@ public abstract class GatewayTestBase {
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
-  private static Gateway gateway;
   private static final String hostname = "127.0.0.1";
   private static int port;
   private static CConfiguration conf;
@@ -111,11 +107,7 @@ public abstract class GatewayTestBase {
     }
     tmpFolder.create();
     conf = CConfiguration.create();
-    conf.setInt(Constants.Gateway.PORT, 0);
-    conf.set(Constants.Gateway.ADDRESS, hostname);
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, true);
-    conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
     conf.set(Constants.Router.ADDRESS, hostname);
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
@@ -140,13 +132,6 @@ public abstract class GatewayTestBase {
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(PassportClient.class).toProvider(
-              new Provider<PassportClient>() {
-                @Override
-                public PassportClient get() {
-                  return new MockedPassportClient(keysAndClusters);
-                }
-              });
           }
 
           @Provides
@@ -158,7 +143,6 @@ public abstract class GatewayTestBase {
           }
         },
         new InMemorySecurityModule(),
-        new GatewayModule().getInMemoryModules(),
         new AppFabricTestModule(conf),
         new StreamServiceRuntimeModule().getStandaloneModules()
       ).with(new AbstractModule() {
@@ -183,7 +167,6 @@ public abstract class GatewayTestBase {
       })
     );
 
-    gateway = injector.getInstance(Gateway.class);
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -196,12 +179,8 @@ public abstract class GatewayTestBase {
     appFabricServer.startAndWait();
     metrics.startAndWait();
     streamHttpService.startAndWait();
-    gateway.startAndWait();
 
     // Restart handlers to check if they are resilient across restarts.
-    gateway.stopAndWait();
-    gateway = injector.getInstance(Gateway.class);
-    gateway.startAndWait();
     router = injector.getInstance(NettyRouter.class);
     router.startAndWait();
     Map<String, Integer> serviceMap = Maps.newHashMap();
@@ -214,7 +193,6 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) {
-    gateway.stopAndWait();
     appFabricServer.stopAndWait();
     metrics.stopAndWait();
     streamHttpService.stopAndWait();
