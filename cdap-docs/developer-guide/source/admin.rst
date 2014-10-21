@@ -1900,9 +1900,18 @@ see the :ref:`security` section.
    * - ``app.bind.port``
      - ``45000``
      - App-Fabric server port
+   * - ``app.boss.threads``
+     - ``1``
+     - Number of Netty server boss threads
    * - ``app.command.port``
      - ``45010``
      - App-Fabric command port
+   * - ``app.connection.backlog``
+     - ``20000``
+     - Maximum connection backlog of AppFabricServer
+   * - ``app.exec.threads``
+     - ``20``
+     - Number of Netty server executor threads
    * - ``app.output.dir``
      - ``/programs``
      - Directory where all archives are stored
@@ -1912,6 +1921,9 @@ see the :ref:`security` section.
    * - ``app.temp.dir``
      - ``/tmp``
      - Temp directory
+   * - ``app.worker.threads``
+     - ``10``
+     - Number of Netty server worker threads
    * - ``dashboard.bind.port``
      - ``9999``
      - CDAP Console bind port
@@ -1991,18 +2003,6 @@ see the :ref:`security` section.
    * - ``explore.inactive.operation.timeout.secs``
      - ``3600``
      - Timeout value in seconds for a SQL operation which has no more results to be fetched
-   * - ``app.boss.threads``
-     - ``1``
-     - Number of Netty server boss threads
-   * - ``app.connection.backlog``
-     - ``20000``
-     - Maximum connection backlog of AppFabricServer
-   * - ``app.exec.threads``
-     - ``20``
-     - Number of Netty server executor threads
-   * - ``app.worker.threads``
-     - ``10``
-     - Number of Netty server worker threads
    * - ``hdfs.lib.dir``
      - ``${hdfs.namespace}/lib``
      - Common directory in HDFS for JAR files for coprocessors
