@@ -411,8 +411,8 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
 #. Find the pre-built ``WordCount-2.5.1.jar`` using the dialog box to navigate to
    ``CDAP_HOME/examples/WordCount/target/``. 
 #. Once the application is deployed, instructions on running the example can be found at the
-   :ref:`WordCount example<word-count>`.
+   :ref:`WordCount example. <word-count>`
 #. You should be able to start the application, inject sentences,
    run the Flow and the Procedure, and see results.
 #. When finished, stop and remove the application as described in the
-   :ref:`examples<examples>`.
+   :ref:`examples. <examples-index>`

@@ -54,7 +54,7 @@ The Flowlet that generates random numbers every 1 millisecond::
   }
 
 
-Deploy and start the Application as described in  :ref:`Building and Running Applications <convention>`
+Deploy and start the Application as described in :ref:`Building and Running Applications. <cdap-building-running>`
 
 Running the Application
 +++++++++++++++++++++++
@@ -62,5 +62,5 @@ Running the Application
 Once you start the flow, the ``source`` flowlet will continuously generate data. You can see this by observing the counters
 for each flowlet in the flow visualization. Even though you are not injecting any data into the flow, the counters increase steadily.
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
+Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-stop-application>`
 

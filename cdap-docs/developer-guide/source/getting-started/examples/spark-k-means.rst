@@ -77,7 +77,7 @@ The calculated centers data is stored in a second ObjectStore Dataset, *centers*
 This procedure has a ``centers`` method to obtain the center's coordinates of a given index.
 
 
-Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
+Deploy and start the application as described in :ref:`Building and Running Applications <cdap-building-running>`
 
 Running the Example
 +++++++++++++++++++
@@ -155,6 +155,6 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
 
 	   "9.1,9.1,9.1"
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
+Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-stop-application>`
 
 .. highlight:: java

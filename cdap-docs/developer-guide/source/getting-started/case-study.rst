@@ -681,5 +681,4 @@ A complete example of the test is included in the downloaded zip.
 Where to Go Next
 ================
 Now that you've seen a CDAP application, take a look at our additional examples,
-located in both the ``/examples`` directory of the SDK and :ref:`also online
-<examples>`.
+located in both the ``/examples`` directory of the SDK and :ref:`also online. <examples-index>`

@@ -2,16 +2,16 @@
    :description: HTTP RESTful Interface to the Cask Data Application Platform
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. highlight:: console
+.. _http-restful-api-cdap-client:
 
 ===========================================================
 Client HTTP RESTful API
 ===========================================================
 
-.. _cdap-client-http-api:
-
 Use the CDAP Client HTTP API to deploy or delete Applications and manage the life cycle of 
 Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
+
+.. highlight:: console
 
 Deploy an Application
 ---------------------

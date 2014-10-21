@@ -1,11 +1,11 @@
 .. :author: Cask Data, Inc.
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _security:
+
 ============================================
 CDAP Security
 ============================================
-
-.. _security:
 
 Cask Data Application Platform (CDAP) supports securing clusters using a perimeter security model.  With perimeter
 security, access to cluster nodes is restricted through a firewall.  Cluster nodes can communicate

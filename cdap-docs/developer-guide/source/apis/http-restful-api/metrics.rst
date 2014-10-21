@@ -2,7 +2,7 @@
    :description: HTTP RESTful Interface to the Cask Data Application Platform
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. highlight:: console
+.. _http-restful-api-metrics:
 
 ===========================================================
 Metrics HTTP RESTful API
@@ -10,28 +10,13 @@ Metrics HTTP RESTful API
 
 .. highlight:: console
 
-.. _metricsHTTP:
-
 As Applications process data, CDAP collects metrics about the Application’s behavior and performance. Some of these
 metrics are the same for every Application—how many events are processed, how many data operations are performed,
 etc.—and are thus called system or CDAP metrics.
 
-.. rst2pdf: CutStart
-
-.. only:: html
-
-   Other metrics are user-defined and differ from Application to Application. 
-   For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-   the Developer Guide, :ref:`CDAP Operations Guide. <admin>`
-
-.. only:: pdf
-
-.. rst2pdf: CutStop
-
-   Other metrics are user-defined and differ from Application to Application. 
-   For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
-   the Developer Guide, :ref:`CDAP Operations Guide. <admin>`
-
+Other metrics are user-defined and differ from Application to Application. 
+For details on how to add metrics to your Application, see the section on User-Defined Metrics in the
+the :ref:`CDAP Operations Guide. <operations-index>`
 
 Metrics Requests
 ----------------

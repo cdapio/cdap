@@ -2,6 +2,8 @@
    :Description: Cask Data Application Platform Purchase Application
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _examples-purchase:
+
 Purchase
 --------
 
@@ -111,7 +113,7 @@ This procedure has a ``history`` method to obtain the purchase history of a give
 Setting up
 ++++++++++
 
-#. Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
+#. Deploy and start the application as described in :ref:`Building and Running Applications <cdap-building-running>`
 #. Note: the CatalogLookupService will not be displayed in the Console
 
 Running the Example
@@ -230,8 +232,6 @@ You repeat this step until the ``curl`` call returns an empty list. That means y
   curl -v -X DELETE http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782
 
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
+Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-stop-application>`
 
 .. highlight:: java
-
-

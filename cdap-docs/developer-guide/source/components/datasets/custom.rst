@@ -2,11 +2,11 @@
    :description: placeholder
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _custom-datasets:
+
 ============================================
 Custom Datasets
 ============================================
-
-.. _custom-datasets:
 
 .. highlight:: java
 
@@ -87,7 +87,7 @@ Application components can access a created Dataset via the ``@UseDataSet`` anno
   }
 
 A complete application demonstrating the use of a custom Dataset is included in our
-:ref:`Purchase Example<purchase>`.
+:ref:`Purchase Example. <examples-purchase>`
 
 You can also create, drop, and truncate Datasets using the
-:ref:`Cask Data Application Platform HTTP REST API <rest-datasets>`.
+:ref:`Cask Data Application Platform HTTP REST API. <http-restful-api-datasets>`

@@ -14,7 +14,7 @@ metrics.
 
 Other metrics are user-defined or "custom" and differ from application to application.
 To add user-defined metrics to your application, read this section in conjunction with the
-details on available system metrics in the :ref:`Metrics HTTP API <metricsHTTP>`.
+details on available system metrics in the :ref:`Metrics HTTP API. <http-restful-api-metrics>`
 
 You embed user-defined metrics in the methods defining the elements of your application.
 They will then emit their metrics and you can retrieve them (along with system metrics)
@@ -45,7 +45,7 @@ To add metrics to a Flowlet *NameSaver*::
     }
   }
 
-An example of user-defined metrics is in ``PurchaseStore`` in the :ref:`purchase`.
+An example of user-defined metrics is in ``PurchaseStore`` in the :ref:`Purchase example. <examples-purchase>`
 
 Using Metrics Explorer
 ----------------------

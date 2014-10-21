@@ -89,7 +89,7 @@ reads the name stored by the ``NameSaver`` from the key-value table. It return a
     }
   }
 
-Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
+Deploy and start the application as described in :ref:`Building and Running Applications <cdap-building-running>`
 
 Running the Example
 +++++++++++++++++++
@@ -119,4 +119,4 @@ you can make an HTTP request to the Metrics API using curl::
   $ curl http://localhost:10000/v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.bytes?aggregate=true
   {"data":3}
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
+Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-stop-application>`

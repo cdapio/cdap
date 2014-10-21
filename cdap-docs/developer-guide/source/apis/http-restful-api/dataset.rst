@@ -2,17 +2,17 @@
    :description: HTTP RESTful Interface to the Cask Data Application Platform
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. highlight:: console
+.. _http-restful-api-datasets:
 
 ===========================================================
 Dataset HTTP RESTful API
 ===========================================================
 
-.. _rest-datasets:
+.. highlight:: console
 
 The Dataset API allows you to interact with Datasets through HTTP. You can list, create,
 delete, and truncate Datasets. For details, see the 
-:ref:`CDAP Developer Guide Advanced Features, Datasets section <Datasets>`
+:ref:`CDAP Components, Datasets section <datasets-index>`
 
 
 Listing all Datasets
@@ -36,7 +36,6 @@ The response body will contain a JSON-formatted list of the existing Datasets::
      }
    }
 
-.. rst2pdf: PageBreak
 
 Creating a Dataset
 ------------------
@@ -93,8 +92,6 @@ Example
      - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
    * - Description
      - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
-
-.. rst2pdf: PageBreak
 
 
 Updating an Existing Dataset
@@ -154,7 +151,6 @@ Example
    * - Description
      - For the "mydataset" of type "Table", update the Dataset and its time-to-live property to 2 hours
 
-.. rst2pdf: PageBreak
 
 Deleting a Dataset
 ------------------
@@ -187,7 +183,6 @@ Example
    * - Description
      - Deletes the Dataset named "mydataset"
 
-.. rst2pdf: PageBreak
 
 Deleting all Datasets
 ---------------------

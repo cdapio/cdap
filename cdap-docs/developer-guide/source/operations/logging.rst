@@ -22,7 +22,7 @@ For instance, in a Flowlet you can write::
 The log messages emitted by your Application code can be viewed in two different ways.
 
 - Using the :ref:`restful-api`.
-  The :ref:`Logging HTTP interface <loggingHTTP>` details all the available contexts that
+  The :ref:`Logging HTTP interface <http-restful-api-logging>` details all the available contexts that
   can be called to retrieve different messages.
 - All log messages of an Application can be viewed in the CDAP Console
   by clicking the *Logs* button in the Flow or Procedure screens.

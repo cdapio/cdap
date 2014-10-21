@@ -29,6 +29,6 @@ For a high-level view of the concepts of the Cask Data Application Platform,
 please see :doc:`Platform Overview. </overview/index>`
 
 For more information beyond this section, see the :doc:`Javadocs </apis/javadocs/index>` and
-the code in the :ref:`Examples <examples>` directory, both of which are on the `Cask.co
+the code in the :ref:`Examples <examples-index>` directory, both of which are on the `Cask.co
 <http://cask.co>`_ `resources page <http://cask.co/resources>`_ as well as in your CDAP
 installation directory.

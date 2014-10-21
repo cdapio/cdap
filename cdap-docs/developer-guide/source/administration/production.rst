@@ -30,7 +30,7 @@ is persisted.
 The Standalone CDAP by default binds to the localhost address, and is not available for
 remote access by any outside process or application outside of the local machine.
 
-See the :ref:`Getting Started Guide <get-started>` and the *Cask Data Application Platform
+See the :ref:`Getting Started Guide <getting-started-index>` and the *Cask Data Application Platform
 SDK* for information on how to start and manage your Standalone CDAP.
 
 

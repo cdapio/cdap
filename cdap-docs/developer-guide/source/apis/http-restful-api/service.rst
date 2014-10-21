@@ -2,7 +2,7 @@
    :description: HTTP RESTful Interface to the Cask Data Application Platform
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. highlight:: console
+.. http-restful-api-service:
 
 ===========================================================
 Service HTTP RESTful API

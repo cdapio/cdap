@@ -31,7 +31,7 @@ Let's look at some of these elements, and then run the Application and see the r
 The Word Count Application
 ..........................
 
-As in the other :ref:`examples.<examples>`, the components
+As in the other :ref:`examples,<examples-index>` the components
 of the Application are tied together by the class ``WordCount``::
 
   public class WordCount extends AbstractApplication {
@@ -75,7 +75,7 @@ This Procedure has three methods:
 - getCount(): Given a word, this returns the total count of occurrences and the top-10 associated words for this word.
 - getAssoc(): Given a pair, "word1" and "word2", this returns the association count for this pair.
 
-Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
+Deploy and start the application as described in :ref:`Building and Running Applications <cdap-building-running>`
 
 Running the Example
 +++++++++++++++++++
@@ -131,7 +131,7 @@ Console in JSON format, for example (reformatted to fit)::
     - getStats - This returns the statistics, "total words received", "total length of words received" and so on.
     - getAssoc - For getAssoc you need to provide two words to get their association count, example: {"word1":"Hello", "word2":"CDAP"}.
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
+Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-stop-application>`
 
 .. highlight:: java
 

@@ -104,7 +104,7 @@ Strategies in Testing MapReduce Jobs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce jobs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found in the :ref:`Purchase Example <purchase>` included in the CDAP SDK.
+found in the :ref:`Purchase Example <examples-purchase>` included in the CDAP SDK.
 
 The ``PurchaseTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::
@@ -157,7 +157,7 @@ The assertion will verify that the correct result was received.
 Strategies in Testing Spark Programs
 ====================================
 Let's write a test case for an application that uses a Spark program.
-Complete source code for this test can be found at :ref:`Spark PageRank<spark-page-rank>`.
+Complete source code for this test can be found at :ref:`Spark PageRank<examples-spark-page-rank>`.
 
 The ``SparkPageRankTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::
@@ -207,7 +207,7 @@ The assertion will verify that the correct result was received.
 Validating Test Data with SQL
 =============================
 Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
-in the test case are record-scannable as described in :ref:`data-explore`
+in the test case are record-scannable as described in :ref:`data-exploration`.
 This can be done using a JDBC connection obtained from the test base::
 
 

@@ -2,7 +2,7 @@
    :description: HTTP RESTful Interface to the Cask Data Application Platform
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. highlight:: console
+.. http-restful-api-procedure:
 
 ===========================================================
 Procedure HTTP RESTful API
@@ -11,7 +11,7 @@ Procedure HTTP RESTful API
 .. highlight:: console
 
 This interface supports sending calls to the methods of an Application’s Procedures.
-See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
+See the :ref:`CDAP Client HTTP API <http-restful-api-cdap-client>` for how to control the life cycle of
 Procedures.
 
 Executing Procedures

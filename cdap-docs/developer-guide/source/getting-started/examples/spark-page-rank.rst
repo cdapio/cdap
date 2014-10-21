@@ -2,6 +2,8 @@
      :Description: Cask Data Application Platform SparkPageRank Application
      :Copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _examples-spark-page-rank:
+
 Spark Page Rank Example
 ---------------------------------
 
@@ -77,7 +79,7 @@ The calculated page rank data is stored in a second ObjectStore Dataset, *ranks*
 
 This procedure has a ``rank`` method to obtain the page rank of a given URL.
 
-Deploy and start the application as described in  :ref:`Building and Running Applications <convention>`
+Deploy and start the application as described in :ref:`Building and Running Applications <cdap-building-running>`
 
 Running the Example
 +++++++++++++++++++
@@ -160,6 +162,6 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 
             "0.9988696312751688"
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications <stop-application>`.
+Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-stop-application>`
 
 .. highlight:: java

@@ -2,7 +2,7 @@
    :description: HTTP RESTful Interface to the Cask Data Application Platform
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. highlight:: console
+.. _restful-api:
 
 ===========================================================
 CDAP HTTP RESTful API
@@ -23,8 +23,6 @@ CDAP HTTP RESTful API
     Monitor <monitor>
 
 .. highlight:: console
-
-.. _restful-api:
 
 Introduction
 ============

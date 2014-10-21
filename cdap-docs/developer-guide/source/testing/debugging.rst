@@ -46,7 +46,7 @@ an HTTP request to the element’s URL. For example, the following will start a 
 
 Note that this URL differs from the URL for starting the Flow only by the last path
 component (``debug`` instead of ``start``; see
-:ref:`CDAP Client HTTP API <cdap-client-http-api>`). You can pass in
+:ref:`CDAP Client HTTP API <http-restful-api-cdap-client>`). You can pass in
 runtime arguments in the exact same way as you normally would start a Flow.
 
 Once the Flow is running, each Flowlet will detect an available port in its container
@@ -171,7 +171,7 @@ You may need to adjust them for your installation or version.
 Debugging the Transaction Manager (Advanced Use)
 ================================================
 In this advanced use section, we will explain in depth how transactions work internally.
-Transactions are introduced in the :ref:`Transaction System <transaction-system>`
+Transactions are introduced in the :ref:`Transaction System. <transaction-system>`
 
 A transaction is defined by an identifier, which contains the time stamp, in milliseconds,
 of its creation. This identifier—also called the `write pointer`—represents the version

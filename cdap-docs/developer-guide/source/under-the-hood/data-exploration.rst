@@ -2,11 +2,11 @@
    :description: placeholder
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _data-exploration:
+
 ============================================
 Data Exploration
 ============================================
-
-.. _data-explore:
 
 
 It is often useful to be able to explore a Dataset in an ad-hoc manner.
@@ -83,7 +83,7 @@ Limitations
   For example, you cannot execute ad-hoc queries over an ``ObjectStore<MyObject>`` if the ``MyObject`` is contained in
   the application jar. However, if you define your own Dataset type ``MyObjectStore`` that extends or encapsulates an
   ``ObjectStore<MyObject>``, then ``MyObject`` becomes part of the Dataset definition for ``MyObjectStore``. See the
-  :ref:`Purchase <purchase>` application for an example.
+  :ref:`Purchase <examples-purchase>` application for an example.
 
 
 Parameterized Types

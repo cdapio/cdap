@@ -2,10 +2,11 @@
    :description: Examples
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _examples-index:
+
 ============================================
 Additional Examples
 ============================================
-
 
 .. toctree::
    :maxdepth: 1

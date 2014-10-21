@@ -195,7 +195,7 @@ Dataset Explorer
 ................
 From within the `Store`_ pane you can access the Dataset Explorer, which allows for SQL-like
 queries of the datasets' underlying Hive tables. Details on the requirements for formulating and
-performing these queries can be found in the Developer Guide :ref:`data-explore`.
+performing these queries can be found in the Developer Guide :ref:`data-exploration`.
 
 Using the information supplied for each Hive table (schema, keys, properties) you can generate a
 SQL-like query and then execute it.
