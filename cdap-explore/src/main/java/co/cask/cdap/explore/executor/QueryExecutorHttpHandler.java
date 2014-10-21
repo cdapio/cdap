@@ -37,7 +37,6 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.primitives.Longs;
 import com.google.common.reflect.TypeToken;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -360,7 +359,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   }
 
   private void startHiveIfNeeded() {
-    if (startHiveOnDemand && exploreService.state() == Service.State.NEW) {
+    if (startHiveOnDemand) {
       exploreService.startAndWait();
     }
   }

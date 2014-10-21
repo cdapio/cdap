@@ -63,6 +63,7 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
+import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
@@ -139,6 +140,7 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
+  private static ExploreService exploreService;
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -285,8 +287,13 @@ public class TestBase {
     discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
     exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     exploreExecutorService.startAndWait();
+    exploreService = injector.getInstance(ExploreService.class);
     exploreClient = injector.getInstance(ExploreClient.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
+  }
+
+  protected static void startExploreService() {
+    exploreService.startAndWait();
   }
 
   private static Module createDataFabricModule(final CConfiguration cConf) {

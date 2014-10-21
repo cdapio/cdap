@@ -929,7 +929,7 @@
         <value>false</value>
     </property>
     <property>
-        <name>explore.startondemand</name>
+        <name>explore.start.on.demand</name>
         <value>false</value>
     </property>
     <property>
