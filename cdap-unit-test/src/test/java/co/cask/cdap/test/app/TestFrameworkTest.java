@@ -659,9 +659,8 @@ public class TestFrameworkTest extends TestBase {
     }
   }
 
-  @Test(timeout = 60000L)
+  @Test(timeout = 90000L)
   public void testSQLQuery() throws Exception {
-
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
