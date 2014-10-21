@@ -104,6 +104,11 @@ import javax.annotation.Nullable;
 /**
  * Defines common functionality used by different HiveExploreServices. The common functionality includes
  * starting/stopping transactions, serializing configuration and saving operation information.
+ *
+ * Overridden {@link co.cask.cdap.explore.service.Explore} methods also call {@code startAndWait()},
+ * which effectively allows this {@link com.google.common.util.concurrent.Service} to not have to start
+ * until the first call to the explore methods is made. This is used for {@link Constants.Explore#START_ON_DEMAND},
+ * which, if true, does not start the {@link ExploreService} when the explore HTTP services are started.
  */
 public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService {
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
