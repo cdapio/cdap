@@ -1,6 +1,7 @@
 .. :author: Cask Data, Inc.
-   :description: placeholder
    :copyright: Copyright © 2014 Cask Data, Inc.
+
+.. _guides-tutorials-index:
 
 ============================================
 Additional Resources: Guides and Tutorials
@@ -13,7 +14,6 @@ are longer, taking anywhere from 2-3 hours.
 
 How-To Guides
 -------------
-
 Designed to be completed in 15-30 minutes, these guides provide quick, hands-on instructions for 
 building the “Hello World” of any development task with CDAP.
 
@@ -30,8 +30,6 @@ Tutorials
 ---------
 Designed to be completed in 2-3 hours, these tutorials provide deeper, in-context explorations of 
 big data application development topics, leaving you ready to implement real-world solutions.
-
-
 
 - `WISE: Web Analytics: <http://docs.cask.co/tutorial/current/en/tutorial2.html>`__
   Learn how to build CDAP application to analyze web site’s users behavior	

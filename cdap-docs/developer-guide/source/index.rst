@@ -61,8 +61,8 @@ Where to Go Next
   to build Big Data applications.
 
 
-.. |examples| replace:: **Examples, Guide and Tutorials:**
-.. _examples: examples/index.html
+.. |examples| replace:: **Examples, Guides, and Tutorials:**
+.. _examples: examples-guide-tutorials/index.html
 
 - |examples|_ **Examples included with the SDK** range from a simple introductory *Hello
   World* to more elaborate examples such as the *Purchase Application* that use all of the
@@ -77,8 +77,8 @@ Where to Go Next
 .. _under-the-hood: under-the-hood/index.html
 
 - |under-the-hood|_ Covers **advanced topics on CDAP** that will be of interest to
-  developers who want a deeper dive into CDAP, with presentations on the transaction system,
-  data exploration, streams, and best practices fro CDP development.
+  developers who want a deeper dive into CDAP, with presentations on the Transaction System,
+  Data Exploration, Streams, Client Authentication for Secure CDAP Instances, and Best Practices for CDAP development.
 
 
 .. |apis| replace:: **API References:**
@@ -100,31 +100,23 @@ Where to Go Next
 .. _tools: tools/index.html
 
 - |tools|_ CDAP comes with a number of tools to make a developer’s life easier. These
-  tools help with interacting with applications, ingesting data into CDAP, and fetching
-  access tokens.
-
-
-.. |user-interface| replace:: **User Interface:**
-.. _user-interface: user-interface.html
-
-- |user-interface|_ This section described the **CDAP Console**, the browser-based management application
-  that allows you to control, manage and explore a CDAP instance, be it the Standalone SDK or a distributed
-  cluster with hundreds of nodes.
+  tools help with: interacting with applications; ingesting data into CDAP; authenticating clients and fetching
+  access tokens; and the CDAP Console, the browser-based management application
+  that allows you to control, manage and explore a CDAP instance.
 
 
 .. |admin| replace:: **Administration:**
 .. _admin: administration/index.html
 
-- |admin|_ covers **installation, configuration, security setup, and putting CDAP into production and
-  monitoring.** An appendix covers the XML file used to configure the CDAP security configuration.
+- |admin|_ covers **putting CDAP into production, with installation, configuration, security setup, and
+  monitoring.** Appendices cover the XML files used to configure the CDAP installation and security configurations.
 
 
 .. |ops| replace:: **Operations:**
 .. _ops: operations/index.html
 
 - |ops|_ The :doc:`Operations Guide <operations/index>` covers 
-  **security, monitoring, logging, metrics, runtime arguments, and scaling instances.** An
-  appendix covers the XML file used to configure the CDAP installation.
+  **security, monitoring, logging, metrics, runtime arguments, and scaling instances.** 
 
 
 .. |remaining| replace:: **Remaining Sections:**

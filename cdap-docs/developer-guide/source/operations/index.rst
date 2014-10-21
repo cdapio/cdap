@@ -15,8 +15,6 @@ CDAP Operations
     Metrics <metrics>
     Runtime Arguments <runtime-arguments>
     Scaling Instances <scaling-instances>
-    Appendix: cdap-site.xml <cdap-site>
-    Appendix: cdap-security.xml <cdap-security>
     
     
 Command-Line Interface

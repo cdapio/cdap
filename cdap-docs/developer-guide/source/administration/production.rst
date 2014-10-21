@@ -13,6 +13,8 @@ Regardless of the runtime edition, CDAP is fully functional and the code you dev
 changes. However, performance and scale are limited when using in-memory or standalone
 CDAPs.
 
+.. _in-memory-data-application-platform:
+
 In-memory CDAP
 --------------
 The in-memory CDAP allows you to easily run CDAP for use in unit tests. In this mode, the

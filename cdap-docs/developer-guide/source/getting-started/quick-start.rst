@@ -51,7 +51,7 @@ In both cases, the packaged application is in the ``target/`` directory and the 
 ``Wise-0.2.0.jar``.
 
 **Learn More:** *A detailed description of the application and its implementation is
-available in the* :doc:`Web Analytics Application documentation. <examples/web-analytics>`
+available in the* :ref:`Web Analytics Application documentation. <web-analytics>`
 
 
 Deploying the Application
@@ -66,7 +66,7 @@ or using curl to directly make an HTTP request::
   $ curl -v -H "X-Archive-Name: Wise-0.2.0.jar" -X POST localhost:10000/v2/apps \
        --data-binary @target/Wise-0.2.0.jar
 
-**Learn More:** *You can also deploy apps* :doc:`using the CDAP Console. </user-interface>`
+**Learn More:** *You can also deploy apps* :ref:`using the CDAP Console. <cdap-console>`
 
 
 Starting Realtime Processing

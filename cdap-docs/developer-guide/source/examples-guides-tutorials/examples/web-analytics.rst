@@ -2,6 +2,8 @@
    :description: An example Cask Data Application Platform application
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _web-analytics:
+
 Web Analytics Application
 =========================
 
