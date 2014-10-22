@@ -155,17 +155,14 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       inputStream.close();
     }
 
-    String archiveChecksum = calculateChecksum(archive);
     if (existing != null) {
       /**
        * Get the version object from the MDS, check if (passed) version is greater than current version
-       * If equal but (checksum is different) then extract the jar, update the module_version
-       * value with new {version,checksum} in MDS.
+       * then update the module_version value with new {version,checksum} in MDS.
        */
       DatasetTypeVersion versionInfo = manager.getVersionInfo(name);
 
-      if ((versionInfo.getVersion() > version) || ((versionInfo.getVersion() == version) &&
-        (archiveChecksum.equals(versionInfo.getChecksum())))) {
+      if (versionInfo.getVersion() > version) {
         // not the latest version, newer version already exists, fail.
         String message = String.format("Cannot add module %s module, newer version %s already exists",
                                        name, versionInfo.getVersion());
@@ -177,7 +174,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
     try {
       manager.addModule(name, className, archive);
-      manager.writeVersionInfo(new DatasetTypeVersion(name, version, archiveChecksum));
+      manager.writeVersionInfo(new DatasetTypeVersion(name, version));
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -196,13 +193,6 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       return;
     }
     responder.sendError(HttpResponseStatus.BAD_REQUEST, "Requested dataset module does not exist");
-  }
-
-  private String calculateChecksum(Location archive) throws IOException {
-    FileInputStream fis = new FileInputStream(new File(archive.toURI()));
-    String md5 = org.apache.commons.codec.digest.DigestUtils.md5Hex(fis);
-    fis.close();
-    return md5;
   }
 
   @DELETE
