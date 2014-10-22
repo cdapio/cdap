@@ -17,7 +17,6 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
@@ -377,20 +376,20 @@ public class TestFrameworkTest extends TestBase {
   @Category(SlowTests.class)
   @Test
   public void testAppWithDatasetVersions() throws Exception {
-    ApplicationManager applicationManager = deployApplication(AppWithDatasetVersion1.class);
+    ApplicationManager applicationManager = deployApplication(AppWithDatasetVersion.class);
     LOG.info("Deployed.");
     Assert.assertEquals(1, getDatasetVersion(FakeDataset.class.getName()));
 
-    ApplicationManager applicationManager2 = deployApplication(AppWithDatasetVersion2.class);
+    ApplicationManager applicationManager2 = deployApplication(DuplicateAppWithDatasetVersion.class);
 
     //get the version map and check both applications are present in them
-    Map<String, Integer> applicationVersionMap = getDatasetVersionMap(AppWithDatasetVersion1.DS_NAME);
+    Map<String, Integer> applicationVersionMap = getDatasetVersionMap(AppWithDatasetVersion.DS_NAME);
     Assert.assertEquals(2, applicationVersionMap.size());
 
-    int app1version = applicationVersionMap.get(AppWithDatasetVersion1.NAME);
+    int app1version = applicationVersionMap.get(AppWithDatasetVersion.NAME);
     Assert.assertEquals(1, app1version);
 
-    int app2version = applicationVersionMap.get(AppWithDatasetVersion2.NAME);
+    int app2version = applicationVersionMap.get(DuplicateAppWithDatasetVersion.NAME);
     Assert.assertEquals(1, app2version);
 
     applicationManager.stopAll();

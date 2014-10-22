@@ -133,14 +133,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public synchronized void addInstance(String datasetType, String datasetInstanceName, DatasetProperties props)
-    throws DatasetManagementException, IOException {
+    throws InstanceConflictException, IOException {
     if (instances.get(datasetInstanceName) != null) {
-      // check version and update the latest version
       throw new InstanceConflictException("Dataset instance with name already exists: " + datasetInstanceName);
     }
 
-    Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered",
-                                datasetType);
+    Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered", datasetType);
     DatasetDefinition def = registry.get(datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);
@@ -157,8 +155,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       throw new InstanceConflictException("Dataset instance with name does not exist: " + datasetInstanceName);
     }
     String datasetType = oldSpec.getType();
-    Preconditions.checkArgument(registry.hasType(datasetType),
-                                "Dataset type '%s' is not registered", datasetType);
+    Preconditions.checkArgument(registry.hasType(datasetType), "Dataset type '%s' is not registered", datasetType);
     DatasetDefinition def = registry.get(datasetType);
     DatasetSpecification spec = def.configure(datasetInstanceName, props);
     instances.put(datasetInstanceName, spec);

@@ -398,14 +398,6 @@ public class DatasetTypeManager extends AbstractIdleService {
     @Override
     public void add(DatasetDefinition def) {
       String typeName = def.getName();
-      // disabling typeName check to support update with new versions, module name and
-      // type name will be same if we disallow adding modules by the user.
-
-//      if (datasets.getTypeMDS().getType(typeName) != null) {
-//        String msg = "Cannot add dataset type: it already exists: " + typeName;
-//        LOG.error(msg);
-//        throw new TypeConflictException(msg);
-//      }
       types.add(typeName);
       registry.add(def);
     }

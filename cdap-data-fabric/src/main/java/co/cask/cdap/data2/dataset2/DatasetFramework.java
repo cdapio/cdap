@@ -130,11 +130,11 @@ public interface DatasetFramework {
    * @param datasetTypeName dataset instance type name
    * @param datasetInstanceName dataset instance name
    * @param props dataset instance properties
+   * @throws InstanceConflictException if dataset instance with this name already exists
    * @throws IOException when creation of dataset instance using its admin fails
    * @throws DatasetManagementException
    */
-  void addInstance(String datasetTypeName,  String datasetInstanceName,
-                   DatasetProperties props)
+  void addInstance(String datasetTypeName,  String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException, IOException;
 
   /**
@@ -152,7 +152,6 @@ public interface DatasetFramework {
    */
   void updateInstance(String datasetInstanceName, DatasetProperties props)
     throws DatasetManagementException, IOException;
-
 
   /**
    * @return a collection of {@link co.cask.cdap.api.dataset.DatasetSpecification}s for all datasets

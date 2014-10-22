@@ -30,7 +30,7 @@ import java.io.IOException;
 /**
  * App that uses fake dataset (custom dataset)
  */
-public class AppWithDatasetVersion1 extends AbstractApplication {
+public class AppWithDatasetVersion extends AbstractApplication {
 
   public static final String NAME = "DummyApp1";
   public static final String DS_NAME = "dummyds";

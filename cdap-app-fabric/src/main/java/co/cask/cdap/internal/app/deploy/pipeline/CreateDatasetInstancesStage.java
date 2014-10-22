@@ -52,11 +52,9 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
   public void process(ApplicationSpecLocation input) throws Exception {
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
-
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
       String instanceName = instanceEntry.getKey();
       DatasetCreationSpec instanceSpec = instanceEntry.getValue();
-
       try {
         int version = getDatasetVersion(input.getArchive(), instanceSpec.getTypeName());
         if (!datasetFramework.hasInstance(instanceName)) {

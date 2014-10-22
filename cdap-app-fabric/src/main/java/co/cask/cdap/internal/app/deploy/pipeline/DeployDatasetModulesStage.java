@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -30,7 +29,6 @@ import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.pipeline.AbstractStage;
 import com.google.common.base.Objects;
-import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -46,7 +44,6 @@ import java.util.Map;
  */
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLocation> {
   private static final Logger LOG = LoggerFactory.getLogger(DeployDatasetModulesStage.class);
-
   private final DatasetFramework datasetFramework;
 
   public DeployDatasetModulesStage(DatasetFramework datasetFramework) {
@@ -96,9 +93,6 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
               clazz.getName());
             throw new IllegalArgumentException(msg);
           }
-        } catch (DataSetInstantiationException e) {
-          LOG.error("Dataset instantiation Error", e);
-          throw Throwables.propagate(e);
         } catch (ModuleConflictException e) {
           LOG.info("Not deploying module " + moduleName + " as it already exists");
         }

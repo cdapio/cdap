@@ -27,6 +27,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetMeta;
@@ -329,7 +330,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public boolean isDefaultType(String typeName) throws DatasetManagementException {
     // default system modules have jarLocation as null, and the module that announces this type is the last module
-    // in the list, we are using that information in determining if the type belongs to default module
+    // in the list, we are using this information to determine if the type belongs to default module
     if (client.getType(typeName) != null) {
       DatasetTypeMeta meta = client.getType(typeName);
       List<DatasetModuleMeta> metaList = meta.getModules();
