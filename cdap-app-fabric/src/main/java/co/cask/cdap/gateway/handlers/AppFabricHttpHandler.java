@@ -2580,7 +2580,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of flows associated with account.
+   * Returns a list of flows associated with an account.
    */
   @GET
   @Path("/flows")
@@ -2589,7 +2589,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of procedures associated with account.
+   * Returns a list of procedures associated with an account.
    */
   @GET
   @Path("/procedures")
@@ -2598,7 +2598,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of map/reduces associated with account.
+   * Returns a list of map/reduces associated with an account.
    */
   @GET
   @Path("/mapreduce")
@@ -2607,7 +2607,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of spark jobs associated with account.
+   * Returns a list of spark jobs associated with an account.
    */
   @GET
   @Path("/spark")
@@ -2616,7 +2616,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of workflows associated with account.
+   * Returns a list of Services associated with an account.
+   */
+  @GET
+  @Path("/services")
+  public void getAllServices(HttpRequest request, HttpResponder responder) {
+    programList(request, responder, ProgramType.SERVICE, null);
+  }
+
+  /**
+   * Returns a list of workflows associated with an account.
    */
   @GET
   @Path("/workflows")
@@ -2625,7 +2634,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of applications associated with account.
+   * Returns a list of applications associated with an account.
    */
   @GET
   @Path("/apps")
@@ -2816,7 +2825,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
       } else if (type == ProgramType.SPARK) {
         for (SparkSpecification sparkSpec : appSpec.getSpark().values()) {
-            result.add(makeProgramRecord(appSpec.getName(), sparkSpec, ProgramType.SPARK));
+          result.add(makeProgramRecord(appSpec.getName(), sparkSpec, ProgramType.SPARK));
+        }
+      } else if (type == ProgramType.SERVICE) {
+        for (ServiceSpecification serviceSpec : appSpec.getServices().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), serviceSpec, ProgramType.SERVICE));
         }
       } else if (type == ProgramType.WORKFLOW) {
         for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
