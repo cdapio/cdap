@@ -33,3 +33,12 @@ It has pre-installed all the software that you need to run and develop CDAP appl
 
 No password is required to enter the virtual machine; however, should you need to install or
 remove software, the admin user and password are both ``cdap``.
+
+.. include:: ../dev-env.rst  
+   :start-line: 4
+
+.. include:: ../start-stop-cdap.rst
+   :start-line: 4
+
+.. include:: ../building-apps.rst
+   :start-line: 6

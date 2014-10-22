@@ -1,5 +1,4 @@
 .. :author: Cask Data, Inc.
-   :description: placeholder
    :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _cdap-building-running:
@@ -13,30 +12,27 @@ Building and Running CDAP Applications
 In the examples, we refer to the Standalone CDAP as "CDAP", and the
 example code that is running on it as an "Application".
 
-.. _cdap-building-example:
 
 Building an Example Application
--------------------------------
++++++++++++++++++++++++++++++++
 
 From the example's project root, build an example with the
 `Apache Maven <http://maven.apache.org>`__ command::
 
 	$ mvn clean package
 
-.. _cdap-starting:
 
 Starting CDAP
-------------------------
++++++++++++++++++++++++++++++++
 
 Before running an Example Applications, check that an instance of CDAP is running and available; if not
 follow the instructions for `Starting and Stopping Standalone CDAP. <start-stop-cdap>`
 
 If you can reach the CDAP Console through a browser at `http://localhost:9999/ <http://localhost:9999/>`__, CDAP is running.
 
-.. _cdap-deploying-application:
 
 Deploying an Application
-------------------------
++++++++++++++++++++++++++++++++
 
 Once CDAP is started, you can deploy the example JAR by any of these methds:
 
@@ -48,10 +44,9 @@ Once CDAP is started, you can deploy the example JAR by any of these methds:
   - Linux: ``$./bin/app-manager.sh --action deploy``
   - Windows: ``>bin\app-manager.bat deploy``
 
-.. _cdap-start-application:
 
 Starting an Application
-------------------------
++++++++++++++++++++++++++++++++
 
 Once the application is deployed:
 
@@ -62,10 +57,10 @@ Once the application is deployed:
   - Linux: ``$./bin/app-manager.sh --action start``
   - Windows: ``>bin\app-manager.bat start``
 
-.. _cdap-stop-application:
+
 
 Stopping an Application
-------------------------
++++++++++++++++++++++++++++++++
 
 Once the application is deployed:
 

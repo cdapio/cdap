@@ -17,11 +17,22 @@ Supported Actions
 Installation
 ------------
 
-To install CDAP Stream Client, run
+To install the CDAP Stream Client, either [download a zip file]
+(http://repository.cask.co/downloads/co/cask/cdap/cdap-python-stream-client/1.0.1/cdap-python-stream-client-1.0.1.zip)
 
 ::
 
-    $ pip install cdap-stream-client
+    $ unzip cdap-python-stream-client-1.0.1.zip
+    $ cd cdap-python-stream-client-1.0.1
+    $ python setup.py install
+
+or `clone the repository <https://github.com/caskdata/cdap-ingest>`__
+
+::
+
+    $ git clone https://github.com/caskdata/cdap-ingest.git
+    $ cd cdap-ingest/cdap-stream-clients/python/
+    $ python setup.py install
 
 Usage
 -----
@@ -76,7 +87,7 @@ Create a new Stream with the *stream-id* "newStreamName":
 
 ::
 
-    stream_client.create("newStreamName")
+    stream_client.create("newStreamName");
 
 **Notes:**
 
@@ -93,7 +104,7 @@ Create a ``StreamWriter`` instance for writing events to the Stream
 
 ::
 
-    stream_writer = stream_client.create_writer("streamName")
+    stream_writer = stream_client.create_writer("streamName");
 
 Write Stream Events
 ~~~~~~~~~~~~~~~~~~~
@@ -109,7 +120,7 @@ Example:
 
 ::
 
-    stream_promise = stream_writer.write("New stream event")
+    stream_promise = stream_writer.write("New stream event");
 
 Truncate Stream
 ~~~~~~~~~~~~~~~
@@ -118,7 +129,7 @@ To delete all events that were written to the Stream *streamName*, use:
 
 ::
 
-    stream_client.truncate("streamName")
+    stream_client.truncate("streamName");
 
 Update Stream Time-to-Live (TTL)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,7 +138,7 @@ Update TTL for the Stream *streamName*:
 
 ::
 
-    stream_client.set_ttl("streamName", newTTL)
+    stream_client.set_ttl("streamName", newTTL);
 
 Get Stream Time-to-Live (TTL)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -136,7 +147,7 @@ Get the current TTL value for the Stream *streamName*:
 
 ::
 
-    ttl = stream_client.get_ttl("streamName")
+    ttl = stream_client.get_ttl("streamName");
 
 StreamPromise
 ~~~~~~~~~~~~~
@@ -160,6 +171,6 @@ Example:
         parse response
         ...
 
-    stream_promise = stream_writer.write("New stream event")
+    stream_promise = stream_writer.write("New stream event");
     stream_promise.on_response(on_ok_response, on_error_response)
 

@@ -162,6 +162,6 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 
             "0.9988696312751688"
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-stop-application>`
+Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-building-running>`
 
 .. highlight:: java

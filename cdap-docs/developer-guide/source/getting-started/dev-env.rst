@@ -1,5 +1,4 @@
 .. :author: Cask Data, Inc.
-   :description: Index document
    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
@@ -9,7 +8,7 @@ Development Environment Setup
 .. highlight:: console
 
 Creating an Application
-=======================
++++++++++++++++++++++++
 
 The best way to start developing a CDAP application is by using the Maven archetype::
 
@@ -24,12 +23,10 @@ into your preferred IDE—such as Eclipse or IntelliJ—and start developing you
 CDAP application.
 
 Using IntelliJ
-=======================
-
++++++++++++++++++++++++
 Instructions for using IntelliJ
 
 
 Using Eclipse
-=======================
-
++++++++++++++++++++++++
 Instructions for using Eclipse

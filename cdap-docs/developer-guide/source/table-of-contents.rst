@@ -11,7 +11,7 @@ Cask Data Application Platform Documentation
     Introduction </index>
     Getting Started </getting-started/index>
     Overview </overview/index>
-    CDAP Components </components/index>
+    Building Blocks </building-blocks/index>
     Examples, Guides, Tutorials <examples-guides-tutorials/index>
     Under-the-Hood <under-the-hood/index>
     API References </apis/index>

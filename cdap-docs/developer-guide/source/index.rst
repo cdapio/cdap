@@ -33,9 +33,6 @@ It includes a complete reference to CDAP programming APIs and client interfaces,
 on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoop cluster.
 
 
-Where to Go Next
-================
-
 .. |getting-started| replace:: **Getting Started:**
 .. _getting-started: getting-started/index.html
 

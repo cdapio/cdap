@@ -33,20 +33,32 @@ the custom authentication client.
 Installation
 ------------
 
-To install the CDAP Authentication Client, run
+To install CDAP Authentication Client, either `download a zip
+file: <http://repository.cask.co/downloads/co/cask/cdap/cdap-python-authentication-client/1.0.1/cdap-python-authentication-client-1.0.1.zip>`__
 
 ::
 
-    $ pip install cdap-auth-client
+    $ unzip cdap-python-authentication-client-1.0.1.zip
+    $ cd cdap-python-authentication-client-1.0.1
+    $ python setup.py install
+
+or `clone the repository: <https://github.com/caskdata/cdap-clients>`__
+
+::
+
+    $ git clone https://github.com/caskdata/cdap-clients.git
+    $ cd cdap-clients/cdap-authentication-clients/python/
+    $ python setup.py install
 
 Usage
 -----
 
-To use the Authentication Client Python API, include this import in your
-Python script:
+To use the Authentication Client Python API, include these imports in
+your Python script:
 
 ::
 
+    from cdap_auth_client import Config
     from cdap_auth_client import BasicAuthenticationClient
 
 Example
@@ -85,24 +97,23 @@ Check if authentication is enabled in the CDAP cluster
 Configure Authentication Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Set the required fields on a
-`dictionary <https://docs.python.org/2/tutorial/datastructures.html#dictionaries>`__:
+Set the required fields on a ``Config`` object:
 
 ::
 
-    properties = {
-      'security_auth_client_username': 'admin',
-      'security_auth_client_password': 'secret',
-      'security_ssl_cert_check': True
-    }
+    config = Config()
+    config.security_auth_client_username = "admin"
+    config.security_auth_client_password = "secret"
+    config.security_ssl_cert_check = True
 
 If authentication is enabled, configure the Authentication Client with
 user credentials and other properties (this method should be called only
-once for every ``AuthenticationClient`` object).
+once for every ``AuthenticationClient`` object). Configure the
+authentication client with the ``Config`` object:
 
 ::
 
-    authentication_client.configure(properties)
+    authentication_client.configure(config)
 
 **Note:**
 
@@ -127,11 +138,13 @@ Retrieve and use the access token for the user from the authentication server
 
     token = authentication_client.get_access_token()
 
-    headers = { 'Authorization': token.token_type + ' ' + token.value }
+    headers = { 'Authorization': authentication_client.get_access_token().token_type + " " + \
+                                 authentication_client.get_access_token().value }
     requests.request(method, url, headers=headers)
 
 If there is an error while fetching the access token, an ``IOError``
-will be raised.
+will be raised. The Authentication Client caches the access token until
+the token expires. It automatically re-fetches a new token upon expiry.
 
 Interactive Applications
 ------------------------
@@ -143,15 +156,15 @@ retrieved credentials.
 ::
 
     authentication_client.set_connection_info('localhost', 10000, False)
-    properties = {}
+    config = Config()
 
     if authentication_client.is_auth_enabled():
       for credential in authentication_client.get_required_credentials():
-         print('Please specify %s > ' % credential.get_description())
+         print("Please, specify "  + credential.get_description() +  "> ")
          if credential.is_secret():
             credential_value = getpass.getpass()
          else:
             credential_value = raw_input()
-         properties[credential.get_name()] = credential_value
-      authentication_client.configure(properties)
+         config.__setattr__(credential.get_name(), credential_value)
+      authentication_client.configure(config)
 

@@ -25,8 +25,12 @@ Datasets. Application virtualizations are grouped into Flows, MapReduce, Spark, 
 and Services. This section details how to work with these abstractions to build Big Data
 applications.
 
+.. image:: ../_images/architecture_diag.png
+   :width: 5in
+   :align: center
+
 For a high-level view of the concepts of the Cask Data Application Platform,
-please see :doc:`Platform Overview. </overview/index>`
+please see the platform :doc:`Overview. </overview/index>`
 
 For more information beyond this section, see the :doc:`Javadocs </apis/javadocs/index>` and
 the code in the :ref:`Examples <examples-index>` directory, both of which are on the `Cask.co

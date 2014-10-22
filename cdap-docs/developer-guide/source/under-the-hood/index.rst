@@ -11,7 +11,6 @@ Under-the-Hood of CDAP
    
     Transaction System <transaction-system>
     Data Exploration <data-exploration>
-    Stream Deep-dive <stream-deep-dive>
     Client Authentication <client-authentication>
     Best Practices <best-practices>
 
@@ -22,8 +21,6 @@ will be of interest to developers who want a deeper dive into CDAP:
   concurrency control, and its implications.
 
 - `Data Exploration: <data-exploration>`__ Exploration of CDAP Datasets using SQL.
-
-- `Stream Deep-dive: <stream-deep-dive>`__
 
 - `Client Authentication: <client-authentication>`__ Covers authenticating clients for secure CDAP installations.
 

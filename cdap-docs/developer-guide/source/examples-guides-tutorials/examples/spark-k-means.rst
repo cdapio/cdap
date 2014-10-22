@@ -155,6 +155,6 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
 
 	   "9.1,9.1,9.1"
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-stop-application>`
+Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-building-running>`
 
 .. highlight:: java

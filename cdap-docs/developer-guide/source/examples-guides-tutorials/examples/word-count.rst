@@ -131,7 +131,7 @@ Console in JSON format, for example (reformatted to fit)::
     - getStats - This returns the statistics, "total words received", "total length of words received" and so on.
     - getAssoc - For getAssoc you need to provide two words to get their association count, example: {"word1":"Hello", "word2":"CDAP"}.
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-stop-application>`
+Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-building-running>`
 
 .. highlight:: java
 

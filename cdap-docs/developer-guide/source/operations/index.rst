@@ -17,8 +17,7 @@ CDAP Operations
     Scaling Instances <scaling-instances>
     
     
-Command-Line Interface
-======================
+.. rubric:: Command-Line Interface
 
 Most of the administrative operations are also available more conveniently through the
 Command Line Interface. See this :ref:`section<cli>` for details.
