@@ -379,9 +379,7 @@ public class TestFrameworkTest extends TestBase {
   public void testAppWithDatasetVersions() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithDatasetVersion1.class);
     LOG.info("Deployed.");
-    DataSetManager<FakeDataset> dataSetManager = applicationManager.getDataSet(AppWithDatasetVersion1.DS_NAME);
     Assert.assertEquals(1, getDatasetVersion(FakeDataset.class.getName()));
-    dataSetManager.get().put(Bytes.toBytes("Test"), Bytes.toBytes("Test"));
 
     ApplicationManager applicationManager2 = deployApplication(AppWithDatasetVersion2.class);
 

@@ -28,16 +28,10 @@ import co.cask.cdap.api.dataset.module.EmbeddedDataset;
  */
 
 public class FakeDataset extends AbstractDataset {
-  private KeyValueTable uniqueCountTable;
 
   public FakeDataset(DatasetSpecification spec,
                           @EmbeddedDataset("unique") KeyValueTable uniqueCountTable) {
     super(spec.getName(), uniqueCountTable);
-    this.uniqueCountTable = uniqueCountTable;
-  }
-
-  public void put(byte[] key, byte[] value) {
-    uniqueCountTable.write(key, value);
   }
 
   @Override

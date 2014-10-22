@@ -104,14 +104,6 @@ public class DatasetTypeManager extends AbstractIdleService {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
         @Override
         public Void call(MDSDatasets datasets) throws DatasetModuleConflictException {
-          DatasetModuleMeta existing = datasets.getTypeMDS().getModule(name);
-          if (existing != null) {
-            String msg = String.format("cannot add module %s, module with the same name already exists: %s",
-                                       name, existing);
-            LOG.warn(msg);
-            throw new DatasetModuleConflictException(msg);
-          }
-
           ClassLoader cl;
           DatasetModule module;
           File unpackedLocation = Files.createTempDir();
