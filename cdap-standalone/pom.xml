@@ -281,22 +281,6 @@
                       <directory>${project.parent.basedir}/cdap-api/target/apidocs</directory>
                       <targetPath>javadocs</targetPath>
                     </resource>
-                    <!-- Copy CLI scripts -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-cli/target</directory>
-                      <targetPath>bin</targetPath>
-                      <includes>
-                        <include>cli-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
-                      <targetPath>bin</targetPath>
-                      <includes>
-                        <include>cdap-cli.sh</include>
-                        <include>cdap-cli.bat</include>
-                      </includes>
-                    </resource>
                     <!-- Copy examples. The assume the example is already built -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-examples</directory>
@@ -314,6 +298,39 @@
                         <exclude>build.gradle</exclude>
                         <exclude>**/target/original*.jar</exclude>
                       </excludes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <!-- Copy CLI scripts -->
+              <execution>
+                <id>copy-cli-scripts</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.opt.dir}</outputDirectory>
+                  <useDefaultDelimiters>false</useDefaultDelimiters>
+                  <delimiters>
+                    <delimiter>@@</delimiter>
+                  </delimiters>
+                  <resources>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-cli/target</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>cli-${project.version}.jar</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-cli/bin</directory>
+                      <targetPath>bin</targetPath>
+                      <includes>
+                        <include>cdap-cli.sh</include>
+                        <include>cdap-cli.bat</include>
+                      </includes>
+                      <filtering>true</filtering>
                     </resource>
                   </resources>
                 </configuration>
