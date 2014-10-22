@@ -44,8 +44,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.List;
 import javax.inject.Inject;
@@ -226,7 +224,7 @@ public class StreamClient {
       urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
     }
 
-    if (urlConn instanceof HttpsURLConnection && !config.getDefaultConfig().isVerifySSLCert()) {
+    if (urlConn instanceof HttpsURLConnection && !config.isVerifySSLCert()) {
       try {
         HttpRequests.disableCertCheck((HttpsURLConnection) urlConn);
       } catch (Exception e) {

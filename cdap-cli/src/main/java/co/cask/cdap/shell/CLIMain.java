@@ -17,6 +17,7 @@
 package co.cask.cdap.shell;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.shell.command.CallCommandSet;
 import co.cask.cdap.shell.command.ConnectCommand;
 import co.cask.cdap.shell.command.CreateCommandSet;
@@ -83,6 +84,7 @@ public class CLIMain {
         protected void configure() {
           bind(CLIConfig.class).toInstance(cliConfig);
           bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+          bind(CConfiguration.class).toInstance(CConfiguration.create());
         }
       }
     );

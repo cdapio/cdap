@@ -17,6 +17,7 @@
 package co.cask.cdap.shell.command;
 
 import co.cask.cdap.client.PingClient;
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -27,7 +28,6 @@ import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClie
 import co.cask.cdap.shell.AbstractCommand;
 import co.cask.cdap.shell.CLIConfig;
 import co.cask.cdap.shell.util.FilePathResolver;
-import co.cask.cdap.shell.util.SocketUtil;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.io.Files;
@@ -47,11 +47,13 @@ public class ConnectCommand extends AbstractCommand {
 
   private final CLIConfig cliConfig;
   private final FilePathResolver resolver;
+  private final CConfiguration cConf;
 
   @Inject
-  public ConnectCommand(CLIConfig cliConfig, FilePathResolver resolver) {
+  public ConnectCommand(CLIConfig cliConfig, FilePathResolver resolver, CConfiguration cConf) {
     super("connect", "<cdap-hostname>", "Connects to a CDAP instance. <credential(s)> "
       + "parameter(s) could be used if authentication is enabled in the gateway server.");
+    this.cConf = cConf;
     this.cliConfig = cliConfig;
     this.resolver = resolver;
   }
@@ -67,118 +69,143 @@ public class ConnectCommand extends AbstractCommand {
 
     URI uri = URI.create(uriString);
     String hostname = uri.getHost();
-    boolean ssl = "https".equals(uri.getScheme());
+    boolean sslEnabled = "https".equals(uri.getScheme());
     int port = uri.getPort();
 
     if (port == -1) {
-      if (ssl) {
-        port = cliConfig.getSslPort();
-      } else {
-        port = cliConfig.getPort();
-      }
+      port = sslEnabled ?
+        cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
+        cConf.getInt(Constants.Router.ROUTER_PORT);
     }
 
-    tryConnect(output, hostname, port, ssl, getAccessToken(hostname), true);
+    ConnectionInfo connectionInfo = new ConnectionInfo(hostname, port, sslEnabled);
+    tryConnect(cliConfig.getClientConfig(), connectionInfo, output, true);
   }
 
   /**
-   * Tries to read cdap-site.xml to set host and port. Otherwise, uses default values.
+   * Tries default connection specified by CConfiguration.
    */
   public void tryDefaultConnection(PrintStream output, boolean verbose) {
     CConfiguration cConf = CConfiguration.create();
-    boolean sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED, false);
-    String hostname = cConf.get(Constants.Router.ADDRESS, "localhost");
+    boolean sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
+    String hostname = cConf.get(Constants.Router.ADDRESS);
     int port = sslEnabled ?
-      cConf.getInt(Constants.Router.ROUTER_SSL_PORT, 10443) :
-      cConf.getInt(Constants.Router.ROUTER_PORT, 10000);
+      cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
+      cConf.getInt(Constants.Router.ROUTER_PORT);
+    ConnectionInfo connectionInfo = new ConnectionInfo(hostname, port, sslEnabled);
 
     try {
-      tryConnect(output, hostname, port, sslEnabled, getAccessToken(hostname), verbose);
+      tryConnect(cliConfig.getClientConfig(), connectionInfo, output, verbose);
     } catch (Exception e) {
       // NO-OP
     }
   }
 
-  private void tryConnect(PrintStream output, String hostname, int port, boolean ssl,
-                          String accessTokenString, boolean verbose) throws Exception {
-    if (!SocketUtil.isAvailable(hostname, port)) {
-      throw new IOException(String.format("Host %s on port %d could not be reached", hostname, port));
+  private void tryConnect(ClientConfig clientConfig, ConnectionInfo connectionInfo,
+                          PrintStream output, boolean verbose) throws Exception {
+
+    try {
+      AccessToken accessToken = acquireAccessToken(clientConfig, connectionInfo, output, verbose);
+      checkConnection(clientConfig, connectionInfo, accessToken);
+      cliConfig.setHostname(connectionInfo.getHostname());
+      cliConfig.setPort(connectionInfo.getPort());
+      cliConfig.setSSLEnabled(connectionInfo.isSSLEnabled());
+      cliConfig.setAccessToken(accessToken);
+
+      if (verbose) {
+        output.printf("Successfully connected CDAP instance at %s:%d\n",
+                      connectionInfo.getHostname(), connectionInfo.getPort());
+      }
+
+    } catch (IOException e) {
+      throw new IOException(String.format("Host %s on port %d could not be reached",
+                                          connectionInfo.getHostname(), connectionInfo.getPort()));
     }
 
-    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-    authenticationClient.setConnectionInfo(hostname, port, ssl);
+  }
+
+  private void checkConnection(ClientConfig baseClientConfig,
+                               ConnectionInfo connectionInfo,
+                               AccessToken accessToken) throws IOException, UnAuthorizedAccessTokenException {
+    ClientConfig clientConfig = new ClientConfig.Builder(baseClientConfig)
+      .setHostname(connectionInfo.getHostname())
+      .setPort(connectionInfo.getPort())
+      .setSSLEnabled(connectionInfo.isSSLEnabled())
+      .setAccessToken(accessToken)
+      .build();
+    PingClient pingClient = new PingClient(clientConfig);
+    pingClient.ping();
+  }
+
+  private boolean isAuthenticationEnabled(ConnectionInfo connectionInfo) throws IOException {
+    return getAuthenticationClient(connectionInfo).isAuthEnabled();
+  }
+
+  private AccessToken acquireAccessToken(ClientConfig clientConfig, ConnectionInfo connectionInfo, PrintStream output,
+                                         boolean verbose) throws IOException {
+
+    if (!isAuthenticationEnabled(connectionInfo)) {
+      return null;
+    }
+
+    AccessToken accessToken = getSavedAccessToken(connectionInfo.getHostname());
+
+    try {
+      checkConnection(clientConfig, connectionInfo, accessToken);
+      return accessToken;
+    } catch (UnAuthorizedAccessTokenException e) {
+      // access token invalid - fall through to try acquiring token manually
+    }
+
+    AuthenticationClient authenticationClient = getAuthenticationClient(connectionInfo);
+
     Properties properties = new Properties();
     properties.put(BasicAuthenticationClient.VERIFY_SSL_CERT_PROP_NAME, String.valueOf(cliConfig.isVerifySSLCert()));
 
-    if (authenticationClient.isAuthEnabled()) {
-      // try connecting using provided access token first
-      if (accessTokenString != null) {
-        cliConfig.setConnection(hostname, port, ssl);
-        cliConfig.getClientConfig().setAccessToken(new AccessToken(accessTokenString, -1L, null));
-        PingClient pingClient = new PingClient(cliConfig.getClientConfig());
-        try {
-          pingClient.ping();
-          // successfully connected using provided access token
-          return;
-        } catch (UnAuthorizedAccessTokenException e) {
-          // fall through to try connecting manually
-        }
+    // obtain new access token via manual user input
+    output.printf("Authentication is enabled in the CDAP instance: %s.\n", connectionInfo.getHostname());
+    ConsoleReader reader = new ConsoleReader();
+    for (Credential credential : authenticationClient.getRequiredCredentials()) {
+      String prompt = "Please, specify " + credential.getDescription() + "> ";
+      String credentialValue;
+      if (credential.isSecret()) {
+        credentialValue = reader.readLine(prompt, '*');
+      } else {
+        credentialValue = reader.readLine(prompt);
       }
-
-      // connect via manual user input
-      output.printf("Authentication is enabled in the CDAP instance: %s.\n", hostname);
-      ConsoleReader reader = new ConsoleReader();
-      for (Credential credential : authenticationClient.getRequiredCredentials()) {
-        String prompt = "Please, specify " + credential.getDescription() + "> ";
-        String credentialValue;
-        if (credential.isSecret()) {
-          credentialValue = reader.readLine(prompt, '*');
-        } else {
-          credentialValue = reader.readLine(prompt);
-        }
-        properties.put(credential.getName(), credentialValue);
-      }
-
-      authenticationClient.configure(properties);
-      AccessToken accessToken = authenticationClient.getAccessToken();
-      if (accessToken == null) {
-        output.printf("Invalid credentials\n");
-        return;
-      }
-
-      if (saveAccessToken(accessToken, hostname)) {
-        if (verbose) {
-          output.printf("Saved access token to %s\n", getAccessTokenFile(hostname).getAbsolutePath());
-        }
-      }
-      cliConfig.getClientConfig().setAccessToken(accessToken);
+      properties.put(credential.getName(), credentialValue);
     }
 
-    cliConfig.setConnection(hostname, port, ssl);
-    if (verbose) {
-      output.printf("Successfully connected CDAP instance at %s:%d\n", hostname, port);
+    authenticationClient.configure(properties);
+    accessToken = authenticationClient.getAccessToken();
+
+    if (accessToken != null && saveAccessToken(accessToken, connectionInfo.getHostname())) {
+      if (verbose) {
+        output.printf("Saved access token to %s\n", getAccessTokenFile(connectionInfo.getHostname()).getAbsolutePath());
+      }
     }
+
+    return accessToken;
   }
 
-  private String getAccessToken(String hostname) {
+  private AuthenticationClient getAuthenticationClient(ConnectionInfo connectionInfo) {
+    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
+    authenticationClient.setConnectionInfo(connectionInfo.getHostname(), connectionInfo.getPort(),
+                                           connectionInfo.isSSLEnabled());
+    return authenticationClient;
+  }
+
+  private AccessToken getSavedAccessToken(String hostname) {
     File file = getAccessTokenFile(hostname);
     if (file.exists() && file.canRead()) {
       try {
-        return Joiner.on("").join(Files.readLines(file, Charsets.UTF_8));
+        String tokenString = Joiner.on("").join(Files.readLines(file, Charsets.UTF_8));
+        return new AccessToken(tokenString, -1L, null);
       } catch (IOException e) {
         // Fall through
       }
     }
     return null;
-  }
-
-  private File getAccessTokenFile(String hostname) {
-    String accessTokenEnv = System.getenv(CLIConfig.ENV_ACCESSTOKEN);
-    if (accessTokenEnv != null) {
-      return resolver.resolvePathToFile(accessTokenEnv);
-    }
-
-    return resolver.resolvePathToFile("~/.cdap.accesstoken." + hostname);
   }
 
   private boolean saveAccessToken(AccessToken accessToken, String hostname) {
@@ -194,5 +221,41 @@ public class ConnectCommand extends AbstractCommand {
     }
 
     return false;
+  }
+
+  private File getAccessTokenFile(String hostname) {
+    String accessTokenEnv = System.getenv(CLIConfig.ENV_ACCESSTOKEN);
+    if (accessTokenEnv != null) {
+      return resolver.resolvePathToFile(accessTokenEnv);
+    }
+
+    return resolver.resolvePathToFile("~/.cdap.accesstoken." + hostname);
+  }
+
+  /**
+   * Connection information to a CDAP instance.
+   */
+  private static final class ConnectionInfo {
+    private final String hostname;
+    private final int port;
+    private final boolean sslEnabled;
+
+    private ConnectionInfo(String hostname, int port, boolean sslEnabled) {
+      this.hostname = hostname;
+      this.port = port;
+      this.sslEnabled = sslEnabled;
+    }
+
+    public String getHostname() {
+      return hostname;
+    }
+
+    public int getPort() {
+      return port;
+    }
+
+    public boolean isSSLEnabled() {
+      return sslEnabled;
+    }
   }
 }
