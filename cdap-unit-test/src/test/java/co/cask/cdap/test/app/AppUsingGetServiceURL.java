@@ -46,7 +46,7 @@ import javax.ws.rs.Path;
 
 /**
  * AppWithServices with a CentralService, which other programs will hit via their context's getServiceURL method.
- * This CentralService returns a constant string value {@link ANSWER}, which is checked for in the test cases.
+ * This CentralService returns a constant string value {@link #ANSWER}, which is checked for in the test cases.
  */
 public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String APP_NAME = "AppUsingGetServiceURL";
@@ -117,8 +117,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
     protected void configure() {
       setName(SERVICE_WITH_WORKER);
       addHandler(new NoOpHandler());
-      addWorker(new PingingWorker());
-      useDataset(DATASET_NAME);
+      addWorkers(new PingingWorker());
     }
     public static final class NoOpHandler extends AbstractHttpServiceHandler {
       // handles nothing.
@@ -126,6 +125,11 @@ public class AppUsingGetServiceURL extends AbstractApplication {
 
     private static final class PingingWorker extends AbstractServiceWorker {
       private static final Logger LOG = LoggerFactory.getLogger(PingingWorker.class);
+
+      @Override
+      protected void configure() {
+        useDatasets(DATASET_NAME);
+      }
 
       private void writeToDataSet(final String key, final String val) {
         getContext().execute(new TxRunnable() {

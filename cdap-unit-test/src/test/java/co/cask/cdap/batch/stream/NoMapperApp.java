@@ -18,11 +18,9 @@ package co.cask.cdap.batch.stream;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -48,19 +46,15 @@ public class NoMapperApp extends AbstractApplication {
   public static final class NoMapperMapReduce extends AbstractMapReduce {
 
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("NoMapperMapReduce")
-        .setDescription("No Mapper MapReduce Job")
-        .useOutputDataSet("results")
-        .build();
+    public void configure() {
+      useStreamInput("nomapper");
+      setOutputDataset("results");
     }
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
       job.setReducerClass(NoMapperReducer.class);
-      StreamBatchReadable.useStreamInput(context, "nomapper");
     }
   }
 

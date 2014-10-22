@@ -71,12 +71,6 @@ public final class Constants {
    * App Fabric Configuration.
    */
   public static final class AppFabric {
-    /**
-     * Default constants for common.
-     */
-
-    //TODO: THis temp
-    public static final String DEFAULT_SERVER_ADDRESS = "localhost";
 
     /**
      * App Fabric Server.
@@ -86,6 +80,18 @@ public final class Constants {
     public static final String TEMP_DIR = "app.temp.dir";
     public static final String REST_PORT = "app.rest.port";
     public static final String PROGRAM_JVM_OPTS = "app.program.jvm.opts";
+    public static final String BACKLOG_CONNECTIONS = "app.connection.backlog";
+    public static final String EXEC_THREADS = "app.exec.threads";
+    public static final String BOSS_THREADS = "app.boss.threads";
+    public static final String WORKER_THREADS = "app.worker.threads";
+
+    /**
+     * Defaults.
+     */
+    public static final int DEFAULT_BACKLOG = 20000;
+    public static final int DEFAULT_EXEC_THREADS = 20;
+    public static final int DEFAULT_BOSS_THREADS = 1;
+    public static final int DEFAULT_WORKER_THREADS = 10;
 
     /**
      * Query parameter to indicate start time.
@@ -256,45 +262,10 @@ public final class Constants {
    * Gateway Configurations.
    */
   public static final class Gateway {
-    public static final String ADDRESS = "gateway.bind.address";
-    public static final String PORT = "gateway.bind.port";
-    public static final String BACKLOG_CONNECTIONS = "gateway.connection.backlog";
-    public static final String EXEC_THREADS = "gateway.exec.threads";
-    public static final String BOSS_THREADS = "gateway.boss.threads";
-    public static final String WORKER_THREADS = "gateway.worker.threads";
-    public static final String CONFIG_AUTHENTICATION_REQUIRED = "gateway.authenticate";
-    public static final String CLUSTER_NAME = "gateway.cluster.name";
-    public static final String NUM_CORES = "gateway.num.cores";
-    public static final String NUM_INSTANCES = "gateway.num.instances";
-    public static final String MEMORY_MB = "gateway.memory.mb";
-    public static final String STREAM_FLUME_THREADS = "stream.flume.threads";
-    public static final String STREAM_FLUME_PORT = "stream.flume.port";
-    /**
-     * Defaults.
-     */
-    public static final int DEFAULT_PORT = 10000;
-    public static final int DEFAULT_BACKLOG = 20000;
-    public static final int DEFAULT_EXEC_THREADS = 20;
-    public static final int DEFAULT_BOSS_THREADS = 1;
-    public static final int DEFAULT_WORKER_THREADS = 10;
-    public static final boolean CONFIG_AUTHENTICATION_REQUIRED_DEFAULT = false;
-    public static final String CLUSTER_NAME_DEFAULT = "localhost";
-    public static final int DEFAULT_NUM_CORES = 2;
-    public static final int DEFAULT_NUM_INSTANCES = 1;
-    public static final int DEFAULT_MEMORY_MB = 2048;
-    public static final int DEFAULT_STREAM_FLUME_THREADS = 10;
-    public static final int DEFAULT_STREAM_FLUME_PORT = 10004;
-
-
-    /**
-     * Others.
-     */
     public static final String GATEWAY_VERSION = "/v2";
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
-    public static final String HEADER_DESTINATION_STREAM = "X-Destination";
     public static final String API_KEY = "X-ApiKey";
-    public static final String CFG_PASSPORT_SERVER_URI = "passport.server.uri";
   }
 
   /**
@@ -505,6 +476,8 @@ public final class Constants {
     public static final String HCONF_KEY = "explore.hconfiguration";
     public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
     public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
+
+    public static final String START_ON_DEMAND = "explore.start.on.demand";
 
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_STORAGE_HANDLER_CLASS = "co.cask.cdap.hive.datasets.DatasetStorageHandler";

@@ -18,7 +18,6 @@ package co.cask.cdap.gateway;
 
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.collector.NettyFlumeCollectorTest;
 import co.cask.cdap.gateway.handlers.PingHandlerTest;
 import co.cask.cdap.gateway.handlers.ProcedureHandlerTest;
 import co.cask.cdap.gateway.handlers.RuntimeArgumentTest;
@@ -63,7 +62,6 @@ import javax.annotation.Nullable;
 @Suite.SuiteClasses(value = {
   PingHandlerTest.class,
   ProcedureHandlerTest.class,
-  NettyFlumeCollectorTest.class,
   MetricsReporterHookTest.class,
   StreamHandlerTest.class,
   RuntimeArgumentTest.class

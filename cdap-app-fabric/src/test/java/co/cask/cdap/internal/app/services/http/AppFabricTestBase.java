@@ -101,8 +101,6 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
 
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    conf.setBoolean(Constants.Gateway.CONFIG_AUTHENTICATION_REQUIRED, false);
-    conf.set(Constants.Gateway.CLUSTER_NAME, CLUSTER);
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
     txManager = injector.getInstance(TransactionManager.class);

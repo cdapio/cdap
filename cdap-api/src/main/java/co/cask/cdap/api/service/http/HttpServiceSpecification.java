@@ -19,9 +19,16 @@ package co.cask.cdap.api.service.http;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 
+import java.util.Set;
+
 /**
- * The specification for {@link HttpServiceHandler}. The runtime arguments for the
- * HttpServiceHandler should be defined using this class.
+ * The specification for {@link HttpServiceHandler}.
  */
 public interface HttpServiceSpecification extends PropertyProvider, ProgramSpecification {
+
+  /**
+   * @return An immutable set of {@link co.cask.cdap.api.dataset.Dataset Datasets} name that
+   *         used by the {@link HttpServiceHandler}.
+   */
+  Set<String> getDatasets();
 }

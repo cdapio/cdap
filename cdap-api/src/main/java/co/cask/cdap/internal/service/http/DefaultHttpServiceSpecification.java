@@ -18,8 +18,10 @@ package co.cask.cdap.internal.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A simple implementation of {@link HttpServiceSpecification}.
@@ -29,32 +31,19 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   private final String name;
   private final String description;
   private final Map<String, String> properties;
+  private final Set<String> datasets;
 
   /**
-   * Instantiate this class with the following parameters.
-   *
-   * @param className
-   * @param name
-   * @param description
-   * @param properties
+   * Instantiate this class
    */
   public DefaultHttpServiceSpecification(String className, String name,
-                                         String description, Map<String, String> properties) {
+                                         String description, Map<String, String> properties,
+                                         Set<String> datasets) {
     this.className = className;
     this.name = name;
     this.description = description;
     this.properties = ImmutableMap.copyOf(properties);
-  }
-
-  /**
-   * Instantiate this class with the following parammeters.
-   *
-   * @param name
-   * @param description
-   * @param properties
-   */
-  public DefaultHttpServiceSpecification(String name, String description, Map<String, String> properties) {
-    this(null, name, description, properties);
+    this.datasets = ImmutableSet.copyOf(datasets);
   }
 
   /**
@@ -96,5 +85,10 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
   @Override
   public String getProperty(String key) {
     return properties.get(key);
+  }
+
+  @Override
+  public Set<String> getDatasets() {
+    return datasets;
   }
 }

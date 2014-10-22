@@ -16,13 +16,16 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.app.FakeApp;
+import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.proto.ColumnDesc;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.XSlowTests;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,34 +39,58 @@ import java.util.List;
 @Category(XSlowTests.class)
 public class QueryClientTestRun extends ClientTestBase {
 
+  private static final Gson GSON = new Gson();
+
   private ApplicationClient appClient;
   private QueryClient queryClient;
+  private ProgramClient programClient;
+  private StreamClient streamClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
     appClient = new ApplicationClient(clientConfig);
     queryClient = new QueryClient(clientConfig);
+    programClient = new ProgramClient(clientConfig);
+    streamClient = new StreamClient(clientConfig);
   }
 
   @Test
   public void testAll() throws Exception {
     appClient.deploy(createAppJarFile(FakeApp.class));
+    programClient.start(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
+    streamClient.sendEvent(FakeApp.STREAM_NAME, "bob:123");
+    streamClient.sendEvent(FakeApp.STREAM_NAME, "joe:321");
+
+    Thread.sleep(3000);
 
     QueryHandle queryHandle = queryClient.execute("select * from cdap_user_" + FakeApp.DS_NAME);
-    QueryStatus status = new QueryStatus(null, false);
+    QueryStatus status;
 
-    while (QueryStatus.OpStatus.RUNNING == status.getStatus() ||
-      QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
-      QueryStatus.OpStatus.PENDING == status.getStatus()) {
-
-      Thread.sleep(1000);
+    while (true) {
       status = queryClient.getStatus(queryHandle);
+      if (status.getStatus().isDone()) {
+        break;
+      }
+      Thread.sleep(1000);
     }
 
-    Assert.assertFalse(status.hasResults());
+    Assert.assertNotNull(status);
+    Assert.assertTrue(status.hasResults());
     Assert.assertNotNull(queryClient.getSchema(queryHandle));
-    Assert.assertNotNull(queryClient.getResults(queryHandle, 20));
+    List<QueryResult> results = queryClient.getResults(queryHandle, 20);
+    Assert.assertNotNull(results);
+    Assert.assertEquals(2, results.size());
+    Assert.assertEquals("bob", Bytes.toString(GSON.fromJson(
+      results.get(0).getColumns().get(0).toString(), byte[].class)));
+    Assert.assertEquals("123", Bytes.toString(GSON.fromJson(
+      results.get(0).getColumns().get(1).toString(), byte[].class)));
+    Assert.assertEquals("joe", Bytes.toString(GSON.fromJson(
+      results.get(1).getColumns().get(0).toString(), byte[].class)));
+    Assert.assertEquals("321", Bytes.toString(GSON.fromJson(
+      results.get(1).getColumns().get(1).toString(), byte[].class)));
+
     queryClient.delete(queryHandle);
   }
 }

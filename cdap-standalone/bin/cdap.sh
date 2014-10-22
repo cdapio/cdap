@@ -268,7 +268,7 @@ start() {
     echo $! > $pid
 
     check_for_updates
-    echo -n "Starting CDAP ..."
+    echo -n "Starting Standalone CDAP ..."
 
     background_process=$!
     while kill -0 $background_process >/dev/null 2>/dev/null ; do
@@ -306,7 +306,7 @@ start() {
 }
 
 stop() {
-    echo -n "Stopping CDAP ..."
+    echo -n "Stopping Standalone CDAP ..."
     if [ -f $pid ]; then
       pidToKill=`cat $pid`
       # kill -0 == see if the PID exists
@@ -323,7 +323,7 @@ stop() {
       fi
       rm -f $pid
       echo ""
-      echo "CDAP stopped successfully"
+      echo "Standalone CDAP stopped successfully."
     fi
     echo
 }

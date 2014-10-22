@@ -21,10 +21,8 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import org.apache.twill.api.AbstractTwillRunnable;
-import org.apache.twill.api.TwillApplication;
-import org.apache.twill.api.TwillSpecification;
 
 import java.io.IOException;
 
@@ -40,7 +38,7 @@ public class AppWithServices extends AbstractApplication {
     setName("AppWithServices");
     setDescription("Application with Services");
     addProcedure(new NoOpProcedure());
-    addService("NoOpService", new NoOpService());
+    addService(new BasicService("NoOpService", new NoOpService()));
   }
 
   public static final class NoOpService extends AbstractHttpServiceHandler {

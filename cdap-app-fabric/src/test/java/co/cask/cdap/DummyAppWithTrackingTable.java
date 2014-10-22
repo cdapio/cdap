@@ -120,14 +120,12 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
     private TrackingTable table;
 
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-                                   .setName("dummy-batch")
-                                   .setDescription("batch job that copies from foo to bar")
-                                   .useDataSet("foo")
-                                   .useInputDataSet("foo")
-                                   .useOutputDataSet("bar")
-                                   .build();
+    public void configure() {
+      setName("dummy-batch");
+      setDescription("batch job that copies from foo to bar");
+      useDatasets("foo");
+      setInputDataset("foo");
+      setOutputDataset("bar");
     }
 
     @Override

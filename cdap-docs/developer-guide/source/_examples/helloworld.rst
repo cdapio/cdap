@@ -104,7 +104,7 @@ In the Application's detail page, under Process, click on WhoFlow. This takes yo
 Now click on the "who" stream on the left side of the flow visualization, which brings up a pop-up window.
 Enter a name and click the Inject button. After you close the pop-up window, you will see that the counters
 for both the stream and the "saver" flowlet increase to 1. You can repeat this step to enter more names, but
-remember that only the last name ist stored in the key-value table.
+remember that only the last name is stored in the key-value table.
 
 Using the Procedure
 ###################

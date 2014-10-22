@@ -226,6 +226,14 @@ To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
 
   #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
 
+- Set the ``router.server.address`` property in ``conf/cdap-site.xml`` to the hostname of the CDAP Router.
+  The CDAP Console uses this property to connect to the Router::
+
+      <property>
+        <name>router.server.address</name>
+        <value>{router-host-name}</value>
+      </property>
+
 - To use the ad-hoc querying capabilities of CDAP, enable the CDAP Explore Service in
   ``conf/cdap-site.xml`` (by default, it is disabled)::
 
@@ -420,8 +428,8 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
 #. Open a web browser to the CDAP Console.
    It is located on port ``9999`` of the box where you installed CDAP.
 #. On the Console, click the button *Load an App*.
-#. Find the pre-built ``WordCount-2.5.0.jar`` using the dialog box to navigate to
-   ``CDAP_HOME/examples/WordCount/target/``
+#. Find the pre-built ``WordCount-2.5.1.jar`` using the dialog box to navigate to
+   ``CDAP_HOME/examples/WordCount/target/``. 
 #. Once the application is deployed, instructions on running the example can be found at the
    :ref:`WordCount example<word-count>`.
 #. You should be able to start the application, inject sentences,
@@ -1892,9 +1900,18 @@ see the :ref:`security` section.
    * - ``app.bind.port``
      - ``45000``
      - App-Fabric server port
+   * - ``app.boss.threads``
+     - ``1``
+     - Number of Netty server boss threads
    * - ``app.command.port``
      - ``45010``
      - App-Fabric command port
+   * - ``app.connection.backlog``
+     - ``20000``
+     - Maximum connection backlog of AppFabricServer
+   * - ``app.exec.threads``
+     - ``20``
+     - Number of Netty server executor threads
    * - ``app.output.dir``
      - ``/programs``
      - Directory where all archives are stored
@@ -1904,6 +1921,9 @@ see the :ref:`security` section.
    * - ``app.temp.dir``
      - ``/tmp``
      - Temp directory
+   * - ``app.worker.threads``
+     - ``10``
+     - Number of Netty server worker threads
    * - ``dashboard.bind.port``
      - ``9999``
      - CDAP Console bind port
@@ -1983,42 +2003,6 @@ see the :ref:`security` section.
    * - ``explore.inactive.operation.timeout.secs``
      - ``3600``
      - Timeout value in seconds for a SQL operation which has no more results to be fetched
-   * - ``gateway.boss.threads``
-     - ``1``
-     - Number of Netty server boss threads
-   * - ``gateway.connection.backlog``
-     - ``20000``
-     - Maximum connection backlog of Gateway
-   * - ``gateway.exec.threads``
-     - ``20``
-     - Number of Netty server executor threads
-   * - ``gateway.max.cached.events.per.stream.num``
-     - ``5000``
-     - Maximum number of a single stream's events cached before flushing
-   * - ``gateway.max.cached.stream.events.bytes``
-     - ``52428800``
-     - Maximum size (in bytes) of stream events cached before flushing
-   * - ``gateway.max.cached.stream.events.num``
-     - ``10000``
-     - Maximum number of stream events cached before flushing
-   * - ``gateway.memory.mb``
-     - ``2048``
-     - Memory in MB for Gateway process in YARN
-   * - ``gateway.num.cores``
-     - ``2``
-     - Cores requested per Gateway container in YARN
-   * - ``gateway.num.instances``
-     - ``1``
-     - Number of Gateway instances in YARN
-   * - ``gateway.stream.callback.exec.num.threads``
-     - ``5``
-     - Number of threads in stream events callback executor
-   * - ``gateway.stream.events.flush.interval.ms``
-     - ``150``
-     - Interval at which cached stream events get flushed
-   * - ``gateway.worker.threads``
-     - ``10``
-     - Number of Netty server worker threads
    * - ``hdfs.lib.dir``
      - ``${hdfs.namespace}/lib``
      - Common directory in HDFS for JAR files for coprocessors
@@ -2205,12 +2189,6 @@ see the :ref:`security` section.
    * - ``ssl.enabled``
      - ``false``
      - True to enable SSL
-   * - ``stream.flume.port``
-     - ``10004``
-     -
-   * - ``stream.flume.threads``
-     - ``20``
-     -
    * - ``thrift.max.read.buffer``
      - ``16777216``
      - Maximum read buffer size in bytes used by the Thrift server [`Note 2`_]

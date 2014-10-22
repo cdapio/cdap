@@ -16,26 +16,38 @@
 
 package co.cask.cdap.internal.service;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.ServiceSpecification;
-import org.apache.twill.api.EventHandlerSpecification;
-import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.api.TwillSpecification;
+import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import com.google.common.collect.ImmutableMap;
 
-import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * This class defines a specification for a {@link ServiceSpecification}.
  */
 public class DefaultServiceSpecification implements ServiceSpecification {
 
-  private final TwillSpecification specification;
   private final String className;
+  private final String name;
+  private final String description;
+  private final Map<String, HttpServiceSpecification> handlers;
+  private final Map<String, ServiceWorkerSpecification> workers;
+  private final Resources resources;
+  private final int instances;
 
-  public DefaultServiceSpecification(String className, TwillSpecification specification) {
-    this.specification = specification;
+  public DefaultServiceSpecification(String className, String name, String description,
+                                     Map<String, HttpServiceSpecification> handlers,
+                                     Map<String, ServiceWorkerSpecification> workers,
+                                     Resources resources, int instances) {
     this.className = className;
+    this.name = name;
+    this.description = description;
+    this.handlers = ImmutableMap.copyOf(handlers);
+    this.workers = ImmutableMap.copyOf(workers);
+    this.resources = resources;
+    this.instances = instances;
   }
 
   @Override
@@ -45,32 +57,31 @@ public class DefaultServiceSpecification implements ServiceSpecification {
 
   @Override
   public String getName() {
-    return specification.getName();
-  }
-
-  @Override
-  public Map<String, RuntimeSpecification> getRunnables() {
-    return specification.getRunnables();
-  }
-
-  @Override
-  public List<Order> getOrders() {
-    return specification.getOrders();
-  }
-
-  @Override
-  public List<PlacementPolicy> getPlacementPolicies() {
-    return specification.getPlacementPolicies();
-  }
-
-  @Nullable
-  @Override
-  public EventHandlerSpecification getEventHandler() {
-    return specification.getEventHandler();
+    return name;
   }
 
   @Override
   public String getDescription() {
-    return "";
+    return description;
+  }
+
+  @Override
+  public Map<String, HttpServiceSpecification> getHandlers() {
+    return handlers;
+  }
+
+  @Override
+  public Map<String, ServiceWorkerSpecification> getWorkers() {
+    return workers;
+  }
+
+  @Override
+  public Resources getResources() {
+    return resources;
+  }
+
+  @Override
+  public int getInstances() {
+    return instances;
   }
 }

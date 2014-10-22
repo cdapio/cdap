@@ -106,9 +106,8 @@ define(['../../helpers/chart-helper'], function (chartHelper) {
                       children.push({id: this.id, text: this.text });
                   }
                 });
-                this.children = children;
                 if (children.length) {
-                  data.push(this);
+                  data.push({text: this.text, children: children});
                 }
               });
               query.callback({results: data});

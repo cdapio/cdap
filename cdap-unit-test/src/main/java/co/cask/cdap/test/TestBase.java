@@ -162,7 +162,7 @@ public class TestBase {
         Application app = (Application) appInstance;
         DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
         app.configure(configurer, new ApplicationContext());
-        appSpec = configurer.createApplicationSpec();
+        appSpec = configurer.createSpecification();
       } else {
         throw new IllegalArgumentException("Application class does not represent application: "
                                              + applicationClz.getName());
@@ -198,6 +198,7 @@ public class TestBase {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
     cConf.set(Constants.Explore.LOCAL_DATA_DIR,
               tmpFolder.newFolder("hive").getAbsolutePath());
 
@@ -395,8 +396,6 @@ public class TestBase {
    * @param datasetInstanceName instance name
    * @param props properties
    * @param <T> type of the dataset admin
-   * @return
-   * @throws Exception
    */
   @Beta
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
@@ -412,8 +411,6 @@ public class TestBase {
    * @param datasetTypeName dataset type name
    * @param datasetInstanceName instance name
    * @param <T> type of the dataset admin
-   * @return
-   * @throws Exception
    */
   @Beta
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,

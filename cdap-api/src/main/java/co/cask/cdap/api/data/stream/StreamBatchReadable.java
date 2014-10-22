@@ -58,6 +58,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
   private static final String END_TIME_KEY = "end";
   private static final String DECODER_KEY = "decoder";
 
+  private final URI uri;
   private final String streamName;
   private final long startTime;
   private final long endTime;
@@ -88,9 +89,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
    */
   public static void useStreamInput(MapReduceContext context, String streamName, long startTime, long endTime) {
-    URI uri = createStreamURI(streamName, ImmutableMap.<String, Object>of(START_TIME_KEY, startTime,
-                                                                          END_TIME_KEY, endTime));
-    context.setInput(uri.toString(), null);
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime).toURI().toString(), null);
   }
 
   /**
@@ -105,10 +104,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public static void useStreamInput(MapReduceContext context, String streamName,
                                     long startTime, long endTime, Class<? extends StreamEventDecoder> decoderType) {
-    URI uri = createStreamURI(streamName, ImmutableMap.<String, Object>of(START_TIME_KEY, startTime,
-                                                                          END_TIME_KEY, endTime,
-                                                                          DECODER_KEY, decoderType.getName()));
-    context.setInput(uri.toString(), null);
+    context.setInput(new StreamBatchReadable(streamName, startTime, endTime, decoderType).toURI().toString(), null);
   }
 
   /**
@@ -148,6 +144,7 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    */
   public StreamBatchReadable(URI uri) {
     Preconditions.checkArgument("stream".equals(uri.getScheme()));
+    this.uri = uri;
     streamName = uri.getAuthority();
 
     String query = uri.getQuery();
@@ -181,24 +178,58 @@ public class StreamBatchReadable implements BatchReadable<Long, String> {
    * @param endTime End timestamp in milliseconds.
    */
   public StreamBatchReadable(String streamName, long startTime, long endTime) {
-    this(URI.create(String.format("stream://%s?%s=%d&%s=%d",
-                                  streamName, START_TIME_KEY, startTime, END_TIME_KEY, endTime)));
+    this(createStreamURI(streamName, ImmutableMap.<String, Object>of(START_TIME_KEY, startTime,
+                                                                     END_TIME_KEY, endTime)));
   }
 
+  /**
+   * Constructs an instance with the given properties.
+   *
+   * @param streamName Name of the stream
+   * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
+   * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
+   * @param decoderType The {@link StreamEventDecoder} class for decoding {@link StreamEvent}
+   */
+  public StreamBatchReadable(String streamName, long startTime,
+                             long endTime, Class<? extends StreamEventDecoder> decoderType) {
+    this(createStreamURI(streamName, ImmutableMap.<String, Object>of(START_TIME_KEY, startTime,
+                                                                     END_TIME_KEY, endTime,
+                                                                     DECODER_KEY, decoderType.getName())));
+  }
+
+  /**
+   * Returns the stream name.
+   */
   public String getStreamName() {
     return streamName;
   }
 
+  /**
+   * Returns the start time.
+   */
   public long getStartTime() {
     return startTime;
   }
 
+  /**
+   * Returns the end time.
+   */
   public long getEndTime() {
     return endTime;
   }
 
+  /**
+   * Returns the class name of the decoder.
+   */
   public String getDecoderType() {
     return decoderType;
+  }
+
+  /**
+   * Returns an {@link URI} that represents this {@link StreamBatchReadable}.
+   */
+  public URI toURI() {
+    return uri;
   }
 
   @Override

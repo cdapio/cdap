@@ -40,7 +40,6 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
@@ -56,7 +55,6 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
-import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -282,11 +280,9 @@ public class DefaultStoreTest {
     }
 
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName(name)
-        .setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here for testing MDS")
-        .build();
+    public void configure() {
+      setName(name);
+      setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here for testing MDS");
     }
   }
 
@@ -341,31 +337,31 @@ public class DefaultStoreTest {
   }
 
   @Test
-  public void testServiceRunnableInstances() throws Exception {
+  public void testServiceInstances() throws Exception {
     AppFabricTestHelper.deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
     app.configure(appConfigurer, new ApplicationContext());
 
-    ApplicationSpecification appSpec = appConfigurer.createApplicationSpec();
+    ApplicationSpecification appSpec = appConfigurer.createSpecification();
     Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), appSpec.getName());
     store.addApplication(appId, appSpec, new LocalLocationFactory().create("/appwithservices"));
 
+    // Test setting of service instances
     Id.Program programId = Id.Program.from(appId, "NoOpService");
-    int count = store.getServiceRunnableInstances(programId, "NoOpService");
+    int count = store.getServiceInstances(programId);
     Assert.assertEquals(1, count);
 
-    store.setServiceRunnableInstances(programId, "NoOpService", 10);
-    count = store.getServiceRunnableInstances(programId, "NoOpService");
+    store.setServiceInstances(programId, 10);
+    count = store.getServiceInstances(programId);
     Assert.assertEquals(10, count);
 
     ApplicationSpecification newSpec = store.getApplication(appId);
     Map<String, ServiceSpecification> services = newSpec.getServices();
     Assert.assertEquals(1, services.size());
 
-    Map<String, RuntimeSpecification> runtimeSpecs = services.get("NoOpService").getRunnables();
-    Assert.assertEquals(1, runtimeSpecs.size());
-    Assert.assertEquals(10, runtimeSpecs.get("NoOpService").getResourceSpecification().getInstances());
+    ServiceSpecification serviceSpec = services.get("NoOpService");
+    Assert.assertEquals(10, serviceSpec.getInstances());
   }
 
   @Test

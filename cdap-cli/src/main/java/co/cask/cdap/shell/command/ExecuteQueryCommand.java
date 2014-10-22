@@ -26,9 +26,11 @@ import co.cask.cdap.shell.ElementType;
 import co.cask.cdap.shell.util.AsciiTable;
 import co.cask.cdap.shell.util.RowMaker;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -36,6 +38,7 @@ import java.util.List;
  */
 public class ExecuteQueryCommand extends AbstractCommand {
 
+  private static final long TIMEOUT_MS = 30000;
   private final QueryClient queryClient;
 
   @Inject
@@ -50,19 +53,19 @@ public class ExecuteQueryCommand extends AbstractCommand {
 
     String query = Joiner.on(" ").join(args);
     QueryHandle queryHandle = queryClient.execute(query);
-    QueryStatus status = new QueryStatus(null, false);
+    QueryStatus status = null;
 
     long startTime = System.currentTimeMillis();
-    while (QueryStatus.OpStatus.RUNNING == status.getStatus() ||
-      QueryStatus.OpStatus.INITIALIZED == status.getStatus() ||
-      QueryStatus.OpStatus.PENDING == status.getStatus()) {
-
-      Thread.sleep(1000);
+    while (System.currentTimeMillis() - startTime < TIMEOUT_MS) {
       status = queryClient.getStatus(queryHandle);
+      if (status.getStatus().isDone()) {
+        break;
+      }
+      Thread.sleep(1000);
     }
 
-    if (status.hasResults()) {
-      List<ColumnDesc> schema = queryClient.getSchema(queryHandle);
+    if (status != null && status.hasResults()) {
+      final List<ColumnDesc> schema = queryClient.getSchema(queryHandle);
       String[] header = new String[schema.size()];
       for (int i = 0; i < header.length; i++) {
         ColumnDesc column = schema.get(i);
@@ -75,7 +78,7 @@ public class ExecuteQueryCommand extends AbstractCommand {
       new AsciiTable<QueryResult>(header, results, new RowMaker<QueryResult>() {
         @Override
         public Object[] makeRow(QueryResult object) {
-          return object.getColumns().toArray(new Object[object.getColumns().size()]);
+          return convertRow(object.getColumns(), schema);
         }
       }).print(output);
 
@@ -84,5 +87,26 @@ public class ExecuteQueryCommand extends AbstractCommand {
       output.println("Couldn't obtain results after " + (System.currentTimeMillis() - startTime) + "ms. " +
                        "Try querying manually with handle " + queryHandle.getHandle());
     }
+  }
+
+  private Object[] convertRow(List<Object> row, List<ColumnDesc> schema) {
+    Preconditions.checkArgument(row.size() == schema.size(), "Row and schema length differ");
+
+    Object[] result = new Object[row.size()];
+    Iterator<Object> rowIterator = row.iterator();
+    Iterator<ColumnDesc> schemaIterator = schema.iterator();
+    int index = 0;
+    while (rowIterator.hasNext() && schemaIterator.hasNext()) {
+      Object columnValue = rowIterator.next();
+      ColumnDesc schemaColumn = schemaIterator.next();
+      if (columnValue != null && columnValue instanceof Double
+        && schemaColumn.getType() != null && schemaColumn.getType().endsWith("INT")) {
+        columnValue = ((Double) columnValue).longValue();
+      }
+      result[index] = columnValue;
+      index++;
+    }
+
+    return result;
   }
 }
