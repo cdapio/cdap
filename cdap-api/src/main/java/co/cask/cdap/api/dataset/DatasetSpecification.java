@@ -61,7 +61,8 @@ public final class DatasetSpecification {
   }
 
   public static DatasetSpecification changeName(DatasetSpecification spec, String newName) {
-    return new DatasetSpecification(newName, spec.type, spec.properties, spec.datasetSpecs);
+    return new DatasetSpecification(newName, spec.type,
+                                    spec.properties, spec.datasetSpecs);
   }
 
   /**
