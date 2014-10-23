@@ -49,6 +49,7 @@ import jline.console.completer.Completer;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import javax.net.ssl.SSLHandshakeException;
 
@@ -65,10 +66,10 @@ public class CLIMain {
   public CLIMain(final CLIConfig cliConfig) throws URISyntaxException, IOException {
     this.reader = new ConsoleReader();
     this.cliConfig = cliConfig;
-    this.cliConfig.addHostnameChangeListener(new CLIConfig.HostnameChangeListener() {
+    this.cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
-      public void onHostnameChanged(String newHostname) {
-        reader.setPrompt("cdap (" + cliConfig.getURI() + ")> ");
+      public void onConnectionChanged(URI newURI) {
+        reader.setPrompt("cdap (" + newURI + ")> ");
       }
     });
     this.helpCommand = new HelpCommand(new Supplier<CommandSet>() {

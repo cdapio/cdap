@@ -42,7 +42,7 @@ public class CLIConfig {
   private final ClientConfig clientConfig;
   private final String version;
 
-  private List<HostnameChangeListener> hostnameChangeListeners;
+  private List<ConnectionChangeListener> connectionChangeListeners;
 
   /**
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
@@ -53,7 +53,7 @@ public class CLIConfig {
       .setVerifySSLCert(Boolean.valueOf(System.getProperty(PROP_VERIFY_SSL_CERT, "true")))
       .build();
     this.version = tryGetVersion();
-    this.hostnameChangeListeners = Lists.newArrayList();
+    this.connectionChangeListeners = Lists.newArrayList();
   }
 
   private String tryGetVersion() {
@@ -92,31 +92,37 @@ public class CLIConfig {
 
   public void setHostname(String hostname) {
     clientConfig.setHostname(hostname);
-    for (HostnameChangeListener listener : hostnameChangeListeners) {
-      listener.onHostnameChanged(hostname);
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig.getBaseURI());
     }
   }
 
   public void setPort(int port) {
     clientConfig.setPort(port);
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig.getBaseURI());
+    }
   }
 
   public void setSSLEnabled(boolean sslEnabled) {
     clientConfig.setSSLEnabled(sslEnabled);
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig.getBaseURI());
+    }
   }
 
   public void setAccessToken(AccessToken accessToken) {
     clientConfig.setAccessToken(accessToken);
   }
 
-  public void addHostnameChangeListener(HostnameChangeListener listener) {
-    this.hostnameChangeListeners.add(listener);
+  public void addHostnameChangeListener(ConnectionChangeListener listener) {
+    this.connectionChangeListeners.add(listener);
   }
 
   /**
    * Listener for hostname changes.
    */
-  public interface HostnameChangeListener {
-    void onHostnameChanged(String newHostname);
+  public interface ConnectionChangeListener {
+    void onConnectionChanged(URI newURI);
   }
 }

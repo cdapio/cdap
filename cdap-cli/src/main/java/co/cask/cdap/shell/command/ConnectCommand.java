@@ -39,6 +39,7 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.util.Properties;
 import javax.inject.Inject;
+import javax.net.ssl.SSLHandshakeException;
 
 /**
  * Connects to a CDAP instance.
@@ -116,7 +117,9 @@ public class ConnectCommand extends AbstractCommand {
         output.printf("Successfully connected CDAP instance at %s:%d\n",
                       connectionInfo.getHostname(), connectionInfo.getPort());
       }
-
+    } catch (SSLHandshakeException e) {
+      // forward exception caused by invalid SSL certificates
+      throw e;
     } catch (IOException e) {
       throw new IOException(String.format("Host %s on port %d could not be reached: %s",
                                           connectionInfo.getHostname(), connectionInfo.getPort(),
