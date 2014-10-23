@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.transaction;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.tephra.ChangeId;
 import co.cask.tephra.TransactionManager;
@@ -704,7 +705,7 @@ public class TransactionManagerDebuggerMain {
     // create a config and load the gateway properties
     CConfiguration cConf = CConfiguration.create();
     Configuration hConf = new Configuration();
-    cConf.copyTxProperties(hConf);
+    CConfigurationUtil.copyTxProperties(cConf, hConf);
 
     TransactionManagerDebuggerMain instance = new TransactionManagerDebuggerMain(hConf);
     boolean success = instance.execute(args);
