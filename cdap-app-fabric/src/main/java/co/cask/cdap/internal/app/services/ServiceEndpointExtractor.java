@@ -53,7 +53,7 @@ public final class ServiceEndpointExtractor extends MethodVisitor {
     Path classPathAnnotation = instance.getClass().getAnnotation(Path.class);
     Path methodPathAnnotation = method.getAnnotation(Path.class);
 
-    if (methodPathAnnotation == null) {
+    if (methodPathAnnotation == null && classPathAnnotation == null) {
       return;
     }
 
@@ -73,13 +73,13 @@ public final class ServiceEndpointExtractor extends MethodVisitor {
     for (Class<? extends Annotation> methodTypeClz : methodAnnotations) {
       String methodType  = methodTypeClz.getAnnotation(HttpMethod.class).value();
       String endpoint = "/";
-      if (classPathAnnotation != null) {
-        endpoint += String.format("%s/%s", classPathAnnotation.value(), methodPathAnnotation.value());
-      } else {
-        endpoint += methodPathAnnotation.value();
-      }
-      // Replace consecutive instances of / with a single instance.
-      endpoint = endpoint.replaceAll("/+", "/");
+
+      String methodPath = methodPathAnnotation != null? methodPathAnnotation.value() : "";
+      String classPath = classPathAnnotation != null? classPathAnnotation.value() : "";
+      endpoint += String.format("%s/%s", classPath, methodPath);
+
+      // Replace consecutive instances of / with a single instance, and remove trailing instances of /.
+      endpoint = endpoint.replaceAll("/+", "/").replaceAll("\\/+\\z", "");
       endpoints.add(new ExposedServiceEndpoint(methodType, endpoint));
     }
   }

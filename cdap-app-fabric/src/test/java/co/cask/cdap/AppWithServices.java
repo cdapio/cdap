@@ -30,7 +30,6 @@ import java.io.IOException;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
 /**
  * Test Application with services for the new application API.
@@ -56,13 +55,19 @@ public class AppWithServices extends AbstractApplication {
     }
   }
 
-  @Path("/v1")
+  @Path("/multi")
   public static final class MultiPingHandler extends AbstractHttpServiceHandler {
 
-    @Path("/ping")
+    // No method level path, multiple request types.
     @POST
     @GET
-    public void handler(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("id") String id) {
+    public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
+    }
+
+    @GET
+    @Path("/ping")
+    public void pingHandler(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.sendStatus(200);
     }
   }

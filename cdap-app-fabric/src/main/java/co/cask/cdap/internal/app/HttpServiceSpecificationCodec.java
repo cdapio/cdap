@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -43,10 +44,17 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     String description = jsonObj.get("description").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
-    List<ExposedServiceEndpoint> endpointsExposed = deserializeList(jsonObj.get("endpoints"), context,
-                                                                    ExposedServiceEndpoint.class);
-
+    List<ExposedServiceEndpoint> endpointsExposed;
+    if (isOldSpec(jsonObj)) {
+      endpointsExposed = ImmutableList.of();
+    } else {
+      endpointsExposed = deserializeList(jsonObj.get("endpoints"), context, ExposedServiceEndpoint.class);
+    }
     return new HttpServiceSpecification(className, name, description, properties, datasets, endpointsExposed);
+  }
+
+  private boolean isOldSpec(JsonObject json) {
+    return !json.has("endpoints"); // This field wasn't in the original spec
   }
 
   @Override

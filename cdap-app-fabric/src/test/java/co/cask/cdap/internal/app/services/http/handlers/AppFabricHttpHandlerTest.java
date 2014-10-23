@@ -1387,8 +1387,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Set<ExposedServiceEndpoint> expectedEndpoints = ImmutableSet.of(new ExposedServiceEndpoint("GET", "/ping"),
-                                                                    new ExposedServiceEndpoint("POST", "/v1/ping"),
-                                                                    new ExposedServiceEndpoint("GET", "/v1/ping"));
+                                                                    new ExposedServiceEndpoint("POST", "/multi"),
+                                                                    new ExposedServiceEndpoint("GET", "/multi"),
+                                                                    new ExposedServiceEndpoint("GET", "/multi/ping"));
 
     GsonBuilder gsonBuidler = new GsonBuilder();
     gsonBuidler.registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec());
