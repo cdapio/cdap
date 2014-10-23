@@ -199,8 +199,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   private byte[] getZipCheckSum(String filePath) throws IOException, NoSuchAlgorithmException {
     InputStream tempFile1InputStream = new FileInputStream(filePath);
     ZipInputStream zStream = new ZipInputStream(tempFile1InputStream);
-    ZipEntry zipEntry;
-    MessageDigest md = MessageDigest.getInstance("SHA");
+    MessageDigest md = MessageDigest.getInstance("SHA-256");
     while (zStream.getNextEntry() != null) {
       md.update(ByteStreams.toByteArray(zStream));
     }
