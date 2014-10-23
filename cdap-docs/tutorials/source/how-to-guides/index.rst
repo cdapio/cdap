@@ -7,6 +7,17 @@
 CDAP How-To Guides
 ==================
 
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+
+   cdap-flume-guide
+   cdap-mapreduce-guide
+   cdap-bi-guide
+   cdap-timeseries-guide
+   cdap-spark-guide
+
+
 Designed to be completed in 15-30 minutes, these guides provide quick, hands-on
 instructions for building the “Hello World” of any development task with CDAP.
 

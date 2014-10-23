@@ -12,7 +12,7 @@ from common_conf import *
 
 # Override the common config
 
-html_short_title = u'CDAP Tutorials'
+html_short_title = u'CDAP How-To Guides and Tutorials'
 
 # Remove this guide from the mapping as it will fail as it has been deleted by clean
 intersphinx_mapping.pop("tutorials", None)

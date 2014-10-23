@@ -3,4 +3,4 @@
 
 .. _cdap-bi-guide:
 
-.. include:: ../build/_includes/cdap-bi-guide/README.rst
+.. include:: ../../build/_includes/cdap-bi-guide/README.rst

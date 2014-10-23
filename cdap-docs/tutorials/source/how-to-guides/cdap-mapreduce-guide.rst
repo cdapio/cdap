@@ -3,4 +3,4 @@
 
 .. _cdap-mapreduce-guide:
 
-.. include:: ../build/_includes/cdap-mapreduce-guide/README.rst
+.. include:: ../../build/_includes/cdap-mapreduce-guide/README.rst

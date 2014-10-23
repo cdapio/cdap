@@ -1,33 +1,12 @@
 .. :author: Cask Data, Inc.
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _guides-tutorials-index:
+.. _tutorials:
 
 ============================================
-Additional Resources: Guides and Tutorials
-============================================
-
-A series of `CDAP Guides and Tutorials <http://cask.co/guides/>`__ are available online.
-
-The guides are designed to be completed in less than 30 minutes, while the tutorials
-are longer, taking anywhere from 2-3 hours.
-
-How-To Guides
--------------
-Designed to be completed in 15-30 minutes, these guides provide quick, hands-on instructions for 
-building the “Hello World” of any development task with CDAP.
-
-- `Ingesting Data with Flume: <https://github.com/cdap-guides/cdap-flume-guide>`__ 
-  Learn how to use Flume to ingest data into CDAP in real-time	
-- `Storing Timeseries Data: <https://github.com/cdap-guides/cdap-timeseries-guide>`__  
-  Learn how to store timeseries data in CDAP Datasets
-- `Batch Data Processing with MapReduce: <https://github.com/cdap-guides/cdap-mapreduce-guide>`__ 
-  Learn how to run MapReduce jobs to process data in CDAP	
-- `Iterative Data Processing with Spark: <https://github.com/cdap-guides/cdap-spark-guide>`__ 
-  Learn how to run Spark program to process data in CDAP
-
 Tutorials
----------
+============================================
+
 Designed to be completed in 2-3 hours, these tutorials provide deeper, in-context explorations of 
 big data application development topics, leaving you ready to implement real-world solutions.
 

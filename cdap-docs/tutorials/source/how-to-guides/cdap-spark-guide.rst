@@ -3,4 +3,4 @@
 
 .. _cdap-spark-guide:
 
-.. include:: ../build/_includes/cdap-spark-guide/README.rst
+.. include:: ../../build/_includes/cdap-spark-guide/README.rst

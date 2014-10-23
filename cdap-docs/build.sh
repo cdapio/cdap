@@ -150,7 +150,6 @@ function build() {
   clean
   build_specific_doc admin $1
   build_specific_doc developer-guide $1
-  build_specific_doc guides $1
   build_specific_doc reference $1
   build_specific_doc tutorials $1
   add_redirect
@@ -168,7 +167,6 @@ function build_specific_doc() {
   cd $SCRIPT_PATH
   echo "Copying $1 guide results..."
   cp -r $1/$BUILD/$HTML $BUILD/$HTML/$1
-#   mv -f $BUILD/$HTML $BUILD/$1
   echo ""
 }
 

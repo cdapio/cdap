@@ -3,4 +3,4 @@
 
 .. _cdap-flume-guide:
 
-.. include:: ../build/_includes/cdap-flume-guide/README.rst
+.. include:: ../../build/_includes/cdap-flume-guide/README.rst

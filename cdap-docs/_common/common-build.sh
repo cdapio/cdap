@@ -196,7 +196,7 @@ function make_zip_html() {
   version
   ZIP_FILE_NAME="$PROJECT-docs-$PROJECT_VERSION.zip"
   cd $SCRIPT_PATH/$BUILD
-  zip -r $ZIP_FILE_NAME $HTML/*
+  zip -qr $ZIP_FILE_NAME $HTML/*
 }
 
 function make_zip() {
@@ -211,7 +211,7 @@ function make_zip() {
   mkdir $ZIP_DIR_NAME
   mv $HTML $ZIP_DIR_NAME/en
   echo "$REDIRECT_EN_HTML" > $ZIP_DIR_NAME/index.html
-  zip -r $ZIP_DIR_NAME.zip $ZIP_DIR_NAME/*
+  zip -qr $ZIP_DIR_NAME.zip $ZIP_DIR_NAME/*
 }
 
 function make_zip_localized() {
@@ -223,7 +223,7 @@ function make_zip_localized() {
   mv $HTML $PROJECT_VERSION/en
   # Add a redirect index.html file
   echo "$REDIRECT_EN_HTML" > $PROJECT_VERSION/index.html
-  zip -r $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
+  zip -qr $ZIP_DIR_NAME.zip $PROJECT_VERSION/*
 }
 
 function build_extras() {

@@ -3,4 +3,4 @@
 
 .. _cdap-timeseries-guide:
 
-.. include:: ../build/_includes/cdap-timeseries-guide/README.rst
+.. include:: ../../build/_includes/cdap-timeseries-guide/README.rst

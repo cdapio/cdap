@@ -67,7 +67,6 @@ extensions = [
 intersphinx_mapping = {
   'admin': ('../../admin/', os.path.abspath('../../admin/build/html/objects.inv')),
   'developer': ('../../developer-guide/', os.path.abspath('../../developer-guide/build/html/objects.inv')),
-  'guides': ('../../guides', os.path.abspath('../../guides/build/html/objects.inv')),
   'reference': ('../../reference', os.path.abspath('../../reference/build/html/objects.inv')),
   'tutorials': ('../../tutorials', os.path.abspath('../../tutorials/build/html/objects.inv')),
 }
