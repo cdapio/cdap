@@ -24,10 +24,12 @@ package co.cask.cdap.data2.datafabric.dataset.type;
 public class DatasetTypeVersion {
   String moduleName;
   int version;
+  byte[] checkSum;
 
-  public DatasetTypeVersion(String moduleName, int version) {
+  public DatasetTypeVersion(String moduleName, int version, byte[] checkSum) {
     this.moduleName = moduleName;
     this.version = version;
+    this.checkSum = checkSum;
   }
 
   public String getModuleName() {
@@ -38,4 +40,7 @@ public class DatasetTypeVersion {
     return version;
   }
 
+  public byte[] getCheckSum() {
+    return checkSum;
+  }
 }

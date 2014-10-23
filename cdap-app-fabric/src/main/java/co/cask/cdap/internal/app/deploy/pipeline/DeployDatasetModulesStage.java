@@ -29,6 +29,7 @@ import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.pipeline.AbstractStage;
 import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -94,7 +95,9 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
             throw new IllegalArgumentException(msg);
           }
         } catch (ModuleConflictException e) {
-          LOG.info("Not deploying module " + moduleName + " as it already exists");
+          LOG.warn("Deploying the module : {} failed, newer version or version with a " +
+                     "different checksum already exists", moduleName);
+          throw Throwables.propagate(e);
         }
       }
     } finally {

@@ -39,14 +39,18 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -117,7 +121,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @PUT
   @Path("/data/modules/{name}")
   public void addModule(HttpRequest request, final HttpResponder responder,
-                       @PathParam("name") String name) throws IOException {
+                       @PathParam("name") String name) throws IOException, NoSuchAlgorithmException {
 
     String className = request.getHeader(HEADER_CLASS_NAME);
     int version = Integer.parseInt(request.getHeader(HEADER_VERSION_NAME));
@@ -154,27 +158,35 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     } finally {
       inputStream.close();
     }
-
+    byte[] archiveCheckSum = getZipCheckSum(archive.toURI().getPath());
     if (existing != null) {
       /**
        * Get the version object from the MDS, check if (passed) version is greater than current version
        * then update the module_version value with new {version,checksum} in MDS.
        */
       DatasetTypeVersion versionInfo = manager.getVersionInfo(name);
-
+      String message = null;
       if (versionInfo.getVersion() > version) {
         // not the latest version, newer version already exists, fail.
-        String message = String.format("Cannot add module %s module, newer version %s already exists",
+        message = String.format("Cannot add module %s module, newer version %s already exists",
                                        name, versionInfo.getVersion());
+      } else if ((versionInfo.getVersion() == version) && !Arrays.equals(versionInfo.getCheckSum(), archiveCheckSum)) {
+        // dataset with same version exists, but checksum doesn't match, so we send an error
+        message = String.format("Cannot add module %s module, version %s already exists and checksum does not match",
+                                name, versionInfo.getVersion());
+      }
+      if (message != null) {
         LOG.warn(message);
         responder.sendError(HttpResponseStatus.CONFLICT, message);
-        return;
+      } else {
+        responder.sendStatus(HttpResponseStatus.OK);
       }
+      return;
     }
 
     try {
       manager.addModule(name, className, archive);
-      manager.writeVersionInfo(new DatasetTypeVersion(name, version));
+      manager.writeVersionInfo(new DatasetTypeVersion(name, version, archiveCheckSum));
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -182,6 +194,17 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     // todo: response with DatasetModuleMeta of just added module (and log this info)
     LOG.info("Added module {}", name);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private byte[] getZipCheckSum(String filePath) throws IOException, NoSuchAlgorithmException {
+    InputStream tempFile1InputStream = new FileInputStream(filePath);
+    ZipInputStream zStream = new ZipInputStream(tempFile1InputStream);
+    ZipEntry zipEntry;
+    MessageDigest md = MessageDigest.getInstance("SHA");
+    while (zStream.getNextEntry() != null) {
+      md.update(ByteStreams.toByteArray(zStream));
+    }
+    return md.digest();
   }
 
   @GET
