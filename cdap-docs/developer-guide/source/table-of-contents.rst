@@ -2,7 +2,7 @@
    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
-Cask Data Application Platform Documentation
+CDAP Developer’s Guide
 ============================================
 
 .. toctree::
@@ -12,20 +12,11 @@ Cask Data Application Platform Documentation
     Getting Started </getting-started/index>
     Overview </overview/index>
     Building Blocks </building-blocks/index>
-    Examples, Guides, Tutorials <examples-guides-tutorials/index>
-    Under-the-Hood <under-the-hood/index>
-    API References </apis/index>
-    Testing, Debugging, Packaging</testing/index>
+    Examples <examples/index>
+    Testing and Debugging </testing/index>
     Tools </tools/index>
-    Administration </administration/index>
-    Operations </operations/index>
+    Advanced Topics <advanced/index>
     Troubleshooting </troubleshooting>
     Release Notes </release-notes>
-    License and Dependencies </licenses/index>
     Glossary </glossary>
-    FAQ </faq/index>
-    
-.. toctree::
-   :hidden:
-   
-   /apis/javadocs/index
+    FAQ </faq>

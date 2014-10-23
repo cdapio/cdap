@@ -49,46 +49,25 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   interactions, and the anatomy of a basic Big Data application.
 
 
-.. |components| replace:: **CDAP Components:**
-.. _components: components/index.html
+.. |building-blocks| replace:: **Building Blocks:**
+.. _building-blocks: building-blocks/index.html
 
-- |components|_ This section covers **the two core virtualizations in the Cask Data
+- |building-blocks|_ This section covers **the two core virtualizations in the Cask Data
   Application Platform (CDAP): Data and Applications.** Data virtualizations are grouped into
   Streams and Datasets. Application virtualizations are grouped into Flows, MapReduce,
   Spark, Workflows, and Services. Details are provided on working with these abstractions
   to build Big Data applications.
 
 
-.. |examples| replace:: **Examples, Guides, Tutorials:**
-.. _examples: examples-guide-tutorials/index.html
+.. |examples| replace:: **Examples:**
+.. _examples: examples/index.html
 
 - |examples|_ **Examples included with the SDK** range from a simple introductory *Hello
   World* to more elaborate examples such as the *Purchase Application* that use all of the
-  CDAP components. A series of **How-To Guides**, designed to be completed in less than 30
-  minutes each, covers topics such as data ingestion, data storage, and data processing; and a set of
-  **Tutorials,** designed to be completed in anywhere from two to three hours each, gives
-  in-depth case studies of web analytics, network analytics, social analytics and
-  recommendation systems. 
+  CDAP components.
 
 
-.. |under-the-hood| replace:: **Under-the-Hood:**
-.. _under-the-hood: under-the-hood/index.html
-
-- |under-the-hood|_ Covers **advanced topics on CDAP** that will be of interest to
-  developers who want a deeper dive into CDAP, with presentations on the Transaction System,
-  Data Exploration of Datasets, Deep-dive into Streams, Client Authentication for Secure
-  CDAP Instances, and Best Practices for CDAP development.
-
-
-.. |apis| replace:: **API References:**
-.. _apis: apis/index.html
-
-- |apis|_ documents four APIs of CDAP: the **HTTP RESTful API,** the **Java APIs (Javadocs),** the **Java
-  Client API** and the **Command-Line Interface;** the latter provides methods for interacting with the 
-  CDAP server from within a shell.
-
-
-.. |testing| replace:: **Testing, Debugging, Packaging:**
+.. |testing| replace:: **Testing and Debugging:**
 .. _testing: testing/index.html
 
 - |testing|_ CDAP has a **test framework** that developers can use with their applications, **debugging procedures
@@ -104,25 +83,20 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   that allows you to control, manage and explore a CDAP instance.
 
 
-.. |admin| replace:: **Administration:**
-.. _admin: administration/index.html
+.. |advanced| replace:: **Advanced Topics:**
+.. _advanced: advanced/index.html
 
-- |admin|_ Covers **putting CDAP into production, with installation, configuration, security setup, and
-  monitoring.** Appendices cover the XML files used to configure the CDAP installation and security configurations.
-
-
-.. |ops| replace:: **Operations:**
-.. _ops: operations/index.html
-
-- |ops|_ Covers **security, monitoring, logging, metrics, runtime arguments, and scaling instances.** 
+- |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
+  developers who want a deeper dive into CDAP, with presentations on the Data Exploration
+  of Datasets, Client Authentication for Secure CDAP Instances, and Best Practices for
+  CDAP development.
 
 
 .. |remaining| replace:: **Remaining Sections:**
 
 - |remaining| The final documentation sections cover :doc:`Troubleshooting, <troubleshooting>`
   :doc:`Release Notes, <release-notes>`
-  the :doc:`Licenses and Software Dependencies, <licenses/index>` 
-  :doc:`Glossary, <glossary>` and a :doc:`FAQ. <faq/index>`
+  :doc:`Glossary, <glossary>` and a :doc:`FAQ. <faq>`
    
 
 .. |(TM)| unicode:: U+2122 .. trademark sign

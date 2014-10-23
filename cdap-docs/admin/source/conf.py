@@ -12,6 +12,6 @@ from common_conf import *
 
 # Override the common config
 
-html_short_title = u'CDAP Developer’s Guide'
+html_short_title = u'CDAP Administration Guide'
 # Remove this guide from the mapping as it will fail as it has been deleted by clean
-intersphinx_mapping.pop("developer", None)
+intersphinx_mapping.pop("admin", None)

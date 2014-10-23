@@ -12,12 +12,10 @@ Tools
    
     Ingesting Data <ingesting-data>
     Authentication Clients <authentication-clients>
-    CDAP Console <cdap-console>
 
 CDAP comes with a number of tools to make a developer’s life easier. These tools help
-with: interacting with applications; ingesting data into CDAP; authenticating clients and
-fetching access tokens; and the CDAP Console, the browser-based management application
-that allows you to control, manage and explore a CDAP instance.
+with interacting with applications, ingesting data into CDAP, authenticating clients, and
+fetching access tokens.
   
 .. list-table::
     :widths: 15 60
@@ -29,5 +27,3 @@ that allows you to control, manage and explore a CDAP instance.
       - Tools for ingesting data into CDAP.
     * - :ref:`Authentication Clients<authentication-clients>`
       - Tools for fetching access tokens from the authentication service.
-    * - :ref:`CDAP Console<cdap-console>`
-      - A web-based graphical user interface to interact with CDAP instances and the applications they run.

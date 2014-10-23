@@ -18,7 +18,7 @@ Tables, but defines its own interface. Examples include:
 - The ``TimeseriesTable`` uses a Table to store keyed data over time
   and allows querying that data over ranges of time.
 
-See the :doc:`Javadocs </apis/javadocs/index>` for these classes and the :ref:`Examples <examples-index>`
+See the :ref:`Javadocs <reference:javadocs>` for these classes and the :ref:`Examples <examples-index>`
 to learn more about these Datasets. Any class in the CDAP libraries that implements the ``Dataset`` interface is a
 system Dataset.
 

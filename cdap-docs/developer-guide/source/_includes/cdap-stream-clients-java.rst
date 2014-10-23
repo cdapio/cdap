@@ -33,7 +33,7 @@ project's ``pom.xml`` file:
 
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>stream-client-java</artifactId>
+      <artifactId>cdap-stream-client</artifactId>
       <version>1.0.1</version>
     </dependency>
 
