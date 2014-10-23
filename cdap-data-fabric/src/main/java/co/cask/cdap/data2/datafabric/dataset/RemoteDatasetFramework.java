@@ -105,20 +105,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addApplicationVersionInfo(String applicationName, String instanceName, int version)
-    throws DatasetManagementException {
-    client.addApplicationVersionInfo(applicationName, instanceName, version);
-  }
-
-
-  // for the given dataset instance, this method returns the application and the corresponding dataset version
-  // they are using for this instance
-  @Override
-  public Map<String, Integer> getIntanceVersionInfo(String instanceName) throws DatasetManagementException {
-    return client.getInstanceVersionDetails(instanceName);
-  }
-
-  @Override
   public void addModule(String moduleName, DatasetModule module) throws DatasetManagementException {
     addModule(moduleName, DEFAULT_MODULE_VERSION, module);
   }

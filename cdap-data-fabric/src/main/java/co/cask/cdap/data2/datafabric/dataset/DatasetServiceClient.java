@@ -293,52 +293,6 @@ class DatasetServiceClient {
                          Constants.Gateway.GATEWAY_VERSION, resource);
   }
 
-  public void addApplicationVersionInfo(String applicationName, String instanceName, int version)
-    throws DatasetManagementException {
-
-    HttpResponse response = doRequest(HttpMethod.PUT, "datasets/" + instanceName + "/version",
-                                      ImmutableMap.of("Application-Name", applicationName,
-                                                      "Version", String.valueOf(version)));
-
-    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                        instanceName, getDetails(response)));
-    }
-    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                         instanceName, getDetails(response)));
-    }
-  }
-
-  public Map<String, Integer> getInstanceVersionDetails(String instanceName) throws DatasetManagementException {
-
-    HttpResponse response = doRequest(HttpMethod.GET, "datasets/" + instanceName + "/version");
-
-    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
-      throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                        instanceName, getDetails(response)));
-    }
-    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                         instanceName, getDetails(response)));
-    }
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8),
-                         new TypeToken<Map<String, Integer>>() { }.getType());
-  }
-
-  private HttpResponse doRequest(HttpMethod method, String resource, ImmutableMap<String, String> headers)
-    throws DatasetManagementException {
-    String url = resolve(resource);
-    try {
-      return HttpRequests.execute(HttpRequest.builder(method, new URL(url)).addHeaders(headers).build());
-    } catch (IOException e) {
-      throw new DatasetManagementException(
-        String.format("Error during talking to Dataset Service at %s while doing %s with headers %s",
-                      url, method,
-                      headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers)), e);
-    }
-  }
-
   public int getLatestVersion(String moduleName) throws DatasetManagementException {
     HttpResponse response = doRequest(HttpMethod.GET, "modules/" + moduleName + "/version");
 

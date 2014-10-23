@@ -384,11 +384,6 @@ public class TestBase {
     return datasetFramework.getLatestModuleVersion(moduleName);
   }
 
-  protected final Map<String, Integer> getDatasetVersionMap(String instanceName)
-    throws Exception {
-    return datasetFramework.getIntanceVersionInfo(instanceName);
-  }
-
   /**
    * Adds an instance of a dataset.
    * @param datasetTypeName dataset type name

@@ -56,14 +56,13 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
       String instanceName = instanceEntry.getKey();
       DatasetCreationSpec instanceSpec = instanceEntry.getValue();
       try {
-        int version = getDatasetVersion(input.getArchive(), instanceSpec.getTypeName());
         if (!datasetFramework.hasInstance(instanceName)) {
           datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());
         } else if (!datasetFramework.getDatasetSpec(instanceName).getType().equals(instanceSpec.getTypeName())) {
           //type mismatch
-          throw new InstanceConflictException("Dataset type mismatch from existing dataset instance");
+          throw new DataSetInstantiationException("Existing Dataset Instance type is " +
+                                                    "different from provided instance type");
         }
-        datasetFramework.addApplicationVersionInfo(specification.getName(), instanceName, version);
       } catch (DataSetInstantiationException e) {
         LOG.error("Dataset instantiation Error", e);
         throw Throwables.propagate(e);

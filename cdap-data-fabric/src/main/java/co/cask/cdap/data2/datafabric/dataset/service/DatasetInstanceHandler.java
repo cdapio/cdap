@@ -177,40 +177,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Writes version information for application->version which uses the dataset instance
-   */
-  @PUT
-  @Path("/data/datasets/{name}/version")
-  public void writeVersionInfo(HttpRequest request, final HttpResponder responder,
-                     @PathParam("name") String name) {
-    // Get the application name and version information from headers
-    String applicationName = request.getHeader("Application-Name");
-    int version = Integer.parseInt(request.getHeader("Version"));
-    Preconditions.checkNotNull(applicationName, " Required header 'Application-Name' is absent");
-    Preconditions.checkNotNull(version, " Required header 'version' is absent");
-    LOG.info("Adding Application {}, version: {}, Information for instance {}", applicationName, version, name);
-
-    // write to instance MDS the application->version mapping for this instance
-    DatasetSpecification existing = instanceManager.get(name);
-    Preconditions.checkNotNull(existing, "Dataset Instance is not present, " +
-      "cannot write Application->Version information");
-    instanceManager.updateInstanceApplicationVersionMap(name, applicationName, version);
-    responder.sendStatus(HttpResponseStatus.OK);
-  }
-
-
-  /**
-   * Get version information for application->version which uses the dataset instance
-   */
-  @GET
-  @Path("/data/datasets/{name}/version")
-  public void getVersionInfo(HttpRequest request, final HttpResponder responder,
-                               @PathParam("name") String name) {
-    responder.sendJson(HttpResponseStatus.OK, instanceManager.getInstanceMap(name));
-  }
-
-
-  /**
    * Updates an existing Dataset specification properties  {@link DatasetInstanceConfiguration}
    * is constructed based on request and the Dataset instance is updated.
    */

@@ -73,23 +73,6 @@ public interface DatasetFramework {
    * @throws DatasetManagementException
    */
   boolean isDefaultType(String typeName) throws DatasetManagementException;
-  /**
-   * Adds information on dataset version used by Application to the MDS
-   * @param applicationName Name of the application
-   * @param instanceName dataset Instance name
-   * @param version version of dataset type
-   * @throws DatasetManagementException in case of problems
-   */
-  void addApplicationVersionInfo(String applicationName, String instanceName, int version)
-    throws DatasetManagementException;
-
-  /**
-   * Returns the map of Application and the version they are using for this particular dataset type of dataset instance.
-   * @param instanceName dataset Instance name
-   * @throws DatasetManagementException in case of problems
-   */
-  Map<String, Integer> getIntanceVersionInfo(String instanceName)
-    throws DatasetManagementException;
 
   /**
    * Adds dataset types by adding dataset module to the system.

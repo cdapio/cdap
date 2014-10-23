@@ -377,20 +377,10 @@ public class TestFrameworkTest extends TestBase {
   @Test
   public void testAppWithDatasetVersions() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithDatasetVersion.class);
-    LOG.info("Deployed.");
     Assert.assertEquals(1, getDatasetVersion(FakeDataset.class.getName()));
 
     ApplicationManager applicationManager2 = deployApplication(DuplicateAppWithDatasetVersion.class);
-
-    //get the version map and check both applications are present in them
-    Map<String, Integer> applicationVersionMap = getDatasetVersionMap(AppWithDatasetVersion.DS_NAME);
-    Assert.assertEquals(2, applicationVersionMap.size());
-
-    int app1version = applicationVersionMap.get(AppWithDatasetVersion.NAME);
-    Assert.assertEquals(1, app1version);
-
-    int app2version = applicationVersionMap.get(DuplicateAppWithDatasetVersion.NAME);
-    Assert.assertEquals(1, app2version);
+    Assert.assertEquals(1, getDatasetVersion(FakeDataset.class.getName()));
 
     applicationManager.stopAll();
     applicationManager2.stopAll();
