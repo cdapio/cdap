@@ -20,8 +20,6 @@
 # auth
 default['cdap']['cdap_site']['security.server.ssl.keystore.password'] = 'defaultpassword'
 default['cdap']['cdap_site']['security.server.ssl.keystore.path'] = '/opt/cdap/security/conf/keystore.jks'
-default['cdap']['cdap_site']['security.server.ssl.keystore.keypath'] = '/opt/cdap/security/conf/cdap_site.key'
-default['cdap']['cdap_site']['security.server.ssl.keystore.certpath'] = '/opt/cdap/security/conf/cdap_site.crt'
 default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']
 
 # web ui
