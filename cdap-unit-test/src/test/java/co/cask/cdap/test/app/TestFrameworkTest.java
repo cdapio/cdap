@@ -379,11 +379,7 @@ public class TestFrameworkTest extends TestBase {
     ApplicationManager applicationManager = deployApplication(AppWithDatasetVersion.class);
     Assert.assertEquals(1, getDatasetVersion(FakeDataset.class.getName()));
 
-    ApplicationManager applicationManager2 = deployApplication(DuplicateAppWithDatasetVersion.class);
-    Assert.assertEquals(1, getDatasetVersion(FakeDataset.class.getName()));
-
     applicationManager.stopAll();
-    applicationManager2.stopAll();
   }
 
   @Test

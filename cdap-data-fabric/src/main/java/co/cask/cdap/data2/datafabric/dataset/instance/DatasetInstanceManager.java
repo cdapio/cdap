@@ -67,40 +67,6 @@ public class DatasetInstanceManager {
   }
 
   /**
-   * Updates dataset instance type version
-   * @param name of the dataset instance
-   * @param version of the dataset type
-   */
-  public void updateInstanceApplicationVersionMap(final String name, final String applicationName, final int version) {
-    mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Void>() {
-      @Override
-      public Void call(MDSDatasets datasets) throws Exception {
-        Map<String, Integer> appVersionMap = datasets.getInstanceMDS().getAppVersionMap(name);
-        if (appVersionMap == null) {
-          appVersionMap = Maps.newHashMap();
-        }
-        appVersionMap.put(applicationName, version);
-        datasets.getInstanceMDS().updateVersion(name, appVersionMap);
-        return null;
-      }
-    });
-  }
-
-  /**
-   * Gets dataset instance type version
-   * @param name of the dataset instance
-   * @return Map<String, Integer> Map of application Name -> version
-   */
-  public Map<String, Integer> getInstanceMap(final String name) {
-    return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Map<String, Integer>>() {
-      @Override
-      public Map<String, Integer> call(MDSDatasets datasets) throws Exception {
-        return datasets.getInstanceMDS().getAppVersionMap(name);
-      }
-    });
-  }
-
-  /**
    * @return collection of {@link co.cask.cdap.api.dataset.DatasetSpecification} of all dataset instances
    */
   public Collection<DatasetSpecification> getAll() {

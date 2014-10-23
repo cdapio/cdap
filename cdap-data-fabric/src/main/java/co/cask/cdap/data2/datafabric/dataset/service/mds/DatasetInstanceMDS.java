@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 
 import java.util.Collection;
 import java.util.List;
@@ -39,7 +38,6 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
    *       the prefix may help us in future
    */
   private static final byte[] INSTANCE_PREFIX = Bytes.toBytes("i_");
-  private static final byte[] INSTANCE_APP_VERSION_PREFIX = Bytes.toBytes("lv_");
 
   public DatasetInstanceMDS(DatasetSpecification spec, @EmbeddedDataset("") OrderedTable table) {
     super(spec, table);
@@ -54,25 +52,11 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     put(getInstanceKey(instanceSpec.getName()), instanceSpec);
   }
 
-  public void updateVersion(String instanceName, Map<String, Integer> appVersionMap) {
-    put(getInstanceLatestVersionPrefixKey(instanceName), appVersionMap);
-  }
-
-  @Nullable
-  public Map<String, Integer> getAppVersionMap(String instanceName) {
-    return (Map<String, Integer>) get(getInstanceLatestVersionPrefixKey(instanceName),
-               new TypeToken<Map<String, Integer>>() { }.getRawType());
-  }
-
   public boolean delete(String name) {
     if (get(name) == null) {
       return false;
     }
     delete(getInstanceKey(name));
-
-    if (getAppVersionMap(name) != null) {
-      delete(getInstanceLatestVersionPrefixKey(name));
-    }
     return true;
   }
 
@@ -101,7 +85,4 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
     return Bytes.add(INSTANCE_PREFIX, Bytes.toBytes(name));
   }
 
-  private byte[] getInstanceLatestVersionPrefixKey(String name) {
-    return Bytes.add(INSTANCE_APP_VERSION_PREFIX, Bytes.toBytes(name));
-  }
 }
