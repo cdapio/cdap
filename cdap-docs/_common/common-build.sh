@@ -210,6 +210,7 @@ function make_zip() {
   cd $SCRIPT_PATH/$BUILD
   mkdir $ZIP_DIR_NAME
   mv $HTML $ZIP_DIR_NAME/en
+  # Add a redirect index.html file
   echo "$REDIRECT_EN_HTML" > $ZIP_DIR_NAME/index.html
   zip -qr $ZIP_DIR_NAME.zip $ZIP_DIR_NAME/*
 }

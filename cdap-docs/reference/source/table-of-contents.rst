@@ -1,9 +1,9 @@
 .. :author: Cask Data, Inc.
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
-CDAP References
-============================================
+=================================================
+CDAP Reference: APIs, Licenses, and Dependencies
+=================================================
 
 .. toctree::
    :maxdepth: 3

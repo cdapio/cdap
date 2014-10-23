@@ -2,7 +2,7 @@
    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
-CDAP Administration Guide
+CDAP Administration
 ============================================
 
 .. toctree::

@@ -4,7 +4,7 @@
 .. _introduction:
 
 ==================================================
-Administration
+CDAP Administration
 ==================================================
 
 The Cask |(TM)| Data Application Platform (CDAP) is an open source project for distributed data

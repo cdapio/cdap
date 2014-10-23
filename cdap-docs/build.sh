@@ -179,7 +179,8 @@ function build_zip() {
     make_zip
   else
     make_zip_localized $1
-  fi  
+  fi
+  echo "Building zip completed."
 }
 
 

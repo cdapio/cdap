@@ -8,8 +8,11 @@
 Introduction to the Cask Data Application Platform
 ==================================================
 
-The Cask |(TM)| Data Application Platform (CDAP) is an open source project for distributed data
-and applications. 
+The Cask |(TM)| Data Application Platform (CDAP) is an open source application development
+platform for the Hadoop ecosystem that provides developers with data and application
+virtualization to accelerate application development, address a broader range of real-time
+and batch use cases, and deploy applications into production while satisfying enterprise
+requirements.
 
 CDAP is a layer of software running on top of Apache |(TM)| Hadoop |(R)| platforms such as the
 Cloudera Enterprise Data Hub or the Hortonworks Data Platform. CDAP provides three essential elements:
