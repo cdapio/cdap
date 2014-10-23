@@ -13,5 +13,6 @@ from common_conf import *
 # Override the common config
 
 html_short_title = u'CDAP Reference'
+
 # Remove this guide from the mapping as it will fail as it has been deleted by clean
 intersphinx_mapping.pop("reference", None)

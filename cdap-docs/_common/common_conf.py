@@ -64,13 +64,12 @@ extensions = [
     'sphinx.ext.intersphinx',
 ]
 
-# intersphinx_mapping = {'python': ('http://docs.python.org/3.2', None)}
 intersphinx_mapping = {
-  'admin': (os.path.abspath('../../admin/build/html'), None),
-  'developer': (os.path.abspath('../../developer-guide/build/html'), None),
-  'guides': (os.path.abspath('../../guides/build/html'), None),
-  'reference': (os.path.abspath('../../reference/build/html'), None),
-  'tutorials': (os.path.abspath('../../tutorials/build/html'), None),
+  'admin': ('../../admin/', os.path.abspath('../../admin/build/html/objects.inv')),
+  'developer': ('../../developer-guide/', os.path.abspath('../../developer-guide/build/html/objects.inv')),
+  'guides': ('../../guides', os.path.abspath('../../guides/build/html/objects.inv')),
+  'reference': ('../../reference', os.path.abspath('../../reference/build/html/objects.inv')),
+  'tutorials': ('../../tutorials', os.path.abspath('../../tutorials/build/html/objects.inv')),
 }
 
 # Add any paths that contain templates here, relative to this directory.

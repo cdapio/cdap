@@ -5,19 +5,21 @@
     Sphinx sidebar template: "CDAP Guides" links.
 
 #}
+{%- set master_url_root = pathto(master_doc, 1) %}
+{%- if master_url_root == '#' %}{% set master_url_root = '' %}{% endif %}
 
   <div role="note" aria-label="guides links">
     <h3>{{ _('CDAP Guides') }}</h3>
     <ul class="this-page-menu">
-      <li><a href="{{ pathto(master_doc) }}{{ _('/../../developer-guide/index.html') }}"
+      <li><a href="{{ master_url_root }}{{ _('/../../developer-guide/index.html') }}"
             rel="nofollow">{{ _('Developers’ Guide') }}</a></li>
-      <li><a href="{{ pathto(master_doc) }}{{ _('/../../reference/index.html') }}"
+      <li><a href="{{ master_url_root }}{{ _('/../../reference/index.html') }}"
             rel="nofollow">{{ _('Reference') }}</a></li>
-       <li><a href="{{ pathto(master_doc) }}{{ _('/../../admin/index.html') }}"
+       <li><a href="{{ master_url_root }}{{ _('/../../admin/index.html') }}"
             rel="nofollow">{{ _('Administration') }}</a></li>
-      <li><a href="{{ pathto(master_doc) }}{{ _('/../../tutorials/index.html') }}"
+      <li><a href="{{ master_url_root }}{{ _('/../../tutorials/index.html') }}"
             rel="nofollow">{{ _('Tutorials') }}</a></li>
-      <li><a href="{{ pathto(master_doc) }}{{ _('/../../guides/index.html') }}"
+      <li><a href="{{ master_url_root }}{{ _('/../../guides/index.html') }}"
             rel="nofollow">{{ _('How-To Guides') }}</a></li>
     </ul>
    </div>
