@@ -21,7 +21,7 @@
 
 include_recipe 'cdap::web_app'
 
-### Generate a self-signed certificate if SSL is enabled
+### Generate a certificate if SSL is enabled
 execute 'generate-webapp-ssl-cert' do
   ssl_enabled = node['cdap']['cdap_site']['ssl.enabled'] || false
   common_name = node['cdap']['security']['ssl_common_name']
