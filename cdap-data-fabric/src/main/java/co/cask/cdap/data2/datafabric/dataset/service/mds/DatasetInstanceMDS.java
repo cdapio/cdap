@@ -84,5 +84,4 @@ public final class DatasetInstanceMDS extends AbstractObjectsStore {
   private byte[] getInstanceKey(String name) {
     return Bytes.add(INSTANCE_PREFIX, Bytes.toBytes(name));
   }
-
 }

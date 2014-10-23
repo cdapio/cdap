@@ -20,12 +20,9 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasets;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.dataset2.tx.TxCallable;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
-import com.sun.tools.javac.resources.version;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * Manages dataset instances metadata
