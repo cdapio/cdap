@@ -118,8 +118,9 @@ public class ConnectCommand extends AbstractCommand {
       }
 
     } catch (IOException e) {
-      throw new IOException(String.format("Host %s on port %d could not be reached",
-                                          connectionInfo.getHostname(), connectionInfo.getPort()));
+      throw new IOException(String.format("Host %s on port %d could not be reached: %s",
+                                          connectionInfo.getHostname(), connectionInfo.getPort(),
+                                          e.getMessage()));
     }
 
   }
