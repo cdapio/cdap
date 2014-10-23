@@ -76,13 +76,6 @@ Vagrant.configure('2') do |config|
         :server_root_password => 'rootpass',
         :server_debian_password => 'debpass',
         :server_repl_password => 'replpass'
-      },
-      :java => {
-        :install_flavor => 'oracle',
-        :jdk_version => '6',
-        :oracle => {
-          :accept_oracle_download_terms => true
-        }
       }
     }
 
