@@ -148,11 +148,10 @@ public class ConnectCommand extends AbstractCommand {
       return null;
     }
 
-    AccessToken accessToken = getSavedAccessToken(connectionInfo.getHostname());
-
     try {
-      checkConnection(clientConfig, connectionInfo, accessToken);
-      return accessToken;
+      AccessToken savedAccessToken = getSavedAccessToken(connectionInfo.getHostname());
+      checkConnection(clientConfig, connectionInfo, savedAccessToken);
+      return savedAccessToken;
     } catch (UnAuthorizedAccessTokenException e) {
       // access token invalid - fall through to try acquiring token manually
     }
@@ -177,7 +176,7 @@ public class ConnectCommand extends AbstractCommand {
     }
 
     authenticationClient.configure(properties);
-    accessToken = authenticationClient.getAccessToken();
+    AccessToken accessToken = authenticationClient.getAccessToken();
 
     if (accessToken != null && saveAccessToken(accessToken, connectionInfo.getHostname())) {
       if (verbose) {
