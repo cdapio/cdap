@@ -56,7 +56,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   private static final Pattern SPACES = Pattern.compile("\\s+");
   private static final String[] NO_ARGS = {};
 
-  // TODO: InstanceId is not supported in Spark jobs, see CDAP-2.
+  // TODO: InstanceId is not supported in Spark jobs, see CDAP-39.
   public static final String INSTANCE_ID = "0";
   private final Arguments runtimeArguments;
   private final SparkSpecification sparkSpec;
