@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.internal.lang.MethodVisitor;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -40,15 +40,15 @@ import javax.ws.rs.Path;
  * Extract the endpoints exposed by a {@link HttpServiceHandler}.
  */
 public final class ServiceEndpointExtractor extends MethodVisitor {
-  private final List<ExposedServiceEndpoint> endpoints;
+  private final List<ServiceHttpEndpoint> endpoints;
 
-  public ServiceEndpointExtractor(List<ExposedServiceEndpoint> endpoints) {
+  public ServiceEndpointExtractor(List<ServiceHttpEndpoint> endpoints) {
     this.endpoints = endpoints;
   }
 
   @Override
   public void visit(Object instance, TypeToken<?> inspectType,
-                      TypeToken<?> declareType, Method method) throws Exception {
+                    TypeToken<?> declareType, Method method) throws Exception {
 
     Path classPathAnnotation = instance.getClass().getAnnotation(Path.class);
     Path methodPathAnnotation = method.getAnnotation(Path.class);
@@ -59,12 +59,12 @@ public final class ServiceEndpointExtractor extends MethodVisitor {
 
     // Find one or more request type annotations present on the method.
     Set<Class<? extends Annotation>> acceptedMethodTypes = ImmutableSet.of(GET.class, POST.class,
-                                                                            DELETE.class, PUT.class,
-                                                                            OPTIONS.class, HEAD.class);
+                                                                           DELETE.class, PUT.class,
+                                                                           OPTIONS.class, HEAD.class);
 
     Set<Class<? extends Annotation>> methodAnnotations = Sets.newHashSet();
     for (Annotation annotation : method.getAnnotations()) {
-      Class annotationClz = annotation.annotationType();
+      Class<? extends Annotation> annotationClz = annotation.annotationType();
       if (acceptedMethodTypes.contains(annotationClz)) {
         methodAnnotations.add(annotationClz);
       }
@@ -74,13 +74,13 @@ public final class ServiceEndpointExtractor extends MethodVisitor {
       String methodType  = methodTypeClz.getAnnotation(HttpMethod.class).value();
       String endpoint = "/";
 
-      String methodPath = methodPathAnnotation != null? methodPathAnnotation.value() : "";
-      String classPath = classPathAnnotation != null? classPathAnnotation.value() : "";
+      String methodPath = methodPathAnnotation != null ? methodPathAnnotation.value() : "";
+      String classPath = classPathAnnotation != null ? classPathAnnotation.value() : "";
       endpoint += String.format("%s/%s", classPath, methodPath);
 
       // Replace consecutive instances of / with a single instance, and remove trailing instances of /.
       endpoint = endpoint.replaceAll("/+", "/").replaceAll("\\/+\\z", "");
-      endpoints.add(new ExposedServiceEndpoint(methodType, endpoint));
+      endpoints.add(new ServiceHttpEndpoint(methodType, endpoint));
     }
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
@@ -43,7 +44,7 @@ public class ServiceClient {
   }
 
   /**
-   * Gets information about a service.
+   * Gets a {@link ServiceSpecification} for a {@link Service}.
    * 
    * @param appId ID of the application that the service belongs to
    * @param serviceId ID of the service

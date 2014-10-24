@@ -30,8 +30,8 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -1386,21 +1386,21 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet("/v2/apps/AppWithServices/services/NoOpService/");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Set<ExposedServiceEndpoint> expectedEndpoints = ImmutableSet.of(new ExposedServiceEndpoint("GET", "/ping"),
-                                                                    new ExposedServiceEndpoint("POST", "/multi"),
-                                                                    new ExposedServiceEndpoint("GET", "/multi"),
-                                                                    new ExposedServiceEndpoint("GET", "/multi/ping"));
+    Set<ServiceHttpEndpoint> expectedEndpoints = ImmutableSet.of(new ServiceHttpEndpoint("GET", "/ping"),
+                                                                    new ServiceHttpEndpoint("POST", "/multi"),
+                                                                    new ServiceHttpEndpoint("GET", "/multi"),
+                                                                    new ServiceHttpEndpoint("GET", "/multi/ping"));
 
     GsonBuilder gsonBuidler = new GsonBuilder();
     gsonBuidler.registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec());
-    gsonBuidler.registerTypeAdapter(HttpServiceSpecification.class, new HttpServiceSpecificationCodec());
+    gsonBuidler.registerTypeAdapter(HttpServiceHandlerSpecification.class, new HttpServiceSpecificationCodec());
     gsonBuidler.registerTypeAdapter(ServiceWorkerSpecification.class, new ServiceWorkerSpecificationCodec());
     Gson gson = gsonBuidler.create();
     ServiceSpecification specification = readResponse(response, ServiceSpecification.class, gson);
 
-    Set<ExposedServiceEndpoint> returnedEndpoints = Sets.newHashSet();
-    for (HttpServiceSpecification httpServiceSpecification : specification.getHandlers().values()) {
-      returnedEndpoints.addAll(httpServiceSpecification.getEndpoints());
+    Set<ServiceHttpEndpoint> returnedEndpoints = Sets.newHashSet();
+    for (HttpServiceHandlerSpecification httpServiceHandlerSpecification : specification.getHandlers().values()) {
+      returnedEndpoints.addAll(httpServiceHandlerSpecification.getEndpoints());
     }
 
     Assert.assertEquals("NoOpService", specification.getName());

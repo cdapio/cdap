@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
@@ -125,7 +125,7 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
                                                                          final Arguments runtimeArgs) {
     return new BasicHttpServiceContextFactory() {
       @Override
-      public BasicHttpServiceContext create(HttpServiceSpecification spec) {
+      public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
         return new BasicHttpServiceContext(spec, program, runId, instanceId, runtimeArgs,
                                            metricsCollectionService, datasetFramework, cConf,
                                            discoveryServiceClient, txClient);

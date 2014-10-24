@@ -222,9 +222,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
                          runtimeService.getLiveInfo(Id.Program.from(accountId,
                                                                     appId,
                                                                     serviceId),
-                                                    ProgramType.SERVICE
-                         )
-      );
+                                                    ProgramType.SERVICE));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

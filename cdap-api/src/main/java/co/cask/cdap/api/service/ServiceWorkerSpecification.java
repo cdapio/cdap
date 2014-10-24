@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,8 +49,8 @@ public final class ServiceWorkerSpecification implements ProgramSpecification, P
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = Collections.unmodifiableMap(properties);
-    this.datasets = Collections.unmodifiableSet(datasets);
+    this.properties = Collections.unmodifiableMap(new HashMap<String, String>(properties));
+    this.datasets = Collections.unmodifiableSet(new HashSet<String>(datasets));
     this.resources = resources;
     this.instances = instances;
   }

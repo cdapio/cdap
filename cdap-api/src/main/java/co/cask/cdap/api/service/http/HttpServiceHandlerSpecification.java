@@ -20,35 +20,38 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.api.dataset.Dataset;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Specification for a {@link HttpServiceSpecification}.
+ * Specification for a {@link HttpServiceHandler}.
  */
-public final class HttpServiceSpecification implements PropertyProvider, ProgramSpecification {
+public final class HttpServiceHandlerSpecification implements PropertyProvider, ProgramSpecification {
 
   private final String className;
   private final String name;
   private final String description;
   private final Map<String, String> properties;
   private final Set<String> datasets;
-  private final List<ExposedServiceEndpoint> endpoints;
+  private final List<ServiceHttpEndpoint> endpoints;
 
   /**
-   * Create an instance of {@link HttpServiceSpecification}.
+   * Create an instance of {@link HttpServiceHandlerSpecification}.
    */
-  public HttpServiceSpecification(String className, String name,
-                                  String description, Map<String, String> properties,
-                                  Set<String> datasets, List<ExposedServiceEndpoint> endpoints) {
+  public HttpServiceHandlerSpecification(String className, String name,
+                                         String description, Map<String, String> properties,
+                                         Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = Collections.unmodifiableMap(properties);
-    this.datasets = Collections.unmodifiableSet(datasets);
-    this.endpoints = Collections.unmodifiableList(endpoints);
+    this.properties = Collections.unmodifiableMap(new HashMap<String, String>(properties));
+    this.datasets = Collections.unmodifiableSet(new HashSet<String>(datasets));
+    this.endpoints = Collections.unmodifiableList(new ArrayList<ServiceHttpEndpoint>(endpoints));
   }
 
   /**
@@ -100,9 +103,9 @@ public final class HttpServiceSpecification implements PropertyProvider, Program
   }
 
   /**
-   * @return An immutable set of {@link ExposedServiceEndpoint}s that are exposed by the {@link HttpServiceHandler}.
+   * @return An immutable set of {@link ServiceHttpEndpoint}s that are exposed by the {@link HttpServiceHandler}.
    */
-  public List<ExposedServiceEndpoint> getEndpoints() {
+  public List<ServiceHttpEndpoint> getEndpoints() {
     return endpoints;
   }
 }

@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
@@ -31,11 +31,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * GSON codec to serialize/deserialize {@link HttpServiceSpecification}.
+ * GSON codec to serialize/deserialize {@link HttpServiceHandlerSpecification}.
  */
-public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<HttpServiceSpecification> {
+public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<HttpServiceHandlerSpecification> {
   @Override
-  public HttpServiceSpecification deserialize(JsonElement json, Type typeOfT,
+  public HttpServiceHandlerSpecification deserialize(JsonElement json, Type typeOfT,
                                               JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
 
@@ -44,13 +44,13 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
     String description = jsonObj.get("description").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
-    List<ExposedServiceEndpoint> endpointsExposed;
+    List<ServiceHttpEndpoint> endpointsExposed;
     if (isOldSpec(jsonObj)) {
       endpointsExposed = ImmutableList.of();
     } else {
-      endpointsExposed = deserializeList(jsonObj.get("endpoints"), context, ExposedServiceEndpoint.class);
+      endpointsExposed = deserializeList(jsonObj.get("endpoints"), context, ServiceHttpEndpoint.class);
     }
-    return new HttpServiceSpecification(className, name, description, properties, datasets, endpointsExposed);
+    return new HttpServiceHandlerSpecification(className, name, description, properties, datasets, endpointsExposed);
   }
 
   private boolean isOldSpec(JsonObject json) {
@@ -58,14 +58,14 @@ public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<Ht
   }
 
   @Override
-  public JsonElement serialize(HttpServiceSpecification src, Type typeOfSrc, JsonSerializationContext context) {
+  public JsonElement serialize(HttpServiceHandlerSpecification src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject json = new JsonObject();
     json.addProperty("className", src.getClassName());
     json.addProperty("name", src.getName());
     json.addProperty("description", src.getDescription());
     json.add("properties", serializeMap(src.getProperties(), context, String.class));
     json.add("datasets", serializeSet(src.getDatasets(), context, String.class));
-    json.add("endpoints", serializeList(src.getEndpoints(), context, ExposedServiceEndpoint.class));
+    json.add("endpoints", serializeList(src.getEndpoints(), context, ServiceHttpEndpoint.class));
 
     return json;
   }

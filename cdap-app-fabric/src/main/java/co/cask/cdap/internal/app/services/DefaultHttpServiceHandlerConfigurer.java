@@ -16,10 +16,10 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.service.http.ExposedServiceEndpoint;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
@@ -44,7 +44,7 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   private String name;
   private Map<String, String> properties;
   private Set<String> datasets;
-  private List<ExposedServiceEndpoint> endpoints;
+  private List<ServiceHttpEndpoint> endpoints;
 
   /**
    * Instantiates the class with the given {@link HttpServiceHandler}.
@@ -83,13 +83,13 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   }
 
   /**
-   * Creates a {@link HttpServiceSpecification} from the parameters stored in this class.
+   * Creates a {@link HttpServiceHandlerSpecification} from the parameters stored in this class.
    *
    * @return a new specification from the parameters stored in this instance
    */
-  public HttpServiceSpecification createSpecification() {
+  public HttpServiceHandlerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new HttpServiceSpecification(className, name, "", properties, datasets, endpoints);
+    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints);
   }
 }

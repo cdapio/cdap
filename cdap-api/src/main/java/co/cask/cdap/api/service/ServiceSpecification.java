@@ -18,9 +18,10 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,20 +31,20 @@ public final class ServiceSpecification implements ProgramSpecification {
   private final String className;
   private final String name;
   private final String description;
-  private final Map<String, HttpServiceSpecification> handlers;
+  private final Map<String, HttpServiceHandlerSpecification> handlers;
   private final Map<String, ServiceWorkerSpecification> workers;
   private final Resources resources;
   private final int instances;
 
   public ServiceSpecification(String className, String name, String description,
-                              Map<String, HttpServiceSpecification> handlers,
+                              Map<String, HttpServiceHandlerSpecification> handlers,
                               Map<String, ServiceWorkerSpecification> workers,
                               Resources resources, int instances) {
     this.className = className;
     this.name = name;
     this.description = description;
-    this.handlers = Collections.unmodifiableMap(handlers);
-    this.workers = Collections.unmodifiableMap(workers);
+    this.handlers = Collections.unmodifiableMap(new HashMap<String, HttpServiceHandlerSpecification>(handlers));
+    this.workers = Collections.unmodifiableMap(new HashMap<String, ServiceWorkerSpecification>(workers));
     this.resources = resources;
     this.instances = instances;
   }
@@ -66,7 +67,7 @@ public final class ServiceSpecification implements ProgramSpecification {
   /**
    * Returns an immutable map from handler name to handler specification.
    */
-  public Map<String, HttpServiceSpecification> getHandlers() {
+  public Map<String, HttpServiceHandlerSpecification> getHandlers() {
     return handlers;
   }
 

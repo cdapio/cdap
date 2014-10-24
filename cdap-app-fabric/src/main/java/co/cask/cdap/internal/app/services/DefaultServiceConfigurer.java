@@ -23,7 +23,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import com.clearspring.analytics.util.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -37,7 +37,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String name;
   private String description;
   private Map<String, ServiceWorkerSpecification> workers;
-  private Map<String, HttpServiceSpecification> handlers;
+  private Map<String, HttpServiceHandlerSpecification> handlers;
   private Resources resources;
   private int instances;
 
@@ -86,7 +86,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     for (HttpServiceHandler handler : serviceHandlers) {
       DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler);
       handler.configure(configurer);
-      HttpServiceSpecification spec = configurer.createSpecification();
+      HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handlers.containsKey(spec.getName()),
                                   "Handler with name %s already existed.", spec.getName());
       handlers.put(spec.getName(), spec);
