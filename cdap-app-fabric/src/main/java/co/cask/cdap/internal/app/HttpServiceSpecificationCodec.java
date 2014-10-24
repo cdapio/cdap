@@ -32,6 +32,8 @@ import java.util.Set;
 
 /**
  * GSON codec to serialize/deserialize {@link HttpServiceHandlerSpecification}.
+ *
+ *
  */
 public class HttpServiceSpecificationCodec extends AbstractSpecificationCodec<HttpServiceHandlerSpecification> {
   @Override

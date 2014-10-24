@@ -40,11 +40,11 @@ import java.util.Set;
 public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigurer {
 
   private final Map<String, String> propertyFields;
-  private String className;
-  private String name;
+  private final String className;
+  private final String name;
   private Map<String, String> properties;
   private Set<String> datasets;
-  private List<ServiceHttpEndpoint> endpoints;
+  private final List<ServiceHttpEndpoint> endpoints;
 
   /**
    * Instantiates the class with the given {@link HttpServiceHandler}.

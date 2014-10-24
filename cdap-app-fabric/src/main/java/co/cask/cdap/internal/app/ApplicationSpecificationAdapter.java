@@ -88,7 +88,6 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(Schedule.class, new ScheduleCodec())
       .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
       .registerTypeAdapter(HttpServiceHandlerSpecification.class, new HttpServiceSpecificationCodec())
-      .registerTypeAdapter(ServiceWorkerSpecification.class, new ServiceWorkerSpecificationCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 

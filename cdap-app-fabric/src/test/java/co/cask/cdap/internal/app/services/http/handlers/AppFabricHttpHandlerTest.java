@@ -29,9 +29,8 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -41,7 +40,6 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
-import co.cask.cdap.internal.app.ServiceWorkerSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
@@ -1394,7 +1392,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     GsonBuilder gsonBuidler = new GsonBuilder();
     gsonBuidler.registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec());
     gsonBuidler.registerTypeAdapter(HttpServiceHandlerSpecification.class, new HttpServiceSpecificationCodec());
-    gsonBuidler.registerTypeAdapter(ServiceWorkerSpecification.class, new ServiceWorkerSpecificationCodec());
     Gson gson = gsonBuidler.create();
     ServiceSpecification specification = readResponse(response, ServiceSpecification.class, gson);
 
