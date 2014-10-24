@@ -12,3 +12,4 @@ CDAP How-To Guides and Tutorials
    How-To Guides </how-to-guides/index>
    Tutorials </tutorials>
    Apps and Packs </apps-packs>
+   Glossary </glossary>

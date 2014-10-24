@@ -5,7 +5,7 @@
 .. _operations-index:
 
 ============================================
-CDAP Operations
+Operations
 ============================================
 
 .. toctree::
@@ -20,4 +20,5 @@ CDAP Operations
 .. rubric:: Command-Line Interface
 
 Most of the administrative operations are also available more conveniently through the
-Command Line Interface. See this :ref:`section<cli>` for details.
+Command Line Interface. See :ref:`reference:cli` in the 
+:ref:`CDAP Reference Guide<reference:introduction>` for details.

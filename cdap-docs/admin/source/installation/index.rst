@@ -2,14 +2,14 @@
    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
-CDAP Administration
+Installation
 ============================================
 
 .. toctree::
    :maxdepth: 1
    
     Putting CDAP into Production <production>
-    Installation <installation>
+    Installation and Configuration <installation>
     Security <security>
     Monitoring <monitoring>
     Appendix: cdap-site.xml <cdap-site>
