@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
