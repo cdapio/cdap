@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import com.google.common.base.Preconditions;
@@ -50,7 +51,6 @@ import javax.annotation.Nullable;
  */
 public class InMemoryDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryDatasetFramework.class);
-  private static final int DEFAULT_DATASET_VERSION = 1;
 
   private DatasetDefinitionRegistryFactory registryFactory;
   private Map<String, ? extends DatasetModule> defaultModules;
@@ -87,7 +87,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
 
   @Override
   public int getLatestModuleVersion(String moduleName) throws DatasetManagementException {
-    return DEFAULT_DATASET_VERSION;
+    return Constants.DEFAULT_DATASET_TYPE_VERSION;
   }
 
   @Override

@@ -30,7 +30,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
-import com.sun.tools.javac.resources.version;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -50,7 +49,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -66,7 +64,6 @@ import javax.ws.rs.PathParam;
 public class DatasetTypeHandler extends AbstractHttpHandler {
   public static final String HEADER_CLASS_NAME = "X-Class-Name";
   public static final String HEADER_VERSION_NAME = "Version";
-  public static final int DEFAULT_HEADER_VERSION = 0;
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 

@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import com.sun.tools.javac.resources.version;
 
 import java.io.IOException;
 import java.util.Collection;

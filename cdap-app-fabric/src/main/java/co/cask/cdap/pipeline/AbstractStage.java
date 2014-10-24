@@ -39,7 +39,7 @@ import java.io.IOException;
  * @param <T> Type of object processed by this stage.
  */
 public abstract class AbstractStage<T> implements Stage {
-  protected static final int DEFAULT_MODULE_VERSION = 1;
+  private static final int DEFAULT_MODULE_VERSION = 1;
 
   private Context ctx;
   private TypeToken<T> typeToken;
