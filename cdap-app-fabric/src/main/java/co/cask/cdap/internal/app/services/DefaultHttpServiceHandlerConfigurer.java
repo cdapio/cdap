@@ -60,7 +60,7 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
     this.datasets = Sets.newHashSet();
     this.endpoints = Lists.newArrayList();
 
-    // Inspect the handler to grab all @UseDataset, @Property and endpoints exposed.
+    // Inspect the handler to grab all @UseDataset, @Property and endpoints.
     Reflections.visit(handler, TypeToken.of(handler.getClass()),
                       new DataSetFieldExtractor(datasets),
                       new PropertyFieldExtractor(propertyFields),

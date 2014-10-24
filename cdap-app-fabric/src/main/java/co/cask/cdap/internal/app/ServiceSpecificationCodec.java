@@ -120,10 +120,10 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
       // as it is not recorded in old spec. It's ok since the spec is only used to load data from MDS during redeploy.
       handlers.put(spec.get("name").getAsString(),
                    new HttpServiceHandlerSpecification(handlerClass,
-                                                 spec.get("name").getAsString(),
-                                                 spec.get("description").getAsString(),
-                                                 properties, ImmutableSet.<String>of(),
-                                                 ImmutableList.<ServiceHttpEndpoint>of()));
+                                                       spec.get("name").getAsString(),
+                                                       spec.get("description").getAsString(),
+                                                       properties, ImmutableSet.<String>of(),
+                                                       ImmutableList.<ServiceHttpEndpoint>of()));
     }
 
     // Generates worker specs.
