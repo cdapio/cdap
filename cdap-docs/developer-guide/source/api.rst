@@ -467,17 +467,20 @@ You can list all Datasets in CDAP by issuing an HTTP GET request to the URL::
 
 The response body will contain a JSON-formatted list of the existing Datasets::
 
-  {
-     "name":"cdap.user.purchases",
-     "type":"co.cask.cdap.api.dataset.lib.ObjectStore",
-     "properties":{
-        "schema":"...",
-        "type":"..."
-     },
-     "datasetSpecs":{
-        ...
-     }
-   }
+  [
+    {
+       "name":"cdap.user.purchases",
+       "type":"co.cask.cdap.api.dataset.lib.ObjectStore",
+       "properties":{
+          "schema":"...",
+          "type":"..."
+       },
+       "datasetSpecs":{
+          ...
+       }
+    }
+    ...
+  ]
 
 .. rst2pdf: PageBreak
 

@@ -50,6 +50,7 @@ public class ExploreExecutorService extends AbstractIdleService {
   private final ExploreService exploreService;
   private final DiscoveryService discoveryService;
   private final NettyHttpService httpService;
+  private final boolean startOnDemand;
   private Cancellable cancellable;
 
   @Inject
@@ -59,6 +60,7 @@ public class ExploreExecutorService extends AbstractIdleService {
                                 @Named(Constants.Service.EXPLORE_HTTP_USER_SERVICE) Set<HttpHandler> handlers) {
     this.exploreService = exploreService;
     this.discoveryService = discoveryService;
+    this.startOnDemand = cConf.getBoolean(Constants.Explore.START_ON_DEMAND);
 
     int workerThreads = cConf.getInt(Constants.Explore.WORKER_THREADS, 10);
     int execThreads = cConf.getInt(Constants.Explore.EXEC_THREADS, 10);
@@ -82,7 +84,9 @@ public class ExploreExecutorService extends AbstractIdleService {
 
     LOG.info("Starting {}...", ExploreExecutorService.class.getSimpleName());
 
-    exploreService.startAndWait();
+    if (!startOnDemand) {
+      exploreService.startAndWait();
+    }
 
     httpService.startAndWait();
     cancellable = discoveryService.register(new Discoverable() {

@@ -28,6 +28,7 @@ import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -80,16 +81,15 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   public void create(HttpRequest request, HttpResponder responder, @PathParam("name") String name)
   throws Exception {
 
-    String propsHeader = request.getHeader("instance-props");
-    Preconditions.checkArgument(propsHeader != null, "Missing required 'instance-props' header.");
-    String typeMetaHeader = request.getHeader("type-meta");
-    Preconditions.checkArgument(propsHeader != null, "Missing required 'type-meta' header.");
+    InternalDatasetCreationParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+                                                         InternalDatasetCreationParams.class);
+    Preconditions.checkArgument(params.getProperties() != null, "Missing required 'instanceProps' parameter.");
+    Preconditions.checkArgument(params.getTypeMeta() != null, "Missing required 'typeMeta' parameter.");
 
-    LOG.info("Creating dataset instance {}, type meta: {}, props: {}", name, typeMetaHeader, propsHeader);
+    DatasetProperties props = params.getProperties();
+    DatasetTypeMeta typeMeta = params.getTypeMeta();
 
-    DatasetProperties props = GSON.fromJson(propsHeader, DatasetProperties.class);
-    DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
-
+    LOG.info("Creating dataset instance {}, type meta: {}, props: {}", name, typeMeta, props);
     DatasetType type = dsFramework.getDatasetType(typeMeta, null);
 
     if (type == null) {
@@ -110,16 +110,15 @@ public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
   public void drop(HttpRequest request, HttpResponder responder, @PathParam("name") String instanceName)
     throws Exception {
 
-    String specHeader = request.getHeader("instance-spec");
-    Preconditions.checkArgument(specHeader != null, "Missing required 'instance-spec' header.");
-    String typeMetaHeader = request.getHeader("type-meta");
-    Preconditions.checkArgument(specHeader != null, "Missing required 'type-meta' header.");
+    InternalDatasetDropParams params = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+                                                     InternalDatasetDropParams.class);
+    Preconditions.checkArgument(params.getInstanceSpec() != null, "Missing required 'instanceSpec' parameter.");
+    Preconditions.checkArgument(params.getTypeMeta() != null, "Missing required 'typeMeta' parameter.");
 
-    LOG.info("Dropping dataset with spec: {}, type meta: {}", specHeader, typeMetaHeader);
+    DatasetSpecification spec = params.getInstanceSpec();
+    DatasetTypeMeta typeMeta = params.getTypeMeta();
 
-    DatasetSpecification spec = GSON.fromJson(specHeader, DatasetSpecification.class);
-    DatasetTypeMeta typeMeta = GSON.fromJson(typeMetaHeader, DatasetTypeMeta.class);
-
+    LOG.info("Dropping dataset with spec: {}, type meta: {}", spec, typeMeta);
     DatasetType type = dsFramework.getDatasetType(typeMeta, null);
 
     if (type == null) {
