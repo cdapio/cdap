@@ -50,7 +50,7 @@ public final class ServiceEndpointExtractor extends MethodVisitor {
   public void visit(Object instance, TypeToken<?> inspectType,
                     TypeToken<?> declareType, Method method) throws Exception {
 
-    Path classPathAnnotation = instance.getClass().getAnnotation(Path.class);
+    Path classPathAnnotation = inspectType.getRawType().getAnnotation(Path.class);
     Path methodPathAnnotation = method.getAnnotation(Path.class);
 
     if (methodPathAnnotation == null && classPathAnnotation == null) {
@@ -58,9 +58,8 @@ public final class ServiceEndpointExtractor extends MethodVisitor {
     }
 
     // Find one or more request type annotations present on the method.
-    Set<Class<? extends Annotation>> acceptedMethodTypes = ImmutableSet.of(GET.class, POST.class,
-                                                                           DELETE.class, PUT.class,
-                                                                           OPTIONS.class, HEAD.class);
+    Set<Class<? extends Annotation>> acceptedMethodTypes = ImmutableSet.of(GET.class, POST.class, DELETE.class,
+                                                                           PUT.class, OPTIONS.class, HEAD.class);
 
     Set<Class<? extends Annotation>> methodAnnotations = Sets.newHashSet();
     for (Annotation annotation : method.getAnnotations()) {
@@ -74,12 +73,11 @@ public final class ServiceEndpointExtractor extends MethodVisitor {
       String methodType  = methodTypeClz.getAnnotation(HttpMethod.class).value();
       String endpoint = "/";
 
-      String methodPath = methodPathAnnotation != null ? methodPathAnnotation.value() : "";
-      String classPath = classPathAnnotation != null ? classPathAnnotation.value() : "";
-      endpoint += String.format("%s/%s", classPath, methodPath);
+      endpoint = classPathAnnotation == null ? endpoint : endpoint + classPathAnnotation.value();
+      endpoint = methodPathAnnotation == null ? endpoint : endpoint + "/" + methodPathAnnotation.value();
 
-      // Replace consecutive instances of / with a single instance, and remove trailing instances of /.
-      endpoint = endpoint.replaceAll("/+", "/").replaceAll("\\/+\\z", "");
+      // Replace consecutive instances of / with a single instance.
+      endpoint = endpoint.replaceAll("/+", "/");
       endpoints.add(new ServiceHttpEndpoint(methodType, endpoint));
     }
   }
