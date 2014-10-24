@@ -43,12 +43,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-common-unit-test</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>
     </dependency>
@@ -128,14 +122,6 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-common</artifactId>
     </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-minicluster</artifactId>
-    </dependency>
   </dependencies>
 
   <build>
@@ -156,21 +142,6 @@
         </includes>
       </resource>
     </resources>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
-        <executions>
-          <execution>
-            <id>test-jar</id>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
   </build>
 
 </project>
