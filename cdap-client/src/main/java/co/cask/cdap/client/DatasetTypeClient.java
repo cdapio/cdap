@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.DatasetTypeNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
@@ -26,6 +27,7 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import javax.inject.Inject;
@@ -62,13 +64,36 @@ public class DatasetTypeClient {
    *
    * @param typeName name of the dataset type
    * @return {@link DatasetTypeMeta} of the dataset type
+   * @throws DatasetTypeNotFoundException if the dataset type could not be found
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public DatasetTypeMeta get(String typeName) throws IOException, UnAuthorizedAccessTokenException {
+  public DatasetTypeMeta get(String typeName)
+    throws DatasetTypeNotFoundException, IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("data/types/%s", typeName));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new DatasetTypeNotFoundException(typeName);
+    }
+
     return ObjectResponse.fromJsonBody(response, DatasetTypeMeta.class).getResponseObject();
+  }
+
+  /**
+   * Checks if a dataset type exists.
+   *
+   * @param typeName name of the dataset type to check
+   * @return true if the dataset type exists
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public boolean exists(String typeName)
+    throws DatasetTypeNotFoundException, IOException, UnAuthorizedAccessTokenException {
+    URL url = config.resolveURL(String.format("data/types/%s", typeName));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
   }
 
 }

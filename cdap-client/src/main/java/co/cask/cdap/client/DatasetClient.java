@@ -126,6 +126,21 @@ public class DatasetClient {
   }
 
   /**
+   * Checks if a dataset exists.
+   *
+   * @param datasetName Name of the dataset to check
+   * @return true if the dataset exists
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public boolean exists(String datasetName) throws IOException, UnAuthorizedAccessTokenException {
+    URL url = config.resolveURL(String.format("data/datasets/%s", datasetName));
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
+  }
+
+  /**
    * Truncates a dataset. This will clear all data belonging to the dataset.
    *
    * @param datasetName Name of the dataset to truncate

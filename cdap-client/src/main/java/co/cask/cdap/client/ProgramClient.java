@@ -40,6 +40,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 /**
@@ -125,6 +126,36 @@ public class ProgramClient {
     }
 
     return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
+  }
+
+  /**
+   * Waits for a program to have a certain status.
+   *
+   * @param appId ID of the application that the program belongs to
+   * @param programType type of the program
+   * @param programId name of the program
+   * @param status the desired status
+   * @param timeout how long to wait in milliseconds until timing out
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if we timed out waiting for the status
+   */
+  public void waitForStatus(String appId, ProgramType programType, String programId, String status, long timeout)
+    throws UnAuthorizedAccessTokenException, IOException, ProgramNotFoundException, TimeoutException {
+    long startTime = System.currentTimeMillis();
+    while (System.currentTimeMillis() - startTime < timeout) {
+      if (status.equals(getStatus(appId, programType, programId))) {
+        return;
+      }
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // NO-OP
+      }
+    }
+    throw new TimeoutException("Timed out waiting for " + programType.getPrettyName() +
+                                 "'" + appId + ":" + programId + "' to be running");
   }
 
   /**

@@ -61,6 +61,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
     // deploy app
     LOG.info("Deploying app");
     appClient.deploy(createAppJarFile(FakeApp.class));
+    appClient.waitForDeployed(FakeApp.NAME, 30000);
     Assert.assertEquals(1, appClient.list().size());
 
     // check program list
@@ -92,6 +93,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
     // delete app
     LOG.info("Deleting app");
     appClient.delete(FakeApp.NAME);
+    appClient.waitForDeleted(FakeApp.NAME, 30000);
     Assert.assertEquals(0, appClient.list().size());
 
     // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite

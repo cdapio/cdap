@@ -120,6 +120,21 @@ public class DatasetModuleClient {
   }
 
   /**
+   * Checks if a dataset module exists.
+   *
+   * @param moduleName name of the dataset module to check
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public boolean exists(String moduleName) throws IOException, UnAuthorizedAccessTokenException {
+    URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_CONFLICT,
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
+  }
+
+  /**
    * Deletes all dataset modules.
    *
    * @throws DatasetModuleCannotBeDeletedException if one of the dataset modules cannot be deleted,

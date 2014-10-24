@@ -38,6 +38,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 /**
@@ -80,6 +81,72 @@ public class ApplicationClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(appId);
     }
+  }
+
+  /**
+   * Checks if an application exists.
+   *
+   * @param appId ID of the application to check
+   * @return true if the application exists
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public boolean exists(String appId) throws IOException, UnAuthorizedAccessTokenException {
+    HttpResponse response = restClient.execute(HttpMethod.DELETE, config.resolveURL("apps/" + appId),
+                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
+  }
+
+  /**
+   * Waits for an application to be deployed.
+   *
+   * @param appId ID of the application to check
+   * @param timeout milliseconds before timing out
+   * @throws TimeoutException if the application was not yet deployed before {@code timeout} milliseconds
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public void waitForDeployed(String appId, long timeout)
+    throws TimeoutException, IOException, UnAuthorizedAccessTokenException {
+
+    long startTime = System.currentTimeMillis();
+    while (System.currentTimeMillis() - startTime < timeout) {
+      if (exists(appId)) {
+        return;
+      }
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // NO-OP
+      }
+    }
+    throw new TimeoutException("Timed out waiting for application '" + appId + "' to be deployed");
+  }
+
+  /**
+   * Waits for an application to be deleted.
+   *
+   * @param appId ID of the application to check
+   * @param timeout milliseconds before timing out
+   * @throws TimeoutException if the application was not yet deleted before {@code timeout} milliseconds
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public void waitForDeleted(String appId, long timeout)
+    throws TimeoutException, IOException, UnAuthorizedAccessTokenException {
+
+    long startTime = System.currentTimeMillis();
+    while (System.currentTimeMillis() - startTime < timeout) {
+      if (!exists(appId)) {
+        return;
+      }
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // NO-OP
+      }
+    }
+    throw new TimeoutException("Timed out waiting for application '" + appId + "' to be deleted");
   }
 
   /**
