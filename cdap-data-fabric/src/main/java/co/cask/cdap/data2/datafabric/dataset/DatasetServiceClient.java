@@ -306,14 +306,4 @@ class DatasetServiceClient {
     }
     return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), Integer.class);
   }
-
-  public boolean isDefaultType(String typeName) throws DatasetManagementException {
-    HttpResponse response = doRequest(HttpMethod.GET, "type/" + typeName + "/default");
-
-    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to get type %s, details: %s",
-                                                         typeName, getDetails(response)));
-    }
-    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), Boolean.class);
-  }
 }

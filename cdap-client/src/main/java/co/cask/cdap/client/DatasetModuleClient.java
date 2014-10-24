@@ -83,7 +83,7 @@ public class DatasetModuleClient {
 
     URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
     Map<String, String> headers = ImmutableMap.of("X-Class-Name", className,
-                                                  "Version", String.valueOf(Constants.DEFAULT_DATATYPE_VERSION));
+                                                  "Version", String.valueOf(Constants.DEFAULT_DATASET_TYPE_VERSION));
     HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(moduleJarFile).build();
 
     HttpResponse response = restClient.upload(request, config.getAccessToken(),

@@ -244,6 +244,6 @@ public class HBaseOrderedTable extends BufferingOrderedTable {
 
   @Override
   public int getVersion() {
-    return Constants.DEFAULT_DATATYPE_VERSION;
+    return Constants.DEFAULT_DATASET_TYPE_VERSION;
   }
 }

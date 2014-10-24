@@ -30,6 +30,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
 import com.google.inject.Inject;
+import com.sun.tools.javac.resources.version;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -169,19 +170,25 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       if (versionInfo.getVersion() > version) {
         // not the latest version, newer version already exists, fail.
         message = String.format("Cannot add module %s module, newer version %s already exists",
-                                       name, versionInfo.getVersion());
-      } else if ((versionInfo.getVersion() == version) && !Arrays.equals(versionInfo.getCheckSum(), archiveCheckSum)) {
-        // dataset with same version exists, but checksum doesn't match, so we send an error
-        message = String.format("Cannot add module %s module, version %s already exists and checksum does not match",
                                 name, versionInfo.getVersion());
+      }
+      if (versionInfo.getVersion() == version) {
+        //same version as the latest existing version
+        if (!Arrays.equals(versionInfo.getCheckSum(), archiveCheckSum)) {
+          //but checksum doesn't match, so we send an error
+          message = String.format("Cannot add module %s module, version %s already exists and checksum does not match",
+                                  name, versionInfo.getVersion());
+        } else {
+          //checksum matches, no need to add module, as its already the same as latest , we just send success.
+          responder.sendStatus(HttpResponseStatus.OK);
+          return;
+        }
       }
       if (message != null) {
         LOG.warn(message);
         responder.sendError(HttpResponseStatus.CONFLICT, message);
-      } else {
-        responder.sendStatus(HttpResponseStatus.OK);
+        return;
       }
-      return;
     }
 
     try {

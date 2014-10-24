@@ -97,6 +97,6 @@ public class LevelDBMetricsTable implements MetricsTable {
 
   @Override
   public int getVersion() {
-    return Constants.DEFAULT_DATATYPE_VERSION;
+    return Constants.DEFAULT_DATASET_TYPE_VERSION;
   }
 }
