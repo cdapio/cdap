@@ -377,7 +377,7 @@ public class TestFrameworkTest extends TestBase {
   @Test
   public void testAppWithDatasetVersions() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithDatasetVersion.class);
-    Assert.assertEquals(1, getDatasetVersion(FakeDataset.class.getName()));
+    Assert.assertEquals(1, getDatasetVersion(VersionedDataset.class.getName()));
 
     applicationManager.stopAll();
   }

@@ -24,12 +24,12 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 
 /**
- *
+ * Simple Dataset with version
  */
 
-public class FakeDataset extends AbstractDataset {
+public class VersionedDataset extends AbstractDataset {
 
-  public FakeDataset(DatasetSpecification spec,
+  public VersionedDataset(DatasetSpecification spec,
                           @EmbeddedDataset("unique") KeyValueTable uniqueCountTable) {
     super(spec.getName(), uniqueCountTable);
   }

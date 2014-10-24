@@ -39,7 +39,7 @@ public class AppWithDatasetVersion extends AbstractApplication {
   public void configure() {
     setName(NAME);
     addProcedure(new NoOpProcedure());
-    createDataset(DS_NAME, FakeDataset.class);
+    createDataset(DS_NAME, VersionedDataset.class);
   }
 
   public static final class NoOpProcedure extends AbstractProcedure {
