@@ -32,7 +32,7 @@
 
 # Author
 
-Author:: Cask (<ops@cask.co>)
+Author:: Cask Data, Inc. (<ops@cask.co>)
 
 # Testing
 
