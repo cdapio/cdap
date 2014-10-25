@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -100,15 +101,31 @@ public class ServiceProgramRunner implements ProgramRunner {
                                                                        ServiceSpecification spec) {
     Table<String, Integer, ProgramController> components = HashBasedTable.create();
 
-    // Starts the http service. The name is the same as the service name.
-    startComponent(program, program.getName(), spec.getInstances(), runId, userArguments, components);
+    try {
+      // Starts the http service. The name is the same as the service name.
+      startComponent(program, program.getName(), spec.getInstances(), runId, userArguments, components);
 
-    // Starts all Workers
-    for (Map.Entry<String, ServiceWorkerSpecification> entry : spec.getWorkers().entrySet()) {
-      ServiceWorkerSpecification workerSpec = entry.getValue();
-      startComponent(program, workerSpec.getName(), workerSpec.getInstances(), runId, userArguments, components);
+      // Starts all Workers
+      for (Map.Entry<String, ServiceWorkerSpecification> entry : spec.getWorkers().entrySet()) {
+        ServiceWorkerSpecification workerSpec = entry.getValue();
+        startComponent(program, workerSpec.getName(), workerSpec.getInstances(), runId, userArguments, components);
+      }
+    } catch (Throwable t) {
+      try {
+        // Need to stop all started components
+        Futures.successfulAsList(Iterables.transform(components.values(),
+         new Function<ProgramController, ListenableFuture<?>>() {
+           @Override
+           public ListenableFuture<?> apply(ProgramController controller) {
+             return controller.stop();
+           }
+         })).get();
+      } catch (Exception e) {
+        LOG.error("Failed to stop all service components upon startup failure.");
+      }
+      throw Throwables.propagate(t);
+
     }
-
     return components;
   }
 
