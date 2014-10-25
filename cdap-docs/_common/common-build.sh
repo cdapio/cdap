@@ -277,6 +277,7 @@ function check_includes() {
 }
 
 function test_includes () {
+  # For an example of over-riding this function, see developer-guide/build.sh
   echo "No includes to be tested."
 }
 
@@ -305,6 +306,7 @@ function build_includes() {
 }
 
 function pandoc_includes() {
+  # For an example of over-riding this function, see developer-guide/build.sh
   echo "No includes to be translated."
 }
 

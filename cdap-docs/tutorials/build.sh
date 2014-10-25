@@ -27,9 +27,8 @@ CHECK_INCLUDES=$TRUE
 function guide_rewrite() {
   INCLUDES_DIR=$1
   GUIDE=$2
-  REDIRECT_T="\.\./\.\./\.\./\.\." # 4 redirects, escaped
-  REDIRECT_T="\.\./\.\./\.\./\.\./\.\." #5 redirects, escaped
-  REDIRECT_S="../../../../.." #5 redirects
+  REDIRECT_T="\.\./\.\./\.\./\.\./\.\." # 5 redirects, escaped
+  REDIRECT_S="../../../../.." # 5 redirects
   
   mkdir $INCLUDES_DIR/$GUIDE
   sed "s|image:: docs/images|image:: $REDIRECT_T/$GUIDE/docs/images|g" $INCLUDES_DIR/$REDIRECT_S/$GUIDE/README.rst > $INCLUDES_DIR/$GUIDE/README.rst
