@@ -54,6 +54,6 @@ if NOT "%line%" == "6" (
 )
 endlocal
 
-%JAVACMD% -classpath %CLASSPATH% co.cask.cdap.shell.CLIMain %*
+%JAVACMD% -classpath %CLASSPATH% co.cask.cdap.cli.CLIMain %*
 
 :FINALLY

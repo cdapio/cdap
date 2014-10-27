@@ -30,7 +30,7 @@
   <name>CDAP CLI</name>
 
   <properties>
-    <main.class>co.cask.cdap.shell.CLIMain</main.class>
+    <main.class>co.cask.cdap.cli.CLIMain</main.class>
   </properties>
 
   <dependencies>
@@ -38,6 +38,10 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-client</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>co.cask.common</groupId>
+      <artifactId>common-cli</artifactId>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
