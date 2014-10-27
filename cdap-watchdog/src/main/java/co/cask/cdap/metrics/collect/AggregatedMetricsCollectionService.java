@@ -110,8 +110,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   }
 
   @Override
-  public final MetricsCollector getCollector(final MetricsScope scope, final String context,
-                                             final String runId) {
+  public final MetricsCollector getCollector(final MetricsScope scope, final String context, final String runId) {
     return collectors.getUnchecked(new CollectorKey(scope, context, runId));
   }
 

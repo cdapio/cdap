@@ -35,6 +35,7 @@ public class ServiceRunnableMetrics extends AbstractProgramMetrics {
 
   public ServiceRunnableMetrics(MetricsCollectionService collectionService, String metricsContext) {
     super(collectionService.getCollector(
-      MetricsScope.USER, metricsContext, "0"));
+      MetricsScope.USER, metricsContext, "0"
+    ));
   }
 }
