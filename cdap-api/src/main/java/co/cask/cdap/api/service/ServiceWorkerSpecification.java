@@ -19,28 +19,85 @@ package co.cask.cdap.api.service;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * Specification for user Service's {@link ServiceWorker}s.
+ * Specification for {@link ServiceWorker}s.
  */
-public interface ServiceWorkerSpecification extends ProgramSpecification, PropertyProvider {
+public final class ServiceWorkerSpecification implements ProgramSpecification, PropertyProvider {
+  private final String className;
+  private final String name;
+  private final String description;
+  private final Map<String, String> properties;
+  private final Set<String> datasets;
+  private final Resources resources;
+  private final int instances;
 
   /**
-   * @return Resources requirements which will be used to run the serviceWorker.
+   * Create a new instance of ServiceWorkerSpecification.
    */
-  Resources getResources();
+  public ServiceWorkerSpecification(String className, String name, String description,
+                                    Map<String, String> properties, Set<String> datasets,
+                                    Resources resources, int instances) {
+    this.className = className;
+    this.name = name;
+    this.description = description;
+    this.properties = Collections.unmodifiableMap(new HashMap<String, String>(properties));
+    this.datasets = Collections.unmodifiableSet(new HashSet<String>(datasets));
+    this.resources = resources;
+    this.instances = instances;
+  }
+
+  @Override
+  public String getClassName() {
+    return className;
+  }
+
+  @Override
+  public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getDescription() {
+    return description;
+  }
+
+  @Override
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return properties.get(key);
+  }
 
   /**
-   * @return An immutable set of {@link co.cask.cdap.api.dataset.Dataset Datasets} name that
-   *         used by the {@link HttpServiceHandler}.
+   * @return Resources requirements which will be used to run the {@link ServiceWorker}.
    */
-  Set<String> getDatasets();
+  public Resources getResources() {
+    return resources;
+  }
+
+  /**
+   * @return An immutable set of {@link Dataset} name that are used by the {@link HttpServiceHandler}.
+   */
+  public Set<String> getDatasets() {
+    return datasets;
+  }
 
   /**
    * @return Number of instances for the worker.
    */
-  int getInstances();
+  public int getInstances() {
+    return instances;
+  }
 }

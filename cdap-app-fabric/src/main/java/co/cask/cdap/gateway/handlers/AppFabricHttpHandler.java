@@ -1697,6 +1697,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     runnableSpecification(request, responder, appId, ProgramType.WORKFLOW, workflowId);
   }
 
+  @GET
+  @Path("/apps/{app-id}/services/{service-id}")
+  public void serviceSpecification(HttpRequest request, HttpResponder responder,
+                                   @PathParam("app-id") String appId,
+                                   @PathParam("service-id") String serviceId) {
+    runnableSpecification(request, responder, appId, ProgramType.SERVICE, serviceId);
+  }
+
 
 
   private void runnableSpecification(HttpRequest request, HttpResponder responder,

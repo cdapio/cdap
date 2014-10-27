@@ -340,7 +340,7 @@ public class TestFrameworkTest extends TestBase {
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(response.getResponseCode(), 200);
+    Assert.assertEquals(200, response.getResponseCode());
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);

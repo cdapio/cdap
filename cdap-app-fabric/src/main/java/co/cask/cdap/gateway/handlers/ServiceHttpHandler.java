@@ -33,10 +33,11 @@ import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.ServiceMeta;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -52,7 +53,7 @@ import javax.ws.rs.PathParam;
 
 
 /**
- *  Handler class for User services.
+ *  {@link HttpHandler} for User Services.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
@@ -86,36 +87,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
     programList(request, responder, ProgramType.SERVICE, appId, store);
-  }
-
-  /**
-   * Return the service details of a given service.
-   */
-  @Path("/apps/{app-id}/services/{service-id}")
-  @GET
-  public void getService(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") String appId,
-                         @PathParam("service-id") String serviceId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ServiceSpecification spec = getServiceSpecification(accountId, appId, serviceId);
-      if (spec == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      responder.sendJson(HttpResponseStatus.OK,
-                         new ServiceMeta(spec.getName(), spec.getName(), spec.getDescription(),
-                                         ImmutableSet.<String>builder().add(spec.getName())
-                                                                       .addAll(spec.getWorkers().keySet()).build()));
-
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
   }
 
   /**
@@ -225,9 +196,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/services/{service-id}/live-info")
-  public void serviceLifeInfo(HttpRequest request, HttpResponder responder,
-                       @PathParam("app-id") String appId,
-                       @PathParam("service-id") String serviceId) {
+  public void serviceLiveInfo(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") String appId,
+                              @PathParam("service-id") String serviceId) {
     getLiveInfo(request, responder, appId, serviceId, ProgramType.SERVICE, runtimeService);
   }
 
