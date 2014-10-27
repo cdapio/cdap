@@ -27,7 +27,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -163,9 +162,6 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
-
-  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
-    = new TypeToken<Map<String, String>>() { }.getType();
 
   /**
    * Json serializer.
@@ -1878,7 +1874,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       Map<String, String> content = null;
       try {
-        content = GSON.fromJson(postBody, MAP_STRING_STRING_TYPE);
+        content = GSON.fromJson(postBody, STRING_MAP_TYPE);
       } catch (JsonSyntaxException e) {
         responder.sendError(HttpResponseStatus.BAD_REQUEST, "Not a valid body specified.");
         return;
@@ -2585,7 +2581,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.FLOW, null);
+    programList(request, responder, ProgramType.FLOW, null, store);
   }
 
   /**
@@ -2594,7 +2590,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/procedures")
   public void getAllProcedures(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.PROCEDURE, null);
+    programList(request, responder, ProgramType.PROCEDURE, null, store);
   }
 
   /**
@@ -2603,7 +2599,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.MAPREDUCE, null);
+    programList(request, responder, ProgramType.MAPREDUCE, null, store);
   }
 
   /**
@@ -2612,16 +2608,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.SPARK, null);
-  }
-
-  /**
-   * Returns a list of Services associated with an account.
-   */
-  @GET
-  @Path("/services")
-  public void getAllServices(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.SERVICE, null);
+    programList(request, responder, ProgramType.SPARK, null, store);
   }
 
   /**
@@ -2630,7 +2617,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.WORKFLOW, null);
+    programList(request, responder, ProgramType.WORKFLOW, null, store);
   }
 
   /**
@@ -2659,7 +2646,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.FLOW, appId);
+    programList(request, responder, ProgramType.FLOW, appId, store);
   }
 
   /**
@@ -2669,7 +2656,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.PROCEDURE, appId);
+    programList(request, responder, ProgramType.PROCEDURE, appId, store);
   }
 
   /**
@@ -2679,7 +2666,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.MAPREDUCE, appId);
+    programList(request, responder, ProgramType.MAPREDUCE, appId, store);
   }
 
   /**
@@ -2689,7 +2676,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.SPARK, appId);
+    programList(request, responder, ProgramType.SPARK, appId, store);
   }
 
   /**
@@ -2699,7 +2686,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows")
   public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.WORKFLOW, appId);
+    programList(request, responder, ProgramType.WORKFLOW, appId, store);
   }
 
 
@@ -2744,102 +2731,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception : ", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  private void programList(HttpRequest request, HttpResponder responder, ProgramType type, String appid) {
-    if (appid != null && appid.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is null or empty");
-      return;
-    }
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      String list;
-      if (appid == null) {
-        Id.Account accId = Id.Account.from(accountId);
-        list = listPrograms(accId, type);
-      } else {
-        Id.Application appId = Id.Application.from(accountId, appid);
-        list = listProgramsByApp(appId, type);
-      }
-
-      if (list.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else {
-        responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private String listProgramsByApp(Id.Application appId, ProgramType type) throws Exception {
-    ApplicationSpecification appSpec;
-    try {
-      appSpec = store.getApplication(appId);
-      if (appSpec == null) {
-        return "";
-      } else {
-        return listPrograms(Collections.singletonList(appSpec), type);
-      }
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      throw new Exception("Could not retrieve application spec for " + appId.toString() + ", reason: " +
-                            throwable.getMessage());
-    }
-  }
-
-  private String listPrograms(Id.Account accId, ProgramType type) throws Exception {
-    try {
-      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(accId);
-      if (appSpecs == null) {
-        return "";
-      } else {
-        return listPrograms(appSpecs, type);
-      }
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      throw new Exception("Could not retrieve application spec for " + accId.toString() + ", reason: " +
-                            throwable.getMessage());
-    }
-  }
-
-  private String listPrograms(Collection<ApplicationSpecification> appSpecs, ProgramType type) throws Exception {
-    List<ProgramRecord> result = Lists.newArrayList();
-    for (ApplicationSpecification appSpec : appSpecs) {
-      if (type == ProgramType.FLOW) {
-        for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-          result.add(makeProgramRecord(appSpec.getName(), flowSpec, ProgramType.FLOW));
-        }
-      } else if (type == ProgramType.PROCEDURE) {
-        for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
-          result.add(makeProgramRecord(appSpec.getName(), procedureSpec, ProgramType.PROCEDURE));
-        }
-      } else if (type == ProgramType.MAPREDUCE) {
-        for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
-          result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
-        }
-      } else if (type == ProgramType.SPARK) {
-        for (SparkSpecification sparkSpec : appSpec.getSpark().values()) {
-          result.add(makeProgramRecord(appSpec.getName(), sparkSpec, ProgramType.SPARK));
-        }
-      } else if (type == ProgramType.SERVICE) {
-        for (ServiceSpecification serviceSpec : appSpec.getServices().values()) {
-          result.add(makeProgramRecord(appSpec.getName(), serviceSpec, ProgramType.SERVICE));
-        }
-      } else if (type == ProgramType.WORKFLOW) {
-        for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
-          result.add(makeProgramRecord(appSpec.getName(), wfSpec, ProgramType.WORKFLOW));
-        }
-      } else {
-        throw new Exception("Unknown program type: " + type.name());
-      }
-    }
-    return GSON.toJson(result);
   }
 
   private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
@@ -3192,10 +3083,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
     return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
-  }
-
-  private static ProgramRecord makeProgramRecord (String appId, ProgramSpecification spec, ProgramType type) {
-    return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
   private static DatasetRecord makeDataSetRecord(String name, String classname) {

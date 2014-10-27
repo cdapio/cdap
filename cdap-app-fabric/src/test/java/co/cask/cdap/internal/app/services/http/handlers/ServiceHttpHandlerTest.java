@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.ProgramRecord;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -32,6 +33,19 @@ import java.util.Map;
  * Test User Services handler in app-fabric - ServiceHttpHandler.java.
  */
 public class ServiceHttpHandlerTest extends AppFabricTestBase {
+
+  @Test
+  public void testAllServices() throws Exception {
+    deploy(AppWithServices.class);
+
+    HttpResponse response = doGet("/v2/services");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<List<ProgramRecord>>() { }.getType();
+    List<ProgramRecord> programRecords = readResponse(response, typeToken);
+
+    Assert.assertEquals(1, programRecords.size());
+    Assert.assertEquals("NoOpService", programRecords.get(0).getId());
+  }
 
   @Test
   public void testServices() throws Exception {

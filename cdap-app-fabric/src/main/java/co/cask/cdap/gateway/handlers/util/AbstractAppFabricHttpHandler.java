@@ -16,18 +16,33 @@
 
 package co.cask.cdap.gateway.handlers.util;
 
+import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
+import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -36,6 +51,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
@@ -46,15 +64,12 @@ import javax.annotation.Nullable;
 public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractAppFabricHttpHandler.class);
 
-  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
-    = new TypeToken<Map<String, String>>() { }.getType();
-
   /**
    * Json serializer.
    */
   private static final Gson GSON = new Gson();
 
-  private static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  protected static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   public AbstractAppFabricHttpHandler(Authenticator authenticator) {
     super(authenticator);
@@ -96,6 +111,108 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     } finally {
       reader.close();
     }
+  }
+
+  protected void programList(HttpRequest request, HttpResponder responder,
+                             ProgramType type, String appid, Store store) {
+    if (appid != null && appid.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is null or empty");
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      String list;
+      if (appid == null) {
+        Id.Account accId = Id.Account.from(accountId);
+        list = listPrograms(accId, type, store);
+      } else {
+        Id.Application appId = Id.Application.from(accountId, appid);
+        list = listProgramsByApp(appId, type, store);
+      }
+
+      if (list.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  protected String listPrograms(Id.Account accId, ProgramType type, Store store) throws Exception {
+    try {
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(accId);
+      if (appSpecs == null) {
+        return "";
+      } else {
+        return listPrograms(appSpecs, type);
+      }
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new Exception("Could not retrieve application spec for " + accId.toString() + ", reason: " +
+                            throwable.getMessage());
+    }
+  }
+
+  private String listProgramsByApp(Id.Application appId, ProgramType type, Store store) throws Exception {
+    ApplicationSpecification appSpec;
+    try {
+      appSpec = store.getApplication(appId);
+      if (appSpec == null) {
+        return "";
+      } else {
+        return listPrograms(Collections.singletonList(appSpec), type);
+      }
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new Exception("Could not retrieve application spec for " + appId.toString() + ", reason: " +
+                            throwable.getMessage());
+    }
+  }
+
+  protected String listPrograms(Collection<ApplicationSpecification> appSpecs, ProgramType type) throws Exception {
+    List<ProgramRecord> result = Lists.newArrayList();
+    for (ApplicationSpecification appSpec : appSpecs) {
+      if (type == ProgramType.FLOW) {
+        for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), flowSpec, ProgramType.FLOW));
+        }
+      } else if (type == ProgramType.PROCEDURE) {
+        for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), procedureSpec, ProgramType.PROCEDURE));
+        }
+      } else if (type == ProgramType.MAPREDUCE) {
+        for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
+        }
+      } else if (type == ProgramType.SPARK) {
+        for (SparkSpecification sparkSpec : appSpec.getSpark().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), sparkSpec, ProgramType.SPARK));
+        }
+      } else if (type == ProgramType.SERVICE) {
+        for (ServiceSpecification serviceSpec : appSpec.getServices().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), serviceSpec, ProgramType.SERVICE));
+        }
+      } else if (type == ProgramType.WORKFLOW) {
+        for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), wfSpec, ProgramType.WORKFLOW));
+        }
+      } else {
+        throw new Exception("Unknown program type: " + type.name());
+      }
+    }
+    return GSON.toJson(result);
+  }
+
+
+  protected static ProgramRecord makeProgramRecord (String appId, ProgramSpecification spec, ProgramType type) {
+    return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
   /**

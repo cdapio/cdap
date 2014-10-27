@@ -33,7 +33,6 @@ import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.ServiceMeta;
@@ -41,7 +40,6 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -49,7 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -78,33 +75,21 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return the list of user twill apps for an application.
+   * Returns a list of Services associated with an account.
+   */
+  @GET
+  @Path("/services")
+  public void getAllServices(HttpRequest request, HttpResponder responder) {
+    programList(request, responder, ProgramType.SERVICE, null, store);
+  }
+
+  /**
+   * Return the list of user Services in an application.
    */
   @Path("/apps/{app-id}/services")
   @GET
-  public void listServices(HttpRequest request, HttpResponder responder,
-                           @PathParam("app-id") String appId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
-      if (spec != null) {
-        List<ProgramRecord> services = Lists.newArrayList();
-        for (Map.Entry<String, ServiceSpecification> entry : spec.getServices().entrySet()) {
-          ServiceSpecification specification = entry.getValue();
-          services.add(new ProgramRecord(ProgramType.SERVICE, appId, specification.getName(),
-                                         specification.getName(), specification.getDescription()));
-        }
-        responder.sendJson(HttpResponseStatus.OK, services);
-      } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
+    programList(request, responder, ProgramType.SERVICE, appId, store);
   }
 
   /**
