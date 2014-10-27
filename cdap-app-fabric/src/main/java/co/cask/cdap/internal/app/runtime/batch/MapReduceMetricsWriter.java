@@ -70,9 +70,6 @@ public class MapReduceMetricsWriter {
     int memoryPerMapper = jobConf.getConfiguration().getInt(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB);
     int memoryPerReducer = jobConf.getConfiguration().getInt(Job.REDUCE_MEMORY_MB, Job.DEFAULT_REDUCE_MEMORY_MB);
 
-    // mapred counters are running counters whereas our metrics timeseries and aggregates make more
-    // sense as incremental numbers.  So we want to subtract the current counter value from the previous before
-    // emitting to the metrics system.
     long mapInputRecords = getTaskCounter(TaskCounter.MAP_INPUT_RECORDS);
     long mapOutputRecords = getTaskCounter(TaskCounter.MAP_OUTPUT_RECORDS);
     long mapOutputBytes = getTaskCounter(TaskCounter.MAP_OUTPUT_BYTES);
