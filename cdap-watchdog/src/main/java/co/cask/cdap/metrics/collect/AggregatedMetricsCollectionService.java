@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -25,6 +26,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.util.concurrent.AbstractScheduledService;
+import com.yammer.metrics.core.Metric;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +63,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
         public AggregatedMetricsEmitter load(EmitterKey key) throws Exception {
           return new AggregatedMetricsEmitter(key.getCollectorKey().getContext(),
                                               key.getCollectorKey().getRunId(),
-                                              key.getMetric());
+                                              key.getMetric(), key.getCollectorKey().getType());
         }
       });
   }
@@ -110,8 +112,9 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
   }
 
   @Override
-  public final MetricsCollector getCollector(final MetricsScope scope, final String context, final String runId) {
-    return collectors.getUnchecked(new CollectorKey(scope, context, runId));
+  public final MetricsCollector getCollector(final MetricsScope scope, final String context,
+                                             final String runId, final MetricContentType type) {
+    return collectors.getUnchecked(new CollectorKey(scope, context, runId, type));
   }
 
   @Override
@@ -163,6 +166,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
           public void increment(String metricName, int value, String... tags) {
             emitters.getUnchecked(keys.getUnchecked(metricName)).increment(value, tags);
           }
+
+          @Override
+          public void gauge(String metricName, long value, String... tags) {
+            emitters.getUnchecked(keys.getUnchecked(metricName)).set(value, tags);
+          }
         };
       }
     };
@@ -175,11 +183,13 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
     private final MetricsScope scope;
     private final String context;
     private final String runId;
+    private final MetricContentType type;
 
-    private CollectorKey(MetricsScope scope, String context, String runId) {
+    private CollectorKey(MetricsScope scope, String context, String runId, MetricContentType type) {
       this.scope = scope;
       this.context = context;
       this.runId = runId;
+      this.type = type;
     }
 
     private MetricsScope getScope() {
@@ -192,6 +202,10 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
     private String getRunId() {
       return runId;
+    }
+
+    private MetricContentType getType() {
+      return type;
     }
 
     @Override
@@ -207,7 +221,8 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
       return scope == other.scope
         && Objects.equal(context, other.context)
-        && Objects.equal(runId, other.runId);
+        && Objects.equal(runId, other.runId)
+        && Objects.equal(type, other.type);
     }
 
     @Override
@@ -215,6 +230,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
       int result = scope.hashCode();
       result = 31 * result + context.hashCode();
       result = 31 * result + runId.hashCode();
+      result = 31 * result + type.hashCode();
       return result;
     }
   }

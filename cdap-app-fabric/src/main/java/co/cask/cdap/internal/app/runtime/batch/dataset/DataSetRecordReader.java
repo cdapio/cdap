@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch.dataset;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
@@ -44,7 +45,7 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
     this.context = context;
     this.dataSetName = dataSetName;
     this.dataSetMetrics = context.getMetricsCollectionService().getCollector(
-      MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0");
+      MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0", MetricContentType.COUNT);
   }
 
   @Override

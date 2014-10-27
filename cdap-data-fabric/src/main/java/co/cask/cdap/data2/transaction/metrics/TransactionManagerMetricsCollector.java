@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.transaction.metrics;
 
+import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -30,7 +31,8 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
 
   @Inject
   public TransactionManagerMetricsCollector(MetricsCollectionService metricsCollectionService) {
-    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, "transactions", "0");
+    this.metricsCollector = metricsCollectionService.getCollector(MetricsScope.SYSTEM, "transactions", "0",
+                                                                  MetricContentType.COUNT);
   }
 
   @Override

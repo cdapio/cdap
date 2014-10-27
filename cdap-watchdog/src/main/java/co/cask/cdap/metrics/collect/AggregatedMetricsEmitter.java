@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.cache.CacheBuilder;
@@ -42,8 +43,9 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   private final String name;
   private final AtomicLong value;
   private final LoadingCache<String, AtomicLong> tagValues;
+  private final MetricContentType type;
 
-  AggregatedMetricsEmitter(String context, String runId, String name) {
+  AggregatedMetricsEmitter(String context, String runId, String name, MetricContentType type) {
     this.context = context;
     this.runId = runId;
     this.name = name;
@@ -56,6 +58,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
                                      return new AtomicLong();
                                    }
                                  });
+    this.type = type;
     if (name == null || name.isEmpty()) {
       LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, " +
         "for context " + context + " and runId " + runId);
@@ -76,6 +79,13 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     for (Map.Entry<String, AtomicLong> entry : tagValues.asMap().entrySet()) {
       builder.add(new TagMetric(entry.getKey(), entry.getValue().getAndSet(0)));
     }
-    return new MetricsRecord(context, runId, name, builder.build(), timestamp, value);
+    return new MetricsRecord(context, runId, name, builder.build(), timestamp, value, type);
+  }
+
+  public void set(long value, String[] tags) {
+    this.value.set(value);
+    for (String tag : tags) {
+      tagValues.getUnchecked(tag).set(value);
+    }
   }
 }

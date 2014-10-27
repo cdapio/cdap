@@ -44,9 +44,9 @@ public class MetricsReporterHookTest extends GatewayTestBase {
   @Test
   public void testMetricsSuccess() throws Exception {
     String context = Constants.Service.APP_FABRIC_HTTP + ".PingHandler.ping";
-    int received = mockMetricsCollectionService.getMetrics(context, "request.received");
-    int successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
-    int clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");
+    long received = mockMetricsCollectionService.getMetrics(context, "request.received");
+    long successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
+    long clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");
 
     // Make a successful call
     HttpResponse response = GatewayFastTestsSuite.doGet("/ping");
@@ -61,9 +61,9 @@ public class MetricsReporterHookTest extends GatewayTestBase {
   @Test
   public void testMetricsNotFound() throws Exception {
     String context = Constants.Stream.STREAM_HANDLER + ".StreamHandler.getInfo";
-    int received = mockMetricsCollectionService.getMetrics(context, "request.received");
-    int successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
-    int clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");
+    long received = mockMetricsCollectionService.getMetrics(context, "request.received");
+    long successful = mockMetricsCollectionService.getMetrics(context, "response.successful");
+    long clientError = mockMetricsCollectionService.getMetrics(context, "response.client-error");
 
     // Get info of non-existent stream
     HttpResponse response = GatewayFastTestsSuite.doGet("/v2/streams/metrics-hook-test-non-existent-stream/info");
@@ -79,9 +79,9 @@ public class MetricsReporterHookTest extends GatewayTestBase {
    * Verify metrics. It tries couple times to avoid race condition.
    * This is because metrics hook is updated asynchronously.
    */
-  private void verifyMetrics(int expected, String context, String metricsName) throws InterruptedException {
+  private void verifyMetrics(long expected, String context, String metricsName) throws InterruptedException {
     int trial = 0;
-    int metrics = -1;
+    long metrics = -1;
     while (trial++ < 5) {
       metrics = mockMetricsCollectionService.getMetrics(context, metricsName);
       if (expected == metrics) {

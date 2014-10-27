@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.transport;
 
+import co.cask.cdap.common.metrics.MetricContentType;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
@@ -34,18 +35,29 @@ public final class MetricsRecord {
   private final List<TagMetric> tags;       // List of TagMetric
   private final long timestamp;             // Timestamp in second of when the metric happened.
   private final long value;                  // Value of the metric, regardless of tags
+  private final MetricContentType type;
 
   public MetricsRecord(String context, String runId,
                        String name, Iterable<TagMetric> tags,
-                       long timestamp, long value) {
+                       long timestamp, long value, MetricContentType type) {
     this.context = context;
     this.runId = runId;
     this.timestamp = timestamp;
     this.name = name;
     this.value = value;
     this.tags = ImmutableList.copyOf(tags);
+    this.type = type;
   }
 
+  public MetricsRecord(String context, String runId,
+                       String name, Iterable<TagMetric> tags,
+                       long timestamp, long value) {
+    this(context, runId, name, tags, timestamp, value, MetricContentType.COUNT);
+  }
+
+  public MetricContentType getType() {
+    return type;
+  }
   public String getContext() {
     return context;
   }

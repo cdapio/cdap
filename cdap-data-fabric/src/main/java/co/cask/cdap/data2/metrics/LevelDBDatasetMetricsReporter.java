@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metrics;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -93,7 +94,7 @@ public class LevelDBDatasetMetricsReporter extends AbstractScheduledService impl
   private void report(Map<String, LevelDBOrderedTableService.TableStats> datasetStat) {
     // we use "0" as runId: it is required by metrics system to provide something at this point
     MetricsCollector collector =
-      metricsService.getCollector(MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0");
+      metricsService.getCollector(MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0", MetricContentType.COUNT);
     for (Map.Entry<String, LevelDBOrderedTableService.TableStats> statEntry : datasetStat.entrySet()) {
       String datasetName = userDsNamespace.fromNamespaced(statEntry.getKey());
       if (datasetName == null) {

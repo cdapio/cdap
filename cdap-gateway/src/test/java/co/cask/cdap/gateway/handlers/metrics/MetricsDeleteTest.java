@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.gateway.handlers.metrics;
 
+import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.base.Charsets;
@@ -40,15 +41,18 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
   public void testContextDelete() throws Exception {
     // Insert some metrics
     MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                "WCount.f.WordCounter.unique", "0");
+                                                                "WCount.f.WordCounter.unique", "0",
+                                                                MetricContentType.COUNT);
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);
 
-    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WordCounter.counter", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WordCounter.counter", "0",
+                                               MetricContentType.COUNT);
     collector.increment("process.events.processed", 4);
     collector.increment("process.events.out", 3);
 
-    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WCounter.counter", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WCounter.counter", "0",
+                                               MetricContentType.COUNT);
     collector.increment("process.events.processed", 2);
     collector.increment("process.events.out", 1);
 
@@ -81,12 +85,14 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
   public void testContextAndMetricDelete() throws Exception {
     // Insert some metrics
     MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                "WCount.f.WordCounter.unique", "0");
+                                                                "WCount.f.WordCounter.unique", "0",
+                                                                MetricContentType.COUNT);
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);
     collector.increment("store.ops", 7);
 
-    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WordCounter.counter", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM, "WCount.f.WordCounter.counter", "0",
+                                               MetricContentType.COUNT);
     collector.increment("process.events.processed", 4);
     collector.increment("process.events.out", 3);
 
@@ -117,7 +123,8 @@ public class MetricsDeleteTest extends MetricsSuiteTestBase {
   public void testMetricNoContextDelete() throws Exception {
     // Insert some metrics
     MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                "WCount.f.WordCounter.unique", "0");
+                                                                "WCount.f.WordCounter.unique", "0",
+                                                                MetricContentType.COUNT);
     collector.increment("store.ops", 7);
     collector.increment("process.events.processed", 6);
     collector.increment("process.events.out", 5);

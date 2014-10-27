@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.metrics;
 
+import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsScope;
 
@@ -26,6 +27,8 @@ public class ProcedureMetrics extends AbstractProgramMetrics {
 
   public ProcedureMetrics(MetricsCollectionService collectionService, String applicationId, String procedureId) {
     // Not support runID for now.
-    super(collectionService.getCollector(MetricsScope.USER, String.format("%s.p.%s", applicationId, procedureId), "0"));
+    super(collectionService.getCollector(MetricsScope.USER,
+                                         String.format("%s.p.%s", applicationId, procedureId), "0",
+                                         MetricContentType.COUNT));
   }
 }

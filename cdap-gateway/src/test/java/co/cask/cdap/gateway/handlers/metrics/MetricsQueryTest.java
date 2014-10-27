@@ -16,6 +16,7 @@
 package co.cask.cdap.gateway.handlers.metrics;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
@@ -48,19 +49,22 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
 
     // Insert queue metrics
     MetricsCollector enqueueCollector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                       "WordCount.f.WordCounter.counter", "0");
+                                                                       "WordCount.f.WordCounter.counter", "0",
+                                                                       MetricContentType.COUNT);
     enqueueCollector.increment("process.events.out", 10, queueName.getSimpleName());
 
     // Insert ack metrics
     MetricsCollector ackCollector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                   "WordCount.f.WordCounter.unique", "0");
+                                                                   "WordCount.f.WordCounter.unique", "0",
+                                                                   MetricContentType.COUNT);
     ackCollector.increment("process.events.processed", 6, "input." + queueName.toString());
     ackCollector.increment("process.events.processed", 2, "input.stream:///streamX");
     ackCollector.increment("process.events.processed", 1, "input.stream://developer/streamX");
 
     // Insert stream metrics
     MetricsCollector streamCollector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                      Constants.Gateway.METRICS_CONTEXT, "0");
+                                                                      Constants.Gateway.METRICS_CONTEXT, "0",
+                                                                      MetricContentType.COUNT);
     streamCollector.increment("collect.events", 5, "streamX");
 
     // Wait for collection to happen
@@ -96,7 +100,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     // Insert system metric
     MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
                                                                 "appfabric.AppFabricHttpHandler.getAllApps",
-                                                                "0");
+                                                                "0", MetricContentType.COUNT);
     collector.increment("request.received", 1);
 
     // Wait for collection to happen
@@ -137,7 +141,8 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   @Test
   public void testingUserServiceMetrics() throws Exception {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
-                                                                "WordCount.s.CounterService.CountRunnable", "0");
+                                                                "WordCount.s.CounterService.CountRunnable", "0",
+                                                                MetricContentType.COUNT);
     collector.increment("reads", 1);
 
     // Wait for collection to happen
@@ -156,7 +161,8 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   @Test
   public void testingInvalidUserServiceMetrics() throws Exception {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
-                                                                "WordCount.s.InvalidService.CountRunnable", "0");
+                                                                "WordCount.s.InvalidService.CountRunnable", "0",
+                                                                MetricContentType.COUNT);
     collector.increment("reads", 1);
 
     // Wait for collection to happen
@@ -212,7 +218,8 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   @Test
   public void testingTransactoinMetrics() throws Exception {
     // Insert system metric  (stream.handler is the service name)
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM, "transactions", "0");
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM, "transactions", "0",
+                                                                MetricContentType.COUNT);
     collector.increment("inprogress", 1);
 
     // Wait for collection to happen
@@ -226,10 +233,11 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   public void testGetMetric() throws Exception {
     // Insert some metric
     MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM,
-                                                                "WordCount.f.WordCounter.counter", "0");
+                                                                "WordCount.f.WordCounter.counter", "0",
+                                                                MetricContentType.COUNT);
     collector.increment("reads", 10, "wordStats");
     collector.increment("collect.events", 10, "wordStream");
-    collector = collectionService.getCollector(MetricsScope.SYSTEM, "-.cluster", "0");
+    collector = collectionService.getCollector(MetricsScope.SYSTEM, "-.cluster", "0", MetricContentType.COUNT);
     collector.increment("resources.total.storage", 10);
 
     // Wait for collection to happen
