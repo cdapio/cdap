@@ -68,4 +68,4 @@ elif [ -d "$conf" ]; then
   CLASSPATH=$CLASSPATH:"$conf"/
 fi
 
-java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.shell.CLIMain "$@"
+java -cp ${CLASSPATH} -Dscript=$script co.cask.cdap.cli.CLIMain "$@"
