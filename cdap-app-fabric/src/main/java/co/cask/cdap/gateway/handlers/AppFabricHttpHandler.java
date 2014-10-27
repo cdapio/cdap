@@ -1352,7 +1352,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       int oldInstances = store.getFlowletInstances(programID, flowletId);
       if (oldInstances != instances) {
         store.setFlowletInstances(programID, flowletId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, ProgramType.FLOW);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, ProgramType.FLOW,
+                                                                        runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                               ImmutableMap.of("flowlet", flowletId,
@@ -1629,7 +1630,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId,
                                 @PathParam("procedure-id") final String procedureId) {
-    getLiveInfo(request, responder, appId, procedureId, ProgramType.PROCEDURE);
+    getLiveInfo(request, responder, appId, procedureId, ProgramType.PROCEDURE, runtimeService);
   }
 
   @GET
@@ -1638,7 +1639,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void flowLiveInfo(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") final String appId,
                            @PathParam("flow-id") final String flowId) {
-    getLiveInfo(request, responder, appId, flowId, ProgramType.FLOW);
+    getLiveInfo(request, responder, appId, flowId, ProgramType.FLOW, runtimeService);
   }
 
   /**
@@ -2437,7 +2438,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getAccountId(),
                                                                         programId.getApplicationId(),
                                                                         programId.getId(),
-                                                                        type);
+                                                                        type, runtimeService);
     if (programRunInfo != null) {
       doStop(programRunInfo);
     }
@@ -2729,40 +2730,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception : ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
-                                                            String flowId, ProgramType typeId) {
-    ProgramType type = ProgramType.valueOf(typeId.name());
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               accountId, flowId);
-
-    Id.Program programId = Id.Program.from(accountId, appId, flowId);
-
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
-      if (programId.equals(info.getProgramId())) {
-        return info;
-      }
-    }
-    return null;
-  }
-
-  private void getLiveInfo(HttpRequest request, HttpResponder responder,
-                           final String appId, final String programId, ProgramType type) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      responder.sendJson(HttpResponseStatus.OK,
-                         runtimeService.getLiveInfo(Id.Program.from(accountId,
-                                                                    appId,
-                                                                    programId),
-                                                    type));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }

@@ -24,15 +24,19 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
+import co.cask.cdap.internal.UserErrors;
+import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -213,6 +217,42 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   protected static ProgramRecord makeProgramRecord (String appId, ProgramSpecification spec, ProgramType type) {
     return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
+  }
+
+  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
+                                                            String flowId, ProgramType typeId,
+                                                            ProgramRuntimeService runtimeService) {
+    ProgramType type = ProgramType.valueOf(typeId.name());
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               accountId, flowId);
+
+    Id.Program programId = Id.Program.from(accountId, appId, flowId);
+
+    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
+      if (programId.equals(info.getProgramId())) {
+        return info;
+      }
+    }
+    return null;
+  }
+
+  protected void getLiveInfo(HttpRequest request, HttpResponder responder,
+                           final String appId, final String programId, ProgramType type,
+                           ProgramRuntimeService runtimeService) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      responder.sendJson(HttpResponseStatus.OK,
+                         runtimeService.getLiveInfo(Id.Program.from(accountId,
+                                                                    appId,
+                                                                    programId),
+                                                    type));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**

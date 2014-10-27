@@ -96,7 +96,6 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
     Map<String, String> returnedBody = readResponse(response, typeToken);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals(numRequested, returnedBody.get("requested"));
-
   }
 
 }

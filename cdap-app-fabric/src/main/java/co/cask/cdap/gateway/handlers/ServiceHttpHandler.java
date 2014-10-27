@@ -26,8 +26,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.UserErrors;
-import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
@@ -37,7 +35,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.ServiceMeta;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
@@ -46,7 +43,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -207,7 +203,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
                                                                         programId.getApplicationId(),
                                                                         programId.getId(),
-                                                                        ProgramType.SERVICE);
+                                                                        ProgramType.SERVICE, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                               ImmutableMap.of("runnable", runnableName,
@@ -229,22 +225,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/services/{service-id}/live-info")
-  public void liveInfo(HttpRequest request, HttpResponder responder,
+  public void serviceLifeInfo(HttpRequest request, HttpResponder responder,
                        @PathParam("app-id") String appId,
                        @PathParam("service-id") String serviceId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      responder.sendJson(HttpResponseStatus.OK,
-                         runtimeService.getLiveInfo(Id.Program.from(accountId,
-                                                                    appId,
-                                                                    serviceId),
-                                                    ProgramType.SERVICE));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    getLiveInfo(request, responder, appId, serviceId, ProgramType.SERVICE, runtimeService);
   }
 
   @Nullable
@@ -287,22 +271,5 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         return store.getServiceWorkerInstances(programId, runnable);
       }
     }
-  }
-
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
-                                                            String flowId, ProgramType typeId) {
-    ProgramType type = ProgramType.valueOf(typeId.name());
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               accountId, flowId);
-
-    Id.Program programId = Id.Program.from(accountId, appId, flowId);
-
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
-      if (programId.equals(info.getProgramId())) {
-        return info;
-      }
-    }
-    return null;
   }
 }
