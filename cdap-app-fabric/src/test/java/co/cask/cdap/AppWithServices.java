@@ -23,8 +23,13 @@ import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 
 import java.io.IOException;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 
 /**
  * Test Application with services for the new application API.
@@ -38,18 +43,38 @@ public class AppWithServices extends AbstractApplication {
     setName("AppWithServices");
     setDescription("Application with Services");
     addProcedure(new NoOpProcedure());
-    addService(new BasicService("NoOpService", new NoOpService()));
+    addService(new BasicService("NoOpService", new PingHandler(), new MultiPingHandler()));
   }
 
-  public static final class NoOpService extends AbstractHttpServiceHandler {
-    // no-op service
+  public static final class PingHandler extends AbstractHttpServiceHandler {
+
+    @Path("ping")
+    @GET
+    public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
+    }
+  }
+
+  @Path("/multi")
+  public static final class MultiPingHandler extends AbstractHttpServiceHandler {
+
+    // No method level path, multiple request types.
+    @POST
+    @GET
+    public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
+    }
+
+    @GET
+    @Path("/ping")
+    public void pingHandler(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
+    }
   }
 
   public static final class NoOpProcedure extends AbstractProcedure {
     @Handle("noop")
-    public void handle(ProcedureRequest request,
-                       ProcedureResponder responder)
-      throws IOException {
+    public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       responder.sendJson("OK");
     }
   }

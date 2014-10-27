@@ -14,36 +14,44 @@
  * the License.
  */
 
-package co.cask.cdap.internal.service.http;
+package co.cask.cdap.api.service.http;
 
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.common.PropertyProvider;
+import co.cask.cdap.api.dataset.Dataset;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * A simple implementation of {@link HttpServiceSpecification}.
+ * Specification for a {@link HttpServiceHandler}.
  */
-public class DefaultHttpServiceSpecification implements HttpServiceSpecification {
+public final class HttpServiceHandlerSpecification implements PropertyProvider, ProgramSpecification {
+
   private final String className;
   private final String name;
   private final String description;
   private final Map<String, String> properties;
   private final Set<String> datasets;
+  private final List<ServiceHttpEndpoint> endpoints;
 
   /**
-   * Instantiate this class
+   * Create an instance of {@link HttpServiceHandlerSpecification}.
    */
-  public DefaultHttpServiceSpecification(String className, String name,
+  public HttpServiceHandlerSpecification(String className, String name,
                                          String description, Map<String, String> properties,
-                                         Set<String> datasets) {
+                                         Set<String> datasets, List<ServiceHttpEndpoint> endpoints) {
     this.className = className;
     this.name = name;
     this.description = description;
-    this.properties = ImmutableMap.copyOf(properties);
-    this.datasets = ImmutableSet.copyOf(datasets);
+    this.properties = Collections.unmodifiableMap(new HashMap<String, String>(properties));
+    this.datasets = Collections.unmodifiableSet(new HashSet<String>(datasets));
+    this.endpoints = Collections.unmodifiableList(new ArrayList<ServiceHttpEndpoint>(endpoints));
   }
 
   /**
@@ -87,8 +95,17 @@ public class DefaultHttpServiceSpecification implements HttpServiceSpecification
     return properties.get(key);
   }
 
-  @Override
+  /**
+   * @return An immutable set of {@link Dataset} names that are used by the {@link HttpServiceHandler}.
+   */
   public Set<String> getDatasets() {
     return datasets;
+  }
+
+  /**
+   * @return An immutable set of {@link ServiceHttpEndpoint}s that are exposed by the {@link HttpServiceHandler}.
+   */
+  public List<ServiceHttpEndpoint> getEndpoints() {
+    return endpoints;
   }
 }
