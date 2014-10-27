@@ -136,6 +136,7 @@
     <cdap.client.version>1.0.1</cdap.client.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
+    <cdap.tmpdir>${project.build.directory}</cdap.tmpdir>
   </properties>
 
   <modules>
@@ -1214,7 +1215,7 @@
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
             <systemPropertyVariables>
-              <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
+              <java.io.tmpdir>${cdap.tmpdir}</java.io.tmpdir>
             </systemPropertyVariables>
             <includes>
               <include>**/*TestsSuite.java</include>
