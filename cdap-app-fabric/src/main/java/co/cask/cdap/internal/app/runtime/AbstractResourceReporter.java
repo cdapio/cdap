@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
-import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -80,14 +79,13 @@ public abstract class AbstractResourceReporter extends AbstractScheduledService 
   protected void sendMetrics(String context, int containers, int memory, int vcores) {
     LOG.trace("Reporting resources in context {}: (containers, memory, vcores) = ({}, {}, {})",
               context, containers, memory, vcores);
-    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM, context, "0",
-                                                                MetricContentType.COUNT);
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.SYSTEM, context, "0");
     collector.increment(METRIC_CONTAINERS, containers);
     collector.increment(METRIC_MEMORY_USAGE, memory);
     collector.increment(METRIC_VIRTUAL_CORE_USAGE, vcores);
   }
 
   protected MetricsCollector getCollector(String context) {
-    return collectionService.getCollector(MetricsScope.SYSTEM, context, "0", MetricContentType.COUNT);
+    return collectionService.getCollector(MetricsScope.SYSTEM, context, "0");
   }
 }

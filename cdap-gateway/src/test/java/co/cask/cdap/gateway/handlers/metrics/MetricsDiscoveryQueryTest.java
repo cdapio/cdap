@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.gateway.handlers.metrics;
 
-import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import com.google.common.base.Charsets;
@@ -119,29 +118,22 @@ public class MetricsDiscoveryQueryTest extends MetricsSuiteTestBase {
 
   private static void setupMetrics() throws InterruptedException {
     MetricsCollector collector =
-      collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0",
-                                     MetricContentType.COUNT);
+      collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0");
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WordCounter.splitter", "0",
-                                               MetricContentType.COUNT);
+    collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WordCounter.splitter", "0");
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WCounter.splitter", "0",
-                                               MetricContentType.COUNT);
+    collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WCounter.splitter", "0");
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WCounter.counter", "0",
-                                               MetricContentType.COUNT);
+    collector = collectionService.getCollector(MetricsScope.USER, "WCount.f.WCounter.counter", "0");
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.p.RCounts", "0", MetricContentType.COUNT);
+    collector = collectionService.getCollector(MetricsScope.USER, "WCount.p.RCounts", "0");
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.b.ClassicWordCount.m", "0",
-                                               MetricContentType.COUNT);
+    collector = collectionService.getCollector(MetricsScope.USER, "WCount.b.ClassicWordCount.m", "0");
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WCount.b.ClassicWordCount.r", "0",
-                                               MetricContentType.COUNT);
+    collector = collectionService.getCollector(MetricsScope.USER, "WCount.b.ClassicWordCount.r", "0");
     collector.increment("reads", 1);
-    collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0",
-                                               MetricContentType.COUNT);
+    collector = collectionService.getCollector(MetricsScope.USER, "WordCount.f.WordCounter.splitter", "0");
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 

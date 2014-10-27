@@ -16,7 +16,6 @@
 
 package co.cask.cdap.gateway;
 
-import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -34,7 +33,7 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
   private final Table<String, String, Long> metrics = HashBasedTable.create();
 
   @Override
-  public MetricsCollector getCollector(MetricsScope scope, String context, String runId, MetricContentType type) {
+  public MetricsCollector getCollector(MetricsScope scope, String context, String runId) {
     return new MockMetricsCollector(context);
   }
 

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.hooks;
 
-import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -55,7 +54,7 @@ public class MetricsReporterHook extends AbstractHandlerHook {
         .build(new CacheLoader<String, MetricsCollector>() {
           @Override
           public MetricsCollector load(String key) throws Exception {
-            return metricsCollectionService.getCollector(MetricsScope.SYSTEM, key, "0", MetricContentType.COUNT);
+            return metricsCollectionService.getCollector(MetricsScope.SYSTEM, key, "0");
           }
         });
     } else {

@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.cache.CacheBuilder;
@@ -26,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -43,9 +41,8 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   private final String name;
   private final AtomicLong value;
   private final LoadingCache<String, AtomicLong> tagValues;
-  private final MetricContentType type;
 
-  AggregatedMetricsEmitter(String context, String runId, String name, MetricContentType type) {
+  AggregatedMetricsEmitter(String context, String runId, String name) {
     this.context = context;
     this.runId = runId;
     this.name = name;
@@ -58,7 +55,6 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
                                      return new AtomicLong();
                                    }
                                  });
-    this.type = type;
     if (name == null || name.isEmpty()) {
       LOG.warn("Creating emmitter with " + (name == null ? "null" : "empty") + " name, " +
         "for context " + context + " and runId " + runId);
@@ -79,7 +75,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     for (Map.Entry<String, AtomicLong> entry : tagValues.asMap().entrySet()) {
       builder.add(new TagMetric(entry.getKey(), entry.getValue().getAndSet(0)));
     }
-    return new MetricsRecord(context, runId, name, builder.build(), timestamp, value, type);
+    return new MetricsRecord(context, runId, name, builder.build(), timestamp, value);
   }
 
   public void set(long value, String[] tags) {

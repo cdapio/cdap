@@ -24,7 +24,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -80,11 +79,9 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
     MetricsCollector datasetMetrics;
     if (metricsCollectionService != null) {
       // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
-      this.programMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM, metricsContext, "0",
-                                                                  MetricContentType.COUNT);
+      this.programMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM, metricsContext, "0");
       datasetMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM,
-                                                             Constants.Metrics.DATASET_CONTEXT, "0",
-                                                             MetricContentType.COUNT);
+                                                             Constants.Metrics.DATASET_CONTEXT, "0");
     } else {
       this.programMetrics = null;
       datasetMetrics = null;

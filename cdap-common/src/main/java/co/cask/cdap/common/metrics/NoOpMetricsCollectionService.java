@@ -34,7 +34,7 @@ public class NoOpMetricsCollectionService extends AbstractIdleService implements
   }
 
   @Override
-  public MetricsCollector getCollector(MetricsScope scope, String context, String runId, MetricContentType type) {
+  public MetricsCollector getCollector(MetricsScope scope, String context, String runId) {
     return new MetricsCollector() {
       @Override
       public void increment(String metricName, int value, String... tags) {

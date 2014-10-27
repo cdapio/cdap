@@ -25,7 +25,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -99,14 +98,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
         this.systemMapperMetrics.put(
           scope, metricsCollectionService.getCollector(scope,
                                                        getMetricContext(program, MapReduceMetrics.TaskType.Mapper),
-                                                       INSTANCE_ID, MetricContentType.GAUGE));
+                                                       INSTANCE_ID));
         this.systemReducerMetrics.put(
           scope, metricsCollectionService.getCollector(scope,
                                                        getMetricContext(program, MapReduceMetrics.TaskType.Reducer),
-                                                       INSTANCE_ID, MetricContentType.GAUGE));
+                                                       INSTANCE_ID));
         this.systemMetrics.put(
-          scope, metricsCollectionService.getCollector(scope, getMetricContext(program), INSTANCE_ID,
-                                                       MetricContentType.GAUGE));
+          scope, metricsCollectionService.getCollector(scope, getMetricContext(program), INSTANCE_ID));
       }
       // for user metrics.  type can be null if its not in a map or reduce task, but in the yarn container that
       // launches the mapred job.

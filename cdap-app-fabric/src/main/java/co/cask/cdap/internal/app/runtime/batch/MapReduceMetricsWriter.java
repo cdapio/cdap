@@ -17,12 +17,8 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
@@ -33,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Gathers statistics from a running mapreduce job through its counters and writes the data to the metrics system.
@@ -136,7 +131,7 @@ public class MapReduceMetricsWriter {
           reportSystemStats(counters.getGroup(group), context.getSystemReducerMetrics(scope));
         } else if (programPart.equals("dataset")) {
           reportSystemStats(counters.getGroup(group), context.getMetricsCollectionService().getCollector(
-                  scope, Constants.Metrics.DATASET_CONTEXT, "0", MetricContentType.COUNT));
+                  scope, Constants.Metrics.DATASET_CONTEXT, "0"));
         }
       }
     }

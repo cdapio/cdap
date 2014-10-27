@@ -16,7 +16,6 @@
 package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.common.io.BinaryDecoder;
-import co.cask.cdap.common.metrics.MetricContentType;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.internal.io.ASMDatumWriterFactory;
@@ -99,8 +98,7 @@ public class KafkaMetricsCollectionServiceTest {
 
     // publish metrics for different context
     for (int i = 1; i <= 3; i++) {
-      collectionService.getCollector(MetricsScope.USER, "test.context." + i,
-                                     "runId", MetricContentType.COUNT).increment("processed", i);
+      collectionService.getCollector(MetricsScope.USER, "test.context." + i, "runId").increment("processed", i);
     }
 
     // Sleep to make sure metrics get published
@@ -143,8 +141,7 @@ public class KafkaMetricsCollectionServiceTest {
     TimeUnit.SECONDS.sleep(5);
 
     // public a metric
-    collectionService.getCollector(MetricsScope.USER, "test.context", "runId",
-                                   MetricContentType.COUNT).increment("metric", 5);
+    collectionService.getCollector(MetricsScope.USER, "test.context", "runId").increment("metric", 5);
 
     // Sleep to make sure metrics get published
     TimeUnit.SECONDS.sleep(2);
