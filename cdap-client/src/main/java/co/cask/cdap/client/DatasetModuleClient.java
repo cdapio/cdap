@@ -23,12 +23,14 @@ import co.cask.cdap.client.exception.DatasetModuleAlreadyExistsException;
 import co.cask.cdap.client.exception.DatasetModuleCannotBeDeletedException;
 import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.client.util.ProgramFlowUtil;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 
@@ -38,6 +40,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 /**
@@ -128,10 +134,61 @@ public class DatasetModuleClient {
    */
   public boolean exists(String moduleName) throws IOException, UnAuthorizedAccessTokenException {
     URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
-    HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_CONFLICT,
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     return response.getResponseCode() != HttpURLConnection.HTTP_NOT_FOUND;
+  }
+
+  /**
+   * Waits for a dataset module to exist.
+   *
+   * @param moduleName Name of the dataset module to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the dataset module was not yet existent before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForExists(final String moduleName, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
+
+    try {
+      ProgramFlowUtil.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return exists(moduleName);
+        }
+      }, timeout, timeoutUnit.toSeconds(1), timeoutUnit);
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnAuthorizedAccessTokenException.class);
+    }
+  }
+
+  /**
+   * Waits for a dataset module to be deleted.
+   *
+   * @param moduleName Name of the dataset module to check
+   * @param timeout time to wait before timing out
+   * @param timeoutUnit time unit of timeout
+   * @throws IOException if a network error occurred
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the dataset module was not yet deleted before {@code timeout} milliseconds
+   * @throws InterruptedException if interrupted while waiting
+   */
+  public void waitForDeleted(final String moduleName, long timeout, TimeUnit timeoutUnit)
+    throws IOException, UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
+
+    try {
+      ProgramFlowUtil.waitFor(false, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return exists(moduleName);
+        }
+      }, timeout, timeoutUnit.toSeconds(1), timeoutUnit);
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), IOException.class, UnAuthorizedAccessTokenException.class);
+    }
   }
 
   /**
