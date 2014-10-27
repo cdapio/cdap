@@ -166,7 +166,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractSchedul
 
           @Override
           public void gauge(String metricName, long value, String... tags) {
-            emitters.getUnchecked(keys.getUnchecked(metricName)).set(value, tags);
+            emitters.getUnchecked(keys.getUnchecked(metricName)).gauge(value, tags);
           }
         };
       }

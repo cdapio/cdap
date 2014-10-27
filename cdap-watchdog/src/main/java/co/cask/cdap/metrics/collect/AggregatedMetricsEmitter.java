@@ -78,7 +78,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     return new MetricsRecord(context, runId, name, builder.build(), timestamp, value);
   }
 
-  public void set(long value, String[] tags) {
+  public void gauge(long value, String[] tags) {
     this.value.set(value);
     for (String tag : tags) {
       tagValues.getUnchecked(tag).set(value);

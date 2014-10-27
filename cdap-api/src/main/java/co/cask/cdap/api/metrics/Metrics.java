@@ -27,12 +27,5 @@ public interface Metrics {
    * @param delta The value to increase by.
    */
   void count(String counterName, int delta);
-
-  /**
-   * Sets the value of the specified counter with a value
-   * @param counterName
-   * @param value
-   */
-  //void set(String counterName, long value);
 }
 
