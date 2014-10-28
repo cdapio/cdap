@@ -24,6 +24,7 @@ import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.transport.MetricContentType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.base.Preconditions;
@@ -33,6 +34,7 @@ import com.google.common.collect.Maps;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NavigableMap;
 
 /**
  * Table for storing aggregated metrics for all time.
@@ -100,6 +102,7 @@ public final class AggregatesTable {
       while (records.hasNext()) {
         MetricsRecord record = records.next();
         byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
+        if (record.getType() == MetricContentType.COUNT) {
         Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
         // The no tag value
@@ -109,7 +112,22 @@ public final class AggregatesTable {
         for (TagMetric tag : record.getTags()) {
           increments.put(Bytes.toBytes(tag.getTag()), tag.getValue());
         }
-        aggregatesTable.increment(rowKey, increments);
+
+          aggregatesTable.increment(rowKey, increments);
+        } else if (record.getType() == MetricContentType.GAUGE) {
+          NavigableMap<byte[], byte[]> gauges = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+
+          // The no tag value
+          gauges.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), Bytes.toBytes(record.getValue()));
+
+          // For each tag, increments corresponding values
+          for (TagMetric tag : record.getTags()) {
+            gauges.put(Bytes.toBytes(tag.getTag()), Bytes.toBytes(record.getValue()));
+          }
+          NavigableMap<byte[], NavigableMap<byte[], byte[]>> keyMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+          keyMap.put(rowKey, gauges);
+          aggregatesTable.put(keyMap);
+        }
       }
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);

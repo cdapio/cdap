@@ -16,6 +16,7 @@
 package co.cask.cdap.metrics.data;
 
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.metrics.transport.MetricContentType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.base.Function;
@@ -128,7 +129,7 @@ public abstract class TimeSeriesTableTestBase {
         for (String tag : tags) {
           tagMetrics.add(new TagMetric(tag, j * 2));
         }
-        records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j));
+        records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j, MetricContentType.COUNT));
         tagMetrics.clear();
       }
       timeSeriesTable.save(records);
@@ -177,9 +178,36 @@ public abstract class TimeSeriesTableTestBase {
     long value = Integer.MAX_VALUE * 2L;
     timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
                                                             ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
-                                                            time, value)));
+                                                            time, value, MetricContentType.COUNT)));
 
     // verify that some metrics are there for both contexts
+    MetricsScanQuery query = new MetricsScanQueryBuilder()
+      .setContext("context").setMetric("bigmetric").build(time,  time + 1000);
+
+    Assert.assertTrue(timeSeriesTable.scan(query).hasNext());
+    MetricsScanResult result = timeSeriesTable.scan(query).next();
+    Assert.assertEquals(value, result.iterator().next().getValue());
+  }
+
+
+  @Test
+  public void testGauge() throws OperationException {
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testGauge", 1);
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // checking that we can store more than just int
+    long value = Integer.MAX_VALUE;
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                            ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                            time, value, MetricContentType.GAUGE)));
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                            ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                            time, value, MetricContentType.COUNT)));
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                            ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                            time, value, MetricContentType.GAUGE)));
+
     MetricsScanQuery query = new MetricsScanQueryBuilder()
       .setContext("context").setMetric("bigmetric").build(time,  time + 1000);
 
@@ -272,8 +300,10 @@ public abstract class TimeSeriesTableTestBase {
         // 10 timepoints for each metric
         List<MetricsRecord> records = Lists.newArrayListWithCapacity(10);
         for (int k = 0; k < 10; k++) {
-          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15));
-          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15));
+          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15,
+                                        MetricContentType.COUNT));
+          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15,
+                                        MetricContentType.COUNT));
           timeSeriesTable.save(records);
         }
       }
@@ -357,8 +387,10 @@ public abstract class TimeSeriesTableTestBase {
         // 10 timepoints for each metric
         List<MetricsRecord> records = Lists.newArrayListWithCapacity(10);
         for (int k = 0; k < 10; k++) {
-          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15));
-          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15));
+          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15,
+                                        MetricContentType.COUNT));
+          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15,
+                                        MetricContentType.COUNT));
           timeSeriesTable.save(records);
         }
       }
@@ -453,7 +485,8 @@ public abstract class TimeSeriesTableTestBase {
     try {
       timeSeriesTable.save(ImmutableList.of(
         new MetricsRecord("app.f.flow.flowlet", "0", "store.bytes", ImmutableList.of(
-          new TagMetric("tag1", 1), new TagMetric("tag2", 2), new TagMetric("tag3", 3)), 1234567890, 6)
+          new TagMetric("tag1", 1), new TagMetric("tag2", 2), new TagMetric("tag3", 3)), 1234567890, 6,
+                          MetricContentType.COUNT)
       ));
 
       Map<String, Long> tagValues = Maps.newHashMap();

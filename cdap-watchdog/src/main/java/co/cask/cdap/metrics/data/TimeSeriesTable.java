@@ -24,6 +24,7 @@ import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.transport.MetricContentType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.base.Preconditions;
@@ -273,21 +274,21 @@ public final class TimeSeriesTable {
     // delta is guaranteed to be 2 bytes.
     byte[] column = deltaCache[(int) (timestamp - timeBase)];
 
-    addValue(rowKey, column, table, record.getValue());
+    addValue(rowKey, column, table, record.getValue(), record.getType());
 
     // Save tags metrics
     for (TagMetric tag : record.getTags()) {
       rowKey = getKey(record.getContext(), record.getRunId(), record.getName(), tag.getTag(), timeBase);
-      addValue(rowKey, column, table, tag.getValue());
+      addValue(rowKey, column, table, tag.getValue(), record.getType());
     }
   }
 
 
   private void addValue(byte[] rowKey, byte[] column,
-                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, long value) {
+                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, long value, MetricContentType type) {
     byte[] oldValue = get(table, rowKey, column);
     long newValue = value;
-    if (oldValue != null) {
+    if (oldValue != null && type != MetricContentType.GAUGE) {
       if (Bytes.SIZEOF_LONG == oldValue.length) {
         newValue = Bytes.toLong(oldValue) + value;
       } else if (Bytes.SIZEOF_INT == oldValue.length) {

@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.metrics.collect;
 
+import co.cask.cdap.metrics.transport.MetricContentType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.cache.CacheBuilder;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -40,6 +42,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
   private final String runId;
   private final String name;
   private final AtomicLong value;
+  private final AtomicBoolean gaugeUsed;
   private final LoadingCache<String, AtomicLong> tagValues;
 
   AggregatedMetricsEmitter(String context, String runId, String name) {
@@ -47,6 +50,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     this.runId = runId;
     this.name = name;
     this.value = new AtomicLong();
+    this.gaugeUsed = new AtomicBoolean(false);
     this.tagValues = CacheBuilder.newBuilder()
                                  .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
                                  .build(new CacheLoader<String, AtomicLong>() {
@@ -75,11 +79,13 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     for (Map.Entry<String, AtomicLong> entry : tagValues.asMap().entrySet()) {
       builder.add(new TagMetric(entry.getKey(), entry.getValue().getAndSet(0)));
     }
-    return new MetricsRecord(context, runId, name, builder.build(), timestamp, value);
+    MetricContentType type = gaugeUsed.getAndSet(false) ? MetricContentType.GAUGE : MetricContentType.COUNT;
+    return new MetricsRecord(context, runId, name, builder.build(), timestamp, value, type);
   }
 
   public void gauge(long value, String[] tags) {
     this.value.set(value);
+    this.gaugeUsed.set(true);
     for (String tag : tags) {
       tagValues.getUnchecked(tag).set(value);
     }
