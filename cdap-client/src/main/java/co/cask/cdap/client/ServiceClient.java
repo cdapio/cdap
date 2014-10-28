@@ -54,10 +54,10 @@ public class ServiceClient {
    * 
    * @param appId ID of the application that the service belongs to
    * @param serviceId ID of the service
-   * @return {@link ServiceSpecification} representing the service.
+   * @return {@link ServiceSpecification} representing the service
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   * @throws NotFoundException if the app or service could not be found.
+   * @throws NotFoundException if the app or service could not be found
    */
   public ServiceSpecification get(String appId, String serviceId)
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
@@ -72,13 +72,13 @@ public class ServiceClient {
   }
 
   /**
-   * Gets a list of {@link ServiceHttpEndpoint} that a {@link Service} exposes.
+   * Gets a list of {@link ServiceHttpEndpoint} that a {@link Service} exposes
    * @param appId ID of the application that the service belongs to
    * @param serviceId ID of the service
    * @return A list of {@link ServiceHttpEndpoint}
-   * @throws IOException if a network error occurred.
+   * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   * @throws NotFoundException if the app or service could not be found.
+   * @throws NotFoundException if the app or service could not be found
    */
   public List<ServiceHttpEndpoint> getEndpoints(String appId, String serviceId)
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
