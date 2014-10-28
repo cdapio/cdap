@@ -21,4 +21,3 @@
 default['cdap']['repo']['apt_repo_url'] = 'http://repository.cask.co/ubuntu/precise/amd64/releases'
 default['cdap']['repo']['apt_components'] = ['releases']
 default['cdap']['repo']['yum_repo_url'] = 'http://repository.cask.co/centos/6/x86_64/releases'
-default['cdap']['repo']['yum_repo_key_url'] = 'http://repository.cask.co/centos/6/x86_64/pubkey.gpg'
