@@ -57,11 +57,13 @@ public class ServiceClient {
    * @return {@link ServiceSpecification} representing the service.
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found.
    */
   public ServiceSpecification get(String appId, String serviceId)
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
     URL url = config.resolveURL(String.format("apps/%s/services/%s", appId, serviceId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
 
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException("application or service ", appId + "/" + serviceId);
@@ -76,6 +78,7 @@ public class ServiceClient {
    * @return A list of {@link ServiceHttpEndpoint}
    * @throws IOException if a network error occurred.
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the app or service could not be found.
    */
   public List<ServiceHttpEndpoint> getEndpoints(String appId, String serviceId)
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
