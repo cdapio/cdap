@@ -49,7 +49,6 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String name;
   private String description;
   private Map<String, ServiceWorkerSpecification> workers;
-  private Map<String, HttpServiceSpecification> handleSpecs;
   private List<HttpServiceHandler> handlers;
   private Resources resources;
   private int instances;
@@ -63,7 +62,6 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     this.name = service.getClass().getSimpleName();
     this.description = "";
     this.workers = Maps.newHashMap();
-    this.handleSpecs = Maps.newHashMap();
     this.handlers = Lists.newArrayList();
     this.resources = new Resources();
     this.instances = 1;
@@ -98,15 +96,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   @Override
   public void addHandlers(Iterable<? extends HttpServiceHandler> serviceHandlers) {
-    for (HttpServiceHandler handler : serviceHandlers) {
-      DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler);
-      handler.configure(configurer);
-      HttpServiceSpecification spec = configurer.createSpecification();
-      Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
-                                  "Handler with name %s already existed.", spec.getName());
-      handleSpecs.put(spec.getName(), spec);
-      handlers.add(handler);
-    }
+    Iterables.addAll(handlers, serviceHandlers);
   }
 
   @Override
@@ -122,14 +112,29 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   public ServiceSpecification createSpecification() {
-    verifyHandlers();
+    Map<String, HttpServiceSpecification> handleSpecs = createHandlerSpecs(handlers);
     return new DefaultServiceSpecification(className, name, description, handleSpecs, workers, resources, instances);
   }
 
   /**
-    * Constructs a NettyHttpService, to verify that the handleSpecs passed in by the user are valid.
-    */
-  private void verifyHandlers() {
+   * Constructs HttpServiceSpecifications for each of the handlers in the {@param handlers} list.
+   * Also performs verifications on these handlers (that a NettyHttpService can be constructed from them).
+   */
+  private Map<String, HttpServiceSpecification> createHandlerSpecs(List<? extends HttpServiceHandler> handlers) {
+    verifyHandlers(handlers);
+    Map<String, HttpServiceSpecification> handleSpecs = Maps.newHashMap();
+    for (HttpServiceHandler handler : handlers) {
+      DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler);
+      handler.configure(configurer);
+      HttpServiceSpecification spec = configurer.createSpecification();
+      Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
+                                  "Handler with name %s already existed.", spec.getName());
+      handleSpecs.put(spec.getName(), spec);
+    }
+    return handleSpecs;
+  }
+
+  private void verifyHandlers(List<? extends HttpServiceHandler> handlers) {
     Preconditions.checkArgument(!Iterables.isEmpty(handlers), "Cannot define a Service without handler.");
     try {
       List<HttpHandler> httpHandlers = Lists.newArrayList();
@@ -137,6 +142,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
         httpHandlers.add(createHttpHandler(handler, ""));
       }
 
+      // Constructs a NettyHttpService, to verify that the handlers passed in by the user are valid.
       NettyHttpService.builder()
         .setPort(0)
         .addHttpHandlers(httpHandlers)

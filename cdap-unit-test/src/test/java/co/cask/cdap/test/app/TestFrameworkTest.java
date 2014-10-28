@@ -328,7 +328,7 @@ public class TestFrameworkTest extends TestBase {
   }
 
   @Category(SlowTests.class)
-  @Test(expected=IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testServiceWithInvalidHandler() throws Exception {
       deployApplication(AppWithInvalidHandler.class);
   }
