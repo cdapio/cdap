@@ -26,8 +26,8 @@ import javax.ws.rs.Path;
 /**
  * Fake no-op Service.
  */
-public final class FakeService extends AbstractHttpServiceHandler {
-  public static final String NAME = "fakeService";
+public final class PingService extends AbstractHttpServiceHandler {
+  public static final String NAME = "pingService";
 
   @Path("ping")
   @GET

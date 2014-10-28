@@ -28,7 +28,6 @@ import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.common.http.ObjectResponse;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -82,10 +81,10 @@ public class ServiceClient {
     throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
 
     ServiceSpecification specification = get(appId, serviceId);
-    List<ServiceHttpEndpoint> endpoints = Lists.newArrayList();
+    ImmutableList.Builder<ServiceHttpEndpoint> builder = new ImmutableList.Builder<ServiceHttpEndpoint>();
     for (HttpServiceHandlerSpecification handlerSpecification : specification.getHandlers().values()) {
-      endpoints.addAll(handlerSpecification.getEndpoints());
+      builder.addAll(handlerSpecification.getEndpoints());
     }
-    return ImmutableList.copyOf(endpoints);
+    return builder.build();
   }
 }

@@ -19,7 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.app.FakeService;
+import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -49,27 +49,27 @@ public class ServiceClientTestRun extends ClientTestBase {
     programClient = new ProgramClient(clientConfig);
 
     appClient.deploy(createAppJarFile(FakeApp.class));
-    programClient.start(FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
-    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
+    programClient.start(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
+    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
   }
 
   @After
   public void tearDown() throws Throwable {
-    programClient.stop(FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
-    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
+    programClient.stop(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
+    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
   }
 
   @Test
   public void testGetServiceSpecification() throws Exception {
-    ServiceSpecification serviceSpecification = serviceClient.get(FakeApp.NAME, FakeService.NAME);
-    assertEquals(serviceSpecification.getName(), FakeService.NAME);
+    ServiceSpecification serviceSpecification = serviceClient.get(FakeApp.NAME, PingService.NAME);
+    assertEquals(serviceSpecification.getName(), PingService.NAME);
     assertEquals(serviceSpecification.getHandlers().size(), 1);
     assertEquals(serviceSpecification.getWorkers().size(), 0);
   }
 
   @Test
   public void testGetEndpoints() throws Exception {
-    List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(FakeApp.NAME, FakeService.NAME);
+    List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(FakeApp.NAME, PingService.NAME);
     assertEquals(1, endpoints.size());
     ServiceHttpEndpoint endpoint = endpoints.get(0);
     assertEquals("GET", endpoint.getMethod());
