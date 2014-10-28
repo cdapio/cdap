@@ -88,6 +88,7 @@ import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -223,6 +224,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final DatasetFramework dsFramework;
 
   /**
+   * System Namespaced Dataset Service
+   */
+  private final DatasetFramework sysdsFramework;
+
+  /**
    * App fabric output directory.
    */
   private final String appFabricDir;
@@ -335,9 +341,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework,
-                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
+    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration,
+                                                                                               Namespace.USER));
+    this.sysdsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration,
+                                                                                                  Namespace.SYSTEM));
   }
 
   /**
@@ -1800,9 +1807,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       ApplicationWithPrograms applicationWithPrograms =
         manager.deploy(id, appId, archiveLocation).get();
-      String propertyTable = Constants.Dataset.PROPERTY_TABLE;
-      if (!dsFramework.hasInstance(propertyTable)) {
-        dsFramework.addInstance(KeyValueTable.class.getName(), propertyTable, DatasetProperties.EMPTY);
+      String propertyTableName = Joiner.on(".").join(
+        Lists.newArrayList(id.getId(), applicationWithPrograms.getAppSpecLoc().getApplicationId().getId(),
+                           Constants.Dataset.PROPERTY_TABLE));
+      if (!sysdsFramework.hasInstance(propertyTableName)) {
+        sysdsFramework.addInstance(KeyValueTable.class.getName(), propertyTableName, DatasetProperties.EMPTY);
       }
 
       ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
@@ -1812,8 +1821,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       throw new Exception(e.getMessage());
     }
   }
-
-
 
   private void setupSchedules(String accountId, ApplicationSpecification specification)  throws IOException {
 
@@ -2242,6 +2249,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
     }
     deleteProgramLocations(appId);
+
+    // Delete the Property Table associated with the Application
+    String propertyTable = Joiner.on(".").join(Lists.newArrayList(identifier.getAccountId(),
+                                                                  identifier.getApplicationId(),
+                                                                  Constants.Dataset.PROPERTY_TABLE));
+    sysdsFramework.deleteInstance(propertyTable);
 
     Location appArchive = store.getApplicationArchiveLocation(appId);
     Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
