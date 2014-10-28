@@ -18,10 +18,19 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.data.stream.BytesStreamEventDecoder;
+import co.cask.cdap.data.stream.StreamInputFormat;
+import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data.stream.TextStreamEventDecoder;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
@@ -29,13 +38,19 @@ import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkConf;
+import org.apache.twill.filesystem.Location;
+import org.json4s.StreamInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -57,8 +72,9 @@ abstract class AbstractSparkContext implements SparkContext {
   private final Arguments runtimeArguments;
   final BasicSparkContext basicSparkContext;
   private final SparkConf sparkConf;
+  private final StreamAdmin streamAdmin;
 
-  public AbstractSparkContext() {
+  public AbstractSparkContext(StreamAdmin streamAdmin) {
     hConf = loadHConf();
     // Create an instance of BasicSparkContext from the Hadoop Configuration file which was just loaded
     SparkContextProvider sparkContextProvider = new SparkContextProvider(hConf);
@@ -66,6 +82,7 @@ abstract class AbstractSparkContext implements SparkContext {
     this.logicalStartTime = basicSparkContext.getLogicalStartTime();
     this.spec = basicSparkContext.getSpecification();
     this.runtimeArguments = basicSparkContext.getRuntimeArgs();
+    this.streamAdmin = streamAdmin;
     this.sparkConf = initializeSparkConf();
   }
 
@@ -134,6 +151,53 @@ abstract class AbstractSparkContext implements SparkContext {
     hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLIT_CLASS, inputSplits.get(0).getClass().getName());
     hConf.set(SparkContextConfig.HCONF_ATTR_INPUT_SPLITS, new Gson().toJson(inputSplits));
     return hConf;
+  }
+
+  /**
+   * Sets the input to a {@link Stream}
+   *
+   * @param streamName name of streams to which input will be set to
+   * @param vClass     the value class which can be either {@link Text} or {@link BytesWritable}
+   * @return updated {@link Configuration}
+   * @throws IOException if the given {@link Stream} is not found or the {@link StreamEventDecoder} was not identified
+   */
+  Configuration setStreamInputDataset(String streamName, Class<?> vClass) throws IOException {
+    Configuration hConf = new Configuration(getHConf());
+    StreamBatchReadable stream = new StreamBatchReadable(URI.create(streamName));
+    configureStreamInput(hConf, stream, vClass);
+    return hConf;
+  }
+
+  /**
+   * Adds the needed information to read from the given {@link Stream} in the {@link Configuration}
+   *
+   * @param hConf  the {@link Configuration} to which the stream info will be added
+   * @param stream a {@link StreamBatchReadable} for the given stream
+   * @param vClass the value class which can be either {@link Text} or {@link BytesWritable}
+   * @throws IOException
+   */
+  private void configureStreamInput(Configuration hConf, StreamBatchReadable stream, Class<?> vClass)
+    throws IOException {
+    StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
+    Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
+                                                               StreamUtils.getGeneration(streamConfig));
+    StreamInputFormat.setTTL(hConf, streamConfig.getTTL());
+    StreamInputFormat.setStreamPath(hConf, streamPath.toURI());
+    StreamInputFormat.setTimeRange(hConf, stream.getStartTime(), stream.getEndTime());
+
+    String decoderType = stream.getDecoderType();
+    if (decoderType == null) {
+      // If the user don't specify the decoder, detect the type
+      if (!StreamInputFormat.setStreamEventDecoder(hConf, vClass)) {
+        throw new IOException("Failed to determine decoder for consuming StreamEvent from " + vClass);
+      }
+    } else {
+      StreamInputFormat.setDecoderType(hConf, decoderType);
+    }
+    hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, StreamInputFormat.class, InputFormat.class);
+
+    LOG.info("Using Stream as input from {}", streamPath.toURI());
+
   }
 
   /**

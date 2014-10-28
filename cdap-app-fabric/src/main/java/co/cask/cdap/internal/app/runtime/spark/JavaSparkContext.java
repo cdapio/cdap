@@ -17,12 +17,19 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.data.stream.StreamInputFormat;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.spark.api.java.JavaPairRDD;
 
+import java.io.IOException;
 import java.net.URL;
 
 /**
@@ -32,8 +39,8 @@ class JavaSparkContext extends AbstractSparkContext {
 
   org.apache.spark.api.java.JavaSparkContext originalSparkContext;
 
-  public JavaSparkContext() {
-    super();
+  public JavaSparkContext(StreamAdmin streamAdmin) {
+    super(streamAdmin);
     this.originalSparkContext = new org.apache.spark.api.java.JavaSparkContext(getSparkConf());
     originalSparkContext.sc().addSparkListener(new SparkProgramListener());
   }
@@ -67,6 +74,49 @@ class JavaSparkContext extends AbstractSparkContext {
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
     Configuration hConf = setOutputDataset(datasetName);
     ((JavaPairRDD) rdd).saveAsNewAPIHadoopFile(datasetName, kClass, vClass, SparkDatasetOutputFormat.class, hConf);
+  }
+
+  /**
+   * Gets a {@link Stream} as a {@link JavaPairRDD}
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
+   * @param startTime  the starting time of the stream to be read
+   * @param endTime    the ending time of the streams to be read
+   * @return the {@link JavaPairRDD} created from the {@link Stream} to be read
+   */
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
+    return readFromStream(streamName, vClass, startTime, endTime, null);
+  }
+
+  /**
+   * Gets a {@link Stream} as a {@link JavaPairRDD}
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
+   * @param startTime  the starting time of the stream to be read
+   * @param endTime    the ending time of the streams to be read
+   * @param decoderType the decoder to use while reading streams; null if not provided
+   * @return the {@link JavaPairRDD} created from the {@link Stream} to be read
+   */
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                              Class<? extends StreamEventDecoder> decoderType) {
+    Configuration hConf;
+    try {
+      if (decoderType == null) {
+        hConf = setStreamInputDataset(new StreamBatchReadable(streamName, startTime, endTime).toURI().toString(),
+                                      vClass);
+      } else {
+        hConf = setStreamInputDataset(new StreamBatchReadable(streamName, startTime, endTime, decoderType).toURI()
+                                        .toString(), vClass);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to set input to specified stream: " + streamName);
+    }
+    return (T) originalSparkContext.newAPIHadoopFile(streamName, StreamInputFormat.class, LongWritable.class, vClass,
+                                                     hConf);
   }
 
   /**

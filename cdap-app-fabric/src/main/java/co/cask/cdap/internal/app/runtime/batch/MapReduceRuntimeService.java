@@ -493,14 +493,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (typeArgs.length < 2 || !LongWritable.class.equals(typeArgs[0])) {
         continue;
       }
-      // It might make sense to move the following mapping to some centralized place when more types are supported
-      // or when it needs to be shared with other program runner (e.g. Spark).
-      if (Text.class.equals(typeArgs[1])) {
-        StreamInputFormat.setDecoderType(job, TextStreamEventDecoder.class.getName());
-        return true;
-      }
-      if (BytesWritable.class.equals(typeArgs[1])) {
-        StreamInputFormat.setDecoderType(job, BytesStreamEventDecoder.class.getName());
+      if (StreamInputFormat.setStreamEventDecoder(job.getConfiguration(), typeArgs[1].getClass())) {
         return true;
       }
     }

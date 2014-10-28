@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -109,6 +110,17 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   @Override
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass) {
     throw new IllegalStateException("Writing  dataset is not supported here");
+  }
+
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
+    throw new IllegalStateException("Reading stream is not supported here");
+  }
+
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                              Class<? extends StreamEventDecoder> decoderType) {
+    throw new IllegalStateException("Reading stream is not supported here");
   }
 
   private static String getMetricContext(Program program) {
