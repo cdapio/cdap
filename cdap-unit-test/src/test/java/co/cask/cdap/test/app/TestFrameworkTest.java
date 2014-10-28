@@ -693,4 +693,31 @@ public class TestFrameworkTest extends TestBase {
     }
   }
 
+  @Test
+  public void testProperty() throws Exception {
+    Map<String, String> emptyMap = Maps.newHashMap();
+    final int CALLS = 10;
+    ApplicationManager appManager = deployApplication(FilterApp.class);
+
+    try {
+      Map<String, String> args = Maps.newHashMap();
+      args.put("threshold", "10");
+      appManager.startFlow("FilterFlow", args);
+
+      StreamWriter input = appManager.getStreamWriter("input");
+      input.send("1");
+      input.send("11");
+
+      ProcedureManager procManager = appManager.startProcedure("Count");
+      ProcedureClient procClient = procManager.getClient();
+      Gson gson = new Gson();
+      for (int i = 0; i < CALLS; i++) {
+        procClient.query("result", emptyMap);
+      }
+      Assert.assertEquals(Integer.toString(CALLS), gson.fromJson(procClient.query("callCount", emptyMap), String.class));
+    } finally {
+      appManager.stopAll();
+    }
+  }
+
 }

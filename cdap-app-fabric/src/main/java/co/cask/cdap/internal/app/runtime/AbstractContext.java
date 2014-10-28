@@ -17,7 +17,10 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -64,6 +67,7 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
   private final DataSetInstantiator dsInstantiator;
 
   private final DiscoveryServiceClient discoveryServiceClient;
+  private KeyValueTable propertyTable;
 
   public AbstractContext(Program program, RunId runId,
                          Set<String> datasets,
@@ -89,6 +93,13 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
     this.dsInstantiator = new DataSetInstantiator(dsFramework, conf, program.getClassLoader(),
                                                   datasetMetrics, programMetrics);
+    this.propertyTable = null;
+    try {
+      this.propertyTable = dsInstantiator.getDataSet(Constants.Dataset.PROPERTY_TABLE);
+      this.dsInstantiator.addTransactionAware(this.propertyTable);
+    } catch (DataSetInstantiationException e) {
+      LOG.error("Unable to get PropertyTable Dataset for Account Id : {}", program.getAccountId(), e);
+    }
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
@@ -208,6 +219,20 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
       LOG.error("Got exception while creating serviceURL", e);
       return null;
     }
+  }
+
+  private String getPrefixedPropertyKey(String key) {
+    return getAccountId() + "." + getApplicationId() + "." + getProgramName() + "." + key;
+  }
+
+  @Override
+  public void setProperty(String key, String value) {
+    propertyTable.write(getPrefixedPropertyKey(key), value);
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return Bytes.toString(propertyTable.read(getPrefixedPropertyKey(key)));
   }
 
   /**

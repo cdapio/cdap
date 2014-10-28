@@ -184,4 +184,13 @@ abstract class AbstractSparkContext implements SparkContext {
     return arguments.build();
   }
 
+  @Override
+  public void setProperty(String key, String value) {
+    basicSparkContext.setProperty(key, value);
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return basicSparkContext.getProperty(key);
+  }
 }
