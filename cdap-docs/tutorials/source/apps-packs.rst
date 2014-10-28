@@ -1,9 +1,9 @@
 .. :author: Cask Data, Inc.
    :copyright: Copyright © 2014 Cask Data, Inc.
 
-===================
-CDAP Apps and Packs
-===================
+==============
+Apps and Packs
+==============
 
 CDAP Applications Repository
 ----------------------------

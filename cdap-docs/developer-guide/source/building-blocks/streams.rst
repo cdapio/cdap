@@ -2,11 +2,11 @@
    :description: placeholder
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _streams:
+
 ============================================
 Stream
 ============================================
-
-.. _streams:
 
 **Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
 They are ordered, time-partitioned sequences of data, usable for realtime collection and consumption of data.

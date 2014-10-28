@@ -306,6 +306,7 @@ function build_includes() {
 }
 
 function pandoc_includes() {
+  # $1 passed is the directory to which the translated files are to be written.
   # For an example of over-riding this function, see developer-guide/build.sh
   echo "No includes to be translated."
 }

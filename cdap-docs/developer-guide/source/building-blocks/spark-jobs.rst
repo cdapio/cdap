@@ -2,11 +2,11 @@
    :description: placeholder
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _spark:
+
 ============================================
 Spark *(Beta, Standalone CDAP only)*
 ============================================
-
-.. _spark:
 
 **Spark** is used for in-memory cluster computing. It lets you load large sets of data into memory and query them
 repeatedly. This makes it suitable for both iterative and interactive programs. Similar to MapReduce,

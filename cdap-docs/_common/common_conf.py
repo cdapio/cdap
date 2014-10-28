@@ -178,6 +178,9 @@ html_theme_path = ['_themes','../../_common/_themes']
 # A shorter title for the navigation bar.  Default is the same as html_title.
 html_short_title = u"CDAP Developer’s Guide"
 
+# A shorter title for the sidebar section, preceding the words "Table of Contents".
+html_short_title_toc = u"Developer’s Guide"
+
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
 #html_logo = None
@@ -207,7 +210,7 @@ html_static_path = ['../../_common/_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**': ['globaltoc.html', 'relations.html', 'searchbox.html', 'guides.html'],}
+html_sidebars = {'**': ['guides.html', 'globaltoc.html', 'relations.html', 'searchbox.html', ],}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -243,6 +246,10 @@ html_show_sphinx = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'CDAPdoc'
 
+# This context needs to be created in each child conf.py. At a minimum, it needs to be 
+# html_context = {"html_short_title_toc":html_short_title_toc}
+# This is because it needs to be set as the last item.
+html_context = {}
 
 # -- Options for LaTeX output ---------------------------------------------
 

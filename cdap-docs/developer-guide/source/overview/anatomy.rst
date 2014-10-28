@@ -6,7 +6,7 @@
 Anatomy of a Big Data Application
 ============================================
 
-As an application developer building a Big Data application, you are primarily concerned with four areas:
+As an application developer building a Big Data application, you are primarily concerned with five areas:
 
 - **Data Collection:** A method of getting data into the system so that it can be processed. 
   We distinguish these types of data collecting:
@@ -59,11 +59,11 @@ As an application developer building a Big Data application, you are primarily c
 
 A CDAP application consists of combinations of these components:
 
-- `Streams <dev-guide.html#streams>`__ for real-time data collection;
-- Programs—`Flows <dev-guide.html#flows>`__, `MapReduce <dev-guide.html#mapreduce>`__,
-  `Spark <dev-guide.html#spark>`__—for data processing in realtime or in batch;
-- `Datasets <dev-guide.html#datasets>`__ for virtualized data storage; and
-- `Procedures <dev-guide.html#procedures>`__ and `Services <dev-guide.html#services>`__
+- :ref:`Streams <streams>` for real-time data collection;
+- Programs—:ref:`Flows, <flows-flowlets-index>` :ref:`MapReduce, <mapreduce>`
+  :ref:`Spark <spark>`—for data processing in realtime or in batch;
+- :ref:`Datasets <datasets-index>` for virtualized data storage; and
+- :ref:`Procedures <procedures>` and :ref:`Services <user-services>`
   for data serving to external clients.
 
 This diagram illustrates a typical Big Data application:

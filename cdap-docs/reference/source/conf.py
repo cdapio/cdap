@@ -14,5 +14,8 @@ from common_conf import *
 
 html_short_title = u'CDAP Reference'
 
+html_short_title_toc = u'Reference'
+html_context = {"html_short_title_toc":html_short_title_toc}
+
 # Remove this guide from the mapping as it will fail as it has been deleted by clean
 intersphinx_mapping.pop("reference", None)
