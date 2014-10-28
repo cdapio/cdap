@@ -91,7 +91,6 @@ public class DefaultServiceWorkerConfigurer implements ServiceWorkerConfigurer {
   public ServiceWorkerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new DefaultServiceWorkerSpecification(className, name, description,
-                                                 properties, datasets, resource, instances);
+    return new ServiceWorkerSpecification(className, name, description, properties, datasets, resource, instances);
   }
 }

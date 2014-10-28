@@ -36,11 +36,10 @@ import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.ServiceMeta;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -59,7 +58,7 @@ import javax.ws.rs.PathParam;
 
 
 /**
- *  Handler class for User services.
+ *  {@link HttpHandler} for User Services.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
@@ -78,7 +77,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return the list of user twill apps for an application.
+   * Return the list of user services for an application.
    */
   @Path("/apps/{app-id}/services")
   @GET
@@ -99,36 +98,6 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       } else {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Return the service details of a given service.
-   */
-  @Path("/apps/{app-id}/services/{service-id}")
-  @GET
-  public void getService(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") String appId,
-                         @PathParam("service-id") String serviceId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ServiceSpecification spec = getServiceSpecification(accountId, appId, serviceId);
-      if (spec == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      responder.sendJson(HttpResponseStatus.OK,
-                         new ServiceMeta(spec.getName(), spec.getName(), spec.getDescription(),
-                                         ImmutableSet.<String>builder().add(spec.getName())
-                                                                       .addAll(spec.getWorkers().keySet()).build()));
-
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

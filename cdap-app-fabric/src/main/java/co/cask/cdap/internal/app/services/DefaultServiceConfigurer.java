@@ -24,10 +24,9 @@ import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
-import co.cask.cdap.internal.service.DefaultServiceSpecification;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.clearspring.analytics.util.Preconditions;
@@ -112,21 +111,21 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   public ServiceSpecification createSpecification() {
-    Map<String, HttpServiceSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new DefaultServiceSpecification(className, name, description, handleSpecs, workers, resources, instances);
+    Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
+    return new ServiceSpecification(className, name, description, handleSpecs, workers, resources, instances);
   }
 
   /**
    * Constructs HttpServiceSpecifications for each of the handlers in the {@param handlers} list.
    * Also performs verifications on these handlers (that a NettyHttpService can be constructed from them).
    */
-  private Map<String, HttpServiceSpecification> createHandlerSpecs(List<? extends HttpServiceHandler> handlers) {
+  private Map<String, HttpServiceHandlerSpecification> createHandlerSpecs(List<? extends HttpServiceHandler> handlers) {
     verifyHandlers(handlers);
-    Map<String, HttpServiceSpecification> handleSpecs = Maps.newHashMap();
+    Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
       DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler);
       handler.configure(configurer);
-      HttpServiceSpecification spec = configurer.createSpecification();
+      HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
                                   "Handler with name %s already existed.", spec.getName());
       handleSpecs.put(spec.getName(), spec);
