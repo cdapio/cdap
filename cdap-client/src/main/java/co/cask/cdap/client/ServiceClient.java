@@ -21,6 +21,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.http.HttpMethod;
@@ -30,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import javax.inject.Inject;
@@ -57,9 +59,14 @@ public class ServiceClient {
    * @throws IOException if a network error occurred
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public ServiceSpecification get(String appId, String serviceId) throws IOException, UnAuthorizedAccessTokenException {
+  public ServiceSpecification get(String appId, String serviceId)
+    throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
     URL url = config.resolveURL(String.format("apps/%s/services/%s", appId, serviceId));
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException("application or service ", appId + "/" + serviceId);
+    }
     return ObjectResponse.fromJsonBody(response, ServiceSpecification.class).getResponseObject();
   }
 
@@ -72,7 +79,7 @@ public class ServiceClient {
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
   public List<ServiceHttpEndpoint> getEndpoints(String appId, String serviceId)
-    throws IOException, UnAuthorizedAccessTokenException {
+    throws IOException, UnAuthorizedAccessTokenException, NotFoundException {
 
     ServiceSpecification specification = get(appId, serviceId);
     List<ServiceHttpEndpoint> endpoints = Lists.newArrayList();
