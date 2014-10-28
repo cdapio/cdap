@@ -45,11 +45,15 @@ public interface RuntimeContext {
 
   /**
    * Stores a key/value property pair. It'll be persisted when the current transaction context commits.
+   * @param key Key String
+   * @param value Value String
    */
   void setProperty(String key, String value);
 
   /**
    * Returns the property value of the given key or null if not such property exists.
+   * @param key Key String
+   * @return Value String
    */
   String getProperty(String key);
 }
