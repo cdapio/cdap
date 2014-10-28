@@ -17,10 +17,21 @@
 package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
  * Fake no-op Service.
  */
 public final class FakeService extends AbstractHttpServiceHandler {
   public static final String NAME = "fakeService";
+
+  @Path("ping")
+  @GET
+  public void ping(HttpServiceRequest request, HttpServiceResponder responder) {
+    responder.sendStatus(200);
+  }
 }

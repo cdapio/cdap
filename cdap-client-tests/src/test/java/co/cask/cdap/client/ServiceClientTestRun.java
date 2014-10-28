@@ -17,14 +17,18 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeService;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -33,27 +37,42 @@ import static org.junit.Assert.assertEquals;
  */
 @Category(XSlowTests.class)
 public class ServiceClientTestRun extends ClientTestBase {
-  private ApplicationClient appClient;
   private ServiceClient serviceClient;
   private ProgramClient programClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
-    appClient = new ApplicationClient(clientConfig);
+
+    ApplicationClient appClient = new ApplicationClient(clientConfig);
     serviceClient = new ServiceClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
+
+    appClient.deploy(createAppJarFile(FakeApp.class));
+    programClient.start(FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
+    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
+  }
+
+  @After
+  public void tearDown() throws Throwable {
+    programClient.stop(FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
+    assertProgramStopped(programClient, FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
   }
 
   @Test
   public void testGetServiceSpecification() throws Exception {
-    appClient.deploy(createAppJarFile(FakeApp.class));
-    programClient.start(FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
-    assertProgramRunning(programClient, FakeApp.NAME, ProgramType.SERVICE, FakeService.NAME);
-
     ServiceSpecification serviceSpecification = serviceClient.get(FakeApp.NAME, FakeService.NAME);
     assertEquals(serviceSpecification.getName(), FakeService.NAME);
     assertEquals(serviceSpecification.getHandlers().size(), 1);
     assertEquals(serviceSpecification.getWorkers().size(), 0);
+  }
+
+  @Test
+  public void testGetEndpoints() throws Exception {
+    List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(FakeApp.NAME, FakeService.NAME);
+    assertEquals(1, endpoints.size());
+    ServiceHttpEndpoint endpoint = endpoints.get(0);
+    assertEquals("GET", endpoint.getMethod());
+    assertEquals("/ping", endpoint.getPath());
   }
 }
