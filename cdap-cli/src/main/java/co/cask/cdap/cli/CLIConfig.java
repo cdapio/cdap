@@ -20,7 +20,6 @@ import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
@@ -48,12 +47,20 @@ public class CLIConfig {
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
    */
   public CLIConfig(String hostname) {
-    this.clientConfig = new ClientConfig.Builder()
-      .setHostname(Objects.firstNonNull(hostname, "localhost"))
-      .setVerifySSLCert(Boolean.valueOf(System.getProperty(PROP_VERIFY_SSL_CERT, "true")))
-      .build();
+    this.clientConfig = createClientConfig(hostname);
     this.version = tryGetVersion();
     this.connectionChangeListeners = Lists.newArrayList();
+  }
+
+  private ClientConfig createClientConfig(String hostname) {
+    ClientConfig.Builder clientConfigBuilder = new ClientConfig.Builder();
+    if (hostname != null) {
+      clientConfigBuilder.setHostname(hostname);
+    }
+    if (System.getProperty(PROP_VERIFY_SSL_CERT) != null) {
+      clientConfigBuilder.setVerifySSLCert(Boolean.parseBoolean(System.getProperty(PROP_VERIFY_SSL_CERT)));
+    }
+    return clientConfigBuilder.build();
   }
 
   private String tryGetVersion() {

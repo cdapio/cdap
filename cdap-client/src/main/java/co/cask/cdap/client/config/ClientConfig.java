@@ -16,6 +16,7 @@
 
 package co.cask.cdap.client.config;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.HttpRequestConfig;
 import co.cask.cdap.security.authentication.client.AccessToken;
@@ -34,6 +35,8 @@ import javax.annotation.Nullable;
  */
 public class ClientConfig {
 
+  private static final CConfiguration CONF = CConfiguration.create();
+
   private static final int DEFAULT_UPLOAD_READ_TIMEOUT = 15000;
   private static final int DEFAULT_UPLOAD_CONNECT_TIMEOUT = 15000;
 
@@ -42,12 +45,10 @@ public class ClientConfig {
   private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
 
   private static final String DEFAULT_VERSION = Constants.Gateway.GATEWAY_VERSION_TOKEN;
-  private static final String HTTP = "http";
-  private static final String HTTPS = "https";
-  private static final int DEFAULT_PORT = 10000;
-  private static final int DEFAULT_SSL_PORT = 10443;
-  private static final boolean DEFAULT_SSL_ENABLED = false;
-  private static final String DEFAULT_HOST = "localhost";
+  private static final int DEFAULT_PORT = CONF.getInt(Constants.Router.ROUTER_PORT);
+  private static final int DEFAULT_SSL_PORT = CONF.getInt(Constants.Router.ROUTER_SSL_PORT);
+  private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(Constants.Security.SSL_ENABLED);
+  private static final String DEFAULT_HOST = CONF.get(Constants.Router.ADDRESS);
 
   private HttpRequestConfig defaultHttpConfig;
   private HttpRequestConfig uploadHttpConfig;
@@ -87,7 +88,7 @@ public class ClientConfig {
    * @return the base URI of the target CDAP instance
    */
   public URI getBaseURI() {
-    return URI.create(String.format("%s://%s:%d", sslEnabled ? HTTPS : HTTP, hostname, port));
+    return URI.create(String.format("%s://%s:%d", sslEnabled ? "https" : "http", hostname, port));
   }
 
   /**
