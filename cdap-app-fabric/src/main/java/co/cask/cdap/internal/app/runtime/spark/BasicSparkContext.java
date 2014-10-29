@@ -113,6 +113,11 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   }
 
   @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass) {
+    throw new IllegalStateException("Reading stream is not supported here");
+  }
+
+  @Override
   public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
     throw new IllegalStateException("Reading stream is not supported here");
   }

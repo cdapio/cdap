@@ -73,6 +73,16 @@ public interface SparkContext extends RuntimeContext {
   <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass);
 
   /**
+   * Create a Spark RDD that uses complete {@link Stream} as input source
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
+   * @param <T>        type of RDD
+   * @return the RDD created from {@link Stream}
+   */
+  <T> T readFromStream(String streamName, Class<?> vClass);
+
+  /**
    * Create a Spark RDD that uses {@link Stream} as input source
    *
    * @param streamName the name of the {@link Stream} to be read as an RDD
@@ -85,7 +95,7 @@ public interface SparkContext extends RuntimeContext {
   <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime);
 
   /**
-   * Create a Spark RDD that uses {@link Stream} as input source
+   * Create a Spark RDD that uses {@link Stream} as input source according to the given {@link StreamEventDecoder}
    *
    * @param streamName  the name of the {@link Stream} to be read as an RDD
    * @param vClass      the value class

@@ -88,6 +88,18 @@ class ScalaSparkContext extends AbstractSparkContext {
    *
    * @param streamName the name of the {@link Stream} to be read as an RDD
    * @param vClass     the value class
+   * @return the RDD created from {@link Stream}
+   */
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass) {
+    return readFromStream(streamName, vClass, 0, System.currentTimeMillis(), null);
+  }
+
+  /**
+   * Gets a {@link Stream} as a {@link NewHadoopRDD}
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
    * @param startTime  the starting time of the stream to be read
    * @param endTime    the ending time of the streams to be read
    * @return the RDD created from {@link Stream}
