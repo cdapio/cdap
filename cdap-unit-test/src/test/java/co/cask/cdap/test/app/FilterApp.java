@@ -140,5 +140,11 @@ public class FilterApp extends AbstractApplication {
         responder.sendJson(ProcedureResponse.Code.SUCCESS, value);
       }
     }
+
+    @Handle("resetCount")
+    public void resetHandle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+      context.setProperty(CALL_PROPERTY, "0");
+      responder.sendJson(ProcedureResponse.Code.SUCCESS);
+    }
   }
 }

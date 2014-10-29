@@ -42,6 +42,7 @@ import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.After;
@@ -59,6 +60,7 @@ import java.sql.ResultSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -675,8 +677,12 @@ public class TestFrameworkTest extends TestBase {
     try {
       // list the tables and make sure the table is there
       ResultSet results = connection.prepareStatement("show tables").executeQuery();
-      Assert.assertTrue(results.next());
-      Assert.assertTrue("cdap_user_mytable".equalsIgnoreCase(results.getString(1)));
+      Set<String> tableNames = Sets.newHashSet();
+      while (results.next()) {
+        tableNames.add(results.getString(1).toLowerCase());
+      }
+      Assert.assertTrue(!tableNames.isEmpty());
+      Assert.assertTrue(tableNames.contains("cdap_user_mytable"));
 
       // run a query over the dataset
       results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
@@ -711,6 +717,7 @@ public class TestFrameworkTest extends TestBase {
       ProcedureManager procManager = appManager.startProcedure("Count");
       ProcedureClient procClient = procManager.getClient();
       Gson gson = new Gson();
+      procClient.query("resetCount", emptyMap);
       for (int i = 0; i < calls; i++) {
         procClient.query("result", emptyMap);
       }
