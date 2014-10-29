@@ -17,7 +17,6 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -33,23 +32,16 @@ public class AppWithInvalidHandler extends AbstractApplication {
 
   @Override
   public void configure() {
-    addService(new ServiceWithInvalidHandler());
+    addService("ServiceWithInvalidHandler", new InvalidHandler());
   }
 
-  public static class ServiceWithInvalidHandler extends AbstractService {
-    @Override
-    protected void configure() {
-      addHandler(new InvalidHandler());
+  // A handler which has an invalid value for its @Path param, due to an extra slash.
+  public static final class InvalidHandler extends AbstractHttpServiceHandler {
+    @Path("/write/{/key}")
+    @GET
+    public void handler(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("key") String key) {
+      responder.sendStatus(200);
     }
 
-    // A handler which has an invalid value for its @Path param, due to an extra slash.
-    public static final class InvalidHandler extends AbstractHttpServiceHandler {
-      @Path("/write/{/key}")
-      @GET
-      public void handler(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("key") String key) {
-        responder.sendStatus(200);
-      }
-
-    }
   }
 }

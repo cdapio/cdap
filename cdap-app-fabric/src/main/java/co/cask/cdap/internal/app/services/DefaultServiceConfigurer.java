@@ -134,16 +134,15 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   private void verifyHandlers(List<? extends HttpServiceHandler> handlers) {
-    Preconditions.checkArgument(!Iterables.isEmpty(handlers), "Cannot define a Service without handler.");
+    Preconditions.checkArgument(!Iterables.isEmpty(handlers), "Service %s should have at least one handler", name);
     try {
       List<HttpHandler> httpHandlers = Lists.newArrayList();
       for (HttpServiceHandler handler : handlers) {
-        httpHandlers.add(createHttpHandler(handler, ""));
+        httpHandlers.add(createHttpHandler(handler));
       }
 
       // Constructs a NettyHttpService, to verify that the handlers passed in by the user are valid.
       NettyHttpService.builder()
-        .setPort(0)
         .addHttpHandlers(httpHandlers)
         .build();
     } catch (Throwable t) {
@@ -154,15 +153,11 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   }
 
-  private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler, String pathPrefix) {
-    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix);
+  private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler) {
+    HttpHandlerFactory factory = new HttpHandlerFactory("");
     @SuppressWarnings("unchecked")
     TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());
-    return factory.createHttpHandler(type, createDelegatorContext(handler));
-  }
-
-  private <T extends HttpServiceHandler> DelegatorContext<T> createDelegatorContext(T handler) {
-    return new VerificationDelegateContext<T>(handler);
+    return factory.createHttpHandler(type, new VerificationDelegateContext<T>(handler));
   }
 
   private static final class VerificationDelegateContext<T extends HttpServiceHandler> implements DelegatorContext<T> {

@@ -111,6 +111,7 @@ public class ServiceProgramRunner implements ProgramRunner {
         startComponent(program, workerSpec.getName(), workerSpec.getInstances(), runId, userArguments, components);
       }
     } catch (Throwable t) {
+      LOG.error("Failed to start all service components upon startup failure.", t);
       try {
         // Need to stop all started components
         Futures.successfulAsList(Iterables.transform(components.values(),
@@ -120,10 +121,11 @@ public class ServiceProgramRunner implements ProgramRunner {
              return controller.stop();
            }
          })).get();
+        throw Throwables.propagate(t);
       } catch (Exception e) {
-        LOG.error("Failed to stop all service components upon startup failure.");
+        LOG.error("Failed to stop all service components upon startup failure.", e);
+        throw Throwables.propagate(e);
       }
-      throw Throwables.propagate(t);
 
     }
     return components;
