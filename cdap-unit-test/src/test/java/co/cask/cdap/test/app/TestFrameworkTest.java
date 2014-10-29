@@ -696,7 +696,7 @@ public class TestFrameworkTest extends TestBase {
   @Test
   public void testProperty() throws Exception {
     Map<String, String> emptyMap = Maps.newHashMap();
-    final int CALLS = 10;
+    final int calls = 10;
     ApplicationManager appManager = deployApplication(FilterApp.class);
 
     try {
@@ -711,10 +711,11 @@ public class TestFrameworkTest extends TestBase {
       ProcedureManager procManager = appManager.startProcedure("Count");
       ProcedureClient procClient = procManager.getClient();
       Gson gson = new Gson();
-      for (int i = 0; i < CALLS; i++) {
+      for (int i = 0; i < calls; i++) {
         procClient.query("result", emptyMap);
       }
-      Assert.assertEquals(Integer.toString(CALLS), gson.fromJson(procClient.query("callCount", emptyMap), String.class));
+      Assert.assertEquals(Integer.toString(calls), gson.fromJson(procClient.query("callCount", emptyMap),
+                                                                 String.class));
     } finally {
       appManager.stopAll();
     }

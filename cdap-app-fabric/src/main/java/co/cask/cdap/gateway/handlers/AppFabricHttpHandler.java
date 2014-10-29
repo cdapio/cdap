@@ -19,9 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
@@ -1807,13 +1805,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       ApplicationWithPrograms applicationWithPrograms =
         manager.deploy(id, appId, archiveLocation).get();
-      String propertyTableName = Joiner.on(".").join(
-        Lists.newArrayList(id.getId(), applicationWithPrograms.getAppSpecLoc().getApplicationId().getId(),
-                           Constants.Dataset.PROPERTY_TABLE));
-      if (!sysdsFramework.hasInstance(propertyTableName)) {
-        sysdsFramework.addInstance(KeyValueTable.class.getName(), propertyTableName, DatasetProperties.EMPTY);
-      }
-
       ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
       setupSchedules(accountId, specification);
     } catch (Throwable e) {
