@@ -11,6 +11,7 @@ How-To Guides
    :maxdepth: 1
    :titlesonly:
 
+   cdap-flow-guide
    cdap-flume-guide
    cdap-mapreduce-guide
    cdap-bi-guide
@@ -21,6 +22,13 @@ How-To Guides
 
 Designed to be completed in 15-30 minutes, these guides provide quick, hands-on
 instructions for building the “Hello World” of any development task with CDAP.
+
+
+.. |flow-guide| replace:: **Realtime Data Processing With a Flow:**
+.. _flow-guide: cdap-flow-guide.html
+
+- |flow-guide|_  Learn how to **process data in realtime** with CDAP. You will discover how
+  easy it is to scale out applications on CDAP.
 
 
 .. |flume-guide| replace:: **Ingesting Data into CDAP using Apache Flume:**
