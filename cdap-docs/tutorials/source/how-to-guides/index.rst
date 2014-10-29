@@ -15,6 +15,7 @@ How-To Guides
    cdap-mapreduce-guide
    cdap-bi-guide
    cdap-timeseries-guide
+   cdap-twitter-ingest-guide
    cdap-spark-guide
 
 
@@ -45,6 +46,13 @@ instructions for building the “Hello World” of any development task with CDA
 .. _timeseries-guide: cdap-timeseries-guide.html
 
 - |timeseries-guide|_ Learn how to **store timeseries data in CDAP Datasets.**
+
+
+.. |twitter-ingest-guide| replace:: **Consuming Twitter Data in Realtime:**
+.. _twitter-ingest-guide: cdap-twitter-ingest-guide.html
+
+- |twitter-ingest-guide|_ Learn how to **consume a live tweets stream in realtime,** one of
+  the common tasks of big data applications that power the social analytics.
 
 
 .. |spark-guide| replace:: **Iterative Data Processing with Apache Spark:**

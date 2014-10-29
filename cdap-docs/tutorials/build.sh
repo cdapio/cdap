@@ -34,7 +34,7 @@ function guide_rewrite() {
   
   mkdir $INCLUDES_DIR/$GUIDE
   pandoc -t rst -r markdown $INCLUDES_DIR/$REDIRECT_S/$GUIDE/README.md  -o $INCLUDES_DIR/$GUIDE/README_SOURCE.rst
-  sed "s|figure:: docs/images|figure:: $REDIRECT_T/$GUIDE/docs/images|g" $INCLUDES_DIR/$GUIDE/README_SOURCE.rst > $INCLUDES_DIR/$GUIDE/README.rst
+  sed -e "s|figure:: docs/images|figure:: $REDIRECT_T/$GUIDE/docs/images|g" -e "s|.. code:: |.. code-block:: |g" $INCLUDES_DIR/$GUIDE/README_SOURCE.rst > $INCLUDES_DIR/$GUIDE/README.rst
 }
 
 function pandoc_includes() {
@@ -45,11 +45,11 @@ function pandoc_includes() {
   guide_rewrite $1 cdap-mapreduce-guide
   guide_rewrite $1 cdap-spark-guide
   guide_rewrite $1 cdap-timeseries-guide
-
+  guide_rewrite $1 cdap-twitter-ingest-guide
+  
   # Not yet completed
   #  guide_rewrite $1 cdap-flow-guide
   #  guide_rewrite $1 cdap-kafka-ingest-guide
-  #  guide_rewrite $1 cdap-twitter-ingest-guide
 }
 
 run_command $1

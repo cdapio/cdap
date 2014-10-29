@@ -14,6 +14,7 @@ from common_conf import *
 
 html_short_title = u'CDAP How-To Guides and Tutorials'
 
+# If this title is changed, change guides.html to match
 html_short_title_toc = u'Guides and Tutorials'
 html_context = {"html_short_title_toc":html_short_title_toc}
 

@@ -3,6 +3,6 @@
 
 .. highlight:: console
 
-.. _cdap-flume-guide:
+.. _cdap-twitter-ingest-guide:
 
-.. include:: ../../build/_includes/cdap-flume-guide/README.rst
+.. include:: ../../build/_includes/cdap-twitter-ingest-guide/README.rst
