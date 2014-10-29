@@ -9,17 +9,17 @@ describe 'cdap::repo' do
   describe 'rhel' do
     it 'Verifies the repository file is present and correct' do
       skip unless node[:platform_family] == 'rhel'
-      file('/etc/yum.repos.d/cdap.repo').must_exist.with(:owner, 'root').and(:group, 'root').and(:mode, '0644')
-      file('/etc/yum.repos.d/cdap.repo').must_include "baseurl=#{node['cdap']['repo']['url']}"
-      file('/etc/yum.repos.d/cdap.repo').must_include 'enabled=1'
+      file('/etc/yum.repos.d/cask.repo').must_exist.with(:owner, 'root').and(:group, 'root').and(:mode, '0644')
+      file('/etc/yum.repos.d/cask.repo').must_include "baseurl=#{node['cdap']['repo']['url']}"
+      file('/etc/yum.repos.d/cask.repo').must_include 'enabled=1'
     end
   end
 
   describe 'debian' do
     it 'Verifies the repository file is present and correct' do
       skip unless node[:platform_family] == 'debian'
-      file('/etc/apt/sources.list.d/cdap.list').must_exist.with(:owner, 'root').and(:group, 'root').and(:mode, '0644')
-      file('/etc/apt/sources.list.d/cdap.list').must_include "#{node['cdap']['repo']['url']}"
+      file('/etc/apt/sources.list.d/cask.list').must_exist.with(:owner, 'root').and(:group, 'root').and(:mode, '0644')
+      file('/etc/apt/sources.list.d/cask.list').must_include "#{node['cdap']['repo']['url']}"
     end
   end
 
