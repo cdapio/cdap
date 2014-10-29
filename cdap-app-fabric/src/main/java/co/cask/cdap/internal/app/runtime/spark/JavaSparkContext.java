@@ -115,7 +115,6 @@ class JavaSparkContext extends AbstractSparkContext {
   @Override
   public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
                               Class<? extends StreamEventDecoder> decoderType) {
-    if (validateVClass(vClass)) {
       Configuration hConf;
       try {
         if (decoderType == null) {
@@ -128,9 +127,6 @@ class JavaSparkContext extends AbstractSparkContext {
       }
       return (T) originalSparkContext.newAPIHadoopFile(streamName, StreamInputFormat.class, LongWritable.class, vClass,
                                                        hConf);
-    } else {
-      throw new IllegalArgumentException("The value class must be of type BytesWritable or Text");
-    }
   }
 
   /**

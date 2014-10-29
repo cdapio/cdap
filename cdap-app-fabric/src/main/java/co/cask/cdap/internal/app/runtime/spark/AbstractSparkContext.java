@@ -184,7 +184,8 @@ abstract class AbstractSparkContext implements SparkContext {
     if (decoderType == null) {
       // If the user don't specify the decoder, detect the type
       if (!StreamInputFormat.setStreamEventDecoder(hConf, vClass)) {
-        throw new RuntimeException("This should never happen. We already checked the value class to be supported");
+        throw new IllegalArgumentException("The value class must be of type BytesWritable or Text if no decoder type " +
+                                             "is provided");
       }
     } else {
       StreamInputFormat.setDecoderType(hConf, decoderType);
@@ -241,15 +242,5 @@ abstract class AbstractSparkContext implements SparkContext {
       arguments.put(runtimeArgument);
     }
     return arguments.build();
-  }
-
-  /**
-   * Validates the value class to be of Type supported by Streams
-   *
-   * @param vClass the specified value class to be checked
-   * @return a boolean which is true if the value class is {@link BytesWritable} or {@link Text} else false
-   */
-  boolean validateVClass(Class<?> vClass) {
-    return (vClass.equals(BytesWritable.class) || vClass.equals(Text.class));
   }
 }
