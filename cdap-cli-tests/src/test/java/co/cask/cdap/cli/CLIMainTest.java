@@ -18,6 +18,7 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.app.FakeApp;
 import co.cask.cdap.cli.app.FakeProcedure;
+import co.cask.cdap.cli.app.PingService;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
@@ -112,6 +113,16 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
       + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
     testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
+
+    //test service commands
+    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PingService.NAME);
+    testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
+    testCommandOutputContains(cli, "list endpoints service " + qualifiedServiceId, "GET");
+    testCommandOutputContains(cli, "list endpoints service " + qualifiedServiceId, "/ping");
+    System.out.println("call service " + qualifiedServiceId + " GET /ping \"{'test' : 'val'}\"");
+    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " GET /ping " +
+                                   "headers \"{'test' : 'val'}\"", "val");
+    testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
 
     // cleanup
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");

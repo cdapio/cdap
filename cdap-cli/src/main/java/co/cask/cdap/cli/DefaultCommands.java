@@ -17,6 +17,7 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.command.CallProcedureCommand;
+import co.cask.cdap.cli.command.CallServiceCommand;
 import co.cask.cdap.cli.command.ConnectCommand;
 import co.cask.cdap.cli.command.CreateDatasetInstanceCommand;
 import co.cask.cdap.cli.command.CreateStreamCommand;
@@ -42,6 +43,7 @@ import co.cask.cdap.cli.command.ListDatasetInstancesCommand;
 import co.cask.cdap.cli.command.ListDatasetModulesCommand;
 import co.cask.cdap.cli.command.ListDatasetTypesCommand;
 import co.cask.cdap.cli.command.ListProgramsCommandSet;
+import co.cask.cdap.cli.command.ListServiceEndpointsCommand;
 import co.cask.cdap.cli.command.ListStreamsCommand;
 import co.cask.cdap.cli.command.SendStreamEventCommand;
 import co.cask.cdap.cli.command.SetProgramInstancesCommandSet;
@@ -102,6 +104,8 @@ public class DefaultCommands implements Supplier<List<Command>> {
       .addAll(injector.getInstance(StopProgramCommandSet.class).getCommands())
       .add(injector.getInstance(TruncateDatasetInstanceCommand.class))
       .add(injector.getInstance(TruncateStreamCommand.class))
+      .add(injector.getInstance(CallServiceCommand.class))
+      .add(injector.getInstance(ListServiceEndpointsCommand.class))
       .build();
   }
 

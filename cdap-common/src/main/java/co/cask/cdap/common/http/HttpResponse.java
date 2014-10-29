@@ -20,7 +20,7 @@ import com.google.common.base.Charsets;
 import java.nio.charset.Charset;
 
 /**
- * Return type for http requests executed by {@link HttpResponse}
+ * Return type for http requests executed by {@link HttpRequests}
  */
 public class HttpResponse {
   private final int responseCode;

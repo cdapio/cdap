@@ -78,7 +78,7 @@ public enum ElementType {
   SERVICE("Service", "Services", "service", "services",
           ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
-          Capability.START_STOP, Capability.STATUS),
+          Capability.START_STOP, Capability.STATUS, Capability.LIST),
 
   RUNNABLE("Runnable", "Runnables", "runnable", "runnables",
            null, ProgramType.SERVICE,
