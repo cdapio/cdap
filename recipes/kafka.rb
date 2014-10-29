@@ -21,6 +21,7 @@ include_recipe 'cdap::default'
 
 package 'cdap-kafka' do
   action :install
+  version node['cdap']['version']
 end
 
 kafka_log_dir =

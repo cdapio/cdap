@@ -22,6 +22,7 @@ include_recipe 'cdap::repo'
 
 package 'cdap-security' do
   action :install
+  version node['cdap']['version']
 end
 
 service 'cdap-auth-server' do

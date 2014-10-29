@@ -19,6 +19,8 @@
 
 include_recipe 'cdap::default'
 
-%w(gateway kafka master web_app).each do |recipe|
+include_recipe 'cdap::gateway' if node['cdap']['version'].to_f < 2.6
+
+%w(kafka master web_app).each do |recipe|
   include_recipe "cdap::#{recipe}"
 end
