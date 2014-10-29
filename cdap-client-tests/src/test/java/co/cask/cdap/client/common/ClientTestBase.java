@@ -46,7 +46,7 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    clientConfig = new ClientConfig(HOSTNAME, null);
+    clientConfig = new ClientConfig.Builder().setHostname(HOSTNAME).setPort(PORT).build();
   }
 
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {

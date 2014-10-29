@@ -18,11 +18,8 @@ package co.cask.cdap.cli;
 
 import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.cdap.client.config.ClientConfig;
-import co.cask.cdap.common.http.HttpRequestConfig;
-import co.cask.cdap.security.authentication.client.AuthenticationClient;
-import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
+import co.cask.cdap.security.authentication.client.AccessToken;
 import com.google.common.base.Charsets;
-import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.CharStreams;
@@ -31,7 +28,6 @@ import com.google.common.io.InputSupplier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 /**
@@ -42,36 +38,29 @@ public class CLIConfig {
   public static final String PROP_VERIFY_SSL_CERT = "verify.ssl.cert";
   public static final String ENV_ACCESSTOKEN = "ACCESS_TOKEN";
 
-  private static final int DEFAULT_PORT = 10000;
-  private static final int DEFAULT_SSL_PORT = 10443;
-  private static final boolean DEFAULT_SSL = false;
-
   private final ClientConfig clientConfig;
   private final String version;
-  private final boolean verifySSLCert;
 
-  private String hostname;
-  private List<HostnameChangeListener> hostnameChangeListeners;
-  private int port;
-  private int sslPort;
-  private URI uri;
+  private List<ConnectionChangeListener> connectionChangeListeners;
 
   /**
    * @param hostname Hostname of the CDAP server to interact with (e.g. "example.com")
    */
   public CLIConfig(String hostname) {
-    this.verifySSLCert = Boolean.valueOf(System.getProperty(PROP_VERIFY_SSL_CERT, "true"));
-    this.hostname = Objects.firstNonNull(hostname, "localhost");
-    this.port = DEFAULT_PORT;
-    this.uri = URI.create(String.format("http://%s:%d", hostname, port));
-    this.sslPort = DEFAULT_SSL_PORT;
-    AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-    authenticationClient.setConnectionInfo(hostname, port, DEFAULT_SSL);
-    this.clientConfig = new ClientConfig(hostname, port,
-                                         new HttpRequestConfig(15000, 15000, verifySSLCert),
-                                         new HttpRequestConfig(0, 0, verifySSLCert), null);
+    this.clientConfig = createClientConfig(hostname);
     this.version = tryGetVersion();
-    this.hostnameChangeListeners = Lists.newArrayList();
+    this.connectionChangeListeners = Lists.newArrayList();
+  }
+
+  private ClientConfig createClientConfig(String hostname) {
+    ClientConfig.Builder clientConfigBuilder = new ClientConfig.Builder();
+    if (hostname != null) {
+      clientConfigBuilder.setHostname(hostname);
+    }
+    if (System.getProperty(PROP_VERIFY_SSL_CERT) != null) {
+      clientConfigBuilder.setVerifySSLCert(Boolean.parseBoolean(System.getProperty(PROP_VERIFY_SSL_CERT)));
+    }
+    return clientConfigBuilder.build();
   }
 
   private String tryGetVersion() {
@@ -88,56 +77,59 @@ public class CLIConfig {
     }
   }
 
-  public boolean isVerifySSLCert() {
-    return verifySSLCert;
+  public ClientConfig getClientConfig() {
+    return clientConfig;
   }
 
   public String getHost() {
-    return hostname;
+    return clientConfig.getHostname();
   }
 
-  public int getPort() {
-    return port;
+  public URI getURI() {
+    return clientConfig.getBaseURI();
   }
 
-  public int getSslPort() {
-    return sslPort;
-  }
-
-  public ClientConfig getClientConfig() {
-    return clientConfig;
+  public boolean isVerifySSLCert() {
+    return clientConfig.isVerifySSLCert();
   }
 
   public String getVersion() {
     return version;
   }
 
-  public void setConnection(String hostname, int port, boolean ssl) throws URISyntaxException {
-    this.hostname = hostname;
-    if (ssl) {
-      this.sslPort = port;
-    } else {
-      this.port = port;
-    }
-    this.uri = URI.create(String.format("%s://%s:%d", ssl ? "https" : "http", hostname, port));
-    this.clientConfig.setHostnameAndPort(hostname, port, ssl);
-    for (HostnameChangeListener listener : hostnameChangeListeners) {
-      listener.onHostnameChanged(hostname);
+  public void setHostname(String hostname) {
+    clientConfig.setHostname(hostname);
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig.getBaseURI());
     }
   }
 
-  public void addHostnameChangeListener(HostnameChangeListener listener) {
-    this.hostnameChangeListeners.add(listener);
+  public void setPort(int port) {
+    clientConfig.setPort(port);
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig.getBaseURI());
+    }
   }
 
-  public URI getURI() {
-    return uri;
+  public void setSSLEnabled(boolean sslEnabled) {
+    clientConfig.setSSLEnabled(sslEnabled);
+    for (ConnectionChangeListener listener : connectionChangeListeners) {
+      listener.onConnectionChanged(clientConfig.getBaseURI());
+    }
+  }
+
+  public void setAccessToken(AccessToken accessToken) {
+    clientConfig.setAccessToken(accessToken);
+  }
+
+  public void addHostnameChangeListener(ConnectionChangeListener listener) {
+    this.connectionChangeListeners.add(listener);
   }
 
   /**
    * Listener for hostname changes.
    */
-  public interface HostnameChangeListener {
-    void onHostnameChanged(String newHostname);
+  public interface ConnectionChangeListener {
+    void onConnectionChanged(URI newURI);
   }
 }

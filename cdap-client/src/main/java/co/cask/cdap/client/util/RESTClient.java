@@ -41,19 +41,28 @@ public class RESTClient {
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
 
-  private RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig) {
+  public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig) {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
   }
 
   /**
-   * Creates a default {@link RESTClient}.
+   * Creates a {@link RESTClient}.
    *
-   * @param config {@link ClientConfig} that configures hostname and timeouts
+   * @param clientConfig default {@link ClientConfig} that configures timeouts
    * @return {@link RESTClient} instance
    */
-  public static RESTClient create(ClientConfig config) {
-    return new RESTClient(config.getDefaultConfig(), config.getUploadConfig());
+  public static RESTClient create(ClientConfig clientConfig) {
+    return new RESTClient(clientConfig.getDefaultHttpConfig(), clientConfig.getUploadHttpConfig());
+  }
+
+  /**
+   * Creates a default {@link RESTClient}.
+   *
+   * @return {@link RESTClient} instance
+   */
+  public static RESTClient create() {
+    return new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT);
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)

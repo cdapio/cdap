@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpRequests;
@@ -108,7 +109,7 @@ public abstract class DatasetServiceTestBase {
 
     // Tx Manager to support working with datasets
     Configuration txConf = HBaseConfiguration.create();
-    cConf.copyTxProperties(txConf);
+    CConfigurationUtil.copyTxProperties(cConf, txConf);
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
