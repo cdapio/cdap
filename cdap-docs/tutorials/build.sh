@@ -46,9 +46,9 @@ function pandoc_includes() {
   guide_rewrite $1 cdap-spark-guide
   guide_rewrite $1 cdap-timeseries-guide
   guide_rewrite $1 cdap-twitter-ingest-guide
+  guide_rewrite $1 cdap-flow-guide
   
   # Not yet completed
-  #  guide_rewrite $1 cdap-flow-guide
   #  guide_rewrite $1 cdap-kafka-ingest-guide
 }
 
