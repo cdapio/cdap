@@ -25,10 +25,8 @@ import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.data.stream.BytesStreamEventDecoder;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data.stream.TextStreamEventDecoder;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
@@ -45,12 +43,10 @@ import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkConf;
 import org.apache.twill.filesystem.Location;
-import org.json4s.StreamInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -156,14 +152,13 @@ abstract class AbstractSparkContext implements SparkContext {
   /**
    * Sets the input to a {@link Stream}
    *
-   * @param streamName name of streams to which input will be set to
-   * @param vClass     the value class which can be either {@link Text} or {@link BytesWritable}
+   * @param stream the stream to which input will be set to
+   * @param vClass the value class which can be either {@link Text} or {@link BytesWritable}
    * @return updated {@link Configuration}
    * @throws IOException if the given {@link Stream} is not found or the {@link StreamEventDecoder} was not identified
    */
-  Configuration setStreamInputDataset(String streamName, Class<?> vClass) throws IOException {
+  Configuration setStreamInputDataset(StreamBatchReadable stream, Class<?> vClass) throws IOException {
     Configuration hConf = new Configuration(getHConf());
-    StreamBatchReadable stream = new StreamBatchReadable(URI.create(streamName));
     configureStreamInput(hConf, stream, vClass);
     return hConf;
   }
@@ -189,7 +184,7 @@ abstract class AbstractSparkContext implements SparkContext {
     if (decoderType == null) {
       // If the user don't specify the decoder, detect the type
       if (!StreamInputFormat.setStreamEventDecoder(hConf, vClass)) {
-        throw new IOException("Failed to determine decoder for consuming StreamEvent from " + vClass);
+        throw new RuntimeException("This should never happen. We already checked the value class to be supported");
       }
     } else {
       StreamInputFormat.setDecoderType(hConf, decoderType);
@@ -248,4 +243,13 @@ abstract class AbstractSparkContext implements SparkContext {
     return arguments.build();
   }
 
+  /**
+   * Validates the value class to be of Type supported by Streams
+   *
+   * @param vClass the specified value class to be checked
+   * @return a boolean which is true if the value class is {@link BytesWritable} or {@link Text} else false
+   */
+  boolean validateVClass(Class<?> vClass) {
+    return (vClass.equals(BytesWritable.class) || vClass.equals(Text.class));
+  }
 }

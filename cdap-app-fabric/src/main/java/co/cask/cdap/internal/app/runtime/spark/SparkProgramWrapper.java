@@ -65,8 +65,8 @@ public class SparkProgramWrapper {
 
   // TODO: Get around Spark's limitation of only one SparkContext in a JVM and support multiple spark context:
   // CDAP-4
-  private static volatile boolean sparkProgramSuccessful;
-  private static volatile boolean sparkProgramRunning;
+  private static boolean sparkProgramSuccessful;
+  private static boolean sparkProgramRunning;
 
   /**
    * Constructor

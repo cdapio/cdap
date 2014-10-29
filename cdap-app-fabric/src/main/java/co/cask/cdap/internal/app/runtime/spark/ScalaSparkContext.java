@@ -112,30 +112,32 @@ class ScalaSparkContext extends AbstractSparkContext {
   /**
    * Gets a {@link Stream} as a {@link NewHadoopRDD}
    *
-   * @param streamName the name of the {@link Stream} to be read as an RDD
-   * @param vClass     the value class
-   * @param startTime  the starting time of the stream to be read
-   * @param endTime    the ending time of the streams to be read
+   * @param streamName  the name of the {@link Stream} to be read as an RDD
+   * @param vClass      the value class
+   * @param startTime   the starting time of the stream to be read
+   * @param endTime     the ending time of the streams to be read
    * @param decoderType the decoder to use while reading streams
    * @return the RDD created from {@link Stream}
    */
   @Override
   public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
                               Class<? extends StreamEventDecoder> decoderType) {
-    Configuration hConf;
-    try {
-      if (decoderType == null) {
-        hConf = setStreamInputDataset(new StreamBatchReadable(streamName, startTime, endTime).toURI().toString(),
-                                      vClass);
-      } else {
-        hConf = setStreamInputDataset(new StreamBatchReadable(streamName, startTime, endTime, decoderType).toURI()
-                                        .toString(), vClass);
+    if (validateVClass(vClass)) {
+      Configuration hConf;
+      try {
+        if (decoderType == null) {
+          hConf = setStreamInputDataset(new StreamBatchReadable(streamName, startTime, endTime), vClass);
+        } else {
+          hConf = setStreamInputDataset(new StreamBatchReadable(streamName, startTime, endTime, decoderType), vClass);
+        }
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to set input to specified stream: " + streamName);
       }
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to set input to specified stream: " + streamName);
+      return (T) originalSparkContext.newAPIHadoopFile(streamName, StreamInputFormat.class, LongWritable.class, vClass,
+                                                       hConf);
+    } else {
+      throw new IllegalArgumentException("The value class must be of type BytesWritable or Text");
     }
-    return (T) originalSparkContext.newAPIHadoopFile(streamName, StreamInputFormat.class, LongWritable.class, vClass,
-                                                     hConf);
   }
 
   private <T, K, V> void writeToDatasetHelper(T rdd, String datasetName, Class<K> kClass, Class<V> vClass) {

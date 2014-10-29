@@ -34,6 +34,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -83,6 +84,12 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   private static final String MIN_SPLIT_SIZE = "input.streaminputformat.min.splits.size";
   private static final String DECODER_TYPE = "input.streaminputformat.decoder.type";
 
+  /**
+   * Sets the TTL for the stream events.
+   *
+   * @param job  The job to modify
+   * @param ttl TTL of the stream in milliseconds.
+   */
   public static void setTTL(Job job, long ttl) {
     setTTL(job.getConfiguration(), ttl);
   }
@@ -90,7 +97,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   /**
    * Sets the TTL for the stream events.
    *
-   * @param conf  The job configuration to modify
+   * @param conf  The configuration to modify
    * @param ttl TTL of the stream in milliseconds.
    */
   public static void setTTL(Configuration conf, long ttl) {
@@ -98,6 +105,13 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     conf.setLong(STREAM_TTL, ttl);
   }
 
+  /**
+   * Sets the time range for the stream events.
+   *
+   * @param job The job to modify
+   * @param startTime Timestamp in milliseconds of the event start time (inclusive).
+   * @param endTime Timestamp in milliseconds of the event end time (exclusive).
+   */
   public static void setTimeRange(Job job, long startTime, long endTime) {
     setTimeRange(job.getConfiguration(), startTime, endTime);
   }
@@ -105,7 +119,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   /**
    * Sets the time range for the stream events.
    *
-   * @param conf The job to modify
+   * @param conf The configuration to modify
    * @param startTime Timestamp in milliseconds of the event start time (inclusive).
    * @param endTime Timestamp in milliseconds of the event end time (exclusive).
    */
@@ -117,6 +131,12 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     conf.setLong(EVENT_END_TIME, endTime);
   }
 
+  /**
+   * Sets the base path to stream files.
+   *
+   * @param job The job to modify.
+   * @param path The file path to stream base directory.
+   */
   public static void setStreamPath(Job job, URI path) {
     setStreamPath(job.getConfiguration(), path);
   }
@@ -131,9 +151,16 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     conf.set(STREAM_PATH, path.toString());
   }
 
+  /**
+   * Sets the maximum split size.
+   *
+   * @param job The job to modify.
+   * @param maxSplits Maximum split size in bytes.
+   */
   public static void setMaxSplitSize(Job job, long maxSplits) {
     setMaxSplitSize(job.getConfiguration(), maxSplits);
   }
+
   /**
    * Sets the maximum split size.
    *
@@ -144,6 +171,12 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     conf.setLong(MAX_SPLIT_SIZE, maxSplits);
   }
 
+  /**
+   * Sets the minimum split size.
+   *
+   * @param job The job to modify.
+   * @param minSplits Minimum split size in bytes.
+   */
   public static void setMinSplitSize(Job job, long minSplits) {
     setMinSplitSize(job.getConfiguration(), minSplits);
   }
@@ -151,13 +184,19 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   /**
    * Sets the minimum split size.
    *
-   * @param conf The job to modify.
+   * @param conf The conf to modify.
    * @param minSplits Minimum split size in bytes.
    */
   public static void setMinSplitSize(Configuration conf, long minSplits) {
     conf.setLong(MIN_SPLIT_SIZE, minSplits);
   }
 
+  /**
+   * Sets the class name for the {@link StreamEventDecoder}.
+   *
+   * @param job The job to modify.
+   * @param decoderType Class name of the decoder class
+   */
   public static void setDecoderType(Job job, String decoderType) {
     setDecoderType(job.getConfiguration(), decoderType);
   }
@@ -165,7 +204,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   /**
    * Sets the class name for the {@link StreamEventDecoder}.
    *
-   * @param conf The job to modify.
+   * @param conf The conf to modify.
    * @param decoderType Class name of the decoder class
    */
   public static void setDecoderType(Configuration conf, String decoderType) {
@@ -182,12 +221,17 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     return conf.getClass(DECODER_TYPE, null, StreamEventDecoder.class);
   }
 
-  public static boolean setStreamEventDecoder(Configuration hConf, Class<?> vClass) {
+  /**
+   * Sets the decoder type depending upon the supplied value class
+   * @param conf the conf to modify
+   * @param vClass the value class Type
+   */
+  public static boolean setStreamEventDecoder(Configuration conf, Type vClass) {
     if (Text.class.equals(vClass)) {
-      StreamInputFormat.setDecoderType(hConf, TextStreamEventDecoder.class.getName());
+      StreamInputFormat.setDecoderType(conf, TextStreamEventDecoder.class.getName());
       return true;
     } else if (BytesWritable.class.equals(vClass)) {
-      StreamInputFormat.setDecoderType(hConf, BytesStreamEventDecoder.class.getName());
+      StreamInputFormat.setDecoderType(conf, BytesStreamEventDecoder.class.getName());
       return true;
     }
     return false;
