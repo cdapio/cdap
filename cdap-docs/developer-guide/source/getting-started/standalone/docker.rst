@@ -56,10 +56,10 @@ To use the **Docker image**:
 - For a full list of Docker Commands, see the `Docker Command Line Documentation.
   <https://docs.docker.com/reference/commandline/cli/>`__
 
-.. include:: ../dev-env.rst  
+.. include:: ../../../build/_includes/dev-env-versioned.rst  
    :start-line: 4
 
-.. include:: ../start-stop-cdap.rst
+.. include:: ../../../build/_includes/start-stop-cdap-versioned.rst  
    :start-line: 4
 
 .. include:: ../building-apps.rst

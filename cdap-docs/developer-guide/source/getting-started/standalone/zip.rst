@@ -11,15 +11,18 @@ Binary Zip File
 The **zip file** is available on the Downloads section of the Cask Website at `<http://cask.co/downloads>`__.
 Click the link marked "SDK" of the *Software Development Kit (SDK).* 
 
-Once downloaded, unzip it to a directory on your machine::
+Once downloaded, unzip it to a directory on your machine:
 
-    $ unzip cdap-sdk-{version}.zip
+.. include:: ../../../build/_includes/unzip-versioned.rst  
 
-.. include:: ../dev-env.rst  
+.. include:: ../../../build/_includes/dev-env-versioned.rst  
    :start-line: 4
 
-.. include:: ../start-stop-cdap.rst
+.. include:: ../../../build/_includes/start-stop-cdap-versioned.rst  
    :start-line: 4
 
 .. include:: ../building-apps.rst
    :start-line: 6
+
+
+..     $ unzip cdap-sdk-{version}.zip

@@ -26,7 +26,7 @@ Starting CDAP
 +++++++++++++++++++++++++++++++
 
 Before running an Example Applications, check that an instance of CDAP is running and available; if not
-follow the instructions for `Starting and Stopping Standalone CDAP. <start-stop-cdap>`
+follow the instructions for :ref:`Starting and Stopping Standalone CDAP. <start-stop-cdap>`
 
 If you can reach the CDAP Console through a browser at `http://localhost:9999/ <http://localhost:9999/>`__, CDAP is running.
 

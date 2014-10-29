@@ -27,6 +27,17 @@ source ../_common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
 
+function version_rewrite() {
+  version
+  cd $SCRIPT_PATH
+  echo "Re-writing $1 to $2"
+  # Re-writes the version in an RST-snippet file to have the current version.
+  REWRITE_SOURCE=$1
+  REWRITE_TARGET=$2
+  
+  sed -e "s|<version>|$PROJECT_VERSION|g" $REWRITE_SOURCE > $REWRITE_TARGET
+}
+
 function pandoc_includes() {
   # Uses pandoc to translate the README markdown files to rst in the target directory
   INCLUDES_DIR=$1
@@ -42,6 +53,7 @@ function pandoc_includes() {
   fi
 
   echo "Using $TEST_INCLUDES includes..."
+
   #   authentication-client java
   pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-java.rst
   
@@ -62,6 +74,12 @@ function pandoc_includes() {
   
   #   stream-client python
   pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md  -o $INCLUDES_DIR/cdap-stream-clients-python.rst
+  
+  # Fix version
+  version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/dev-env-version.txt $INCLUDES_DIR/dev-env-versioned.rst
+  version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/start-stop-cdap-version.txt $INCLUDES_DIR/start-stop-cdap-versioned.rst
+  version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/standalone/unzip-version.txt $INCLUDES_DIR/unzip-versioned.rst
+
 }
 
 function test_includes () {
