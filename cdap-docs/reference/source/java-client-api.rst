@@ -30,20 +30,22 @@ Components
 
 The Java Client API allows you to interact with these CDAP components:
 
-- `ApplicationClient: <#applicationclient>`_ interacting with applications
-- `DatasetClient: <#DatasetClient>`_ interacting with Datasets
-- `DatasetModuleClient: <#DatasetModuleClient>`_ interacting with Dataset Modules
-- `DatasetTypeClient: <#DatasetTypeClient>`_ interacting with Dataset Types
-- `MetricsClient: <#MetricsClient>`_ interacting with Metrics
-- `MonitorClient: <#MonitorClient>`_ monitoring System Services
-- `ProcedureClient: <#ProcedureClient>`_ interacting with Procedures
-- `ProgramClient: <#ProgramClient>`_ interacting with Flows, Procedures, MapReduce Jobs, User Services, and Workflows
-- `QueryClient: <#QueryClient>`_ querying Datasets
-- `ServiceClient: <#ServiceClient>`_ interacting with User Services
-- `StreamClient: <#StreamClient>`_ interacting with Streams
+- `ApplicationClient: <#application-client>`_ interacting with applications
+- `DatasetClient: <#dataset-client>`_ interacting with Datasets
+- `DatasetModuleClient: <#dataset-module-client>`_ interacting with Dataset Modules
+- `DatasetTypeClient: <#dataset-type-client>`_ interacting with Dataset Types
+- `MetricsClient: <#metrics-client>`_ interacting with Metrics
+- `MonitorClient: <#monitor-client>`_ monitoring System Services
+- `ProcedureClient: <#procedure-client>`_ interacting with Procedures
+- `ProgramClient: <#program-client>`_ interacting with Flows, Procedures, MapReduce Jobs, User Services, and Workflows
+- `QueryClient: <#query-client>`_ querying Datasets
+- `ServiceClient: <#service-client>`_ interacting with User Services
+- `StreamClient: <#stream-client>`_ interacting with Streams
 
 The above list links to the examples below for each portion of the API.
 
+
+.. _application-client:
 
 ApplicationClient
 -----------------
@@ -69,6 +71,8 @@ ApplicationClient
   appClient.listPrograms("Purchase");
 
 
+.. _dataset-client:
+
 DatasetClient
 -------------
 ::
@@ -92,6 +96,8 @@ DatasetClient
   datasetClient.delete("someDataset");
 
 
+.. _dataset-module-client:
+
 DatasetModuleClient
 -------------------
 ::
@@ -113,6 +119,8 @@ DatasetModuleClient
   datasetModuleClient.deleteAll();
 
 
+.. _dataset-type-client:
+
 DatasetTypeClient
 -----------------
 ::
@@ -130,6 +138,8 @@ DatasetTypeClient
   datasetTypeMeta = datasetTypeClient.get(SomeDataset.class.getName());
 
 
+.. _metrics-client:
+
 MetricsClient
 -------------
 ::
@@ -143,6 +153,8 @@ MetricsClient
   // Fetch the total number of events that have been processed by a Flow
   JsonObject metric = metricsClient.getMetric("user", "/apps/HelloWorld/flows",
                                               "process.events.processed", "aggregate=true");
+
+.. _monitor-client:
 
 MonitorClient
 -------------
@@ -164,6 +176,8 @@ MonitorClient
   int systemServiceInstances = monitorClient.getSystemServiceInstances("transaction");
 
 
+.. _procedure-client:
+
 ProcedureClient
 ---------------
 ::
@@ -181,6 +195,8 @@ ProcedureClient
   // Stop a Procedure
   programClient.stop("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
 
+
+.. _program-client:
 
 ProgramClient
 -------------
@@ -222,6 +238,8 @@ ProgramClient
   // Stop a Flow in the WordCount example
   programClient.stop("WordCount", ProgramType.FLOW, "WordCountFlow");
 
+
+.. _query-client:
 
 QueryClient
 -----------
@@ -266,6 +284,9 @@ QueryClient
   // End perform an ad-hoc query
   //
 
+
+.. _service-client:
+
 ServiceClient
 -------------
 ::
@@ -279,6 +300,8 @@ ServiceClient
   // Fetch Service information using the Service in the PurchaseApp example
   ServiceMeta serviceMeta = serviceClient.get("PurchaseApp", "CatalogLookup");
 
+
+.. _stream-client:
 
 StreamClient
 ------------
@@ -345,4 +368,3 @@ StreamClient
   //
   // End write asynchronously
   //
-
