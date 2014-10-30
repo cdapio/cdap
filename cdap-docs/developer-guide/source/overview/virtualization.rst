@@ -18,6 +18,9 @@ code.
    :width: 5in
    :align: center
 
+In this diagram, CDAP System components are in orange and non-system components are in yellow, with Hadoop 
+infrastructure in grey.
+
 Data Virtualization
 -------------------
 

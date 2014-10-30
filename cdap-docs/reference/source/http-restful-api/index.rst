@@ -129,11 +129,11 @@ but a request may return any of these.
 Working with CDAP Security
 --------------------------
 When working with a CDAP cluster with security enabled (``security.enabled=true`` in
-``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must first
-obtain an access token from the authentication server (see the *Client Authentication* section of the
-Developer Guide :ref:`CDAP Security. <security>`).
-In order to authenticate, all client requests must supply this access token in the
-``Authorization`` header of the request::
+``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must
+first obtain an access token from the authentication server (see the :ref:`Client
+Authentication <client-authentication>` section of the *CDAP Developers’ Guide*). In order to
+authenticate, all client requests must supply this access token in the ``Authorization``
+header of the request::
 
    Authorization: Bearer <token>
 

@@ -155,7 +155,7 @@ events into the Stream.
 The same query can be made using curl with an HTTP request. However, you'll need to specify the
 start and end of the time range as milliseconds since the start of the Epoch::
 
-  $ curl localhost:10000/v2/streams/logEventStream/events?start=1412385622228\&end=1412386222228\&limit=5
+  $ curl "localhost:10000/v2/streams/logEventStream/events?start=1412385622228\&end=1412386222228\&limit=5"
 
 Note that it is important to escape the ampersands in the URL to prevent the shell from
 interpreting it as a special character. Also, the RESTful API will return the events
@@ -206,7 +206,7 @@ The Flow counts URL requests by the origin IP address, using a dataset called
 *WiseService*. Before we can use this service, we need to make sure that it is running. We
 can start the service using a REST call::
 
-  $ curl -XPOST localhost:10000/v2/apps/Wise/services/WiseService/start
+  $ curl -d localhost:10000/v2/apps/Wise/services/WiseService/start
 
 Or, using the command line interface::
 
@@ -227,7 +227,7 @@ using a REST call::
 
 Or, we can find out how many times the URL "/home.html" was accessed from the same IP address::
 
-  $ curl -d “/home.html” localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count
+  $ curl -d "/home.html" localhost:10000/v2/apps/Wise/services/WiseService/methods/ip/255.255.255.249/count
   6
 
 Note that this is a POST request, because we need to send over the URL of interest.
@@ -271,7 +271,7 @@ CLI::
 
 or using a REST call::
 
-  $ curl -XPOST localhost:10000/v2/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/start
+  $ curl -d localhost:10000/v2/apps/Wise/mapreduce/WiseWorkflow_BounceCountsMapReduce/start
 
 Note that this MapReduce job processes the exact same data that is consumed by the
 WiseFlow, namely, the log event stream, and both programs can run at the same time without
