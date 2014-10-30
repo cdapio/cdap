@@ -38,7 +38,7 @@ public abstract class AbstractProgramMetrics implements Metrics {
   }
 
   @Override
-  public void gauge(String counterName, long value) {
-    metricsCollector.gauge(counterName, value);
+  public void gauge(String gaugeName, long value) {
+    metricsCollector.gauge(gaugeName, value);
   }
 }

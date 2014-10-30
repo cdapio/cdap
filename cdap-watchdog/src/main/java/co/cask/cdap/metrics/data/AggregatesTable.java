@@ -119,7 +119,7 @@ public final class AggregatesTable {
           // The no tag value
           gauges.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), Bytes.toBytes(record.getValue()));
 
-          // For each tag, increments corresponding values
+          // For each tag, sets corresponding values
           for (TagMetric tag : record.getTags()) {
             gauges.put(Bytes.toBytes(tag.getTag()), Bytes.toBytes(record.getValue()));
           }

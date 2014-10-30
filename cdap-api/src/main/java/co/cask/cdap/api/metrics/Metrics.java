@@ -30,9 +30,9 @@ public interface Metrics {
 
   /**
    * Sets the specific counter to the provided value.
-   * @param counterName Name of the counter. Use alphanumeric characters in metric names.
+   * @param gaugeName Name of the counter. Use alphanumeric characters in metric names.
    * @param value The value to be set.
    */
-  void gauge(String counterName, long value);
+  void gauge(String gaugeName, long value);
 }
 
