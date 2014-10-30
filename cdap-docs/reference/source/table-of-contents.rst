@@ -12,6 +12,6 @@ CDAP Reference: APIs, Licenses, and Dependencies
     HTTP RESTful API <http-restful-api/index>
     Javadocs <javadocs/index>
     Java Client API <java-client-api>
-    Command Line Interface API <cli-api>
+    Command-Line Interface API <cli-api>
     License and Dependencies </licenses/index>
     Glossary </glossary>

@@ -28,9 +28,9 @@ and accessing core CDAP services. CDAP defines and implements a diverse collecti
 applications and data on existing Hadoop infrastructure such as HBase, HDFS, YARN, MapReduce,
 Hive, and Spark.
 
-These documents are your complete guide to the Cask Data Application Platform: they help you get
-started and set up your development environment; explain how CDAP works; and teach the
-development and testing of CDAP applications.
+These documents are your complete guide to the Cask Data Application Platform: they help
+you get started and set up your development environment; explain how CDAP works; and teach
+how to develop and test CDAP applications.
 
 It includes a complete reference to CDAP programming APIs and client interfaces, with instructions
 on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoop cluster.
@@ -49,7 +49,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |overview|_ Covers the **overall architecture and technology behind CDAP,** including
   the virtualization of data and applications, CDAP concepts, components and their
-  interactions, and the anatomy of a basic Big Data application.
+  interactions, and the anatomy of a Big Data application.
 
 
 .. |building-blocks| replace:: **Building Blocks:**
@@ -66,15 +66,15 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 .. _examples: examples/index.html
 
 - |examples|_ **Examples included with the SDK** range from a simple introductory *Hello
-  World* to more elaborate examples such as the *Purchase Application* that use all of the
+  World* to more elaborate examples such as the *Purchase Application* that use many of the
   CDAP components.
 
 
 .. |testing| replace:: **Testing and Debugging:**
 .. _testing: testing/index.html
 
-- |testing|_ CDAP has a **test framework** that developers can use with their applications, **debugging procedures
-  and tools,** and recommendations on **packaging your completed application** prior to deployment.
+- |testing|_ CDAP has a **test framework** that developers can use with their applications, **tools and procedures
+  for debugging ,** and recommendations on **packaging your completed application** prior to deployment.
 
 
 .. |tools| replace:: **Tools:**

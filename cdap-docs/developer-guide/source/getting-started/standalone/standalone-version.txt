@@ -1,4 +1,4 @@
-.. virtual-machine.rst
+.. used in virtual-machine.rst
 
 - Java JDK 7 and Node.js are both installed.
 - Maven is installed and configured to work for CDAP.
@@ -8,7 +8,14 @@
 - The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console,
   ``http://localhost:9999``.
    
-.. docker.rst
+.. used in docker.rst
 
 - CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
   Directory is under ``/Software/cdap-sdk-<version>``.
+
+
+.. used in zip.rst
+
+::
+
+    $ unzip cdap-sdk-<version>.zip

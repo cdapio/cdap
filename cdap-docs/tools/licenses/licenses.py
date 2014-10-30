@@ -367,8 +367,6 @@ def print_dependencies(title, file_base, header, widths, data_list):
     RST_HEADER=""".. :author: Cask Data, Inc.
    :version: %(version)s
 
-:orphan:
-
 =================================================
 Cask Data Application Platform |version|
 =================================================
@@ -379,9 +377,9 @@ Cask Data Application Platform %(title)s Dependencies
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
 
-.. rst2pdf: build ../../../developer-guide/licenses-pdf/
-.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
-.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../../reference/licenses-pdf/
+.. rst2pdf: config ../../../_common/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../_common/_templates/pdf-stylesheet
 
 .. csv-table:: **Cask Data Application Platform %(title)s Dependencies**
    :header: %(header)s

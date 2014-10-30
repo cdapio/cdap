@@ -6,8 +6,7 @@
 Core Virtualizations
 ============================================
 
-Data Virtualization
--------------------
+.. rubric:: Data Virtualization
 
 There are two main data virtualizations: Streams and Datasets. Streams are ordered,
 partitioned sequences of data, and are the primary means of bringing data from external
@@ -16,8 +15,7 @@ to access your data using higher-level abstractions and generic, reusable Java
 implementations of common data patterns instead of requiring you to manipulate data with
 low-level APIs.
 
-Application Virtualization
---------------------------
+.. rubric:: Application Virtualization
 
 Applications are a virtualization on top of your data, hiding low-level details of
 individual programming paradigms and runtimes, while providing access to many useful and

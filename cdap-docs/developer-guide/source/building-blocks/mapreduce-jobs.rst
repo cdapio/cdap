@@ -104,7 +104,7 @@ CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
 MapReduce and Datasets
 ----------------------
 Both CDAP ``Mapper`` and ``Reducer`` can directly read
-from a Dataset or write to a Dataset similar to the way a Flowlet or Service can.
+or write to a Dataset, similar to the way a Flowlet or Service can.
 
 To access a Dataset directly in Mapper or Reducer, you need (1) a
 declaration and (2) an injection:

@@ -43,6 +43,7 @@ LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
 PROJECT="cdap"
 PROJECT_CAPS="CDAP"
+REFERENCE="reference"
 
 SCRIPT_PATH=`pwd`
 
@@ -51,9 +52,6 @@ BUILD_PATH="$SCRIPT_PATH/$BUILD"
 HTML_PATH="$BUILD_PATH/$HTML"
 
 DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
-
-REST_SOURCE="$SOURCE_PATH/rest.rst"
-REST_PDF="$SCRIPT_PATH/$BUILD_PDF/rest.pdf"
 
 if [ "x$2" == "x" ]; then
   PROJECT_PATH="$SCRIPT_PATH/../../"
@@ -114,7 +112,6 @@ function usage() {
   echo "    docs           Clean build of docs"
   echo "    javadocs       Clean build of javadocs ($API module only) for SDK and website"
   echo "    javadocs-full  Clean build of javadocs for all modules"
-  echo "    rest-pdf       Clean build of REST PDF"
   echo "    license-pdfs   Clean build of License Dependency PDFs"
   echo "    zip            Zips docs into $ZIP"
   echo ""
@@ -167,24 +164,25 @@ function copy_javadocs_sdk() {
 }
 
 function build_license_pdfs() {
+  version
   cd $SCRIPT_PATH
   rm -rf $SCRIPT_PATH/$LICENSES_PDF
   mkdir $SCRIPT_PATH/$LICENSES_PDF
   E_DEP="cdap-enterprise-dependencies"
   L_DEP="cdap-level-1-dependencies"
   S_DEP="cdap-standalone-dependencies"
-  # paths are relative to location of $DOC_GEN script
-  LIC_PDF="../../../$DEVELOPER_GUIDE/$LICENSES_PDF"
-  LIC_RST="../$DEVELOPER_GUIDE/source/$LICENSES"
+  # paths are relative to location of $DOC_GEN_PY script
+  LIC_PDF="../../../$REFERENCE/$LICENSES_PDF"
+  LIC_RST="../$REFERENCE/source/$LICENSES"
   echo ""
   echo "Building $E_DEP"
-  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$E_DEP.pdf $LIC_RST/$E_DEP.rst
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$E_DEP.pdf -b $PROJECT_VERSION $LIC_RST/$E_DEP.rst
   echo ""
   echo "Building $L_DEP"
-  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$L_DEP.pdf $LIC_RST/$L_DEP.rst
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$L_DEP.pdf -b $PROJECT_VERSION $LIC_RST/$L_DEP.rst
   echo ""
   echo "Building $S_DEP"
-  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$S_DEP.pdf $LIC_RST/$S_DEP.rst
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$S_DEP.pdf -b $PROJECT_VERSION $LIC_RST/$S_DEP.rst
 }
 
 function copy_license_pdfs() {
@@ -249,14 +247,6 @@ function build_web() {
   build_extras
 }
 
-function build_rest_pdf() {
-  cd $SCRIPT_PATH
-  # version is not needed because the renaming is done by the pom.xml file
-  rm -rf $SCRIPT_PATH/$BUILD_PDF
-  mkdir $SCRIPT_PATH/$BUILD_PDF
-  python $DOC_GEN_PY -g pdf -o $REST_PDF $REST_SOURCE
-}
-
 function check_includes() {
   if [ $CHECK_INCLUDES == $TRUE ]; then
     if hash pandoc 2>/dev/null; then
@@ -317,7 +307,6 @@ function build_standalone() {
 }
 
 function build_sdk() {
-  build_rest_pdf
   build_standalone
 }
 
@@ -373,7 +362,6 @@ function run_command() {
     javadocs )          build_javadocs_sdk; exit 1;;
     javadocs-full )     build_javadocs_full; exit 1;;
     depends )           build_dependencies; exit 1;;
-    rest-pdf )          build_rest_pdf; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           print_version; exit 1;;
     test )              test; exit 1;;

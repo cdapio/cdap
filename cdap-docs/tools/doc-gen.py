@@ -28,7 +28,7 @@
 # python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-standalone-dependencies.pdf ../developer-guide/source/licenses/cdap-standalone-dependencies.rst
 #
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 DEFAULT_OUTPUT_PDF_FILE = "output.pdf"
 DEFAULT_GENERATE = "pdf"
 TEMP_FILE_SUFFIX = "_temp"
@@ -66,11 +66,10 @@ def parse_options():
         description="Generates HTML, PDF or Slides from an reST-formatted file (currently limited to PDF)")
 
     parser.add_option(
-        "-v", "--version",
-        action="store_true",
-        dest="version",
-        help="Version of software",
-        default=False)
+        "-b", "--buildversion",
+        dest="build_version",
+        help="Version of CDAP",
+        default="")
 
     parser.add_option(
         "-o", "--output",
@@ -86,6 +85,13 @@ def parse_options():
         help="One of html, pdf, or slides "
              "(default %s)" % DEFAULT_GENERATE,
         default=DEFAULT_GENERATE)
+
+    parser.add_option(
+        "-v", "--version",
+        action="store_true",
+        dest="version",
+        help="Version of this software",
+        default=False)
 
     (options, args) = parser.parse_args()
 
@@ -180,6 +186,9 @@ def process_pdf(input_file, options):
     temp = open(temp_file,'w')    
     for line in lines:
         temp.write(line+'\n')
+    if options.build_version: # If a build version was specified on command-line, use it
+        line = ".. |version| replace:: %s" % options.build_version
+        temp.write('\n'+line+'\n')
     temp.close()
     print "Completed parsing input file"
 

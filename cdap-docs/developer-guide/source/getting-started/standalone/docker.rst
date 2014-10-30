@@ -42,7 +42,7 @@ To use the **Docker image**:
 
     $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
     
-.. include:: ../../../build/_includes/cdap-sdk-versioned.rst 
+.. include:: ../../../build/_includes/standalone-versioned.rst 
    :start-line: 12
    :end-line:   15
   
@@ -51,10 +51,10 @@ To use the **Docker image**:
   ``<virtual-hostname>`` with the Docker VM's IP address you obtained earlier. Start a browser 
   and enter the address to access the CDAP Console.
 
-- In order to begin building CDAP applications, have our `recommended software and tools
-  <#system-requirements-and-dependencies>`__ installed in your environment.
+- In order to begin building CDAP applications, have our :ref:`recommended software and tools
+  <system-requirements-and-dependencies>` installed in your environment.
 
-- For a full list of Docker Commands, see the `Docker Command Line Documentation.
+- For a full list of Docker Commands, see the `Docker Command-Line Documentation.
   <https://docs.docker.com/reference/commandline/cli/>`__
 
 .. include:: ../../../build/_includes/dev-env-versioned.rst  

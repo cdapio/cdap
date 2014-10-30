@@ -78,8 +78,7 @@ function pandoc_includes() {
   # Fix version
   version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/dev-env-version.txt $INCLUDES_DIR/dev-env-versioned.rst
   version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/start-stop-cdap-version.txt $INCLUDES_DIR/start-stop-cdap-versioned.rst
-  version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/standalone/unzip-version.txt $INCLUDES_DIR/unzip-versioned.rst
-  version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/standalone/cdap-sdk-version.txt $INCLUDES_DIR/cdap-sdk-versioned.rst
+  version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/standalone/standalone-version.txt $INCLUDES_DIR/standalone-versioned.rst
 }
 
 function test_includes () {

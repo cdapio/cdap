@@ -2,6 +2,8 @@
    :description: Index document
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _quick-start:
+
 ============================================
 Quick Start
 ============================================
@@ -12,15 +14,16 @@ CDAP is a platform for developing and running big data applications. To get star
 have a collection of pre-built applications available that will allow you to quickly
 experience the power of CDAP.
 
-In this example, we will use one of these applications to complete a very common big data
-use case: log analytics.
+In this example, we will use one of these applications to complete a very common Big Data
+use case: web log analytics.
 
-The log analytics application will show you how CDAP can aggregate logs, perform
-real-time and batch analytics of the logs ingested, and expose the results using multiple
-interfaces. Specifically, this application processes web server access logs, counts
-page-views by IP in real-time, and computes the bounce ratio of each web page encountered
-in batch. (The bounce rate is the percentage of views that are not followed by another
-view on the same site.)
+The `web log analytics application
+<https://github.com/caskdata/cdap-apps/tree/develop/Wise>`__ will show you how CDAP can
+aggregate logs, perform real-time and batch analytics of the logs ingested, and expose the
+results using multiple interfaces. Specifically, this application processes web server
+access logs, counts page-views by IP in real-time, and computes the bounce ratio of each
+web page encountered in batch. (The bounce rate is the percentage of views that are not
+followed by another view on the same site.)
 
 
 Download, Install and Start CDAP
@@ -56,12 +59,12 @@ available in the* :ref:`Web Analytics Application documentation. <web-analytics>
 
 Deploying the Application
 =========================
-You can deploy the application into your running instance of CDAP either using the
-command-line tool::
+You can deploy the application into your running instance of CDAP either using the 
+:ref:`CDAP command-line tool <reference:cli>`::
 
   $ cdap-cli.sh deploy app target/Wise-0.2.0.jar
 
-or using curl to directly make an HTTP request::
+or using ``curl`` to directly make an HTTP request::
 
   $ curl -v -H "X-Archive-Name: Wise-0.2.0.jar" localhost:10000/v2/apps \
        --data-binary @target/Wise-0.2.0.jar
@@ -73,13 +76,13 @@ Starting Realtime Processing
 ============================
 Now that the application is deployed, we can start the real-time processing::
 
-  $ curl -v -d localhost:10000/v2/apps/Wise/flows/WiseFlow/start
-
-This starts the Flow named *WiseFlow,* which listens for log events from web servers to
-analyze them in realtime. Another way to start the flow is using the command line::
-
   $ cdap-cli.sh start flow Wise.WiseFlow
   Successfully started Flow 'WiseFlow' of application 'Wise'
+
+This starts the Flow named *WiseFlow,* which listens for log events from web servers to
+analyze them in realtime. Another way to start the flow is using ``curl``::
+
+  $ curl -v -d localhost:10000/v2/apps/Wise/flows/WiseFlow/start
 
 At any time, you can find out whether the Flow is running::
 
@@ -92,16 +95,17 @@ At any time, you can find out whether the Flow is running::
 Injecting Data 
 ==============
 The *WiseFlow* uses a Stream to receive log events from Web servers. The Stream has a REST
-endpoint to send events to it, and you can do that using an HTTP request::
-
-  $ curl localhost:10000/v2/streams/logEventStream \
-  > -d '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] \ 
-  > "GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'
-
-Or, you can use the command line interface to achieve the same::
+endpoint used to ingest data with HTTP requests, and you can do that using the
+command-line interface::
 
   $ cdap-cli.sh send stream logEventStream 
   > '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] \
+  > "GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'
+
+Or, you can use an HTTP request::
+
+  $ curl localhost:10000/v2/streams/logEventStream \
+  > -d '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] \ 
   > "GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'
 
 Because it is tedious to send events manually, a file with sample web log events is
@@ -121,7 +125,7 @@ same time as the date included in each event - that is the time when the event a
 occurred on the web server.) 
 
 You can retrieve events from a Stream by specifying a time range and a limit on the number
-of events you want to see. For example, using the command line, this shows up to 5 events
+of events you want to see. For example, using the command-line, this shows up to 5 events
 in the time range of 3 minutes duration, starting 5 minutes ago::
 
   $ cdap-cli.sh get stream logEventStream -5m +3m 5
@@ -158,9 +162,10 @@ start and end of the time range as milliseconds since the start of the Epoch::
   $ curl "localhost:10000/v2/streams/logEventStream/events?start=1412385622228\&end=1412386222228\&limit=5"
 
 Note that it is important to escape the ampersands in the URL to prevent the shell from
-interpreting it as a special character. Also, the RESTful API will return the events
-in a JSON format that is not suited for display here; you are welcome to try it out and
-parse the output—it is intended for consumption by machines, not humans.
+interpreting it as a special character. The RESTful API will return the events in a JSON
+format; there are a `variety of tools available
+<https://www.google.com/search?q=json+pretty+print>`__ to pretty-print it on the
+command-line.
 
 
 Monitoring with the CDAP Console
@@ -169,7 +174,7 @@ You may recall that before we started injected data into the Stream, we started 
 *WiseFlow* to process these events in real-time. You can observe the Flow while it is
 processing events by retrieving metrics about how many events it has processed. For that, we
 need to know the name of the Flowlet inside the *WiseFlow* that performs the actual
-processing. In this case, it is a Flowlet named *parser*. Here is a curl command to
+processing. In this case, it is a Flowlet named *parser*. Here is a ``curl`` command to
 retreive the number of events it has processed::
 
   $ curl localhost:10000/v2/metrics/system/apps/Wise/flows/WiseFlow/flowlets/parser/\
@@ -204,13 +209,13 @@ Retrieving the Results of Processing
 The Flow counts URL requests by the origin IP address, using a dataset called
 *pageViewStore*. To make these counts available, the application implements a service called
 *WiseService*. Before we can use this service, we need to make sure that it is running. We
-can start the service using a REST call::
-
-  $ curl -d localhost:10000/v2/apps/Wise/services/WiseService/start
-
-Or, using the command line interface::
+can start the service using the command-line interface::
 
   $ cdap-cli.sh start service Wise.WiseService
+
+Or, using a REST call::
+
+  $ curl -d localhost:10000/v2/apps/Wise/services/WiseService/start
 
 Now that the service is running, we can query it to find out the current count for a
 particular IP address. For example, the data injected by our script contains this line
@@ -372,7 +377,7 @@ pages?
 
 Summary
 =======
-Congratulations! You've just successfully run your first big data log analytics application on CDAP. 
+Congratulations! You've just successfully run your first Big Data log analytics application on CDAP. 
 
 You can deploy the same application on a real cluster and experience the power of CDAP.
 

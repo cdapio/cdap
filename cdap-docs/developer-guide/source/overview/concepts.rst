@@ -6,8 +6,7 @@
 Concepts and Components of CDAP
 ============================================
 
-Components of CDAP and their Interactions
-=========================================
+.. rubric:: Components of CDAP and their Interactions
 
 This diagram illustrates the components that comprise Distributed CDAP and shows some of their interactions,
 with CDAP System components in orange and non-system components in yellow:

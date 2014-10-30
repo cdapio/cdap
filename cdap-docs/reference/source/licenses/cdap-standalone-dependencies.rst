@@ -1,8 +1,6 @@
 .. :author: Cask Data, Inc.
    :version: 2.5.0
 
-:orphan:
-
 =================================================
 Cask Data Application Platform |version|
 =================================================
@@ -13,9 +11,9 @@ Cask Data Application Platform Standalone Dependencies
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
 
-.. rst2pdf: build ../../../developer-guide/licenses-pdf/
-.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
-.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../../reference/licenses-pdf/
+.. rst2pdf: config ../../../_common/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../_common/_templates/pdf-stylesheet
 
 .. csv-table:: **Cask Data Application Platform Standalone Dependencies**
    :header: "Package","Version","Classifier","License","License URL"

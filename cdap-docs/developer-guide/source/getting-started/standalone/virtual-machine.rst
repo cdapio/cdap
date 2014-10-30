@@ -23,7 +23,7 @@ The CDAP Standalone Virtual Machine is configured with the recommended settings 
 
 It has pre-installed all the software that you need to run and develop CDAP applications:
 
-.. include:: ../../../build/_includes/cdap-sdk-versioned.rst 
+.. include:: ../../../build/_includes/standalone-versioned.rst 
    :start-line: 2
    :end-line:   10
 

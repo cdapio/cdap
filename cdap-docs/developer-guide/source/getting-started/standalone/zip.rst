@@ -13,7 +13,9 @@ Click the link marked "SDK" of the *Software Development Kit (SDK).*
 
 Once downloaded, unzip it to a directory on your machine:
 
-.. include:: ../../../build/_includes/unzip-versioned.rst  
+.. include:: ../../../build/_includes/standalone-versioned.rst  
+   :start-line: 18
+   :end-line:   21
 
 .. include:: ../../../build/_includes/dev-env-versioned.rst  
    :start-line: 4
@@ -23,6 +25,3 @@ Once downloaded, unzip it to a directory on your machine:
 
 .. include:: ../building-apps.rst
    :start-line: 6
-
-
-..     $ unzip cdap-sdk-{version}.zip

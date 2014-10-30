@@ -37,7 +37,7 @@ configuring each of the Application elements::
         }
       }
 
-Notice that *Streams* are defined using provided ``Stream`` class, and are referenced by
+Notice that *Streams* are defined using the provided ``Stream`` class, and are referenced by
 names, while other components are defined using user-written classes that implement
 correspondent interfaces and are referenced by passing an object, in addition to being
 assigned a unique name.

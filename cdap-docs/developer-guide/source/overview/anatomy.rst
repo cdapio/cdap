@@ -74,5 +74,5 @@ This diagram illustrates a typical Big Data application:
 
 It illustrates the power of data virtualization in CDAP: a stream is not just a means to collect data; it can
 be consumed by realtime and batch processing at the same time. Similarly, datasets allow sharing of data between
-programs of different paradigms, be they realtime or batch, without compromising the consistency of the data,
+programs of different paradigms, realtime or batch, without compromising the consistency of the data,
 because all data access happens under ACID (Atomicity, Consistency, Isolation, and Durability) guarantees.

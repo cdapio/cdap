@@ -19,9 +19,12 @@ Big Data applications. Before you learn how to develop and operate applications,
 explain the concepts and architecture of CDAP.
 
 
-Where to Go Next
-================
-Now that you understand the concepts and the architecture of CDAP, you are ready to write an application:
+.. rubric:: Where to Go Next
 
-- `Cask Data Application Platform Developer Guide <dev-guide.html>`__,
-  which guides you through the development and the components of an application.
+Now that you've seen the concepts and the architecture of CDAP, you are ready to write an application:
+
+- :ref:`Quick Start <quick-start>`, which guides you through the development and the components
+  of a complete web log analytics application; and
+
+- Additional :ref:`examples, <examples-index>` :ref:`guides, <guides-index>` and
+  :ref:`tutorials <tutorials>` on building CDAP applications. 

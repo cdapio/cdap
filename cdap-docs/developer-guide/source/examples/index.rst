@@ -57,8 +57,7 @@ In addition to the :ref:`Getting Started <getting-started-index>` example, the S
 
 
 
-What's Next
-===========
+.. rubric:: What's Next
 
 You can learn more about developing data application using CDAP by:
 

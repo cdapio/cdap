@@ -3,6 +3,4 @@
 
 .. highlight:: console
 
-.. _dev-env:
-
 .. include:: ../../build/_includes/start-stop-cdap-versioned.rst

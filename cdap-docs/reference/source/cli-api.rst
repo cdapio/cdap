@@ -4,7 +4,7 @@
 .. _cli:
 
 ============================================
-Command Line Interface API
+Command-Line Interface API
 ============================================
 
 Introduction

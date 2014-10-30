@@ -13,8 +13,7 @@ Datasets
     Types of Datasets <types>
     Core Datasets <core>
     Table API <table>
-    System Datasets <system>
-    Custom Datasets <custom>
+    System and Custom Datasets <system-custom>
     Datasets and MapReduce <datasets-mapreduce>
 
 .. highlight:: java
@@ -42,7 +41,7 @@ time series. You can implement your own data patterns as custom
 Datasets on top of Tables.
 
 You can create a Dataset in CDAP using either the
-:ref:`Cask Data Application Platform HTTP RESTful API <http-restful-api-datasets>` or command line tools.
+:ref:`Cask Data Application Platform HTTP RESTful API <http-restful-api-datasets>` or command-line tools.
 
 You can also tell Applications to create a Dataset if it does not already
 exist by declaring the Dataset details in the Application specification.
@@ -72,4 +71,4 @@ instance of the Dataset class into the Application.
 You can also implement custom Datasets by implementing the ``Dataset``
 interface or by extending existing Dataset types. See the
 :ref:`Purchase Example<examples-purchase>` for an implementation of a Custom Dataset.
-For more details, refer to :ref:`Custom Datasets <custom-datasets>`
+For more details, refer to :ref:`Custom Datasets. <custom-datasets>`

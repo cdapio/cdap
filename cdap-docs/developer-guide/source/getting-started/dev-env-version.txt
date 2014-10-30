@@ -20,14 +20,15 @@ The best way to start developing a CDAP application is by using the Maven archet
      -DarchetypeVersion=<version>
 
 This creates a Maven project with all required dependencies, Maven plugins, and a simple
-application template for the development of your application. You can import this Maven project
-into your preferred IDE—such as IntelliJ or Eclipse—and start developing your first
+application template for the development of your application. You can import this Maven project into your preferred IDE—such as 
+`IntelliJ <https://www.jetbrains.com/idea/>`__ or 
+`Eclipse <https://www.eclipse.org/>`__—and start developing your first
 CDAP application.
 
 Using IntelliJ
-++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-1. Open IntelliJ and import the Maven project.
+1. Open `IntelliJ <https://www.jetbrains.com/idea/>`__ and import the Maven project.
 #. Go to menu *File -> Import Project*...
 #. Select the ``pom.xml`` in the Maven project's directory.
 #. Select the *Import Maven projects automatically* and *Automatically download: Sources, Documentation*
@@ -35,9 +36,10 @@ Using IntelliJ
 #. Click *Next*, complete the remaining dialogs, and the new CDAP project will be created and opened.
 
 Using Eclipse
-+++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-1. In your Eclipse installation, make sure you have the `m2eclipse <http://m2eclipse.sonatype.org>`__ plugin installed.
+1. In your `Eclipse <https://www.eclipse.org/>`__ installation, make sure you have the
+   `m2eclipse <http://m2eclipse.sonatype.org>`__ plugin installed.
 #. Go to menu *File -> Import*
 #. Enter *maven* in the *Select an import source* dialog to filter for Maven options.
 #. Select *Existing Maven Projects* as the import source.

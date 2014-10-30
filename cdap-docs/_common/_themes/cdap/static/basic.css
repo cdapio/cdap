@@ -315,6 +315,7 @@ table.docutils {
     width: 100%;
     margin-left: 0%;
     margin-right: 0%;
+    background-color: white;
 }
 
 table.docutils td, table.docutils th {

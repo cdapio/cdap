@@ -1,3 +1,0 @@
-::
-
-    $ unzip cdap-sdk-<version>.zip

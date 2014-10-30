@@ -93,3 +93,39 @@ Yes. You can install CDAP on your Hadoop cluster. See :ref:`install`.
 
 CDAP has been tested on and supports CDH 4.2.x or later, HDP 2.0 or later, and Apache Hadoop/HBase 2.0.2-0.4 and 2.1.0. 
 
+
+.. _faq-cdap-user-groups:
+
+Issues, User Groups, Mailing Lists, and IRC Channel
+===================================================
+
+.. rubric:: I've found a bug in CDAP. How do I file an issue?
+
+We have a `JIRA for filing issues. <https://issues.cask.co/browse/CDAP>`__
+
+
+.. rubric:: What User Groups and Mailing Lists are available about CDAP?
+
+- `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__
+
+The *cdap-user* mailing list is primarily for users using the product to develop
+application. You can expect questions from users, release announcements, and any other
+discussions that we think will be helpful to the users.
+
+- `cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__
+
+The *cdap-dev* mailing list is essentially for developers actively working
+on the product, and should be used for all our design, architecture and technical
+discussions moving forward. This mailing list will also receive all JIRA and GitHub
+notifications.
+
+
+.. rubric:: Is CDAP on IRC?
+
+**CDAP IRC Channel:** #cdap on `irc.freenode.net. <http://irc.freenode.net/>`__
+
+
+
+
+
+

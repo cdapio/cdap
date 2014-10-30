@@ -20,10 +20,10 @@ Getting Started with CDAP
 
 
 The CDAP Software Development Kit (SDK) is all that is needed to develop CDAP applications
-in your development environment, either your laptop or a work station. It includes:
+in your development environment, either your laptop or a workstation. It includes:
 
 - A Standalone CDAP that can run on a single machine in a single JVM. It provides all of
-  the CDAP APIs without requiring a Hadoop cluster, using alternative, fully functional
+  the CDAP APIs without requiring a Hadoop cluster, using alternative, fully-functional
   implementations of CDAP features. For example, application containers are implemented as
   Java threads instead of YARN containers.
 - The :ref:`CDAP Console, <cdap-console>` a web-based graphical user interface to interact with CDAP instances
@@ -33,4 +33,4 @@ in your development environment, either your laptop or a work station. It includ
   own applications.
   
 Online, we have many additional resources, ranging from this extensive documentation set
-to user groups.
+to :ref:`user groups. <faq-cdap-user-groups>`

@@ -2,6 +2,8 @@
    :description: placeholder
    :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _flowlets:
+
 ============================================
 Flowlets
 ============================================
@@ -22,10 +24,10 @@ doesn't do anything for initialization or destruction::
 
     @Override
     public FlowletSpecification configure() {
-      return FlowletSpecification.Builder.with().
-        setName("round").
-        setDescription("A rounding Flowlet").
-        build();
+      return FlowletSpecification.Builder.with()
+        .setName("round")
+        .setDescription("A rounding Flowlet")
+        .build();
     }
 
     @Override
