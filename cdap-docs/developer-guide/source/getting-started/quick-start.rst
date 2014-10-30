@@ -63,7 +63,7 @@ command-line tool::
 
 or using curl to directly make an HTTP request::
 
-  $ curl -v -H "X-Archive-Name: Wise-0.2.0.jar" -X POST localhost:10000/v2/apps \
+  $ curl -v -H "X-Archive-Name: Wise-0.2.0.jar" localhost:10000/v2/apps \
        --data-binary @target/Wise-0.2.0.jar
 
 **Learn More:** *You can also deploy apps* :ref:`using the CDAP Console. <cdap-console>`
@@ -73,7 +73,7 @@ Starting Realtime Processing
 ============================
 Now that the application is deployed, we can start the real-time processing::
 
-  $ curl -v -XPOST localhost:10000/v2/apps/Wise/flows/WiseFlow/start
+  $ curl -v -d localhost:10000/v2/apps/Wise/flows/WiseFlow/start
 
 This starts the Flow named *WiseFlow,* which listens for log events from web servers to
 analyze them in realtime. Another way to start the flow is using the command line::
@@ -94,7 +94,7 @@ Injecting Data
 The *WiseFlow* uses a Stream to receive log events from Web servers. The Stream has a REST
 endpoint to send events to it, and you can do that using an HTTP request::
 
-  $ curl localhost:10000/v2/streams/logEventStream -X POST \
+  $ curl localhost:10000/v2/streams/logEventStream \
   > -d '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] \ 
   > "GET /cdap.html HTTP/1.0" 401 2969 " " "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"'
 

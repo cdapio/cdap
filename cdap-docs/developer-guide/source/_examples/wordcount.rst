@@ -97,14 +97,13 @@ Querying the Results
 If the Procedure has not already been started, you start it either through the
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/WordCount/procedures/RetrieveCounts/start'
+	curl -v -d 'http://localhost:10000/v2/apps/WordCount/procedures/RetrieveCounts/start'
 
 There are two ways to query the  ``RetrieveCounts`` procedure:
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -d '{"word": "CDAP"}' \
-	  -X POST 'http://localhost:10000/v2/apps/WordCount/procedures/RetrieveCounts/methods/getCount'
+	curl -v -d '{"word": "CDAP"}' 'http://localhost:10000/v2/apps/WordCount/procedures/RetrieveCounts/methods/getCount'
 
   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the project SDK.
 

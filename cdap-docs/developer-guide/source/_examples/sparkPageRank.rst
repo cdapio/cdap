@@ -107,8 +107,7 @@ There are three ways to start the Spark program:
 
 2. Send a query via an HTTP request using the ``curl`` command::
 
-     curl -v -d '{args="3"}' \
-    	  -X POST 'http://localhost:10000/v2/apps/SparkPageRank/spark/SparkPageRankProgram/start'
+     curl -v -d '{args="3"}' 'http://localhost:10000/v2/apps/SparkPageRank/spark/SparkPageRankProgram/start'
 
    On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
@@ -128,14 +127,14 @@ Querying the Results
 If the Procedure has not already been started, you start it either through the 
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/start'
+	curl -v -d 'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/start'
 	
 There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure`` procedure:
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
 	 curl -v -d '{"url": "http://example.com/page1"}' \
-	  -X POST 'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/methods/rank'
+	   'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/methods/rank'
 
    On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
