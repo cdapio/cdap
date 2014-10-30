@@ -60,6 +60,7 @@ import java.util.Set;
 public class BasicServiceWorkerContext extends AbstractContext implements ServiceWorkerContext {
   private static final Logger LOG = LoggerFactory.getLogger(BasicServiceWorkerContext.class);
 
+  private final ServiceWorkerSpecification specification;
   private final Set<String> datasets;
   private final Map<String, String> runtimeArgs;
   private final TransactionSystemClient transactionSystemClient;
@@ -74,6 +75,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                    DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, spec.getDatasets(), getMetricContext(program, spec.getName(), instanceId),
           metricsCollectionService, datasetFramework, cConf, discoveryServiceClient);
+    this.specification = spec;
     this.datasets = ImmutableSet.copyOf(spec.getDatasets());
     this.runtimeArgs = runtimeArgs.asMap();
     this.transactionSystemClient = transactionSystemClient;
@@ -96,6 +98,11 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private static String getMetricContext(Program program, String runnableName, int instanceId) {
     return String.format("%s.%s.%s.%s.%s", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SERVICE),
                          program.getName(), runnableName, instanceId);
+  }
+
+  @Override
+  public ServiceWorkerSpecification getSpecification() {
+    return specification;
   }
 
   @Override
