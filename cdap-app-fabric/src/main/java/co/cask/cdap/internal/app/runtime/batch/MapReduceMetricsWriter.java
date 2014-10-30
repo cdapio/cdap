@@ -77,7 +77,7 @@ public class MapReduceMetricsWriter {
     // current metrics API only supports int, cast it for now. Need another rev to support long.
     // we want to output the # of records since the last time we wrote metrics in order to get a count
     // of how much was written this second and so that we can aggregate the counts.
-    context.getSystemMapperMetrics().gauge(METRIC_COMPLETION, (int) (mapProgress * 100));
+    context.getSystemMapperMetrics().gauge(METRIC_COMPLETION, (long) (mapProgress * 100));
     context.getSystemMapperMetrics().gauge(METRIC_INPUT_RECORDS, mapInputRecords);
     context.getSystemMapperMetrics().gauge(METRIC_OUTPUT_RECORDS, mapOutputRecords);
     context.getSystemMapperMetrics().gauge(METRIC_BYTES, mapOutputBytes);
