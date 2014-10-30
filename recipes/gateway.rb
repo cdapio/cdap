@@ -21,6 +21,7 @@ include_recipe 'cdap::default'
 
 package 'cdap-gateway' do
   action :install
+  version node['cdap']['version']
 end
 
 %w(cdap-gateway cdap-router).each do |svc|

@@ -21,6 +21,7 @@ include_recipe 'cdap::default'
 
 package 'cdap-master' do
   action :install
+  version node['cdap']['version']
 end
 
 # Include kerberos support

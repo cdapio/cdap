@@ -19,6 +19,8 @@
 
 # Default: conf.chef
 default['cdap']['conf_dir'] = 'conf.chef'
+# Default: 2.5.1
+default['cdap']['version'] = '2.5.1-1'
 # cdap-site.xml
 default['cdap']['cdap_site']['root.namespace'] = 'cdap'
 # ideally we could put the macro '/${cdap.namespace}' here but this attribute is used elsewhere in the cookbook
@@ -36,7 +38,10 @@ default['cdap']['cdap_site']['app.bind.address'] = node['fqdn']
 default['cdap']['cdap_site']['data.tx.bind.address'] = node['fqdn']
 default['cdap']['cdap_site']['metrics.query.bind.address'] = node['fqdn']
 default['cdap']['cdap_site']['dashboard.bind.port'] = '9999'
-default['cdap']['cdap_site']['gateway.server.address'] = node['fqdn']
-default['cdap']['cdap_site']['gateway.server.port'] = '10000'
-default['cdap']['cdap_site']['gateway.memory.mb'] = '512'
 default['cdap']['cdap_site']['log.saver.run.memory.megs'] = '512'
+# These are only used with CDAP < 2.6
+if node['cdap']['version'].to_f < 2.6
+  default['cdap']['cdap_site']['gateway.server.address'] = node['fqdn']
+  default['cdap']['cdap_site']['gateway.server.port'] = '10000'
+  default['cdap']['cdap_site']['gateway.memory.mb'] = '512'
+end

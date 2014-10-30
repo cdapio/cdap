@@ -28,6 +28,7 @@ include_recipe 'cdap::repo'
 
 package 'cdap-web-app' do
   action :install
+  version node['cdap']['version']
 end
 
 service 'cdap-web-app' do
