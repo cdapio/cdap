@@ -142,7 +142,6 @@ public class MapReduceMetricsWriter {
       String metric = parts[0];
       if (parts.length == 2) {
         // has tag
-        //todo(question) : dont we support multiple tags?
         String tag = parts[1];
         collector.gauge(metric, counter.getValue(), tag);
       } else {
