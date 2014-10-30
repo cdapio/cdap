@@ -27,5 +27,12 @@ public interface Metrics {
    * @param delta The value to increase by.
    */
   void count(String counterName, int delta);
+
+  /**
+   * Sets the specific counter to the provided value.
+   * @param counterName Name of the counter. Use alphanumeric characters in metric names.
+   * @param value The value to be set.
+   */
+  void gauge(String counterName, long value);
 }
 

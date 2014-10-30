@@ -36,4 +36,9 @@ public abstract class AbstractProgramMetrics implements Metrics {
   public void count(String counterName, int delta) {
     metricsCollector.increment(counterName, delta);
   }
+
+  @Override
+  public void gauge(String counterName, long value) {
+    metricsCollector.gauge(counterName, value);
+  }
 }
