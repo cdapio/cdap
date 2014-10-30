@@ -183,7 +183,7 @@ abstract class AbstractSparkContext implements SparkContext {
     String decoderType = stream.getDecoderType();
     if (decoderType == null) {
       // If the user don't specify the decoder, detect the type
-      if (!StreamInputFormat.setStreamEventDecoder(hConf, vClass)) {
+      if (!StreamInputFormat.trySetDecoder(hConf, vClass)) {
         throw new IllegalArgumentException("The value class must be of type BytesWritable or Text if no decoder type " +
                                              "is provided");
       }

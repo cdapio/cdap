@@ -26,10 +26,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.data.stream.BytesStreamEventDecoder;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data.stream.TextStreamEventDecoder;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -55,9 +53,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -493,7 +489,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (typeArgs.length < 2 || !LongWritable.class.equals(typeArgs[0])) {
         continue;
       }
-      if (StreamInputFormat.setStreamEventDecoder(job.getConfiguration(), typeArgs[1].getClass())) {
+      if (StreamInputFormat.trySetDecoder(job.getConfiguration(), typeArgs[1])) {
         return true;
       }
     }

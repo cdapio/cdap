@@ -226,12 +226,12 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param conf the conf to modify
    * @param vClass the value class Type
    */
-  public static boolean setStreamEventDecoder(Configuration conf, Type vClass) {
+  public static boolean trySetDecoder(Configuration conf, Type vClass) {
     if (Text.class.equals(vClass)) {
-      StreamInputFormat.setDecoderType(conf, TextStreamEventDecoder.class.getName());
+      setDecoderType(conf, TextStreamEventDecoder.class.getName());
       return true;
     } else if (BytesWritable.class.equals(vClass)) {
-      StreamInputFormat.setDecoderType(conf, BytesStreamEventDecoder.class.getName());
+      setDecoderType(conf, BytesStreamEventDecoder.class.getName());
       return true;
     }
     return false;
