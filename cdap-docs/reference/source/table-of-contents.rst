@@ -15,3 +15,10 @@ CDAP Reference: APIs, Licenses, and Dependencies
     Command-Line Interface API <cli-api>
     License and Dependencies </licenses/index>
     Glossary </glossary>
+
+.. toctree::
+   :hidden:
+
+   /licenses/cdap-enterprise-dependencies
+   /licenses/cdap-level-1-dependencies
+   /licenses/cdap-singlenode-dependencies
