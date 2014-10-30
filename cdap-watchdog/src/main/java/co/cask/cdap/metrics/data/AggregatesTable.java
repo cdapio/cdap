@@ -103,16 +103,15 @@ public final class AggregatesTable {
         MetricsRecord record = records.next();
         byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
         if (record.getType() == MetricContentType.COUNT) {
-        Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+          Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-        // The no tag value
-        increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
+          // The no tag value
+          increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
 
-        // For each tag, increments corresponding values
-        for (TagMetric tag : record.getTags()) {
-          increments.put(Bytes.toBytes(tag.getTag()), tag.getValue());
-        }
-
+          // For each tag, increments corresponding values
+          for (TagMetric tag : record.getTags()) {
+            increments.put(Bytes.toBytes(tag.getTag()), tag.getValue());
+          }
           aggregatesTable.increment(rowKey, increments);
         } else if (record.getType() == MetricContentType.GAUGE) {
           NavigableMap<byte[], byte[]> gauges = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
