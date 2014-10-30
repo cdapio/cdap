@@ -90,15 +90,12 @@ public class ServiceHttpServer extends AbstractIdleService {
 
     this.handlerReferences = Maps.newConcurrentMap();
     this.handlerReferenceQueue = new ReferenceQueue<Supplier<HandlerContextPair>>();
+
+    constructNettyHttpService();
   }
 
-  /**
-   * Starts the {@link NettyHttpService} and announces this runnable as well.
-   */
-  @Override
-  public void startUp() {
+  public void constructNettyHttpService() {
     Id.Program programId = program.getId();
-
     // Constructs all handler delegator. It is for bridging ServiceHttpHandler and HttpHandler (in netty-http).
     List<HandlerDelegatorContext> delegatorContexts = Lists.newArrayList();
     InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
@@ -121,8 +118,16 @@ public class ServiceHttpServer extends AbstractIdleService {
                                       programId.getApplicationId(),
                                       programId.getId());
 
-    LOG.debug("Starting HTTP server for Service {}", programId);
     service = createNettyHttpService(host, delegatorContexts, pathPrefix);
+  }
+
+  /**
+   * Starts the {@link NettyHttpService} and announces this runnable as well.
+   */
+  @Override
+  public void startUp() {
+    LOG.debug("Starting HTTP server for Service {}", program.getId());
+    Id.Program programId = program.getId();
     service.startAndWait();
 
     // announce the twill runnable
