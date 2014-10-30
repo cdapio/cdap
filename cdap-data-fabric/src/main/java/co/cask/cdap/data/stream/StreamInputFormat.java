@@ -222,9 +222,10 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   }
 
   /**
-   * Sets the decoder type depending upon the supplied value class
+   * Tries to set the decoder type depending upon the supplied value class
    * @param conf the conf to modify
    * @param vClass the value class Type
+   * @return a boolean which is true if the decoder type was set successfully else false
    */
   public static boolean trySetDecoder(Configuration conf, Type vClass) {
     if (Text.class.equals(vClass)) {
