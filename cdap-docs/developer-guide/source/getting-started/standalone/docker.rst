@@ -42,8 +42,9 @@ To use the **Docker image**:
 
     $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
     
-- CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
-  Directory is under ``/Software/cdap-sdk-2.5.0``.
+.. include:: ../../../build/_includes/cdap-sdk-versioned.rst 
+   :start-line: 12
+   :end-line:   15
   
 - Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
   at ``http://<virtual-hostname>:9999``, such as ``http://6f0162922c37:9999``. Replace
