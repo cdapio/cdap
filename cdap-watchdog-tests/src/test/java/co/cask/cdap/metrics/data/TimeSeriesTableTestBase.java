@@ -198,18 +198,18 @@ public abstract class TimeSeriesTableTestBase {
 
     // checking that we can store more than just int
     long value = Integer.MAX_VALUE;
-    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "gaugemetric",
                                                             ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
                                                             time, value, MetricContentType.GAUGE)));
-    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "gaugemetric",
                                                             ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
                                                             time, value, MetricContentType.COUNT)));
-    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "gaugemetric",
                                                             ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
                                                             time, value, MetricContentType.GAUGE)));
 
     MetricsScanQuery query = new MetricsScanQueryBuilder()
-      .setContext("context").setMetric("bigmetric").build(time,  time + 1000);
+      .setContext("context").setMetric("gaugemetric").build(time,  time + 1000);
 
     Assert.assertTrue(timeSeriesTable.scan(query).hasNext());
     MetricsScanResult result = timeSeriesTable.scan(query).next();
