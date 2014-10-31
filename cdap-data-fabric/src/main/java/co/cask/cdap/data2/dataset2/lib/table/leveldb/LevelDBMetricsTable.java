@@ -16,10 +16,13 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -48,8 +51,12 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], byte[]>> updates) throws Exception {
-    core.persist(updates, System.currentTimeMillis());
+  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+    NavigableMap<byte[], NavigableMap<byte[], byte[]>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> entry : updates.entrySet()) {
+      convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), LONG_TO_BYTE_ARRAY));
+    }
+    core.persist(convertedUpdates, System.currentTimeMillis());
   }
 
   @Override
@@ -93,4 +100,13 @@ public class LevelDBMetricsTable implements MetricsTable {
   public void close() throws IOException {
     // Do nothing
   }
+
+  private static final Function<Long, byte[]> LONG_TO_BYTE_ARRAY = new Function<Long, byte[]>() {
+    @Nullable
+    @Override
+    public byte[] apply(@Nullable Long input) {
+      return Bytes.toBytes(input);
+    }
+  };
+
 }

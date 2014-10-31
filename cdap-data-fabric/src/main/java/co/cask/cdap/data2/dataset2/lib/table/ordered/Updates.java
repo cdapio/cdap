@@ -30,11 +30,11 @@ import javax.annotation.Nullable;
  */
 public final class Updates {
 
-  public static final Function<byte[], Update> BYTES_TO_PUTS = new Function<byte[], Update>() {
+  public static final Function<Long, Update> LONG_TO_PUTS = new Function<Long, Update>() {
     @Nullable
     @Override
-    public Update apply(@Nullable byte[] input) {
-      return new PutValue(input);
+    public Update apply(@Nullable Long input) {
+      return new PutValue(Bytes.toBytes(input));
     }
   };
 

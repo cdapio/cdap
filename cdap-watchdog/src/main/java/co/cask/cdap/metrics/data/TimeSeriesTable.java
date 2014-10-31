@@ -27,6 +27,7 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricContentType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -36,6 +37,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableMap;
+import javax.annotation.Nullable;
 
 /**
  * Table for storing time series metrics.
@@ -112,9 +114,13 @@ public final class TimeSeriesTable {
     while (records.hasNext()) {
       getUpdates(records.next(), table);
     }
-
+    //Convert the value - Map of <byte[],byte[]> to Map of <byte[],Long>
+    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (NavigableMap.Entry<byte[], NavigableMap<byte[], byte[]>> entry : table.entrySet()) {
+      convertedTable.put(entry.getKey(), Maps.transformValues(entry.getValue(), BYTE_ARRAY_TO_LONG));
+    }
     try {
-      timeSeriesTable.put(table);
+      timeSeriesTable.put(convertedTable);
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
@@ -392,6 +398,14 @@ public final class TimeSeriesTable {
     }
     return deltas;
   }
+
+  private static final Function<byte[], Long> BYTE_ARRAY_TO_LONG = new Function<byte[], Long>() {
+    @Nullable
+    @Override
+    public Long apply(@Nullable byte[] input) {
+      return Bytes.toLong(input);
+    }
+  };
 
   private ImmutablePair<byte[], byte[]> createDefaultTagFuzzyPair() {
     byte[] key = entityCodec.encode(MetricsEntityType.TAG, MetricsConstants.EMPTY_TAG);
