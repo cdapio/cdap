@@ -21,6 +21,10 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.http.HttpMethod;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpRequests;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.After;
@@ -28,6 +32,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -74,5 +80,13 @@ public class ServiceClientTestRun extends ClientTestBase {
     ServiceHttpEndpoint endpoint = endpoints.get(0);
     assertEquals("GET", endpoint.getMethod());
     assertEquals("/ping", endpoint.getPath());
+  }
+
+  @Test
+  public void testGetServiceURL() throws Exception {
+    URL url = new URL(serviceClient.getServiceURL(FakeApp.NAME, PingService.NAME), "ping");
+    HttpRequest request = HttpRequest.builder(HttpMethod.GET, url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
   }
 }

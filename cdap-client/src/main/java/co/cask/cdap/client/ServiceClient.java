@@ -90,4 +90,11 @@ public class ServiceClient {
     }
     return builder.build();
   }
+
+  public URL getServiceURL(String appId, String serviceId)
+    throws NotFoundException, IOException, UnAuthorizedAccessTokenException {
+    // Make sure the service actually exists
+    get(appId, serviceId);
+    return config.resolveURL(String.format("apps/%s/services/%s/methods/", appId, serviceId));
+  }
 }
