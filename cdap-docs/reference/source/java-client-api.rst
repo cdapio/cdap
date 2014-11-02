@@ -1,11 +1,14 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
+
+.. _client-api:
+
+.. _java-client-api:
 
 ============================================
 Java Client API
 ============================================
-
-.. _client-api:
 
 The Cask Data Application Platform (CDAP) Java Client API provides methods for interacting
 with CDAP from Java applications.

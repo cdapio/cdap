@@ -1,6 +1,7 @@
-.. :author: Cask Data, Inc.
-   :description: HTTP RESTful Interface to the Cask Data Application Platform
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :description: HTTP RESTful Interface to the Cask Data Application Platform
+    :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. http-restful-api-procedure:
 

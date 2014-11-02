@@ -1,11 +1,12 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
 Runtime Arguments
 ============================================
 
-Flows, Procedures, MapReduce and Workflows can receive runtime arguments:
+Flows, Procedures, MapReduce Jobs, and Workflows can receive runtime arguments:
 
 - For Flows and Procedures, runtime arguments are available to the ``initialize`` method in the context.
 

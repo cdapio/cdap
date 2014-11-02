@@ -1,5 +1,6 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _introduction:
 
@@ -22,7 +23,7 @@ CDAP Reference: APIs, Licenses, and Dependencies
 
 
 .. |java-client| replace:: **Java Client API:**
-.. _java-client: java-client-api/index.html
+.. _java-client: java-client-api.html
 
 - |java-client|_ documents four APIs of CDAP: the **HTTP RESTful API,** the **Java APIs (Javadocs),** the **Java
   Client API** and the **Command-Line Interface;** the latter provides methods for interacting with the 

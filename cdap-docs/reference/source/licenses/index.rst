@@ -1,9 +1,17 @@
-.. :author: Cask Data, Inc.
-   :description: Cask Data Application Platform Dependencies
+.. meta::
+    :author: Cask Data, Inc.
+    :description: Cask Data Application Platform Dependencies
 
 ========================================================
 Cask Data Application Platform Licenses and Dependencies
 ========================================================
+
+.. toctree::
+   :hidden:
+
+    <cdap-enterprise-dependencies>
+    <cdap-level-1-dependencies>
+    <cdap-standalone-dependencies>
 
 CDAP Product License
 --------------------

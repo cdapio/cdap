@@ -19,7 +19,7 @@
 # Builds:
 #
 # admin
-# developer-guide
+# developer
 # guides
 # reference
 # tutorials
@@ -29,7 +29,7 @@
 
 API="cdap-api"
 BUILD="build"
-BUILD_TEMP="build_temp"
+BUILD_TEMP="build-temp"
 GITHUB="github"
 WEB="web"
 HTML="html"
@@ -38,14 +38,14 @@ PROJECT_CAPS="CDAP"
 SCRIPT=`basename $0`
 SCRIPT_PATH=`pwd`
 
-REDIRECT_DEVELOPER_GUIDE_HTML=`cat <<EOF
+REDIRECT_DEVELOPER_HTML=`cat <<EOF
 <!DOCTYPE HTML>
 <html lang="en-US">
     <head>
         <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="0;url=developer-guide/index.html">
+        <meta http-equiv="refresh" content="0;url=developer/index.html">
         <script type="text/javascript">
-            window.location.href = "developer-guide/index.html"
+            window.location.href = "developer/index.html"
         </script>
         <title></title>
     </head>
@@ -70,7 +70,7 @@ function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
   echo "Build script for '$PROJECT_CAPS' docs"
-  echo "Usage: $SCRIPT < option > [source]"
+  echo "Usage: $SCRIPT < option > [source test_includes]"
   echo ""
   echo "  Options (select one)"
   echo "    all            Clean build of everything: HTML docs and Javadocs, GitHub and Web versions"
@@ -116,13 +116,13 @@ function clean() {
 
 function build_all() {
   echo "Building GitHub Docs."
-  ./build.sh docs-github
+  ./build.sh docs-github $ARG_2 $ARG_3
   echo "Stashing GitHub Docs."
   cd $SCRIPT_PATH
   mkdir -p $SCRIPT_PATH/$BUILD_TEMP
   mv $SCRIPT_PATH/$BUILD/*.zip $SCRIPT_PATH/$BUILD_TEMP
   echo "Building Web Docs."
-  ./build.sh docs-web
+  ./build.sh docs-web $ARG_2 $ARG_3
   echo "Moving GitHub Docs."
   mv $SCRIPT_PATH/$BUILD_TEMP/*.zip $SCRIPT_PATH/$BUILD
   rm -rf $SCRIPT_PATH/$BUILD_TEMP
@@ -149,7 +149,7 @@ function build_docs_web() {
 function build() {
   clean
   build_specific_doc admin $1
-  build_specific_doc developer-guide $1
+  build_specific_doc developer $1
   build_specific_doc reference $1
   build_specific_doc tutorials $1
   add_redirect
@@ -157,13 +157,13 @@ function build() {
 
 function add_redirect() {
   cd $SCRIPT_PATH/$BUILD/$HTML
-  echo "$REDIRECT_DEVELOPER_GUIDE_HTML" > index.html
+  echo "$REDIRECT_DEVELOPER_HTML" > index.html
 }
 
 function build_specific_doc() {
   echo "Building $1 guide, target $2..."
   cd $1
-  ./build.sh $2
+  ./build.sh $2 $ARG_2 $ARG_3
   cd $SCRIPT_PATH
   echo "Copying $1 guide results..."
   cp -r $1/$BUILD/$HTML $BUILD/$HTML/$1

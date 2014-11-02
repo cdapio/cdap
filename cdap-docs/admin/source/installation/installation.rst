@@ -1,5 +1,6 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
 Installation and Configuration
@@ -126,7 +127,8 @@ Node.js Runtime
 You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__:
 
 1. Download the appropriate Linux or Solaris binary ``.tar.gz`` from
-   `nodejs.org/download/ <http://nodejs.org/download/>`__. #. Extract somewhere such as ``/opt/node-[version]/``
+   `nodejs.org/download/ <http://nodejs.org/download/>`__.
+ #. Extract somewhere such as ``/opt/node-[version]/``
 #. Build node.js; instructions that may assist are available at
    `github <https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager>`__
 #. Ensure that ``nodejs`` is in the ``$PATH``. One method is to use a symlink from the installation:
@@ -164,7 +166,25 @@ services need to be running.
 Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and possibly *Hive*)
 cluster configurations by adding your configuration to their class paths.
 
-.. rst2pdf: PageBreak
+
+Deployment Architectures
+........................
+
+.. image:: ../_images/cdap-minimal-deployment.png
+   :width: 8in
+   :align: center
+
+------------
+
+.. image:: ../_images/cdap-ha-deployment.png
+   :width: 8in
+   :align: center
+
+------------
+
+.. image:: ../_images/cdap-ha-hs-deployment.png
+   :width: 8in
+   :align: center
 
 Prepare the Cluster
 ...................
@@ -178,7 +198,7 @@ and the default HDFS user is ``yarn``. If you set up your cluster as above, no f
 required.
 
 To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
-(see the `Appendix <#appendix>`__) and set appropriate properties.
+(see the :ref:`appendix-cdap-site.xml`) and set appropriate properties.
 
 - If you want to use an HDFS directory with a name other than ``/cdap``:
 
@@ -359,7 +379,7 @@ accessible through a browser at port 9999. The URL will be ``http://<console-ip>
 ``<console-ip>`` is the IP address of one of the machine where you installed the packages
 and started the services.
 
-Upgrading From a Previous Version
+Upgrading from a Previous Version
 ---------------------------------
 When upgrade an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.

@@ -1,5 +1,6 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
 
 =================================================
 CDAP Reference: APIs, Licenses, and Dependencies
@@ -16,9 +17,3 @@ CDAP Reference: APIs, Licenses, and Dependencies
     License and Dependencies </licenses/index>
     Glossary </glossary>
 
-.. toctree::
-   :hidden:
-
-   /licenses/cdap-enterprise-dependencies
-   /licenses/cdap-level-1-dependencies
-   /licenses/cdap-singlenode-dependencies

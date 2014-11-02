@@ -66,7 +66,7 @@ extensions = [
 
 intersphinx_mapping = {
   'admin': ('../../admin/', os.path.abspath('../../admin/build/html/objects.inv')),
-  'developer': ('../../developer-guide/', os.path.abspath('../../developer-guide/build/html/objects.inv')),
+  'developer': ('../../developer/', os.path.abspath('../../developer/build/html/objects.inv')),
   'reference': ('../../reference', os.path.abspath('../../reference/build/html/objects.inv')),
   'tutorials': ('../../tutorials', os.path.abspath('../../tutorials/build/html/objects.inv')),
 }
@@ -166,7 +166,7 @@ html_theme = 'cdap'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {"stickysidebar":"true"}
+# html_theme_options = {"showtoc_include_showtocs":"false"}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']

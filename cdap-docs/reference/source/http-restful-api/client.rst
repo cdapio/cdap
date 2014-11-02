@@ -1,6 +1,7 @@
-.. :author: Cask Data, Inc.
-   :description: HTTP RESTful Interface to the Cask Data Application Platform
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :description: HTTP RESTful Interface to the Cask Data Application Platform
+    :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _http-restful-api-cdap-client:
 
@@ -36,7 +37,7 @@ To list all of the deployed applications, issue an HTTP GET request::
 
 This will return a JSON String map that lists each Application with its name and description.
 
-Details of A Deployed Application
+Details of a Deployed Application
 ---------------------------------
 
 For detailed information on an application that has been deployed, use::
@@ -104,15 +105,15 @@ jobs, Workflows, and Custom Services, and query for their status using HTTP POST
      - Description
    * - ``<app-id>``
      - Name of the Application being called
-   * - ``<element-type>``
+   * - ``<program-type>``
      - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
-   * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*)
+   * - ``<program-id>``
+     - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
        being called
    * - ``<operation>``
      - One of ``start`` or ``stop``
 
-You can retrieve the status of multiple elements from different applications and element types
+You can retrieve the status of multiple programs from different applications and program types
 using an HTTP POST method::
 
   POST <base-url>/status
@@ -130,7 +131,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"programType"``
      - One of ``flow``, ``procedure``, ``mapreduce``, ``workflow`` or ``service``
    * - ``"programId"``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*)
+     - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
        being called
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -239,18 +240,7 @@ Example::
   GET <base-url>/apps/WordCount/flows/WordCounter/live-info
 
 The response is formatted in JSON; an example of this is shown in the 
-
-.. rst2pdf: CutStart
-
-.. only:: html
-
-  :ref:`CDAP Testing and Debugging Guide. <TestFramework>`
-
-.. only:: pdf
-
-.. rst2pdf: CutStop
-
-  :ref:`CDAP Testing and Debugging Guide. <TestFramework>`
+:ref:`CDAP Testing and Debugging Guide. <developer:debugging-distributed>`
 
 
 Scale

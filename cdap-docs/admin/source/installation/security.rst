@@ -1,5 +1,6 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _security:
 
@@ -7,13 +8,12 @@
 CDAP Security
 ============================================
 
-Cask Data Application Platform (CDAP) supports securing clusters using a perimeter security model.  With perimeter
-security, access to cluster nodes is restricted through a firewall.  Cluster nodes can communicate
-with each other, but outside clients can only communicate with the cluster through a secured
-host.  Using CDAP security, the CDAP authentication server issues credentials (access
-tokens) to authenticated clients.  Clients then send these credentials on requests to CDAP.
-Calls that lack valid access tokens will be rejected, limiting access to only authenticated
-clients.
+Cask Data Application Platform (CDAP) supports securing clusters using a perimeter
+security model. With perimeter security, cluster nodes can communicate with each other,
+but outside clients can only communicate with the cluster through a secured host. Using
+CDAP security, the CDAP authentication server issues credentials (access tokens) to
+authenticated clients. Clients then send these credentials on requests to CDAP. Calls that
+lack valid access tokens will be rejected, limiting access to only authenticated clients.
 
 Authentication in CDAP consists of two components:
 
@@ -41,7 +41,8 @@ be authenticated in that situation, whenever possible a secure Hadoop cluster sh
 
 Enabling Security
 -----------------
-To enable security in CDAP, add these properties to ``cdap-site.xml``:
+To enable security in CDAP, add these properties to ``cdap-site.xml``
+(Note that the ``cdap-security.xml`` file should be owned and readable only by the CDAP user):
 
 ============================================= ===============================================================
    Property                                     Value

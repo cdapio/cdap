@@ -1,5 +1,6 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _introduction:
 
@@ -21,8 +22,10 @@ and applications.
 .. |ops| replace:: **Operations:**
 .. _ops: operations/index.html
 
-- |ops|_ Covers **security, monitoring, logging, metrics, runtime arguments, scaling instances and 
+- |ops|_ Covers **logging, metrics, runtime arguments, scaling instances and 
   introduces the CDAP Console.** 
+
+
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:

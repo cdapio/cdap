@@ -1,0 +1,26 @@
+{#
+    guides.html
+    ~~~~~~~~~~~~~~~~~~~~~
+
+    Sphinx sidebar template: "CDAP Guides" links.
+
+#}
+{%- set master_url_root = pathto(master_doc, 1) %}
+{%- if master_url_root == '#' %}{% set master_url_root = '' %}{% endif %}
+{%- if  html_short_title_toc == 'Developers’ Guide'    %}{% set doc1 = '<b>' %}{% set doc1b = '</b>' %}{% endif %}
+{%- if  html_short_title_toc == 'Reference'            %}{% set doc2 = '<b>' %}{% set doc2b = '</b>' %}{% endif %}
+{%- if  html_short_title_toc == 'Administration'       %}{% set doc3 = '<b>' %}{% set doc3b = '</b>' %}{% endif %}
+{%- if  html_short_title_toc == 'Guides and Tutorials' %}{% set doc4 = '<b>' %}{% set doc4b = '</b>' %}{% endif %}
+  <div role="note" aria-label="guides links">
+    <h3>{{ _('CDAP Documentation') }}</h3>
+    <ul class="this-page-menu">
+      <li>{{ doc1 }}<a href="{{ master_url_root }}{{ _('/../../developer/index.html') }}"
+            rel="nofollow">{{ _('Developers’ Guide') }}</a>{{ doc1b }}</li>
+      <li>{{ doc2 }}<a href="{{ master_url_root }}{{ _('/../../reference/index.html') }}"
+            rel="nofollow">{{ _('Reference') }}</a>{{ doc2b }}</li>
+      <li>{{ doc3 }}<a href="{{ master_url_root }}{{ _('/../../admin/index.html') }}"
+            rel="nofollow">{{ _('Administration') }}</a>{{ doc3b }}</li>
+      <li>{{ doc4 }}<a href="{{ master_url_root }}{{ _('/../../tutorials/index.html') }}"
+            rel="nofollow">{{ _('How-To Guides and Tutorials') }}</a>{{ doc4b }}</li>
+    </ul>
+   </div>

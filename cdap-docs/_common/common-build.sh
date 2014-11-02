@@ -37,7 +37,7 @@ INCLUDES="_includes"
 API="cdap-api"
 APIDOCS="apidocs"
 APIS="apis"
-DEVELOPER_GUIDE="developer-guide"
+DEVELOPER_GUIDE="developer"
 JAVADOCS="javadocs"
 LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
@@ -267,7 +267,7 @@ function check_includes() {
 }
 
 function test_includes () {
-  # For an example of over-riding this function, see developer-guide/build.sh
+  # For an example of over-riding this function, see developer/build.sh
   echo "No includes to be tested."
 }
 
@@ -297,7 +297,7 @@ function build_includes() {
 
 function pandoc_includes() {
   # $1 passed is the directory to which the translated files are to be written.
-  # For an example of over-riding this function, see developer-guide/build.sh
+  # For an example of over-riding this function, see developer/build.sh
   echo "No includes to be translated."
 }
 

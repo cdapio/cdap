@@ -1,5 +1,8 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
+
+.. _appendix-cdap-security.xml:
 
 ============================================
 Appendix: ``cdap-security.xml``

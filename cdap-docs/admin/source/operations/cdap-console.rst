@@ -1,5 +1,6 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _cdap-console:
 
@@ -13,6 +14,7 @@ Application Platform in all modes of CDAP except an
 
 .. image:: ../_images/console/console_01_overview.png
    :width: 600px
+   :align: center
 
 Here is a screen-capture of the CDAP Console running on a Distributed CDAP.
 
@@ -23,5 +25,8 @@ managing each of these CDAP elements.
 In the far upper-right are two buttons: the *Metrics* and *Services* buttons, which take
 you to their respective explorers.
 
-A detailed *How-To Guide* covering using the CDAP Console is available at `Guides and
-Tutorials for CDAP. <http://cask.co/guides/>`__
+A detailed *How-To Guide* covering using the CDAP Console 
+will be available
+at `Guides and Tutorials for CDAP. <http://cask.co/guides/>`__
+
+.. is available
