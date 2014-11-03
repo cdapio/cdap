@@ -183,6 +183,9 @@ function build_zip() {
   echo "Building zip completed."
 }
 
+function build_sdk() {
+  build_specific_doc developer sdk
+}
 
 set_project_path
 

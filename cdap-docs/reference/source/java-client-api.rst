@@ -178,6 +178,8 @@ MonitorClient
   // Fetch the number of instances of the System Transaction Service
   int systemServiceInstances = monitorClient.getSystemServiceInstances("transaction");
 
+  // Set the number of instances of the System Transaction Service
+  monitorClient.setSystemServiceInstances("transaction", 1);
 
 .. _procedure-client:
 

@@ -51,6 +51,49 @@ security.enabled                                true
 security.auth.server.address                    <hostname>
 ============================================= ===============================================================
 
+Configuring Kerberos (required)
+...............................
+To configure Kerberos authentication for various CDAP services, add these properties to ``cdap-site.xml``:
+
+============================================= ===================== =========================================
+   Property                                     Default Value         Description
+============================================= ===================== =========================================
+kerberos.auth.enabled                          ``security.enabled``   true to enable Kerberos authentication
+cdap.master.kerberos.keytab                    None                   Kerberos keytab file location
+cdap.master.kerberos.principal                 None                   Kerberos principal associated with
+                                                                      the keytab
+============================================= ===================== =========================================
+
+Configuring Zookeeper (required)
+................................
+To configure Zookeeper to enable SASL authentication, add the following to your ``zoo.cfg``::
+
+  authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
+  jaasLoginRenew=3600000
+  kerberos.removeHostFromPrincipal=true
+  kerberos.removeRealmFromPrincipal=true
+
+This will let Zookeeper use the ``SASLAuthenticationProvider`` as an auth provider, and the ``jaasLoginRenew`` line
+will cause the Zookeeper server to renew its Kerberos ticket once an hour.
+
+Then, create a ``jaas.conf`` file for your Zookeeper server::
+
+  Server {
+       com.sun.security.auth.module.Krb5LoginModule required
+       useKeyTab=true
+       keyTab="/path/to/zookeeper.keytab"
+       storeKey=true
+       useTicketCache=false
+       principal="<your-zookeeper-principal>";
+  };
+
+The keytab file must be readable by the Zookeeper server, and ``<your-zookeeper-principal>`` must correspond
+to the keytab file.
+
+Finally, start Zookeeper server with the following JVM option::
+
+  -Djava.security.auth.login.config=/path/to/jaas.conf
+
 Running Servers with SSL
 ........................
 
@@ -131,49 +174,6 @@ dashboard.ssl.key                              SSL key file location; the file s
 ============================================= ===============================================================
 
 **Note:** To allow self signed certificates, set dashboard.ssl.disable.cert.check field to true in cdap-site.xml
-
-Configuring Kerberos (required)
-...............................
-To configure Kerberos authentication for various CDAP services, add these properties to ``cdap-site.xml``:
-
-============================================= ===================== =========================================
-   Property                                     Default Value         Description
-============================================= ===================== =========================================
-kerberos.auth.enabled                          ``security.enabled``   true to enable Kerberos authentication
-cdap.master.kerberos.keytab                    None                   Kerberos keytab file location
-cdap.master.kerberos.principal                 None                   Kerberos principal associated with
-                                                                      the keytab
-============================================= ===================== =========================================
-
-Configuring Zookeeper (required)
-................................
-To configure Zookeeper to enable SASL authentication, add the following to your ``zoo.cfg``::
-
-  authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
-  jaasLoginRenew=3600000
-  kerberos.removeHostFromPrincipal=true
-  kerberos.removeRealmFromPrincipal=true
-
-This will let Zookeeper use the ``SASLAuthenticationProvider`` as an auth provider, and the ``jaasLoginRenew`` line
-will cause the Zookeeper server to renew its Kerberos ticket once an hour.
-
-Then, create a ``jaas.conf`` file for your Zookeeper server::
-
-  Server {
-       com.sun.security.auth.module.Krb5LoginModule required
-       useKeyTab=true
-       keyTab="/path/to/zookeeper.keytab"
-       storeKey=true
-       useTicketCache=false
-       principal="<your-zookeeper-principal>";
-  };
-
-The keytab file must be readable by the Zookeeper server, and ``<your-zookeeper-principal>`` must correspond
-to the keytab file.
-
-Finally, start Zookeeper server with the following JVM option::
-
-  -Djava.security.auth.login.config=/path/to/jaas.conf
 
 Enabling Access Logging
 .......................

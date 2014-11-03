@@ -303,7 +303,7 @@ function pandoc_includes() {
 
 function build_standalone() {
   cd $PROJECT_PATH
-  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples && mvn package -pl standalone -am -DskipTests -P dist,release
+  MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release
 }
 
 function build_sdk() {

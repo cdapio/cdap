@@ -90,7 +90,7 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"3600000"}}``
+     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"3600"}}``
    * - Description
      - Creates a Dataset named "mydataset" of the type "table" and time-to-live property set to 1 hour
 
@@ -148,7 +148,7 @@ Example
    * - HTTP Request
      - ``PUT <base-url>/data/datasets/mydataset/properties``
    * - Body
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"7200000"}}``
+     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"ttl":"7200"}}``
    * - Description
      - For the "mydataset" of type "Table", update the Dataset and its time-to-live property to 2 hours
 

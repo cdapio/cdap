@@ -3,8 +3,6 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. highlight:: console
-
 ===========================================================
 Stream HTTP RESTful API
 ===========================================================
@@ -13,7 +11,7 @@ Stream HTTP RESTful API
 
 .. _rest-streams:
 
-This interface supports creation of a Stream; sending, reading, and truncating events to
+This interface supports creation of a :ref:`Stream; <developer:streams>` sending, reading, and truncating events to
 and from a Stream; and setting the TTL property of a Stream.
 
 Streams may have multiple consumers (for example, multiple Flows), each of which may be a

@@ -141,7 +141,7 @@ page of the CDAP Console and then click the start button. You can see the status
 
 Alternatively, you can send a ``curl`` request to the CDAP::
   
-  curl -v -d http://localhost:10000/v2/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start
+  curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
 
 Querying the Results
 ####################
@@ -149,31 +149,31 @@ Querying the Results
 If the Procedure has not already been started, you start it either through the 
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-	curl -v -d'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseProcedure/start'
+	curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseProcedure/start'
 	
 There are two ways to query the *history* ObjectStore through the ``PurchaseProcedure`` procedure:
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -d '{"customer": "Alice"}' \
-	  'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseProcedure/methods/history'
+    curl -v -d '{"customer": "Alice"}' \
+      'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseProcedure/methods/history'
 
-  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
+   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
 
-	  libexec\curl...
+    libexec\curl...
 
 2. Click on the ``PurchaseProcedure`` in the Application page of the Console to get to the 
    Procedure dialogue. Type in the method name ``history``, and enter the customer name in the parameters
    field, such as::
 
-	{ "customer" : "Alice" }
+    { "customer" : "Alice" }
 
    Then click the *Execute* button. The purchase history for that customer will be displayed in the
    Console in JSON format, for example [reformatted to fit]::
 
-	{"customer":"Alice","purchases"
-	   [{"customer":"Alice",
-	      "product":"coconut","quantity":2,"price":5,"purchaseTime":1404268588338,"catalogId":""}]}
+    {"customer":"Alice","purchases"
+      [{"customer":"Alice",
+        "product":"coconut","quantity":2,"price":5,"purchaseTime":1404268588338,"catalogId":""}]}
 
 Exploring the Results Using SQL
 ###############################
@@ -184,12 +184,11 @@ includes a script, ``bin/cdap-cli.sh``, that can execute the series of calls.
 
 From within the SDK root directory::
 
-  bin/cdap-cli.sh execute SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')
+  bin/cdap-cli.sh execute "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
 
 This will submit the query, using the *History* table in the ``cdap_user`` namespace, wait for its completion and 
 then retrieve and print all results, one by one::
 
-  Query handle is ad004d63-7e8d-44f8-b53a-33f3cf3bd5c8.
   ["Alice","[{\"customer\":\"Alice\",\"product\":\"grapefruit\",\"quantity\":12,\"price\":10
     \"purchasetime\":1403737694225}]"]
   ["Bob","[{\"customer\":\"Bob\",\"product\":\"orange\",\"quantity\":6,\"price\":12
@@ -200,8 +199,8 @@ If you prefer to use ``curl`` directly, here is the sequence of steps to execute
 
 First, submit the query for execution::
 
-  curl -v -d '{"query": "'"SELECT * FROM cask_user_history WHERE customer IN ('Alice','Bob')"'"}'
-    http://localhost:10000/v2/data/queries
+  curl -v -d '{"query": "'"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"'"}' \
+    http://localhost:10000/v2/data/explore/queries
 
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
 correctly at the shell command prompt. On success, this will return a handle for the query, such as::
@@ -211,7 +210,7 @@ correctly at the shell command prompt. On success, this will return a handle for
 This handle is needed to inquire about the status of the query and to retrieve query results. To get the
 status, issue a GET to the query's URL using the handle::
 
-  curl -v -X GET http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
+  curl -v -X GET http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
 
 Because a SQL query can run for several minutes, you may have to repeat the call until it returns a status of *finished*::
 
@@ -219,7 +218,7 @@ Because a SQL query can run for several minutes, you may have to repeat the call
 
 Once execution has finished, you can retrieve the results of the query using the handle::
 
-  curl -v -d http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
+  curl -v -X POST http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
 
 This will return—up to a limited number of—the results in JSON format::
 
@@ -230,7 +229,7 @@ This will return—up to a limited number of—the results in JSON format::
 
 You repeat this step until the ``curl`` call returns an empty list. That means you have retrieved all of the results and you can now close the query::
 
-  curl -v -X DELETE http://localhost:10000/v2/data/queries/363f8ceb-29fe-493d-810f-858ed0440782
+  curl -v -X DELETE http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782
 
 
 Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-building-running>`

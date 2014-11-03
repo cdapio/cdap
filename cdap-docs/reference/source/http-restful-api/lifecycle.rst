@@ -6,10 +6,10 @@
 .. _http-restful-api-cdap-client:
 
 ===========================================================
-Client HTTP RESTful API
+Lifecycle HTTP RESTful API
 ===========================================================
 
-Use the CDAP Client HTTP API to deploy or delete Applications and manage the life cycle of 
+Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the life cycle of 
 Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
 
 .. highlight:: console
@@ -523,3 +523,25 @@ For Workflows, you can also retrieve:
 - the next time that the workflow is scheduled to run (using the parameter ``nextruntime``)::
 
     GET <base-url>/apps/<app-id>/workflows/<workflow-id>/nextruntime
+
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/workflows/WhoWorkflow/schedules``
+   * - Description
+     - Retrieves the schedules of the Workflow *WhoWorkflow* of the Application *HelloWorld*
+   * - Returns
+     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
+       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+   * - HTTP Method
+     - ``GET <base-url>/apps/HelloWorld/workflows/WhoWorkflow/nextruntime``
+   * - Description
+     - Retrieves the next runtime of the Workflow *WhoWorkflow* of the Application *HelloWorld*
+   * - Returns
+     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
+       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+

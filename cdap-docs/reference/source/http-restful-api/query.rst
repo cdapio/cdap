@@ -69,7 +69,6 @@ Example
    * - Description
      - Submit a query to get the first 5 entries from the Dataset, *mydataset*
 
-.. rst2pdf: PageBreak
 
 Status of a Query
 -----------------
@@ -151,6 +150,8 @@ HTTP Responses
      - Description
    * - ``200 OK``
      - The query was successfully received and the query schema was returned in the body
+   * - ``400 Bad Request``
+     - The query is not well-formed or contains an error, or the query status is not ``FINISHED``.
    * - ``404 Not Found``
      - The query handle does not match any current query
 
@@ -236,7 +237,22 @@ whereas for ``STRING`` or ``VARCHAR`` the value will be a string literal.
 Repeat the query to retrieve subsequent results. If all results of the query have already 
 been retrieved, then the returned list is empty. 
 
-.. rst2pdf: PageBreak
+Example
+.......
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - HTTP Request
+     - ``POST <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2/next``
+   * - HTTP Response
+     - ``[{"columns": [ 10, 5]},``
+       `` {"columns": [ 20, 27]},``
+       `` {"columns": [ 50, 6]},``
+       `` {"columns": [ 90, 30]},``
+       `` {"columns": [ 95, 91]}]``
+   * - Description
+     - Retrieve the results of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
 
 Closing a Query
 ---------------
@@ -302,6 +318,22 @@ To return a list of queries, use::
      - Optional offset for pagination, returns the results that are greater than offset if the cursor is ``next`` or
        results that are less than offset if cursor is ``prev``
 
+Comments
+........
+The results are returned as a JSON array, with each element containing information about the query::
+
+  [
+    {
+        "timestamp": 1407192465183,
+        "statement": "SHOW TABLES",
+        "status": "FINISHED",
+        "query_handle": "319d9438-903f-49b8-9fff-ac71cf5d173d",
+        "has_results": true,
+        "is_active": false
+    },
+    ...
+  ]
+
 Example
 .......
 .. list-table::
@@ -321,22 +353,6 @@ Example
        ``}]``
    * - Description
      - Close the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
-
-Comments
-........
-The results are returned as a JSON array, with each element containing information about the query::
-
-  [
-    {
-        "timestamp": 1407192465183,
-        "statement": "SHOW TABLES",
-        "status": "FINISHED",
-        "query_handle": "319d9438-903f-49b8-9fff-ac71cf5d173d",
-        "has_results": true,
-        "is_active": false
-    },
-    ...
-  ]
 
 Download Query Results
 ----------------------
@@ -390,16 +406,6 @@ You can obtain the schema of the underlying Hive Table with::
    * - ``<dataset-name>``
      - Name of the Dataset whose schema is to be retrieved
 
-Comments
-........
-The results are returned as a JSON Map, with ``key`` containing the column names of the underlying table and 
-``value`` containing the column types of the underlying table::
-
-  {
-    "key": "array<tinyint>",
-    "value": "array<tinyint>"
-  }
-
 HTTP Responses
 ..............
 .. list-table::
@@ -412,3 +418,14 @@ HTTP Responses
      - The HTTP call was successful.
    * - ``404 Not Found``
      - The dataset was not found.
+     
+Comments
+........
+The results are returned as a JSON Map, with ``key`` containing the column names of the underlying table and 
+``value`` containing the column types of the underlying table::
+
+  {
+    "key": "array<tinyint>",
+    "value": "array<tinyint>"
+  }
+
