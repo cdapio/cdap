@@ -17,7 +17,7 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.metrics.transport.MetricContentType;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.inject.Inject;
@@ -74,7 +74,7 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
       counterGroup += "." + scope.name();
 
-      if (record.getType() == MetricContentType.COUNT) {
+      if (record.getType() == MetricType.COUNT) {
         increment = true;
       }
 

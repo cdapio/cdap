@@ -24,7 +24,7 @@ import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.transport.MetricContentType;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.base.Preconditions;
@@ -285,10 +285,10 @@ public final class TimeSeriesTable {
 
 
   private void addValue(byte[] rowKey, byte[] column,
-                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, long value, MetricContentType type) {
+                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, long value, MetricType type) {
     byte[] oldValue = get(table, rowKey, column);
     long newValue = value;
-    if (oldValue != null && type != MetricContentType.GAUGE) {
+    if (oldValue != null && type != MetricType.GAUGE) {
       if (Bytes.SIZEOF_LONG == oldValue.length) {
         newValue = Bytes.toLong(oldValue) + value;
       } else if (Bytes.SIZEOF_INT == oldValue.length) {
