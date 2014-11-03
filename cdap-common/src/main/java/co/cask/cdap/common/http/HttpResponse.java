@@ -16,8 +16,11 @@
 package co.cask.cdap.common.http;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 
 import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Return type for http requests executed by {@link HttpRequests}
@@ -26,11 +29,13 @@ public class HttpResponse {
   private final int responseCode;
   private final String responseMessage;
   private final byte[] responseBody;
+  private final Map<String, List<String>> headers;
 
-  HttpResponse(int responseCode, String responseMessage, byte[] responseBody) {
+  HttpResponse(int responseCode, String responseMessage, byte[] responseBody, Map<String, List<String>> headers) {
     this.responseCode = responseCode;
     this.responseMessage = responseMessage;
     this.responseBody = responseBody;
+    this.headers = ImmutableMap.copyOf(headers);
   }
 
   public int getResponseCode() {
@@ -51,5 +56,9 @@ public class HttpResponse {
 
   public String getResponseBodyAsString(Charset charset) {
     return new String(responseBody, charset);
+  }
+
+  public Map<String, List<String>> getHeaders() {
+    return headers;
   }
 }

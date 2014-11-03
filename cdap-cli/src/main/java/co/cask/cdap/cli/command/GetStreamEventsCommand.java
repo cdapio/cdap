@@ -16,25 +16,21 @@
 
 package co.cask.cdap.cli.command;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AsciiTable;
+import co.cask.cdap.cli.util.ResponseUtil;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,8 +38,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class GetStreamEventsCommand implements Command {
 
-  private static final int MAX_BODY_SIZE = 256;
-  private static final int LINE_WRAP_LIMIT = 64;
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
   private final StreamClient streamClient;
@@ -73,9 +67,9 @@ public class GetStreamEventsCommand implements Command {
 
           return new Object[] {
             event.getTimestamp(),
-            event.getHeaders().isEmpty() ? "" : formatHeader(event.getHeaders()),
+            event.getHeaders().isEmpty() ? "" : ResponseUtil.formatHeader(event.getHeaders()),
             bodySize,
-            getBody(event.getBody())
+            ResponseUtil.getBody(event.getBody())
           };
         }
       }
@@ -136,38 +130,5 @@ public class GetStreamEventsCommand implements Command {
     } catch (NumberFormatException e) {
       throw new CommandInputError("Invalid number value: " + arg + ". Reason: " + e.getMessage());
     }
-  }
-
-  /**
-   * Creates a string representing the output of stream event header. Each key/value pair is outputted on its own
-   * line in the form {@code <key> : <value>}.
-   */
-  private String formatHeader(Map<String, String> headers) {
-    StringBuilder builder = new StringBuilder();
-    String separator = "";
-    for (Map.Entry<String, String> entry : headers.entrySet()) {
-      builder.append(separator).append(entry.getKey()).append(" : ").append(entry.getValue());
-      separator = LINE_SEPARATOR;
-    }
-    return builder.toString();
-  }
-
-  /**
-   * Creates a string representing the body in the output. It only prints up to {@link #MAX_BODY_SIZE}, with line
-   * wrap at each {@link #LINE_WRAP_LIMIT} character.
-   */
-  private String getBody(ByteBuffer body) {
-    ByteBuffer bodySlice = body.slice();
-    boolean hasMore = false;
-    if (bodySlice.remaining() > MAX_BODY_SIZE) {
-      bodySlice.limit(MAX_BODY_SIZE);
-      hasMore = true;
-    }
-
-    String str = Bytes.toStringBinary(bodySlice) + (hasMore ? "..." : "");
-    if (str.length() <= LINE_WRAP_LIMIT) {
-      return str;
-    }
-    return Joiner.on(LINE_SEPARATOR).join(Splitter.fixedLength(LINE_WRAP_LIMIT).split(str));
   }
 }

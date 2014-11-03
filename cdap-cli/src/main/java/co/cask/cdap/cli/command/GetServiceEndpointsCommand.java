@@ -31,14 +31,14 @@ import java.io.PrintStream;
 import java.util.List;
 
 /**
- * List the endpoints that a {@link Service} exposes.
+ * Get a list of the endpoints that a {@link Service} exposes.
  */
-public class ListServiceEndpointsCommand implements Command {
+public class GetServiceEndpointsCommand implements Command {
 
   private final ServiceClient serviceClient;
 
   @Inject
-  public ListServiceEndpointsCommand(ServiceClient serviceClient) {
+  public GetServiceEndpointsCommand(ServiceClient serviceClient) {
     this.serviceClient = serviceClient;
   }
 
@@ -66,7 +66,7 @@ public class ListServiceEndpointsCommand implements Command {
 
   @Override
   public String getPattern() {
-    return String.format("list endpoints service <%s>", ArgumentName.SERVICE);
+    return String.format("get service <%s> endpoints", ArgumentName.SERVICE);
   }
 
   @Override

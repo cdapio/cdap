@@ -19,20 +19,21 @@ package co.cask.cdap.cli.app;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import org.jboss.netty.buffer.ChannelBuffers;
 
-import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * Ping Service.
+ * Echo Service.
  */
-public final class PingService extends AbstractHttpServiceHandler {
-  public static final String NAME = "pingService";
+public final class EchoHandler extends AbstractHttpServiceHandler {
+  public static final String NAME = "echoHandler";
 
-  @GET
-  @Path("/ping")
-  public void ping(HttpServiceRequest request, HttpServiceResponder responder) {
-    String value = request.getHeader("test");
-    responder.sendJson(200, value);
+  @POST
+  @Path("/echo")
+  public void echo(HttpServiceRequest request, HttpServiceResponder responder) {
+    String body = new String(ChannelBuffers.copiedBuffer(request.getContent()).array());
+    responder.sendString(body);
   }
 }

@@ -16,22 +16,23 @@
 
 package co.cask.cdap.cli.command;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AsciiTable;
+import co.cask.cdap.cli.util.ResponseUtil;
 import co.cask.cdap.cli.util.RowMaker;
+import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.conf.StringUtils;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpResponse;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -39,26 +40,25 @@ import com.google.inject.Inject;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Call an endpoint of a {@link Service}.
  */
 public class CallServiceCommand implements Command {
-
-  private static final int MAX_BODY_SIZE = 256;
-  private static final int LINE_WRAP_LIMIT = 64;
-  private static final String LINE_SEPARATOR = System.getProperty("line.separator");
   private static final Gson GSON = new Gson();
 
 
   private final ClientConfig clientConfig;
   private final RESTClient restClient;
+  private final ServiceClient serviceClient;
 
   @Inject
-  public CallServiceCommand(ClientConfig clientConfig) {
+  public CallServiceCommand(ClientConfig clientConfig, ServiceClient serviceClient) {
     this.clientConfig = clientConfig;
     this.restClient = RESTClient.create(clientConfig);
+    this.serviceClient = serviceClient;
   }
 
   @Override
@@ -68,11 +68,13 @@ public class CallServiceCommand implements Command {
     String serviceId = appAndServiceId[1];
     String method = arguments.get(ArgumentName.HTTP_METHOD.toString());
     String path = arguments.get(ArgumentName.ENDPOINT.toString());
+    path = path.startsWith("/") ? path.substring(1) : path;
     String headers = arguments.get(ArgumentName.HEADERS.toString(), "");
     String body = arguments.get(ArgumentName.HTTP_BODY.toString(), "");
 
-    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() { }.getType());
-    URL url = clientConfig.resolveURL(String.format("/apps/%s/services/%s/methods/%s", appId, serviceId, path));
+    Map<String, String> headerMap = GSON.fromJson(headers, new TypeToken<Map<String, String>>() {
+    }.getType());
+    URL url = new URL(serviceClient.getServiceURL(appId, serviceId), path);
 
     HttpMethod httpMethod = HttpMethod.valueOf(method);
     HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url).addHeaders(headerMap);
@@ -82,7 +84,7 @@ public class CallServiceCommand implements Command {
     HttpResponse response = restClient.execute(builder.build(), clientConfig.getAccessToken());
 
     new AsciiTable<HttpResponse>(
-      new String[] { "status", "body size", "body"},
+      new String[] { "status", "headers", "body size", "body"},
       ImmutableList.of(response),
       new RowMaker<HttpResponse>() {
         @Override
@@ -92,8 +94,9 @@ public class CallServiceCommand implements Command {
 
           return new Object[] {
             httpResponse.getResponseCode(),
+            formatHeaders(httpResponse),
             bodySize,
-            getBody(byteBuffer)
+            ResponseUtil.getBody(byteBuffer)
           };
         }
       }
@@ -114,21 +117,18 @@ public class CallServiceCommand implements Command {
   }
 
   /**
-   * Creates a string representing the body in the output. It only prints up to {@link #MAX_BODY_SIZE}, with line
-   * wrap at each {@link #LINE_WRAP_LIMIT} character.
+   * Format multiple header values as a comma separated list of the values.
+   * This is valid, as per: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html
    */
-  private String getBody(ByteBuffer body) {
-    ByteBuffer bodySlice = body.slice();
-    boolean hasMore = false;
-    if (bodySlice.remaining() > MAX_BODY_SIZE) {
-      bodySlice.limit(MAX_BODY_SIZE);
-      hasMore = true;
+  private String formatHeaders(HttpResponse response) {
+    Map<String, List<String>> headers = response.getHeaders();
+    ImmutableMap.Builder builder = new ImmutableMap.Builder();
+    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+      if (entry.getKey() != null) {
+        List<String> value = entry.getValue();
+        builder.put(entry.getKey(), StringUtils.arrayToString(value.toArray(new String[value.size()])));
+      }
     }
-
-    String str = Bytes.toStringBinary(bodySlice) + (hasMore ? "..." : "");
-    if (str.length() <= LINE_WRAP_LIMIT) {
-      return str;
-    }
-    return Joiner.on(LINE_SEPARATOR).join(Splitter.fixedLength(LINE_WRAP_LIMIT).split(str));
+    return ResponseUtil.formatHeader(builder.build());
   }
 }

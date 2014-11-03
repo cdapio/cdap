@@ -53,6 +53,6 @@ public class FakeApp extends AbstractApplication {
     createDataset(DS_NAME, FakeDataset.class.getName());
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
-    addService(PingService.NAME, new PingService());
+    addService(EchoHandler.NAME, new EchoHandler());
   }
 }

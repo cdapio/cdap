@@ -16,10 +16,12 @@
 package co.cask.cdap.common.http;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import java.lang.reflect.Type;
+import java.util.List;
 
 /**
  * Convenient wrapper of {@link HttpResponse} that makes client code cleaner when dealing with java object that can be
@@ -61,7 +63,8 @@ public final class ObjectResponse<T> extends HttpResponse {
   }
 
   private ObjectResponse(HttpResponse response, T object) {
-    super(response.getResponseCode(), response.getResponseMessage(), response.getResponseBody());
+    super(response.getResponseCode(), response.getResponseMessage(),
+          response.getResponseBody(), ImmutableMap.<String, List<String>>of());
     this.object = object;
   }
 

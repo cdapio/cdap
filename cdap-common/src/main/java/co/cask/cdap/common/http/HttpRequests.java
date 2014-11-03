@@ -106,7 +106,7 @@ public final class HttpRequests {
       try {
         if (isSuccessful(conn.getResponseCode())) {
           return new HttpResponse(conn.getResponseCode(), conn.getResponseMessage(),
-                                  ByteStreams.toByteArray(conn.getInputStream()));
+                                  ByteStreams.toByteArray(conn.getInputStream()), conn.getHeaderFields());
         }
       } catch (FileNotFoundException e) {
         // Server returns 404. Hence handle as error flow below. Intentional having empty catch block.
@@ -115,7 +115,7 @@ public final class HttpRequests {
       // Non 2xx response
       InputStream es = conn.getErrorStream();
       byte[] content = (es == null) ? new byte[0] : ByteStreams.toByteArray(es);
-      return new HttpResponse(conn.getResponseCode(), conn.getResponseMessage(), content);
+      return new HttpResponse(conn.getResponseCode(), conn.getResponseMessage(), content, conn.getHeaderFields());
     } finally {
       conn.disconnect();
     }

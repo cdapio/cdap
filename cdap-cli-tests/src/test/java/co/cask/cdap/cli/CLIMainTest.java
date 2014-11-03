@@ -16,9 +16,9 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.cli.app.EchoHandler;
 import co.cask.cdap.cli.app.FakeApp;
 import co.cask.cdap.cli.app.FakeProcedure;
-import co.cask.cdap.cli.app.PingService;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
@@ -115,13 +115,11 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
 
     //test service commands
-    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PingService.NAME);
+    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, EchoHandler.NAME);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
-    testCommandOutputContains(cli, "list endpoints service " + qualifiedServiceId, "GET");
-    testCommandOutputContains(cli, "list endpoints service " + qualifiedServiceId, "/ping");
-    System.out.println("call service " + qualifiedServiceId + " GET /ping \"{'test' : 'val'}\"");
-    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " GET /ping " +
-                                   "headers \"{'test' : 'val'}\"", "val");
+    testCommandOutputContains(cli, "get service " + qualifiedServiceId + " endpoints", "POST");
+    testCommandOutputContains(cli, "get service " + qualifiedServiceId + " endpoints", "/echo");
+    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"", "testBody");
     testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
 
     // cleanup
