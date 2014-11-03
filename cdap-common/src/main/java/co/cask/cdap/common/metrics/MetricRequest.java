@@ -35,7 +35,7 @@ import java.util.List;
  *     MetricRequest.Builder builder = new MetricRequest.Builder(true);
  *     builder.setRequestType(cmd);
  *     builder.setMetricName(name);
- *     builder.setMetricType(type);
+ *     builder.setMetricCategory(category);
  *     builder.setTimestamp(timestamp);
  *     builder.setValue(value);
  *     MetricRequest request = builder.create();
@@ -63,9 +63,9 @@ public class MetricRequest {
   private MetricRequestType requestType;
 
   /**
-   * Defines the type of metricName.
+   * Defines the category of metricName.
    */
-  private MetricType metricType;
+  private MetricCategory metricCategory;
 
   /**
    * Defines the name of the metric.
@@ -121,16 +121,16 @@ public class MetricRequest {
   }
 
   /**
-   * Returns the type of the metric that was received.
+   * Returns the category of the metric that was received.
    *
-   * @return type of metric as specified by {@link MetricType}
+   * @return category of metric as specified by {@link MetricCategory}
    */
-  public MetricType getMetricType() {
-    return metricType;
+  public MetricCategory getMetricCategory() {
+    return metricCategory;
   }
 
-  private void setMetricType(MetricType metricType) {
-    this.metricType = metricType;
+  private void setMetricCategory(MetricCategory metricCategory) {
+    this.metricCategory = metricCategory;
   }
 
   /**
@@ -215,7 +215,7 @@ public class MetricRequest {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("Request Type", requestType)
-      .add("CMetric Type", metricType)
+      .add("CMetric Type", metricCategory)
       .add("CMetric Name", metricName)
       .add("Timestamp", timestamp)
       .add("Value", value)
@@ -228,7 +228,7 @@ public class MetricRequest {
    */
   public static class Builder {
     private String requestType;
-    private MetricType metricType;
+    private MetricCategory metricCategory;
     private String metricName;
     private float value;
     private long timestamp;
@@ -251,13 +251,13 @@ public class MetricRequest {
       return this;
     }
 
-    public Builder setMetricType(String type) {
-      if (MetricType.FlowSystem.name().equals(type)) {
-        metricType = MetricType.FlowSystem;
-      } else if (MetricType.FlowUser.name().equals(type)) {
-        metricType = MetricType.FlowUser;
+    public Builder setMetricCategory(String category) {
+      if (MetricCategory.FlowSystem.name().equals(category)) {
+        metricCategory = MetricCategory.FlowSystem;
+      } else if (MetricCategory.FlowUser.name().equals(category)) {
+        metricCategory = MetricCategory.FlowUser;
       } else {
-        metricType = MetricType.System;
+        metricCategory = MetricCategory.System;
       }
       return this;
     }
@@ -303,7 +303,7 @@ public class MetricRequest {
       mpr.setRawRequest(rawRequest);
       mpr.setType(requestType);
       mpr.setMetricName(metricName);
-      mpr.setMetricType(metricType);
+      mpr.setMetricCategory(metricCategory);
       mpr.setValue(value);
       mpr.setTimestamp(timestamp);
       mpr.setTags(tags);
