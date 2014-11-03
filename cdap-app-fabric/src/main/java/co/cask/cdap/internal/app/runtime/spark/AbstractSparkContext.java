@@ -192,7 +192,7 @@ abstract class AbstractSparkContext implements SparkContext {
     }
     hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, StreamInputFormat.class, InputFormat.class);
 
-    LOG.info("Using Stream as input from {}", streamPath.toURI());
+    LOG.info("Using Stream as input from {}", stream.toURI());
 
   }
 
