@@ -30,6 +30,7 @@ public enum ArgumentName {
   SERVICE("service-id"),
   RUNNABLE("runnable-id"),
   MAPREDUCE("mapreduce-id"),
+  SPARK("spark-id"),
 
   HOSTNAME("hostname"),
   DATASET_TYPE("dataset-type"),
