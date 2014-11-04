@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.AppWithServices;
+import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -29,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Test User Services handler in app-fabric - ServiceHttpHandler.java.
+ * Tests for {@link ServiceHttpHandler}.
  */
 public class ServiceHttpHandlerTest extends AppFabricTestBase {
 
@@ -67,7 +68,6 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
     response = doGet("/v2/apps/AppWithServices/services/NoOpService/runnables/InvalidRunnable/instances");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-
     //Set instances to numRequested, and then check with a get that the instances were indeed set.
     String instancesUrl = "/v2/apps/AppWithServices/services/NoOpService/runnables/NoOpService/instances";
     String numRequested = "13";
@@ -82,7 +82,5 @@ public class ServiceHttpHandlerTest extends AppFabricTestBase {
     Map<String, String> returnedBody = readResponse(response, typeToken);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals(numRequested, returnedBody.get("requested"));
-
   }
-
 }

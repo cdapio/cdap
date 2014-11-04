@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -90,20 +90,17 @@ public class ServiceHttpServer extends AbstractIdleService {
 
     this.handlerReferences = Maps.newConcurrentMap();
     this.handlerReferenceQueue = new ReferenceQueue<Supplier<HandlerContextPair>>();
+
+    constructNettyHttpService();
   }
 
-  /**
-   * Starts the {@link NettyHttpService} and announces this runnable as well.
-   */
-  @Override
-  public void startUp() {
+  public void constructNettyHttpService() {
     Id.Program programId = program.getId();
-
     // Constructs all handler delegator. It is for bridging ServiceHttpHandler and HttpHandler (in netty-http).
     List<HandlerDelegatorContext> delegatorContexts = Lists.newArrayList();
     InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
 
-    for (Map.Entry<String, HttpServiceSpecification> entry : spec.getHandlers().entrySet()) {
+    for (Map.Entry<String, HttpServiceHandlerSpecification> entry : spec.getHandlers().entrySet()) {
       try {
         Class<?> handlerClass = program.getClassLoader().loadClass(entry.getValue().getClassName());
         @SuppressWarnings("unchecked")
@@ -121,8 +118,16 @@ public class ServiceHttpServer extends AbstractIdleService {
                                       programId.getApplicationId(),
                                       programId.getId());
 
-    LOG.debug("Starting HTTP server for Service {}", programId);
     service = createNettyHttpService(host, delegatorContexts, pathPrefix);
+  }
+
+  /**
+   * Starts the {@link NettyHttpService} and announces this runnable as well.
+   */
+  @Override
+  public void startUp() {
+    LOG.debug("Starting HTTP server for Service {}", program.getId());
+    Id.Program programId = program.getId();
     service.startAndWait();
 
     // announce the twill runnable
@@ -262,12 +267,12 @@ public class ServiceHttpServer extends AbstractIdleService {
     private final InstantiatorFactory instantiatorFactory;
     private final ThreadLocal<Supplier<HandlerContextPair>> handlerThreadLocal;
     private final TypeToken<HttpServiceHandler> handlerType;
-    private final HttpServiceSpecification spec;
+    private final HttpServiceHandlerSpecification spec;
     private final BasicHttpServiceContextFactory contextFactory;
 
     private HandlerDelegatorContext(TypeToken<HttpServiceHandler> handlerType,
                                     InstantiatorFactory instantiatorFactory,
-                                    HttpServiceSpecification spec,
+                                    HttpServiceHandlerSpecification spec,
                                     BasicHttpServiceContextFactory contextFactory) {
       this.handlerType = handlerType;
       this.instantiatorFactory = instantiatorFactory;

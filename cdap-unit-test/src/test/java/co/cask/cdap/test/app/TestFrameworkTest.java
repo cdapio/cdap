@@ -21,9 +21,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpRequests;
-import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -39,6 +36,9 @@ import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -328,6 +328,12 @@ public class TestFrameworkTest extends TestBase {
   }
 
   @Category(SlowTests.class)
+  @Test(expected = IllegalArgumentException.class)
+  public void testServiceWithInvalidHandler() throws Exception {
+      deployApplication(AppWithInvalidHandler.class);
+  }
+
+  @Category(SlowTests.class)
   @Test
   public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
@@ -340,7 +346,7 @@ public class TestFrameworkTest extends TestBase {
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(response.getResponseCode(), 200);
+    Assert.assertEquals(200, response.getResponseCode());
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);

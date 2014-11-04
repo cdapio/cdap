@@ -96,6 +96,7 @@
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
+    <cask.common.cli.version>0.1.0-SNAPSHOT</cask.common.cli.version>
     <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
@@ -132,9 +133,10 @@
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.1.0</spark.version>
-    <cdap.client.version>1.0.1</cdap.client.version>
+    <cdap.client.version>1.1.0-SNAPSHOT</cdap.client.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
+    <cask.common.version>0.1.0-SNAPSHOT</cask.common.version>
   </properties>
 
   <modules>
@@ -181,6 +183,11 @@
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-nop</artifactId>
         <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-cli</artifactId>
+        <version>${cask.common.cli.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.ws.rs</groupId>
@@ -1082,6 +1089,10 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -1182,6 +1193,16 @@
         <groupId>co.cask.cdap</groupId>
         <artifactId>cdap-authentication-client</artifactId>
         <version>${cdap.client.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-http</artifactId>
+        <version>${cask.common.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.common</groupId>
+        <artifactId>common-io</artifactId>
+        <version>${cask.common.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
