@@ -272,7 +272,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       @Override
       public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
         if (!executor.isShutdown()) {
-          metricsCollector.gauge("collect.async.reject", 1);
+          metricsCollector.increment("collect.async.reject", 1);
           r.run();
         }
       }
