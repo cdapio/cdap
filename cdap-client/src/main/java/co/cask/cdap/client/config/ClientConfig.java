@@ -18,8 +18,8 @@ package co.cask.cdap.client.config;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.HttpRequestConfig;
 import co.cask.cdap.security.authentication.client.AccessToken;
+import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;

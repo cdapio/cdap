@@ -24,11 +24,11 @@ import co.cask.cdap.client.exception.DatasetModuleCannotBeDeletedException;
 import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.http.HttpMethod;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpResponse;
-import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpResponse;
+import co.cask.common.http.ObjectResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 

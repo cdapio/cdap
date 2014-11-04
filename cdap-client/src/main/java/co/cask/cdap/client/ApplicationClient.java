@@ -20,13 +20,13 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.ApplicationNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.http.HttpMethod;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpResponse;
-import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpResponse;
+import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -63,7 +63,8 @@ public class ApplicationClient {
    */
   public List<ApplicationRecord> list() throws IOException, UnAuthorizedAccessTokenException {
     HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("apps"), config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() {
+    }).getResponseObject();
   }
 
   /**
