@@ -19,6 +19,6 @@ package co.cask.cdap.metrics.transport;
  * MetricType - COUNTER or GAUGE type
  */
 public enum MetricType {
-  COUNT,
+  COUNTER,
   GAUGE
 }

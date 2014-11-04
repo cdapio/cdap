@@ -29,7 +29,7 @@ public interface MetricsCollector {
   void increment(String metricName, int value, String... tags);
 
   /**
-   * Guage a metric value at the current time.
+   * Gauge a metric value at the current time.
    * @param metricName Name of the metric.
    * @param value value of the metric.
    * @param tags Tags associated with the metric.

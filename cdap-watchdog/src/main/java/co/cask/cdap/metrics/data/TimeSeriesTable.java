@@ -288,7 +288,7 @@ public final class TimeSeriesTable {
                         NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, long value, MetricType type) {
     byte[] oldValue = get(table, rowKey, column);
     long newValue = value;
-    if (oldValue != null && type != MetricType.GAUGE) {
+    if (oldValue != null && type == MetricType.COUNTER) {
       if (Bytes.SIZEOF_LONG == oldValue.length) {
         newValue = Bytes.toLong(oldValue) + value;
       } else if (Bytes.SIZEOF_INT == oldValue.length) {

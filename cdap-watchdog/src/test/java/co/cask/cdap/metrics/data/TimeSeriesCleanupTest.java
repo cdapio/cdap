@@ -121,7 +121,7 @@ public class TimeSeriesCleanupTest {
         for (String tag : tags) {
           tagMetrics.add(new TagMetric(tag, j * 2));
         }
-        records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j, MetricType.COUNT));
+        records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j, MetricType.COUNTER));
         tagMetrics.clear();
       }
       timeSeriesTable.save(records);

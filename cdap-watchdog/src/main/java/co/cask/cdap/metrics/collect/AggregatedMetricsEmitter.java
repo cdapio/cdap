@@ -79,7 +79,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     for (Map.Entry<String, AtomicLong> entry : tagValues.asMap().entrySet()) {
       builder.add(new TagMetric(entry.getKey(), entry.getValue().getAndSet(0)));
     }
-    MetricType type = gaugeUsed.getAndSet(false) ? MetricType.GAUGE : MetricType.COUNT;
+    MetricType type = gaugeUsed.getAndSet(false) ? MetricType.GAUGE : MetricType.COUNTER;
     return new MetricsRecord(context, runId, name, builder.build(), timestamp, value, type);
   }
 

@@ -215,7 +215,7 @@ public class MetricRequest {
   public String toString() {
     return Objects.toStringHelper(this)
       .add("Request Type", requestType)
-      .add("CMetric Type", metricCategory)
+      .add("CMetric Category", metricCategory)
       .add("CMetric Name", metricName)
       .add("Timestamp", timestamp)
       .add("Value", value)

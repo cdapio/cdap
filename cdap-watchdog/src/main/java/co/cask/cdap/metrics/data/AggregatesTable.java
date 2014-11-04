@@ -102,7 +102,7 @@ public final class AggregatesTable {
       while (records.hasNext()) {
         MetricsRecord record = records.next();
         byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
-        if (record.getType() == MetricType.COUNT) {
+        if (record.getType() == MetricType.COUNTER) {
           Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
           // The no tag value
