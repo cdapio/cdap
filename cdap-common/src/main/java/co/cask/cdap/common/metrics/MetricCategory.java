@@ -17,9 +17,9 @@
 package co.cask.cdap.common.metrics;
 
 /**
- * Class defines types of metrics allowed.
+ * Class defines categories of metrics allowed.
  */
-public enum MetricType {
+public enum MetricCategory {
   /**
    * Metrics that are part of lower level system e.g. disk, i/o, network.
    */

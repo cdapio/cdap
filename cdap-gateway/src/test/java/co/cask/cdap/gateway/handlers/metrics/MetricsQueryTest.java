@@ -154,6 +154,28 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
 
 
   @Test
+  public void testingUserServiceGaugeMetrics() throws Exception {
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.s.CounterService.CountRunnable", "0");
+    collector.increment("gmetric", 1);
+    collector.gauge("gmetric", 10);
+    collector.increment("gmetric", 1);
+    collector.gauge("gmetric", 10);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String runnableRequest =
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/gmetric?aggregate=true";
+
+    String serviceRequest =
+      "/user/apps/WordCount/services/CounterService/gmetric?aggregate=true";
+    testSingleMetric(runnableRequest, 10);
+    testSingleMetric(serviceRequest, 10);
+  }
+
+
+  @Test
   public void testingInvalidUserServiceMetrics() throws Exception {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
                                                                 "WordCount.s.InvalidService.CountRunnable", "0");
