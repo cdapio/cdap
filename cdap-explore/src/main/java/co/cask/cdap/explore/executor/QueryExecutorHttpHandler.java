@@ -389,14 +389,14 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   private String appendCSVRow(StringBuffer sb, QueryResult result)
     throws HandleNotFoundException, SQLException, ExploreException {
     boolean first = true;
-    for (Object o : result.getColumns()) {
+    for (QueryResult.ResultObject o : result.getColumns()) {
       if (first) {
         first = false;
       } else {
         sb.append(',');
       }
       // Using GSON toJson will serialize objects - in particular, strings will be quoted
-      sb.append(GSON.toJson(o));
+      sb.append(GSON.toJson(o.getObject()));
     }
     return sb.toString();
   }

@@ -656,7 +656,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
         ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
         for (TRow tRow : tRowSet.getRows()) {
-          List<Object> cols = Lists.newArrayList();
+          List<QueryResult.ResultObject> cols = Lists.newArrayList();
           for (TColumnValue tColumnValue : tRow.getColVals()) {
             cols.add(tColumnToObject(tColumnValue));
           }
@@ -996,21 +996,21 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throw new ExploreException(e);
   }
 
-  protected Object tColumnToObject(TColumnValue tColumnValue) throws ExploreException {
+  protected QueryResult.ResultObject tColumnToObject(TColumnValue tColumnValue) throws ExploreException {
     if (tColumnValue.isSetBoolVal()) {
-      return tColumnValue.getBoolVal().isValue();
+      return new QueryResult.ResultObject(tColumnValue.getBoolVal().isValue(), QueryResult.ResultType.BOOLEAN);
     } else if (tColumnValue.isSetByteVal()) {
-      return tColumnValue.getByteVal().getValue();
+      return new QueryResult.ResultObject(tColumnValue.getByteVal().getValue(), QueryResult.ResultType.BYTE);
     } else if (tColumnValue.isSetDoubleVal()) {
-      return tColumnValue.getDoubleVal().getValue();
+      return new QueryResult.ResultObject(tColumnValue.getDoubleVal().getValue(), QueryResult.ResultType.DOUBLE);
     } else if (tColumnValue.isSetI16Val()) {
-      return tColumnValue.getI16Val().getValue();
+      return new QueryResult.ResultObject(tColumnValue.getI16Val().getValue(), QueryResult.ResultType.SHORT);
     } else if (tColumnValue.isSetI32Val()) {
-      return tColumnValue.getI32Val().getValue();
+      return new QueryResult.ResultObject(tColumnValue.getI32Val().getValue(), QueryResult.ResultType.INT);
     } else if (tColumnValue.isSetI64Val()) {
-      return tColumnValue.getI64Val().getValue();
+      return new QueryResult.ResultObject(tColumnValue.getI64Val().getValue(), QueryResult.ResultType.LONG);
     } else if (tColumnValue.isSetStringVal()) {
-      return tColumnValue.getStringVal().getValue();
+      return new QueryResult.ResultObject(tColumnValue.getStringVal().getValue(), QueryResult.ResultType.STRING);
     }
     throw new ExploreException("Unknown column value encountered: " + tColumnValue);
   }

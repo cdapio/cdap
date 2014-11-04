@@ -114,7 +114,7 @@ public class ExploreResultSet extends BaseExploreResultSet {
     if (currentRow == null) {
       throw new SQLException("No row found.");
     }
-    List<Object> columns = currentRow.getColumns();
+    List<QueryResult.ResultObject> columns = currentRow.getColumns();
     if (columns.isEmpty()) {
       throw new SQLException("RowSet does not contain any columns!");
     }
@@ -124,7 +124,7 @@ public class ExploreResultSet extends BaseExploreResultSet {
 
     int columnType = getMetaData().getColumnType(columnIndex);
     try {
-      Object evaluated = evaluate(columnType, columns.get(columnIndex - 1));
+      Object evaluated = evaluate(columnType, columns.get(columnIndex - 1).getObject());
       setWasNull(evaluated == null);
       return evaluated;
     } catch (Exception e) {

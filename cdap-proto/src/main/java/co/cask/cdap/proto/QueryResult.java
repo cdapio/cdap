@@ -24,13 +24,27 @@ import java.util.List;
  * Represents query result.
  */
 public class QueryResult {
-  private final List<Object> columns;
 
-  public QueryResult(List<Object> columns) {
+  /**
+   * Type of an column in a query result row.
+   */
+  public enum ResultType {
+    BOOLEAN,
+    BYTE,
+    SHORT,
+    INT,
+    LONG,
+    DOUBLE,
+    STRING
+  }
+
+  private final List<ResultObject> columns;
+
+  public QueryResult(List<ResultObject> columns) {
     this.columns = columns;
   }
 
-  public List<Object> getColumns() {
+  public List<ResultObject> getColumns() {
     return columns;
   }
 
@@ -58,5 +72,31 @@ public class QueryResult {
     return Objects.toStringHelper(this)
       .add("columns", columns)
       .toString();
+  }
+
+  /**
+   * Represents one object of a query result.
+   */
+  public static class ResultObject {
+    Object object;
+    ResultType type;
+
+    public ResultObject(Object object, ResultType type) {
+      this.object = object;
+      this.type = type;
+    }
+
+    public Object getObject() {
+      return object;
+    }
+
+    public ResultType getType() {
+      return type;
+    }
+
+    @Override
+    public String toString() {
+      return object.toString();
+    }
   }
 }

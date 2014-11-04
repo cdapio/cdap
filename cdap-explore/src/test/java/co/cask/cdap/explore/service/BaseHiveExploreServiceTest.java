@@ -178,15 +178,22 @@ public class BaseHiveExploreServiceTest {
     while (results.hasNext() && i < 100) {
       i++;
       QueryResult result = results.next();
-      List<Object> newCols = Lists.newArrayList();
-      for (Object obj : result.getColumns()) {
-        if (obj instanceof String) {
-          newCols.add(((String) obj).trim());
-        } else if (obj instanceof Double) {
-          // NOTE: this means only use 4 decimals for double and float values in test cases
-          newCols.add((double) Math.round(((Double) obj).doubleValue() * 10000) / 10000);
-        } else {
-          newCols.add(obj);
+      List<QueryResult.ResultObject> newCols = Lists.newArrayList();
+      for (QueryResult.ResultObject obj : result.getColumns()) {
+        switch (obj.getType()) {
+          case STRING:
+            newCols.add(new QueryResult.ResultObject(((String) obj.getObject()).trim(),
+                                                     QueryResult.ResultType.STRING));
+            break;
+          case DOUBLE:
+            // NOTE: this means only use 4 decimals for double and float values in test cases
+            newCols.add(new QueryResult.ResultObject(
+              (double) Math.round(((Double) obj.getObject()).doubleValue() * 10000) / 10000,
+              QueryResult.ResultType.DOUBLE));
+            break;
+          default:
+            newCols.add(obj);
+            break;
         }
       }
       newResults.add(new QueryResult(newCols));

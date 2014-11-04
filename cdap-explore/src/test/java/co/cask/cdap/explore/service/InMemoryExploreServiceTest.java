@@ -126,7 +126,8 @@ public class InMemoryExploreServiceTest {
     runCommand("show tables",
         true,
         Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-        Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("test"))));
+        Lists.newArrayList(new QueryResult(Lists.newArrayList(
+          new QueryResult.ResultObject("test", QueryResult.ResultType.STRING)))));
 
     runCommand("describe test",
         true,
@@ -136,8 +137,16 @@ public class InMemoryExploreServiceTest {
             new ColumnDesc("comment", "STRING", 3, "from deserializer")
         ),
         Lists.newArrayList(
-            new QueryResult(Lists.<Object>newArrayList("first", "int", "")),
-            new QueryResult(Lists.<Object>newArrayList("second", "string", ""))
+            new QueryResult(Lists.newArrayList(
+              new QueryResult.ResultObject("first", QueryResult.ResultType.STRING),
+              new QueryResult.ResultObject("int", QueryResult.ResultType.STRING),
+              new QueryResult.ResultObject("", QueryResult.ResultType.STRING))
+            ),
+            new QueryResult(Lists.newArrayList(
+              new QueryResult.ResultObject("second", QueryResult.ResultType.STRING),
+              new QueryResult.ResultObject("int", QueryResult.ResultType.STRING),
+              new QueryResult.ResultObject("", QueryResult.ResultType.STRING))
+            )
         )
     );
 
@@ -196,12 +205,15 @@ public class InMemoryExploreServiceTest {
   private static List<QueryResult> trimColumnValues(List<QueryResult> results) {
     List<QueryResult> newResults = Lists.newArrayList();
     for (QueryResult result : results) {
-      List<Object> newCols = Lists.newArrayList();
-      for (Object obj : result.getColumns()) {
-        if (obj instanceof String) {
-          newCols.add(((String) obj).trim());
-        } else {
-          newCols.add(obj);
+      List<QueryResult.ResultObject> newCols = Lists.newArrayList();
+      for (QueryResult.ResultObject obj : result.getColumns()) {
+        switch (obj.getType()) {
+          case STRING:
+            newCols.add(new QueryResult.ResultObject(((String) obj.getObject()).trim(),
+                                                     QueryResult.ResultType.STRING));
+            break;
+          default:
+            newCols.add(obj);
         }
       }
       newResults.add(new QueryResult(newCols));
