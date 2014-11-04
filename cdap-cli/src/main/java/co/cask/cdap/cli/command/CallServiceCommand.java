@@ -118,16 +118,14 @@ public class CallServiceCommand implements Command {
 
   /**
    * Format multiple header values as a comma separated list of the values.
-   * This is valid, as per: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html
+   * This is a valid formatting: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html
    */
   private String formatHeaders(HttpResponse response) {
     Map<String, List<String>> headers = response.getHeaders();
-    ImmutableMap.Builder builder = new ImmutableMap.Builder();
+    ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<String, String>();
     for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-      if (entry.getKey() != null) {
-        List<String> value = entry.getValue();
-        builder.put(entry.getKey(), StringUtils.arrayToString(value.toArray(new String[value.size()])));
-      }
+      List<String> value = entry.getValue();
+      builder.put(entry.getKey(), StringUtils.arrayToString(value.toArray(new String[value.size()])));
     }
     return ResponseUtil.formatHeader(builder.build());
   }

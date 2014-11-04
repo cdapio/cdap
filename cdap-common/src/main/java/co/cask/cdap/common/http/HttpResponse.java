@@ -35,7 +35,7 @@ public class HttpResponse {
     this.responseCode = responseCode;
     this.responseMessage = responseMessage;
     this.responseBody = responseBody;
-    this.headers = ImmutableMap.copyOf(headers);
+    this.headers = cleanHeaders(headers);
   }
 
   public int getResponseCode() {
@@ -60,5 +60,18 @@ public class HttpResponse {
 
   public Map<String, List<String>> getHeaders() {
     return headers;
+  }
+
+  /**
+   * Create an immutable copy of the headers without any null keys.
+   */
+  private Map<String, List<String>> cleanHeaders(Map<String, List<String>> headers) {
+    ImmutableMap.Builder<String, List<String>> builder = new ImmutableMap.Builder<String, List<String>>();
+    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+      if (entry.getKey() != null) {
+        builder.put(entry.getKey(), entry.getValue());
+      }
+    }
+    return builder.build();
   }
 }
