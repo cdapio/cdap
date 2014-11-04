@@ -35,7 +35,7 @@ If you can reach the CDAP Console through a browser at `http://localhost:9999/ <
 Deploying an Application
 +++++++++++++++++++++++++++++++
 
-Once CDAP is started, you can deploy the example JAR by any of these methds:
+Once CDAP is started, you can deploy the example JAR by any of these methods:
 
 - Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console
   running at `http://localhost:9999/ <http://localhost:9999/>`__; or
@@ -52,7 +52,7 @@ Starting an Application
 Once the application is deployed:
 
 - You can go to the Application view by clicking on the Application's name. Now you can *Start* or *Stop* any of the Processes
-  or Queries of the application; or
+  or Queries associated with the application; or
 - From the example's project root run the App Manager script:
 
   - Linux: ``$./bin/app-manager.sh --action start``

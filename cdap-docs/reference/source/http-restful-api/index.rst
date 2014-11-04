@@ -14,11 +14,11 @@ CDAP HTTP RESTful API
 .. toctree::
    
     Introduction <introduction>
+    Lifecycle <lifecycle>
     Stream <stream>
     Dataset <dataset>
     Query <query>
     Procedure <procedure>
-    Lifecycle <lifecycle>
     Service <service>
     Logging <logging>
     Metrics <metrics>
@@ -30,12 +30,12 @@ CDAP HTTP RESTful API
 The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of purposes:
 
 - :doc:`Introduction: <introduction>` conventions, status codes, and working with CDAP Security
+- :doc:`Lifecycle: <lifecycle>` deploying and managing Applications and managing the life cycle of Flows,
+  Procedures, MapReduce Jobs, Workflows, and Custom Services
 - :doc:`Stream: <stream>` sending data events to a Stream or to inspect the contents of a Stream
 - :doc:`Dataset: <dataset>` interacting with Datasets, Dataset Modules, and Dataset Types
 - :doc:`Query: <query>` sending ad-hoc queries to CDAP Datasets
 - :doc:`Procedure: <procedure>` sending calls to a stored Procedure
-- :doc:`Lifecycle: <lifecycle>` deploying and managing Applications and managing the life cycle of Flows,
-  Procedures, MapReduce Jobs, Workflows, and Custom Services
 - :doc:`Service: <service>` supports making requests to the methods of an Application’s Services
 - :doc:`Logging: <logging>` retrieving Application logs
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user Applications (user-defined metrics)

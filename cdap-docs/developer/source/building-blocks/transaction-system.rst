@@ -34,13 +34,13 @@ object can be reattempted. This ensures "exactly-once" processing of each object
 OCC: Optimistic Concurrency Control
 -----------------------------------
 
-The Cask Data Application Platform uses *Optimistic Concurrency Control* (OCC) to implement
-transactions. Unlike most relational databases that use locks to prevent conflicting
-operations between transactions, under OCC we allow these conflicting writes to happen.
-When the transaction is committed, we can detect whether it has any conflicts: namely, if
-during the lifetime of the transaction, another transaction committed a write for one of
-the same keys that the transaction has written. In that case, the transaction is aborted
-and all of its writes are rolled back.
+The Cask Data Application Platform uses `Cask's Tephra, <http://tephra.io>`__ which uses
+*Optimistic Concurrency Control* (OCC) to implement transactions. Unlike most relational
+databases that use locks to prevent conflicting operations between transactions, under OCC
+we allow these conflicting writes to happen. When the transaction is committed, we can
+detect whether it has any conflicts: namely, if during the lifetime of the transaction,
+another transaction committed a write for one of the same keys that the transaction has
+written. In that case, the transaction is aborted and all of its writes are rolled back.
 
 In other words: If two overlapping transactions modify the same row, then the transaction
 that commits first will succeed, but the transaction that commits last is rolled back due

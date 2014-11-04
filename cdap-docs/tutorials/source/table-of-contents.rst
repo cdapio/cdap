@@ -10,6 +10,7 @@ CDAP How-To Guides and Tutorials
    :maxdepth: 3
 
    Introduction </index>
+   Examples </examples/index>
    How-To Guides </how-to-guides/index>
    Tutorials </tutorials>
    Apps and Packs </apps-packs>

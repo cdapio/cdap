@@ -3,6 +3,9 @@
     :description: Cask Data Application Platform Hello World Application
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+
+.. _examples-hello-world:
+
 Hello World
 -----------
 

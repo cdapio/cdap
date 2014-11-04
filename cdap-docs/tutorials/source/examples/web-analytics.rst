@@ -181,7 +181,7 @@ with a SQL query. You can easily execute SQL queries against Datasets using the 
 simply selecting **Store** on the left sidebar, clicking the **Explore** button on the right, and then selecting
 the **UniqueVisitCount** Dataset:
 
-.. image:: ../_images/quickstart/wa_explore_store.png
+.. image:: ../_images/wa_explore_store.png
    :width: 10in
 
 You can then run SQL queries against the Dataset. Let's try to find the top five IP
@@ -189,12 +189,12 @@ addresses that visited the site by running a SQL query::
 
   SELECT * FROM cdap_user_uniquevisitcount ORDER BY value DESC LIMIT 5
 
-.. image:: ../_images/quickstart/wa_explore_query.png
+.. image:: ../_images/wa_explore_query.png
    :width: 10in
 
 You can copy and paste the above SQL into the **Query** box and click **Execute** to run it. It may take a while for
 the query to finish. Once it's finished, you can click on the result button at the bottom to show the query results:
 
-.. image:: ../_images/quickstart/wa_explore_result.png
+.. image:: ../_images/wa_explore_result.png
    :width: 10in
 

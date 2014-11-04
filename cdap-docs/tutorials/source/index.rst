@@ -3,10 +3,20 @@
     :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _tutorials-index:
+.. _introduction:
 
 ============================================
-CDAP How-To Guides and Tutorials
+CDAP Examples, How-To Guides, and Tutorials
 ============================================
+
+
+.. |examples| replace:: **Examples:**
+.. _examples: examples/index.html
+
+- |examples|_ Included with the :ref:`CDAP SDK, <getting-started-index>` they range from a
+  simple introductory :ref:`Hello World <examples-hello-world>` to more elaborate examples
+  such as the :ref:`Purchase Application <examples-purchase>` that uses many of the CDAP
+  components.
 
 
 .. |guides| replace:: **How-To Guides:**
@@ -29,9 +39,7 @@ CDAP How-To Guides and Tutorials
 - |apps|_ contains data applications built using CDAP.
 
 
-
 .. |packs| replace:: **CDAP Packs repository:**
 .. _packs: apps-packs.html
 
 - |packs|_ a collection of useful and reusable building blocks for your data applications.
-

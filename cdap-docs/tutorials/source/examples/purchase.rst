@@ -171,9 +171,12 @@ There are two ways to query the *history* ObjectStore through the ``PurchaseProc
    Then click the *Execute* button. The purchase history for that customer will be displayed in the
    Console in JSON format, for example [reformatted to fit]::
 
-    {"customer":"Alice","purchases"
+    {"customer":"Alice","purchases":
       [{"customer":"Alice",
-        "product":"coconut","quantity":2,"price":5,"purchaseTime":1404268588338,"catalogId":""}]}
+        "product":"coconut","quantity":2,"price":5,"purchaseTime":1414993175135,"catalogId":""},
+       {"customer":"Alice",
+        "product":"grapefruit","quantity":12,"price":10,"purchaseTime":1414993175134,"catalogId":""}]}
+
 
 Exploring the Results Using SQL
 ###############################

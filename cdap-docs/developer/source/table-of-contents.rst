@@ -13,7 +13,6 @@ CDAP Developers’ Guide
     Getting Started </getting-started/index>
     Overview </overview/index>
     Building Blocks </building-blocks/index>
-    Examples <examples/index>
     Testing and Debugging </testing/index>
     Ingesting Data </ingesting-tools/index>
     Authentication Clients </authentication-clients/index>

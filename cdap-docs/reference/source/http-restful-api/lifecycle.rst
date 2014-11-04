@@ -31,11 +31,16 @@ and its content as the body of the request::
 Invoke the same command to update an Application to a newer version.
 However, be sure to stop all of its Flows, Procedures and MapReduce jobs before updating the Application.
 
+
+Deployed Applications
+---------------------
+
 To list all of the deployed applications, issue an HTTP GET request::
 
   GET <base-url>/apps
 
 This will return a JSON String map that lists each Application with its name and description.
+
 
 Details of a Deployed Application
 ---------------------------------
@@ -66,6 +71,7 @@ HTTP Responses
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
+
 Delete an Application
 ---------------------
 To delete an Application together with all of its Flows, Procedures and MapReduce jobs, submit an HTTP DELETE::
@@ -87,7 +93,6 @@ and not necessarily the same as the name of the JAR file that was used to deploy
 Also, this does not delete the Streams and Datasets associated with the Application
 because they belong to your account, not the Application.
 
-.. rst2pdf: PageBreak
 
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
@@ -204,8 +209,6 @@ issue an HTTP PUT with the parameter ``runtimeargs``::
 with the arguments as a JSON string in the body::
 
   {"foo":"bar","this":"that"}
-
-.. rst2pdf: PageBreak
 
 To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET 
 request to the element's URL using the same parameter ``runtimeargs``::
@@ -372,8 +375,6 @@ Examples
      - Change the number of instances of the Flowlet *saver*
        in the Flow *WhoFlow* of the Application *HelloWorld*
 
-.. rst2pdf: PageBreak
-
 Scaling Procedures
 ..................
 In a similar way to `Scaling Flowlets`_, you can query or change the number of instances 
@@ -411,8 +412,6 @@ Example
    * - Description
      - Find out the number of instances of the Procedure *Greeting*
        in the Application *HelloWorld*
-
-.. rst2pdf: PageBreak
 
 Scaling Services
 ................
@@ -454,7 +453,6 @@ Example
    * - Description
      - Retrieve the number of instances of the Service *CatalogLookup* in the application *PurchaseHistory*.
 
-.. rst2pdf: PageBreak
 
 Run History and Schedule
 ------------------------
@@ -500,20 +498,6 @@ For Services, you can retrieve the history of a Twill Service using::
 
   GET <base-url>/apps/<app-id>/services/<service-id>/history
 
-Example
-.......
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
-   * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/services/WhoService/history``
-   * - Description
-     - Retrieve the history of the Service *WhoService* of the Application *HelloWorld*
-   * - Returns
-     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
-       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
-
 For Workflows, you can also retrieve:
 
 - the schedules defined for a workflow (using the parameter ``schedules``)::
@@ -531,17 +515,25 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/workflows/WhoWorkflow/schedules``
+     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookup/history``
    * - Description
-     - Retrieves the schedules of the Workflow *WhoWorkflow* of the Application *HelloWorld*
+     - Retrieve the history of the Service *CatalogLookup* of the Application *PurchaseHistory*
    * - Returns
-     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
-       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+     - ``[{"runid":"cad83d45-ecfb-4bf8-8cdb-4928a5601b0e","start":1415051892,"end":1415057103,"status":"STOPPED"}]``
+   * - 
+     - 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/workflows/WhoWorkflow/nextruntime``
+     - ``GET <base-url>/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
    * - Description
-     - Retrieves the next runtime of the Workflow *WhoWorkflow* of the Application *HelloWorld*
+     - Retrieves the schedules of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
    * - Returns
-     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
-       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+     - ``["WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule"]``
+   * - 
+     - 
+   * - HTTP Method
+     - ``GET <base-url>/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/nextruntime``
+   * - Description
+     - Retrieves the next runtime of the Workflow *PurchaseHistoryWorkflow* of the Application *PurchaseHistory*
+   * - Returns
+     - ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
 

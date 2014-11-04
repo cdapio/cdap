@@ -3,11 +3,13 @@
     :description: Introduction to the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _introduction:
+.. _developer-index:
 
 ==================================================
-Introduction to the Cask Data Application Platform
+CDAP Developers’ Guide
 ==================================================
+
+.. rubric:: Introduction to the Cask Data Application Platform
 
 The Cask |(TM)| Data Application Platform (CDAP) is an open source application development
 platform for the Hadoop ecosystem that provides developers with data and application
@@ -61,14 +63,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   Streams and Datasets. Application virtualizations are grouped into Flows, MapReduce,
   Spark, Workflows, and Services. Details are provided on working with these abstractions
   to build Big Data applications.
-
-
-.. |examples| replace:: **Examples:**
-.. _examples: examples/index.html
-
-- |examples|_ **Examples included with the SDK** range from a simple introductory *Hello
-  World* to more elaborate examples such as the *Purchase Application* that use many of the
-  CDAP components.
 
 
 .. |testing| replace:: **Testing and Debugging:**

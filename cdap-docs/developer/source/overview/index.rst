@@ -3,6 +3,10 @@
     :description: Architecture of the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+:hide-toc: true
+
+.. _cdap-overview:
+
 ========================================================
 Cask Data Application Platform Overview
 ========================================================
@@ -20,12 +24,32 @@ Big Data applications. Before you learn how to develop and operate applications,
 explain the concepts and architecture of CDAP.
 
 
+.. |virtualization| replace:: **Virtualization:**
+.. _virtualization: virtualization.html
+
+.. |concepts| replace:: **Concepts and Components:**
+.. _concepts: concepts.html
+
+.. |anatomy| replace:: **Anatomy of a Big Data Application:**
+.. _anatomy: anatomy.html
+
+- |virtualization|_ Describes how CDAP lets you **virtualize your data and applications.**
+
+- |concepts|_ Covers the **components of CDAP and their interactions.**
+
+- |anatomy|_ Explains the **areas of concern in developing a Big Data application,** and how you use CDAP to address these.
+
+
 .. rubric:: Where to Go Next
 
-Now that you've seen the concepts and the architecture of CDAP, you are ready to write an application:
+Now that you've seen the concepts and the architecture of CDAP, you are ready to start writing an application.
 
-- :ref:`Quick Start <quick-start>`, which guides you through the development and the components
-  of a complete web log analytics application; and
+Here are some places to start:
 
-- Additional :ref:`examples, <examples-index>` :ref:`guides, <guides-index>` and
-  :ref:`tutorials <tutorials>` on building CDAP applications. 
+- If you haven't already, go through our :ref:`Quick Start example <quick-start>`, which guides you
+  through the development and the components of a complete web log analytics application; 
+
+- There are additional :ref:`examples, <examples-index>` :ref:`how-to guides, <guides-index>` and
+  :ref:`tutorials <tutorials>` on building CDAP applications; and
+  
+- :ref:`building-blocks` describes in detail the components of CDAP, and how they interact.

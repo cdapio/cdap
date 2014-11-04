@@ -23,12 +23,11 @@ As an application developer building a Big Data application, you are primarily c
   ingesting events in realtime at massive scale. Events in the stream can then be consumed by applications in
   real-time or batch.
 
-- **Data Exploration:** One of the most powerful paradigms of Big Data is "schema-on-write". This means the ability
-  to collect and store data without knowing details about its schema or structure. These details are only needed
-  at processing time. An important step—between collecting the data and processing it—is exploration; that is,
-  examining data with ad-hoc queries to learn about its structure and nature.
-
-.. FIXME! This is not exactly what CDAP allows!
+- **Data Exploration:** One of the most powerful paradigms of Big Data is the ability to
+  collect and store data without knowing details about its structure. These details are only
+  needed at processing time. An important step—between collecting the data and processing
+  it—is exploration; that is, examining data with ad-hoc queries to learn about its
+  structure and nature.
 
 - **Data Processing:** After data is collected, we need to process it in various ways. For example:
 

@@ -59,7 +59,7 @@ available in the* :ref:`Web Analytics Application documentation. <web-analytics>
 
 Deploying the Application
 =========================
-You can deploy the application into your running instance of CDAP either using the 
+You can deploy the application into your running instance of CDAP either by using the 
 :ref:`CDAP command-line tool <reference:cli>`::
 
   $ cdap-cli.sh deploy app target/Wise-0.2.0.jar
@@ -170,7 +170,7 @@ command-line.
 
 Monitoring with the CDAP Console
 ================================
-You may recall that before we started injected data into the Stream, we started the
+You may recall that before we started injecting data into the Stream, we started the
 *WiseFlow* to process these events in real-time. You can observe the Flow while it is
 processing events by retrieving metrics about how many events it has processed. For that, we
 need to know the name of the Flowlet inside the *WiseFlow* that performs the actual

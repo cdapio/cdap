@@ -19,9 +19,18 @@ Advanced Topics
 This section of the documentation includes articles that cover advanced topics on CDAP that 
 will be of interest to developers who want a deeper dive into CDAP:
 
-- `Data Exploration: <data-exploration>`__ Exploration of CDAP Datasets using SQL.
+.. |data-exploration| replace:: **Data Exploration:**
+.. _data-exploration: data-exploration.html
 
-- `Client Authentication: <client-authentication>`__ Covers authenticating clients for secure CDAP installations.
+.. |client-authentication| replace:: **Client Authentication:**
+.. _client-authentication: client-authentication.html
 
-- `Best Practices: <best-practices>`__ Suggestions when developing a CDAP application.
+.. |best-practices| replace:: **Best Practices:**
+.. _best-practices: best-practices.html
+
+- |data-exploration|_ Exploration of CDAP Datasets using SQL.
+
+- |client-authentication|_ Covers authenticating clients for secure CDAP installations.
+
+- |best-practices|_ Suggestions when developing a CDAP application.
 

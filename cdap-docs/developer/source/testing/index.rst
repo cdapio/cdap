@@ -21,7 +21,7 @@ CDAP comes with a number of tools to make a developer's life easier. These tools
 help with testing, debugging and packaging CDAP applications:
 
 .. list-table::
-    :widths: 15 60
+    :widths: 25 75
     :header-rows: 1
 
     * - Tool Name

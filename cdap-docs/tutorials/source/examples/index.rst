@@ -24,7 +24,8 @@ Examples
    Web Analytics <web-analytics>
 
 
-In addition to the :ref:`Getting Started <getting-started-index>` example, the SDK includes these examples:
+In addition to the :ref:`Getting Started's <getting-started-index>` 
+:ref:`Quick Start/Web Log Analytics example, <quick-start>` the SDK includes these examples:
 
 .. list-table::
   :widths: 15 60
@@ -63,10 +64,10 @@ In addition to the :ref:`Getting Started <getting-started-index>` example, the S
 
 You can learn more about developing data application using CDAP by:
 
-- Look at our :ref:`How-To Guides<tutorials:guides-index>` and
-  :ref:`Tutorials<tutorials:tutorials>`, with a collection of quick how-to-guides and
+- Look at our :ref:`How-To Guides<guides-index>` and
+  :ref:`Tutorials<tutorials>`, with a collection of quick how-to-guides and
   longer tutorials covering a complete range of Big Data application topics.
 - Exploring the Web Analytics Application :doc:`source code.<web-analytics>` It includes 
   test cases that show unit-testing an application.
-- For a detailed understanding of what CDAP is capable of, read our :doc:`Overview </overview/index>` and 
-  :doc:`Building Blocks </building-blocks/index>` sections.
+- For a detailed understanding of what CDAP is capable of, read our :ref:`Overview <cdap-overview>` and 
+  :ref:`Building Blocks <building-blocks>` sections.
