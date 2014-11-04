@@ -2,8 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _tutorials-index:
-.. _introduction:
+.. _examples-introduction-index:
 
 ============================================
 CDAP Examples, How-To Guides, and Tutorials

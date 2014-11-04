@@ -384,5 +384,5 @@ You can deploy the same application on a real cluster and experience the power o
 Additional :ref:`examples, <examples-index>` :ref:`guides, <guides-index>` and
 :ref:`tutorials <tutorials>` on building CDAP applications are available. 
 
-As  a next step, we recommend reviewing the :ref:`summary of the documentation resources <introduction>`
+As  a next step, we recommend reviewing the :ref:`summary of the documentation resources <developer-index>`
 and then continue with the remainder of the :ref:`Getting Started <getting-started-index>` section.

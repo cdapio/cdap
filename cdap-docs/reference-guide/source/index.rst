@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _introduction:
+.. _reference-index:
 
 =================================================
 CDAP Reference: APIs, Licenses, and Dependencies

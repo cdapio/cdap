@@ -38,8 +38,8 @@ or a workstation. It includes:
   tasks, and serve as templates for developing your own applications.
   
 Online, we have many additional resources, ranging from an extensive set of guides
-(:ref:`Developers’ Guide <introduction>`, 
-:ref:`Reference <reference:introduction>`, 
-:ref:`Administration <admin:introduction>`,
-:ref:`Examples, How-To Guides, and Tutorials <tutorials:introduction>`)
+(:ref:`Developers’ Guide <developer-index>`, 
+:ref:`Reference <reference:reference-index>`, 
+:ref:`Administration <admin:admin-index>`,
+:ref:`Examples, How-To Guides, and Tutorials <examples:examples-introduction-index>`)
 to :ref:`user groups. <faq-cdap-user-groups>`

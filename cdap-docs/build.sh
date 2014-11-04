@@ -18,11 +18,10 @@
 
 # Builds:
 #
-# admin
-# developer
-# guides
-# reference
-# tutorials
+# admin-guide
+# developer-guide
+# reference-guide
+# examples-guide
 
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
@@ -43,9 +42,9 @@ REDIRECT_DEVELOPER_HTML=`cat <<EOF
 <html lang="en-US">
     <head>
         <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="0;url=developer/index.html">
+        <meta http-equiv="refresh" content="0;url=developer-guide/index.html">
         <script type="text/javascript">
-            window.location.href = "developer/index.html"
+            window.location.href = "developer-guide/index.html"
         </script>
         <title></title>
     </head>
@@ -148,10 +147,10 @@ function build_docs_web() {
 
 function build() {
   clean
-  build_specific_doc admin $1
-  build_specific_doc developer $1
-  build_specific_doc reference $1
-  build_specific_doc tutorials $1
+  build_specific_doc admin-guide $1
+  build_specific_doc developer-guide $1
+  build_specific_doc reference-guide $1
+  build_specific_doc examples-guide $1
   add_redirect
 }
 
@@ -161,11 +160,11 @@ function add_redirect() {
 }
 
 function build_specific_doc() {
-  echo "Building $1 guide, target $2..."
+  echo "Building $1, target $2..."
   cd $1
   ./build.sh $2 $ARG_2 $ARG_3
   cd $SCRIPT_PATH
-  echo "Copying $1 guide results..."
+  echo "Copying $1 results..."
   cp -r $1/$BUILD/$HTML $BUILD/$HTML/$1
   echo ""
 }

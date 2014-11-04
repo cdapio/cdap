@@ -65,10 +65,10 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-  'admin': ('../../admin/', os.path.abspath('../../admin/build/html/objects.inv')),
-  'developer': ('../../developer/', os.path.abspath('../../developer/build/html/objects.inv')),
-  'reference': ('../../reference', os.path.abspath('../../reference/build/html/objects.inv')),
-  'tutorials': ('../../tutorials', os.path.abspath('../../tutorials/build/html/objects.inv')),
+  'admin':     ('../../admin-guide/',     os.path.abspath('../../admin-guide/build/html/objects.inv')),
+  'developer': ('../../developer-guide/', os.path.abspath('../../developer-guide/build/html/objects.inv')),
+  'reference': ('../../reference-guide',  os.path.abspath('../../reference-guide/build/html/objects.inv')),
+  'examples':  ('../../examples-guide',   os.path.abspath('../../examples-guide/build/html/objects.inv')),
 }
 
 # Add any paths that contain templates here, relative to this directory.

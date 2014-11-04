@@ -38,7 +38,7 @@ ENTERPRISE = "cdap-enterprise-dependencies"
 LEVEL_1    = "cdap-level-1-dependencies"
 STANDALONE = "cdap-standalone-dependencies"
 
-LICENSES_SOURCE = "../../developer/source/licenses"
+LICENSES_SOURCE = "../../developer-guide/source/licenses"
 
 SPACE = " "*3
 BACK_DASH = "\-"

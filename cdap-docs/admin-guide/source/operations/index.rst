@@ -54,4 +54,4 @@ Operations
 
 Most of the administrative operations are also available more conveniently through the
 Command-Line Interface. See :ref:`reference:cli` in the 
-:ref:`CDAP Reference Guide<reference:introduction>` for details.
+:ref:`CDAP Reference Guide<reference:reference-index>` for details.
