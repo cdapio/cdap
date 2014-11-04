@@ -63,8 +63,7 @@ public class ApplicationClient {
    */
   public List<ApplicationRecord> list() throws IOException, UnAuthorizedAccessTokenException {
     HttpResponse response = restClient.execute(HttpMethod.GET, config.resolveURL("apps"), config.getAccessToken());
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() {
-    }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
   }
 
   /**
