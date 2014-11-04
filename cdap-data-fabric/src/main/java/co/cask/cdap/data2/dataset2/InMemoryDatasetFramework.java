@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import com.google.common.base.Preconditions;
@@ -76,13 +77,28 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public synchronized void addModule(String moduleName, DatasetModule module)
+  public synchronized void addModule(String moduleName, int version, DatasetModule module)
     throws ModuleConflictException {
-
     if (moduleClasses.containsKey(moduleName)) {
       throw new ModuleConflictException("Cannot add module " + moduleName + ": it already exists.");
     }
     add(moduleName, module, false);
+  }
+
+  @Override
+  public int getLatestModuleVersion(String moduleName) throws DatasetManagementException {
+    return Constants.DEFAULT_DATASET_TYPE_VERSION;
+  }
+
+  @Override
+  public boolean isDefaultType(String typeName) throws DatasetManagementException {
+    //since InMemoryDatasetFramework is used only internally this will always be true.
+    return true;
+  }
+
+  @Override
+  public void addModule(String moduleName, DatasetModule module) throws DatasetManagementException {
+    addModule(moduleName, 0, module);
   }
 
   @Override

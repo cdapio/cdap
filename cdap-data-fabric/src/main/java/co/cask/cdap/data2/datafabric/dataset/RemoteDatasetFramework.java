@@ -27,6 +27,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetMeta;
@@ -61,6 +62,7 @@ import javax.annotation.Nullable;
  */
 public class RemoteDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
+  private static final int DEFAULT_MODULE_VERSION = 1;
 
   private final DatasetServiceClient client;
   private final DatasetDefinitionRegistryFactory registryFactory;
@@ -77,7 +79,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
-  public void addModule(String moduleName, DatasetModule module)
+  public void addModule(String moduleName, int version, DatasetModule module)
     throws DatasetManagementException {
 
     // We support easier APIs for custom datasets: user can implement dataset and make it available for others to use
@@ -94,8 +96,17 @@ public class RemoteDatasetFramework implements DatasetFramework {
     } else {
       typeClass = module.getClass();
     }
+    addModule(moduleName, version, typeClass);
+  }
 
-    addModule(moduleName, typeClass);
+  @Override
+  public int getLatestModuleVersion(String moduleName) throws DatasetManagementException {
+    return client.getLatestVersion(moduleName);
+  }
+
+  @Override
+  public void addModule(String moduleName, DatasetModule module) throws DatasetManagementException {
+    addModule(moduleName, DEFAULT_MODULE_VERSION, module);
   }
 
   @Override
@@ -179,12 +190,12 @@ public class RemoteDatasetFramework implements DatasetFramework {
     return (T) type.getDataset(instanceInfo.getSpec(), arguments);
   }
 
-  private void addModule(String moduleName, Class<?> typeClass) throws DatasetManagementException {
+  private void addModule(String moduleName, int version, Class<?> typeClass) throws DatasetManagementException {
     try {
       File tempFile = File.createTempFile(typeClass.getName(), ".jar");
       try {
         Location tempJarPath = createDeploymentJar(typeClass, new LocalLocationFactory().create(tempFile.toURI()));
-        client.addModule(moduleName, typeClass.getName(), tempJarPath);
+        client.addModule(moduleName, version, typeClass.getName(), tempJarPath);
       } finally {
         tempFile.delete();
       }
@@ -258,7 +269,6 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                                   ClassLoader classLoader)
     throws DatasetManagementException {
 
-
     if (classLoader == null) {
       classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
     }
@@ -301,5 +311,18 @@ public class RemoteDatasetFramework implements DatasetFramework {
     }
 
     return (T) new DatasetType(registry.get(implementationInfo.getName()), classLoader);
+  }
+
+  @Override
+  public boolean isDefaultType(String typeName) throws DatasetManagementException {
+    // default system modules have jarLocation as null, and the module that announces this type is the last module
+    // in the list, we are using this information to determine if the type belongs to default module
+    if (client.getType(typeName) != null) {
+      DatasetTypeMeta meta = client.getType(typeName);
+      List<DatasetModuleMeta> metaList = meta.getModules();
+      DatasetModuleMeta moduleMeta = metaList.get(metaList.size() - 1);
+      return (moduleMeta.getJarLocation() == null);
+    }
+    return false;
   }
 }

@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
+import co.cask.cdap.common.conf.Constants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -126,6 +127,11 @@ public class SingleTypeModuleTest {
   public abstract static class AbstractDataset implements Dataset {
     @Override
     public void close() throws IOException {
+    }
+
+    @Override
+    public int getVersion() {
+      return Constants.DEFAULT_DATASET_TYPE_VERSION;
     }
   }
 }

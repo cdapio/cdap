@@ -134,11 +134,11 @@ class DatasetServiceClient {
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
-                                                         datasetInstanceName, getDetails(response)));
+                                                        datasetInstanceName, getDetails(response)));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
-                                                          datasetInstanceName, getDetails(response)));
+                                                         datasetInstanceName, getDetails(response)));
     }
   }
 
@@ -172,12 +172,12 @@ class DatasetServiceClient {
     }
   }
 
-  public void addModule(String moduleName, String className, Location jarLocation)
+  public void addModule(String moduleName, int version, String className, Location jarLocation)
     throws DatasetManagementException {
 
     HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
-                           ImmutableMap.of("X-Class-Name", className),
-                           Locations.newInputSupplier(jarLocation));
+                                      ImmutableMap.of("X-Class-Name", className, "Version", String.valueOf(version)),
+                                      Locations.newInputSupplier(jarLocation));
 
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
@@ -291,5 +291,19 @@ class DatasetServiceClient {
     InetSocketAddress addr = discoverable.getSocketAddress();
     return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
                          Constants.Gateway.GATEWAY_VERSION, resource);
+  }
+
+  public int getLatestVersion(String moduleName) throws DatasetManagementException {
+    HttpResponse response = doRequest(HttpMethod.GET, "modules/" + moduleName + "/version");
+
+    if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
+      throw new ModuleConflictException(String.format("Failed to add module %s due to conflict, details: %s",
+                                                      moduleName, getDetails(response)));
+    }
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to add module %s, details: %s",
+                                                         moduleName, getDetails(response)));
+    }
+    return GSON.fromJson(new String(response.getResponseBody(), Charsets.UTF_8), Integer.class);
   }
 }

@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
@@ -166,6 +167,11 @@ public class HBaseKVTableDefinition extends AbstractDatasetDefinition<NoTxKeyVal
     @Override
     public void close() throws IOException {
       table.close();
+    }
+
+    @Override
+    public int getVersion() {
+      return Constants.DEFAULT_DATASET_TYPE_VERSION;
     }
   }
 

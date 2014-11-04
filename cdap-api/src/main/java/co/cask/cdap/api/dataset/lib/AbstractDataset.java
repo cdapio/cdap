@@ -17,6 +17,7 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.Versioned;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -32,7 +33,9 @@ import java.util.Collection;
  * implements {@link TransactionAware} and {@link MeteredDataset} interfaces by propagating corresponded
  * logic to each dataset in a list when possible.
  */
-public abstract class AbstractDataset implements Dataset, MeteredDataset, TransactionAware {
+public abstract class AbstractDataset implements Dataset, MeteredDataset, TransactionAware, Versioned {
+  private static final int DEFAULT_DATASET_VERSION = 1;
+
   private final String instanceName;
   private final Collection<Dataset> underlying;
   private final TransactionAware txAwares;
@@ -54,6 +57,11 @@ public abstract class AbstractDataset implements Dataset, MeteredDataset, Transa
     for (Dataset dataset : underlying) {
       dataset.close();
     }
+  }
+
+  @Override
+  public int getVersion() {
+    return DEFAULT_DATASET_VERSION;
   }
 
   // metering stuff

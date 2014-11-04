@@ -379,6 +379,15 @@ public class TestFrameworkTest extends TestBase {
     LOG.info("DatasetUpdateService Stopped");
   }
 
+  @Category(SlowTests.class)
+  @Test
+  public void testAppWithDatasetVersions() throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithDatasetVersion.class);
+    Assert.assertEquals(1, getDatasetVersion(VersionedDataset.class.getName()));
+
+    applicationManager.stopAll();
+  }
+
   @Test
   public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);

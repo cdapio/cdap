@@ -551,6 +551,7 @@ public final class Constants {
   public static final int DEFAULT_DATA_LEVELDB_BLOCKSIZE = 1024;
   public static final long DEFAULT_DATA_LEVELDB_CACHESIZE = 1024 * 1024 * 100;
   public static final boolean DEFAULT_DATA_LEVELDB_FSYNC = true;
+  public static final int DEFAULT_DATASET_TYPE_VERSION = 1;
 
   /**
    * Configuration for Metadata service.

@@ -16,11 +16,13 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
+import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InstanceConflictException;
 import co.cask.cdap.pipeline.AbstractStage;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,14 +58,20 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
       try {
         if (!datasetFramework.hasInstance(instanceName)) {
           datasetFramework.addInstance(instanceSpec.getTypeName(), instanceName, instanceSpec.getProperties());
+        } else if (!datasetFramework.getDatasetSpec(instanceName).getType().equals(instanceSpec.getTypeName())) {
+          //type mismatch
+          throw new DataSetInstantiationException("Existing Dataset Instance type is " +
+                                                    "different from provided instance type");
         }
+      } catch (DataSetInstantiationException e) {
+        LOG.error("Dataset instantiation Error", e);
+        throw Throwables.propagate(e);
       } catch (InstanceConflictException e) {
         // NO-OP: Instance is simply already created, possibly by an older version of this app OR a different app
         // TODO: verify that the created instance is from this app
         LOG.warn("Couldn't create dataset instance '" + instanceName + "' of type '" + instanceSpec.getTypeName(), e);
       }
     }
-
     // Emit the input to next stage.
     emit(input);
   }

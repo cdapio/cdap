@@ -41,6 +41,21 @@ public class NamespacedDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public void addModule(String moduleName, int version, DatasetModule module) throws DatasetManagementException {
+    delegate.addModule(moduleName, version, module);
+  }
+
+  @Override
+  public int getLatestModuleVersion(String moduleName) throws DatasetManagementException {
+    return delegate.getLatestModuleVersion(moduleName);
+  }
+
+  @Override
+  public boolean isDefaultType(String typeName) throws DatasetManagementException {
+    return delegate.isDefaultType(typeName);
+  }
+
+  @Override
   public void addModule(String moduleName, DatasetModule module)
     throws DatasetManagementException {
 

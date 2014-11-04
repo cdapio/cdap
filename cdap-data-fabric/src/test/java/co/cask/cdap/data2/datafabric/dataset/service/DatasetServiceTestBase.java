@@ -187,6 +187,7 @@ public abstract class DatasetServiceTestBase {
     try {
       HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
         .addHeader("X-Class-Name", moduleClass.getName())
+        .addHeader("Version", String.valueOf(Constants.DEFAULT_DATASET_TYPE_VERSION))
         .withBody(new File(jarPath)).build();
       return HttpRequests.execute(request).getResponseCode();
     } finally {
@@ -213,6 +214,7 @@ public abstract class DatasetServiceTestBase {
     try {
       HttpRequest request = HttpRequest.put(getUrl("/data/modules/" + moduleName))
         .addHeader("X-Class-Name", moduleClassName)
+        .addHeader("Version", "1")
         .withBody(new File(jarPath)).build();
       return HttpRequests.execute(request).getResponseCode();
     } finally {

@@ -19,11 +19,13 @@ package co.cask.cdap.proto;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -37,7 +39,8 @@ public class DatasetModuleMeta {
 
   private final List<String> types;
   private final List<String> usesModules;
-  private final List<String> usedByModules;
+  // using set to avoid adding types from multiple versions
+  private final Set<String> usedByModules;
 
   /**
    * Creates instance of {@link DatasetModuleMeta}
@@ -56,7 +59,7 @@ public class DatasetModuleMeta {
     this.jarLocation = jarLocation;
     this.types = Collections.unmodifiableList(types);
     this.usesModules = Collections.unmodifiableList(usesModules);
-    this.usedByModules = Lists.newArrayList();
+    this.usedByModules = Sets.newLinkedHashSet();
   }
 
   /**

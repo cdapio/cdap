@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeVersion;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
@@ -38,12 +39,17 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.zip.ZipInputStream;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -57,6 +63,7 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class DatasetTypeHandler extends AbstractHttpHandler {
   public static final String HEADER_CLASS_NAME = "X-Class-Name";
+  public static final String HEADER_VERSION_NAME = "Version";
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeHandler.class);
 
@@ -112,20 +119,14 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @PUT
   @Path("/data/modules/{name}")
   public void addModule(HttpRequest request, final HttpResponder responder,
-                       @PathParam("name") String name) throws IOException {
+                       @PathParam("name") String name) throws IOException, NoSuchAlgorithmException {
 
     String className = request.getHeader(HEADER_CLASS_NAME);
+    int version = Integer.parseInt(request.getHeader(HEADER_VERSION_NAME));
     Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
-    LOG.info("Adding module {}, class name: {}", name, className);
+    LOG.info("Adding module {}, class name: {}, version {}", name, className, version);
 
     DatasetModuleMeta existing = manager.getModule(name);
-    if (existing != null) {
-      String message = String.format("Cannot add module %s: module with same name already exists: %s",
-                                     name, existing);
-      LOG.warn(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
-      return;
-    }
 
     ChannelBuffer content = request.getContent();
     if (content == null) {
@@ -155,9 +156,41 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     } finally {
       inputStream.close();
     }
+    byte[] archiveCheckSum = getZipCheckSum(archive.toURI().getPath());
+    if (existing != null) {
+      /**
+       * Get the version object from the MDS, check if (passed) version is greater than current version
+       * then update the module_version value with new {version,checksum} in MDS.
+       */
+      DatasetTypeVersion versionInfo = manager.getVersionInfo(name);
+      String message = null;
+      if (versionInfo.getVersion() > version) {
+        // not the latest version, newer version already exists, fail.
+        message = String.format("Cannot add module %s module, newer version %s already exists",
+                                name, versionInfo.getVersion());
+      }
+      if (versionInfo.getVersion() == version) {
+        //same version as the latest existing version
+        if (!Arrays.equals(versionInfo.getCheckSum(), archiveCheckSum)) {
+          //but checksum doesn't match, so we send an error
+          message = String.format("Cannot add module %s module, version %s already exists and checksum does not match",
+                                  name, versionInfo.getVersion());
+        } else {
+          //checksum matches, no need to add module, as its already the same as latest , we just send success.
+          responder.sendStatus(HttpResponseStatus.OK);
+          return;
+        }
+      }
+      if (message != null) {
+        LOG.warn(message);
+        responder.sendError(HttpResponseStatus.CONFLICT, message);
+        return;
+      }
+    }
 
     try {
       manager.addModule(name, className, archive);
+      manager.writeVersionInfo(new DatasetTypeVersion(name, version, archiveCheckSum));
     } catch (DatasetModuleConflictException e) {
       responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
       return;
@@ -165,6 +198,27 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     // todo: response with DatasetModuleMeta of just added module (and log this info)
     LOG.info("Added module {}", name);
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private byte[] getZipCheckSum(String filePath) throws IOException, NoSuchAlgorithmException {
+    InputStream tempFile1InputStream = new FileInputStream(filePath);
+    ZipInputStream zStream = new ZipInputStream(tempFile1InputStream);
+    MessageDigest md = MessageDigest.getInstance("SHA-256");
+    while (zStream.getNextEntry() != null) {
+      md.update(ByteStreams.toByteArray(zStream));
+    }
+    return md.digest();
+  }
+
+  @GET
+  @Path("/data/modules/{name}/version")
+  public void getLatestVersion(HttpRequest request, final HttpResponder responder, @PathParam("name") String name) {
+    DatasetTypeVersion versionInfo = manager.getVersionInfo(name);
+    if (versionInfo != null) {
+      responder.sendJson(HttpResponseStatus.OK, versionInfo.getVersion());
+      return;
+    }
+    responder.sendError(HttpResponseStatus.BAD_REQUEST, "Requested dataset module does not exist");
   }
 
   @DELETE

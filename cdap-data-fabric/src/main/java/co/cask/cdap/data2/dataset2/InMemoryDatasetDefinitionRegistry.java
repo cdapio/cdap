@@ -45,11 +45,7 @@ public class InMemoryDatasetDefinitionRegistry implements DatasetDefinitionRegis
 
   @Override
   public void add(DatasetDefinition def) {
-    String typeName = def.getName();
-    if (datasetTypes.containsKey(typeName)) {
-      throw new TypeConflictException("Cannot add dataset type: it already exists: " + typeName);
-    }
-    datasetTypes.put(typeName, def);
+    datasetTypes.put(def.getName(), def);
   }
 
   @Override

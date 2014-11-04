@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
@@ -127,6 +128,11 @@ public class InMemoryKVTableDefinition extends AbstractDatasetDefinition<NoTxKey
     @Override
     public void close() throws IOException {
       // no-op
+    }
+
+    @Override
+    public int getVersion() {
+      return Constants.DEFAULT_DATASET_TYPE_VERSION;
     }
   }
 

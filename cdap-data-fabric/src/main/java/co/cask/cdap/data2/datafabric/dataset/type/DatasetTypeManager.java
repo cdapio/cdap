@@ -104,14 +104,6 @@ public class DatasetTypeManager extends AbstractIdleService {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
         @Override
         public Void call(MDSDatasets datasets) throws DatasetModuleConflictException {
-          DatasetModuleMeta existing = datasets.getTypeMDS().getModule(name);
-          if (existing != null) {
-            String msg = String.format("cannot add module %s, module with the same name already exists: %s",
-                                       name, existing);
-            LOG.warn(msg);
-            throw new DatasetModuleConflictException(msg);
-          }
-
           ClassLoader cl;
           DatasetModule module;
           File unpackedLocation = Files.createTempDir();
@@ -231,6 +223,34 @@ public class DatasetTypeManager extends AbstractIdleService {
       @Override
       public DatasetModuleMeta call(MDSDatasets datasets) throws Exception {
         return datasets.getTypeMDS().getModule(name);
+      }
+    });
+  }
+
+
+  /**
+   * @param name of the module to return info for
+   * @return dataset version info {@link co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeVersion}or
+   * {@code null} if module with given name does NOT exist
+   */
+  public DatasetTypeVersion getVersionInfo(final String name) {
+    return mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, DatasetTypeVersion>() {
+      @Override
+      public DatasetTypeVersion call(MDSDatasets datasets) throws Exception {
+        return datasets.getTypeMDS().getVersionInfo(name);
+      }
+    });
+  }
+
+  /**
+   * write the new version information for the dataset type
+   */
+  public void writeVersionInfo(final DatasetTypeVersion versionInfo) {
+    mdsDatasets.executeUnchecked(new TxCallable<MDSDatasets, Void>() {
+      @Override
+      public Void call(MDSDatasets datasets) throws Exception {
+        datasets.getTypeMDS().write(versionInfo);
+        return null;
       }
     });
   }
@@ -378,11 +398,6 @@ public class DatasetTypeManager extends AbstractIdleService {
     @Override
     public void add(DatasetDefinition def) {
       String typeName = def.getName();
-      if (datasets.getTypeMDS().getType(typeName) != null) {
-        String msg = "Cannot add dataset type: it already exists: " + typeName;
-        LOG.error(msg);
-        throw new TypeConflictException(msg);
-      }
       types.add(typeName);
       registry.add(def);
     }

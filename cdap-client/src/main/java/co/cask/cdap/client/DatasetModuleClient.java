@@ -24,6 +24,7 @@ import co.cask.cdap.client.exception.DatasetModuleCannotBeDeletedException;
 import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.HttpMethod;
 import co.cask.cdap.common.http.HttpRequest;
 import co.cask.cdap.common.http.HttpResponse;
@@ -81,7 +82,8 @@ public class DatasetModuleClient {
     throws BadRequestException, AlreadyExistsException, IOException {
 
     URL url = config.resolveURL(String.format("data/modules/%s", moduleName));
-    Map<String, String> headers = ImmutableMap.of("X-Class-Name", className);
+    Map<String, String> headers = ImmutableMap.of("X-Class-Name", className,
+                                                  "Version", String.valueOf(Constants.DEFAULT_DATASET_TYPE_VERSION));
     HttpRequest request = HttpRequest.put(url).addHeaders(headers).withBody(moduleJarFile).build();
 
     HttpResponse response = restClient.upload(request, config.getAccessToken(),

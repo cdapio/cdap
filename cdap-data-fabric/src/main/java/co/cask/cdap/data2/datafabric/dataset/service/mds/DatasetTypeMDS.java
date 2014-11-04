@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeVersion;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import com.google.common.collect.Lists;
@@ -46,6 +47,11 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
    */
   private static final byte[] TYPE_TO_MODULE_PREFIX = Bytes.toBytes("t_");
 
+  /**
+   * Prefix for rows containing module -> version Info mapping
+   */
+  private static final byte[] MODULE_TO_VERSION_PREFIX = Bytes.toBytes("v_");
+
   public DatasetTypeMDS(DatasetSpecification spec, @EmbeddedDataset("") OrderedTable table) {
     super(spec, table);
   }
@@ -53,6 +59,11 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
   @Nullable
   public DatasetModuleMeta getModule(String name) {
     return get(getModuleKey(name), DatasetModuleMeta.class);
+  }
+
+  @Nullable
+  public DatasetTypeVersion getVersionInfo(String name) {
+    return get(getVersionKey(name), DatasetTypeVersion.class);
   }
 
   @Nullable
@@ -93,6 +104,11 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
     }
   }
 
+
+  public void write(DatasetTypeVersion versionInfo) {
+    put(getVersionKey(versionInfo.getModuleName()), versionInfo);
+  }
+
   public void deleteModule(String name) {
     DatasetModuleMeta module = getModule(name);
     if (module == null) {
@@ -119,7 +135,6 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
       modulesToLoad.add(getModule(usedModule));
     }
     modulesToLoad.add(moduleMeta);
-
     return new DatasetTypeMeta(typeName, modulesToLoad);
   }
 
@@ -135,6 +150,10 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
 
   private byte[] getModuleKey(String name) {
     return Bytes.add(MODULES_PREFIX, Bytes.toBytes(name));
+  }
+
+  private byte[] getVersionKey(String name) {
+    return Bytes.add(MODULE_TO_VERSION_PREFIX, Bytes.toBytes(name));
   }
 
   private byte[] getTypeKey(String name) {

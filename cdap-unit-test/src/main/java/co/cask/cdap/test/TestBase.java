@@ -116,6 +116,7 @@ import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
@@ -377,6 +378,11 @@ public class TestBase {
     datasetFramework.addModule(moduleName, datasetModule.newInstance());
   }
 
+
+  protected final int getDatasetVersion(String moduleName)
+    throws Exception {
+    return datasetFramework.getLatestModuleVersion(moduleName);
+  }
 
   /**
    * Adds an instance of a dataset.

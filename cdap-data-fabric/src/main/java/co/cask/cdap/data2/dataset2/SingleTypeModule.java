@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 /**
@@ -162,6 +163,21 @@ public class SingleTypeModule implements DatasetModule {
     };
 
     registry.add(def);
+  }
+
+  public int getVersion() throws IllegalAccessException, InvocationTargetException, InstantiationException {
+    final Constructor ctor = findSuitableCtorOrFail(dataSetClass);
+
+    Class<?>[] paramTypes = ctor.getParameterTypes();
+    // we initialize specification with a dummy spec and set null value to other paratmeters, so we can initialize
+    // and call getVersion on the dataset type.
+    Object[] params = new Object[paramTypes.length];
+    params[0] = DatasetSpecification.builder("Dummy", "Table.class").build();
+    for (int i = 1; i < paramTypes.length; i++) {
+      params[i] = null;
+    }
+    Dataset versionDataset = (Dataset) ctor.newInstance(params);
+    return versionDataset.getVersion();
   }
 
   @VisibleForTesting
