@@ -120,25 +120,25 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   protected void programList(HttpRequest request, HttpResponder responder,
                              ProgramType type, String appid, Store store) {
     if (appid != null && appid.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is null or empty");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "App id is empty");
       return;
     }
 
     try {
       String accountId = getAuthenticatedAccountId(request);
-      String list;
+      String result;
       if (appid == null) {
         Id.Account accId = Id.Account.from(accountId);
-        list = listPrograms(accId, type, store);
+        result = listPrograms(accId, type, store);
       } else {
         Id.Application appId = Id.Application.from(accountId, appid);
-        list = listProgramsByApp(appId, type, store);
+        result = listProgramsByApp(appId, type, store);
       }
 
-      if (list.isEmpty()) {
+      if (result.isEmpty()) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
-        responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
+        responder.sendByteArray(HttpResponseStatus.OK, result.getBytes(Charsets.UTF_8),
                                 ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
       }
     } catch (SecurityException e) {
@@ -215,13 +215,13 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
   }
 
 
-  protected static ProgramRecord makeProgramRecord (String appId, ProgramSpecification spec, ProgramType type) {
+  protected static ProgramRecord makeProgramRecord(String appId, ProgramSpecification spec, ProgramType type) {
     return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
   protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
-                                                            String flowId, ProgramType typeId,
-                                                            ProgramRuntimeService runtimeService) {
+                                                              String flowId, ProgramType typeId,
+                                                              ProgramRuntimeService runtimeService) {
     ProgramType type = ProgramType.valueOf(typeId.name());
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
