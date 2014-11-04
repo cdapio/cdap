@@ -79,32 +79,6 @@ class JavaSparkContext extends AbstractSparkContext {
   /**
    * Gets a {@link Stream} as a {@link JavaPairRDD}
    *
-   * @param streamName the name of the {@link Stream} to be read as an RDD
-   * @param vClass     the value class
-   * @return the {@link JavaPairRDD} created from the {@link Stream} to be read
-   */
-  @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass) {
-    return readFromStream(streamName, vClass, 0, System.currentTimeMillis(), null);
-  }
-
-  /**
-   * Gets a {@link Stream} as a {@link JavaPairRDD}
-   *
-   * @param streamName the name of the {@link Stream} to be read as an RDD
-   * @param vClass     the value class
-   * @param startTime  the starting time of the stream to be read
-   * @param endTime    the ending time of the streams to be read
-   * @return the {@link JavaPairRDD} created from the {@link Stream} to be read
-   */
-  @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
-    return readFromStream(streamName, vClass, startTime, endTime, null);
-  }
-
-  /**
-   * Gets a {@link Stream} as a {@link JavaPairRDD}
-   *
    * @param streamName  the name of the {@link Stream} to be read as an RDD
    * @param vClass      the value class
    * @param startTime   the starting time of the stream to be read

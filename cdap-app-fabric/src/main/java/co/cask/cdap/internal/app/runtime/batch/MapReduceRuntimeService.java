@@ -429,7 +429,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // If the user don't specify the decoder, detect the type from Mapper/Reducer
       setStreamEventDecoder(job);
     } else {
-      StreamInputFormat.setDecoderType(job, decoderType);
+      StreamInputFormat.setDecoderClassName(job, decoderType);
     }
     job.setInputFormatClass(StreamInputFormat.class);
 
@@ -489,8 +489,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (typeArgs.length < 2 || !LongWritable.class.equals(typeArgs[0])) {
         continue;
       }
-      if (StreamInputFormat.trySetDecoder(job.getConfiguration(), typeArgs[1])) {
+      try {
+        StreamInputFormat.inferDecoderClass(job.getConfiguration(), typeArgs[1]);
         return true;
+      } catch (IllegalArgumentException iae) {
+        LOG.debug("Failed to set decoder", iae);
+        return false;
       }
     }
     throw new IOException("Failed to determine decoder for consuming StreamEvent from " + userClass);

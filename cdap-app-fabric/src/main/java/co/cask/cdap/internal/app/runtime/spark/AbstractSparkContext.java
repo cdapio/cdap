@@ -42,6 +42,8 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.rdd.NewHadoopRDD;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,6 +152,32 @@ abstract class AbstractSparkContext implements SparkContext {
   }
 
   /**
+   * Gets a {@link Stream} as a {@link JavaPairRDD} for Java program and {@link NewHadoopRDD} for Scala Program
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
+   * @return the RDD created from the {@link Stream} to be read
+   */
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass) {
+    return readFromStream(streamName, vClass, 0, System.currentTimeMillis(), null);
+  }
+
+  /**
+   * Gets a {@link Stream} as a {@link JavaPairRDD} for Java program and {@link NewHadoopRDD} for Scala Program
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
+   * @param startTime  the starting time of the stream to be read
+   * @param endTime    the ending time of the streams to be read
+   * @return the RDD created from the {@link Stream} to be read
+   */
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
+    return readFromStream(streamName, vClass, startTime, endTime, null);
+  }
+
+  /**
    * Sets the input to a {@link Stream}
    *
    * @param stream the stream to which input will be set to
@@ -182,18 +210,14 @@ abstract class AbstractSparkContext implements SparkContext {
 
     String decoderType = stream.getDecoderType();
     if (decoderType == null) {
-      // If the user don't specify the decoder, detect the type
-      if (!StreamInputFormat.trySetDecoder(hConf, vClass)) {
-        throw new IllegalArgumentException("The value class must be of type BytesWritable or Text if no decoder type " +
-                                             "is provided");
-      }
+        // If the user don't specify the decoder, detect the type
+        StreamInputFormat.inferDecoderClass(hConf, vClass);
     } else {
-      StreamInputFormat.setDecoderType(hConf, decoderType);
+      StreamInputFormat.setDecoderClassName(hConf, decoderType);
     }
     hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, StreamInputFormat.class, InputFormat.class);
 
     LOG.info("Using Stream as input from {}", stream.toURI());
-
   }
 
   /**

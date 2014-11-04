@@ -195,20 +195,20 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * Sets the class name for the {@link StreamEventDecoder}.
    *
    * @param job The job to modify.
-   * @param decoderType Class name of the decoder class
+   * @param decoderClassName Class name of the decoder class
    */
-  public static void setDecoderType(Job job, String decoderType) {
-    setDecoderType(job.getConfiguration(), decoderType);
+  public static void setDecoderClassName(Job job, String decoderClassName) {
+    setDecoderClassName(job.getConfiguration(), decoderClassName);
   }
 
   /**
    * Sets the class name for the {@link StreamEventDecoder}.
    *
    * @param conf The conf to modify.
-   * @param decoderType Class name of the decoder class
+   * @param decoderClassName Class name of the decoder class
    */
-  public static void setDecoderType(Configuration conf, String decoderType) {
-    conf.set(DECODER_TYPE, decoderType);
+  public static void setDecoderClassName(Configuration conf, String decoderClassName) {
+    conf.set(DECODER_TYPE, decoderClassName);
   }
 
   /**
@@ -222,20 +222,20 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   }
 
   /**
-   * Tries to set the decoder type depending upon the supplied value class
-   * @param conf the conf to modify
+   * Tries to set the {@link StreamInputFormat#DECODER_TYPE} depending upon the supplied value class
+   *
+   * @param conf   the conf to modify
    * @param vClass the value class Type
-   * @return a boolean which is true if the decoder type was set successfully else false
    */
-  public static boolean trySetDecoder(Configuration conf, Type vClass) {
+  public static void inferDecoderClass(Configuration conf, Type vClass) {
     if (Text.class.equals(vClass)) {
-      setDecoderType(conf, TextStreamEventDecoder.class.getName());
-      return true;
+      setDecoderClassName(conf, TextStreamEventDecoder.class.getName());
     } else if (BytesWritable.class.equals(vClass)) {
-      setDecoderType(conf, BytesStreamEventDecoder.class.getName());
-      return true;
+      setDecoderClassName(conf, BytesStreamEventDecoder.class.getName());
+    } else {
+      throw new IllegalArgumentException("The value class must be of type BytesWritable or Text if no decoder type " +
+                                           "is provided");
     }
-    return false;
   }
 
   @Override

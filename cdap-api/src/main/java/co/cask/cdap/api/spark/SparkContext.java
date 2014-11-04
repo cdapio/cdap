@@ -87,9 +87,10 @@ public interface SparkContext extends RuntimeContext {
    *
    * @param streamName the name of the {@link Stream} to be read as an RDD
    * @param vClass     the value class
-   * @param startTime  the starting time of the stream to be read
-   * @param endTime    the ending time of the streams to be read; to read everything from the Stream set this to
-   *                   Long.MAX_VALUE
+   * @param startTime  the starting time of the stream to be read in milliseconds. To read from the starting of the
+   *                   stream set this to 0
+   * @param endTime    the ending time of the streams to be read in milliseconds. To read up to the end of the stream
+   *                   set this to Long.MAX_VALUE
    * @param <T>        type of RDD
    * @return the RDD created from {@link Stream}
    */
@@ -100,8 +101,10 @@ public interface SparkContext extends RuntimeContext {
    *
    * @param streamName  the name of the {@link Stream} to be read as an RDD
    * @param vClass      the value class
-   * @param startTime   the starting time of the stream to be read
-   * @param endTime     the ending time of the streams to be read
+   * @param startTime   the starting time of the stream to be read in milliseconds. To read from the starting of the
+   *                    stream set this to 0
+   * @param endTime     the ending time of the streams to be read in milliseconds. To read up to the end of the stream
+   *                    set this to Long.MAX_VALUE
    * @param decoderType the decoder to use while reading streams
    * @param <T>         type of RDD
    * @return the RDD created from {@link Stream}
