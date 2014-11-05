@@ -57,22 +57,22 @@ public class ExploreResultSetTest {
             new ColumnDesc("column16", "struct<name:string,attr:string>", 15, "")
         )),
         ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
-            new QueryResult(ImmutableList.<Object>of(
-                "value1",
-                1,
-                "c",
-                0.1f,
-                0.2d,
-                true,
-                0x1,
-                (short) 2,
-                new Long(10),
-                "2014-06-20",
-                "2014-06-20 07:37:00",
-                "1000000000",
-                "\"{\"key1\":\"value1\"}",
-                "[\"a\",\"b\",\"c\"]",
-                "{\"name\":\"first\",\"attr\":\"second\"}"
+            new QueryResult(ImmutableList.of(
+              new QueryResult.ResultObject("value1"),
+              new QueryResult.ResultObject(1),
+              new QueryResult.ResultObject("c"),
+              new QueryResult.ResultObject(0.1d),
+              new QueryResult.ResultObject(0.2d),
+              new QueryResult.ResultObject(true),
+              new QueryResult.ResultObject(0x1),
+              new QueryResult.ResultObject((short) 2),
+              new QueryResult.ResultObject((long) 10),
+              new QueryResult.ResultObject("2014-06-20"),
+              new QueryResult.ResultObject("2014-06-20 07:37:00"),
+              new QueryResult.ResultObject("1000000000"),
+              new QueryResult.ResultObject("\"{\"key1\":\"value1\"}"),
+              new QueryResult.ResultObject("[\"a\",\"b\",\"c\"]"),
+              new QueryResult.ResultObject("{\"name\":\"first\",\"attr\":\"second\"}")
             ))
         ))
     );
@@ -115,7 +115,10 @@ public class ExploreResultSetTest {
             new ColumnDesc("column1", "int", 1, "")
         )),
         ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
-            new QueryResult(ImmutableList.<Object>of(1, "value1"))
+          new QueryResult(ImmutableList.of(
+            new QueryResult.ResultObject(1),
+            new QueryResult.ResultObject("value1"))
+          )
         ))
     );
 

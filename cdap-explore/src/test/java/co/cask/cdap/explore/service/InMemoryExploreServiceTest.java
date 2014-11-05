@@ -127,7 +127,7 @@ public class InMemoryExploreServiceTest {
         true,
         Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
         Lists.newArrayList(new QueryResult(Lists.newArrayList(
-          new QueryResult.ResultObject("test", QueryResult.ResultType.STRING)))));
+          new QueryResult.ResultObject("test")))));
 
     runCommand("describe test",
         true,
@@ -138,14 +138,14 @@ public class InMemoryExploreServiceTest {
         ),
         Lists.newArrayList(
             new QueryResult(Lists.newArrayList(
-              new QueryResult.ResultObject("first", QueryResult.ResultType.STRING),
-              new QueryResult.ResultObject("int", QueryResult.ResultType.STRING),
-              new QueryResult.ResultObject("", QueryResult.ResultType.STRING))
+              new QueryResult.ResultObject("first"),
+              new QueryResult.ResultObject("int"),
+              new QueryResult.ResultObject(""))
             ),
             new QueryResult(Lists.newArrayList(
-              new QueryResult.ResultObject("second", QueryResult.ResultType.STRING),
-              new QueryResult.ResultObject("int", QueryResult.ResultType.STRING),
-              new QueryResult.ResultObject("", QueryResult.ResultType.STRING))
+              new QueryResult.ResultObject("second"),
+              new QueryResult.ResultObject("string"),
+              new QueryResult.ResultObject(""))
             )
         )
     );
@@ -162,11 +162,26 @@ public class InMemoryExploreServiceTest {
         Lists.newArrayList(new ColumnDesc("first", "INT", 1, null),
                            new ColumnDesc("second", "STRING", 2, null)),
         Lists.newArrayList(
-            new QueryResult(Lists.<Object>newArrayList("1", "one")),
-            new QueryResult(Lists.<Object>newArrayList("2", "two")),
-            new QueryResult(Lists.<Object>newArrayList("3", "three")),
-            new QueryResult(Lists.<Object>newArrayList("4", "four")),
-            new QueryResult(Lists.<Object>newArrayList("5", "five")))
+            new QueryResult(ImmutableList.of(
+              new QueryResult.ResultObject("1"),
+              new QueryResult.ResultObject("one"))
+            ),
+            new QueryResult(ImmutableList.of(
+              new QueryResult.ResultObject("2"),
+              new QueryResult.ResultObject("two"))
+            ),
+            new QueryResult(ImmutableList.of(
+              new QueryResult.ResultObject("3"),
+              new QueryResult.ResultObject("three"))
+            ),
+            new QueryResult(ImmutableList.of(
+              new QueryResult.ResultObject("4"),
+              new QueryResult.ResultObject("four"))
+            ),
+            new QueryResult(ImmutableList.of(
+              new QueryResult.ResultObject("5"),
+              new QueryResult.ResultObject("five"))
+            ))
     );
 
     runCommand("select * from test",
@@ -174,11 +189,27 @@ public class InMemoryExploreServiceTest {
         Lists.newArrayList(new ColumnDesc("test.first", "INT", 1, null),
                            new ColumnDesc("test.second", "STRING", 2, null)),
         Lists.newArrayList(
-            new QueryResult(Lists.<Object>newArrayList("1", "one")),
-            new QueryResult(Lists.<Object>newArrayList("2", "two")),
-            new QueryResult(Lists.<Object>newArrayList("3", "three")),
-            new QueryResult(Lists.<Object>newArrayList("4", "four")),
-            new QueryResult(Lists.<Object>newArrayList("5", "five"))));
+          new QueryResult(ImmutableList.of(
+            new QueryResult.ResultObject("1"),
+            new QueryResult.ResultObject("one"))
+          ),
+          new QueryResult(ImmutableList.of(
+            new QueryResult.ResultObject("2"),
+            new QueryResult.ResultObject("two"))
+          ),
+          new QueryResult(ImmutableList.of(
+            new QueryResult.ResultObject("3"),
+            new QueryResult.ResultObject("three"))
+          ),
+          new QueryResult(ImmutableList.of(
+            new QueryResult.ResultObject("4"),
+            new QueryResult.ResultObject("four"))
+          ),
+          new QueryResult(ImmutableList.of(
+            new QueryResult.ResultObject("5"),
+            new QueryResult.ResultObject("five"))
+          ))
+    );
 
     runCommand("drop table if exists test",
         false,
@@ -209,8 +240,7 @@ public class InMemoryExploreServiceTest {
       for (QueryResult.ResultObject obj : result.getColumns()) {
         switch (obj.getType()) {
           case STRING:
-            newCols.add(new QueryResult.ResultObject(((String) obj.getObject()).trim(),
-                                                     QueryResult.ResultType.STRING));
+            newCols.add(new QueryResult.ResultObject(obj.getStringValue().trim()));
             break;
           default:
             newCols.add(obj);

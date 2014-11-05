@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
+import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
 import com.google.common.collect.ImmutableList;
@@ -288,11 +289,16 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
       exploreClient.submit("insert into table simple_table select * from test").get().close();
 
       ExploreExecutionResult result = exploreClient.submit("select * from simple_table").get();
-      Assert.assertEquals(ImmutableList.of(1.0, "one"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(2.0, "two"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(3.0, "three"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(4.0, "four"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(5.0, "five"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(1), new QueryResult.ResultObject("one")),
+                          result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(2), new QueryResult.ResultObject("two")),
+                          result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(3), new QueryResult.ResultObject("three")),
+                          result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(4), new QueryResult.ResultObject("four")),
+                          result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(5), new QueryResult.ResultObject("five")),
+                          result.next().getColumns());
       Assert.assertFalse(result.hasNext());
       result.close();
 
@@ -331,7 +337,8 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
       exploreClient.submit("insert into table test select * from simple_table").get().close();
 
       ExploreExecutionResult result = exploreClient.submit("select * from test").get();
-      Assert.assertEquals(ImmutableList.of(10.0, "ten"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(10), new QueryResult.ResultObject("ten")),
+                          result.next().getColumns());
       Assert.assertFalse(result.hasNext());
       result.close();
 

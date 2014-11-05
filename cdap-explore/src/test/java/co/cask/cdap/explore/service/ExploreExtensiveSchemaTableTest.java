@@ -95,7 +95,7 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
     runCommand("show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
+               Lists.newArrayList(new QueryResult(ImmutableList.of(new QueryResult.ResultObject("my_table")))));
 
     runCommand("describe my_table",
                true,
@@ -105,47 +105,172 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
                  new ColumnDesc("comment", "STRING", 3, "from deserializer")
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("s", "string", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("i", "int", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("f", "float", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("d", "double", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("l", "bigint", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("b", "tinyint", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("bo", "boolean", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("sh", "smallint", "from deserializer")),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("s"),
+                   new QueryResult.ResultObject("string"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("i"),
+                   new QueryResult.ResultObject("int"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("f"),
+                   new QueryResult.ResultObject("float"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("d"),
+                   new QueryResult.ResultObject("double"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("l"),
+                   new QueryResult.ResultObject("bigint"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("b"),
+                   new QueryResult.ResultObject("tinyint"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("bo"),
+                   new QueryResult.ResultObject("boolean"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("sh"),
+                   new QueryResult.ResultObject("smallint"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
                  // note: hive removes upper cases
                  // Arrays
-                 new QueryResult(Lists.<Object>newArrayList("iarr", "array<int>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("farr", "array<float>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("darr", "array<double>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("larr", "array<bigint>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("barr", "binary", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("boarr", "array<boolean>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("sharr", "array<smallint>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("sarr", "array<string>", "from deserializer")),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("iarr"),
+                   new QueryResult.ResultObject("array<int>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("farr"),
+                   new QueryResult.ResultObject("array<float>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("darr"),
+                   new QueryResult.ResultObject("array<double>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("larr"),
+                   new QueryResult.ResultObject("array<bigint>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("barr"),
+                   new QueryResult.ResultObject("binary"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("boarr"),
+                   new QueryResult.ResultObject("array<boolean>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("sharr"),
+                   new QueryResult.ResultObject("array<smallint>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("sarr"),
+                   new QueryResult.ResultObject("array<string>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
                  // Lists
-                 new QueryResult(Lists.<Object>newArrayList("ilist", "array<int>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("flist", "array<float>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("dlist", "array<double>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("llist", "array<bigint>", "from deserializer")),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("ilist"),
+                   new QueryResult.ResultObject("array<int>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("flist"),
+                   new QueryResult.ResultObject("array<float>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("dlist"),
+                   new QueryResult.ResultObject("array<double>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("llist"),
+                   new QueryResult.ResultObject("array<bigint>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
                  // Note: list<byte> becomes array<tinyint>, whereas byte[] becomes binary...
-                 new QueryResult(Lists.<Object>newArrayList("blist", "array<tinyint>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("bolist", "array<boolean>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("shlist", "array<smallint>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("slist", "array<string>", "from deserializer")),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("blist"),
+                   new QueryResult.ResultObject("array<tinyint>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("bolist"),
+                   new QueryResult.ResultObject("array<boolean>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("shlist"),
+                   new QueryResult.ResultObject("array<smallint>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("slist"),
+                   new QueryResult.ResultObject("array<string>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
                  // Maps
-                 new QueryResult(Lists.<Object>newArrayList("stoimap", "map<string,int>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("ftodmap", "map<float,double>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("ltobmap", "map<bigint,tinyint>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("botoshmap", "map<boolean,smallint>", "from deserializer")),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("stoimap"),
+                   new QueryResult.ResultObject("map<string,int>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("ftodmap"),
+                   new QueryResult.ResultObject("map<float,double>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("ltobmap"),
+                   new QueryResult.ResultObject("map<bigint,tinyint>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("botoshmap"),
+                   new QueryResult.ResultObject("map<boolean,smallint>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
                  // Custom type
-                 new QueryResult(Lists.<Object>newArrayList("v", "struct<s:string,i:int>", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("varr", "array<struct<s:string,i:int>>",
-                                                            "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("vlist", "array<struct<s:string,i:int>>",
-                                                            "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("stovmap", "map<string,struct<s:string,i:int>>",
-                                                       "from deserializer"))
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("v"),
+                   new QueryResult.ResultObject("struct<s:string,i:int>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("varr"),
+                   new QueryResult.ResultObject("array<struct<s:string,i:int>>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("vlist"),
+                   new QueryResult.ResultObject("array<struct<s:string,i:int>>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 )),
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("stovmap"),
+                   new QueryResult.ResultObject("map<string,struct<s:string,i:int>>"),
+                   new QueryResult.ResultObject("from deserializer")
+                 ))
                )
     );
 
@@ -193,14 +318,41 @@ public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest 
                                                  "map<string,struct<s:string,i:int>>", 32, null)
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList(
-                   "foo", 1.0, 1.23, 2.45, 1000.0, 100.0, true, 8.0, "[10,11]", "[1.67,2.89]", "[10.56,8.78]",
-                   "[101,201]", Lists.newArrayList(106.0, 110.0), "[true,false]", "[50,51]", "[\"foo\",\"bar\"]",
-                   "[10,20]", "[10.45,20.98]", "[10.99,20.9]", "[654,2897]", "[22,23]", "[true,true]", "[76,39]",
-                   "[\"foo2\",\"bar2\"]", "{\"foo3\":51}", "{3.55:51.98}", "{890:45}", "{true:27}",
-                   "{\"s\":\"foo\",\"i\":2}", "[{\"s\":\"bar\",\"i\":3},{\"s\":\"foobar\",\"i\":4}]",
-                   "[{\"s\":\"foobar2\",\"i\":3}]", "{\"key\":{\"s\":\"foobar3\",\"i\":9}}"
-                 )))
+                 new QueryResult(ImmutableList.of(
+                   new QueryResult.ResultObject("foo"),
+                   new QueryResult.ResultObject(1),
+                   new QueryResult.ResultObject(1.23),
+                   new QueryResult.ResultObject(2.45),
+                   new QueryResult.ResultObject((long) 1000),
+                   new QueryResult.ResultObject((byte) 100),
+                   new QueryResult.ResultObject(true),
+                   new QueryResult.ResultObject((short) 8),
+                   new QueryResult.ResultObject("[10,11]"),
+                   new QueryResult.ResultObject("[1.67,2.89]"),
+                   new QueryResult.ResultObject("[10.56,8.78]"),
+                   new QueryResult.ResultObject("[101,201]"),
+                   new QueryResult.ResultObject(new byte[] { 106, 110 }),
+                   new QueryResult.ResultObject("[true,false]"),
+                   new QueryResult.ResultObject("[50,51]"),
+                   new QueryResult.ResultObject("[\"foo\",\"bar\"]"),
+                   new QueryResult.ResultObject("[10,20]"),
+                   new QueryResult.ResultObject("[10.45,20.98]"),
+                   new QueryResult.ResultObject("[10.99,20.9]"),
+                   new QueryResult.ResultObject("[654,2897]"),
+                   new QueryResult.ResultObject("[22,23]"),
+                   new QueryResult.ResultObject("[true,true]"),
+                   new QueryResult.ResultObject("[76,39]"),
+                   new QueryResult.ResultObject("[\"foo2\",\"bar2\"]"),
+                   new QueryResult.ResultObject("{\"foo3\":51}"),
+                   new QueryResult.ResultObject("{3.55:51.98}"),
+                   new QueryResult.ResultObject("{890:45}"),
+                   new QueryResult.ResultObject("{true:27}"),
+                   new QueryResult.ResultObject("{\"s\":\"foo\",\"i\":2}"),
+                   new QueryResult.ResultObject("[{\"s\":\"bar\",\"i\":3},{\"s\":\"foobar\",\"i\":4}]"),
+                   new QueryResult.ResultObject("[{\"s\":\"foobar2\",\"i\":3}]"),
+                   new QueryResult.ResultObject("{\"key\":{\"s\":\"foobar3\",\"i\":9}}")
+                 ))
+               )
     );
 
     // Make sure the whole schema has been persisted in the metastore, and with the right order

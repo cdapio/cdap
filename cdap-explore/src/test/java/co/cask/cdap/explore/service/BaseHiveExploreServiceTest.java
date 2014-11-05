@@ -174,22 +174,19 @@ public class BaseHiveExploreServiceTest {
   protected static List<QueryResult> trimColumnValues(Iterator<QueryResult> results) {
     int i = 0;
     List<QueryResult> newResults = Lists.newArrayList();
-    // Max 100 results
-    while (results.hasNext() && i < 100) {
+    // Max 10 results
+    while (results.hasNext() && i < 10) {
       i++;
       QueryResult result = results.next();
       List<QueryResult.ResultObject> newCols = Lists.newArrayList();
       for (QueryResult.ResultObject obj : result.getColumns()) {
         switch (obj.getType()) {
           case STRING:
-            newCols.add(new QueryResult.ResultObject(((String) obj.getObject()).trim(),
-                                                     QueryResult.ResultType.STRING));
+            newCols.add(new QueryResult.ResultObject(obj.getStringValue().trim()));
             break;
           case DOUBLE:
             // NOTE: this means only use 4 decimals for double and float values in test cases
-            newCols.add(new QueryResult.ResultObject(
-              (double) Math.round(((Double) obj.getObject()).doubleValue() * 10000) / 10000,
-              QueryResult.ResultType.DOUBLE));
+            newCols.add(new QueryResult.ResultObject((double) Math.round(obj.getDoubleValue() * 10000) / 10000));
             break;
           default:
             newCols.add(obj);

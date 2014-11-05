@@ -73,7 +73,11 @@ public class Hive13ExploreService extends BaseHiveExploreService {
       RowSet rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
       ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
       for (Object[] objects : rowSet) {
-        rowsBuilder.add(new QueryResult(Lists.newArrayList(objects)));
+        List<QueryResult.ResultObject> cols = Lists.newArrayList();
+        for (Object obj : objects) {
+          cols.add(rowObjectToQueryResultObject(obj));
+        }
+        rowsBuilder.add(new QueryResult(cols));
       }
       return rowsBuilder.build();
     } else {
@@ -85,5 +89,28 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
     return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
+  }
+
+  protected QueryResult.ResultObject rowObjectToQueryResultObject(Object obj) throws ExploreException {
+    if (obj instanceof Boolean) {
+      return new QueryResult.ResultObject((Boolean) obj);
+    } else if (obj instanceof Byte) {
+      return new QueryResult.ResultObject((Byte) obj);
+    } else if (obj instanceof Double) {
+      return new QueryResult.ResultObject((Double) obj);
+    } else if (obj instanceof Short) {
+      return new QueryResult.ResultObject((Short) obj);
+    } else if (obj instanceof Integer) {
+      return new QueryResult.ResultObject((Integer) obj);
+    } else if (obj instanceof Long) {
+      return new QueryResult.ResultObject((Long) obj);
+    } else if (obj instanceof String) {
+      return new QueryResult.ResultObject((String) obj);
+    } else if (obj instanceof byte[]) {
+      return new QueryResult.ResultObject((byte[]) obj);
+    } else if (obj == null) {
+      return new QueryResult.ResultObject();
+    }
+    throw new ExploreException("Unknown column value encountered: " + obj);
   }
 }

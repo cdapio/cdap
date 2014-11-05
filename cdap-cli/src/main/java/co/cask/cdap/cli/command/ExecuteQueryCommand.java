@@ -27,11 +27,9 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -78,7 +76,7 @@ public class ExecuteQueryCommand implements Command {
       new AsciiTable<QueryResult>(header, results, new RowMaker<QueryResult>() {
         @Override
         public Object[] makeRow(QueryResult object) {
-          return convertRow(object.getColumns(), schema);
+          return convertRow(object.getColumns());
         }
       }).print(output);
 
@@ -89,24 +87,11 @@ public class ExecuteQueryCommand implements Command {
     }
   }
 
-  private Object[] convertRow(List<Object> row, List<ColumnDesc> schema) {
-    Preconditions.checkArgument(row.size() == schema.size(), "Row and schema length differ");
-
+  private Object[] convertRow(List<QueryResult.ResultObject> row) {
     Object[] result = new Object[row.size()];
-    Iterator<Object> rowIterator = row.iterator();
-    Iterator<ColumnDesc> schemaIterator = schema.iterator();
-    int index = 0;
-    while (rowIterator.hasNext() && schemaIterator.hasNext()) {
-      Object columnValue = rowIterator.next();
-      ColumnDesc schemaColumn = schemaIterator.next();
-      if (columnValue != null && columnValue instanceof Double
-        && schemaColumn.getType() != null && schemaColumn.getType().endsWith("INT")) {
-        columnValue = ((Double) columnValue).longValue();
-      }
-      result[index] = columnValue;
-      index++;
+    for (int index = 0; index < row.size(); index++) {
+      result[index] = row.get(index).getObject();
     }
-
     return result;
   }
 
