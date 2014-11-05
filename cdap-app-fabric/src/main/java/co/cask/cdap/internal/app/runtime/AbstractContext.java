@@ -17,7 +17,9 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -27,9 +29,15 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
@@ -42,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -64,6 +73,7 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
   private final DataSetInstantiator dsInstantiator;
 
   private final DiscoveryServiceClient discoveryServiceClient;
+  private KeyValueTable propertyTable;
 
   public AbstractContext(Program program, RunId runId,
                          Set<String> datasets,
@@ -89,6 +99,19 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
 
     this.dsInstantiator = new DataSetInstantiator(dsFramework, conf, program.getClassLoader(),
                                                   datasetMetrics, programMetrics);
+    this.propertyTable = null;
+    try {
+      DatasetFramework sysds = new NamespacedDatasetFramework(dsFramework,
+                                                              new DefaultDatasetNamespace(conf, Namespace.SYSTEM));
+      String propertyTable = Joiner.on(".").join(Lists.newArrayList(getAccountId(), getApplicationId(),
+                                                                    Constants.Dataset.PROPERTY_TABLE));
+      this.propertyTable = sysds.getDataset(propertyTable, new HashMap<String, String>(), program.getClassLoader());
+      Preconditions.checkArgument(this.propertyTable != null);
+      this.dsInstantiator.addTransactionAware(this.propertyTable);
+    } catch (Exception e) {
+      LOG.error("Unable to find PropertyTable Dataset", e);
+      Throwables.propagate(e);
+    }
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
@@ -208,6 +231,20 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
       LOG.error("Got exception while creating serviceURL", e);
       return null;
     }
+  }
+
+  private String getPrefixedPropertyKey(String key) {
+    return getProgramName() + "." + key;
+  }
+
+  @Override
+  public void setProperty(String key, String value) {
+    propertyTable.write(getPrefixedPropertyKey(key), value);
+  }
+
+  @Override
+  public String getProperty(String key) {
+    return Bytes.toString(propertyTable.read(getPrefixedPropertyKey(key)));
   }
 
   /**

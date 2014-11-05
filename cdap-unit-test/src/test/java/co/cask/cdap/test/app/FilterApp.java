@@ -29,9 +29,12 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.procedure.AbstractProcedure;
+import co.cask.cdap.api.procedure.ProcedureContext;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -102,17 +105,46 @@ public class FilterApp extends AbstractApplication {
    * return counts.
    */
   public static class Count extends AbstractProcedure {
+    private static final String CALL_PROPERTY = "resultCalls";
+    private static final Logger LOG = LoggerFactory.getLogger(Count.class);
+
     @UseDataSet("count")
     private KeyValueTable counters;
+    private ProcedureContext context;
+
+    @Override
+    public void initialize(ProcedureContext context) {
+      this.context = context;
+      if (context.getProperty(CALL_PROPERTY) == null) {
+        context.setProperty(CALL_PROPERTY, "0");
+      }
+    }
 
     @Handle("result")
     public void handle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
       byte[]  result = counters.read(highPass);
+      context.setProperty(CALL_PROPERTY, Integer.toString(Integer.valueOf(context.getProperty(CALL_PROPERTY)) + 1));
       if (result == null) {
         responder.sendJson(ProcedureResponse.Code.NOT_FOUND, "No result");
       } else {
         responder.sendJson(ProcedureResponse.Code.SUCCESS, Bytes.toLong(result));
       }
+    }
+
+    @Handle("callCount")
+    public void callHandle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+      String value = context.getProperty(CALL_PROPERTY);
+      if (value == null) {
+        responder.sendJson(ProcedureResponse.Code.NOT_FOUND, "Property Not Found");
+      } else {
+        responder.sendJson(ProcedureResponse.Code.SUCCESS, value);
+      }
+    }
+
+    @Handle("resetCount")
+    public void resetHandle(ProcedureRequest request, ProcedureResponder responder) throws IOException {
+      context.setProperty(CALL_PROPERTY, "0");
+      responder.sendJson(ProcedureResponse.Code.SUCCESS);
     }
   }
 }

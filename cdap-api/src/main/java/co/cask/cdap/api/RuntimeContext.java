@@ -28,7 +28,6 @@ public interface RuntimeContext {
    */
   Map<String, String> getRuntimeArguments();
 
-
   /**
    * Used to discover services inside a given application.
    * @param applicationId Application name
@@ -43,4 +42,18 @@ public interface RuntimeContext {
    * @return URL
    */
   URL getServiceURL(String serviceId);
+
+  /**
+   * Stores a key/value property pair. It'll be persisted when the current transaction context commits.
+   * @param key Key String
+   * @param value Value String
+   */
+  void setProperty(String key, String value);
+
+  /**
+   * Returns the property value of the given key or null if not such property exists.
+   * @param key Key String
+   * @return Value String
+   */
+  String getProperty(String key);
 }

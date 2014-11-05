@@ -150,6 +150,7 @@ public final class Constants {
   public static final class Dataset {
 
     public static final String TABLE_PREFIX = "dataset.table.prefix";
+    public static final String PROPERTY_TABLE = "property";
 
     /**
      * DatasetManager service configuration.

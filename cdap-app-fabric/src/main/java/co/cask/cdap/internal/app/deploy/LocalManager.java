@@ -28,6 +28,7 @@ import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
+import co.cask.cdap.internal.app.deploy.pipeline.CreatePropertyDatasetStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
@@ -62,6 +63,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
   private final ProgramTerminator programTerminator;
 
   private final DatasetFramework datasetFramework;
+  private final DatasetFramework sysdsFramework;
 
 
   @Inject
@@ -83,6 +85,9 @@ public class LocalManager<I, O> implements Manager<I, O> {
     this.datasetFramework =
       new NamespacedDatasetFramework(datasetFramework,
                                      new DefaultDatasetNamespace(configuration, Namespace.USER));
+    this.sysdsFramework = new NamespacedDatasetFramework(datasetFramework,
+                                                         new DefaultDatasetNamespace(configuration, Namespace.SYSTEM));
+
   }
 
   @Override
@@ -92,6 +97,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new VerificationStage(datasetFramework));
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
+    pipeline.addLast(new CreatePropertyDatasetStage(sysdsFramework));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
