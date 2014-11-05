@@ -49,7 +49,7 @@ public enum ArgumentName {
   APP_JAR_FILE("app-jar-file"),
   DATASET_MODULE_JAR_FILE("module-jar-file"),
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
-  QUERY("TODO:query"),
+  QUERY("query"),
   APP("app-id");
 
   private final String name;
