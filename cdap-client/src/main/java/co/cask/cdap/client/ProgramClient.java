@@ -158,7 +158,7 @@ public class ProgramClient {
         public String call() throws Exception {
           return getStatus(appId, programType, programId);
         }
-      }, timeout, timeoutUnit.toSeconds(1), timeoutUnit);
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), UnAuthorizedAccessTokenException.class);
       Throwables.propagateIfPossible(e.getCause(), ProgramNotFoundException.class);

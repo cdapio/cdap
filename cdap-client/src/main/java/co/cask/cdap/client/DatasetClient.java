@@ -166,7 +166,7 @@ public class DatasetClient {
         public Boolean call() throws Exception {
           return exists(datasetName);
         }
-      }, timeout, timeoutUnit.toSeconds(1), timeoutUnit);
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), IOException.class, UnAuthorizedAccessTokenException.class);
     }
@@ -192,7 +192,7 @@ public class DatasetClient {
         public Boolean call() throws Exception {
           return exists(datasetName);
         }
-      }, timeout, timeoutUnit.toSeconds(1), timeoutUnit);
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), IOException.class, UnAuthorizedAccessTokenException.class);
     }

@@ -122,7 +122,7 @@ public class ApplicationClient {
         public Boolean call() throws Exception {
           return exists(appId);
         }
-      }, timeout, timeoutUnit.toSeconds(1), timeoutUnit);
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), IOException.class, UnAuthorizedAccessTokenException.class);
     }
@@ -148,7 +148,7 @@ public class ApplicationClient {
         public Boolean call() throws Exception {
           return exists(appId);
         }
-      }, timeout, timeoutUnit.toSeconds(1), timeoutUnit);
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       Throwables.propagateIfPossible(e.getCause(), IOException.class, UnAuthorizedAccessTokenException.class);
     }

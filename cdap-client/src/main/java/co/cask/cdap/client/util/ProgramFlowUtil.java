@@ -35,18 +35,21 @@ public class ProgramFlowUtil {
    * @param desiredValue the desired value to get from callable
    * @param callable the callable to check
    * @param timeout time until we timeout
+   * @param timeoutUnit unit of time for timeout
    * @param sleepDelay time to wait between calls to callable
-   * @param timeUnit unit of time for timeout and sleepDelay
+   * @param sleepDelayUnit unit of time for sleepDelay
    * @param <T> type of desiredValue
    * @throws TimeoutException if timeout has passed, but didn't get the desiredValue
    * @throws InterruptedException if something interrupted this waiting operation
    * @throws ExecutionException if there was an exception in calling the callable
    */
-  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout, long sleepDelay, TimeUnit timeUnit)
+  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout, TimeUnit timeoutUnit,
+                                 long sleepDelay, TimeUnit sleepDelayUnit)
     throws TimeoutException, InterruptedException, ExecutionException {
 
+    long sleepDelayMs = sleepDelayUnit.toMillis(sleepDelay);
     long startTime = System.currentTimeMillis();
-    long timeoutMs = timeUnit.toMillis(timeout);
+    long timeoutMs = timeoutUnit.toMillis(timeout);
     while (System.currentTimeMillis() - startTime < timeoutMs) {
       try {
         if (desiredValue.equals(callable.call())) {
@@ -55,7 +58,7 @@ public class ProgramFlowUtil {
       } catch (Exception e) {
         throw new ExecutionException(e);
       }
-      Thread.sleep(sleepDelay);
+      Thread.sleep(sleepDelayMs);
     }
     throw new TimeoutException();
 
