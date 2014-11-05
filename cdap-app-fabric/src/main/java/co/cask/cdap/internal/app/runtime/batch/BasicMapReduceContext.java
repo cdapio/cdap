@@ -109,7 +109,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       // for user metrics.  type can be null if its not in a map or reduce task, but in the yarn container that
       // launches the mapred job.
       this.mapredMetrics = (type == null) ?
-        null : new MapReduceMetrics(metricsCollectionService, getApplicationId(), getProgramName(), type);
+        null : new MapReduceMetrics(metricsCollectionService, getApplicationId(), getProgramName(), type,
+                                    runId.getId());
     } else {
       this.systemMapperMetrics = null;
       this.systemReducerMetrics = null;
