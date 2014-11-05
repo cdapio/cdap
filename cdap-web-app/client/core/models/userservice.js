@@ -46,15 +46,12 @@ define(['core/models/program'], function (Program) {
       var self = this;
       http.rest('apps/' + self.app + '/services/' + self.name, function (serviceSpec) {
         var workers = [];
-        var handler;
-        serviceSpec.runnables.forEach(function(runnable){
-          obj = Ember.Object.create({id : runnable});
-          if(runnable === self.name) {
-            handler = obj;
-          } else {
-            workers.push(obj);
-          }
+        var handler = Ember.Object.create({id : self.name});
+        var workerNames = Object.keys(serviceSpec.workers);
+        workerNames.forEach(function(workerName){
+          workers.push( Ember.Object.create({id: workerName}) );
         });
+
         self.set('workersList', workers);
         self.set('handler', handler);
         self.set('numWorkers', workers.length);

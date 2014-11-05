@@ -26,19 +26,15 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.UserErrors;
-import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.ServiceMeta;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -48,8 +44,6 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -59,7 +53,7 @@ import javax.ws.rs.PathParam;
 
 
 /**
- *  Handler class for User services.
+ *  {@link HttpHandler} for User Services.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
@@ -78,63 +72,21 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return the list of user twill apps for an application.
+   * Returns a list of Services associated with an account.
    */
-  @Path("/apps/{app-id}/services")
   @GET
-  public void listServices(HttpRequest request, HttpResponder responder,
-                           @PathParam("app-id") String appId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
-      if (spec != null) {
-        List<ProgramRecord> services = Lists.newArrayList();
-        for (Map.Entry<String, ServiceSpecification> entry : spec.getServices().entrySet()) {
-          ServiceSpecification specification = entry.getValue();
-          services.add(new ProgramRecord(ProgramType.SERVICE, appId, specification.getName(),
-                                         specification.getName(), specification.getDescription()));
-        }
-        responder.sendJson(HttpResponseStatus.OK, services);
-      } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  @Path("/services")
+  public void getAllServices(HttpRequest request, HttpResponder responder) {
+    programList(request, responder, ProgramType.SERVICE, null, store);
   }
 
   /**
-   * Return the service details of a given service.
+   * Return the list of user Services in an application.
    */
-  @Path("/apps/{app-id}/services/{service-id}")
+  @Path("/apps/{app-id}/services")
   @GET
-  public void getService(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") String appId,
-                         @PathParam("service-id") String serviceId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ServiceSpecification spec = getServiceSpecification(accountId, appId, serviceId);
-      if (spec == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      responder.sendJson(HttpResponseStatus.OK,
-                         new ServiceMeta(spec.getName(), spec.getName(), spec.getDescription(),
-                                         ImmutableSet.<String>builder().add(spec.getName())
-                                                                       .addAll(spec.getWorkers().keySet()).build()));
-
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
+    programList(request, responder, ProgramType.SERVICE, appId, store);
   }
 
   /**
@@ -222,7 +174,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
                                                                         programId.getApplicationId(),
                                                                         programId.getId(),
-                                                                        ProgramType.SERVICE);
+                                                                        ProgramType.SERVICE, runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                               ImmutableMap.of("runnable", runnableName,
@@ -244,22 +196,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/services/{service-id}/live-info")
-  public void liveInfo(HttpRequest request, HttpResponder responder,
-                       @PathParam("app-id") String appId,
-                       @PathParam("service-id") String serviceId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      responder.sendJson(HttpResponseStatus.OK,
-                         runtimeService.getLiveInfo(Id.Program.from(accountId,
-                                                                    appId,
-                                                                    serviceId),
-                                                    ProgramType.SERVICE));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  public void serviceLiveInfo(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") String appId,
+                              @PathParam("service-id") String serviceId) {
+    getLiveInfo(request, responder, appId, serviceId, ProgramType.SERVICE, runtimeService);
   }
 
   @Nullable
@@ -302,22 +242,5 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         return store.getServiceWorkerInstances(programId, runnable);
       }
     }
-  }
-
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
-                                                            String flowId, ProgramType typeId) {
-    ProgramType type = ProgramType.valueOf(typeId.name());
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               accountId, flowId);
-
-    Id.Program programId = Id.Program.from(accountId, appId, flowId);
-
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
-      if (programId.equals(info.getProgramId())) {
-        return info;
-      }
-    }
-    return null;
   }
 }

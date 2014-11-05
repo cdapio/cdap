@@ -34,11 +34,11 @@ public final class MetricsRecord {
   private final List<TagMetric> tags;       // List of TagMetric
   private final long timestamp;             // Timestamp in second of when the metric happened.
   private final long value;                  // Value of the metric, regardless of tags
-  private final MetricContentType type;      // Type of the metric value, to be set(gauge) or to increment
+  private final MetricType type;      // Type of the metric value, to be set(gauge) or to increment
 
   public MetricsRecord(String context, String runId,
                        String name, Iterable<TagMetric> tags,
-                       long timestamp, long value, MetricContentType type) {
+                       long timestamp, long value, MetricType type) {
     this.context = context;
     this.runId = runId;
     this.timestamp = timestamp;
@@ -72,7 +72,7 @@ public final class MetricsRecord {
     return value;
   }
 
-  public MetricContentType getType() {
+  public MetricType getType() {
     return type;
   }
 

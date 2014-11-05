@@ -29,7 +29,7 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.transport.MetricContentType;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.collect.ImmutableList;
@@ -121,7 +121,7 @@ public class TimeSeriesCleanupTest {
         for (String tag : tags) {
           tagMetrics.add(new TagMetric(tag, j * 2));
         }
-        records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j, MetricContentType.COUNT));
+        records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j, MetricType.COUNTER));
         tagMetrics.clear();
       }
       timeSeriesTable.save(records);

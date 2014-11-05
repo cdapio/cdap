@@ -24,8 +24,13 @@ import co.cask.cdap.api.RuntimeContext;
 public interface ServiceWorkerContext extends RuntimeContext {
 
   /**
+   * Returns the specification used to configure the {@link ServiceWorker} bounded to this context.
+   */
+  ServiceWorkerSpecification getSpecification();
+
+  /**
    * Execute a set of operations on datasets via a {@link TxRunnable} that are committed as a single transaction.
-   * @param runnable
+   * @param runnable The runnable to be executed in the transaction
    */
   void execute(TxRunnable runnable);
 }

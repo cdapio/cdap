@@ -18,17 +18,19 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,10 +40,11 @@ import java.util.Set;
 public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigurer {
 
   private final Map<String, String> propertyFields;
-  private String className;
-  private String name;
+  private final String className;
+  private final String name;
   private Map<String, String> properties;
   private Set<String> datasets;
+  private final List<ServiceHttpEndpoint> endpoints;
 
   /**
    * Instantiates the class with the given {@link HttpServiceHandler}.
@@ -55,11 +58,13 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
     this.name = handler.getClass().getSimpleName();
     this.properties = ImmutableMap.of();
     this.datasets = Sets.newHashSet();
+    this.endpoints = Lists.newArrayList();
 
-    // Inspect the handler to grab all @UseDataset and @Property
+    // Inspect the handler to grab all @UseDataset, @Property and endpoints.
     Reflections.visit(handler, TypeToken.of(handler.getClass()),
                       new DataSetFieldExtractor(datasets),
-                      new PropertyFieldExtractor(propertyFields));
+                      new PropertyFieldExtractor(propertyFields),
+                      new ServiceEndpointExtractor(endpoints));
   }
 
   /**
@@ -78,13 +83,13 @@ public class DefaultHttpServiceHandlerConfigurer implements HttpServiceConfigure
   }
 
   /**
-   * Creates a {@link HttpServiceSpecification} from the parameters stored in this class.
+   * Creates a {@link HttpServiceHandlerSpecification} from the parameters stored in this class.
    *
    * @return a new specification from the parameters stored in this instance
    */
-  public HttpServiceSpecification createSpecification() {
+  public HttpServiceHandlerSpecification createSpecification() {
     Map<String, String> properties = Maps.newHashMap(this.properties);
     properties.putAll(propertyFields);
-    return new DefaultHttpServiceSpecification(className, name, "", properties, datasets);
+    return new HttpServiceHandlerSpecification(className, name, "", properties, datasets, endpoints);
   }
 }

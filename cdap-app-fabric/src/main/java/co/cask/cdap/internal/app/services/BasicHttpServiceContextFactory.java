@@ -16,8 +16,7 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.service.http.HttpServiceContext;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 
 /**
@@ -28,5 +27,5 @@ public interface BasicHttpServiceContextFactory {
   /**
    * Creates a new instance of {@link BasicHttpServiceContext} with the given spec.
    */
-  BasicHttpServiceContext create(HttpServiceSpecification spec);
+  BasicHttpServiceContext create(HttpServiceHandlerSpecification spec);
 }

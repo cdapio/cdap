@@ -18,10 +18,8 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpRequests;
-import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -41,6 +39,9 @@ import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.proto.DatasetModuleMeta;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.ObjectResponse;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
@@ -108,7 +109,7 @@ public abstract class DatasetServiceTestBase {
 
     // Tx Manager to support working with datasets
     Configuration txConf = HBaseConfiguration.create();
-    cConf.copyTxProperties(txConf);
+    CConfigurationUtil.copyTxProperties(cConf, txConf);
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);

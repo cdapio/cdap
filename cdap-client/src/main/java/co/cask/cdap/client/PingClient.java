@@ -19,7 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.http.HttpMethod;
+import co.cask.common.http.HttpMethod;
 
 import java.io.IOException;
 import javax.inject.Inject;

@@ -35,12 +35,14 @@ public class FakeApp extends AbstractApplication {
   public static final List<String> FLOWS = Lists.newArrayList(FakeFlow.NAME);
   public static final List<String> PROCEDURES = Lists.newArrayList(FakeProcedure.NAME);
   public static final List<String> MAPREDUCES = Lists.newArrayList();
+  public static final List<String> SPARK = Lists.newArrayList(FakeSpark.NAME);
   public static final List<String> WORKFLOWS = Lists.newArrayList();
   public static final List<String> SERVICES = Lists.newArrayList();
   public static final List<String> ALL_PROGRAMS = ImmutableList.<String>builder()
     .addAll(FLOWS)
     .addAll(PROCEDURES)
     .addAll(MAPREDUCES)
+    .addAll(SPARK)
     .addAll(WORKFLOWS)
     .addAll(SERVICES)
     .build();
@@ -54,5 +56,6 @@ public class FakeApp extends AbstractApplication {
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
     addService(FakeService.NAME, new FakeService());
+    addSpark(new FakeSpark());
   }
 }

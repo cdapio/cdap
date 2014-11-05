@@ -17,10 +17,6 @@
 package co.cask.cdap.explore.client;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.http.HttpMethod;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpRequests;
-import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
@@ -37,6 +33,10 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;

@@ -245,6 +245,10 @@ public abstract class AppFabricTestBase {
     return GSON.fromJson(readResponse(response), type);
   }
 
+  protected static <T> T readResponse(HttpResponse response, Type type, Gson gson) throws IOException {
+    return gson.fromJson(readResponse(response), type);
+  }
+
   /**
    * Deploys an application.
    */

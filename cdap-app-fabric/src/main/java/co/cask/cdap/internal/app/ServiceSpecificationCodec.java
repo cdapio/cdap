@@ -19,10 +19,9 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
-import co.cask.cdap.internal.app.services.DefaultServiceWorkerSpecification;
-import co.cask.cdap.internal.service.DefaultServiceSpecification;
-import co.cask.cdap.internal.service.http.DefaultHttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -69,14 +68,14 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
-    Map<String, HttpServiceSpecification> handlers = deserializeMap(jsonObj.get("handlers"), context,
-                                                                    HttpServiceSpecification.class);
+    Map<String, HttpServiceHandlerSpecification> handlers = deserializeMap(jsonObj.get("handlers"), context,
+                                                                    HttpServiceHandlerSpecification.class);
     Map<String, ServiceWorkerSpecification> workers = deserializeMap(jsonObj.get("workers"), context,
                                                                      ServiceWorkerSpecification.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     int instances = jsonObj.get("instances").getAsInt();
 
-    return new DefaultServiceSpecification(className, name, description, handlers, workers, resources, instances);
+    return new ServiceSpecification(className, name, description, handlers, workers, resources, instances);
   }
 
   @Override
@@ -85,7 +84,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     object.addProperty("className", spec.getClassName());
     object.addProperty("name", spec.getName());
     object.addProperty("description", spec.getDescription());
-    object.add("handlers", serializeMap(spec.getHandlers(), context, HttpServiceSpecification.class));
+    object.add("handlers", serializeMap(spec.getHandlers(), context, HttpServiceHandlerSpecification.class));
     object.add("workers", serializeMap(spec.getWorkers(), context, ServiceWorkerSpecification.class));
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.addProperty("instances", spec.getInstances());
@@ -99,7 +98,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
   private ServiceSpecification decodeOldSpec(JsonObject json) {
     String className = json.get("classname").getAsString();
     TwillSpecification twillSpec = twillSpecificationAdapter.fromJson(json.get("spec").getAsString());
-    Map<String, HttpServiceSpecification> handlers = Maps.newHashMap();
+    Map<String, HttpServiceHandlerSpecification> handlers = Maps.newHashMap();
     Map<String, ServiceWorkerSpecification> workers = Maps.newHashMap();
 
     RuntimeSpecification handlerSpec = twillSpec.getRunnables().get(twillSpec.getName());
@@ -117,13 +116,14 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
       Map<String, String> properties = GSON.fromJson(spec.get("properties"),
                                                      new TypeToken<Map<String, String>>() { }.getType());
 
-      // Reconstruct the HttpServiceSpecification. However there is no way to determine the datasets as it is
-      // not recorded in old spec. It's ok since the spec is only used to load data from MDS during redeploy.
+      // Reconstruct the HttpServiceSpecification. However there is no way to determine the datasets or endpoints
+      // as it is not recorded in old spec. It's ok since the spec is only used to load data from MDS during redeploy.
       handlers.put(spec.get("name").getAsString(),
-                   new DefaultHttpServiceSpecification(handlerClass,
+                   new HttpServiceHandlerSpecification(handlerClass,
                                                        spec.get("name").getAsString(),
                                                        spec.get("description").getAsString(),
-                                                       properties, ImmutableSet.<String>of()));
+                                                       properties, ImmutableSet.<String>of(),
+                                                       ImmutableList.<ServiceHttpEndpoint>of()));
     }
 
     // Generates worker specs.
@@ -132,7 +132,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
       Set<String> datasets = GSON.fromJson(runnableSpec.getConfigs().get("service.datasets"),
                                            new TypeToken<Set<String>>() { }.getType());
       ResourceSpecification resourceSpec = entry.getValue().getResourceSpecification();
-      ServiceWorkerSpecification workerSpec = new DefaultServiceWorkerSpecification(
+      ServiceWorkerSpecification workerSpec = new ServiceWorkerSpecification(
         runnableSpec.getConfigs().get("service.class.name"),
         runnableSpec.getName(), runnableSpec.getName(),
         runnableSpec.getConfigs(), datasets,
@@ -142,9 +142,8 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     }
 
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();
-    return new DefaultServiceSpecification(className, twillSpec.getName(), twillSpec.getName(),
-                                           handlers, workers,
-                                           new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
-                                           resourceSpec.getInstances());
+    return new ServiceSpecification(className, twillSpec.getName(), twillSpec.getName(), handlers, workers,
+                                    new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
+                                    resourceSpec.getInstances());
   }
 }

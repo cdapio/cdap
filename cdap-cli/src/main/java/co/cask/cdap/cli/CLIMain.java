@@ -19,6 +19,7 @@ package co.cask.cdap.cli;
 import co.cask.cdap.cli.command.ConnectCommand;
 import co.cask.cdap.cli.command.HelpCommand;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.common.cli.CLI;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.exception.CLIExceptionHandler;
@@ -35,6 +36,7 @@ import jline.console.completer.Completer;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 import javax.net.ssl.SSLHandshakeException;
@@ -66,6 +68,7 @@ public class CLIMain {
         protected void configure() {
           bind(CLIConfig.class).toInstance(cliConfig);
           bind(ClientConfig.class).toInstance(cliConfig.getClientConfig());
+          bind(CConfiguration.class).toInstance(CConfiguration.create());
         }
       }
     );
@@ -93,10 +96,10 @@ public class CLIMain {
       }
     });
 
-    this.cliConfig.addHostnameChangeListener(new CLIConfig.HostnameChangeListener() {
+    this.cliConfig.addHostnameChangeListener(new CLIConfig.ConnectionChangeListener() {
       @Override
-      public void onHostnameChanged(String newHostname) {
-        cli.getReader().setPrompt("cdap (" + cliConfig.getURI() + ")> ");
+      public void onConnectionChanged(URI newURI) {
+        cli.getReader().setPrompt("cdap (" + newURI + ")> ");
       }
     });
   }

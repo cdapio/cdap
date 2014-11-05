@@ -13,11 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.http;
+
+package co.cask.cdap.client.app;
+
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
- * Represents HTTP methods.
+ * Fake no-op Service.
  */
-public enum HttpMethod {
-  GET, POST, PUT, DELETE;
+public final class PingService extends AbstractHttpServiceHandler {
+  public static final String NAME = "pingService";
+
+  @Path("ping")
+  @GET
+  public void ping(HttpServiceRequest request, HttpServiceResponder responder) {
+    responder.sendStatus(200);
+  }
 }

@@ -20,9 +20,9 @@ import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
@@ -172,7 +172,7 @@ public class HttpHandlerGeneratorTest {
   private static class NoOpHttpServiceContext implements TransactionalHttpServiceContext {
 
     @Override
-    public HttpServiceSpecification getSpecification() {
+    public HttpServiceHandlerSpecification getSpecification() {
       return null;
     }
 

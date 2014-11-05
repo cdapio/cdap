@@ -22,15 +22,15 @@ import co.cask.cdap.client.exception.BadRequestException;
 import co.cask.cdap.client.exception.StreamNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.http.HttpMethod;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpRequests;
-import co.cask.cdap.common.http.HttpResponse;
-import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.cdap.security.authentication.client.AccessToken;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
+import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -44,8 +44,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.List;
 import javax.inject.Inject;
@@ -226,7 +224,7 @@ public class StreamClient {
       urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION, accessToken.getTokenType() + " " + accessToken.getValue());
     }
 
-    if (urlConn instanceof HttpsURLConnection && !config.getDefaultConfig().isVerifySSLCert()) {
+    if (urlConn instanceof HttpsURLConnection && !config.isVerifySSLCert()) {
       try {
         HttpRequests.disableCertCheck((HttpsURLConnection) urlConn);
       } catch (Exception e) {

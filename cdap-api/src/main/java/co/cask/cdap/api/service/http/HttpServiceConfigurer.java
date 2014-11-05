@@ -24,7 +24,7 @@ import java.util.Map;
 public interface HttpServiceConfigurer {
 
   /**
-   * Sets a set of properties that will be available through the {@link HttpServiceSpecification#getProperties()}
+   * Sets a set of properties that will be available through the {@link HttpServiceHandlerSpecification#getProperties()}
    * at runtime.
    *
    * @param properties the properties to set

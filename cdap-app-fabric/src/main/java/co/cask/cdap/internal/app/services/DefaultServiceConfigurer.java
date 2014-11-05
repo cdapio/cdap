@@ -22,12 +22,22 @@ import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
-import co.cask.cdap.internal.service.DefaultServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
+import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
+import co.cask.http.HttpHandler;
+import co.cask.http.NettyHttpService;
 import com.clearspring.analytics.util.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,9 +48,10 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private String name;
   private String description;
   private Map<String, ServiceWorkerSpecification> workers;
-  private Map<String, HttpServiceSpecification> handlers;
+  private List<HttpServiceHandler> handlers;
   private Resources resources;
   private int instances;
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceConfigurer.class);
 
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
@@ -50,7 +61,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     this.name = service.getClass().getSimpleName();
     this.description = "";
     this.workers = Maps.newHashMap();
-    this.handlers = Maps.newHashMap();
+    this.handlers = Lists.newArrayList();
     this.resources = new Resources();
     this.instances = 1;
   }
@@ -84,14 +95,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   @Override
   public void addHandlers(Iterable<? extends HttpServiceHandler> serviceHandlers) {
-    for (HttpServiceHandler handler : serviceHandlers) {
-      DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler);
-      handler.configure(configurer);
-      HttpServiceSpecification spec = configurer.createSpecification();
-      Preconditions.checkArgument(!handlers.containsKey(spec.getName()),
-                                  "Handler with name %s already existed.", spec.getName());
-      handlers.put(spec.getName(), spec);
-    }
+    Iterables.addAll(handlers, serviceHandlers);
   }
 
   @Override
@@ -107,7 +111,72 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   public ServiceSpecification createSpecification() {
-    Preconditions.checkArgument(!handlers.isEmpty(), "Cannot define a Service without handler.");
-    return new DefaultServiceSpecification(className, name, description, handlers, workers, resources, instances);
+    Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
+    return new ServiceSpecification(className, name, description, handleSpecs, workers, resources, instances);
+  }
+
+  /**
+   * Constructs HttpServiceSpecifications for each of the handlers in the {@param handlers} list.
+   * Also performs verifications on these handlers (that a NettyHttpService can be constructed from them).
+   */
+  private Map<String, HttpServiceHandlerSpecification> createHandlerSpecs(List<? extends HttpServiceHandler> handlers) {
+    verifyHandlers(handlers);
+    Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
+    for (HttpServiceHandler handler : handlers) {
+      DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(handler);
+      handler.configure(configurer);
+      HttpServiceHandlerSpecification spec = configurer.createSpecification();
+      Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
+                                  "Handler with name %s already existed.", spec.getName());
+      handleSpecs.put(spec.getName(), spec);
+    }
+    return handleSpecs;
+  }
+
+  private void verifyHandlers(List<? extends HttpServiceHandler> handlers) {
+    Preconditions.checkArgument(!Iterables.isEmpty(handlers), "Service %s should have at least one handler", name);
+    try {
+      List<HttpHandler> httpHandlers = Lists.newArrayList();
+      for (HttpServiceHandler handler : handlers) {
+        httpHandlers.add(createHttpHandler(handler));
+      }
+
+      // Constructs a NettyHttpService, to verify that the handlers passed in by the user are valid.
+      NettyHttpService.builder()
+        .addHttpHandlers(httpHandlers)
+        .build();
+    } catch (Throwable t) {
+      String errMessage = String.format("Invalid handlers in service: %s.", name);
+      LOG.error(errMessage, t);
+      throw new IllegalArgumentException(errMessage, t);
+    }
+
+  }
+
+  private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler) {
+    HttpHandlerFactory factory = new HttpHandlerFactory("");
+    @SuppressWarnings("unchecked")
+    TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());
+    return factory.createHttpHandler(type, new VerificationDelegateContext<T>(handler));
+  }
+
+  private static final class VerificationDelegateContext<T extends HttpServiceHandler> implements DelegatorContext<T> {
+
+    private final T handler;
+
+    private VerificationDelegateContext(T handler) {
+      this.handler = handler;
+    }
+
+    @Override
+    public T getHandler() {
+      return handler;
+    }
+
+    @Override
+    public HttpServiceContext getServiceContext() {
+      // Never used. (It's only used during server runtime, which we don't verify).
+      return null;
+    }
   }
 }

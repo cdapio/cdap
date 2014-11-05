@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.metrics.collect;
 
-import co.cask.cdap.metrics.transport.MetricContentType;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.cache.CacheBuilder;
@@ -79,7 +79,7 @@ final class AggregatedMetricsEmitter implements MetricsEmitter {
     for (Map.Entry<String, AtomicLong> entry : tagValues.asMap().entrySet()) {
       builder.add(new TagMetric(entry.getKey(), entry.getValue().getAndSet(0)));
     }
-    MetricContentType type = gaugeUsed.getAndSet(false) ? MetricContentType.GAUGE : MetricContentType.COUNT;
+    MetricType type = gaugeUsed.getAndSet(false) ? MetricType.GAUGE : MetricType.COUNTER;
     return new MetricsRecord(context, runId, name, builder.build(), timestamp, value, type);
   }
 

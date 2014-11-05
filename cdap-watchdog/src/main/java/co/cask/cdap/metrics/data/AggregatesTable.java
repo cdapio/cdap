@@ -24,7 +24,7 @@ import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.transport.MetricContentType;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.base.Preconditions;
@@ -102,7 +102,7 @@ public final class AggregatesTable {
       while (records.hasNext()) {
         MetricsRecord record = records.next();
         byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
-        if (record.getType() == MetricContentType.COUNT) {
+        if (record.getType() == MetricType.COUNTER) {
           Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
           // The no tag value
@@ -113,9 +113,8 @@ public final class AggregatesTable {
             increments.put(Bytes.toBytes(tag.getTag()), tag.getValue());
           }
           aggregatesTable.increment(rowKey, increments);
-        } else if (record.getType() == MetricContentType.GAUGE) {
+        } else if (record.getType() == MetricType.GAUGE) {
           NavigableMap<byte[], Long> gauges = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-
           // The no tag value
           gauges.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
 
