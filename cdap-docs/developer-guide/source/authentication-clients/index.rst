@@ -2,8 +2,6 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-:showtoc: true
-
 .. _authentication-clients:
 
 ================================================

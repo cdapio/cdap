@@ -14,20 +14,20 @@ You specify a Stream in your :ref:`Application <applications>` specification::
 
   addStream(new Stream("myStream"));
 
-specifies a new Stream named *myStream*. Names used for Streams need to
-be unique across the CDAP instance.
+This specifies a new Stream named *myStream*. 
 
+Streams are uniquely identified by an ID string (a "name") and are explicitly created
+before being used. Names used for Streams need to be unique across the CDAP instance, as
+Streams are shared between applications.
+
+They can be created programmatically within your application, through the CDAP Console, or
+by using a command-line tool. Data written to a Stream can be consumed in real-time by
+:ref:`Flows <flows>` or in batch by :ref:`MapReduce Jobs. <mapreduce>`.
 You can write to Streams either one operation at a time or in batches,
 using either the :ref:`Cask Data Application Platform HTTP RESTful API <rest-streams>`
 or command-line tools.
 
-Each individual signal sent to a Stream is stored as a ``StreamEvent``,
-which is comprised of a header (a map of strings for metadata) and a
-body (a blob of binary data).
+Each individual signal sent to a Stream is stored as a ``StreamEvent``, which is comprised
+of a header (a map of strings for metadata) and a body (a blob of binary data).
 
-Streams are uniquely identified by an ID string (a "name") and are
-explicitly created before being used. They can be created
-programmatically within your application, through the CDAP Console,
-or by or using a command-line tool. Data written to a Stream
-can be consumed in real-time by Flows or in batch by MapReduce. Streams are shared
-between applications, so they require a unique name.
+

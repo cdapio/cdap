@@ -49,8 +49,6 @@ HTTP Responses
    * - ``200 OK``
      - The event successfully called the method, and the body contains the results
 
-.. rst2pdf: PageBreak
-
 Checking Status of a Specific CDAP System Service
 -------------------------------------------------
 To check the status of a specific System Service, use::
@@ -117,8 +115,6 @@ Example
    * - Description
      - Returns the status of the Metrics Service
 
-.. rst2pdf: PageBreak
-
 Scaling System Services
 -----------------------
 In distributed CDAP installations, the number of instances for system services 
@@ -154,11 +150,8 @@ Examples
      - ``GET <base-url>/system/services/metrics/instances``
    * - Description
      - Determine the number of instances being used for the metrics HTTP service 
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
+   * - 
+     - 
    * - HTTP Method
      - ``PUT <base-url>/system/services/metrics/instances``
        ``instances``

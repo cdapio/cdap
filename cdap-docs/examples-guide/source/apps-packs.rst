@@ -12,7 +12,7 @@ CDAP Applications Repository
 The `CDAP Apps <https://github.com/caskdata/cdap-apps/>`__ repository contains data applications built using
 CDAP. Selected applications include:
 
-- `WISE: <https://github.com/caskdata/cdap-apps/tree/develop/Wise/>`__ Web analytics application
+- `Wise: <https://github.com/caskdata/cdap-apps/tree/develop/Wise/>`__ Web analytics application
 
   Web Insights Engine analyzes the behavior of users of a website by processing Apache web logs. 
   Refer to `the online tutorial <case-study.html>`__ to learn how to build it from scratch.

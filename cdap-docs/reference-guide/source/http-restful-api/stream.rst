@@ -60,8 +60,6 @@ Comments
 - The ``<new-stream-id>`` should only contain ASCII letters, digits and hyphens.
 - If the Stream already exists, no error is returned, and the existing Stream remains in place.
 
-.. rst2pdf: PageBreak
-
 Sending Events to a Stream
 --------------------------
 An event can be sent to a Stream by sending an HTTP POST method to the URL of the Stream::
@@ -120,8 +118,6 @@ After receiving the request, the HTTP handler transforms it into a Stream event:
 - If the request contains any headers prefixed with the *stream-id*,
   the *stream-id* prefix is stripped from the header name and
   the header is added to the event.
-
-.. rst2pdf: PageBreak
 
 Reading Events from a Stream
 ----------------------------
@@ -192,8 +188,6 @@ Example
    * - Response body
      - ``[ {"timestamp" : 1407806944181, "headers" : { }, "body" : "Hello World" } ]``
 
-.. rst2pdf: PageBreak
-
 Truncating a Stream
 -------------------
 Truncating means deleting all events that were ever written to the Stream.
@@ -234,8 +228,6 @@ Example
      - ``POST <base-url>/streams/mystream/truncate``
    * - Description
      - Delete all events in the Stream named *mystream*
-
-.. rst2pdf: PageBreak
 
 Setting Time-To-Live Property of a Stream
 -----------------------------------------

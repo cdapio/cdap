@@ -72,7 +72,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   for debugging ,** and recommendations on **packaging your completed application** prior to deployment.
 
 
-.. |ingesting-tools| replace:: **Ingesting Tools:**
+.. |ingesting-tools| replace:: **Ingesting Data:**
 .. _ingesting-tools: ingesting-tools/index.html
 
 - |ingesting-tools|_ CDAP comes with a number of tools to make a developer’s life easier. These
@@ -85,14 +85,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |authentication-clients|_ Theses tools **fetch access tokens from the
   authentication service.** Two APIs are currently available: Java and Python.
-
-
-.. |tools| replace:: **Tools:**
-.. _tools: tools/index.html
-
-- |tools|_ CDAP comes with a number of tools to make a developer’s life easier. These
-  tools help with **ingesting data** into CDAP and
-  **authenticating clients and fetching access tokens.**
 
 
 .. |advanced| replace:: **Advanced Topics:**

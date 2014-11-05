@@ -51,17 +51,15 @@ Examples
        ``WhoFlow/flowlets/saver/process.busyness?aggregate=true``
    * - Description
      - Using a *System* metric, *process.busyness*
-
-.. list-table::
-   :widths: 20 80
-   :stub-columns: 1
-
+   * - 
+     - 
    * - HTTP Method
      - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
        ``WhoFlow/flowlets/saver/names.bytes?aggregate=true``
    * - Description
      - Using a *User-Defined* metric, *names.bytes*
-
+   * - 
+     - 
    * - HTTP Method
      - ``GET <base-url>/metrics/user/apps/HelloWorld/services/``
        ``WhoService/runnables/WhoRun/names.bytes?aggregate=true``
@@ -129,8 +127,6 @@ with the arguments as a JSON string in the body::
 
 If the context of the requested metric or metric itself doesn't exist the system returns status 200 (OK) with JSON formed as per above description and with values being zeroes.
 
-.. rst2pdf: PageBreak
-
 Time Range
 ----------
 The time range of a metric query can be specified in various ways:
@@ -156,8 +152,6 @@ Instead of getting the values for each second of a time range, you can also retr
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
   GET <base-url>/metrics/system/apps/CountRandom/process.events.processed?aggregate=true
-
-.. rst2pdf: PageBreak
 
 Available Contexts
 ------------------
@@ -209,8 +203,6 @@ Stream metrics are only available at the Stream level and the only available con
    * - A single Stream
      - ``/streams/<stream-id>``
 
-.. rst2pdf: PageBreak
-
 Dataset metrics are available at the Dataset level, but they can also be queried down to the
 Flowlet, Procedure, Mapper, or Reducer level:
 
@@ -231,8 +223,6 @@ Flowlet, Procedure, Mapper, or Reducer level:
      - ``/datasets/<dataset-id>``
    * - All Datasets across all Applications
      - ``/``
-
-.. rst2pdf: PageBreak
 
 Available Metrics
 -----------------

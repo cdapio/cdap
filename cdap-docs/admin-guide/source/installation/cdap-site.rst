@@ -387,8 +387,6 @@ see the :ref:`security` section.
      - ``40000``
      - Zookeeper session time out in milliseconds
 
-.. rst2pdf: PageBreak
-
 .. _note 1:
 
 **Note 1**:

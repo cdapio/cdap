@@ -13,7 +13,7 @@ To use the **Virtual Machine image**:
 
 - Download and install either `Oracle VirtualBox <https://www.virtualbox.org>`__ or
   `VMWare <http://www.vmware.com/products/player>`__ player to your environment.
-- Download the CDAP Standalone Virtual Machine (*Standalone VM*) at `<http://cask.co/downloads>`__.
+- Download the CDAP Standalone Virtual Machine (*Standalone VM*) at `<http://cask.co/downloads/#cdap>`__.
 - Import the downloaded ``.ova`` file into either the VirtualBox or VMWare Player.
 
 The CDAP Standalone Virtual Machine is configured with the recommended settings for Standalone CDAP:
@@ -32,10 +32,11 @@ No password is required to enter the virtual machine; however, should you need t
 remove software, the admin user and password are both ``cdap``.
 
 .. include:: ../../../build/_includes/dev-env-versioned.rst  
-   :start-line: 4
+   :start-line: 5
 
 .. include:: ../../../build/_includes/start-stop-cdap-versioned.rst  
    :start-line: 4
+   :end-line:   29
 
 .. include:: ../building-apps.rst
-   :start-line: 6
+   :start-line: 7

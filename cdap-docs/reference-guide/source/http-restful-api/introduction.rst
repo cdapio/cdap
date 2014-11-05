@@ -50,7 +50,6 @@ and that you are to replace it with your value, perhaps in this case *mystream*:
 
   PUT <base-url>/streams/mystream
 
-.. rst2pdf: PageBreak
 
 Status Codes
 ============
@@ -93,7 +92,7 @@ Status Codes
      - ``Not Implemented``
      - A request contained a query that is not supported by this API
 
-**Note:** These returned status codes are not necessarily included in the descriptions of the API,
+**Note:** These returned status codes are not necessarily included in the descriptions of the APIs,
 but a request may return any of these.
 
 
@@ -102,9 +101,9 @@ Working with CDAP Security
 When working with a CDAP cluster with security enabled (``security.enabled=true`` in
 ``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must
 first obtain an access token from the authentication server (see the :ref:`Client
-Authentication <client-authentication>` section of the *CDAP Developers’ Guide*). In order to
-authenticate, all client requests must supply this access token in the ``Authorization``
-header of the request::
+Authentication <client-authentication>` section of the :ref:`CDAP Developers’ Guide
+<developer:developer-index>`). In order to authenticate, all client requests must supply
+this access token in the ``Authorization`` header of the request::
 
    Authorization: Bearer <token>
 

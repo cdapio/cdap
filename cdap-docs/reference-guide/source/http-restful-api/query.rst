@@ -62,7 +62,7 @@ Example
 
    * - HTTP Request
      - ``PUT <base-url>/data/explore/queries``
-   * - Body
+   * - HTTP Body
      - ``{"query":"SELECT * FROM cdap_user_mydataset LIMIT 5"}``
    * - HTTP Response
      - ``{"handle":"57cf1b01-8dba-423a-a8b4-66cd29dd75e2"}``

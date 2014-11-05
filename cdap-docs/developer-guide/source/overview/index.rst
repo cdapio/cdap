@@ -14,9 +14,10 @@ Cask Data Application Platform Overview
 .. toctree::
    :maxdepth: 1
    
-    Virtualization <virtualization>
-    Concepts and Components <concepts>
     Anatomy of a Big Data Application <anatomy>
+    Concepts and Components <concepts>
+    Virtualization <virtualization>
+    Programming Interfaces <interfaces>
 
 
 **Cask Data Application Platform (CDAP)** is a developer-centric middleware for developing and running
@@ -24,20 +25,22 @@ Big Data applications. Before you learn how to develop and operate applications,
 explain the concepts and architecture of CDAP.
 
 
-.. |virtualization| replace:: **Virtualization:**
-.. _virtualization: virtualization.html
+.. |anatomy| replace:: **Anatomy of a Big Data Application:**
+.. _anatomy: anatomy.html
 
 .. |concepts| replace:: **Concepts and Components:**
 .. _concepts: concepts.html
 
-.. |anatomy| replace:: **Anatomy of a Big Data Application:**
-.. _anatomy: anatomy.html
+.. |virtualization| replace:: **Virtualization:**
+.. _virtualization: virtualization.html
 
-- |virtualization|_ Describes how CDAP lets you **virtualize your data and applications.**
-
-- |concepts|_ Covers the **components of CDAP and their interactions.**
+.. |interfaces| replace:: **Programming Interfaces:**
+.. _interfaces: interfaces.html
 
 - |anatomy|_ Explains the **areas of concern in developing a Big Data application,** and how you use CDAP to address these.
+- |concepts|_ Covers the **components of CDAP and their interactions.**
+- |virtualization|_ Describes how CDAP lets you **virtualize your data and applications.**
+- |interfaces|_ CDAP interfaces can be described as either **Developer or Clients interfaces.**
 
 
 .. rubric:: Where to Go Next

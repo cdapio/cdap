@@ -62,7 +62,7 @@ Example
      - ``GET <base-url>/apps/AnalyticsApp/services/IpGeoLookupService/methods/lookup/46.19.42.110``
    * - Description
      - Make a request to the ``lookup/{ip}`` endpoint of the ``IpGeoLookupService`` in ``AnalyticsApp``.
-   * - Response status code
+   * - Response Status Code
      - ``200 OK``
-   * - Response body
+   * - Response Body
      - ``{"latitude": "76.9285", "longitude": "76.9285"}``

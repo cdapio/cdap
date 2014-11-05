@@ -165,20 +165,24 @@ Examples
    :widths: 20 80
    :stub-columns: 1
 
-   * -
-     - **Example / Description**
    * - HTTP Method
      - ``POST <base-url>/apps/HelloWorld/flows/WhoFlow/start``
-   * -
+   * - Description
      - Start a Flow *WhoFlow* in the Application *HelloWorld*
+   * - 
+     - 
    * - HTTP Method
      - ``POST <base-url>/apps/Count/procedures/GetCounts/stop``
-   * -
+   * - Description
      - Stop the Procedure *GetCounts* in the Application *Count*
+   * - 
+     - 
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/status``
-   * -
+   * - Description
      - Get the status of the Flow *WhoFlow* in the Application *HelloWorld*
+   * - 
+     - 
    * - HTTP Method
      - ``POST <base-url>/status``
    * - HTTP Body
@@ -188,8 +192,8 @@ Examples
      - ``[{"appId":"MyApp", "programType":"flow", "programId":"MyFlow", "status":"RUNNING", "statusCode":200},``
        ``{"appId":"MyApp2", "programType":"procedure", "programId":"MyProcedure",``
        ``"error":"Program not found", "statusCode":404}]``
-   * -
-     - Try to get the status of the Flow *MyFlow* in the Application *MyApp* and of the Procedure *MyProcedure*
+   * - Description
+     - Attempt to get the status of the Flow *MyFlow* in the Application *MyApp* and of the Procedure *MyProcedure*
        in the Application *MyApp2*
 
 When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::

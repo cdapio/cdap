@@ -53,16 +53,16 @@ To use the **Docker image**:
   and enter the address to access the CDAP Console.
 
 - In order to begin building CDAP applications, have our :ref:`recommended software and tools
-  <system-requirements-and-dependencies>` installed in your environment.
+  <system-requirements>` installed in your environment.
 
 - For a full list of Docker Commands, see the `Docker Command-Line Documentation.
   <https://docs.docker.com/reference/commandline/cli/>`__
 
 .. include:: ../../../build/_includes/dev-env-versioned.rst  
-   :start-line: 4
+   :start-line: 5
 
 .. include:: ../../../build/_includes/start-stop-cdap-versioned.rst  
    :start-line: 4
 
 .. include:: ../building-apps.rst
-   :start-line: 6
+   :start-line: 7
