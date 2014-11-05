@@ -43,14 +43,7 @@ You can either download the application zip archive that we have built for you, 
 you can pull the source code from GitHub. If you download the zip file, then the application
 is already built and packaged::
 
-  $ wget http://repository.cask.co/downloads/co/cask/cdap/apps/0.2.0/cdap-wise-0.2.0.zip
-  
-or::
-
   $ curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/0.2.0/cdap-wise-0.2.0.zip
-
-::
-
   $ unzip cdap-wise-0.2.0.zip
   $ cd cdap-wise-0.2.0
 
