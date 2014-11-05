@@ -24,9 +24,9 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.http.HttpMethod;
-import co.cask.cdap.common.http.HttpResponse;
-import co.cask.cdap.common.http.ObjectResponse;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpResponse;
+import co.cask.common.http.ObjectResponse;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;

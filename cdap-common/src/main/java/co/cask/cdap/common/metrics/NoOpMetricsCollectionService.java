@@ -40,6 +40,11 @@ public class NoOpMetricsCollectionService extends AbstractIdleService implements
       public void increment(String metricName, int value, String... tags) {
         // no-op
       }
+
+      @Override
+      public void gauge(String metricName, long value, String... tags) {
+        // no-op
+      }
     };
   }
 }
