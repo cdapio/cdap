@@ -93,23 +93,23 @@ public class Hive13ExploreService extends BaseHiveExploreService {
 
   protected QueryResult.ResultObject rowObjectToQueryResultObject(Object obj) throws ExploreException {
     if (obj instanceof Boolean) {
-      return new QueryResult.ResultObject((Boolean) obj);
+      return QueryResult.ResultObject.of((Boolean) obj);
     } else if (obj instanceof Byte) {
-      return new QueryResult.ResultObject((Byte) obj);
+      return QueryResult.ResultObject.of((Byte) obj);
     } else if (obj instanceof Double) {
-      return new QueryResult.ResultObject((Double) obj);
+      return QueryResult.ResultObject.of((Double) obj);
     } else if (obj instanceof Short) {
-      return new QueryResult.ResultObject((Short) obj);
+      return QueryResult.ResultObject.of((Short) obj);
     } else if (obj instanceof Integer) {
-      return new QueryResult.ResultObject((Integer) obj);
+      return QueryResult.ResultObject.of((Integer) obj);
     } else if (obj instanceof Long) {
-      return new QueryResult.ResultObject((Long) obj);
+      return QueryResult.ResultObject.of((Long) obj);
     } else if (obj instanceof String) {
-      return new QueryResult.ResultObject((String) obj);
+      return QueryResult.ResultObject.of((String) obj);
     } else if (obj instanceof byte[]) {
-      return new QueryResult.ResultObject((byte[]) obj);
+      return QueryResult.ResultObject.of((byte[]) obj);
     } else if (obj == null) {
-      return new QueryResult.ResultObject();
+      return QueryResult.ResultObject.of();
     }
     throw new ExploreException("Unknown column value encountered: " + obj);
   }

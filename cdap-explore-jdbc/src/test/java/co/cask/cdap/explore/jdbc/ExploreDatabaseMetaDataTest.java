@@ -129,8 +129,8 @@ public class ExploreDatabaseMetaDataTest {
         ),
         ImmutableMap.of(statement, (List<QueryResult>) Lists.newArrayList(
                           new QueryResult(ImmutableList.of(
-                            new QueryResult.ResultObject("some value"),
-                            new QueryResult.ResultObject(10))
+                            QueryResult.ResultObject.of("some value"),
+                            QueryResult.ResultObject.of(10))
                           )
                         )
         )

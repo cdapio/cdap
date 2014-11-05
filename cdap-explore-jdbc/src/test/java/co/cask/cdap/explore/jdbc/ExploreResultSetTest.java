@@ -58,21 +58,21 @@ public class ExploreResultSetTest {
         )),
         ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
             new QueryResult(ImmutableList.of(
-              new QueryResult.ResultObject("value1"),
-              new QueryResult.ResultObject(1),
-              new QueryResult.ResultObject("c"),
-              new QueryResult.ResultObject(0.1d),
-              new QueryResult.ResultObject(0.2d),
-              new QueryResult.ResultObject(true),
-              new QueryResult.ResultObject(0x1),
-              new QueryResult.ResultObject((short) 2),
-              new QueryResult.ResultObject((long) 10),
-              new QueryResult.ResultObject("2014-06-20"),
-              new QueryResult.ResultObject("2014-06-20 07:37:00"),
-              new QueryResult.ResultObject("1000000000"),
-              new QueryResult.ResultObject("\"{\"key1\":\"value1\"}"),
-              new QueryResult.ResultObject("[\"a\",\"b\",\"c\"]"),
-              new QueryResult.ResultObject("{\"name\":\"first\",\"attr\":\"second\"}")
+              QueryResult.ResultObject.of("value1"),
+              QueryResult.ResultObject.of(1),
+              QueryResult.ResultObject.of("c"),
+              QueryResult.ResultObject.of(0.1d),
+              QueryResult.ResultObject.of(0.2d),
+              QueryResult.ResultObject.of(true),
+              QueryResult.ResultObject.of(0x1),
+              QueryResult.ResultObject.of((short) 2),
+              QueryResult.ResultObject.of((long) 10),
+              QueryResult.ResultObject.of("2014-06-20"),
+              QueryResult.ResultObject.of("2014-06-20 07:37:00"),
+              QueryResult.ResultObject.of("1000000000"),
+              QueryResult.ResultObject.of("\"{\"key1\":\"value1\"}"),
+              QueryResult.ResultObject.of("[\"a\",\"b\",\"c\"]"),
+              QueryResult.ResultObject.of("{\"name\":\"first\",\"attr\":\"second\"}")
             ))
         ))
     );
@@ -116,8 +116,8 @@ public class ExploreResultSetTest {
         )),
         ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
           new QueryResult(ImmutableList.of(
-            new QueryResult.ResultObject(1),
-            new QueryResult.ResultObject("value1"))
+            QueryResult.ResultObject.of(1),
+            QueryResult.ResultObject.of("value1"))
           )
         ))
     );

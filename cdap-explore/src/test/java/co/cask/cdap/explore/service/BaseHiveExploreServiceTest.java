@@ -152,41 +152,57 @@ public class BaseHiveExploreServiceTest {
   protected static void runCommand(String command, boolean expectedHasResult,
                                    List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
     throws Exception {
+    // Only 10 results max by default
+    runCommand(command, expectedHasResult, 10, expectedColumnDescs, expectedResults);
+  }
+
+  protected static void runCommand(String command, boolean expectedHasResult, int maxResults,
+                                   List<ColumnDesc> expectedColumnDescs, List<QueryResult> expectedResults)
+    throws Exception {
 
     ListenableFuture<ExploreExecutionResult> future = exploreClient.submit(command);
-    assertStatementResult(future, expectedHasResult, expectedColumnDescs, expectedResults);
+    assertStatementResult(future, expectedHasResult, maxResults, expectedColumnDescs, expectedResults);
   }
 
   protected static void assertStatementResult(ListenableFuture<ExploreExecutionResult> future,
                                               boolean expectedHasResult, List<ColumnDesc> expectedColumnDescs,
                                               List<QueryResult> expectedResults)
     throws Exception {
-    ExploreExecutionResult results = future.get();
-
-    Assert.assertEquals(expectedHasResult, results.hasNext());
-
-    Assert.assertEquals(expectedColumnDescs, results.getResultSchema());
-    Assert.assertEquals(expectedResults, trimColumnValues(results));
-
-    results.close();
+    // Only 10 results max by default
+    assertStatementResult(future, expectedHasResult, 10, expectedColumnDescs, expectedResults);
   }
 
-  protected static List<QueryResult> trimColumnValues(Iterator<QueryResult> results) {
+  protected static void assertStatementResult(ListenableFuture<ExploreExecutionResult> future,
+                                              boolean expectedHasResult, int maxResults,
+                                              List<ColumnDesc> expectedColumnDescs,
+                                              List<QueryResult> expectedResults)
+    throws Exception {
+    ExploreExecutionResult results = future.get();
+
+    try {
+      Assert.assertEquals(expectedHasResult, results.hasNext());
+      Assert.assertEquals(expectedColumnDescs, results.getResultSchema());
+      Assert.assertEquals(expectedResults, trimColumnValues(results, maxResults));
+    } finally {
+      results.close();
+    }
+  }
+
+  protected static List<QueryResult> trimColumnValues(Iterator<QueryResult> results, int maxResults) {
     int i = 0;
     List<QueryResult> newResults = Lists.newArrayList();
-    // Max 10 results
-    while (results.hasNext() && i < 10) {
+    while (results.hasNext() && i < maxResults) {
       i++;
       QueryResult result = results.next();
       List<QueryResult.ResultObject> newCols = Lists.newArrayList();
       for (QueryResult.ResultObject obj : result.getColumns()) {
         switch (obj.getType()) {
           case STRING:
-            newCols.add(new QueryResult.ResultObject(obj.getStringValue().trim()));
+            newCols.add(QueryResult.ResultObject.of(obj.getStringValue().trim()));
             break;
           case DOUBLE:
             // NOTE: this means only use 4 decimals for double and float values in test cases
-            newCols.add(new QueryResult.ResultObject((double) Math.round(obj.getDoubleValue() * 10000) / 10000));
+            newCols.add(QueryResult.ResultObject.of((double) Math.round(obj.getDoubleValue() * 10000) / 10000));
             break;
           default:
             newCols.add(obj);

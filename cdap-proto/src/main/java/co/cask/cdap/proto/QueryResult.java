@@ -17,9 +17,12 @@
 package co.cask.cdap.proto;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents one row of a query result.
@@ -30,15 +33,37 @@ public class QueryResult {
    * Type of a cell in a query result row.
    */
   public enum ResultType {
-    BOOLEAN,
-    BYTE,
-    SHORT,
-    INT,
-    LONG,
-    DOUBLE,
-    STRING,
-    BINARY,
-    NULL
+    BOOLEAN(Boolean.class),
+    BYTE(Byte.class),
+    SHORT(Short.class),
+    INT(Integer.class),
+    LONG(Long.class),
+    DOUBLE(Double.class),
+    STRING(String.class),
+    BINARY(byte[].class),
+    NULL(null);
+
+    private static Map<Class<?>, ResultType> types;
+    private final Class<?> cls;
+
+    static {
+      types = Maps.newIdentityHashMap();
+      for (ResultType type : ResultType.values()) {
+        if (type.cls != null) {
+          types.put(type.cls, type);
+        }
+      }
+    }
+
+    private ResultType(Class<?> cls) {
+      this.cls = cls;
+    }
+
+    static ResultType of(Class<?> cls) {
+      ResultType type = types.get(cls);
+      Preconditions.checkArgument(type != null, String.format("Type %s is not supported.", cls));
+      return type;
+    }
   }
 
   private final List<ResultObject> columns;
@@ -91,48 +116,53 @@ public class QueryResult {
     String stringValue = null;
     byte[] binaryValue = null;
 
-    public ResultObject(Boolean value) {
-      this.booleanValue = value;
-      this.type = ResultType.BOOLEAN;
+    /**
+     * Create a Hive query result row cell based on a value.
+     */
+    public static ResultObject of(Object value) {
+      if (value == null) {
+        return of();
+      }
+      return new ResultObject(ResultType.of(value.getClass()), value);
     }
 
-    public ResultObject(Byte value) {
-      this.byteValue = value;
-      this.type = ResultType.BYTE;
+    /**
+     * Create a null Hive query result row cell.
+     */
+    public static ResultObject of() {
+      return new ResultObject(ResultType.NULL, null);
     }
 
-    public ResultObject(Short shortValue) {
-      this.shortValue = shortValue;
-      this.type = ResultType.SHORT;
-    }
-
-    public ResultObject(Integer intValue) {
-      this.intValue = intValue;
-      this.type = ResultType.INT;
-    }
-
-    public ResultObject(Long longValue) {
-      this.longValue = longValue;
-      this.type = ResultType.LONG;
-    }
-
-    public ResultObject(Double doubleValue) {
-      this.doubleValue = doubleValue;
-      this.type = ResultType.DOUBLE;
-    }
-
-    public ResultObject(String stringValue) {
-      this.stringValue = stringValue;
-      this.type = ResultType.STRING;
-    }
-
-    public ResultObject(byte[] binaryValue) {
-      this.binaryValue = binaryValue;
-      this.type = ResultType.BINARY;
-    }
-
-    public ResultObject() {
-      this.type = ResultType.NULL;
+    private ResultObject(ResultType type, Object value) {
+      this.type = type;
+      switch (type) {
+        case BOOLEAN:
+          booleanValue = (Boolean) value;
+          break;
+        case BYTE:
+          byteValue = (Byte) value;
+          break;
+        case SHORT:
+          shortValue = (Short) value;
+          break;
+        case INT:
+          intValue = (Integer) value;
+          break;
+        case LONG:
+          longValue = (Long) value;
+          break;
+        case DOUBLE:
+          doubleValue = (Double) value;
+          break;
+        case STRING:
+          stringValue = (String) value;
+          break;
+        case BINARY:
+          binaryValue = (byte[]) value;
+          break;
+        case NULL:
+          break;
+      }
     }
 
     public Boolean getBooleanValue() {

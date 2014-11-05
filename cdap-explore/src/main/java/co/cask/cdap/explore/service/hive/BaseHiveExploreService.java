@@ -998,19 +998,19 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected QueryResult.ResultObject tColumnToObject(TColumnValue tColumnValue) throws ExploreException {
     if (tColumnValue.isSetBoolVal()) {
-      return new QueryResult.ResultObject(tColumnValue.getBoolVal().isValue());
+      return QueryResult.ResultObject.of(tColumnValue.getBoolVal().isValue());
     } else if (tColumnValue.isSetByteVal()) {
-      return new QueryResult.ResultObject(tColumnValue.getByteVal().getValue());
+      return QueryResult.ResultObject.of(tColumnValue.getByteVal().getValue());
     } else if (tColumnValue.isSetDoubleVal()) {
-      return new QueryResult.ResultObject(tColumnValue.getDoubleVal().getValue());
+      return QueryResult.ResultObject.of(tColumnValue.getDoubleVal().getValue());
     } else if (tColumnValue.isSetI16Val()) {
-      return new QueryResult.ResultObject(tColumnValue.getI16Val().getValue());
+      return QueryResult.ResultObject.of(tColumnValue.getI16Val().getValue());
     } else if (tColumnValue.isSetI32Val()) {
-      return new QueryResult.ResultObject(tColumnValue.getI32Val().getValue());
+      return QueryResult.ResultObject.of(tColumnValue.getI32Val().getValue());
     } else if (tColumnValue.isSetI64Val()) {
-      return new QueryResult.ResultObject(tColumnValue.getI64Val().getValue());
+      return QueryResult.ResultObject.of(tColumnValue.getI64Val().getValue());
     } else if (tColumnValue.isSetStringVal()) {
-      return new QueryResult.ResultObject(tColumnValue.getStringVal().getValue());
+      return QueryResult.ResultObject.of(tColumnValue.getStringVal().getValue());
     }
     throw new ExploreException("Unknown column value encountered: " + tColumnValue);
   }

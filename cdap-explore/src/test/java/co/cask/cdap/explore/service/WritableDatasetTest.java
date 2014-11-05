@@ -289,15 +289,15 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
       exploreClient.submit("insert into table simple_table select * from test").get().close();
 
       ExploreExecutionResult result = exploreClient.submit("select * from simple_table").get();
-      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(1), new QueryResult.ResultObject("one")),
+      Assert.assertEquals(ImmutableList.of(QueryResult.ResultObject.of(1), QueryResult.ResultObject.of("one")),
                           result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(2), new QueryResult.ResultObject("two")),
+      Assert.assertEquals(ImmutableList.of(QueryResult.ResultObject.of(2), QueryResult.ResultObject.of("two")),
                           result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(3), new QueryResult.ResultObject("three")),
+      Assert.assertEquals(ImmutableList.of(QueryResult.ResultObject.of(3), QueryResult.ResultObject.of("three")),
                           result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(4), new QueryResult.ResultObject("four")),
+      Assert.assertEquals(ImmutableList.of(QueryResult.ResultObject.of(4), QueryResult.ResultObject.of("four")),
                           result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(5), new QueryResult.ResultObject("five")),
+      Assert.assertEquals(ImmutableList.of(QueryResult.ResultObject.of(5), QueryResult.ResultObject.of("five")),
                           result.next().getColumns());
       Assert.assertFalse(result.hasNext());
       result.close();
@@ -337,7 +337,7 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
       exploreClient.submit("insert into table test select * from simple_table").get().close();
 
       ExploreExecutionResult result = exploreClient.submit("select * from test").get();
-      Assert.assertEquals(ImmutableList.of(new QueryResult.ResultObject(10), new QueryResult.ResultObject("ten")),
+      Assert.assertEquals(ImmutableList.of(QueryResult.ResultObject.of(10), QueryResult.ResultObject.of("ten")),
                           result.next().getColumns());
       Assert.assertFalse(result.hasNext());
       result.close();

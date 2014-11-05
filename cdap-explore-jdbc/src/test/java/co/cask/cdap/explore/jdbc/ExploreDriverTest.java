@@ -321,12 +321,12 @@ public class ExploreDriverTest {
       List<QueryResult> rows = Lists.newArrayList();
       if (!canceledHandles.contains(id) && !handleWithFetchedResutls.contains(id)) {
         rows.add(new QueryResult(ImmutableList.of(
-          new QueryResult.ResultObject(1),
-          new QueryResult.ResultObject("one"))
+          QueryResult.ResultObject.of(1),
+          QueryResult.ResultObject.of("one"))
         ));
         rows.add(new QueryResult(ImmutableList.of(
-          new QueryResult.ResultObject(2),
-          new QueryResult.ResultObject("two"))
+          QueryResult.ResultObject.of(2),
+          QueryResult.ResultObject.of("two"))
         ));
         handleWithFetchedResutls.add(id);
       }
