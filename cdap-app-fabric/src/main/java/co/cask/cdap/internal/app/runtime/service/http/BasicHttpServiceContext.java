@@ -61,7 +61,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     this.runtimeArgs = runtimeArgs.asMap();
     this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
     this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService,
-                                                             getMetricsContext(program, instanceId));
+                                                             getMetricsContext(program, instanceId), runId.getId());
   }
 
   /**

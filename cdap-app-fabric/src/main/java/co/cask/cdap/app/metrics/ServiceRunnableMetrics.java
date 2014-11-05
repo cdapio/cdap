@@ -26,16 +26,9 @@ import co.cask.cdap.proto.ProgramType;
  */
 public class ServiceRunnableMetrics extends AbstractProgramMetrics {
 
-  public ServiceRunnableMetrics(MetricsCollectionService collectionService, String applicationId,
-                                String serviceId, String runnableId, int instanceId) {
+  public ServiceRunnableMetrics(MetricsCollectionService collectionService, String metricsContext, String runId) {
     super(collectionService.getCollector(
-      MetricsScope.USER, String.format("%s.%s.%s.%s.%d", applicationId, TypeId.getMetricContextId(ProgramType.SERVICE),
-                                       serviceId, runnableId, instanceId), "0"));
-  }
-
-  public ServiceRunnableMetrics(MetricsCollectionService collectionService, String metricsContext) {
-    super(collectionService.getCollector(
-      MetricsScope.USER, metricsContext, "0"
+      MetricsScope.USER, metricsContext, runId
     ));
   }
 }

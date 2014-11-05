@@ -154,8 +154,8 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
 
   @Test
   public void testingMetricsWithRunIds() throws Exception {
-    String runId1= "id123";
-    String runId2= "id124";
+    String runId1 = "id123";
+    String runId2 = "id124";
 
     MetricsCollector collector1 = collectionService.getCollector(MetricsScope.USER,
                                                                 "WordCount.s.CounterService.CountRunnable", runId1);

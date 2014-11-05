@@ -82,7 +82,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConf, Namespace.USER));
     this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService,
-                                                             getMetricContext(program, spec.getName(), instanceId));
+                                                             getMetricContext(program, spec.getName(), instanceId),
+                                                             runId.getId());
   }
 
   @Override
@@ -96,7 +97,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   }
 
   private static String getMetricContext(Program program, String runnableName, int instanceId) {
-    return String.format("%s.%s.%s.%s.%s", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SERVICE),
+    return String.format("%s.%s.%s.%s.%d", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SERVICE),
                          program.getName(), runnableName, instanceId);
   }
 

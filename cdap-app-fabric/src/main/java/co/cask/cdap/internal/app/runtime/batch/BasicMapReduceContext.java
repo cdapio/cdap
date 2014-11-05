@@ -95,16 +95,17 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       this.systemReducerMetrics = Maps.newHashMap();
       this.systemMetrics = Maps.newHashMap();
       for (MetricsScope scope : MetricsScope.values()) {
+        String metricsRunId = (scope == MetricsScope.USER) ? runId.getId() : INSTANCE_ID;
         this.systemMapperMetrics.put(
           scope, metricsCollectionService.getCollector(scope,
                                                        getMetricContext(program, MapReduceMetrics.TaskType.Mapper),
-                                                       INSTANCE_ID));
+                                                       metricsRunId));
         this.systemReducerMetrics.put(
           scope, metricsCollectionService.getCollector(scope,
                                                        getMetricContext(program, MapReduceMetrics.TaskType.Reducer),
-                                                       INSTANCE_ID));
+                                                       metricsRunId));
         this.systemMetrics.put(
-          scope, metricsCollectionService.getCollector(scope, getMetricContext(program), INSTANCE_ID));
+          scope, metricsCollectionService.getCollector(scope, getMetricContext(program), metricsRunId));
       }
       // for user metrics.  type can be null if its not in a map or reduce task, but in the yarn container that
       // launches the mapred job.
