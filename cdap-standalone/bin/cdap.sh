@@ -16,6 +16,8 @@
 # the License.
 #
 
+VERSION_HOST="docs.cask.co"
+
 # We need a larger PermSize for SparkProgramRunner to call SparkSubmit
 if [ -d /opt/cdap ]; then
  CDAP_HOME=/opt/cdap; export CDAP_HOME
@@ -165,7 +167,8 @@ check_for_updates() {
   l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`
   if [ $l -eq 3 ]
   then
-    new=`curl 'http://s3.amazonaws.com/cdap-docs/VERSION' 2>/dev/null`
+    new_curl="curl -s ${VERSION_HOST}/cdap/version"
+    new=`eval $new_curl 2>/dev/null`
     if [[ "x${new}" != "x" ]]; then
      current=`cat ${APP_HOME}/VERSION`
      compare_versions $new $current
@@ -173,6 +176,8 @@ check_for_updates() {
        0);;
        1) echo ""
           echo "UPDATE: There is a newer version of the CDAP SDK available."
+          echo "        New version: $new"
+          echo "        Current version: $current"
           echo "        Download it from http://cask.co/downloads"
           echo "";;
        2);;
@@ -388,6 +393,10 @@ case "$1" in
     $1
   ;;
 
+  update)
+    check_for_updates
+  ;;
+  
   *)
     echo "Usage: $0 {start|stop|restart|status}"
     echo "Additional options with start, restart:"
@@ -396,8 +405,5 @@ case "$1" in
     exit 1
   ;;
 
-
 esac
 exit $?
-
-VERSION_HOST="205.186.175.189"
