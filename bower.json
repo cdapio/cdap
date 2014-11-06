@@ -16,6 +16,7 @@
     "angular-loading-bar": "0.6.0",
     "ngstorage": "0.3.0",
 
-    "cask-angular-capitalize": "https://github.com/caskdata/ng-capsules/blob/master/zip/cask-angular-capitalize.zip?raw=true"
+    "cask-angular-capitalize": "https://github.com/caskdata/ng-capsules/blob/master/zip/cask-angular-capitalize.zip?raw=true",
+    "cask-angular-theme": "https://github.com/caskdata/ng-capsules/raw/b0eb82950f4a8281f29352d3f659c91e4af87c11/zip/cask-angular-theme.zip"
   }
 }

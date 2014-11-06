@@ -6,8 +6,8 @@ angular.module(PKG.name+'.feature.home').controller('HomeCtrl',
 function ($alert) {
 
   $alert({
-    title: 'hello world!',
-    content: err,
+    title: 'hello',
+    content: 'world!',
     type: 'info'
   });
 
