@@ -65,10 +65,10 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-  'admin':     ('../../admin-guide/',     os.path.abspath('../../admin-guide/build/html/objects.inv')),
-  'developer': ('../../developer-guide/', os.path.abspath('../../developer-guide/build/html/objects.inv')),
-  'reference': ('../../reference-guide',  os.path.abspath('../../reference-guide/build/html/objects.inv')),
-  'examples':  ('../../examples-guide',   os.path.abspath('../../examples-guide/build/html/objects.inv')),
+  'admin':      ('../../admin-manual/',      os.path.abspath('../../admin-manual/build/html/objects.inv')),
+  'developers': ('../../developers-manual/', os.path.abspath('../../developers-manual/build/html/objects.inv')),
+  'reference':  ('../../reference-manual',   os.path.abspath('../../reference-manual/build/html/objects.inv')),
+  'examples':   ('../../examples-manual',    os.path.abspath('../../examples-manual/build/html/objects.inv')),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -176,10 +176,10 @@ html_theme_path = ['_themes','../../_common/_themes']
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = u"CDAP Developer’s Guide"
+html_short_title = u"CDAP Developer’s Manual"
 
 # A shorter title for the sidebar section, preceding the words "Table of Contents".
-html_short_title_toc = u"Developer’s Guide"
+html_short_title_toc = u"Developer’s Manual"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -210,7 +210,7 @@ html_static_path = ['../../_common/_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**': ['guides.html', 'globaltoc.html', 'relations.html', 'searchbox.html', ],}
+html_sidebars = {'**': ['manuals.html', 'globaltoc.html', 'relations.html', 'searchbox.html', ],}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.

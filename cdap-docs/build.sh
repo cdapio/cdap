@@ -18,10 +18,10 @@
 
 # Builds:
 #
-# admin-guide
-# developer-guide
-# reference-guide
-# examples-guide
+# admin-manual
+# developers-manual
+# reference-manual
+# examples-manual
 
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
@@ -42,9 +42,9 @@ REDIRECT_DEVELOPER_HTML=`cat <<EOF
 <html lang="en-US">
     <head>
         <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="0;url=developer-guide/index.html">
+        <meta http-equiv="refresh" content="0;url=developers-manual/index.html">
         <script type="text/javascript">
-            window.location.href = "developer-guide/index.html"
+            window.location.href = "developers-manual/index.html"
         </script>
         <title></title>
     </head>
@@ -147,10 +147,10 @@ function build_docs_web() {
 
 function build() {
   clean
-  build_specific_doc admin-guide $1
-  build_specific_doc developer-guide $1
-  build_specific_doc reference-guide $1
-  build_specific_doc examples-guide $1
+  build_specific_doc admin-manual $1
+  build_specific_doc developers-manual $1
+  build_specific_doc reference-manual $1
+  build_specific_doc examples-manual $1
   add_redirect
 }
 

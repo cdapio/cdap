@@ -23,9 +23,9 @@
 # which is given relative to the script location.
 #
 # PDF generation examples:
-# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-enterprise-dependencies.pdf ../developer-guide/source/licenses/cdap-enterprise-dependencies.rst
-# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-level-1-dependencies.pdf    ../developer-guide/source/licenses/cdap-level-1-dependencies.rst
-# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-standalone-dependencies.pdf ../developer-guide/source/licenses/cdap-standalone-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-enterprise-dependencies.pdf ../developers-manual/source/licenses/cdap-enterprise-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-level-1-dependencies.pdf    ../developers-manual/source/licenses/cdap-level-1-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-standalone-dependencies.pdf ../developers-manual/source/licenses/cdap-standalone-dependencies.rst
 #
 
 VERSION = "0.0.4"
@@ -194,10 +194,10 @@ def process_pdf(input_file, options):
 
     # Generate PDF
 #     /usr/local/bin/rst2pdf 
-#     --config="/Users/*/*/cdap/docs/developer-guide/source/_templates/pdf-config" 
-#     --stylesheets="/Users/*/*/cdap/docs/developer-guide/source/_templates/pdf-stylesheet" 
-#     -o "/Users/*/*/cdap/docs/developer-guide/build-pdf/rest2.pdf" 
-#     "/Users/*/*/cdap/docs/developer-guide/source/rest.rst_temp”
+#     --config="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-config" 
+#     --stylesheets="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-stylesheet" 
+#     -o "/Users/*/*/cdap/docs/developers-manual/build-pdf/rest2.pdf" 
+#     "/Users/*/*/cdap/docs/developers-manual/source/rest.rst_temp”
 
     command = '/usr/local/bin/rst2pdf --config="%s" --stylesheets="%s" -o "%s" %s' % (config, stylesheets, output, temp_file)
     print "command: %s" % command
