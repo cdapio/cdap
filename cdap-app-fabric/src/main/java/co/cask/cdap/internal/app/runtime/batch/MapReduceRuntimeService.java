@@ -494,7 +494,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         return true;
       } catch (IllegalArgumentException iae) {
         LOG.debug("Failed to set decoder", iae);
-        return false;
       }
     }
     throw new IOException("Failed to determine decoder for consuming StreamEvent from " + userClass);
