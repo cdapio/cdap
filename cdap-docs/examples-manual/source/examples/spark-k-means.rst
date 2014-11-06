@@ -50,8 +50,8 @@ The calculated centers data is stored in a second ObjectStore Dataset, *centers*
 This procedure has a ``centers`` method to obtain the center's coordinates of a given index.
 
 
-Building and Running the Example
-================================
+Building and Starting the Example
+=================================
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.

@@ -70,8 +70,8 @@ The Flowlet (*source*) that generates random numbers every 1 millisecond::
    :language: java
    :lines: 28-
 
-Building and Running the Example
-================================
+Building and Starting the Example
+=================================
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.

@@ -35,7 +35,7 @@ stored:
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
-   :lines: 73-95
+   :lines: 76-95
   
 Note that the flowlet also emits metrics: Every time a name longer than 10 characters is received,
 the counter ``names.longnames`` is incremented by one, and the metric ``names.bytes`` is incremented
@@ -52,8 +52,8 @@ reads the name stored by the ``NameSaver`` from the key-value table. It return a
    :language: java
    :lines: 100-115
 
-Building and Running the Example
-================================
+Building and Starting the Example
+=================================
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.

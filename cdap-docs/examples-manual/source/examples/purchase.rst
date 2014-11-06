@@ -82,8 +82,8 @@ implements the ``RecordScannable`` interface to allow SQL queries over the Datas
 This procedure has a ``history`` method to obtain the purchase history of a given customer.
 
 
-Building and Running the Example
-================================
+Building and Starting the Example
+=================================
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.

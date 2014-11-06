@@ -59,8 +59,8 @@ This Procedure has three methods:
 - ``getAssoc()``: Given a pair, "word1" and "word2", this returns the association count for the pair.
 
 
-Building and Running the Example
-================================
+Building and Starting the Example
+=================================
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.

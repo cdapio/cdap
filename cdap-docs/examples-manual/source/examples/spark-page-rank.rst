@@ -51,8 +51,8 @@ The calculated page rank data is stored in a second ObjectStore Dataset, *ranks*
 This procedure has a ``rank`` method to obtain the page rank of a given URL.
 
 
-Building and Running the Example
-================================
+Building and Starting the Example
+=================================
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
