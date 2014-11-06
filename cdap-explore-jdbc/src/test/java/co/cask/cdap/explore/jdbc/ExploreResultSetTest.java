@@ -57,22 +57,22 @@ public class ExploreResultSetTest {
             new ColumnDesc("column16", "struct<name:string,attr:string>", 15, "")
         )),
         ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
-            new QueryResult(ImmutableList.<Object>of(
-                "value1",
-                1,
-                "c",
-                0.1f,
-                0.2d,
-                true,
-                0x1,
-                (short) 2,
-                new Long(10),
-                "2014-06-20",
-                "2014-06-20 07:37:00",
-                "1000000000",
-                "\"{\"key1\":\"value1\"}",
-                "[\"a\",\"b\",\"c\"]",
-                "{\"name\":\"first\",\"attr\":\"second\"}"
+            new QueryResult(ImmutableList.of(
+              QueryResult.ResultObject.of("value1"),
+              QueryResult.ResultObject.of(1),
+              QueryResult.ResultObject.of("c"),
+              QueryResult.ResultObject.of(0.1d),
+              QueryResult.ResultObject.of(0.2d),
+              QueryResult.ResultObject.of(true),
+              QueryResult.ResultObject.of(0x1),
+              QueryResult.ResultObject.of((short) 2),
+              QueryResult.ResultObject.of((long) 10),
+              QueryResult.ResultObject.of("2014-06-20"),
+              QueryResult.ResultObject.of("2014-06-20 07:37:00"),
+              QueryResult.ResultObject.of("1000000000"),
+              QueryResult.ResultObject.of("\"{\"key1\":\"value1\"}"),
+              QueryResult.ResultObject.of("[\"a\",\"b\",\"c\"]"),
+              QueryResult.ResultObject.of("{\"name\":\"first\",\"attr\":\"second\"}")
             ))
         ))
     );
@@ -115,7 +115,10 @@ public class ExploreResultSetTest {
             new ColumnDesc("column1", "int", 1, "")
         )),
         ImmutableMap.of("mock_query", (List<QueryResult>) Lists.newArrayList(
-            new QueryResult(ImmutableList.<Object>of(1, "value1"))
+          new QueryResult(ImmutableList.of(
+            QueryResult.ResultObject.of(1),
+            QueryResult.ResultObject.of("value1"))
+          )
         ))
     );
 

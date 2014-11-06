@@ -128,8 +128,12 @@ public class ExploreDatabaseMetaDataTest {
                           new ColumnDesc("column2", "INT", 2, ""))
         ),
         ImmutableMap.of(statement, (List<QueryResult>) Lists.newArrayList(
-          new QueryResult(ImmutableList.<Object>of("some value", 10))
-        ))
+                          new QueryResult(ImmutableList.of(
+                            QueryResult.ResultObject.of("some value"),
+                            QueryResult.ResultObject.of(10))
+                          )
+                        )
+        )
       );
 
       metadata = new ExploreDatabaseMetaData(null, exploreClient);

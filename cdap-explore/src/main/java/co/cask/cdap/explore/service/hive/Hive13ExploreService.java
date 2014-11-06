@@ -73,7 +73,11 @@ public class Hive13ExploreService extends BaseHiveExploreService {
       RowSet rowSet = getCliService().fetchResults(operationHandle, FetchOrientation.FETCH_NEXT, size);
       ImmutableList.Builder<QueryResult> rowsBuilder = ImmutableList.builder();
       for (Object[] objects : rowSet) {
-        rowsBuilder.add(new QueryResult(Lists.newArrayList(objects)));
+        List<QueryResult.ResultObject> cols = Lists.newArrayList();
+        for (Object obj : objects) {
+          cols.add(rowObjectToQueryResultObject(obj));
+        }
+        rowsBuilder.add(new QueryResult(cols));
       }
       return rowsBuilder.build();
     } else {
@@ -85,5 +89,28 @@ public class Hive13ExploreService extends BaseHiveExploreService {
   protected OperationHandle doExecute(SessionHandle sessionHandle, String statement)
     throws HiveSQLException, ExploreException {
     return getCliService().executeStatementAsync(sessionHandle, statement, ImmutableMap.<String, String>of());
+  }
+
+  protected QueryResult.ResultObject rowObjectToQueryResultObject(Object obj) throws ExploreException {
+    if (obj instanceof Boolean) {
+      return QueryResult.ResultObject.of((Boolean) obj);
+    } else if (obj instanceof Byte) {
+      return QueryResult.ResultObject.of((Byte) obj);
+    } else if (obj instanceof Double) {
+      return QueryResult.ResultObject.of((Double) obj);
+    } else if (obj instanceof Short) {
+      return QueryResult.ResultObject.of((Short) obj);
+    } else if (obj instanceof Integer) {
+      return QueryResult.ResultObject.of((Integer) obj);
+    } else if (obj instanceof Long) {
+      return QueryResult.ResultObject.of((Long) obj);
+    } else if (obj instanceof String) {
+      return QueryResult.ResultObject.of((String) obj);
+    } else if (obj instanceof byte[]) {
+      return QueryResult.ResultObject.of((byte[]) obj);
+    } else if (obj == null) {
+      return QueryResult.ResultObject.of();
+    }
+    throw new ExploreException("Unknown column value encountered: " + obj);
   }
 }

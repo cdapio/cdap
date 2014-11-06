@@ -320,8 +320,14 @@ public class ExploreDriverTest {
       }
       List<QueryResult> rows = Lists.newArrayList();
       if (!canceledHandles.contains(id) && !handleWithFetchedResutls.contains(id)) {
-        rows.add(new QueryResult(ImmutableList.<Object>of("1", "one")));
-        rows.add(new QueryResult(ImmutableList.<Object>of("2", "two")));
+        rows.add(new QueryResult(ImmutableList.of(
+          QueryResult.ResultObject.of(1),
+          QueryResult.ResultObject.of("one"))
+        ));
+        rows.add(new QueryResult(ImmutableList.of(
+          QueryResult.ResultObject.of(2),
+          QueryResult.ResultObject.of("two"))
+        ));
         handleWithFetchedResutls.add(id);
       }
       responder.sendJson(HttpResponseStatus.OK, rows);

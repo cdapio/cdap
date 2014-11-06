@@ -154,7 +154,7 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
     runCommand("show tables",
                true,
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("my_table"))));
+               Lists.newArrayList(new QueryResult(ImmutableList.of(QueryResult.ResultObject.of("my_table")))));
 
     runCommand("describe my_table",
                true,
@@ -164,9 +164,15 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new ColumnDesc("comment", "STRING", 3, "from deserializer")
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("key", "string", "from deserializer")),
-                 new QueryResult(Lists.<Object>newArrayList("value", "struct<name:string,ints:array<int>>",
-                                                            "from deserializer"))
+                 new QueryResult(ImmutableList.of(QueryResult.ResultObject.of("key"),
+                                                  QueryResult.ResultObject.of("string"),
+                                                  QueryResult.ResultObject.of("from deserializer"))
+                 ),
+                 new QueryResult(ImmutableList.of(
+                   QueryResult.ResultObject.of("value"),
+                   QueryResult.ResultObject.of("struct<name:string,ints:array<int>>"),
+                   QueryResult.ResultObject.of("from deserializer"))
+                 )
                )
     );
 
@@ -176,8 +182,15 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                   new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                 new QueryResult(ImmutableList.of(
+                   QueryResult.ResultObject.of("1"),
+                   QueryResult.ResultObject.of("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}"))
+                 ),
+                 new QueryResult(ImmutableList.of(
+                   QueryResult.ResultObject.of("2"),
+                   QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+                 )
+               )
     );
 
     runCommand("select key, value from my_table where key = '1'",
@@ -186,8 +199,9 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new ColumnDesc("key", "STRING", 1, null),
                  new ColumnDesc("value", "struct<name:string,ints:array<int>>", 2, null)
                ),
-               Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}"))
+               Lists.newArrayList(new QueryResult(ImmutableList.of(
+                                    QueryResult.ResultObject.of("1"),
+                                    QueryResult.ResultObject.of("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")))
                )
     );
 
@@ -198,8 +212,14 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("1", "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}")),
-                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+                 new QueryResult(ImmutableList.of(
+                   QueryResult.ResultObject.of("1"),
+                   QueryResult.ResultObject.of("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}"))
+                 ),
+                 new QueryResult(ImmutableList.of(
+                   QueryResult.ResultObject.of("2"),
+                   QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+                 )
                )
     );
 
@@ -210,7 +230,10 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                  new ColumnDesc("my_table.value", "struct<name:string,ints:array<int>>", 2, null)
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+                 new QueryResult(ImmutableList.of(
+                   QueryResult.ResultObject.of("2"),
+                   QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+                 )
                )
     );
   }
@@ -296,17 +319,17 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
 
       List<QueryResult> firstPreview = exploreService.previewResults(handle);
       Assert.assertEquals(ImmutableList.of(
-        new QueryResult(ImmutableList.<Object>of("my_table")),
-        new QueryResult(ImmutableList.<Object>of("my_table_2")),
-        new QueryResult(ImmutableList.<Object>of("my_table_3")),
-        new QueryResult(ImmutableList.<Object>of("my_table_4")),
-        new QueryResult(ImmutableList.<Object>of("my_table_5"))
+        new QueryResult(ImmutableList.of(QueryResult.ResultObject.of("my_table"))),
+        new QueryResult(ImmutableList.of(QueryResult.ResultObject.of("my_table_2"))),
+        new QueryResult(ImmutableList.of(QueryResult.ResultObject.of("my_table_3"))),
+        new QueryResult(ImmutableList.of(QueryResult.ResultObject.of("my_table_4"))),
+        new QueryResult(ImmutableList.of(QueryResult.ResultObject.of("my_table_5")))
       ), firstPreview);
 
 
       List<QueryResult> endResults = exploreService.nextResults(handle, 100);
       Assert.assertEquals(ImmutableList.of(
-        new QueryResult(ImmutableList.<Object>of("my_table_6"))
+        new QueryResult(ImmutableList.of(QueryResult.ResultObject.of("my_table_6")))
       ), endResults);
 
       List<QueryResult> secondPreview = exploreService.previewResults(handle);
@@ -508,9 +531,14 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                     new ColumnDesc("my_table.value",
                                                    "struct<name:string,ints:array<int>>", 2, null)),
                  Lists.newArrayList(
-                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}")))
+                   new QueryResult(ImmutableList.of(
+                     QueryResult.ResultObject.of("2"),
+                     QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"))
+                   )
+                 )
       );
 
+      // TODO how do NULL values come here??
       runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
                    "my_table " +
                    "right outer join my_table_1 on (my_table.key=my_table_1.key)",
@@ -521,10 +549,19 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                     new ColumnDesc("my_table_1.value",
                                                    "struct<name:string,ints:array<int>>", 4, null)),
                  Lists.newArrayList(
-                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
-                                                         "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
-                   new QueryResult(Lists.<Object>newArrayList(null, null, "3",
-                                                         "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
+                   new QueryResult(ImmutableList.of(
+                     QueryResult.ResultObject.of("2"),
+                     QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"),
+                     QueryResult.ResultObject.of("2"),
+                     QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")
+                   )),
+                   new QueryResult(ImmutableList.of(
+                     QueryResult.ResultObject.of(),
+                     QueryResult.ResultObject.of(),
+                     QueryResult.ResultObject.of("3"),
+                     QueryResult.ResultObject.of("{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")
+                   ))
+                 )
       );
 
       runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
@@ -537,10 +574,19 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                     new ColumnDesc("my_table_1.value",
                                                    "struct<name:string,ints:array<int>>", 4, null)),
                  Lists.newArrayList(
-                   new QueryResult(Lists.<Object>newArrayList("1",
-                                                         "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
-                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
-                                                         "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")))
+                   new QueryResult(ImmutableList.of(
+                     QueryResult.ResultObject.of("1"),
+                     QueryResult.ResultObject.of("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}"),
+                     QueryResult.ResultObject.of(),
+                     QueryResult.ResultObject.of()
+                   )),
+                   new QueryResult(ImmutableList.of(
+                     QueryResult.ResultObject.of("2"),
+                     QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"),
+                     QueryResult.ResultObject.of("2"),
+                     QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")
+                   ))
+                 )
       );
 
       runCommand("select my_table.key, my_table.value, my_table_1.key, my_table_1.value from " +
@@ -553,12 +599,25 @@ public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
                                     new ColumnDesc("my_table_1.value",
                                                    "struct<name:string,ints:array<int>>", 4, null)),
                  Lists.newArrayList(
-                   new QueryResult(Lists.<Object>newArrayList("1",
-                                                         "{\"name\":\"first\",\"ints\":[1,2,3,4,5]}", null, null)),
-                   new QueryResult(Lists.<Object>newArrayList("2", "{\"name\":\"two\",\"ints\":[10,11,12,13,14]}",
-                                                         "2", "{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")),
-                   new QueryResult(Lists.<Object>newArrayList(null, null, "3",
-                                                         "{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")))
+                   new QueryResult(ImmutableList.of(
+                     QueryResult.ResultObject.of("1"),
+                     QueryResult.ResultObject.of("{\"name\":\"first\",\"ints\":[1,2,3,4,5]}"),
+                     QueryResult.ResultObject.of(),
+                     QueryResult.ResultObject.of()
+                   )),
+                   new QueryResult(ImmutableList.of(
+                     QueryResult.ResultObject.of("2"),
+                     QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[10,11,12,13,14]}"),
+                     QueryResult.ResultObject.of("2"),
+                     QueryResult.ResultObject.of("{\"name\":\"two\",\"ints\":[20,21,22,23,24]}")
+                   )),
+                   new QueryResult(ImmutableList.of(
+                     QueryResult.ResultObject.of(),
+                     QueryResult.ResultObject.of(),
+                     QueryResult.ResultObject.of("3"),
+                     QueryResult.ResultObject.of("{\"name\":\"third\",\"ints\":[30,31,32,33,34]}")
+                   ))
+                 )
       );
     } finally {
       datasetFramework.deleteInstance("my_table_1");
