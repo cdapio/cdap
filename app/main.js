@@ -19,7 +19,8 @@ angular
       ]).name,
 
       angular.module(PKG.name+'.filters', [
-        PKG.name+'.services'
+        PKG.name+'.services',
+        'cask-angular-capitalize'
       ]).name,
 
       'mgcrea.ngStrap.alert',
