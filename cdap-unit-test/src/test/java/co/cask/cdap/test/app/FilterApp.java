@@ -81,7 +81,7 @@ public class FilterApp extends AbstractApplication {
     @ProcessInput
     public void process (StreamEvent event) {
       //highpass filter.
-      String value = Bytes.toString(event.getBody().array());
+      String value = Bytes.toString(event.getBody());
       if (Long.parseLong(value) > threshold) {
         counters.increment(highPass, 1L);
       }

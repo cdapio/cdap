@@ -194,6 +194,22 @@ public class Bytes {
   }
 
   /**
+   * This method will convert a utf8 encoded byte buffer, from its array offset
+   * to its limit, into a string. The position and the mark are ignored. If
+   * an UnsupportedEncodingException occurs, this method will eat it
+   * and return null instead.
+   *
+   * @param buf Presumed UTF-8 encoded byte buffer.
+   * @return String made from <code>buf</code> or null
+   */
+  public static String toString(ByteBuffer buf) {
+    if (buf == null) {
+      return null;
+    }
+    return toString(buf.array(), buf.arrayOffset(), buf.limit());
+  }
+
+  /**
    * Write a printable representation of a byte array.
    *
    * @param b byte array
