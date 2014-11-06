@@ -100,21 +100,18 @@ and executed in CDAP:
 Building and Starting
 =================================
 
-The source code of the Web Analytics Application for this tutorial is included in the CDAP SDK,
-inside the ``examples/WebAnalytics`` directory.
+- You can either build the example (as described `below
+  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
+- Start CDAP, deploy and start the application as described below in 
+  `Running CDAP Applications`_\ .
+  Make sure you start the flow and procedure as described.
+- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
-When the Standalone CDAP instance is running, you can build and start the Web Analytics Application
-with these commands, executed from the ``examples/WebAnalytics`` directory of the SDK::
+Running CDAP Applications
+============================================
 
-  $ mvn package
-  $ bin/app-manager.sh --action deploy
-  $ bin/app-manager.sh --action start
-
-On Windows, run these commands instead::
-
-  > mvn package
-  > bin\app-manager.bat deploy
-  > bin\app-manager.bat start
+.. include:: /../../developers-manual/source/getting-started/building-apps.rst
+   :start-line: 9
 
 
 Running the Example
@@ -142,10 +139,11 @@ On Windows::
 
 Query the Unique Visitor Page Views
 ---------------------------------------
-Once the log data has been processed by the ``WebAnalyticsFlow``, we can explore the Dataset ``UniqueVisitCount``
-with a SQL query. You can easily execute SQL queries against Datasets using the CDAP Console by
-simply selecting **Store** on the left sidebar, then clicking the **Explore** button on the right, and then selecting
-the **UniqueVisitCount** Dataset:
+Once the log data has been processed by the ``WebAnalyticsFlow``, we can explore the
+Dataset ``UniqueVisitCount`` with a SQL query. You can easily execute SQL queries against
+Datasets using the CDAP Console by simply selecting **Store** on the left sidebar, then
+clicking the **Explore** button on the right, and then selecting the **UniqueVisitCount**
+Dataset:
 
 .. image:: ../_images/wa_explore_store.png
    :width: 8in
@@ -155,13 +153,15 @@ addresses that visited the site by running a SQL query::
 
   SELECT * FROM cdap_user_uniquevisitcount ORDER BY value DESC LIMIT 5
 
-You can copy and paste the above SQL into the **Query** box as shown below and click the
-**Execute** button to run it. It may take a while for the query to finish.
+You can copy and paste the above SQL into the **Query** box as shown below (replacing the
+default query that is there) and click the **Execute** button to run it. It may take a
+while for the query to finish.
 
 .. image:: ../_images/wa_explore_query.png
    :width: 8in
 
-Once it's finished, click on the **Results** button at the top to see the query results:
+Once it's finished, click on the disclosure triangle on the left side of the **Results**
+table line to expand the display and see the query results:
 
 .. image:: ../_images/wa_explore_result.png
    :width: 8in
