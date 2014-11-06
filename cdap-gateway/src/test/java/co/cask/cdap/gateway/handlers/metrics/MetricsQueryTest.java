@@ -159,38 +159,38 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
 
     MetricsCollector collector1 = collectionService.getCollector(MetricsScope.USER,
                                                                 "WordCount.s.CounterService.CountRunnable", runId1);
-    collector1.increment("reads", 1);
+    collector1.increment("rid_metric", 1);
 
     MetricsCollector collector2 = collectionService.getCollector(MetricsScope.USER,
                                                                 "WordCount.s.CounterService.CountRunnable", runId2);
-    collector2.increment("reads", 2);
+    collector2.increment("rid_metric", 2);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
     //runnable metric request with runId1
     String runnableRequest1 =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/reads?aggregate=true&runId=" + runId1;
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/rid_metric?aggregate=true&run-id=" + runId1;
 
     //runnable metric request with runId2
     String runnableRequest2 =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/reads?aggregate=true&runId=" + runId2;
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/rid_metric?aggregate=true&run-id=" + runId2;
 
     //service metric request with runId2
     String serviceRequest2 =
-      "/user/apps/WordCount/services/CounterService/reads?aggregate=true&runId=" + runId2;
+      "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true&run-id=" + runId2;
 
     //service metric request with invliad runId
     String serviceRequestInvalidId =
-      "/user/apps/WordCount/services/CounterService/reads?aggregate=true&runId=fff";
+      "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true&run-id=fff";
 
     //service metric request without specifying the runId and aggregate will run the sum of these two runIds
     String serviceRequestTotal =
-      "/user/apps/WordCount/services/CounterService/reads?aggregate=true";
+      "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true";
 
     // metric request without any context
     String metricRequest1 =
-      "/user/reads?aggregate=true&runId=" + runId1;
+      "/user/rid_metric?aggregate=true&run-id=" + runId1;
 
     testSingleMetric(runnableRequest1, 1);
     testSingleMetric(runnableRequest2, 2);
