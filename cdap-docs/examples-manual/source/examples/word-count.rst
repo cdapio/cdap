@@ -59,18 +59,21 @@ This Procedure has three methods:
 - ``getAssoc()``: Given a pair, "word1" and "word2", this returns the association count for the pair.
 
 
-Building and Starting the Example
+Building and Starting
 =================================
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
-  `Building and Running CDAP Applications`_\ .
+  `Running CDAP Applications`_\ .
   Make sure you start the flow and procedure as described.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
+Running CDAP Applications
+============================================
+
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 7
+   :start-line: 9
 
 Running the Example
 ===================

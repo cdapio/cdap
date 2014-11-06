@@ -97,7 +97,7 @@ and executed in CDAP:
    :lines: 26-
 
 
-Building and Starting the Example
+Building and Starting
 =================================
 
 The source code of the Web Analytics Application for this tutorial is included in the CDAP SDK,
