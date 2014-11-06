@@ -43,7 +43,7 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
     - An application that demonstrates the ``@Tick`` feature of Flows. It uses a tick method to generate random
       numbers which are then counted by downstream Flowlets.
   * - :doc:`Purchase<purchase>`
-    - This example demonstrates use of each of the CDAP elements—Streams, Flows, Flowlets, Datasets, Queries,
+    - This example demonstrates use of many of the CDAP elements—Streams, Flows, Flowlets, Datasets, Queries,
       Procedures, MapReduce, Workflows, and Services—in a single Application.
       
       A Flow receives events from a Stream, each event describing a purchase ("John bought 5 apples for $2");

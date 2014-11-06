@@ -58,7 +58,7 @@ In both cases, the packaged application is in the ``target/`` directory and the 
 ``cdap-wise-0.2.0.jar``.
 
 **Learn More:** *A detailed description of the application and its implementation is
-available in the* :ref:`Web Analytics Application documentation. <web-analytics>`
+available in the* :ref:`Web Analytics Application documentation. <examples-web-analytics>`
 
 
 Deploying the Application

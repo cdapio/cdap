@@ -54,11 +54,20 @@ public class SparkPageRankApp extends AbstractApplication {
   public void configure() {
     setName("SparkPageRank");
     setDescription("Spark page rank app");
+    
+    // Ingest data into the Application via a Stream
     addStream(new Stream("backlinkURLStream"));
+    
+    // Process URL pairs in real-time using a Flow
     addFlow(new BackLinkFlow());
+    
+    // Run a Spark program on the acquired data
     addSpark(new SparkPageRankSpecification());
+    
+    // Query the processed data using a Procedure
     addProcedure(new RanksProcedure());
 
+    // Store input and processed data in ObjectStore Datasets
     try {
       ObjectStores.createObjectStore(getConfigurer(), "backlinkURLs", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "ranks", Double.class);

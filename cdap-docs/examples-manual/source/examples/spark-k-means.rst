@@ -3,13 +3,16 @@
     :description: Cask Data Application Platform SparkKMeans Application
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _examples-spark-k-means:
+
+=============
 Spark K-Means
--------------
+=============
 
 A Cask Data Application Platform (CDAP) Example Demonstrating Spark.
 
 Overview
-........
+=============
 
 This example demonstrates a Spark application performing streaming analysis, computing the centers of points from an
 input stream using the K-Means Clustering method.
@@ -26,78 +29,59 @@ send back a JSON-formatted result with the center's coordinates based on the ``i
 Let's look at some of these elements, and then run the Application and see the results.
 
 The SparkKMeans Application
-...........................
+------------------------------------------------------------
 
 As in the other `examples <index.html>`__, the components
-of the Application are tied together by the class ``SparkKMeansApp``::
+of the Application are tied together by the class ``SparkKMeansApp``:
 
-  public class SparkKMeansApp extends AbstractApplication {
-
-    public static final Charset UTF8 = Charset.forName("UTF-8");
-
-    @Override
-    public void configure() {
-      setName("SparkKMeans");
-      setDescription("Spark K-Means app");
-
-      // Ingest data into the Application via a Stream
-      addStream(new Stream("pointsStream"));
-
-      // Process points data in real-time using a Flow
-      addFlow(new PointsFlow());
-
-      // Run a Spark program on the acquired data
-      addSpark(new SparkKMeansSpecification());
-
-      // Query the processed data using a Procedure
-      addProcedure(new CentersProcedure());
-
-      // Store input and processed data in ObjectStore Datasets
-      try {
-        ObjectStores.createObjectStore(getConfigurer(), "points", String.class);
-        ObjectStores.createObjectStore(getConfigurer(), "centers", String.class);
-      } catch (UnsupportedTypeException e) {
-        // This exception is thrown by ObjectStore if its parameter type cannot be
-        // (de)serialized (for example, if it is an interface and not a class, then there is
-        // no auto-magic way deserialize an object.) In this case that will not happen
-        // because String is an actual class.
-        throw new RuntimeException(e);
-      }
-    }
-  }
+.. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
+   :language: java
+   :lines: 48-80
 
 ``points`` and ``centers``: ObjectStore Data Storage
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+------------------------------------------------------------
 
 The raw points data is stored in an ObjectStore Dataset, *points*.
 The calculated centers data is stored in a second ObjectStore Dataset, *centers*.
 
 ``CentersProcedure``: Procedure
-+++++++++++++++++++++++++++++++
+------------------------------------------------------------
 
 This procedure has a ``centers`` method to obtain the center's coordinates of a given index.
 
 
-Deploy and start the application as described in :ref:`Building and Running Applications <cdap-building-running>`
+Building and Running the Example
+================================
+
+- You can either build the example (as described `below
+  <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
+- Start CDAP, deploy and start the application as described below in 
+  `Building and Running CDAP Applications`_\ .
+  Make sure you start the flow and procedure as described.
+- Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
+
+.. include:: /../../developers-manual/source/getting-started/building-apps.rst
+   :start-line: 7
 
 Running the Example
-+++++++++++++++++++
+===================
 
-Injecting points data
-#####################
+.. highlight:: console
 
-Run this script to inject points data
-to the Stream named *pointsStream* in the ``SparkKMeans`` application::
+Injecting Points Data
+------------------------------
 
-	$ ./bin/inject-data.sh
+Run this script to inject points data to the Stream named *pointsStream* in the
+``SparkKMeans`` application::
+
+  $ ./bin/inject-data.sh
 
 On Windows::
 
-	~SDK> bin\inject-data.bat
+  > bin\inject-data.bat
 
 Running the Spark program
-#########################
-
+------------------------------
 There are three ways to start the Spark program:
 
 1. Click on the ``SparkKMeansProgram`` in the Application page of the CDAP Console to get to the
@@ -105,45 +89,43 @@ There are three ways to start the Spark program:
 
 2. Send a query via an HTTP request using the ``curl`` command::
 
-     curl -v -d '{args="3"}' \
-    	 'http://localhost:10000/v2/apps/SparkKMeansProgram/spark/SparkKMeansProgram/start'
+    curl -v -d '{args="3"}' \
+      'http://localhost:10000/v2/apps/SparkKMeansProgram/spark/SparkKMeansProgram/start'; echo
 
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
-	  libexec\curl...
+    libexec\curl...
 
 3. Use the command::
 
     $ ./bin/app-manager.sh --action run
 
-  On Windows::
+   On Windows::
 
-	~SDK> bin\app-manager.bat run
+    > bin\app-manager.bat run
 
 Querying the Results
-####################
+------------------------------
 
-If the Procedure has not already been started, you start it either through the 
+If the Procedure has not already been started, you can start it either through the 
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-	curl -v -d 'http://localhost:10000/v2/apps/SparkKMeans/procedures/CentersProcedure/start'
-	
-There are two ways to query the *centers* ObjectStore through the ``CentersProcedure`` procedure:
+  curl -v -d 'http://localhost:10000/v2/apps/SparkKMeans/procedures/CentersProcedure/start'
+  
+There are two ways to query the *centers* ObjectStore using the ``CentersProcedure`` procedure:
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
-	 curl -v -d '{"index": "1"}' \
-	   'http://localhost:10000/v2/apps/SparkKMeans/procedures/CentersProcedure/methods/centers'
+     curl -v -d '{"index": "1"}' \
+       'http://localhost:10000/v2/apps/SparkKMeans/procedures/CentersProcedure/methods/centers'; echo
 
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
-	  libexec\curl...
+     libexec\curl...
 
-2. Type a Procedure method name, in this case CentersProcedure, in the Query page of the CDAP Console:
+2. Type the Procedure method name, ``CentersProcedure``, in the Query page of the CDAP Console.
 
-   In the CDAP Console:
-
-   #. Click the *Query* button.
+   #. Click the *Query* button in the left side-bar of the CDAP Console.
    #. Click on the *CentersProcedure* Procedure.
    #. Type ``centers`` in the *Method* text box.
    #. Type the parameters required for this method, a JSON string with the name *index* and
@@ -154,8 +136,8 @@ There are two ways to query the *centers* ObjectStore through the ``CentersProce
    #. Click the *Execute* button.
    #. The center's coordinates will be displayed in the Console in JSON format. For example::
 
-	   "9.1,9.1,9.1"
+        "9.1,9.1,9.1"
 
-Once done, you can stop the application as described in :ref:`Building and Running Applications. <cdap-building-running>`
-
-.. highlight:: java
+Stopping the Application
+-------------------------------
+Once done, you can stop the application as described above in `Stopping an Application. <#stopping-an-application>`__

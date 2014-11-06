@@ -83,7 +83,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 .. |authentication-clients| replace:: **Authentication Clients:**
 .. _authentication-clients: authentication-clients/index.html
 
-- |authentication-clients|_ Theses tools **fetch access tokens from the
+- |authentication-clients|_ These tools **fetch access tokens from the
   authentication service.** Two APIs are currently available: Java and Python.
 
 
