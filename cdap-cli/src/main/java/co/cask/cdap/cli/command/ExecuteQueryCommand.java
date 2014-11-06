@@ -47,8 +47,7 @@ public class ExecuteQueryCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
-    String prefix = "execute query ";
-    String query = arguments.getRawInput().substring(prefix.length());
+    String query = arguments.get(ArgumentName.QUERY.toString());
 
     QueryHandle queryHandle = queryClient.execute(query);
     QueryStatus status = null;

@@ -40,7 +40,7 @@ public class SendStreamEventCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String streamId = arguments.get(ArgumentName.STREAM.toString());
-    String streamEvent = arguments.getRawInput().substring(String.format("send stream %s ", streamId).length());
+    String streamEvent = arguments.get(ArgumentName.STREAM_EVENT.toString());
     streamClient.sendEvent(streamId, streamEvent);
     output.printf("Successfully send stream event to stream '%s'\n", streamId);
   }

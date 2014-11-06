@@ -22,10 +22,17 @@ package co.cask.cdap.api.metrics;
  */
 public interface Metrics {
   /**
-   * Increases the value of the specific counter by delta.
-   * @param counterName Name of the counter. Use alphanumeric characters in metric names.
+   * Increases the value of the specific metric by delta.
+   * @param metricName Name of the counter. Use alphanumeric characters in metric names.
    * @param delta The value to increase by.
    */
-  void count(String counterName, int delta);
+  void count(String metricName, int delta);
+
+  /**
+   * Sets the specific metric to the provided value.
+   * @param metricName Name of the counter. Use alphanumeric characters in metric names.
+   * @param value The value to be set.
+   */
+  void gauge(String metricName, long value);
 }
 

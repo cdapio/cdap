@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -98,36 +99,29 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   protected void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
                                       String programId)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
 
     assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
   }
 
-
   protected void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
                                       String programId)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
 
     assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
   }
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
 
-    String status;
-    int numTries = 0;
-    int maxTries = 10;
-    do {
-      status = programClient.getStatus(appId, programType, programId);
-      numTries++;
-      try {
-        TimeUnit.SECONDS.sleep(1);
-      } catch (InterruptedException e) {
-        // NO-OP
-      }
-    } while (!status.equals(programStatus) && numTries <= maxTries);
-    Assert.assertEquals(programStatus, status);
+    try {
+      programClient.waitForStatus(appId, programType, programId, programStatus, 30, TimeUnit.SECONDS);
+    } catch (TimeoutException e) {
+      // NO-OP
+    }
+
+    Assert.assertEquals(programStatus, programClient.getStatus(appId, programType, programId));
   }
 
   protected File createAppJarFile(Class<?> cls) {

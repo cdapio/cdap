@@ -13,11 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.common.http;
+package co.cask.cdap.metrics.transport;
 
 /**
- * Represents HTTP methods.
+ * MetricType - COUNTER or GAUGE type
  */
-public enum HttpMethod {
-  GET, POST, PUT, DELETE;
+public enum MetricType {
+  COUNTER,
+  GAUGE
 }

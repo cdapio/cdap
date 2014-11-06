@@ -88,6 +88,10 @@ public enum ElementType {
   MAPREDUCE("MapReduce job", "MapReduce jobs", "mapreduce", "mapreduce",
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,
+            Capability.LOGS, Capability.HISTORY, Capability.STATUS, Capability.START_STOP, Capability.LIST),
+  SPARK("Spark job", "Spark jobs", "spark", "spark",
+            ProgramType.SPARK, null,
+            ArgumentName.SPARK,
             Capability.LOGS, Capability.HISTORY, Capability.STATUS, Capability.START_STOP, Capability.LIST);
 
   private final String pluralName;

@@ -17,6 +17,7 @@ package co.cask.cdap.metrics.collect;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.inject.Inject;
@@ -54,6 +55,7 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
     while (metrics.hasNext()) {
       MetricsRecord record = metrics.next();
       String context = record.getContext();
+      boolean increment = false;
 
       // Context is expected to look like appId.b.programId.[m|r].[taskId]
       String counterGroup;
@@ -72,12 +74,25 @@ public final class MapReduceCounterCollectionService extends AggregatedMetricsCo
 
       counterGroup += "." + scope.name();
 
+      if (record.getType() == MetricType.COUNTER) {
+        increment = true;
+      }
+
       String counterName = getCounterName(record.getName());
-      taskContext.getCounter(counterGroup, counterName).increment(record.getValue());
+      if (increment) {
+        taskContext.getCounter(counterGroup, counterName).increment(record.getValue());
+      } else {
+        taskContext.getCounter(counterGroup, counterName).setValue(record.getValue());
+      }
+
       for (TagMetric tag : record.getTags()) {
         counterName = getCounterName(record.getName(), tag.getTag());
         if (counterName != null) {
-          taskContext.getCounter(counterGroup, counterName).increment(tag.getValue());
+          if (increment) {
+            taskContext.getCounter(counterGroup, counterName).increment(tag.getValue());
+          } else {
+            taskContext.getCounter(counterGroup, counterName).setValue(tag.getValue());
+          }
         }
       }
     }

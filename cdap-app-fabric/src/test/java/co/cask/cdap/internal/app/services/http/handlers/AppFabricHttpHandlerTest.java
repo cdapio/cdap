@@ -38,6 +38,7 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
+import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -77,7 +78,7 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * Test {@link co.cask.cdap.gateway.handlers.AppFabricHttpHandler}
+ * Tests for {@link AppFabricHttpHandler}.
  */
 public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
@@ -1376,7 +1377,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     waitState("services", "AppWithServices", "NoOpService", "STOPPED");
 
   }
-
 
   @Test
   public void testServiceSpecification() throws Exception {
