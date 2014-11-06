@@ -2,6 +2,8 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+:hide-toc: true
+
 .. _building-blocks:
 
 ============================================
@@ -23,27 +25,39 @@ Building Blocks
     Services <services>
     Transaction System <transaction-system>
 
-This section covers the two core virtualizations in the Cask Data Application Platform
-(CDAP)—Data and Applications. 
+This section covers the :doc:`core virtualizations <core>` in the Cask Data Application Platform
+(CDAP)—**Data** and **Applications.**
 
-**Data virtualizations** are grouped into Streams and Datasets. 
+An :doc:`Application <applications>` is a collection of application virtualizations that read from—and
+write to—the data virtualization layer in CDAP.
 
-**Application virtualizations** are grouped into Flows (and Flowlets), MapReduce Jobs,
-Workflows, Spark Jobs, Procedures, and Services.  
+**Data virtualizations** include:
 
-The **Transaction System** is an essential service that provides ACID (atomicity,
-consistency, isolation, and durability) guarantees, critical in applications where data
-accuracy is required.
+- :doc:`Streams <streams>`
+- :doc:`Datasets <datasets/index>`
+
+**Application virtualizations** include:
+
+- :doc:`Flows (and Flowlets) <flows-flowlets/index>`
+- :doc:`MapReduce Jobs <mapreduce-jobs>`
+- :doc:`Workflows <workflows>`
+- :doc:`Spark Jobs <spark-jobs>`
+- :doc:`Procedures <procedures>`
+- :doc:`Services <services>`
+
+The :doc:`Transaction System <transaction-system>` is an essential service that provides ACID
+(atomicity, consistency, isolation, and durability) guarantees, critical in applications
+where data accuracy is required.
 
 This diagram gives an outline of these components, and how they and other CDAP components
-relate in a Hadoop installation: 
+relate in an Apache Hadoop installation: 
 
 .. image:: ../_images/architecture_diag.png
    :width: 7in
    :align: center
 
-For a high-level view of the concepts of the Cask Data Application Platform,
-please see the platform :doc:`Overview. </overview/index>`
+For a high-level view of the concepts of the Cask Data Application Platform, see the
+platform :doc:`Overview. </overview/index>`
 
 For information beyond this section, see the :ref:`Javadocs <reference:javadocs>` and
 the code in the :ref:`Examples <examples-index>` directory, both of which are available at the

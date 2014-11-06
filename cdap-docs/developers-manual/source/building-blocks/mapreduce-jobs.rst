@@ -5,10 +5,10 @@
 .. _mapreduce:
 
 ============================================
-MapReduce
+MapReduce Jobs
 ============================================
 
-**MapReduce** is used to process data in batch. MapReduce jobs can be
+A **MapReduce Job** is used to process data in batch. MapReduce jobs can be
 written as in a conventional Hadoop system. Additionally, CDAP
 **Datasets** can be accessed from MapReduce jobs as both input and
 output.

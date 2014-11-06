@@ -48,7 +48,7 @@ an HTTP request to the element’s URL. For example, the following will start a 
 
 Note that this URL differs from the URL for starting the Flow only by the last path
 component (``debug`` instead of ``start``; see
-:ref:`CDAP Client HTTP API <http-restful-api-cdap-client>`). You can pass in
+:ref:`http-restful-api-lifecycle`). You can pass in
 runtime arguments in the exact same way as you normally would start a Flow.
 
 Once the Flow is running, each Flowlet will detect an available port in its container

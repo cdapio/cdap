@@ -114,5 +114,4 @@ Application components can access a created Dataset via the ``@UseDataSet`` anno
 A complete application demonstrating the use of a custom Dataset is included in our
 :ref:`Purchase Example. <examples-purchase>`
 
-You can also create, drop, and truncate Datasets using the
-:ref:`Cask Data Application Platform HTTP REST API. <http-restful-api-datasets>`
+You can also create, drop, and truncate Datasets using the :ref:`http-restful-api-dataset`.

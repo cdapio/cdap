@@ -13,10 +13,10 @@ Similar to Flows, Services run in containers and the number of running service i
 Developers can implement Custom Services to interface with a legacy system and perform additional processing beyond
 the CDAP processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-Custom Services lifecycle can be controlled via the CDAP Console or by using the
+The lifecycle of a Custom Service can be controlled via the CDAP Console or by using the
 :ref:`CDAP Java Client API <client-api>` or :ref:`CDAP RESTful HTTP API <restful-api>`.
 
-Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler`` \s to serve requests.
+Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler``\s to serve requests.
 
 You can add Services to your application by calling the ``addService`` method in the
 Application's ``configure`` method::
@@ -51,7 +51,7 @@ Application's ``configure`` method::
 Service Handlers
 ----------------
 
-``ServiceHandler`` \s are used to handle and serve HTTP requests.
+``ServiceHandler``\s are used to handle and serve HTTP requests.
 
 You add handlers to your Service by calling the ``addHandler`` method in the Service's ``configure`` method.
 

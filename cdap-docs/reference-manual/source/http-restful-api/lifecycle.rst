@@ -3,7 +3,7 @@
     :description: HTTP RESTful Interface to the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _http-restful-api-cdap-client:
+.. _http-restful-api-lifecycle:
 
 ===========================================================
 Lifecycle HTTP RESTful API

@@ -42,7 +42,7 @@ time series. You can implement your own data patterns as custom
 Datasets on top of Tables.
 
 You can create a Dataset in CDAP using either the
-:ref:`Cask Data Application Platform HTTP RESTful API <http-restful-api-datasets>` or command-line tools.
+:ref:`http-restful-api-dataset` or command-line tools.
 
 You can also tell Applications to create a Dataset if it does not already
 exist by declaring the Dataset details in the Application specification.

@@ -5,7 +5,7 @@
 .. _spark:
 
 ============================================
-Spark *(Beta, Standalone CDAP only)*
+Spark Jobs *(Beta, Standalone CDAP only)*
 ============================================
 
 **Spark** is used for in-memory cluster computing. It lets you load large sets of data into memory and query them

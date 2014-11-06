@@ -5,11 +5,14 @@
 .. _streams:
 
 ============================================
-Stream
+Streams
 ============================================
 
 **Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
 They are ordered, time-partitioned sequences of data, usable for realtime collection and consumption of data.
+
+
+
 You specify a Stream in your :ref:`Application <applications>` specification::
 
   addStream(new Stream("myStream"));
@@ -24,7 +27,7 @@ They can be created programmatically within your application, through the CDAP C
 by using a command-line tool. Data written to a Stream can be consumed in real-time by
 :ref:`Flows <flows>` or in batch by :ref:`MapReduce Jobs. <mapreduce>`.
 You can write to Streams either one operation at a time or in batches,
-using either the :ref:`Cask Data Application Platform HTTP RESTful API <rest-streams>`
+using either the :ref:`http-restful-api-stream`
 or command-line tools.
 
 Each individual signal sent to a Stream is stored as a ``StreamEvent``, which is comprised
