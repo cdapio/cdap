@@ -20,10 +20,9 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.services.AbstractDiscoveryServiceContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.EndpointStrategy;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -31,28 +30,19 @@ import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.common.base.Preconditions;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.Cancellable;
-import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Base class for program runtime context
  */
-public abstract class AbstractContext implements DataSetContext, RuntimeContext {
+public abstract class AbstractContext extends AbstractDiscoveryServiceContext implements DataSetContext,
+  RuntimeContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
   private final Program program;
@@ -62,7 +52,6 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
   private final MetricsCollector programMetrics;
 
   private final DataSetInstantiator dsInstantiator;
-
   private final DiscoveryServiceClient discoveryServiceClient;
 
   public AbstractContext(Program program, RunId runId,
@@ -72,6 +61,7 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
                          DatasetFramework dsFramework,
                          CConfiguration conf,
                          DiscoveryServiceClient discoveryServiceClient) {
+    super(program);
     this.program = program;
     this.runId = runId;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -150,66 +140,6 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
     return runId;
   }
 
-  @Override
-  public URL getServiceURL(final String applicationId, final String serviceId) {
-    ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
-                                                                                        getAccountId(),
-                                                                                        applicationId,
-                                                                                        serviceId));
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(serviceDiscovered);
-    Discoverable discoverable = endpointStrategy.pick();
-    if (discoverable != null) {
-      return createURL(discoverable, applicationId, serviceId);
-    }
-
-    final SynchronousQueue<URL> discoverableQueue = new SynchronousQueue<URL>();
-    Cancellable discoveryCancel = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        try {
-          URL url = createURL(serviceDiscovered.iterator().next(), applicationId, serviceId);
-          discoverableQueue.offer(url);
-        } catch (NoSuchElementException e) {
-          LOG.debug("serviceDiscovered is empty");
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
-
-    try {
-      URL url = discoverableQueue.poll(1, TimeUnit.SECONDS);
-      if (url == null) {
-        LOG.debug("Discoverable endpoint not found for appID: {}, serviceID: {}.", applicationId, serviceId);
-      }
-      return url;
-    } catch (InterruptedException e) {
-      LOG.error("Got exception: ", e);
-      return null;
-    } finally {
-      discoveryCancel.cancel();
-    }
-  }
-
-  @Override
-  public URL getServiceURL(String serviceId) {
-    return getServiceURL(getApplicationId(), serviceId);
-  }
-
-  private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceId) {
-    if (discoverable == null) {
-      return null;
-    }
-    String hostName = discoverable.getSocketAddress().getHostName();
-    int port = discoverable.getSocketAddress().getPort();
-    String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
-                                Constants.Gateway.GATEWAY_VERSION, applicationId, serviceId);
-    try {
-      return new URL(path);
-    } catch (MalformedURLException e) {
-      LOG.error("Got exception while creating serviceURL", e);
-      return null;
-    }
-  }
-
   /**
    * Release all resources held by this context, for example, datasets. Subclasses should override this
    * method to release additional resources.
@@ -229,5 +159,10 @@ public abstract class AbstractContext implements DataSetContext, RuntimeContext 
     } catch (Throwable t) {
       LOG.error("Dataset throws exceptions during close:" + ds.toString() + ", in context: " + this);
     }
+  }
+
+  @Override
+  public DiscoveryServiceClient getDiscoveryServiceClient() {
+    return discoveryServiceClient;
   }
 }

@@ -16,14 +16,27 @@
 
 package co.cask.cdap.api;
 
-import java.util.Map;
+import java.net.URL;
 
 /**
- * This interface represents a context for a processor or elements of a processor.
+ * An interface for Discovery Service.
  */
-public interface RuntimeContext {
+public interface DiscoveryServiceContext {
+
   /**
-   * @return A map of argument key and value.
+   * Used to discover services inside a given application.
+   *
+   * @param applicationId Application name
+   * @param serviceId     Service name
+   * @return URL
    */
-  Map<String, String> getRuntimeArguments();
+  URL getServiceURL(String applicationId, String serviceId);
+
+  /**
+   * Omitting an applicationId assumes that the program wants to discover a service within its own application.
+   *
+   * @param serviceId Service Name
+   * @return URL
+   */
+  URL getServiceURL(String serviceId);
 }

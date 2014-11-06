@@ -16,10 +16,13 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.DiscoveryServiceContext;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+
+import java.io.Serializable;
 
 /**
  * Spark job execution context. This context is shared between CDAP and User's Spark job.
@@ -131,4 +134,12 @@ public interface SparkContext extends RuntimeContext {
    * @return String[] containing all the arguments which is indexed by their position as they were supplied
    */
   public String[] getRuntimeArguments(String argsKey);
+
+  /**
+   * Returns a {@link Serializable} {@link DiscoveryServiceContext} for Service Discovery in Spark Program which can be
+   * passed in Spark program's closures.
+   *
+   * @return A {@link Serializable} {@link DiscoveryServiceContext}
+   */
+  public DiscoveryServiceContext getSerializableDiscoveryServiceContext();
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.DiscoveryServiceContext;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.Stream;
@@ -25,6 +26,7 @@ import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.app.services.SerializableDiscoveryServiceContext;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -71,6 +73,7 @@ abstract class AbstractSparkContext implements SparkContext {
   final BasicSparkContext basicSparkContext;
   private final SparkConf sparkConf;
   private final StreamAdmin streamAdmin;
+  private final SerializableDiscoveryServiceContext serializableDiscoveryServiceContext;
 
   public AbstractSparkContext(StreamAdmin streamAdmin) {
     hConf = loadHConf();
@@ -82,6 +85,9 @@ abstract class AbstractSparkContext implements SparkContext {
     this.runtimeArguments = basicSparkContext.getRuntimeArgs();
     this.streamAdmin = streamAdmin;
     this.sparkConf = initializeSparkConf();
+    this.serializableDiscoveryServiceContext = new SerializableDiscoveryServiceContext(basicSparkContext.getProgram(),
+                                                                                      basicSparkContext
+                                                                                        .getDiscoveryServiceClient());
   }
 
   /**
@@ -266,5 +272,10 @@ abstract class AbstractSparkContext implements SparkContext {
       arguments.put(runtimeArgument);
     }
     return arguments.build();
+  }
+
+  @Override
+  public DiscoveryServiceContext getSerializableDiscoveryServiceContext() {
+    return serializableDiscoveryServiceContext;
   }
 }
