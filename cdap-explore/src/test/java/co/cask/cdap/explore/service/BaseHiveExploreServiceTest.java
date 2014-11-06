@@ -198,11 +198,11 @@ public class BaseHiveExploreServiceTest {
       for (QueryResult.ResultObject obj : result.getColumns()) {
         switch (obj.getType()) {
           case STRING:
-            newCols.add(QueryResult.ResultObject.of(obj.getStringValue().trim()));
+            newCols.add(QueryResult.ResultObject.of(((String) obj.getValue()).trim()));
             break;
           case DOUBLE:
             // NOTE: this means only use 4 decimals for double and float values in test cases
-            newCols.add(QueryResult.ResultObject.of((double) Math.round(obj.getDoubleValue() * 10000) / 10000));
+            newCols.add(QueryResult.ResultObject.of((double) Math.round(((Double) obj.getValue()) * 10000) / 10000));
             break;
           default:
             newCols.add(obj);

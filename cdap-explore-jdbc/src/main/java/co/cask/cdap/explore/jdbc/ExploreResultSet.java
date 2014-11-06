@@ -124,7 +124,7 @@ public class ExploreResultSet extends BaseExploreResultSet {
 
     int columnType = getMetaData().getColumnType(columnIndex);
     try {
-      Object evaluated = evaluate(columnType, columns.get(columnIndex - 1).getObject());
+      Object evaluated = evaluate(columnType, columns.get(columnIndex - 1).getValue());
       setWasNull(evaluated == null);
       return evaluated;
     } catch (Exception e) {

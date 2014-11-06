@@ -24,6 +24,7 @@ import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.explore.service.TableNotFoundException;
 import co.cask.cdap.explore.utils.ColumnsArgs;
 import co.cask.cdap.explore.utils.FunctionsArgs;
+import co.cask.cdap.explore.utils.QueryResultObjectTypeAdapter;
 import co.cask.cdap.explore.utils.SchemasArgs;
 import co.cask.cdap.explore.utils.TablesArgs;
 import co.cask.cdap.proto.ColumnDesc;
@@ -42,6 +43,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -65,7 +67,9 @@ import javax.annotation.Nullable;
  */
 abstract class ExploreHttpClient implements Explore {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreHttpClient.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(QueryResult.ResultObject.class, new QueryResultObjectTypeAdapter())
+    .create();
 
   private static final Type MAP_TYPE_TOKEN = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type TABLES_TYPE = new TypeToken<List<TableNameInfo>>() { }.getType();

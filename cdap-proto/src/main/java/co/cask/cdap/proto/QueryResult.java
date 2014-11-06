@@ -106,14 +106,8 @@ public class QueryResult {
    * Represents one cell in a query result row.
    */
   public static class ResultObject {
-    Boolean booleanValue = null;
-    Byte byteValue = null;
-    Short shortValue = null;
-    Integer intValue = null;
-    Long longValue = null;
-    Double doubleValue = null;
-    String stringValue = null;
-    byte[] binaryValue = null;
+    ResultType type = null;
+    Object value = null;
 
     /**
      * Create a Hive query result row cell based on a value.
@@ -122,111 +116,35 @@ public class QueryResult {
       if (value == null) {
         return of();
       }
-      return new ResultObject(value);
+      return new ResultObject(ResultType.of(value.getClass()), value);
     }
 
     /**
      * Create a null Hive query result row cell.
      */
     public static ResultObject of() {
-      return new ResultObject(null);
+      return new ResultObject(ResultType.NULL, null);
     }
 
-    private ResultObject(Object value) {
-      switch (ResultType.of(value.getClass())) {
-        case BOOLEAN:
-          booleanValue = (Boolean) value;
-          break;
-        case BYTE:
-          byteValue = (Byte) value;
-          break;
-        case SHORT:
-          shortValue = (Short) value;
-          break;
-        case INT:
-          intValue = (Integer) value;
-          break;
-        case LONG:
-          longValue = (Long) value;
-          break;
-        case DOUBLE:
-          doubleValue = (Double) value;
-          break;
-        case STRING:
-          stringValue = (String) value;
-          break;
-        case BINARY:
-          binaryValue = (byte[]) value;
-          break;
-        case NULL:
-          break;
-      }
-    }
-
-    public Boolean getBooleanValue() {
-      return booleanValue;
-    }
-
-    public Byte getByteValue() {
-      return byteValue;
-    }
-
-    public Short getShortValue() {
-      return shortValue;
-    }
-
-    public Integer getIntValue() {
-      return intValue;
-    }
-
-    public Long getLongValue() {
-      return longValue;
-    }
-
-    public Double getDoubleValue() {
-      return doubleValue;
-    }
-
-    public String getStringValue() {
-      return stringValue;
-    }
-
-    public byte[] getBinaryValue() {
-      return binaryValue;
+    private ResultObject(ResultType type, Object value) {
+      this.type = type;
+      this.value = value;
     }
 
     public ResultType getType() {
-      return ResultType.of(getObject().getClass());
+      return type;
     }
 
-    public Object getObject() {
-      if (booleanValue != null) {
-        return booleanValue;
-      } else if (byteValue != null) {
-        return byteValue;
-      } else if (shortValue != null) {
-        return shortValue;
-      } else if (intValue != null) {
-        return intValue;
-      } else if (longValue != null) {
-        return longValue;
-      } else if (doubleValue != null) {
-        return doubleValue;
-      } else if (stringValue != null) {
-        return stringValue;
-      } else if (binaryValue != null) {
-        return binaryValue;
-      }
-      return null;
+    public Object getValue() {
+      return value;
     }
 
     @Override
     public String toString() {
-      Object object = getObject();
-      if (object == null) {
+      if (value == null) {
         return "null";
       }
-      return object.toString();
+      return value.toString();
     }
 
     @Override
@@ -238,20 +156,17 @@ public class QueryResult {
         return false;
       }
       ResultObject that = (ResultObject) o;
-      return Objects.equal(this.booleanValue, that.booleanValue) &&
-        Objects.equal(this.byteValue, that.byteValue) &&
-        Objects.equal(this.shortValue, that.shortValue) &&
-        Objects.equal(this.intValue, that.intValue) &&
-        Objects.equal(this.longValue, that.longValue) &&
-        Objects.equal(this.doubleValue, that.doubleValue) &&
-        Objects.equal(this.stringValue, that.stringValue) &&
-        Arrays.equals(this.binaryValue, that.binaryValue);
+      if (this.value instanceof byte[] && that.value instanceof byte[]) {
+        return Objects.equal(this.type, that.type) &&
+          Arrays.equals((byte[]) this.value, (byte[]) that.value);
+      }
+      return Objects.equal(this.type, that.type) &&
+        Objects.equal(this.value, that.value);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(booleanValue, byteValue, shortValue, intValue,
-                              longValue, doubleValue, stringValue, binaryValue);
+      return Objects.hashCode(type, value);
     }
   }
 }

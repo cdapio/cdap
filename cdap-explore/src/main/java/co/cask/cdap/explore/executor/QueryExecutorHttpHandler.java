@@ -396,7 +396,7 @@ public class QueryExecutorHttpHandler extends AbstractHttpHandler {
         sb.append(',');
       }
       // Using GSON toJson will serialize objects - in particular, strings will be quoted
-      sb.append(GSON.toJson(o.getObject()));
+      sb.append(GSON.toJson(o.getValue()));
     }
     return sb.toString();
   }

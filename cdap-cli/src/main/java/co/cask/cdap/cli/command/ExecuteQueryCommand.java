@@ -89,7 +89,7 @@ public class ExecuteQueryCommand implements Command {
   private Object[] convertRow(List<QueryResult.ResultObject> row) {
     Object[] result = new Object[row.size()];
     for (int index = 0; index < row.size(); index++) {
-      result[index] = row.get(index).getObject();
+      result[index] = row.get(index).getValue();
     }
     return result;
   }

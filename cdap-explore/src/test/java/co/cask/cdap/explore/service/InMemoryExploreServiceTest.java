@@ -240,7 +240,7 @@ public class InMemoryExploreServiceTest {
       for (QueryResult.ResultObject obj : result.getColumns()) {
         switch (obj.getType()) {
           case STRING:
-            newCols.add(QueryResult.ResultObject.of(obj.getStringValue().trim()));
+            newCols.add(QueryResult.ResultObject.of(((String) obj.getValue()).trim()));
             break;
           default:
             newCols.add(obj);
