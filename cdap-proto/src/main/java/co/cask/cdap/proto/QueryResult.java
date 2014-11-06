@@ -106,7 +106,6 @@ public class QueryResult {
    * Represents one cell in a query result row.
    */
   public static class ResultObject {
-    ResultType type;
     Boolean booleanValue = null;
     Byte byteValue = null;
     Short shortValue = null;
@@ -123,19 +122,18 @@ public class QueryResult {
       if (value == null) {
         return of();
       }
-      return new ResultObject(ResultType.of(value.getClass()), value);
+      return new ResultObject(value);
     }
 
     /**
      * Create a null Hive query result row cell.
      */
     public static ResultObject of() {
-      return new ResultObject(ResultType.NULL, null);
+      return new ResultObject(null);
     }
 
-    private ResultObject(ResultType type, Object value) {
-      this.type = type;
-      switch (type) {
+    private ResultObject(Object value) {
+      switch (ResultType.of(value.getClass())) {
         case BOOLEAN:
           booleanValue = (Boolean) value;
           break;
@@ -197,57 +195,38 @@ public class QueryResult {
       return binaryValue;
     }
 
-    public Object getObject() {
-      switch (type) {
-        case BOOLEAN:
-          return booleanValue;
-        case BYTE:
-          return byteValue;
-        case SHORT:
-          return shortValue;
-        case INT:
-          return intValue;
-        case LONG:
-          return longValue;
-        case DOUBLE:
-          return doubleValue;
-        case STRING:
-          return stringValue;
-        case BINARY:
-          return binaryValue;
-        case NULL:
-          return null;
-      }
-      return null;
+    public ResultType getType() {
+      return ResultType.of(getObject().getClass());
     }
 
-    public ResultType getType() {
-      return type;
+    public Object getObject() {
+      if (booleanValue != null) {
+        return booleanValue;
+      } else if (byteValue != null) {
+        return byteValue;
+      } else if (shortValue != null) {
+        return shortValue;
+      } else if (intValue != null) {
+        return intValue;
+      } else if (longValue != null) {
+        return longValue;
+      } else if (doubleValue != null) {
+        return doubleValue;
+      } else if (stringValue != null) {
+        return stringValue;
+      } else if (binaryValue != null) {
+        return binaryValue;
+      }
+      return null;
     }
 
     @Override
     public String toString() {
-      switch (type) {
-        case BOOLEAN:
-          return booleanValue.toString();
-        case BYTE:
-          return byteValue.toString();
-        case SHORT:
-          return shortValue.toString();
-        case INT:
-          return intValue.toString();
-        case LONG:
-          return longValue.toString();
-        case DOUBLE:
-          return doubleValue.toString();
-        case STRING:
-          return stringValue;
-        case BINARY:
-          return Arrays.asList(binaryValue).toString();
-        case NULL:
-          return "null";
+      Object object = getObject();
+      if (object == null) {
+        return "null";
       }
-      return null;
+      return object.toString();
     }
 
     @Override
@@ -258,11 +237,8 @@ public class QueryResult {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-
       ResultObject that = (ResultObject) o;
-
-      return Objects.equal(this.type, that.type) &&
-        Objects.equal(this.booleanValue, that.booleanValue) &&
+      return Objects.equal(this.booleanValue, that.booleanValue) &&
         Objects.equal(this.byteValue, that.byteValue) &&
         Objects.equal(this.shortValue, that.shortValue) &&
         Objects.equal(this.intValue, that.intValue) &&
@@ -274,7 +250,7 @@ public class QueryResult {
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(type, booleanValue, byteValue, shortValue, intValue,
+      return Objects.hashCode(booleanValue, byteValue, shortValue, intValue,
                               longValue, doubleValue, stringValue, binaryValue);
     }
   }
