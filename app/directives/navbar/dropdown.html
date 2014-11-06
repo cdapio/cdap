@@ -1,0 +1,32 @@
+<ul class="dropdown-menu dropdown-menu-right" role="menu" style="left:auto">
+
+  <li role="presentation">
+    <a role="menuitem" tabindex="-1" href="http://cask.co" target="_blank">
+      <span class="fa fa-book"></span>
+      Cask Home
+    </a>
+  </li>
+
+  <li role="presentation">
+    <a role="menuitem" tabindex="-1" href="https://groups.google.com/forum/#!forum/cdap-dev" target="_blank">
+      <span class="fa fa-support"></span>
+      Support
+    </a>
+  </li>
+
+
+
+  <li role="presentation" class="divider"></li>
+
+  <li role="presentation" class="dropdown-header">
+    themes
+  </li>
+
+  <li role="presentation" ng-repeat="it in theme.list()" ng-class="{disabled:it==theme.current}">
+    <a role="menuitem" href="" ng-click="theme.set(it)">
+      <span class="fa" ng-class="it==theme.current ? 'fa-dot-circle-o' : 'fa-circle-o'"></span>
+      {{it | myCapitalizeFilter}}
+    </a>
+  </li>
+
+</ul>

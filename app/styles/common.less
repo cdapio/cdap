@@ -1,0 +1,149 @@
+@import "./variables.less";
+@import "../../bower_components/bootstrap/less/mixins.less";
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 80px;
+}
+
+footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #f5f5f5;
+
+  > .container {
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+
+  p.text-muted {
+    margin: 20px 0;
+  }
+}
+
+main.container {
+  padding: 60px 15px 0;
+}
+
+#alerts {
+  position: fixed;
+  z-index: 99;
+  top: 60px;
+  left: 0;
+  right: 0;
+}
+
+.modal {
+
+  &.center {
+    .modal-dialog {
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      min-width: 320px;
+      max-width: 630px;
+      width: 50%;
+      transform: translateX(-50%) translateY(-50%);
+    }
+  }
+
+  .modal-body {
+    max-height: 400px;
+    overflow: auto;
+  }
+}
+
+.modal-backdrop {
+  // see https://github.com/twbs/bootstrap/pull/14724
+  z-index: ( @zindex-modal - 1 );
+}
+
+fieldset.row {
+  margin-bottom: 1px;
+}
+
+@media (max-width: @screen-xs-max) {
+  .form-control {
+    margin-bottom: 1px;
+  }
+}
+
+.form-control.ng-dirty.ng-invalid {
+  border-color: #a94442;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+  &:focus {
+    border-color: #843534;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 6px #ce8483;
+  }
+}
+
+
+span.text-info[bs-tooltip] {
+  cursor: help;
+}
+
+.jumbotron {
+  margin-top: 1em;
+}
+
+.nav-tabs > li > a {
+  cursor: pointer;
+}
+
+fieldset.tab-pane {
+  padding-top: 1em;
+
+  &.am-fade.active-add {
+    // cf http://mgcrea.github.io/angular-strap/##tabs-usage
+    animation-name: fadeIn;
+  }
+}
+
+body div.progress {
+  margin: 1px; /* by default they have just margin-bottom: 20px */
+}
+
+
+.coopr-list-striped {
+  > li:nth-child(odd) {
+    background-color: @table-bg-accent;
+  }
+}
+
+.coopr-ticker {
+  p {
+    font-weight: bold;
+    text-align: center;
+    em {
+      display: block;
+      font-style: normal;
+      font-size: 400%;
+    }
+  }
+}
+
+
+
+.coopr-control-group {
+  .clearfix();
+
+  position: relative;
+  margin-bottom: 10px;
+  margin-right: 36px;
+
+  padding: 9px 10px 5px;
+  border: 1px solid @gray-lighter;
+
+  p.remove {
+      position: absolute;
+      right: -36px;
+      top: 0;
+  }
+
+}

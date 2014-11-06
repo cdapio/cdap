@@ -1,0 +1,16 @@
+<div class="text-center">
+  <p>
+    <a class="btn btn-lg btn-primary" 
+      download="{{filename}}"
+      ng-click="$hide()"
+      ng-disabled="!bloburl" 
+      ng-href="{{bloburl}}">
+      download 
+      <span class="fa fa-download"></span>
+    </a>
+  </p>
+  <p ng-show="bloburl">
+    <code>{{filename}}</code>
+    <small>{{filesize}}</small>
+  </p>
+</div>

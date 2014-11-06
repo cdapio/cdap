@@ -1,0 +1,70 @@
+<div ng-hide="currentUser">
+  <div class="jumbotron text-center">
+    <h1>
+      Coopr
+    </h1>
+    <p>operate barrel-making machinery and assemble casks</p>
+    <p><a class="btn btn-primary" ui-sref="login">
+      Sign in
+      <span class="fa fa-sign-in"></span>
+    </a></p>
+  </div>
+</div>
+
+<div ng-show="currentUser">
+
+  <div class="page-header">
+
+    <div class="pull-right">
+      <div class="btn-group btn-group-sm">
+        <a class="btn btn-default" href="" ng-click="doImport()">
+          <span class="fa fa-arrow-down"></span> Import
+        </a>
+        <a class="btn btn-default" href="" ng-click="doExport()">
+          <span class="fa fa-arrow-up"></span> Export
+        </a>
+      </div>
+    </div>
+
+    <h2>
+      Welcome
+      <small>{{currentUser.username}}/{{currentUser.tenant}}</small>
+    </h2>
+  </div>
+
+  <div class="coopr-ticker row">
+    <div class="col-sm-3">
+      <p class="well">
+        Live Clusters
+        <em>{{liveClusters}}</em>
+      </p>
+    </div>
+    <div class="col-sm-3">
+      <p class="well">
+        Pending Clusters
+        <em>{{pendingClusters}}</em>
+      </p>
+    </div>
+    <div class="col-sm-3">
+      <p class="well">
+        Live Nodes
+        <em>{{liveNodes}}</em>
+      </p>
+    </div>
+    <div class="col-sm-3">
+      <p class="well">
+        All Nodes
+        <em>{{totalNodes}}</em>
+      </p>
+    </div>
+  </div>
+
+  <p ng-show="timestamp"><small>
+    Data last updated 
+    <a href="" ng-click="doRefresh()" 
+      am-time-ago="timestamp" 
+      bs-tooltip="(timestamp | amDateFormat:'H:mm:ss') + ' (click to refresh)'"
+    ></a>.
+  </small></p>
+
+</div>

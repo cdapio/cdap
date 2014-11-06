@@ -1,0 +1,36 @@
+[my-navbar] {
+  ul.navbar-right .dropdown-menu.bottom-right {
+    left: auto !important;
+  }
+
+  .navbar-collapse.in {
+    @media (max-width: 767px) {
+      span.fa {
+        min-width: 2em;
+        text-align: center;
+      }
+    }
+  }
+
+  @media (min-width: 768px) {
+    .bigicons {
+      position: absolute;
+      left:50%;
+      margin-left: -182px;
+      ul.nav > li > a {
+        text-align: center;
+        padding-top: 8px;
+        padding-bottom: 8px;
+
+        font-size: 8px;
+        line-height: 14px;
+
+        span.fa {
+          display: block;
+          font-size: 20px;
+        }
+
+      }
+    }
+  }
+}
