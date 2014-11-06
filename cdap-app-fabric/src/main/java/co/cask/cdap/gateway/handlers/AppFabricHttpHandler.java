@@ -1740,10 +1740,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
     // Copy archive to a temporary location
     final File tmpArchive = new File(new File(configuration.get(Constants.AppFabric.TEMP_DIR), accountId),
-                                     System.currentTimeMillis() + archiveName);
+                                     String.format("%s-%s", System.currentTimeMillis(), archiveName));
     if ((!tmpArchive.getParentFile().exists() && !tmpArchive.getParentFile().mkdirs()) || !tmpArchive.createNewFile()) {
       throw new IOException("Could not create temporary file for archive: " + archiveName);
     }
+    LOG.debug("Moving archive to temporary file on local disk: {}", tmpArchive.getAbsolutePath());
     final OutputStream fos = new FileOutputStream(tmpArchive);
 
     if (archiveName == null || archiveName.isEmpty()) {
