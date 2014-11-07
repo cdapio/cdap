@@ -57,5 +57,5 @@ public interface ExploreExecutionResult extends Iterator<QueryResult>, Closeable
    *
    * @return true if this {@link ExploreExecutionResult} may contain results.
    */
-  boolean mayContainResults();
+  boolean canContainResults();
 }

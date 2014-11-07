@@ -268,14 +268,15 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
     private final ExploreHttpClient exploreClient;
     private final QueryHandle handle;
-    private final boolean mayHaveResults;
+    private final boolean canContainResults;
     private final boolean hasResults;
 
-    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle, boolean mayHaveResults) {
+    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle,
+                                        boolean canContainResults) {
       this.exploreClient = exploreClient;
       this.handle = handle;
-      this.mayHaveResults = mayHaveResults;
-      this.hasResults = mayHaveResults;
+      this.canContainResults = canContainResults;
+      this.hasResults = canContainResults;
     }
 
     @Override
@@ -341,8 +342,8 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     }
 
     @Override
-    public boolean mayContainResults() {
-      return mayHaveResults;
+    public boolean canContainResults() {
+      return canContainResults;
     }
   }
 

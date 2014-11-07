@@ -61,7 +61,7 @@ public class ExecuteQueryCommand implements Command {
     ListenableFuture<ExploreExecutionResult> future = queryClient.execute(query);
     try {
       ExploreExecutionResult executionResult = future.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
-      if (!executionResult.mayContainResults()) {
+      if (!executionResult.canContainResults()) {
         output.println("SQL statement does not output any result.");
         executionResult.close();
         return;

@@ -201,7 +201,7 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     }
 
     @Override
-    public boolean mayContainResults() {
+    public boolean canContainResults() {
       return true;
     }
   }
