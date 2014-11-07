@@ -334,14 +334,16 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
               columnValue = ((Double) columnValue).byteValue();
             }
           } else if (schemaColumn.getType() != null && schemaColumn.getType().equals("BINARY")) {
-            List<Object> binary = null;
+            // A BINARY value is a byte array, which is deserialized by GSon into a list of
+            // double objects - here we recreate a byte[] object.
+            List<Object> binary;
             if (columnValue instanceof List) {
               binary = (List) columnValue;
             } else if (columnValue instanceof Double[]) {
               binary = (List) Arrays.asList((Double[]) columnValue);
-            }
-            if (binary == null) {
-              break;
+            } else {
+              throw new ExploreException("Unsupported format for BINARY data type: " +
+                                           columnValue.getClass().getCanonicalName());
             }
             Object newColumnValue = new byte[binary.size()];
             for (int i = 0; i < ((byte[]) newColumnValue).length; i++) {
@@ -384,7 +386,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     }
 
     @Override
-    public List<ColumnDesc> getResultSchema() throws ExploreException {
+    public synchronized List<ColumnDesc> getResultSchema() throws ExploreException {
       if (resultSchema == null) {
         try {
           resultSchema = exploreClient.getResultSchema(handle);
