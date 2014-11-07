@@ -122,7 +122,11 @@
     {%- if hidetoc %}
         <link rel="stylesheet" href="{{ pathto('_static/hide-toc.css', 1) }}" type="text/css" />
     {%- endif %}
-    
+
+{#  Code to hide navigation on certain pages #}
+   {%- if pagename in ['release-notes', 'glossary', 'faq']%}
+        <link rel="stylesheet" href="{{ pathto('_static/hide-nav.css', 1) }}" type="text/css" />
+   {%- endif %}
 {%- endmacro %}
 
 <html xmlns="http://www.w3.org/1999/xhtml">

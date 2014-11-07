@@ -20,6 +20,16 @@ This application uses one Stream, one Dataset, one Flow and one Procedure to imp
 - A flow with a single flowlet that reads the stream and stores in a dataset each name in a KeyValueTable; and
 - A procedure that reads the name from the KeyValueTable and prints 'Hello [Name]!'.
 
+
+The ``HelloWorld`` Application
+-------------------------------
+
+.. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
+   :language: java
+   :lines: 45-55
+   
+The application uses a stream called *who* to ingest data through a flow *WhoFlow* to a dataset *whom*.
+
 The ``WhoFlow``
 ---------------
 
@@ -37,7 +47,7 @@ stored:
    :language: java
    :lines: 76-95
   
-Note that the flowlet also emits metrics: Every time a name longer than 10 characters is received,
+Note that the flowlet also emits metrics: every time a name longer than 10 characters is received,
 the counter ``names.longnames`` is incremented by one, and the metric ``names.bytes`` is incremented
 by the length of the name. We will see below how to retrieve these metrics using the 
 :ref:`http-restful-api-metrics`.
@@ -51,6 +61,11 @@ reads the name stored by the ``NameSaver`` from the key-value table. It return a
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 100-115
+
+Note that the procedure, like the flowlet, also emits metrics: every time the name *Jane
+Doe* is received, the counter ``greetings.count.jane_doe`` is incremented by one. We will
+see below how to retrieve this metric sing the 
+:ref:`http-restful-api-metrics`.
 
 Building and Starting
 =================================
@@ -74,19 +89,27 @@ Running the Example
 Injecting a Name
 ------------------------------
 
-In the Application's detail page, under *Process*, click on *WhoFlow*. This takes you to the flow details page.
-Now click on the *who* stream on the left side of the flow visualization, which brings up a pop-up window.
-Enter a name and click the *Inject* button. After you close the pop-up window, you will see that the counters
-for both the stream and the *saver* flowlet increase to 1. You can repeat this step to enter more names, but
-remember that only the last name is stored in the key-value table.
+In the Application's detail page, under *Process*, click on *WhoFlow*. This takes you to
+the flow details page. Click on the *Start* button in the right-side, below the green
+arrow. The flow's label will change to *Running* when it is ready to receive events.
+
+Now click on the *who* stream on the left side of the flow visualization, which brings up
+a pop-up window. Enter a name and click the *Inject* button. After you close the pop-up
+window, you will see that the counters for both the stream and the *saver* flowlet
+increase to 1. You can repeat this step to enter more names, but remember that only the
+last name is stored in the key-value table.
 
 Using the Procedure
 ------------------------------
 
-Go back to the Application's detail page, and under Query, click on the *Greeting* procedure. Now you can make a
-request to the procedure: Enter "greet" for the method and click the Execute button. At the bottom of the page you
-will see the procedure's response. If the last name you entered was *Tom*, this will be "Hello, Tom!".
+Go back to the Application's detail page, and under Query, click on the *Greeting*
+procedure. Click on the *Start* button in the right-side, below the green arrow. The
+procedure's label will change to *Running* when it is ready to receive events.
 
+Now you can make a request to the procedure: Enter "greet" for the method and click the
+Execute button. At the bottom of the page you will see the procedure's response. If the
+last name you entered was *Tom*, this will be "Hello, Tom!".
+  
 Retrieving Metrics
 ------------------------------
 
@@ -98,6 +121,18 @@ you can make an HTTP request to the :ref:`http-restful-api-metrics` using curl::
   $ curl http://localhost:10000/v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.bytes?aggregate=true; echo
   {"data":3}
 
+To see the value of the ``names.longnames`` metric (the number of names greater than 10 characters),
+you can use::
+
+  $ curl http://localhost:10000/v2/metrics/user/apps/HelloWorld/flows/WhoFlow/flowlets/saver/names.longnames?aggregate=true; echo
+  {"data":2}
+  
+To see the value of the ``greetings.count.jane_doe`` metric (the number of times the name *Jane Doe* has been seen),
+you can use::
+
+  $ curl http://localhost:10000/v2/metrics/user/apps/HelloWorld/procedures/Greeting/greetings.count.jane_doe?aggregate=true; echo
+  {"data":0}
+  
 Stopping the Application
 -------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. <#stopping-an-application>`__

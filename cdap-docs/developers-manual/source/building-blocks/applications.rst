@@ -11,15 +11,15 @@ Applications
 .. highlight:: java
 
 An **Application** is a collection of application virtualizations that read from—and write
-to—the data virtualization layer in CDAP. Application virtualizations include *Programs,* *Services,* and *Procedures.*
+to—the data virtualization layer in CDAP. 
+
+**Application virtualizations** include *Programs,* *Services,* and *Procedures.*
 
 Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce Jobs <mapreduce-jobs>`,
 :doc:`Workflows <workflows>`, and :doc:`Spark Jobs <spark-jobs>`, and are used to process
 data. :doc:`Services <services>` and :doc:`Procedures <procedures>` are used to serve data.
 
-In writing a CDAP Application, it's best to use an integrated development environment that
-understands the application interface to provide code-completion in writing interface
-methods.
+**Data virtualizations** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
 
 To create an Application, implement the ``Application`` interface or subclass from
 ``AbstractApplication`` class, specifying the Application metadata and declaring and
@@ -31,6 +31,7 @@ configuring each of the Application elements::
           setName("myApp");
           setDescription("My Sample Application");
           addStream(new Stream("myAppStream"));
+          createDataset("myAppDataset", Table.class);
           addFlow(new MyAppFlow());
           addProcedure(new MyAppQuery());
           addMapReduce(new MyMapReduceJob());
@@ -38,10 +39,26 @@ configuring each of the Application elements::
         }
       }
 
-Notice that *Streams* are defined using the provided ``Stream`` class, and are referenced by
-names, while other components are defined using user-written classes that implement
-correspondent interfaces and are referenced by passing an object, in addition to being
-assigned a unique name.
+Notice that *Streams* are defined using the provided ``Stream`` class, and *Datasets* are
+defined by passing a ``Table`` class; both are referenced by name.
+
+Other components are defined using user-written classes that implement correspondent
+interfaces and are referenced by passing an object, in addition to being assigned a unique
+name.
 
 Names used for *Streams* and *Datasets* need to be unique across the CDAP instance, while
-names used for Programs and Services need to be unique only to the application.
+names used for *Programs* and *Services* need to be unique only to the application.
+
+A typical design of a CDAP Application consists of:
+
+- Streams to ingest data into CDAP;
+- Flows, consisting of Flowlets linked together, to process the ingested data
+  in realtime or batch;
+- MapReduce Jobs, Spark Jobs, and Workflows for batch processing tasks;
+- Datasets for storage of data, either raw or the processed results; and
+- Services and Procedures for serving data and processed results.
+
+Of course, not all components are required: it depends on the application. A minimal
+application could include a Stream, a Flow, a Flowlet, and a Dataset. It's possible a
+Stream is not needed, if other methods of bringing in data are used. In the next pages,
+we'll look at these components, and their interactions.

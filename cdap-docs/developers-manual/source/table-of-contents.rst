@@ -18,6 +18,3 @@ CDAP Developers’ Manual
     Authentication Clients </authentication-clients/index>
     Advanced Topics <advanced/index>
     Troubleshooting </troubleshooting>
-    Release Notes </release-notes>
-    Glossary </glossary>
-    FAQ </faq>

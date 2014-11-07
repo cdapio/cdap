@@ -12,5 +12,4 @@ CDAP Administration
     Introduction </index>
     Installation</installation/index>
     Operations </operations/index>
-    Glossary </glossary>
     

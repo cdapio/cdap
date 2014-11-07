@@ -101,12 +101,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |troubleshooting|_ Selected examples of potential problems and possible resolutions.
   
-  
-.. |remaining| replace:: **Remaining Sections:**
-
-- |remaining| The final documentation sections cover :doc:`Release Notes <release-notes>`,
-  :doc:`Glossary <glossary>`, and an :doc:`FAQ. <faq>`
-   
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:

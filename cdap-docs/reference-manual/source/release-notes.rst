@@ -3,15 +3,24 @@
     :description: Release notes for the Cask Data Application Platform
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+:orphan:
+
 .. _overview_release-notes:
 
 .. index::
    single: Release Notes
 
+.. _release-notes:
+
 ============================================
 Cask Data Application Platform Release Notes
 ============================================
-.. _release-notes:
+
+.. contents::
+   :local:
+   :class: faq
+   :backlinks: none
+   :depth: 2
 
 Release 2.5.1
 =============
@@ -36,7 +45,7 @@ Other Changes
 -------------
 
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
-  `CDAP Command-line Interface, <api.html#cli>`__ ``cdap-cli.sh``.
+  :ref:`CDAP Command-line Interface, <cli>` ``cdap-cli.sh``.
 - The CDAP Command-line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The CDAP Java Stream Client now allows empty String events to be sent.
 - The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.
