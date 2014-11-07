@@ -213,7 +213,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       try {
         onFinish(success);
       } finally {
-        SparkProgramWrapper.stopSparkProgram(); // calls stop on SparkContext
         context.close();
         cleanupTask.run();
       }
