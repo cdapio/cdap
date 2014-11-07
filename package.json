@@ -1,5 +1,5 @@
 {
-  "name": "cdap-ngui",
+  "name": "cdap-ui",
   "version": "0.1.0",
   "description": "Front-end for CDAP",
   "scripts": {

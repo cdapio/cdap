@@ -1,5 +1,5 @@
 {
-  "name": "cdap-ngui",
+  "name": "cdap-ui",
   "private": true,
   "dependencies": {
     "angular": "1.3.1",
