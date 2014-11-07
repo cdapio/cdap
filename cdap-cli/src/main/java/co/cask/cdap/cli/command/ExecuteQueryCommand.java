@@ -21,18 +21,25 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.QueryClient;
+import co.cask.cdap.explore.client.ExploreExecutionResult;
+import co.cask.cdap.explore.service.HandleNotFoundException;
+import co.cask.cdap.explore.service.UnexpectedQueryStatusException;
 import co.cask.cdap.proto.ColumnDesc;
-import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.proto.QueryStatus;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
-import java.util.Iterator;
+import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Executes a dataset query.
@@ -51,20 +58,16 @@ public class ExecuteQueryCommand implements Command {
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String query = arguments.get(ArgumentName.QUERY.toString());
 
-    QueryHandle queryHandle = queryClient.execute(query);
-    QueryStatus status = null;
-
-    long startTime = System.currentTimeMillis();
-    while (System.currentTimeMillis() - startTime < TIMEOUT_MS) {
-      status = queryClient.getStatus(queryHandle);
-      if (status.getStatus().isDone()) {
-        break;
+    ListenableFuture<ExploreExecutionResult> future = queryClient.execute(query);
+    try {
+      ExploreExecutionResult executionResult = future.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      if (!executionResult.mayContainResults()) {
+        output.println("SQL statement does not output any result.");
+        executionResult.close();
+        return;
       }
-      Thread.sleep(1000);
-    }
 
-    if (status != null && status.hasResults()) {
-      final List<ColumnDesc> schema = queryClient.getSchema(queryHandle);
+      final List<ColumnDesc> schema = executionResult.getResultSchema();
       String[] header = new String[schema.size()];
       for (int i = 0; i < header.length; i++) {
         ColumnDesc column = schema.get(i);
@@ -72,41 +75,33 @@ public class ExecuteQueryCommand implements Command {
         int index = column.getPosition() - 1;
         header[index] = column.getName() + ": " + column.getType();
       }
-      List<QueryResult> results = queryClient.getResults(queryHandle, 20);
-
-      new AsciiTable<QueryResult>(header, results, new RowMaker<QueryResult>() {
+      List<QueryResult> rows = Lists.newArrayList(executionResult);
+      executionResult.close();
+      new AsciiTable(header, rows, new RowMaker<QueryResult>() {
         @Override
         public Object[] makeRow(QueryResult object) {
-          return convertRow(object.getColumns(), schema);
+          return object.getColumns().toArray();
         }
       }).print(output);
 
-      queryClient.delete(queryHandle);
-    } else {
-      output.println("Couldn't obtain results after " + (System.currentTimeMillis() - startTime) + "ms. " +
-                       "Try querying manually with handle " + queryHandle.getHandle());
-    }
-  }
-
-  private Object[] convertRow(List<Object> row, List<ColumnDesc> schema) {
-    Preconditions.checkArgument(row.size() == schema.size(), "Row and schema length differ");
-
-    Object[] result = new Object[row.size()];
-    Iterator<Object> rowIterator = row.iterator();
-    Iterator<ColumnDesc> schemaIterator = schema.iterator();
-    int index = 0;
-    while (rowIterator.hasNext() && schemaIterator.hasNext()) {
-      Object columnValue = rowIterator.next();
-      ColumnDesc schemaColumn = schemaIterator.next();
-      if (columnValue != null && columnValue instanceof Double
-        && schemaColumn.getType() != null && schemaColumn.getType().endsWith("INT")) {
-        columnValue = ((Double) columnValue).longValue();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      Throwable t = Throwables.getRootCause(e);
+      if (t instanceof HandleNotFoundException) {
+        throw Throwables.propagate(t);
+      } else if (t instanceof UnexpectedQueryStatusException) {
+        UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
+        throw new SQLException(String.format("Statement '%s' execution did not finish successfully. " +
+                                             "Got final state - %s", query, sE.getStatus().toString()));
       }
-      result[index] = columnValue;
-      index++;
+      throw new SQLException(Throwables.getRootCause(e));
+    } catch (CancellationException e) {
+      throw new RuntimeException("Query has been cancelled on ListenableFuture object.");
+    } catch (TimeoutException e) {
+      output.println("Couldn't obtain results after " + TIMEOUT_MS + "ms.");
     }
 
-    return result;
   }
 
   @Override

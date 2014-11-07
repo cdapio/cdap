@@ -107,6 +107,17 @@
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-authentication-client</artifactId>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-explore-client</artifactId>
+      <version>${project.version}</version>
+      <!-- TODO do we need all the exclusions like for cdap-common? -->
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.netty</groupId>
+      <artifactId>netty</artifactId>
+      <version>3.2.7.Final</version>
+    </dependency>
   </dependencies>
 
 </project>
