@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.commons').directive('myNavbar',
-function myNavbarDirective ($dropdown, myTheme) {
+function myNavbarDirective ($dropdown, caskTheme) {
   return {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
@@ -17,7 +17,7 @@ function myNavbarDirective ($dropdown, myTheme) {
         scope: scope
       });
 
-      scope.theme = myTheme;
+      scope.theme = caskTheme;
 
       scope.navbarLinks = [
         { sref: 'foo',      label: 'Foo',     icon: 'cube'          },
