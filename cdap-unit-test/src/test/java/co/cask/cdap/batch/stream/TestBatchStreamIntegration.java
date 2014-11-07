@@ -47,7 +47,7 @@ public class TestBatchStreamIntegration extends TestBase {
       }
 
       MapReduceManager mapReduceManager = applicationManager.startMapReduce("StreamTestBatch");
-      mapReduceManager.waitForFinish(2, TimeUnit.MINUTES);
+      mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
 
       // The MR job simply turns every stream event body into key/value pairs, with key==value.
       DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("results");
