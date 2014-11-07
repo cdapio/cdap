@@ -26,7 +26,6 @@ public class FlowletMetrics extends AbstractProgramMetrics {
 
   public FlowletMetrics(MetricsCollectionService collectionService,
                         String applicationId, String flowId, String flowletId, String runId) {
-    // Not support runID for now.
     super(collectionService.getCollector(
       MetricsScope.USER, String.format("%s.f.%s.%s", applicationId, flowId, flowletId), runId));
   }

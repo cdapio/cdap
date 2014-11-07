@@ -26,7 +26,6 @@ public class ProcedureMetrics extends AbstractProgramMetrics {
 
   public ProcedureMetrics(MetricsCollectionService collectionService, String applicationId, String procedureId,
                           String runId) {
-    // Not support runID for now.
     super(collectionService.getCollector(MetricsScope.USER, String.format("%s.p.%s", applicationId, procedureId),
                                          runId));
   }

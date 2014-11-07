@@ -95,6 +95,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       this.systemReducerMetrics = Maps.newHashMap();
       this.systemMetrics = Maps.newHashMap();
       for (MetricsScope scope : MetricsScope.values()) {
+        // Supporting runId only for user metrics now
         String metricsRunId = (scope == MetricsScope.USER) ? runId.getId() : INSTANCE_ID;
         this.systemMapperMetrics.put(
           scope, metricsCollectionService.getCollector(scope,
