@@ -57,7 +57,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.util.Set;
@@ -81,13 +80,14 @@ public abstract class ExternalAuthenticationServerTestBase {
   private static Codec<AccessToken> tokenCodec;
   private static DiscoveryServiceClient discoveryServiceClient;
   private static InMemoryDirectoryServer ldapServer;
-  private static int ldapPort;
+  protected static int ldapPort = Networks.getRandomPort();
 
   private static final Logger TEST_AUDIT_LOGGER = mock(Logger.class);
 
   // Needs to be set by derived classes.
   protected static CConfiguration configuration;
   protected static SConfiguration sConfiguration;
+  protected static InMemoryListenerConfig ldapListenerConfig;
 
   protected abstract String getProtocol();
   protected abstract HttpClient getHTTPClient() throws Exception;
@@ -141,12 +141,10 @@ public abstract class ExternalAuthenticationServerTestBase {
     cConf.setInt(Constants.Security.AUTH_SERVER_PORT, Networks.getRandomPort());
     cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, Networks.getRandomPort());
 
-    cConf.set(Constants.Security.AUTH_HANDLER_CLASS,
-              "co.cask.cdap.security.server.LDAPAuthenticationHandler");
-    cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, "org.eclipse.jetty.plus.jaas.spi.LdapLoginModule");
+    cConf.set(Constants.Security.AUTH_HANDLER_CLASS, "co.cask.cdap.security.server.LDAPAuthenticationHandler");
+    cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, "co.cask.cdap.security.server.LdapLoginModule");
     cConf.set(configBase.concat("debug"), "true");
     cConf.set(configBase.concat("hostname"), "localhost");
-    ldapPort = Networks.getRandomPort();
     cConf.set(configBase.concat("port"), Integer.toString(ldapPort));
     cConf.set(configBase.concat("userBaseDn"), "dc=example,dc=com");
     cConf.set(configBase.concat("userRdnAttribute"), "cn");
@@ -161,8 +159,8 @@ public abstract class ExternalAuthenticationServerTestBase {
 
   private static void startLDAPServer() throws Exception {
     InMemoryDirectoryServerConfig config = new InMemoryDirectoryServerConfig("dc=example,dc=com");
-    config.setListenerConfigs(InMemoryListenerConfig.createLDAPConfig("LDAP", InetAddress.getByName("127.0.0.1"),
-                                                                      ldapPort, null));
+    config.setListenerConfigs(ldapListenerConfig);
+
     Entry defaultEntry = new Entry(
                               "dn: dc=example,dc=com",
                               "objectClass: top",
@@ -175,6 +173,7 @@ public abstract class ExternalAuthenticationServerTestBase {
                               "sn: User",
                               "uid: user",
                               "userPassword: realtime");
+
     ldapServer = new InMemoryDirectoryServer(config);
     ldapServer.addEntries(defaultEntry, userEntry);
   }
