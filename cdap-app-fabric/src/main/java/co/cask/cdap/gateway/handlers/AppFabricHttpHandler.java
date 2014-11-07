@@ -1785,6 +1785,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } finally {
+          if (!tmpArchive.delete()) {
+            LOG.debug("Could not delete archive in temporary location: {}", tmpArchive.getAbsolutePath());
+          }
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
         }
@@ -1798,6 +1801,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         } catch (IOException e) {
           LOG.error("Error while saving deploy jar.", e);
         } finally {
+          if (!tmpArchive.delete()) {
+            LOG.debug("Could not delete archive in temporary location: {}", tmpArchive.getAbsolutePath());
+          }
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
         }
