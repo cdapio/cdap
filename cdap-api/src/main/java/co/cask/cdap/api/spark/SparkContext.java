@@ -17,7 +17,9 @@
 package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.stream.StreamEventDecoder;
 
 /**
  * Spark job execution context. This context is shared between CDAP and User's Spark job.
@@ -69,6 +71,46 @@ public interface SparkContext extends RuntimeContext {
    * @throws UnsupportedOperationException if the SparkContext is not yet initialized
    */
   <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass);
+
+  /**
+   * Create a Spark RDD that uses complete {@link Stream} as input source
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
+   * @param <T>        type of RDD
+   * @return the RDD created from {@link Stream}
+   */
+  <T> T readFromStream(String streamName, Class<?> vClass);
+
+  /**
+   * Create a Spark RDD that uses {@link Stream} as input source
+   *
+   * @param streamName the name of the {@link Stream} to be read as an RDD
+   * @param vClass     the value class
+   * @param startTime  the starting time of the stream to be read in milliseconds. To read from the starting of the
+   *                   stream set this to 0
+   * @param endTime    the ending time of the streams to be read in milliseconds. To read up to the end of the stream
+   *                   set this to Long.MAX_VALUE
+   * @param <T>        type of RDD
+   * @return the RDD created from {@link Stream}
+   */
+  <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime);
+
+  /**
+   * Create a Spark RDD that uses {@link Stream} as input source according to the given {@link StreamEventDecoder}
+   *
+   * @param streamName  the name of the {@link Stream} to be read as an RDD
+   * @param vClass      the value class
+   * @param startTime   the starting time of the stream to be read in milliseconds. To read from the starting of the
+   *                    stream set this to 0
+   * @param endTime     the ending time of the streams to be read in milliseconds. To read up to the end of the stream
+   *                    set this to Long.MAX_VALUE
+   * @param decoderType the decoder to use while reading streams
+   * @param <T>         type of RDD
+   * @return the RDD created from {@link Stream}
+   */
+  <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                       Class<? extends StreamEventDecoder> decoderType);
 
   /**
    * Returns

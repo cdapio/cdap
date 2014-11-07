@@ -20,6 +20,7 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.client.util.ProgramFlowUtil;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Instances;
@@ -32,6 +33,7 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -40,6 +42,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 /**
@@ -125,6 +131,39 @@ public class ProgramClient {
     }
 
     return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
+  }
+
+  /**
+   * Waits for a program to have a certain status.
+   *
+   * @param appId ID of the application that the program belongs to
+   * @param programType type of the program
+   * @param programId name of the program
+   * @param status the desired status
+   * @param timeout how long to wait in milliseconds until timing out
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @throws TimeoutException if the program did not achieve the desired program status before the timeout
+   * @throws InterruptedException if interrupted while waiting for the desired program status
+   */
+  public void waitForStatus(final String appId, final ProgramType programType, final String programId,
+                            String status, long timeout, TimeUnit timeoutUnit)
+    throws UnAuthorizedAccessTokenException, IOException, ProgramNotFoundException,
+    TimeoutException, InterruptedException {
+
+    try {
+      ProgramFlowUtil.waitFor(status, new Callable<String>() {
+        @Override
+        public String call() throws Exception {
+          return getStatus(appId, programType, programId);
+        }
+      }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), UnAuthorizedAccessTokenException.class);
+      Throwables.propagateIfPossible(e.getCause(), ProgramNotFoundException.class);
+      Throwables.propagateIfPossible(e.getCause(), IOException.class);
+    }
   }
 
   /**

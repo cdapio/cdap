@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.spark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.ScalaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Throwables;
 import org.apache.spark.network.ConnectionManager;
 import org.slf4j.Logger;
@@ -59,6 +60,7 @@ public class SparkProgramWrapper {
   private final String[] arguments;
   private final Class userProgramClass;
   private static SparkContext sparkContext;
+  private static StreamAdmin streamAdmin;
   private static boolean scalaProgram;
 
   // TODO: Get around Spark's limitation of only one SparkContext in a JVM and support multiple spark context:
@@ -129,9 +131,9 @@ public class SparkProgramWrapper {
    */
   void setSparkContext() {
     if (JavaSparkProgram.class.isAssignableFrom(userProgramClass)) {
-      sparkContext = new JavaSparkContext();
+      sparkContext = new JavaSparkContext(getStreamAdmin());
     } else if (ScalaSparkProgram.class.isAssignableFrom(userProgramClass)) {
-      sparkContext = new ScalaSparkContext();
+      sparkContext = new ScalaSparkContext(getStreamAdmin());
       setScalaProgram(true);
     } else {
       String error = "Spark program must implement either JavaSparkProgram or ScalaSparkProgram";
@@ -280,5 +282,13 @@ public class SparkProgramWrapper {
    */
   public static void setScalaProgram(boolean scalaProgram) {
     SparkProgramWrapper.scalaProgram = scalaProgram;
+  }
+
+  public static StreamAdmin getStreamAdmin() {
+    return streamAdmin;
+  }
+
+  public static void setStreamAdmin(StreamAdmin streamAdmin) {
+    SparkProgramWrapper.streamAdmin = streamAdmin;
   }
 }
