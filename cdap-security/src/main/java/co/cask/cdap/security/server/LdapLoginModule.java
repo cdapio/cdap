@@ -35,8 +35,8 @@ import javax.net.ssl.X509TrustManager;
 import javax.security.auth.spi.LoginModule;
 
 /**
- * A custom {@link LoginModule} that allows the disabling of SSL certificate verification for connections between
- * the {@link ExternalAuthenticationServer} and an LDAP instance.
+ * A custom {@link LoginModule} that does LDAP authentication. It allows the disabling of SSL
+ * certificate verification for connections between the {@link ExternalAuthenticationServer} and an LDAP instance.
  */
 public class LdapLoginModule extends org.eclipse.jetty.plus.jaas.spi.LdapLoginModule {
   private static final Logger LOG = LoggerFactory.getLogger(LdapLoginModule.class);
@@ -45,9 +45,9 @@ public class LdapLoginModule extends org.eclipse.jetty.plus.jaas.spi.LdapLoginMo
    * A {@link SocketFactory} that trusts all SSL certificates.
    */
   public static class TrustAllSSLSocketFactory extends SocketFactory {
-    private static SocketFactory trustAllFactory = null;
+    private final SocketFactory trustAllFactory;
 
-    static {
+    private TrustAllSSLSocketFactory() {
       TrustManager[] trustManagers = new TrustManager[] { new X509TrustManager() {
         @Override
         public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
@@ -106,8 +106,8 @@ public class LdapLoginModule extends org.eclipse.jetty.plus.jaas.spi.LdapLoginMo
     /**
      * @see SocketFactory#createSocket(InetAddress, int, InetAddress, int)
      */
-    public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort)
-      throws IOException {
+    public Socket createSocket(InetAddress address, int port,
+                               InetAddress localAddress, int localPort) throws IOException {
       return trustAllFactory.createSocket(address, port, localAddress, localPort);
     }
   }

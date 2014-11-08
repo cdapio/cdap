@@ -39,7 +39,7 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
                                                                              "userIdAttribute", "userPasswordAttribute",
                                                                              "roleBaseDn", "roleNameAttribute",
                                                                              "roleMemberAttribute", "roleObjectClass");
-  private static boolean ldapSSLVerifyCertificate;
+  private static boolean ldapSSLVerifyCertificate = true;
 
   /**
    * Create a new Authentication handler to use LDAP for external authentication.
@@ -80,12 +80,7 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
           }
         }
 
-        try {
-          ldapSSLVerifyCertificate = configuration.getBoolean(authConfigBase.concat("ldapsVerifyCertificate"));
-        } catch (NullPointerException e) {
-          // Enable certificate checking by default
-          ldapSSLVerifyCertificate = true;
-        }
+        ldapSSLVerifyCertificate = configuration.getBoolean(authConfigBase.concat("ldapsVerifyCertificate"), true);
 
         return new AppConfigurationEntry[] {
           new AppConfigurationEntry(configuration.get(Constants.Security.LOGIN_MODULE_CLASS_NAME),
