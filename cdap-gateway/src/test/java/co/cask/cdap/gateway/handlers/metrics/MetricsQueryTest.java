@@ -19,7 +19,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.metrics.query.MetricsPathException;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
@@ -33,7 +32,6 @@ import org.apache.http.entity.StringEntity;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -213,12 +211,12 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     MetricsCollector collector2 = collectionService.getCollector(MetricsScope.USER,
                                                                  "WordCount.s.CounterService.CountRunnableInvalid",
                                                                  runId2);
-    collector2.increment("rid_metric", 2);
+    collector2.increment("rid_metric_invalid", 2);
 
     //runnable metric request with runId1
     String runnableRequest =
       "/user/apps/WordCount/services/CounterService/runnables/CountRunnableInvalid/" +
-        "rid_metric?aggregate=true&run-id=" + runId1 + "&run-id=" + runId2;
+        "rid_metric_invalid?aggregate=true&run-id=" + runId1 + "&run-id=" + runId2;
     HttpResponse response = doGet("/v2/metrics" + runnableRequest);
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
   }

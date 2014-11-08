@@ -28,7 +28,6 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.Iterator;
 import java.util.List;
@@ -362,7 +361,7 @@ final class MetricsRequestParser {
   private static void parseRunIdFromQueryParam(Map<String, List<String>> queryParams, MetricsRequestBuilder builder)
     throws MetricsPathException {
     if (queryParams.containsKey(RUN_ID)) {
-      if (queryParams.size() > 1) {
+      if (queryParams.get(RUN_ID).size() > 1) {
         throw new MetricsPathException("Should supply only one run-id");
       }
       builder.setRunId(queryParams.get(RUN_ID).get(0));
