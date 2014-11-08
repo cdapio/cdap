@@ -20,7 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-import co.cask.cdap.data2.dataset2.lib.table.MapTransformUtil;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.Update;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.Updates;
@@ -58,8 +57,10 @@ public class InMemoryMetricsTable implements MetricsTable {
 
   @Override
   public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
-    NavigableMap<byte[], NavigableMap<byte[], Update>> convertedUpdates =
-      MapTransformUtil.transformMapValues(updates, Updates.LONG_TO_PUTS, Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Update>> convertedUpdates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> entry : updates.entrySet()) {
+      convertedUpdates.put(entry.getKey(), Maps.transformValues(entry.getValue(), Updates.LONG_TO_PUTS));
+    }
     InMemoryOrderedTableService.merge(tableName, convertedUpdates, System.currentTimeMillis());
   }
 

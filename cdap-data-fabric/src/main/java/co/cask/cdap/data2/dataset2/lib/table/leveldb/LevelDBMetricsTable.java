@@ -19,7 +19,6 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
-import co.cask.cdap.data2.dataset2.lib.table.MapTransformUtil;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -38,6 +37,13 @@ public class LevelDBMetricsTable implements MetricsTable {
 
   private final LevelDBOrderedTableCore core;
 
+  static final Function<Long, byte[]> LONG_TO_BYTES = new Function<Long, byte[]>() {
+    @Override
+    public byte[] apply(Long input) {
+      return Bytes.toBytes(input);
+    }
+  };
+
   public LevelDBMetricsTable(String tableName, LevelDBOrderedTableService service) throws IOException {
     this.core = new LevelDBOrderedTableCore(tableName, service);
   }
@@ -54,13 +60,14 @@ public class LevelDBMetricsTable implements MetricsTable {
   @Override
   public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> convertedUpdates =
-      MapTransformUtil.transformMapValues(updates, new Function<Long, byte[]>() {
-        @Nullable
-        @Override
-        public byte[] apply(@Nullable Long input) {
-          return Bytes.toBytes(input);
-        }
-      }, Bytes.BYTES_COMPARATOR);
+      Maps.transformValues(updates,
+                           new Function<NavigableMap<byte[], Long>, NavigableMap<byte[], byte[]>>() {
+                             @Override
+                             public NavigableMap<byte[], byte[]> apply(NavigableMap<byte[], Long> input) {
+                               return Maps.transformValues(input, LONG_TO_BYTES);
+                             }
+                           });
+
 
     core.persist(convertedUpdates, System.currentTimeMillis());
   }
