@@ -27,6 +27,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
 
@@ -67,6 +68,7 @@ public class TestSparkStreamIntegrationApp extends AbstractApplication {
         }
       });
       context.writeToDataset(resultRDD, "result", byte[].class, byte[].class);
+      ((JavaSparkContext) context.getOriginalSparkContext()).stop();
     }
   }
 }
