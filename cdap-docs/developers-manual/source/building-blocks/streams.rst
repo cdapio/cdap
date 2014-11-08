@@ -16,9 +16,7 @@ Console <cdap-console>`, or by using the :ref:`command-line tool. <cli>` Data wr
 Stream can be consumed in real-time by :ref:`Flows <flows>` or in batch by :ref:`MapReduce
 Jobs. <mapreduce>`.
 
-Streams are uniquely identified by an ID string (a "name") and are explicitly created
-before being used. Names used for Streams need to be unique across the CDAP instance, as
-Streams are shared between applications.
+.. rubric:: Creating a Stream
 
 You specify a Stream in your :ref:`Application <applications>` specification::
 
@@ -26,14 +24,22 @@ You specify a Stream in your :ref:`Application <applications>` specification::
 
 This specifies a new Stream named *myStream*. 
 
+Streams are uniquely identified by the ID string (a "name") and are explicitly created
+before being used. Names used for Streams need to be unique across the CDAP instance, as
+Streams are shared between applications.
+
+.. rubric::  Writing To a Stream
+
 You can write to Streams either one operation at a time or in batches, using either the
 :ref:`http-restful-api-stream` or the :ref:`command-line tools. <cli>`
 
 Each individual signal sent to a Stream is stored as a ``StreamEvent``, which is comprised
 of a header (a map of strings for metadata) and a body (a blob of binary data).
 
+.. rubric::  Reading From a Stream
+
 To convert the binary data into a string, you need to take into account the character
-encoding of the data, such as shown in this code fragment from a Flow::
+encoding of the data, such as shown in this code fragment::
 
   @ProcessInput
   public void process(StreamEvent myStreamEvent) {
@@ -41,10 +47,35 @@ encoding of the data, such as shown in this code fragment from a Flow::
   ...
   }
 
-Streams are included in just about every CDAP application, tutorial, guide or example; the
-:ref:`Hello World <examples-hello-world>` demonstrates using a stream to ingest a name into 
-a dataset.
+.. rubric::  Examples of Using Streams
 
-For an example of pushing events to a Stream from the command-line, see the :ref:`Purchase
-example <examples-purchase>`, and its script ``inject-data`` that injects data to a stream.
+Streams are included in just about every CDAP :ref:`application <apps-and-packs>`,
+:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
+
+- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates **using a
+  stream to ingest** a name into a dataset.
+
+- For an example of **pushing events to a Stream from the command-line,** see the :ref:`Purchase
+  example <examples-purchase>`, and its script ``inject-data`` that injects data to a stream.
+
+- For an example of **reading events from a Stream,** see the 
+  :ref:`Purchase example <examples-purchase>`, where the class ``PurchaseStreamReader``
+  reads events from a stream. 
+
+- For an example of **reading from a Stream with a Map Reduce Job,** see the 
+  :ref:`cdap-mapreduce-guide`, where the class ``TopClientsMapReduce`` uses the method
+  ``StreamBatchReadable`` to read events from a stream.
+
+
+.. rubric::  Streams and Transactions
+
+Streams are persisted by CDAP, and once an event has been sent to a Stream, by default it never expires.
+The Time-To-Live (TTL) property governs how long an event is valid for consumption since
+it was written to the Stream. The default TTL for all Streams is infinite, meaning that
+events will never expire. 
+
+The TTL property of a Stream can be changed.
+
+Streams can be truncated, which means deleting all events that were ever written to the
+Stream. This is permanent and cannot be undone. A Stream can be truncated.
 

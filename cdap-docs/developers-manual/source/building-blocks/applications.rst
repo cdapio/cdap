@@ -21,6 +21,8 @@ data. :doc:`Services <services>` and :doc:`Procedures <procedures>` are used to 
 
 **Data virtualizations** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
 
+.. rubric:: Creating an Application with an Application Specification
+
 To create an Application, implement the ``Application`` interface or subclass from
 ``AbstractApplication`` class, specifying the Application metadata and declaring and
 configuring each of the Application elements::
@@ -48,6 +50,8 @@ name.
 
 Names used for *Streams* and *Datasets* need to be unique across the CDAP instance, while
 names used for *Programs* and *Services* need to be unique only to the application.
+
+.. rubric:: A Typical CDAP Application
 
 A typical design of a CDAP Application consists of:
 

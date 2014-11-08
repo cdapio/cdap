@@ -25,6 +25,8 @@ Flowlet can specify one of these three partitioning strategies:
   partitioning ensures that all objects of a given key are received by the same consumer
   instance. This can be useful for aggregating by key, and can help reduce write conflicts.
 
+.. rubric:: First-in first-out (FIFO) Partitioning
+
 Suppose we have a Flowlet that counts words::
 
   public class Counter extends AbstractFlowlet {
@@ -38,8 +40,12 @@ Suppose we have a Flowlet that counts words::
     }
   }
 
-This Flowlet uses the default strategy of FIFO. To increase the throughput when this
-Flowlet has many instances, we can specify round-robin partitioning::
+This Flowlet uses the default strategy of FIFO. 
+
+.. rubric:: Round-robin Partitioning
+
+To increase the throughput when this Flowlet has many instances, we can specify
+round-robin partitioning::
 
   @RoundRobin
   @ProcessInput("wordOut")
@@ -57,7 +63,11 @@ all scream for ice cream”:
 
 The potential problem with this is that the first two instances might
 both attempt to increment the counter for the word *scream* at the same time,
-leading to a write conflict. To avoid conflicts, we can use hash-based partitioning::
+leading to a write conflict. 
+
+.. rubric:: Hash-based Partitioning
+
+To avoid conflicts, we can use hash-based partitioning::
 
   @HashPartition("wordHash")
   @ProcessInput("wordOut")
@@ -83,6 +93,8 @@ Flowlet specifies as the partitioning key. If the output is connected to more th
 Flowlet, you can also annotate a data object with multiple hash keys—each consuming
 Flowlet can then use different partitioning. This is useful if you want to aggregate by
 multiple keys, such as counting purchases by product ID as well as by customer ID.
+
+.. rubric:: Partitioning and Batch Execution
 
 Partitioning can be combined with batch execution::
 

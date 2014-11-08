@@ -61,8 +61,6 @@ of the Application are tied together by the class ``PurchaseApp``:
 The raw purchase data is stored in an ObjectStore Dataset, *purchases*,
 with this method defined in ``PurchaseStore.java``:
 
-  process(Purchase purchase)
-
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
    :language: java
    :lines: 44

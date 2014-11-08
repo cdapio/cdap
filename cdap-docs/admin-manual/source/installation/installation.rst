@@ -176,12 +176,6 @@ Deployment Architectures
 
 ------------
 
-.. image:: ../_images/cdap-ha-deployment.png
-   :width: 8in
-   :align: center
-
-------------
-
 .. image:: ../_images/cdap-ha-hs-deployment.png
    :width: 8in
    :align: center

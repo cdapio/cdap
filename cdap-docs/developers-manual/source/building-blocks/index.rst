@@ -14,7 +14,7 @@ Building Blocks
    :maxdepth: 1
    
     Core Virtualizations <core>
-    Application <applications>
+    Applications <applications>
     Streams <streams>
     Datasets <datasets/index>
     Flows and Flowlets <flows-flowlets/index>
