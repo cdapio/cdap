@@ -22,6 +22,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
+import co.cask.cdap.data2.dataset2.lib.table.MapTransformUtil;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricType;
@@ -115,10 +116,15 @@ public final class TimeSeriesTable {
       getUpdates(records.next(), table);
     }
     //Convert the value - Map of <byte[],byte[]> to Map of <byte[],Long>
-    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-    for (NavigableMap.Entry<byte[], NavigableMap<byte[], byte[]>> entry : table.entrySet()) {
-      convertedTable.put(entry.getKey(), Maps.transformValues(entry.getValue(), BYTE_ARRAY_TO_LONG));
-    }
+    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedTable =
+      MapTransformUtil.transformMapValues(table, new Function<byte[], Long>() {
+        @Nullable
+        @Override
+        public Long apply(@Nullable byte[] input) {
+          return Bytes.toLong(input);
+        }
+      }, Bytes.BYTES_COMPARATOR);
+
     try {
       timeSeriesTable.put(convertedTable);
     } catch (Exception e) {

@@ -1397,8 +1397,8 @@ public class Bytes {
    * @param value value of the entry
    * @return instance of {@link NavigableMap}
    */
-  public static NavigableMap<byte[], Long> immutableSortedMapOf(byte[] key, Long value) {
-    return ImmutableSortedMap.<byte[], Long>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
+  public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key, T value) {
+    return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
   }
 
   /**
@@ -1409,9 +1409,9 @@ public class Bytes {
    * @param value2 value of the second entry
    * @return instance of {@link NavigableMap}
    */
-  public static NavigableMap<byte[], Long> immutableSortedMapOf(byte[] key1, Long value1,
-                                                                  byte[] key2, Long value2) {
-    return ImmutableSortedMap.<byte[], Long>orderedBy(Bytes.BYTES_COMPARATOR)
+  public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key1, T value1,
+                                                                  byte[] key2, T value2) {
+    return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR)
       .put(key1, value1)
       .put(key2, value2).build();
   }
