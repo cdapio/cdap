@@ -27,6 +27,7 @@
     <!--Supressing some chatty loggers -->
     <logger name="org.apache.hadoop" level="INFO"/>
     <logger name="org.mortbay.log" level="INFO"/>
+    <logger name="org.apache.commons.beanutils" level="ERROR" />
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

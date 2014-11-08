@@ -17,8 +17,7 @@
 package co.cask.cdap.app.program;
 
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.common.lang.ApiResourceListHolder;
-import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.ProgramClassLoader;
 import com.google.common.base.Objects;
 
 import java.io.File;
@@ -36,8 +35,8 @@ public final class Archive {
   private final String mainClassName;
 
   public Archive(File unpackedJarFolder, String mainClassName) throws IOException {
-    this.classLoader = ClassLoaders.newProgramClassLoader(
-      unpackedJarFolder, ApiResourceListHolder.getResourceList(),
+    this.classLoader = ProgramClassLoader.create(
+      unpackedJarFolder,
       Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), Archive.class.getClassLoader()));
     this.mainClassName = mainClassName;
   }

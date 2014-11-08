@@ -128,6 +128,8 @@ public class InMemoryRunnableRunner implements ProgramRunner {
       // special case for handling http service
       if (classStr.equals(HttpServiceTwillRunnable.class.getName())) {
         clz = HttpServiceTwillRunnable.class;
+      } else if (classStr.equals(ServiceWorkerTwillRunnable.class.getName())) {
+        clz = ServiceWorkerTwillRunnable.class;
       } else {
         clz = Class.forName(runnableSpec.getRunnableSpecification().getClassName(),
                             true, program.getClassLoader());
