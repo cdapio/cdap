@@ -213,12 +213,12 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     MetricsCollector collector2 = collectionService.getCollector(MetricsScope.USER,
                                                                  "WordCount.s.CounterService.CountRunnableInvalid",
                                                                  runId2);
-    collector2.increment("rid_metric", 2);
+    collector2.increment("rid_metric_invalid", 2);
 
     //runnable metric request with runId1
     String runnableRequest =
       "/user/apps/WordCount/services/CounterService/runnables/CountRunnableInvalid/" +
-        "rid_metric?aggregate=true&run-id=" + runId1 + "&run-id=" + runId2;
+        "rid_metric_invalid?aggregate=true&run-id=" + runId1 + "&run-id=" + runId2;
     HttpResponse response = doGet("/v2/metrics" + runnableRequest);
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
   }
