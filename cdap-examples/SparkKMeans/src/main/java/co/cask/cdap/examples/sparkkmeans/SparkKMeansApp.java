@@ -148,8 +148,13 @@ public class SparkKMeansApp extends AbstractApplication {
         return;
       }
       LOG.debug("get center for index {}", index);
-      // Send response with JSON format.
-      responder.sendJson(centers.read(index.getBytes()));
+      String clusterCenters = centers.read(index.getBytes());
+      if (clusterCenters == null) {
+        responder.error(ProcedureResponse.Code.NOT_FOUND, "Index not found");
+      } else {
+        // Send response with JSON format.
+        responder.sendJson(clusterCenters);
+      }
     }
   }
 }
