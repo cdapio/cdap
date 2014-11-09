@@ -19,6 +19,7 @@ package co.cask.cdap.cli;
 import co.cask.cdap.cli.app.EchoHandler;
 import co.cask.cdap.cli.app.FakeApp;
 import co.cask.cdap.cli.app.FakeProcedure;
+import co.cask.cdap.cli.app.FakeSpark;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
@@ -122,6 +123,18 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"", "testBody");
     testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
 
+    // test spark commands
+    String sparkId = FakeApp.SPARK.get(0);
+    String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
+    testCommandOutputContains(cli, "list spark", sparkId);
+    testCommandOutputContains(cli, "start spark " + qualifiedSparkId, "Successfully started Spark");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STARTING");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING", 180);
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED", 180);
+    testCommandOutputContains(cli, "get spark status " + qualifiedSparkId, "STOPPED");
+    testCommandOutputContains(cli, "get spark history " + qualifiedSparkId, "STOPPED");
+    testCommandOutputContains(cli, "get spark logs " + qualifiedSparkId, "HelloFakeSpark");
+
     // cleanup
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
     testCommandOutputContains(cli, "delete dataset instance " + FakeApp.DS_NAME, "Successfully deleted dataset");
@@ -164,7 +177,7 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
-                                     String programId, String programStatus)
+                                     String programId, String programStatus, int tries)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     String status;
@@ -178,8 +191,15 @@ public class CLIMainTest extends StandaloneTestBase {
       } catch (InterruptedException e) {
         // NO-OP
       }
-    } while (!status.equals(programStatus) && numTries <= maxTries);
+    } while (!status.equals(programStatus) && numTries <= tries);
     Assert.assertEquals(programStatus, status);
+  }
+
+  protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
+                                     String programId, String programStatus)
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+
+    assertProgramStatus(programClient, appId, programType, programId, programStatus, 10);
   }
 
 }

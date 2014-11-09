@@ -88,6 +88,18 @@ public class AggregatedMetricsCollectionServiceTest {
       }
       Assert.assertEquals(ImmutableMap.of("tag1", 3L, "tag2", 7L, "tag3", 4L), tagMetrics);
 
+      // No publishing for 0 value metrics
+      Assert.assertNull(published.poll(3, TimeUnit.SECONDS));
+
+      //update the metrics multiple times with gauge.
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").gauge("metric", 1);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").gauge("metric", 2);
+      service.getCollector(MetricsScope.SYSTEM, "context", "runId").gauge("metric", 3);
+
+      // gauge just updates the value, so polling should return the most recent value written
+      record = published.poll(3, TimeUnit.SECONDS);
+      Assert.assertNotNull(record);
+      Assert.assertEquals(3, record.getValue());
     } finally {
       service.stopAndWait();
     }

@@ -24,6 +24,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
@@ -93,10 +94,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private Configuration sparkHConf;
   private String[] sparkSubmitArgs;
   private volatile boolean stopRequested;
+  private final StreamAdmin streamAdmin;
 
   SparkRuntimeService(CConfiguration cConf, Configuration hConf, Spark spark, SparkSpecification sparkSpecification,
                       BasicSparkContext context, Location programJarLocation, LocationFactory locationFactory,
-                      TransactionSystemClient txClient) {
+                      TransactionSystemClient txClient, StreamAdmin streamAdmin) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.spark = spark;
@@ -105,6 +107,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.context = context;
     this.locationFactory = locationFactory;
     this.txClient = txClient;
+    this.streamAdmin = streamAdmin;
   }
 
   @Override
@@ -165,6 +168,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
       Thread.currentThread().setContextClassLoader(sparkHConf.getClassLoader());
       try {
+        SparkProgramWrapper.setStreamAdmin(streamAdmin);
         SparkProgramWrapper.setSparkProgramRunning(true);
         SparkSubmit.main(sparkSubmitArgs);
       } catch (Exception e) {
