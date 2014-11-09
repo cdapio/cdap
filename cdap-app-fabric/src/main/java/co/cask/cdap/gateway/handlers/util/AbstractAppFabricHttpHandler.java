@@ -32,7 +32,6 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
@@ -157,6 +156,10 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
+  /**
+   * Return a list of {@link ProgramRecord} for a {@link ProgramType} in an Application. The return value may be
+   * null if the applicationId does not exist.
+   */
   private List<ProgramRecord> listProgramsByApp(Id.Application appId, ProgramType type, Store store) throws Exception {
     ApplicationSpecification appSpec;
     try {
@@ -172,41 +175,40 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   protected final List<ProgramRecord> listPrograms(Collection<ApplicationSpecification> appSpecs,
                                                    ProgramType type) throws Exception {
-    ImmutableList.Builder<ProgramRecord> recordsBuilder = new ImmutableList.Builder<ProgramRecord>();
+    List<ProgramRecord> programRecords = Lists.newArrayList();
     for (ApplicationSpecification appSpec : appSpecs) {
       switch (type) {
         case FLOW:
-          recordsBuilder.addAll(createProgramRecords(appSpec.getName(), type, appSpec.getFlows().values()));
+          createProgramRecords(appSpec.getName(), type, appSpec.getFlows().values(), programRecords);
           break;
         case PROCEDURE:
-          recordsBuilder.addAll(createProgramRecords(appSpec.getName(), type, appSpec.getProcedures().values()));
+          createProgramRecords(appSpec.getName(), type, appSpec.getProcedures().values(), programRecords);
           break;
         case MAPREDUCE:
-          recordsBuilder.addAll(createProgramRecords(appSpec.getName(), type, appSpec.getMapReduce().values()));
+          createProgramRecords(appSpec.getName(), type, appSpec.getMapReduce().values(), programRecords);
           break;
         case SPARK:
-          recordsBuilder.addAll(createProgramRecords(appSpec.getName(), type, appSpec.getSpark().values()));
+          createProgramRecords(appSpec.getName(), type, appSpec.getSpark().values(), programRecords);
           break;
         case SERVICE:
-          recordsBuilder.addAll(createProgramRecords(appSpec.getName(), type, appSpec.getServices().values()));
+          createProgramRecords(appSpec.getName(), type, appSpec.getServices().values(), programRecords);
           break;
         case WORKFLOW:
-          recordsBuilder.addAll(createProgramRecords(appSpec.getName(), type, appSpec.getWorkflows().values()));
+          createProgramRecords(appSpec.getName(), type, appSpec.getWorkflows().values(), programRecords);
           break;
         default:
           throw new Exception("Unknown program type: " + type.name());
       }
     }
-    return recordsBuilder.build();
+    return programRecords;
   }
 
-  private List<ProgramRecord> createProgramRecords(String appId, ProgramType type,
-                                                   Iterable<? extends ProgramSpecification> programSpecs) {
-    List<ProgramRecord> programRecords = Lists.newArrayList();
+  private void createProgramRecords(String appId, ProgramType type,
+                                    Iterable<? extends ProgramSpecification> programSpecs,
+                                    List<ProgramRecord> programRecords) {
     for (ProgramSpecification programSpec : programSpecs) {
       programRecords.add(makeProgramRecord(appId, programSpec, type));
     }
-    return programRecords;
   }
 
   protected static ProgramRecord makeProgramRecord(String appId, ProgramSpecification spec, ProgramType type) {
