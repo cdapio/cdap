@@ -1,6 +1,26 @@
-// inspired by angular-sockjs
+
 angular.module(PKG.name+'.services')
 
+  .service('mySocket', function (mySocketFactory) {
+
+    var sock = mySocketFactory({
+      url: '/_sock'
+    });
+
+    sock
+      .setHandler('open', function(){
+        console.log('mySocket open', arguments);
+      })
+      .setHandler('message', function(){
+        console.log('mySocket message', arguments);
+      });
+
+    return sock;
+  })
+
+
+
+  // inspired by angular-sockjs
   .factory('mySocketFactory', function ($timeout) {
 
       var asyncAngularify = function (socket, callback) {
@@ -36,14 +56,5 @@ angular.module(PKG.name+'.services')
         return wrappedSocket;
       };
 
-  })
-  .service('mySocket', function (mySocketFactory) {
-
-    var sock = mySocketFactory({
-      url: '/socket'
-    });
-
-    console.log(sock);
-
-    return sock;
   });
+

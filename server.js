@@ -5,6 +5,8 @@
 var pkg = require('./package.json'),
     morgan = require('morgan'),
     express = require('express'),
+    sockjs = require('sockjs'),
+    http = require('http'),
     finalhandler = require('finalhandler'),
     serveFavicon = require('serve-favicon'),
 
@@ -21,11 +23,17 @@ morgan.token('cooprcred', function(req, res){
   return color.pink(req.headers['coopr-userid'] + '/' + req.headers['coopr-tenantid']);
 });
 
+morgan.token('ms', function(req, res){
+  if (!res._header || !req._startAt) return '';
+  var diff = process.hrtime(req._startAt);
+  var ms = diff[0] * 1e3 + diff[1] * 1e-6;
+  return Math.ceil(ms)+'ms';
+});
+
 var app = express(),
     httpLabel = color.green('http'),
-    corsLabel = color.pink('cors'),
-    httpStaticLogger = morgan(httpLabel+' :method :url :status'),
-    httpIndexLogger = morgan(httpLabel+' :method '+color.hilite(':url')+' :status');
+    httpStaticLogger = morgan(httpLabel+' :method '+color.green(':url')+' :ms :status'),
+    httpIndexLogger = morgan(httpLabel+' :method '+color.hilite(':url')+' :ms :status');
 
 console.log(color.hilite(pkg.name) + ' v' + pkg.version + ' starting up...');
 
@@ -67,6 +75,7 @@ app.get('/robots.txt', [
   }
 ]);
 
+
 // any other path, serve index.html
 app.all('*', [
   httpIndexLogger,
@@ -75,6 +84,26 @@ app.all('*', [
   }
 ]);
 
-app.listen(PORT, '0.0.0.0', function () {
+
+var httpServer = http.createServer(app);
+
+httpServer.listen(PORT, '0.0.0.0', function () {
   console.info(httpLabel+' listening on port %s', PORT);
 });
+
+
+// sockjs
+var sockServer = sockjs.createServer({
+  log: function(lvl, msg) {
+    console.log(color.green('sock'), msg);
+  }
+});
+
+sockServer.on('connection', function (conn) {
+  conn.on('data', function (message) {
+    console.log(color.pink('sock'), conn.id, message);
+    conn.write(message);
+  });
+});
+
+sockServer.installHandlers(httpServer, { prefix: '/_sock' });

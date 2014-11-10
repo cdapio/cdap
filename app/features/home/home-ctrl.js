@@ -11,6 +11,8 @@ function ($alert, mySocket) {
     type: 'info'
   });
 
+  window.mySocket = mySocket;
+
 });
 
 
