@@ -1776,13 +1776,19 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           fos.close();
           // Moving archive from temporary location in local file system to temporary location in targeted file system
           Location tmpLocation = archive.getTempFile("");
-          LOG.debug("Moving archive to temporary file on final file system: {}", tmpLocation.toURI().toString());
-          Files.copy(tmpArchive, Locations.newOutputSupplier(tmpLocation));
-          // Finally, move archive to final location
-          Location finalLocation = tmpLocation.renameTo(archive);
-          if (finalLocation == null) {
-            throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                tmpLocation.toURI().toString(), archive.toURI().toString()));
+          try {
+            LOG.debug("Moving archive to temporary file on final file system: {}", tmpLocation.toURI().toString());
+            Files.copy(tmpArchive, Locations.newOutputSupplier(tmpLocation));
+            // Finally, move archive to final location
+            Location finalLocation = tmpLocation.renameTo(archive);
+            if (finalLocation == null) {
+              throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
+                                                  tmpLocation.toURI().toString(), archive.toURI().toString()));
+            }
+          } catch (IOException e) {
+            // In case copy to temporary file failed, or rename failed
+            tmpLocation.delete();
+            throw Throwables.propagate(e);
           }
 
           sessionInfo.setStatus(DeployStatus.VERIFYING);
