@@ -1,10 +1,9 @@
-<div class="jumbotron text-center">
-  <h1>
-    CDAP
-  </h1>
-  <p>this is a prototype</p>
-  <p><a class="btn btn-primary" ui-sref="login">
-    Sign in
-    <span class="fa fa-sign-in"></span>
-  </a></p>
+<h1>
+  CDAP prototype
+</h1>
+
+<div class="form-inline">
+  <input class="form-control" type="text" ng-model="something" />
+  <button class="btn btn-default" ng-click="sendMsg(something)">
+    send through socket</button>
 </div>

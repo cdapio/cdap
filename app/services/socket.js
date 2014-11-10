@@ -1,60 +1,24 @@
 
 angular.module(PKG.name+'.services')
 
-  .service('mySocket', function (mySocketFactory) {
-
-    var sock = mySocketFactory({
-      url: '/_sock'
-    });
-
-    sock
-      .setHandler('open', function(){
-        console.log('mySocket open', arguments);
-      })
-      .setHandler('message', function(){
-        console.log('mySocket message', arguments);
-      });
-
-    return sock;
+  .constant('MY_SOCKET_EVENT', {
+    message: 'my-socket-message'
   })
 
+  .provider('mySocket', function () {
 
+    this.prefix = '/_sock';
 
-  // inspired by angular-sockjs
-  .factory('mySocketFactory', function ($timeout) {
+    this.$get = function (MY_SOCKET_EVENT, $rootScope) {
+      var socket = new window.SockJS(this.prefix);
 
-      var asyncAngularify = function (socket, callback) {
-        return callback ? function () {
-          var args = arguments;
-          $timeout(function () {
-            callback.apply(socket, args);
-          }, 0);
-        } : angular.noop;
-      };
+      socket.onmessage = function (event) {
+        $rootScope.$broadcast(MY_SOCKET_EVENT.message, event.data);
+      }
 
-      return function socketFactory (options) {
-        options = options || {};
-        var socket = options.socket || new window.SockJS(options.url);
+      return socket;
+    };
 
-        var wrappedSocket = {
-          setHandler: function (event, callback) {
-            socket['on' + event] = asyncAngularify(socket, callback);
-            return this;
-          },
-          removeHandler: function(event) {
-            delete socket['on' + event];
-            return this;
-          },
-          send: function () {
-            return socket.send.apply(socket, arguments);
-          },
-          close: function () {
-            return socket.close.apply(socket, arguments);
-          }
-        };
+  })
 
-        return wrappedSocket;
-      };
-
-  });
-
+  ;
