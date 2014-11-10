@@ -91,7 +91,7 @@ public final class AppFabricServer extends AbstractIdleService {
                                                                        Constants.Service.APP_FABRIC_HTTP));
     // Delete app fabric temp directory
     File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
-                           configuration.get(Constants.AppFabric.TEMP_DIR));
+                           configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     FileUtils.deleteDirectory(tmpDir);
 
     schedulerService.start();

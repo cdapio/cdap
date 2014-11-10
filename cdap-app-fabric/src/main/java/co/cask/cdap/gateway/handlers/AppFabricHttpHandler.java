@@ -1742,8 +1742,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     // Copy archive to a temporary location
     File tempDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
                                      configuration.get(Constants.AppFabric.TEMP_DIR)),
-                            accountId);
-    if (!tempDir.exists() && !tempDir.mkdirs() && !tempDir.mkdirs()) {
+                            accountId).getAbsoluteFile();
+    if (!tempDir.exists() && !tempDir.mkdirs() && !tempDir.exists()) {
       throw new IOException("Could not create temporary directory at: " + tempDir.getAbsolutePath());
     }
     final File tmpArchive = File.createTempFile("app-", ".jar", tempDir);

@@ -93,7 +93,7 @@
 
     <property>
         <name>local.data.dir</name>
-        <value>/tmp/data</value>
+        <value>data</value>
         <description>Data directory for local mode</description>
     </property>
 

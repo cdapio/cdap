@@ -26,11 +26,11 @@
     <!--
        App Fabric Configuration
      -->
-    <property>
-        <name>local.data.dir</name>
-        <value>data</value>
-        <description>Data directory for local mode</description>
-    </property>
+    <!--<property>-->
+        <!--<name>local.data.dir</name>-->
+        <!--<value>data</value>-->
+        <!--<description>Data directory for local mode</description>-->
+    <!--</property>-->
 
     <!--
         Data Fabric configuration
