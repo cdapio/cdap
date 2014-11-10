@@ -65,7 +65,7 @@ Click the link marked "SDK" of the *Software Development Kit (SDK).*
 
 Once downloaded, unzip it to a directory on your machine::
 
-    $ unzip cdap-sdk-2.5.1.zip
+    $ unzip cdap-sdk-2.5.2.zip
 
 CDAP Standalone Virtual Machine Image
 -------------------------------------
@@ -87,7 +87,7 @@ It has pre-installed all the software that you need to run and develop CDAP appl
 
 - Java JDK 7 and Node.js are both installed.
 - Maven is installed and configured to work for CDAP.
-- The Standalone CDAP SDK is installed under ``/Software/cdap-sdk-2.5.1``
+- The Standalone CDAP SDK is installed under ``/Software/cdap-sdk-2.5.2``
   and will automatically start when the virtual machine starts.
 - Both IntelliJ and Eclipse IDE are installed and will start when the virtual machine starts.
 - The Firefox web browser starts when the machine starts. Its default home page is the CDAP Console,
@@ -136,7 +136,7 @@ To use the **Docker image**:
     $ docker run -t -i -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
     
 - CDAP will start automatically once the CDAP Virtual Machine starts. CDAP’s Software
-  Directory is under ``/Software/cdap-sdk-2.5.1``.
+  Directory is under ``/Software/cdap-sdk-2.5.2``.
   
 - Once CDAP starts, it will instruct you to connect to the CDAP Console with a web browser
   at ``http://<virtual-hostname>:9999``, such as ``http://6f0162922c37:9999``. Replace
@@ -155,7 +155,7 @@ Starting and Stopping the Standalone CDAP
 Use the ``cdap.sh`` script to start and stop the Standalone CDAP 
 (the location will vary depending on where the CDAP SDK is installed)::
 
-  $ cd cdap-sdk-2.5.1
+  $ cd cdap-sdk-2.5.2
   $ ./bin/cdap.sh start
   ...
   $ ./bin/cdap.sh stop
@@ -178,7 +178,7 @@ The best way to start developing a CDAP application is by using the Maven archet
   $ mvn archetype:generate \
     -DarchetypeGroupId=co.cask.cdap \
     -DarchetypeArtifactId=cdap-app-archetype \
-    -DarchetypeVersion=2.5.1
+    -DarchetypeVersion=2.5.2
 
 This creates a Maven project with all required dependencies, Maven plugins, and a simple
 application template for the development of your application. You can import this Maven project
