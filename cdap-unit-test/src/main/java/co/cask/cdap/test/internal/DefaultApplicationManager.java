@@ -17,10 +17,8 @@
 package co.cask.cdap.test.internal;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.lang.ApiResourceListHolder;
-import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -103,8 +101,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     try {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
-      ProgramClassLoader classLoader = ClassLoaders.newProgramClassLoader
-        (tempDir, ApiResourceListHolder.getResourceList(), this.getClass().getClassLoader());
+      ClassLoader classLoader = ProgramClassLoader.create(tempDir, getClass().getClassLoader());
       this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
                                                          new DataSetClassLoader(classLoader),
                                                          // todo: collect metrics for datasets outside programs too

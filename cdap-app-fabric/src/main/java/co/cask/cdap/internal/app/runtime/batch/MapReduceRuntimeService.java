@@ -441,7 +441,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * @return a new {@link Location} containing the job jar
    */
   private Location buildJobJar(BasicMapReduceContext context) throws IOException {
-    ApplicationBundler appBundler = new ApplicationBundler(ImmutableList.of("org.apache.hadoop"),
+    // Excludes libraries that are for sure not needed.
+    // Hadoop - Available from the cluster
+    // Spark - MR never uses Spark
+    // Fastutil - 16MB library that only used in tehpra server
+    ApplicationBundler appBundler = new ApplicationBundler(ImmutableList.of("org.apache.hadoop",
+                                                                            "org.apache.spark",
+                                                                            "it.unimi.dsi.fastutil"),
                                                            ImmutableList.of("org.apache.hadoop.hbase",
                                                                             "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();

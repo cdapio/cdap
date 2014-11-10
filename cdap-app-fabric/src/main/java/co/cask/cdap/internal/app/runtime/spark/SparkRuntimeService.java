@@ -315,7 +315,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   private Location buildDependencyJar(BasicSparkContext context, Configuration conf)
     throws IOException {
-    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop", "org.apache.spark"),
+    ApplicationBundler appBundler = new ApplicationBundler(Lists.newArrayList("org.apache.hadoop",
+                                                                              "org.apache.spark",
+                                                                              "it.unimi.dsi.fastutil"),
                                                            Lists.newArrayList("org.apache.hadoop.hbase",
                                                                               "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();
