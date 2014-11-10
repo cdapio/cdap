@@ -78,8 +78,8 @@ Flowlets, and *connections* are specified before building the Flow.
 Flows and Flowlets are included in just about every CDAP :ref:`application <apps-and-packs>`,
 :ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
 
-- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using a
-  flow with a single flowlet to **ingest a name into a dataset.**
+- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using **a
+  flow with a single flowlet** to ingest a name into a dataset.
 
 - For an example of **annotated Flowlets,** see the :ref:`Count Random
   <examples-count-random>` example.
