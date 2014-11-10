@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.home').controller('HomeCtrl',
-function ($alert) {
+function ($alert, mySocket) {
 
   $alert({
     title: 'hello',
