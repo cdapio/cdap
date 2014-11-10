@@ -48,11 +48,10 @@ Follow these steps:
 #. There are instructions for :doc:`starting and stopping CDAP<start-stop-cdap>`, 
    and :doc:`building and running examples and applications <building-apps>`.
 
-Online, we have additional resources ranging from these four manuals:
+Online, we have additional resources ranging from :ref:`user groups <faq-cdap-user-groups>` to these manuals,
+examples, guides, and tutorials:
 
 - :ref:`Developers’ Manual: <developer-index>` Getting Started and Writing Applications with CDAP
-- :ref:`Reference: <reference:reference-index>` APIs, Licenses and Dependencies
-- :ref:`Administration: <admin:admin-index>` Installation and Operation of Distributed CDAP installations
+- :ref:`Reference Manual: <reference:reference-index>` APIs, Licenses and Dependencies
+- :ref:`Administration Manual: <admin:admin-index>` Installation and Operation of Distributed CDAP installations
 - :ref:`Examples, How-To Guides, and Tutorials <examples:examples-introduction-index>`
-
-to :ref:`user groups. <faq-cdap-user-groups>`

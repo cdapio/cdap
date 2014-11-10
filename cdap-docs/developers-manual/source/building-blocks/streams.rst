@@ -11,10 +11,11 @@ Streams
 **Streams** are the primary means of bringing data from external systems into the CDAP in realtime.
 They are ordered, time-partitioned sequences of data, usable for realtime collection and consumption of data.
 
-They can be created programmatically within your application, through the :ref:`CDAP
-Console <cdap-console>`, or by using the :ref:`command-line tool. <cli>` Data written to a
-Stream can be consumed in real-time by :ref:`Flows <flows>` or in batch by :ref:`MapReduce
-Jobs. <mapreduce>`.
+They can be created programmatically within your application, using the
+:ref:`http-restful-api-stream` or by using the :ref:`CDAP Command-line Interface tool. <cli>` 
+
+Data written to a Stream can be consumed in real-time by :ref:`Flows <flows>` or in batch
+by :ref:`MapReduce Jobs. <mapreduce>`.
 
 .. rubric:: Creating a Stream
 
@@ -72,10 +73,9 @@ Streams are included in just about every CDAP :ref:`application <apps-and-packs>
 Streams are persisted by CDAP, and once an event has been sent to a Stream, by default it never expires.
 The Time-To-Live (TTL) property governs how long an event is valid for consumption since
 it was written to the Stream. The default TTL for all Streams is infinite, meaning that
-events will never expire. 
-
-The TTL property of a Stream can be changed.
+events will never expire. The TTL property of a Stream can be changed, using either the 
+:ref:`CDAP Console <cdap-console>` or by using the :ref:`command-line tool. <cli>`
 
 Streams can be truncated, which means deleting all events that were ever written to the
-Stream. This is permanent and cannot be undone. A Stream can be truncated.
-
+Stream. This is permanent and cannot be undone. They can be truncated through the :ref:`CDAP
+Console <cdap-console>` or by using the :ref:`command-line tool. <cli>`

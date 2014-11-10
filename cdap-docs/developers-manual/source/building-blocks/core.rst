@@ -34,3 +34,9 @@ seamlessly deploy it in a different environment—such as your distributed stagi
 With your data virtualized in CDAP as *Streams* and *Datasets*, you are able to process
 that data in realtime or in batch using Programs (*Flows, MapReduce Job, Spark Job,
 Workflow*) and you can serve data to external clients using *Services* and *Procedures*.
+
+This diagram how the CDAP components relate in an Apache Hadoop installation: 
+
+.. image:: ../_images/architecture_diag.png
+   :width: 7in
+   :align: center

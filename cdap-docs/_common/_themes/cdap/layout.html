@@ -204,19 +204,51 @@
 
 {%- block footer %}
     <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">
+    
+    {%- if prev %}Previous Topic: 
+    <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />{{ prev.title }}</a>&nbsp;&nbsp;
+    {%- endif %}
+    
+    </th>
+    <th class="tg-s6z2">
+    
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}{% endtrans %}
       {%- else %}
         {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}{% endtrans %}
       {%- endif %}
-    {%- endif %}
+    {%- endif %}    
     {%- if last_updated %}
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
     {%- endif %}
     {%- if show_sphinx %}
       {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
     {%- endif %}
+    
+    </th>
+    <th class="tg-0ord">
+    
+    {%- if next %}&nbsp;&nbsp;Next Topic:
+    <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />{{ next.title }}</a>
+    {%- endif %}
+    
+    </th>
+  </tr>
+</table>
+
     </div>
 {%- endblock %}
   </body>

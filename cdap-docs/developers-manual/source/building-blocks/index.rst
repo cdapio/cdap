@@ -45,16 +45,9 @@ write to—the data virtualization layer in CDAP.
 - :doc:`Procedures <procedures>`
 - :doc:`Services <services>`
 
-The :doc:`Transaction System <transaction-system>` is an essential service that provides ACID
-(atomicity, consistency, isolation, and durability) guarantees, critical in applications
-where data accuracy is required.
-
-This diagram gives an outline of these components, and how they and other CDAP components
-relate in an Apache Hadoop installation: 
-
-.. image:: ../_images/architecture_diag.png
-   :width: 7in
-   :align: center
+Additionally, the :doc:`Transaction System <transaction-system>` is an essential service
+that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,
+critical in applications where data accuracy is required.
 
 For a high-level view of the concepts of the Cask Data Application Platform, see the
 platform :doc:`Overview. </overview/index>`
