@@ -283,6 +283,7 @@ public class MetricsRequestExecutor {
       .setContext(request.getContextPrefix())
       .setMetric(request.getMetricPrefix())
       .setTag(request.getTagPrefix())
+      .setRunId(request.getRunId())
       .build(start, end);
   }
 }
