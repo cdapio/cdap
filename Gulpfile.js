@@ -95,7 +95,10 @@ gulp.task('js:lib', function() {
       './bower_components/angular-strap/dist/modules/collapse.js',
 
       './bower_components/ngstorage/ngStorage.js',
-      './bower_components/angular-loading-bar/build/loading-bar.js'
+      './bower_components/angular-loading-bar/build/loading-bar.js',
+
+      './bower_components/socksjs-client/dist/sockjs.js',
+      './bower_components/angular-sockjs/socket.js'
 
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
