@@ -25,8 +25,6 @@ package co.cask.cdap.examples.sparkpagerank;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.collect.Iterables;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -62,19 +60,19 @@ public class SparkPageRankProgram implements JavaSparkProgram {
   @Override
   public void run(SparkContext sc) {
     LOG.info("Processing backlinkURLs data");
-    JavaPairRDD<LongWritable, Text> backlinkURLs = sc.readFromStream("backlinkURLStream", Text.class);
+    JavaPairRDD<byte[], String> backlinkURLs = sc.readFromDataset("backlinkURLs", byte[].class, String.class);
     int iterationCount = getIterationCount(sc);
 
     LOG.info("Grouping data by key");
     // Grouping backlinks by unique URL in key
     JavaPairRDD<String, Iterable<String>> links =
-      backlinkURLs.values().mapToPair(new PairFunction<Text, String, String>() {
-        @Override
-        public Tuple2<String, String> call(Text s) {
-          String[] parts = SPACES.split(s.toString());
-          return new Tuple2<String, String>(parts[0], parts[1]);
-        }
-      }).distinct().groupByKey().cache();
+      backlinkURLs.values().mapToPair(new PairFunction<String, String, String>() {
+      @Override
+      public Tuple2<String, String> call(String s) {
+        String[] parts = SPACES.split(s);
+        return new Tuple2<String, String>(parts[0], parts[1]);
+      }
+    }).distinct().groupByKey().cache();
 
     // Initialize default rank for each key URL
     JavaPairRDD<String, Double> ranks = links.mapValues(new Function<Iterable<String>, Double>() {
