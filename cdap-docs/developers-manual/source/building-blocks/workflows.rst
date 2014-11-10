@@ -58,3 +58,8 @@ the Workflow::
         .build();
     }
   }
+
+.. rubric::  Example of Using a Workflow
+
+- For an example of use of **a Workflow,** see the :ref:`Purchase
+  <examples-purchase>` example.

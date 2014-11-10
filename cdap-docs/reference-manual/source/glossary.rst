@@ -91,6 +91,12 @@ Glossary
       The CDAP Console is a web-based application used to deploy CDAP Applications, and
       query and manage the Cask Data Application Platform instance.
 
+   Apache Spark
+      See :term:`Spark Job`.
+
+   Apache Hadoop
+      See :term:`Hadoop`.
+
 
 
 .. |(TM)| unicode:: U+2122 .. trademark sign

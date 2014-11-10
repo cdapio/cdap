@@ -78,3 +78,17 @@ There is also a convenience method to respond with an error message::
                       "Method 'getCount' requires argument 'word'");
       return;
     }
+
+.. rubric::  Examples of Using Procedures
+
+Procedures are included in many CDAP :ref:`applications <apps-and-packs>`,
+:ref:`tutorials <tutorials>`, :ref:`guides <guides-index>` and :ref:`examples <examples-index>`.
+
+- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using a
+  procedure to **retrieve a name from a dataset.**
+
+- For **additional procedure examples,** see the 
+  :ref:`Purchase <examples-purchase>`,
+  :ref:`Spark K-Means <examples-spark-k-means>`, and
+  :ref:`Spark Page Rank <examples-spark-page-rank>`
+  examples.

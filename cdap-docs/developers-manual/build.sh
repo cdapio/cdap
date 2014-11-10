@@ -43,9 +43,11 @@ function pandoc_includes() {
   INCLUDES_DIR=$1
   
   if [ $TEST_INCLUDES == $TEST_INCLUDES_LOCAL ]; then
+    # For the local versions to work, must have the local sources synced to the same tag as the remote.
     MD_CLIENTS="../../../cdap-clients"
     MD_INGEST="../../../cdap-ingest"
   else
+    # https://raw.githubusercontent.com/caskdata/cdap-clients/v1.0.1/cdap-authentication-clients/python/README.md
     GITHUB_URL="https://raw.githubusercontent.com/caskdata"
     VERSION="v1.0.1" # after tagging
     MD_CLIENTS="$GITHUB_URL/cdap-clients/$VERSION"

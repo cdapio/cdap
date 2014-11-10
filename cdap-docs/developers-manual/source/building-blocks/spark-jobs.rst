@@ -8,9 +8,10 @@
 Spark Jobs *(Beta, Standalone CDAP only)*
 ============================================
 
-**Spark** is used for in-memory cluster computing. It lets you load large sets of data into memory and query them
-repeatedly. This makes it suitable for both iterative and interactive programs. Similar to MapReduce,
-Spark can access **Datasets** as both input and output. Spark programs in CDAP can be written in either Java or Scala.
+**Apache Spark** is used for in-memory cluster computing. It lets you load large sets of
+data into memory and query them repeatedly. This makes it suitable for both iterative and
+interactive programs. Similar to MapReduce, Spark can access **Datasets** as both input
+and output. Spark programs in CDAP can be written in either Java or Scala.
 
 In the current release, Spark is supported only in the Standalone CDAP.
 
@@ -128,3 +129,11 @@ write RDD to a Dataset.
   ::
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
+
+
+.. rubric::  Examples of Using Spark Jobs
+
+- For an example of **a Spark Job,** see the :ref:`Spark K-Means <examples-spark-k-means>`
+  and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
+
+- For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.

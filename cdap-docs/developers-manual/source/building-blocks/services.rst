@@ -111,3 +111,12 @@ For example, in Flows::
       ...
     }
   }
+
+.. rubric::  Examples of Using Services
+
+- Almost all of the :ref:`how-to guides <guides-index>` demonstrate the use of services.
+  (The exception is the :ref:`cdap-bi-guide`.)
+
+- From the :ref:`tutorials`, the *WISE: Web Analytics* and the 
+  *MovieRecommender: Recommender System* both demonstrate the use of services.
+

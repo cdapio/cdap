@@ -133,3 +133,32 @@ Tables. These Tables are similar to tables in a relational database with a few k
 - Tables are organized in a way that the columns of a row can be read
   and written independently of other columns, and columns are ordered
   in byte-lexicographic order. They are also known as *Ordered Columnar Tables*.
+  
+  
+.. rubric::  Examples of Using Datasets
+
+Datasets are included in just about every CDAP :ref:`application <apps-and-packs>`,
+:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
+
+- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using a
+  stream to **ingest a name into a dataset.**
+
+- For examples of **custom datasets,** see the :ref:`Word Count <examples-word-count>`
+  and :ref:`Web Analytics <examples-web-analytics>` examples.
+
+- For an example of **a dataset and a Map Reduce Job,** see the :ref:`Purchase
+  <examples-purchase>` example. 
+
+- For an example of a **Table dataset,** see the :ref:`Word Count <examples-word-count>` example.
+
+- For examples of **key-value Table datasets,** see the 
+  :ref:`Hello World <examples-hello-world>`,
+  :ref:`Count Random <examples-count-random>`,
+  :ref:`Word Count <examples-word-count>`, and
+  :ref:`Purchase <examples-purchase>` examples.
+
+- For examples of **ObjectStore datasets,** see the :ref:`Spark K-Means <examples-spark-k-means>`
+  and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
+
+- For an example of a **Timeseries Table dataset,** see the how-to guide :ref:`cdap-timeseries-guide`.
+

@@ -2,6 +2,8 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _datasets-map-reduce-jobs:
+
 ============================================
 Datasets and MapReduce Jobs
 ============================================
@@ -10,6 +12,9 @@ Datasets and MapReduce Jobs
 
 A MapReduce job can interact with a Dataset by using it as an input or an output.
 The Dataset needs to implement specific interfaces to support this.
+
+
+.. rubric:: A Dataset as the Input Source of a MapReduce Job
 
 When you run a MapReduce job, you can configure it to read its input from a Dataset. The
 source Dataset must implement the ``BatchReadable`` interface, which requires two methods::
@@ -49,6 +54,9 @@ To read a range of keys and give a hint that you want 16 splits, write::
     context.setInput(kvTable, kvTable.getSplits(16, startKey, stopKey);
   }
 
+
+.. rubric:: A Dataset as the Output Destination of a MapReduce Job
+
 Just as you have the option to read input from a Dataset, you have the option to write to a Dataset as
 the output destination of a MapReduce job if that Dataset implements the ``BatchWritable``
 interface::
@@ -60,3 +68,9 @@ interface::
 The ``write()`` method is used to redirect all writes performed by a Reducer to the Dataset.
 Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type
 parameters of the Reducer.
+
+
+.. rubric:: Directly Reading and Writing Datasets
+
+Both CDAP ``Mapper`` and ``Reducer`` can :ref:`directly read or write to a Dataset
+<mapreduce-datasets>`, similar to the way a Flowlet or Service can.

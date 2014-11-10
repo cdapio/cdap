@@ -71,3 +71,18 @@ returns a ``FlowSpecification`` using the ``FlowSpecification.Builder()``::
 
 In this example, the *name*, *description*, *with* (or *without*)
 Flowlets, and *connections* are specified before building the Flow.
+
+
+.. rubric::  Examples of Using Flows and Flowlets
+
+Flows and Flowlets are included in just about every CDAP :ref:`application <apps-and-packs>`,
+:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
+
+- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using a
+  flow with a single flowlet to **ingest a name into a dataset.**
+
+- For an example of **annotated Flowlets,** see the :ref:`Count Random
+  <examples-count-random>` example.
+
+- For examples of **flows with multiple flowlets,** see the :ref:`Purchase
+  <examples-purchase>` and :ref:`Count Random <examples-count-random>` examples.

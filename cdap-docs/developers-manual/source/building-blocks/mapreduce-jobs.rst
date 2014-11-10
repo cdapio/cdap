@@ -102,8 +102,13 @@ CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
     }
   }
 
+.. _mapreduce-datasets:
+
 MapReduce and Datasets
 ----------------------
+
+.. rubric: Reading and Writing to Datasets from a MapReduce Job
+
 Both CDAP ``Mapper`` and ``Reducer`` can directly read
 or write to a Dataset, similar to the way a Flowlet or Service can.
 
@@ -121,7 +126,6 @@ declaration and (2) an injection:
            .useDataSet("catalog")
            ...
 
-
 #. Inject the Dataset into the mapper or reducer that uses it::
 
      public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...> {
@@ -135,3 +139,21 @@ declaration and (2) an injection:
          Product product = catalog.read(purchase.getProductId());
          ...
        }
+
+
+.. rubric: Datasets as MapReduce Input or Output
+
+Additionally, a MapReduce job can interact with a Dataset by using it as an input or an
+output, as described in :ref:`datasets-map-reduce-jobs`.
+
+
+.. rubric::  Examples of Using Map Reduce Jobs
+
+Flows and Flowlets are included in just about every CDAP :ref:`application <apps-and-packs>`,
+:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
+
+- For an example of **a MapReduce Job,** see the :ref:`Purchase
+  <examples-purchase>` example.
+
+- For a longer example, the how-to guide :ref:`cdap-mapreduce-guide` also
+  demonstrates the use of MapReduce.
