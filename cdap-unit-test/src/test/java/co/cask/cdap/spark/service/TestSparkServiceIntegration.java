@@ -49,14 +49,15 @@ public class TestSparkServiceIntegration extends TestBase {
     try {
       startService(applicationManager);
 
-      SparkManager sparkManager = applicationManager.startSpark(TestSparkServiceIntegrationApp.SparkServiceProgram.class.getSimpleName());
+      SparkManager sparkManager = applicationManager.startSpark(
+        TestSparkServiceIntegrationApp.SparkServiceProgram.class.getSimpleName());
       sparkManager.waitForFinish(5, TimeUnit.MINUTES);
 
       DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("result");
       KeyValueTable results = datasetManager.get();
       for (int i = 1; i <= 5; i++) {
         byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
-        Assert.assertEquals((i*i), Integer.parseInt(Bytes.toString(results.read(key))));
+        Assert.assertEquals((i * i), Integer.parseInt(Bytes.toString(results.read(key))));
       }
     } finally {
       applicationManager.stopAll();

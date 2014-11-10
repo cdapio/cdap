@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.services;
 
-import co.cask.cdap.api.DiscoveryServiceContext;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -37,19 +37,21 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * An abstract implementation of {@link DiscoveryServiceContext}
+ * An abstract implementation of {@link ServiceDiscoverer}.
+ * It provides definition for {@link ServiceDiscoverer#getServiceURL}  and expects the sub-classes to give definition
+ * for {@link AbstractServiceDiscoverer#getDiscoveryServiceClient}.
  */
-public abstract class AbstractDiscoveryServiceContext implements DiscoveryServiceContext {
+public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractDiscoveryServiceContext.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceDiscoverer.class);
 
   protected String accountId;
   protected String applicationId;
 
-  protected AbstractDiscoveryServiceContext() {
+  protected AbstractServiceDiscoverer() {
   }
 
-  public AbstractDiscoveryServiceContext(Program program) {
+  public AbstractServiceDiscoverer(Program program) {
     this.accountId = program.getAccountId();
     this.applicationId = program.getApplicationId();
   }
@@ -86,7 +88,7 @@ public abstract class AbstractDiscoveryServiceContext implements DiscoveryServic
       }
       return url;
     } catch (InterruptedException e) {
-      LOG.error("Got exception: ", e);
+      LOG.error("Exception raised when discovering endpoint for {}/{}", applicationId, serviceId, e);
       return null;
     } finally {
       discoveryCancel.cancel();

@@ -21,22 +21,22 @@ import java.net.URL;
 /**
  * An interface for Discovery Service.
  */
-public interface DiscoveryServiceContext {
+public interface ServiceDiscoverer {
 
   /**
-   * Used to discover services inside a given application.
+   * Discover the base URL for a Service, relative to which Service endpoints can be accessed
    *
    * @param applicationId Application name
    * @param serviceId     Service name
-   * @return URL
+   * @return URL for the discovered service or null if the service is not found
    */
   URL getServiceURL(String applicationId, String serviceId);
 
   /**
-   * Omitting an applicationId assumes that the program wants to discover a service within its own application.
+   * Discover the base URL for a Service in the same application, relative to which Service endpoints can be accessed
    *
    * @param serviceId Service Name
-   * @return URL
+   * @return URL for the discovered service or null if the service is not found
    */
   URL getServiceURL(String serviceId);
 }

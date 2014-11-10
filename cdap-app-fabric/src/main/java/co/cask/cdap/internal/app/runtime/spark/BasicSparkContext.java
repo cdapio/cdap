@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
-import co.cask.cdap.api.DiscoveryServiceContext;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
@@ -156,7 +156,7 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   }
 
   @Override
-  public DiscoveryServiceContext getSerializableDiscoveryServiceContext() {
+  public ServiceDiscoverer getServiceDiscoverer() {
     throw new IllegalStateException("Service Discovery is not supported in this Context");
   }
 

@@ -16,8 +16,8 @@
 
 package co.cask.cdap.api.spark;
 
-import co.cask.cdap.api.DiscoveryServiceContext;
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.stream.StreamEventDecoder;
@@ -136,10 +136,10 @@ public interface SparkContext extends RuntimeContext {
   public String[] getRuntimeArguments(String argsKey);
 
   /**
-   * Returns a {@link Serializable} {@link DiscoveryServiceContext} for Service Discovery in Spark Program which can be
+   * Returns a {@link Serializable} {@link ServiceDiscoverer} for Service Discovery in Spark Program which can be
    * passed in Spark program's closures.
    *
-   * @return A {@link Serializable} {@link DiscoveryServiceContext}
+   * @return A {@link Serializable} {@link ServiceDiscoverer}
    */
-  public DiscoveryServiceContext getSerializableDiscoveryServiceContext();
+  public ServiceDiscoverer getServiceDiscoverer();
 }

@@ -20,7 +20,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.services.AbstractDiscoveryServiceContext;
+import co.cask.cdap.app.services.AbstractServiceDiscoverer;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -41,7 +41,7 @@ import java.util.Set;
 /**
  * Base class for program runtime context
  */
-public abstract class AbstractContext extends AbstractDiscoveryServiceContext implements DataSetContext,
+public abstract class AbstractContext extends AbstractServiceDiscoverer implements DataSetContext,
   RuntimeContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 

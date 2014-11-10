@@ -16,46 +16,48 @@
 
 package co.cask.cdap.app.services;
 
-import co.cask.cdap.api.DiscoveryServiceContext;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.app.program.Program;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 
 /**
- * A {@link Serializable} {@link DiscoveryServiceContext}. This is needed for {@link Spark} program which expects
+ * A {@link Serializable} {@link ServiceDiscoverer}. This is needed for {@link Spark} program which expects
  * object used in the Closure to be {@link Serializable}
  */
-public class SerializableDiscoveryServiceContext extends AbstractDiscoveryServiceContext implements Serializable {
+public class SerializableServiceDiscoverer extends AbstractServiceDiscoverer implements Externalizable {
 
   private static final long serialVersionUID = 6547316362453719580L;
   private static DiscoveryServiceClient discoveryServiceClient;
 
   // no-arg constructor required for serialization/deserialization to work
-  public SerializableDiscoveryServiceContext() {
+  public SerializableServiceDiscoverer() {
   }
 
-  public SerializableDiscoveryServiceContext(Program program, DiscoveryServiceClient discoveryClient) {
+  public static void setDiscoveryServiceClient(DiscoveryServiceClient discoveryServiceClient) {
+    SerializableServiceDiscoverer.discoveryServiceClient = discoveryServiceClient;
+  }
+
+  public SerializableServiceDiscoverer(Program program) {
     super(program);
-    discoveryServiceClient = discoveryClient;
   }
 
-  // custom serialization
-  private void writeObject(ObjectOutputStream oos) throws IOException {
-    oos.defaultWriteObject();
-    oos.writeObject(accountId);
-    oos.writeObject(applicationId);
+  @Override
+  public void writeExternal(ObjectOutput objectOutput) throws IOException {
+    objectOutput.writeObject(accountId);
+    objectOutput.writeObject(applicationId);
   }
 
-  // custom deserialization
-  private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
-    ois.defaultReadObject();
-    accountId = (String) ois.readObject();
-    applicationId = (String) ois.readObject();
+  @Override
+  public void readExternal(ObjectInput objectInput) throws IOException, ClassNotFoundException {
+    accountId = (String) objectInput.readObject();
+    applicationId = (String) objectInput.readObject();
   }
 
   @Override

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.spark.service;
 
-import co.cask.cdap.api.DiscoveryServiceContext;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -81,13 +81,14 @@ public class TestSparkServiceIntegrationApp extends AbstractApplication {
 
       JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
       distData.count();
-      final DiscoveryServiceContext discoveryServiceContext = context.getSerializableDiscoveryServiceContext();
+      final ServiceDiscoverer serviceDiscoverer = context.getServiceDiscoverer();
       JavaPairRDD<byte[], byte[]> resultRDD = distData.mapToPair(new PairFunction<Integer,
         byte[], byte[]>() {
         @Override
         public Tuple2<byte[], byte[]> call(Integer num) throws Exception {
-          URL squareURL = discoveryServiceContext.getServiceURL(SERVICE_NAME);
-          URLConnection connection = new URL(squareURL, String.format(SERVICE_METHOD_NAME + "/%s", String.valueOf(num))).openConnection();
+          URL squareURL = serviceDiscoverer.getServiceURL(SERVICE_NAME);
+          URLConnection connection = new URL(squareURL, String.format(SERVICE_METHOD_NAME + "/%s",
+                                                                      String.valueOf(num))).openConnection();
           BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
           String squaredVale = reader.readLine();
           Closeables.closeQuietly(reader);
@@ -104,10 +105,10 @@ public class TestSparkServiceIntegrationApp extends AbstractApplication {
     @GET
     public void square(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("num") String num) {
       if (num.isEmpty()) {
-        responder.sendError(HttpResponseStatus.NO_CONTENT.code(), "Movies information is empty.");
+        responder.sendError(HttpResponseStatus.NO_CONTENT.code(), "No number provided");
       } else {
-        responder.sendString(HttpResponseStatus.OK.code(), String.valueOf(Integer.parseInt(num) * Integer.parseInt(num)),
-                             Charsets.UTF_8);
+        responder.sendString(HttpResponseStatus.OK.code(), String.valueOf(Integer.parseInt(num) *
+                                                                            Integer.parseInt(num)), Charsets.UTF_8);
       }
     }
   }
