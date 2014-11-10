@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.commons.io.FileUtils;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
@@ -38,6 +39,7 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
@@ -87,6 +89,11 @@ public final class AppFabricServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
+    // Delete app fabric temp directory
+    File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
+                           configuration.get(Constants.AppFabric.TEMP_DIR));
+    FileUtils.deleteDirectory(tmpDir);
+
     schedulerService.start();
     programRuntimeService.start();
 

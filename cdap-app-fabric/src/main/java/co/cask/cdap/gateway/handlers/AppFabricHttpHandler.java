@@ -43,6 +43,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
@@ -1739,11 +1740,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     final Location archive = uploadDir.append(archiveName);
 
     // Copy archive to a temporary location
-    final File tmpArchive = new File(new File(configuration.get(Constants.AppFabric.TEMP_DIR), accountId),
-                                     String.format("%s-%s", System.currentTimeMillis(), archiveName));
+    final File tmpArchive = new File(
+      new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
+                        configuration.get(Constants.AppFabric.TEMP_DIR)),
+               accountId),
+      String.format("%s-%s", System.currentTimeMillis(), archiveName));
     if ((!tmpArchive.getParentFile().exists() && !tmpArchive.getParentFile().mkdirs()
       && !tmpArchive.getParentFile().mkdirs()) || !tmpArchive.createNewFile()) {
-      throw new IOException("Could not create temporary file for archive: " + archiveName);
+      throw new IOException("Could not create temporary file for archive at: " + tmpArchive.getAbsolutePath());
     }
     LOG.debug("Moving archive to temporary file on local disk: {}", tmpArchive.getAbsolutePath());
     final OutputStream fos = new FileOutputStream(tmpArchive);
@@ -1773,12 +1777,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           // Moving archive from temporary location in local file system to temporary location in targeted file system
           Location tmpLocation = archive.getTempFile("");
           LOG.debug("Moving archive to temporary file on final file system: {}", tmpLocation.toURI().toString());
-          OutputStream os = tmpLocation.getOutputStream();
-          try {
-            Files.copy(tmpArchive, os);
-          } finally {
-            os.close();
-          }
+          Files.copy(tmpArchive, Locations.newOutputSupplier(tmpLocation));
           // Finally, move archive to final location
           Location finalLocation = tmpLocation.renameTo(archive);
           if (finalLocation == null) {
