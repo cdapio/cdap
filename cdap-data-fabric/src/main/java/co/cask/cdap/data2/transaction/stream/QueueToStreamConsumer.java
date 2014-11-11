@@ -19,7 +19,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.stream.DefaultStreamEvent;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.common.stream.StreamEventDataCodec;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -87,7 +86,7 @@ public final class QueueToStreamConsumer implements StreamConsumer {
 
         Decoder decoder = new BinaryDecoder(new ByteBufferInputStream(buffer));
         // In old schema, timestamp is not recorded.
-        builder.add(new DefaultStreamEvent(StreamEventDataCodec.decode(decoder), 0));
+        builder.add(new StreamEvent(StreamEventDataCodec.decode(decoder), 0));
       }
     }
     final List<StreamEvent> events = builder.build();

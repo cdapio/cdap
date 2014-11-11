@@ -49,9 +49,11 @@ public class GetStreamEventsCommand implements Command {
 
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
+    long currentTime = System.currentTimeMillis();
+
     String streamId = arguments.get(ArgumentName.STREAM.toString());
-    long startTime = arguments.getLong(ArgumentName.START_TIME.toString(), 0L);
-    long endTime = arguments.getLong(ArgumentName.END_TIME.toString(), Long.MAX_VALUE);
+    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
     int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     // Get a list of stream events and prints it.
@@ -116,7 +118,7 @@ public class GetStreamEventsCommand implements Command {
           case 'd':
             return base + dir * TimeUnit.DAYS.toMillis(offset);
           default:
-            throw new CommandInputError("Unsupported time type " + type);
+            throw new CommandInputError("Unsupported relative time format: " + type);
         }
       }
       if (arg.equalsIgnoreCase("min")) {

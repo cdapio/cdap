@@ -17,11 +17,12 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.ServiceDiscoverer;
 
 /**
  * Context for custom Service workers.
  */
-public interface ServiceWorkerContext extends RuntimeContext {
+public interface ServiceWorkerContext extends RuntimeContext, ServiceDiscoverer {
 
   /**
    * Returns the specification used to configure the {@link ServiceWorker} bounded to this context.

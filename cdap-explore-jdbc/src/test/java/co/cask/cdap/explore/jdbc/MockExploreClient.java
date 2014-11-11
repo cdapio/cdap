@@ -199,6 +199,11 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
     public List<ColumnDesc> getResultSchema() throws ExploreException {
       return schema;
     }
+
+    @Override
+    public boolean canContainResults() {
+      return true;
+    }
   }
 
   private static final class MockStatementExecutionFuture

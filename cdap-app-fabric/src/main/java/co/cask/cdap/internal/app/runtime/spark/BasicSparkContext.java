@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
@@ -152,6 +153,11 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
       LOG.warn("Argument with key {} not found in Runtime Arguments", argsKey);
       return NO_ARGS;
     }
+  }
+
+  @Override
+  public ServiceDiscoverer getServiceDiscoverer() {
+    throw new IllegalStateException("Service Discovery is not supported in this Context");
   }
 
   @Override

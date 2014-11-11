@@ -94,6 +94,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "send stream " + streamId + " helloworld", "Successfully send stream event");
     testCommandOutputContains(cli, "get stream " + streamId, "helloworld");
+    testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s 1", "helloworld");
+    testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s", "helloworld");
+    testCommandOutputContains(cli, "get stream " + streamId + " -10m", "helloworld");
     testCommandOutputContains(cli, "truncate stream " + streamId, "Successfully truncated stream");
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 123", "Successfully set TTL of stream");

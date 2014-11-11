@@ -105,7 +105,7 @@ public final class StreamEventCodec {
 
       // Read the timestamp
       long timestamp = decoder.readLong();
-      return new DefaultStreamEvent(data, timestamp);
+      return new StreamEvent(data, timestamp);
 
     } catch (IOException e) {
       // It should never happens, otherwise something very wrong.

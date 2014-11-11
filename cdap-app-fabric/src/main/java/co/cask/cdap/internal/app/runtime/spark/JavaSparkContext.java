@@ -30,7 +30,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.spark.api.java.JavaPairRDD;
 
 import java.io.IOException;
-import java.net.URL;
 
 /**
  * A concrete implementation of {@link AbstractSparkContext} which is used if the user's spark job is written in Java.
@@ -112,15 +111,5 @@ class JavaSparkContext extends AbstractSparkContext {
   @Override
   public <T> T getOriginalSparkContext() {
     return (T) originalSparkContext;
-  }
-
-  @Override
-  public URL getServiceURL(String applicationId, String serviceId) {
-    throw new UnsupportedOperationException("Does not support service discovery");
-  }
-
-  @Override
-  public URL getServiceURL(String serviceId) {
-    throw new UnsupportedOperationException("Does not support service discovery");
   }
 }
