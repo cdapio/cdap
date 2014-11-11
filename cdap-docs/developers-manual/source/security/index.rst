@@ -24,8 +24,8 @@ security. With perimeter security, cluster nodes can communicate with each other
 but outside clients can only communicate with the cluster through a secured host. 
 
 Using CDAP security, the CDAP authentication server issues credentials (access tokens) to
-authenticated clients. Clients then send these credentials on requests to CDAP. Calls that
-lack valid access tokens will be rejected, limiting access to only authenticated clients.
+authenticated clients. Clients then send these credentials on requests to CDAP. Only calls
+with valid access tokens will be accepted, rejecting access to un-authenticated clients.
 In addition, access logging can be enabled in CDAP to provide an audit log of all
 operations.
 
