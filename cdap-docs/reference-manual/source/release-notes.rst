@@ -22,6 +22,42 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+Release 2.5.2
+=============
+
+CDAP Bug Fixes
+--------------
+
+- Fixed a problem with a Coopr-provisioned secure cluster failing to start due to class
+  path issue (`CDAP-478 <https://issues.cask.co/browse/CDAP-478>`__).
+- Fixed a problem with the examples and tests incorrectly using the ByteBuffer.array
+  method when reading a stream event (`CDAP-549 <https://issues.cask.co/browse/CDAP-549>`__).
+- Fixed an issue with an Authentication Server so that it can now communicate with an LDAP
+  instance over SSL (`CDAP-556 <https://issues.cask.co/browse/CDAP-556>`__).
+- Fixed a problem with the program class loader to allow an application to use a different
+  version of a library than the one that the CDAP platform uses; for example, a different
+  Kafka library (`CDAP-559 <https://issues.cask.co/browse/CDAP-559>`__).
+
+Other Changes
+-------------
+
+- Improved the CDAP documentation:
+
+  - Re-organized the documentation into three manuals—Developers' Manual, Administration
+    Manual, Reference Manual—and a set of examples, howto-guides and tutorials;
+  - Documents are now in smaller chapters, with numerous updates and revisions;
+  - Added a link for downloading an archive of the documentation for offline use;
+  - Added links to examples relevant to a particular component;
+  - Added suggested deployment architectures for Distributed CDAP installations;
+  - Added a glossary;
+  - Added navigation aids at the bottom of each page; and
+  - Tested and updated the examples included with the Standalone CDAP and their documentation.
+
+Known Issues
+------------
+See *Known Issues* of `the previous version. <#known-issues-251>`_
+
+
 Release 2.5.1
 =============
 
