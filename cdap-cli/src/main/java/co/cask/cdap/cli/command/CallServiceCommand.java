@@ -26,13 +26,14 @@ import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.StringUtils;
-import co.cask.cdap.common.http.HttpMethod;
-import co.cask.cdap.common.http.HttpRequest;
-import co.cask.cdap.common.http.HttpResponse;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multimap;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -40,7 +41,7 @@ import com.google.inject.Inject;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -121,11 +122,11 @@ public class CallServiceCommand implements Command {
    * This is a valid formatting: http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html
    */
   private String formatHeaders(HttpResponse response) {
-    Map<String, List<String>> headers = response.getHeaders();
+    Multimap<String, String> headers = response.getHeaders();
     ImmutableMap.Builder<String, String> builder = new ImmutableMap.Builder<String, String>();
-    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-      List<String> value = entry.getValue();
-      builder.put(entry.getKey(), StringUtils.arrayToString(value.toArray(new String[value.size()])));
+    for (String key : headers.keySet()) {
+      Collection<String> value = headers.get(key);
+      builder.put(key, StringUtils.arrayToString(value.toArray(new String[value.size()])));
     }
     return ResponseUtil.formatHeader(builder.build());
   }
