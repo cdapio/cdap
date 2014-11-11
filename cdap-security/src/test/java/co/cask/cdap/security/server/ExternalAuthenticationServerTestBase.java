@@ -141,8 +141,8 @@ public abstract class ExternalAuthenticationServerTestBase {
     cConf.setInt(Constants.Security.AUTH_SERVER_PORT, Networks.getRandomPort());
     cConf.setInt(Constants.Security.AuthenticationServer.SSL_PORT, Networks.getRandomPort());
 
-    cConf.set(Constants.Security.AUTH_HANDLER_CLASS, "co.cask.cdap.security.server.LDAPAuthenticationHandler");
-    cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, "co.cask.cdap.security.server.LdapLoginModule");
+    cConf.set(Constants.Security.AUTH_HANDLER_CLASS, LDAPAuthenticationHandler.class.getName());
+    cConf.set(Constants.Security.LOGIN_MODULE_CLASS_NAME, LDAPLoginModule.class.getName());
     cConf.set(configBase.concat("debug"), "true");
     cConf.set(configBase.concat("hostname"), "localhost");
     cConf.set(configBase.concat("port"), Integer.toString(ldapPort));

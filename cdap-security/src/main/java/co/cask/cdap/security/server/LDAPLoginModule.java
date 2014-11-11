@@ -17,6 +17,7 @@
 package co.cask.cdap.security.server;
 
 import com.google.common.base.Throwables;
+import org.eclipse.jetty.plus.jaas.spi.LdapLoginModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +39,8 @@ import javax.security.auth.spi.LoginModule;
  * A custom {@link LoginModule} that does LDAP authentication. It allows the disabling of SSL
  * certificate verification for connections between the {@link ExternalAuthenticationServer} and an LDAP instance.
  */
-public class LdapLoginModule extends org.eclipse.jetty.plus.jaas.spi.LdapLoginModule {
-  private static final Logger LOG = LoggerFactory.getLogger(LdapLoginModule.class);
+public class LDAPLoginModule extends LdapLoginModule {
+  private static final Logger LOG = LoggerFactory.getLogger(LDAPLoginModule.class);
 
   /**
    * A {@link SocketFactory} that trusts all SSL certificates.

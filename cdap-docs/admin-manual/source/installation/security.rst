@@ -245,7 +245,7 @@ properties to ``cdap-site.xml``:
    Property                                             Value
 ====================================================== =========================================================
 security.authentication.handlerClassName                co.cask.cdap.security.server.LDAPAuthenticationHandler
-security.authentication.loginmodule.className           co.cask.cdap.security.server.LdapLoginModule
+security.authentication.loginmodule.className           co.cask.cdap.security.server.LDAPLoginModule
 security.authentication.handler.debug                   true/false
 security.authentication.handler.hostname                <hostname>
 security.authentication.handler.port                    <port>
