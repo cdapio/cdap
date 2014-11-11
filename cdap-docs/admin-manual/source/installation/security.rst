@@ -8,8 +8,11 @@
 CDAP Security
 =============
 
-Cask Data Application Platform (CDAP) supports securing clusters using a perimeter
-security model. Here we will discuss how to install and configure a secure CDAP instance.
+Cask Data Application Platform (CDAP) supports securing clusters using perimeter
+security. Here, we’ll discuss how to setup a secure CDAP instance.
+
+Additional security information, including client APIs and the authentication process, is covered
+in the Developers’ Manual :ref:`security-index` section.
 
 We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
 `secure Hadoop clusters <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html>`__.

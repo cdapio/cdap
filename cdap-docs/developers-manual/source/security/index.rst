@@ -20,7 +20,7 @@ Security
 
 
 Cask Data Application Platform (CDAP) supports securing clusters using perimeter
-security model. With perimeter security, cluster nodes can communicate with each other,
+security. With perimeter security, cluster nodes can communicate with each other,
 but outside clients can only communicate with the cluster through a secured host. 
 
 Using CDAP security, the CDAP authentication server issues credentials (access tokens) to
