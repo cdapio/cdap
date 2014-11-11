@@ -99,17 +99,8 @@ var sockServer = sockjs.createServer({
   }
 });
 
-sockServer.on('connection', function (conn) {
-  conn.on('data', function (message) {
-    message = JSON.parse(message);
+var Dispatch = require('./socket-dispatch.js');
 
-    console.log(color.pink('sock'), conn.id, message);
-
-    conn.write(JSON.stringify({
-      response: [Date.now(),2,0],
-      resource: message.resource
-    }));
-  });
-});
+sockServer.on('connection', Dispatch);
 
 sockServer.installHandlers(httpServer, { prefix: '/_sock' });

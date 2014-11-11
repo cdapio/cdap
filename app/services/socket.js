@@ -6,13 +6,11 @@ angular.module(PKG.name+'.services')
   })
 
   /*
-    MyDataSource
-
-    // usage in a controler:
+    MyDataSource // usage in a controler:
 
     var dataSrc = new MyDataSource($scope);
-    $scope.foo = [];
-    dataSrc.poll('foo', {method:'GET', path: '/whatever'});
+    $scope.foo = {};
+    dataSrc.poll('foo.bar', {method:'GET', path: '/whatever'});
 
    */
   .factory('MyDataSource', function (mySocket, MYSOCKET_EVENT) {
@@ -32,7 +30,12 @@ angular.module(PKG.name+'.services')
         scope.$apply(function(){
           angular.forEach(bindings[id], function (val, key) {
             if(angular.equals(val, data.resource)) {
-              scope.$eval(key+' = '+JSON.stringify(data.response));
+              if(key.indexOf('.')===-1) {
+                scope[key] = data.response;
+              }
+              else { // slower version supports nested keys
+                scope.$eval(key+' = '+JSON.stringify(data.response));
+              }
             }
           });
         });
@@ -79,27 +82,48 @@ angular.module(PKG.name+'.services')
 
     this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope) {
 
-      var socket = new window.SockJS(this.prefix),
+      var self = this,
+          socket = null,
           buffer = [];
 
-      socket.onmessage = function (event) {
-        try {
-          var data = JSON.parse(event.data);
-          $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
-        }
-        catch(e) {
-          console.error(e);
-        }
-      };
+      function init (attempt) {
+        console.log('socket init');
 
-      socket.onopen = function () {
-        angular.forEach(buffer, send);
-        buffer = [];
-      };
+        attempt = attempt || 1;
+        socket = new window.SockJS(self.prefix);
 
-      socket.onclose = function () {
-        $rootScope.$broadcast(MYSOCKET_EVENT.closed, arguments);
-      };
+        socket.onmessage = function (event) {
+          try {
+            var data = JSON.parse(event.data);
+            console.log('incoming socket message', data);
+            $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
+          }
+          catch(e) {
+            console.error(e);
+          }
+        };
+
+        socket.onopen = function (event) {
+          console.info('socket opened');
+          angular.forEach(buffer, send);
+          buffer = [];
+        };
+
+        socket.onclose = function (event) {
+          console.error(event.reason);
+          $rootScope.$broadcast(MYSOCKET_EVENT.closed, event);
+
+          // reconnect with exponential backoff
+          var d = Math.max(500, Math.round(
+            (Math.random() + 1) * 500 * Math.pow(2, attempt)
+          ));
+          console.log('will try again in ',d+'ms');
+          setTimeout(function () {
+            init(attempt+1);
+          }, d);
+        };
+
+      }
 
       function send(obj) {
         if(!socket.readyState) {
@@ -112,7 +136,10 @@ angular.module(PKG.name+'.services')
         return true;
       }
 
+      init();
+
       return {
+        init: init,
         send: send,
         close: function () {
           return socket.close.apply(socket, arguments);
