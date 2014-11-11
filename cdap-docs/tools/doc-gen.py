@@ -23,12 +23,12 @@
 # which is given relative to the script location.
 #
 # PDF generation examples:
-# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-enterprise-dependencies.pdf ../developer-guide/source/licenses/cdap-enterprise-dependencies.rst
-# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-level-1-dependencies.pdf    ../developer-guide/source/licenses/cdap-level-1-dependencies.rst
-# python doc-gen.py -g pdf -o ../../../developer-guide/licenses-pdf/cdap-standalone-dependencies.pdf ../developer-guide/source/licenses/cdap-standalone-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-enterprise-dependencies.pdf ../developers-manual/source/licenses/cdap-enterprise-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-level-1-dependencies.pdf    ../developers-manual/source/licenses/cdap-level-1-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-standalone-dependencies.pdf ../developers-manual/source/licenses/cdap-standalone-dependencies.rst
 #
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 DEFAULT_OUTPUT_PDF_FILE = "output.pdf"
 DEFAULT_GENERATE = "pdf"
 TEMP_FILE_SUFFIX = "_temp"
@@ -66,11 +66,10 @@ def parse_options():
         description="Generates HTML, PDF or Slides from an reST-formatted file (currently limited to PDF)")
 
     parser.add_option(
-        "-v", "--version",
-        action="store_true",
-        dest="version",
-        help="Version of software",
-        default=False)
+        "-b", "--buildversion",
+        dest="build_version",
+        help="Version of CDAP",
+        default="")
 
     parser.add_option(
         "-o", "--output",
@@ -86,6 +85,13 @@ def parse_options():
         help="One of html, pdf, or slides "
              "(default %s)" % DEFAULT_GENERATE,
         default=DEFAULT_GENERATE)
+
+    parser.add_option(
+        "-v", "--version",
+        action="store_true",
+        dest="version",
+        help="Version of this software",
+        default=False)
 
     (options, args) = parser.parse_args()
 
@@ -180,15 +186,18 @@ def process_pdf(input_file, options):
     temp = open(temp_file,'w')    
     for line in lines:
         temp.write(line+'\n')
+    if options.build_version: # If a build version was specified on command-line, use it
+        line = ".. |version| replace:: %s" % options.build_version
+        temp.write('\n'+line+'\n')
     temp.close()
     print "Completed parsing input file"
 
     # Generate PDF
 #     /usr/local/bin/rst2pdf 
-#     --config="/Users/*/*/cdap/docs/developer-guide/source/_templates/pdf-config" 
-#     --stylesheets="/Users/*/*/cdap/docs/developer-guide/source/_templates/pdf-stylesheet" 
-#     -o "/Users/*/*/cdap/docs/developer-guide/build-pdf/rest2.pdf" 
-#     "/Users/*/*/cdap/docs/developer-guide/source/rest.rst_temp”
+#     --config="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-config" 
+#     --stylesheets="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-stylesheet" 
+#     -o "/Users/*/*/cdap/docs/developers-manual/build-pdf/rest2.pdf" 
+#     "/Users/*/*/cdap/docs/developers-manual/source/rest.rst_temp”
 
     command = '/usr/local/bin/rst2pdf --config="%s" --stylesheets="%s" -o "%s" %s' % (config, stylesheets, output, temp_file)
     print "command: %s" % command

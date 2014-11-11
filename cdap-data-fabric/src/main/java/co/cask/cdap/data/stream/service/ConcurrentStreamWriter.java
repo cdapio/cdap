@@ -18,7 +18,6 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.metrics.MetricsCollector;
-import co.cask.cdap.common.stream.DefaultStreamEventData;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamCoordinator;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -386,7 +385,7 @@ public final class ConcurrentStreamWriter implements Closeable {
   /**
    * A {@link StreamEventData} that carry state on whether it's been written to the underlying stream file or not.
    */
-  private static final class HandlerStreamEventData extends DefaultStreamEventData {
+  private static final class HandlerStreamEventData extends StreamEventData {
 
     /**
      * The possible state of the event data.
@@ -429,7 +428,7 @@ public final class ConcurrentStreamWriter implements Closeable {
    *
    * @see StreamHandler
    */
-  private static final class SettableStreamEvent implements StreamEvent {
+  private static final class SettableStreamEvent extends StreamEvent {
 
     private StreamEventData data;
     private long timestamp;
