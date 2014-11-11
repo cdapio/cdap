@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>2.5.1</version>
+  <version>2.5.2</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -128,7 +128,7 @@
     <slf4j.version>1.7.5</slf4j.version>
     <tephra.version>0.3.0</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>[0.4.0-incubating-SNAPSHOT,0.5.0-incubating-SNAPSHOT)</twill.version>
+    <twill.version>0.4.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.1.0</spark.version>
@@ -1079,6 +1079,10 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

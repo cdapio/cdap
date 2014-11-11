@@ -19,9 +19,8 @@
 package org.apache.hadoop.mapred;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.ApiResourceListHolder;
-import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Throwables;
@@ -244,10 +243,9 @@ class LocalDistributedCacheManagerWithFix {
    * Creates a class loader that includes the designated
    * files and archives.
    *
-   * Continnuuity fix : for each localClasspaths, if it is JAR file, uses the ProgramClassLoader instead
-   * so that it won't keep the file stream opened, but rather having all classes bytes loaded in memmory.
-   * If the class path is a directory, it will use URLClassLoader. The final ClassLoader is a CombineClassLoader
-   * that load classes from all the ProgramClassLoader and the URLClassLoader as described above.
+   * Cask fix : for each localClasspaths, if it is JAR file, uses the ProgramClassLoader so that bundle jar is
+   * supported, otherwise add it to a URLClassLoader. The final ClassLoader is a CombineClassLoader
+   * that load classes from all the ProgramClassLoaders and the URLClassLoader.
    */
   public ClassLoader makeClassLoader(final ClassLoader parent)
     throws MalformedURLException {
@@ -264,9 +262,7 @@ class LocalDistributedCacheManagerWithFix {
             try {
               File expandDir = Files.createTempDir();
               jarExpandDirs.add(expandDir);
-              return ClassLoaders.newProgramClassLoader(
-                BundleJarUtil.unpackProgramJar(lf.create(uri), expandDir),
-                ApiResourceListHolder.getResourceList(), parent);
+              return ProgramClassLoader.create(BundleJarUtil.unpackProgramJar(lf.create(uri), expandDir), parent);
             } catch (IOException e) {
               throw Throwables.propagate(e);
             }
