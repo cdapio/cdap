@@ -40,6 +40,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import javax.ws.rs.Path;
 
 /**
  * Package local helper class to maintain list of resources that are visible to user programs.
@@ -48,8 +49,10 @@ final class ProgramResources {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResources.class);
 
-  private static final List<String> HADOOP_PACKAGES = ImmutableList.of("org.apache.hadoop");
-  private static final List<String> CDAP_API_PACKAGES = ImmutableList.of("co.cask.cdap.api");
+  private static final List<String> PROVIDED_PACKAGES = ImmutableList.of("org.apache.hadoop");
+  private static final List<String> CDAP_API_PACKAGES = ImmutableList.of("co.cask.cdap.api", "co.cask.cdap.internal");
+  private static final List<String> JAVAX_WS_RS_PACKAGES = ImmutableList.of("javax.ws.rs");
+
   private static final Predicate<URI> JAR_ONLY_URI = new Predicate<URI>() {
     @Override
     public boolean apply(URI input) {
@@ -101,15 +104,18 @@ final class ProgramResources {
     ClassLoader classLoader = ProgramResources.class.getClassLoader();
 
     // Gather resources information for cdap-api classes
-    Set<ClassPath.ClassInfo> apiResources = getResources(getAPIClassPath(classLoader),
+    Set<ClassPath.ClassInfo> apiResources = getResources(getClassPath(classLoader, Application.class),
                                                          CDAP_API_PACKAGES, Sets.<ClassPath.ClassInfo>newHashSet());
     // Trace dependencies for cdap-api classes
     Set<String> result = findClassDependencies(classLoader,
                                                Iterables.transform(apiResources, CLASS_INFO_TO_CLASS_NAME),
                                                Sets.<String>newHashSet());
 
+    // Gather resources for javax.ws.rs classes. They are not traceable from the api classes.
+    getResources(getClassPath(classLoader, Path.class), JAVAX_WS_RS_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result);
+
     return getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
-                        HADOOP_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result);
+                        PROVIDED_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result);
   }
 
 
@@ -132,7 +138,7 @@ final class ProgramResources {
                                                              Function<ClassPath.ClassInfo, V> resultTransform,
                                                              final T result) throws IOException {
     for (String pkg : packages) {
-      ImmutableSet<ClassPath.ClassInfo> packageClasses = classPath.getAllClassesRecursive(pkg);
+      Set<ClassPath.ClassInfo> packageClasses = classPath.getAllClassesRecursive(pkg);
       for (ClassPath.ClassInfo cls : packageClasses) {
         result.add(resultTransform.apply(cls));
       }
@@ -141,10 +147,11 @@ final class ProgramResources {
   }
 
   /**
-   * Gathers all resources for cdap-api classes.
+   * Returns a {@link ClassPath} instance that represents the classpath that the given class is loaded from the given
+   * ClassLoader.
    */
-  private static ClassPath getAPIClassPath(ClassLoader classLoader) throws IOException {
-    String resourceName = Application.class.getName().replace('.', '/') + ".class";
+  private static ClassPath getClassPath(ClassLoader classLoader, Class<?> cls) throws IOException {
+    String resourceName = cls.getName().replace('.', '/') + ".class";
     URL url = classLoader.getResource(resourceName);
     if (url == null) {
       throw new IOException("Resource not found for " + resourceName);
