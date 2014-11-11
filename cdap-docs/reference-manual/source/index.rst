@@ -25,9 +25,7 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 .. |java-client| replace:: **Java Client API:**
 .. _java-client: java-client-api.html
 
-- |java-client|_ documents four APIs of CDAP: the **HTTP RESTful API,** the **Java APIs (Javadocs),** the **Java
-  Client API** and the **Command-Line Interface;** the latter provides methods for interacting with the 
-  CDAP server from within a shell.
+- |java-client|_ provides methods for interacting with CDAP from external Java applications.
 
 
 .. |cli| replace:: **Command-Line Interface API:**
