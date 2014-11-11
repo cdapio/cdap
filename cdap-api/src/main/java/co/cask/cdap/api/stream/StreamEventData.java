@@ -23,15 +23,33 @@ import javax.annotation.Nonnull;
  * Represents data in one stream event.
  */
 @Nonnull
-public interface StreamEventData {
+public class StreamEventData {
+
+  private final ByteBuffer body;
+  private final Map<String, String> headers;
 
   /**
-   * @return A {@link java.nio.ByteBuffer} that is the payload of the event.
+   * Constructs a {@link StreamEventData} instance. The given body and headers are taken as-is.
+   *
+   * @param headers Map of key/value pairs of the event data
+   * @param body body of the event data
    */
-  ByteBuffer getBody();
+  public StreamEventData(Map<String, String> headers, ByteBuffer body) {
+    this.body = body;
+    this.headers = headers;
+  }
 
   /**
    * @return An immutable map of all headers included in this event.
    */
-  Map<String, String> getHeaders();
+  public Map<String, String> getHeaders() {
+    return headers;
+  }
+
+  /**
+   * @return A {@link java.nio.ByteBuffer} that is the payload of the event.
+   */
+  public ByteBuffer getBody() {
+    return body;
+  }
 }

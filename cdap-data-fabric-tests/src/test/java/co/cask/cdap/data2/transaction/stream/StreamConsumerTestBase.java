@@ -18,7 +18,6 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.stream.DefaultStreamEvent;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -153,7 +152,7 @@ public abstract class StreamConsumerTestBase {
     List<StreamEvent> result = Lists.newLinkedList();
     for (int i = 0; i < count; i++) {
       String msg = msgPrefix + i;
-      StreamEvent event = new DefaultStreamEvent(headers, Charsets.UTF_8.encode(msg), clock.getTime());
+      StreamEvent event = new StreamEvent(headers, Charsets.UTF_8.encode(msg), clock.getTime());
       result.add(event);
       streamWriter.append(event);
     }
@@ -278,7 +277,7 @@ public abstract class StreamConsumerTestBase {
     for (int i = 0; i < 10; i++) {
       txContext.start();
       String msg = "Old event " + i;
-      StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(msg));
+      StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(), Charsets.UTF_8.encode(msg));
       producer.enqueue(new QueueEntry(streamEventCodec.encodePayload(event)));
       txContext.finish();
     }
