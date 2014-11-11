@@ -101,8 +101,14 @@ var sockServer = sockjs.createServer({
 
 sockServer.on('connection', function (conn) {
   conn.on('data', function (message) {
+    message = JSON.parse(message);
+
     console.log(color.pink('sock'), conn.id, message);
-    conn.write(message);
+
+    conn.write(JSON.stringify({
+      response: [Date.now(),2,0],
+      resource: message.resource
+    }));
   });
 });
 

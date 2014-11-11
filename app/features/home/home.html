@@ -3,7 +3,15 @@
 </h1>
 
 <div class="form-inline">
-  <input class="form-control" type="text" ng-model="something" />
-  <button class="btn btn-default" ng-click="sendMsg(something)">
-    send through socket</button>
+  <input class="form-control" type="text" ng-model="url" />
+  <button class="btn btn-default" ng-click="fetchSomething(url)">
+    fetch url via socket</button>
 </div>
+
+<p>
+  <pre>{{something | json}}</pre>
+</p>
+
+<p>
+  <pre>{{pollthing | json}}</pre>
+</p>

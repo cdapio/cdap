@@ -3,27 +3,18 @@
  */
 
 angular.module(PKG.name+'.feature.home').controller('HomeCtrl',
-function ($scope, $alert, mySocket, MY_SOCKET_EVENT) {
+function ($scope, $alert, MyDataSource) {
 
-  window.mySocket = mySocket;
+  var dataSrc = new MyDataSource($scope);
 
-  $scope.sendMsg = function(msg) {
-    console.log('sendMsg', msg);
-    mySocket.send(msg);
+  $scope.url = '/whatever';
+
+  $scope.fetchSomething = function (url) {
+    dataSrc.fetch('something', {url:url});
+
   };
 
-  $scope.$on(MY_SOCKET_EVENT.message, function (e, data) {
-
-    console.log(e, data);
-
-    $alert({
-      title: 'socket message',
-      content: data,
-      type: 'info'
-    });
-
-    // $scope.something = '';
-  });
+  dataSrc.poll('pollthing', {url:'/pollme'})
 
 });
 
