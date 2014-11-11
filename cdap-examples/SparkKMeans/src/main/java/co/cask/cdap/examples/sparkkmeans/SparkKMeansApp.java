@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
@@ -105,7 +106,7 @@ public class SparkKMeansApp extends AbstractApplication {
 
     @ProcessInput
     public void process(StreamEvent event) {
-      String body = new String(event.getBody().array());
+      String body = Bytes.toString(event.getBody());
       LOG.trace("Points info: {}", body);
       pointsStore.write(getIdAsByte(UUID.randomUUID()), body);
     }
