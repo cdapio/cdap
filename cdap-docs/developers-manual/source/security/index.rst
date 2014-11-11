@@ -67,5 +67,3 @@ Two authentication client APIs are included with CDAP:
 
 If the standard authentication mechanisms are not sufficient, you can provide a
 :ref:`custom authentication mechanism <custom-authentication>`.
-
-

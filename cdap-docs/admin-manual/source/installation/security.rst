@@ -211,7 +211,7 @@ CDAP provides several ways to authenticate a user's identity:
 - :ref:`installation-basic-authentication`
 - :ref:`installation-ldap-authentication`
 - :ref:`installation-jaspi-authentication`
-- :ref:`Custom Authentication <custom-authentication>`
+- :ref:`installation-custom-authentication`
 
 .. _installation-basic-authentication:
 
@@ -297,6 +297,23 @@ In addition, any properties with the prefix ``security.authentication.handler.``
 such as ``security.authentication.handler.hostname``, will be provided to the handler.
 These properties, stripped off the prefix, will be used to instantiate the ``javax.security.auth.login.Configuration`` used
 by the ``LoginModule``.
+
+.. _installation-custom-authentication:
+
+Custom Authentication
+.....................
+
+To use a Custom Authentication mechanism, set the
+``security.authentication.handlerClassName`` in ``cdap-site.xml`` with the custom
+handler's classname. Any properties set in ``cdap-site.xml`` are available through a
+``CConfiguration`` object and can be used to configure the handler. 
+
+The Developers’ Manual :ref:`Custom Authentication <custom-authentication>` section shows
+how to create a Custom Authentication Mechanism.
+
+To make your custom handler class available to the authentication service, copy your
+packaged jar file (and any additional dependency jars) to the ``security/lib/`` directory
+within your CDAP installation (typically under ``/opt/cdap``).
 
 
 Testing Security

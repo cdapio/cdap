@@ -36,6 +36,5 @@ extending ``AbstractAuthenticationHandler`` and implementing its abstract method
     }
   }
 
-To make your custom handler class available to the authentication service, copy your
-packaged jar file (and any additional dependency jars) to the ``security/lib/`` directory
-within your CDAP installation (typically under ``/opt/cdap``).
+To configure the custom authentication handler, see the Administration Manual’s
+:ref:`installation-custom-authentication` section.
