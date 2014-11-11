@@ -36,7 +36,7 @@ CDAP Bug Fixes
   method when reading a Stream event (`CDAP-549 <https://issues.cask.co/browse/CDAP-549>`__).
 - Fixed a problem with the Authentication Server so that it can now communicate with an LDAP
   instance over SSL (`CDAP-556 <https://issues.cask.co/browse/CDAP-556>`__).
-- Fixed a problem with the program class loader to allow an application to use a different
+- Fixed a problem with the program class loader to allow applications to use a different
   version of a library than the one that the CDAP platform uses; for example, a different
   Kafka library (`CDAP-559 <https://issues.cask.co/browse/CDAP-559>`__).
 - Fixed a problem with CDAP master not obtaining new delegation tokens after running for 
