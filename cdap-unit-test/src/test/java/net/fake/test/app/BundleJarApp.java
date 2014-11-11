@@ -306,7 +306,7 @@ public class BundleJarApp extends AbstractApplication {
       @ProcessInput
       public void process(StreamEvent event) {
         LOG.info("Hello " + loadTestClasses());
-        String body = new String(event.getBody().array());
+        String body = Bytes.toString(event.getBody());
         String key = body.split(":")[0];
         String value = body.split(":")[1];
         input.write(key, value + loadTestClasses());

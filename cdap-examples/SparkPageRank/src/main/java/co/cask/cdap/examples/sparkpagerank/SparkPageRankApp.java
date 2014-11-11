@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
@@ -133,7 +134,7 @@ public class SparkPageRankApp extends AbstractApplication {
      */
     @ProcessInput
     public void process(StreamEvent event) {
-      String body = new String(event.getBody().array());
+      String body = Bytes.toString(event.getBody());
       LOG.trace("Backlink info: {}", body);
       // Store the URL pairs in one row. One pair is kept in the value of an table entry.
       backlinkStore.write(getIdAsByte(UUID.randomUUID()), body);
