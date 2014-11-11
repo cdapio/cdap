@@ -173,6 +173,27 @@ public class MetricsRequestParserTest {
       URI.create("/system/apps/app1/flows/loads?aggregate=true"));
     Assert.assertEquals("app1.f", request.getContextPrefix());
     Assert.assertEquals("loads", request.getMetricPrefix());
+
+    //flow with runId
+    request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/flows/flow1/run-id/1234/some.metric?summary=true"));
+    Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
+    Assert.assertEquals("some.metric", request.getMetricPrefix());
+    Assert.assertEquals("1234", request.getRunId());
+
+    //flowlet with runId
+    request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/run-id/1234/some.metric?summary=true"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
+    Assert.assertEquals("some.metric", request.getMetricPrefix());
+    Assert.assertEquals("1234", request.getRunId());
+  }
+
+  @Test(expected = MetricsPathException.class)
+  public void testMultipleRunIdInvalidPath() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/run-id/1234/run-id/1235/some.metric?summary=true"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
   }
 
   @Test
@@ -200,6 +221,14 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
     Assert.assertEquals("process.events.out", request.getMetricPrefix());
     Assert.assertEquals("queue1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/run-id/run123/" +
+                   "process.events.out?aggregate=true"));
+    Assert.assertEquals("app1.f.flow1.flowlet1", request.getContextPrefix());
+    Assert.assertEquals("process.events.out", request.getMetricPrefix());
+    Assert.assertEquals("queue1", request.getTagPrefix());
+    Assert.assertEquals("run123", request.getRunId());
   }
 
   @Test
@@ -223,6 +252,18 @@ public class MetricsRequestParserTest {
       URI.create("/system/apps/app1/mapreduce/reads?summary=true"));
     Assert.assertEquals("app1.b", request.getContextPrefix());
     Assert.assertEquals("reads", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/mapreduce/mapred1/run-id/run123/reads?summary=true"));
+    Assert.assertEquals("app1.b.mapred1", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("run123", request.getRunId());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/mapreduce/mapred1/mappers/run-id/run123/reads?summary=true"));
+    Assert.assertEquals("app1.b.mapred1.m", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("run123", request.getRunId());
   }
 
   @Test
@@ -236,6 +277,12 @@ public class MetricsRequestParserTest {
       URI.create("/system/apps/app1/procedures/reads?summary=true"));
     Assert.assertEquals("app1.p", request.getContextPrefix());
     Assert.assertEquals("reads", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/procedures/proc1/run-id/run123/reads?summary=true"));
+    Assert.assertEquals("app1.p.proc1", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("run123", request.getRunId());
   }
 
   @Test
@@ -249,6 +296,12 @@ public class MetricsRequestParserTest {
       URI.create("/system/apps/app1/services/serve1/runnables/run1/reads?summary=true"));
     Assert.assertEquals("app1.s.serve1.run1", request.getContextPrefix());
     Assert.assertEquals("reads", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/services/serve1/runnables/run1/run-id/runid123/reads?summary=true"));
+    Assert.assertEquals("app1.s.serve1.run1", request.getContextPrefix());
+    Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("runid123", request.getRunId());
   }
 
 
@@ -277,6 +330,13 @@ public class MetricsRequestParserTest {
     Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
     Assert.assertEquals("store.reads", request.getMetricPrefix());
     Assert.assertEquals("dataset1", request.getTagPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/run-id/123/store.reads?summary=true"));
+    Assert.assertEquals("app1.f.flow1", request.getContextPrefix());
+    Assert.assertEquals("store.reads", request.getMetricPrefix());
+    Assert.assertEquals("dataset1", request.getTagPrefix());
+    Assert.assertEquals("123", request.getRunId());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/flows/store.reads?summary=true"));
@@ -319,9 +379,11 @@ public class MetricsRequestParserTest {
   @Test
   public void testHandler() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
-      URI.create("/system/services/appfabric/handlers/AppFabricHttpHandler/response.server-error?aggregate=true"));
+      URI.create("/system/services/appfabric/handlers/AppFabricHttpHandler/run-id/123/" +
+                   "response.server-error?aggregate=true"));
     Assert.assertEquals("appfabric.AppFabricHttpHandler", request.getContextPrefix());
     Assert.assertEquals("response.server-error", request.getMetricPrefix());
+    Assert.assertEquals("123", request.getRunId());
   }
 
   @Test

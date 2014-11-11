@@ -213,6 +213,7 @@ final class MetricsRequestParser {
     }
     MetricsRequestContext context = contextBuilder.build();
     builder.setContextPrefix(context.getContextPrefix());
+    builder.setRunId(context.getRunId());
     if (context.getTag() != null) {
       builder.setTagPrefix(context.getTag());
     }
@@ -257,6 +258,9 @@ final class MetricsRequestParser {
     switch(requestType) {
       case MAPREDUCE:
         String mrTypeStr = pathParts.next();
+        if (parseRunId(mrTypeStr, pathParts, builder)) {
+          return;
+        }
         MapReduceType mrType;
         try {
           mrType = MapReduceType.valueOf(mrTypeStr.toUpperCase());
@@ -265,6 +269,11 @@ final class MetricsRequestParser {
                                            + ".  must be 'mappers' or 'reducers'.");
         }
         builder.setComponentId(mrType.getId());
+        if (pathParts.hasNext()) {
+          if (!parseRunId(pathParts.next(), pathParts, builder)) {
+            throw new MetricsPathException("path contains too many elements");
+          }
+        }
         break;
       case FLOWS:
         buildFlowletContext(pathParts, builder);
@@ -274,8 +283,13 @@ final class MetricsRequestParser {
         break;
       case SERVICES:
         buildUserServiceContext(pathParts, builder);
+        break;
+      case PROCEDURES:
+        if (pathParts.hasNext()) {
+          parseRunId(pathParts.next(), pathParts, builder);
+        }
+        break;
     }
-
     if (pathParts.hasNext()) {
       throw new MetricsPathException("path contains too many elements");
     }
@@ -283,28 +297,56 @@ final class MetricsRequestParser {
 
   private static void buildUserServiceContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
     throws MetricsPathException {
-    if (!pathParts.next().equals("runnables")) {
+    String nextPath = pathParts.next();
+    if (parseRunId(nextPath, pathParts, builder)) {
+      return;
+    }
+    if (!nextPath.equals("runnables")) {
       throw new MetricsPathException("expecting 'runnables' after the service name");
     }
     if (!pathParts.hasNext()) {
       throw new MetricsPathException("runnables must be followed by a runnable name");
     }
     builder.setComponentId(urlDecode(pathParts.next()));
+    if (pathParts.hasNext()) {
+      if (!parseRunId(pathParts.next(), pathParts, builder)) {
+        throw new MetricsPathException("path contains too many elements");
+      }
+    }
   }
 
-
+  private static boolean parseRunId(String path, Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+    throws MetricsPathException {
+    if (path.equals(RUN_ID)) {
+      if (!pathParts.hasNext()) {
+        throw new MetricsPathException("expecting 'run-id' value after the identified run-id in path");
+      }
+      builder.setRunId(pathParts.next());
+      return true;
+    }
+    return false;
+  }
   /**
    * At this point, pathParts should look like methods/{method-name}
    */
   private static void buildHandlerContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
     throws MetricsPathException {
-    if (!pathParts.next().equals("methods")) {
+    String nextPath = pathParts.next();
+    if (parseRunId(nextPath, pathParts, builder)) {
+      return;
+    }
+    if (!nextPath.equals("methods")) {
       throw new MetricsPathException("expecting 'methods' after the handler name");
     }
     if (!pathParts.hasNext()) {
       throw new MetricsPathException("methods must be followed by a method name");
     }
     builder.setComponentId(urlDecode(pathParts.next()));
+    if (pathParts.hasNext()) {
+      if (!parseRunId(pathParts.next(), pathParts, builder)) {
+        throw new MetricsPathException("path contains too many elements");
+      }
+    }
   }
 
   /**
@@ -312,7 +354,13 @@ final class MetricsRequestParser {
    */
   private static void buildFlowletContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
     throws MetricsPathException {
-    if (!pathParts.next().equals("flowlets")) {
+
+    String nextPath = pathParts.next();
+
+    if (parseRunId(nextPath, pathParts, builder)) {
+      return;
+    }
+    if (!nextPath.equals("flowlets")) {
       throw new MetricsPathException("expecting 'flowlets' after the flow name");
     }
     if (!pathParts.hasNext()) {
@@ -321,13 +369,23 @@ final class MetricsRequestParser {
     builder.setComponentId(urlDecode(pathParts.next()));
 
     if (pathParts.hasNext()) {
-      if (!pathParts.next().equals("queues")) {
+      nextPath = pathParts.next();
+      if (parseRunId(nextPath, pathParts, builder)) {
+        return;
+      }
+      if (!nextPath.equals("queues")) {
         throw new MetricsPathException("expecting 'queues' after the flowlet name");
       }
       if (!pathParts.hasNext()) {
         throw new MetricsPathException("'queues' must be followed by a queue name");
       }
       builder.setTag(MetricsRequestContext.TagType.QUEUE, urlDecode(pathParts.next()));
+
+      if (pathParts.hasNext()) {
+        if (!parseRunId(pathParts.next(), pathParts, builder)) {
+          throw new MetricsPathException("path contains too many elements");
+        }
+      }
     }
   }
 
@@ -337,8 +395,6 @@ final class MetricsRequestParser {
   private static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
 
     Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
-    //Extract RunId from Query - if present
-    parseRunIdFromQueryParam(queryParams, builder);
     // Extracts the query type.
     if (isTimeseriesRequest(queryParams)) {
       parseTimeseries(queryParams, builder);
@@ -355,16 +411,6 @@ final class MetricsRequestParser {
       if (!foundType) {
         throw new IllegalArgumentException("Unknown query type for " + requestURI);
       }
-    }
-  }
-
-  private static void parseRunIdFromQueryParam(Map<String, List<String>> queryParams, MetricsRequestBuilder builder)
-    throws MetricsPathException {
-    if (queryParams.containsKey(RUN_ID)) {
-      if (queryParams.get(RUN_ID).size() > 1) {
-        throw new MetricsPathException("Should supply only one run-id");
-      }
-      builder.setRunId(queryParams.get(RUN_ID).get(0));
     }
   }
 

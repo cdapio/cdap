@@ -156,6 +156,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   public void testingMetricsWithRunIds() throws Exception {
     String runId1 = "id123";
     String runId2 = "id124";
+    String runId3 = "id125";
 
     MetricsCollector collector1 = collectionService.getCollector(MetricsScope.USER,
                                                                 "WordCount.s.CounterService.CountRunnable", runId1);
@@ -165,42 +166,48 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
                                                                 "WordCount.s.CounterService.CountRunnable", runId2);
     collector2.increment("rid_metric", 2);
 
+    MetricsCollector collector3 = collectionService.getCollector(MetricsScope.USER,
+                                                                 "WordCount.b.CounterMapper.m", runId3);
+    collector3.gauge("mr_metric", 10);
+
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
     //runnable metric request with runId1
     String runnableRequest1 =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/rid_metric?aggregate=true&run-id=" + runId1;
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/run-id/" + runId1 +
+        "/rid_metric?aggregate=true";
 
     //runnable metric request with runId2
     String runnableRequest2 =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/rid_metric?aggregate=true&run-id=" + runId2;
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/run-id/" + runId2 +
+        "/rid_metric?aggregate=true";
 
     //service metric request with runId2
     String serviceRequest2 =
-      "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true&run-id=" + runId2;
+      "/user/apps/WordCount/services/CounterService/run-id/" + runId2 + "/rid_metric?aggregate=true";
 
     //service metric request with invliad runId
     String serviceRequestInvalidId =
-      "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true&run-id=fff";
+      "/user/apps/WordCount/services/CounterService/run-id/fff/rid_metric?aggregate=true";
 
     //service metric request without specifying the runId and aggregate will run the sum of these two runIds
     String serviceRequestTotal =
       "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true";
 
-    // metric request without any context
-    String metricRequest1 =
-      "/user/rid_metric?aggregate=true&run-id=" + runId1;
+    String mapreduceMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapper/run-id/" + runId3 + "/mr_metric?aggregate=true";
 
-    String metricRequestInvalid =
-      "/user/rid_metric?aggregate=true&run-id=" + runId1 + "&run-id=" + runId2;
+    String mapperMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapper/mappers/run-id/" + runId3 + "/mr_metric?aggregate=true";
 
     testSingleMetric(runnableRequest1, 1);
     testSingleMetric(runnableRequest2, 2);
     testSingleMetric(serviceRequest2, 2);
     testSingleMetric(serviceRequestInvalidId, 0);
     testSingleMetric(serviceRequestTotal, 3);
-    testSingleMetric(metricRequest1, 1);
+    testSingleMetric(mapreduceMetric, 10);
+    testSingleMetric(mapperMetric, 10);
   }
 
   @Test
@@ -215,8 +222,8 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
 
     //runnable metric request with runId1
     String runnableRequest =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnableInvalid/" +
-        "rid_metric_invalid?aggregate=true&run-id=" + runId1 + "&run-id=" + runId2;
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnableInvalid/run-id/" + runId1 + "/run-id/" +
+        runId2 + "rid_metric_invalid?aggregate=true";
     HttpResponse response = doGet("/v2/metrics" + runnableRequest);
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
   }

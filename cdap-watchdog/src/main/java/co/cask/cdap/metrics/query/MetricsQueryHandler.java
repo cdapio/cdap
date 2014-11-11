@@ -87,9 +87,27 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
 
   // ex: /system/apps/appX/flows/flowY/flowlets/flowletZ/process.events.processed
   // ex2: /system/services/{service-name}/handlers/{handler-name}/methods/{method-name}/{metric}
+  // ex3: /user/apps/appx/flows/flowZ/run-id/897e3c92-f369-43de-94b1-7344ccf2fd13/events.sent
   @GET
   @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/{component-id}/{metric}")
   public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
+
+  // ex: /system/apps/appX/mapreduce/jobId/mappers/run-id/897e3c92-f369-43de-94b1-7344ccf2fd13/process.entries.in
+  @GET
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/run-id/{run-id}/{metric}")
+  public void handleComponentTypeWithRunId(HttpRequest request, HttpResponder responder) throws IOException {
+    handleRequest(request, responder);
+  }
+
+
+  // ex: /system/apps/appX/flows/fowId/flowlets/flowletId/run-id/897e3c92-f369-43de-94b1-7344ccf2fd13/process.entries.in
+  @GET
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/{component-id}/run-id/" +
+          "{run-id}/{metric}")
+  public void handleComponentWithRunId(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
 
