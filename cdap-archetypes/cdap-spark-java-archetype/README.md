@@ -16,7 +16,7 @@ To create a project from the archetype, use this script as an example:
  mvn archetype:generate 					
   -DarchetypeGroupId=co.cask.cdap 			
   -DarchetypeArtifactId=cdap-spark-java-archetype 	
-  -DarchetypeVersion=2.5.2
+  -DarchetypeVersion=2.6.0
   -DgroupId=com.example
   -DartifactId=SparkPageRankExample
   -Dversion=1.0						
