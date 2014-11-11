@@ -32,13 +32,13 @@ CDAP Examples, How-To Guides, and Tutorials
   big data application development topics, leaving you ready to implement real-world solutions.
 
 
-.. |apps| replace:: **CDAP Apps repository:**
+.. |apps| replace:: **CDAP Apps Repository:**
 .. _apps: apps-packs.html
 
 - |apps|_ contains data applications built using CDAP.
 
 
-.. |packs| replace:: **CDAP Packs repository:**
+.. |packs| replace:: **CDAP Packs Repository:**
 .. _packs: apps-packs.html
 
 - |packs|_ a collection of useful and reusable building blocks for your data applications.
