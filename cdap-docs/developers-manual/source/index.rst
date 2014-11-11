@@ -65,6 +65,13 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   to build Big Data applications.
 
 
+.. |security| replace:: **Security:**
+.. _security: security/index.html
+
+- |security|_ CDAP supports securing clusters using perimeter security. Configuration,
+  security authentication and authentication clients for Java and Python are covered in this section.
+
+
 .. |testing| replace:: **Testing and Debugging:**
 .. _testing: testing/index.html
 
@@ -78,13 +85,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 - |ingesting-tools|_ CDAP comes with a number of tools to make a developer’s life easier. These
   tools help with **ingesting data into CDAP:** using Java or Python, the bulk ingestion of files,
   a daemon to tail local files and an Apache Flume Sink implementation.
-
-
-.. |authentication-clients| replace:: **Authentication Clients:**
-.. _authentication-clients: authentication-clients/index.html
-
-- |authentication-clients|_ These tools **fetch access tokens from the
-  authentication service.** Two APIs are currently available: Java and Python.
 
 
 .. |advanced| replace:: **Advanced Topics:**

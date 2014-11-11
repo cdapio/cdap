@@ -36,5 +36,9 @@ extending ``AbstractAuthenticationHandler`` and implementing its abstract method
     }
   }
 
+
+An example of an ``AuthenticationHandler`` can be found in the CDAP source code
+for `LDAPAuthenticationHandler.java <https://github.com/caskdata/cdap/blob/develop/cdap-security/src/main/java/co/cask/cdap/security/server/LDAPAuthenticationHandler.java>`__.
+
 To configure the custom authentication handler, see the Administration Manual’s
 :ref:`installation-custom-authentication` section.
