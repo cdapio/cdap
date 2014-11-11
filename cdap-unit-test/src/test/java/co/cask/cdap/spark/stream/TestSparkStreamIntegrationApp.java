@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.batch.stream.spark;
+package co.cask.cdap.spark.stream;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
