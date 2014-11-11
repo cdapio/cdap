@@ -15,7 +15,7 @@
 
     <ul class="nav navbar-nav">
       <li ng-repeat="link in navbarLinks" ng-class="{active: $state.includes(link.sref)}">
-        <a ui-sref="{{link.sref + '.list'}}">
+        <a ui-sref="{{link.sref}}">
           <span ng-class="link.icon && 'fa fa-' + link.icon"></span>
           {{link.label}}
         </a>

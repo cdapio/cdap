@@ -130,9 +130,11 @@ angular.module(PKG.name+'.services')
           buffer.push(obj);
           return false;
         }
-        socket.send(JSON.stringify(angular.extend({
+        var msg = angular.extend({
           user: myAuth.currentUser
-        }, obj)));
+        }, obj);
+        console.log('outgoing socket message', msg);
+        socket.send(JSON.stringify(msg));
         return true;
       }
 

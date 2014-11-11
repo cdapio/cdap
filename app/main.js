@@ -4,7 +4,8 @@ angular
   .module(PKG.name, [
 
     angular.module(PKG.name+'.features', [
-      PKG.name+'.feature.home'
+      PKG.name+'.feature.home',
+      PKG.name+'.feature.foo'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
