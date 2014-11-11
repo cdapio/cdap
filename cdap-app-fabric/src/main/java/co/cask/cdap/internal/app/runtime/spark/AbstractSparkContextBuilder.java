@@ -71,7 +71,7 @@ public abstract class AbstractSparkContextBuilder {
       program = Programs.create(locationFactory.create(programLocation), classLoader);
       //TODO: This should be changed when we support Spark in Workflow
     } catch (IOException e) {
-      LOG.error("Could not init Program based on location: " + programLocation);
+      LOG.error("Could not init Program based on location: {}", programLocation, e);
       throw Throwables.propagate(e);
     }
 

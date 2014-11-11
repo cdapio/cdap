@@ -18,6 +18,7 @@ package co.cask.cdap.common.lang;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.internal.guava.ClassPath;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
@@ -26,6 +27,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
@@ -39,7 +41,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.ws.rs.Path;
 
 /**
@@ -49,7 +53,8 @@ final class ProgramResources {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResources.class);
 
-  private static final List<String> PROVIDED_PACKAGES = ImmutableList.of("org.apache.hadoop");
+  private static final List<String> HADOOP_PACKAGES = ImmutableList.of("org.apache.hadoop");
+  private static final List<String> SPARK_PACKAGES = ImmutableList.of("org.apache.spark", "scala");
   private static final List<String> CDAP_API_PACKAGES = ImmutableList.of("co.cask.cdap.api", "co.cask.cdap.internal");
   private static final List<String> JAVAX_WS_RS_PACKAGES = ImmutableList.of("javax.ws.rs");
 
@@ -74,32 +79,67 @@ final class ProgramResources {
     }
   };
 
-  private static Set<String> visibleResources;
+
+  // Each program type has it's own set of visible resources
+  private static Map<ProgramType, Set<String>> visibleResources = Maps.newHashMap();
+  // Contains set of resources that are always visible to all program type.
+  private static Set<String> baseResources;
 
   /**
-   * Returns a Set of resource names that are visible through to user proram.
+   * Returns a Set of resource names that are visible through to user program.
+   *
+   * @param type program type. If {@code null}, only the base visible resources will be returned.
    */
-  static synchronized Set<String> getVisibleResources() {
-    if (visibleResources != null) {
-      return visibleResources;
+  static synchronized Set<String> getVisibleResources(@Nullable ProgramType type) {
+    if (type == null) {
+      return getBaseResources();
     }
 
-    try {
-      visibleResources = createVisibleResources();
-    } catch (IOException e) {
-      LOG.error("Failed to determine resources that are visible to user program", e);
-      visibleResources = ImmutableSet.of();
+    Set<String> resources = visibleResources.get(type);
+    if (resources != null) {
+      return resources;
     }
-    return visibleResources;
+    try {
+      resources = createVisibleResources(type);
+    } catch (IOException e) {
+      LOG.error("Failed to determine visible resources to user program of type {}", type, e);
+      resources = ImmutableSet.of();
+    }
+    visibleResources.put(type, resources);
+    return resources;
   }
 
+  private static Set<String> createVisibleResources(ProgramType type) throws IOException {
+    Set<String> resources = getBaseResources();
+
+    // Base on the type, add extra resources
+    // Current only Spark type has extra visible resources
+    if (type == ProgramType.SPARK) {
+      resources = getResources(ClassPath.from(ProgramResources.class.getClassLoader(), JAR_ONLY_URI),
+                               SPARK_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, Sets.newHashSet(resources));
+    }
+    return ImmutableSet.copyOf(resources);
+  }
+
+  private static Set<String> getBaseResources() {
+    if (baseResources != null) {
+      return baseResources;
+    }
+    try {
+      baseResources = createBaseResources();
+    } catch (IOException e) {
+      LOG.error("Failed to determine base visible resources to user program", e);
+      baseResources = ImmutableSet.of();
+    }
+    return baseResources;
+  }
 
   /**
    * Returns a Set of resources name that are visible through the cdap-api module as well as Hadoop classes.
    * This includes all classes+resources in cdap-api plus all classes+resources that cdap-api
    * depends on (for example, sl4j, guava, gson, etc).
    */
-  private static Set<String> createVisibleResources() throws IOException {
+  private static Set<String> createBaseResources() throws IOException {
     // Everything should be traceable in the same ClassLoader of this class, which is the CDAP system ClassLoader
     ClassLoader classLoader = ProgramResources.class.getClassLoader();
 
@@ -114,10 +154,9 @@ final class ProgramResources {
     // Gather resources for javax.ws.rs classes. They are not traceable from the api classes.
     getResources(getClassPath(classLoader, Path.class), JAVAX_WS_RS_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result);
 
-    return getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
-                        PROVIDED_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result);
+    return ImmutableSet.copyOf(getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
+                                            HADOOP_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result));
   }
-
 
   /**
    * Finds all resources that are accessible in a given {@link ClassPath} that starts with certain package prefixes.

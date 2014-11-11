@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -33,6 +34,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * ClassLoader that implements bundle jar feature, in which the application jar contains
@@ -49,7 +51,18 @@ public class ProgramClassLoader extends URLClassLoader {
   };
 
   /**
-   * Constructs an instance that load classes from the given directory. The URLs for class loading are:
+   * Constructs an instance that load classes from the given directory, without program type. See
+   * {@link ProgramResources#getVisibleResources(ProgramType)} for details on system classes that
+   * are visible to the returned ClassLoader.
+   */
+  public static ProgramClassLoader create(File unpackedJarDir, ClassLoader parentClassLoader) throws IOException {
+    return create(unpackedJarDir, parentClassLoader, null);
+  }
+
+  /**
+   * Constructs an instance that load classes from the given directory for the given program type.
+   * <p/>
+   * The URLs for class loading are:
    * <p/>
    * <pre>
    * [dir]
@@ -57,11 +70,13 @@ public class ProgramClassLoader extends URLClassLoader {
    * [dir]/lib/*.jar
    * </pre>
    */
-  public static ProgramClassLoader create(File unpackedJarDir, ClassLoader parentClassLoader) throws IOException {
-    Predicate<String> predicate = Predicates.in(ProgramResources.getVisibleResources());
+  public static ProgramClassLoader create(File unpackedJarDir, ClassLoader parentClassLoader,
+                                          @Nullable ProgramType programType) throws IOException {
+    Predicate<String> predicate = Predicates.in(ProgramResources.getVisibleResources(programType));
     ClassLoader filteredParent = new FilterClassLoader(predicate, parentClassLoader);
     return new ProgramClassLoader(unpackedJarDir, filteredParent);
   }
+
 
   private ProgramClassLoader(File dir, ClassLoader parent) {
     super(getClassPathUrls(dir), parent);
