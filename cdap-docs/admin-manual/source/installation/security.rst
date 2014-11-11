@@ -23,8 +23,8 @@ be authenticated in that situation, whenever possible a secure Hadoop cluster sh
 CDAP Security is configured in ``cdap-site.xml`` and ``cdap-security.xml``:
 
 * ``cdap-site.xml`` has non-sensitive information, such as the type of authentication mechanism and their configuration.
-* ``cdap-security.xml`` is used to store sensitive information such as keystore passwords,
-  SSL certificate keys, etc. ``cdap-security.xml`` should be owned and readable only by the CDAP user.
+* ``cdap-security.xml`` is used to store sensitive information such as keystore passwords and
+  SSL certificate keys. It should be owned and readable only by the CDAP user.
   
 These files are shown in :ref:`appendix-cdap-site.xml` and :ref:`appendix-cdap-security.xml`.
 
