@@ -112,7 +112,7 @@ We have a `JIRA for filing issues. <https://issues.cask.co/browse/CDAP>`__
 - `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__
 
 The *cdap-user* mailing list is primarily for users using the product to develop
-application. You can expect questions from users, release announcements, and any other
+applications. You can expect questions from users, release announcements, and any other
 discussions that we think will be helpful to the users.
 
 - `cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__
