@@ -2,25 +2,41 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _client-authentication:
+.. _security:
 
-============================================
-Client Authentication
-============================================
-
+=============
+CDAP Security
+=============
 Cask Data Application Platform (CDAP) supports securing clusters using a perimeter
-security model. Details of a secure CDAP instance, its installation and configuration, are
-covered in :ref:`CDAP Security. <security>`
+security model. With perimeter security, cluster nodes can communicate with each other,
+but outside clients can only communicate with the cluster through a secured host. Using
+CDAP security, the CDAP authentication server issues credentials (access tokens) to
+authenticated clients. Clients then send these credentials on requests to CDAP. Calls that
+lack valid access tokens will be rejected, limiting access to only authenticated clients.
+In addition, access logging can be enabled in CDAP to provide an audit log of all operations.
+
+Client Authentication
+=====================
+
+Authentication in CDAP consists of two components:
+
+- **Authentication Server:** the authentication server integrates with different authentication
+  backends (LDAP, JASPI plugins) using a plugin API.  Clients must first authenticate with the
+  authentication server through this configured backend.  Once authenticated, clients are issued
+  an access token representing their identity.
+- **CDAP Router:** the CDAP router serves as the secured host in the perimeter security
+  model.  All client calls to the cluster go through the router, and must present a valid access
+  token when security is enabled.
 
 CDAP Authentication Server
-==========================
+--------------------------
 
 CDAP provides support for authenticating clients using OAuth 2 Bearer tokens, which are issued
 by the CDAP authentication server.  The authentication server provides the integration point
 for all external authentication systems.  Clients authenticate with the authentication server as
 follows:
 
-.. image:: ../_images/auth_flow_simple.png
+.. image:: ../../_images/auth_flow_simple.png
    :width: 7in
    :align: center
 
@@ -41,8 +57,19 @@ follows:
    #. If the submitted token is expired, an "expired token" error is returned.  In this case, the
       client should restart authorization from step #1.
 
+Supported Authentication Mechanisms
+-----------------------------------
+CDAP provides several ways to authenticate a user's identity:
+
+- `Basic Authentication`_ [TODO: Link to the other page]
+- `LDAP Authentication`_
+- `Java Authentication Service Provider Interface (JASPI) Authentication`_
+- `Custom Authentication`_
+
+To configure security, [TODO: Link to the other page].
+
 Obtaining an Access Token
-==========================
+-------------------------
 Obtain a new access token by calling::
 
    GET <base-auth-url>/token
@@ -117,7 +144,7 @@ Comments
 
 
 Authentication with RESTful Endpoints
-=====================================
+-------------------------------------
 When security is enabled on a CDAP cluster, only requests with a valid access token will be
 allowed by CDAP.  Clients accessing CDAP RESTful endpoints will first need to obtain an access token
 from the authentication server, as described above, which will be passed to the Router daemon on
@@ -220,3 +247,38 @@ Comments
 ++++++++
 - The ``auth_uri`` value in the error responses indicates where the authentication server(s) are
   running, allowing clients to discover instances from which they can obtain access tokens.
+
+
+.. highlight:: java
+
+Custom Authentication
+=====================
+To provide a custom authentication mechanism you may create your own ``AuthenticationHandler`` by overriding
+``AbstractAuthenticationHandler`` and implementing the abstract methods. ::
+
+  public class CustomAuthenticationHandler extends AbstractAuthenticationHandler {
+
+    @Inject
+    public CustomAuthenticationHandler(CConfiguration configuration) {
+      super(configuration);
+    }
+
+    @Override
+    protected LoginService getHandlerLoginService() {
+      // ...
+    }
+
+    @Override
+    protected IdentityService getHandlerIdentityService() {
+      // ...
+    }
+
+    @Override
+    protected Configuration getLoginModuleConfiguration() {
+      // ...
+    }
+  }
+
+To make your custom handler class available to the authentication service, copy your packaged jar file (and any
+additional dependency jars) to the ``security/lib/`` directory within your CDAP installation
+(typically under ``/opt/cdap``).
