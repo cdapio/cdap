@@ -281,8 +281,8 @@ security.authentication.loginmodule.className           <custom-login-module>
 ===================================================== ==================================================================
 
 In addition, any properties with the prefix ``security.authentication.handler.``,
-such as ``security.authentication.handler.hostname``, will also be used by the handler.
-These properties, without the prefix, will be used to instantiate the ``javax.security.auth.login.Configuration`` used
+such as ``security.authentication.handler.hostname``, will be provided to the handler.
+These properties, stripped off the prefix, will be used to instantiate the ``javax.security.auth.login.Configuration`` used
 by the ``LoginModule``.
 
 
