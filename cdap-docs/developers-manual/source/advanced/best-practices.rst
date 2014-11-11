@@ -1,0 +1,67 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2014 Cask Data, Inc.
+
+============================================
+Best Practices for Developing Applications
+============================================
+
+Initializing Instance Fields
+==========================================
+There are three ways to initialize instance fields used in Flowlets and Procedures:
+
+#. Using the default constructor;
+#. Using the ``initialize()`` method of the Flowlets and Procedures; and
+#. Using ``@Property`` annotations.
+
+To initialize using an Property annotation, simply annotate the field definition with
+``@Property``. 
+
+The following example demonstrates the convenience of using ``@Property`` in a
+``WordFilter`` flowlet
+that filters out specific words::
+
+  public static class WordFilter extends AbstractFlowlet {
+
+    private OutputEmitter<String> out;
+
+    @Property
+    private final String toFilterOut;
+
+    public CountByField(String toFilterOut) {
+      this.toFilterOut = toFilterOut;
+    }
+
+    @ProcessInput()
+    public void process(String word) {
+      if (!toFilterOut.equals(word)) {
+        out.emit(word);
+      }
+    }
+  }
+
+
+The Flowlet constructor is called with the parameter when the Flow is configured::
+
+  public static class WordCountFlow implements Flow {
+    @Override
+    public FlowSpecification configure() {
+      return FlowSpecification.Builder.with()
+        .setName("WordCountFlow")
+        .setDescription("Flow for counting words")
+        .withFlowlets().add(new Tokenizer())
+                       .add(new WordsFilter("the"))
+                       .add(new WordsCounter())
+        .connect().fromStream("text").to("Tokenizer")
+                  .from("Tokenizer").to("WordsFilter")
+                  .from("WordsFilter").to("WordsCounter")
+        .build();
+    }
+  }
+
+
+At run-time, when the Flowlet is started, a value is injected into the ``toFilterOut``
+field.
+
+Field types that are supported using the ``@Property`` annotation are primitives,
+boxed types (e.g. ``Integer``), ``String`` and ``enum``.

@@ -28,12 +28,20 @@ public class WordCount extends AbstractApplication {
   public void configure() {
     setName("WordCount");
     setDescription("Example Word Count Application");
+    
+    // Ingest data into the Application via Streams
     addStream(new Stream("wordStream"));
+
+    // Store processed data in Datasets
     createDataset("wordStats", Table.class);
     createDataset("wordCounts", KeyValueTable.class);
     createDataset("uniqueCount", UniqueCountTable.class);
     createDataset("wordAssocs", AssociationTable.class);
+    
+    // Process events in real-time using Flows
     addFlow(new WordCounter());
+    
+    // Query the processed data using a Procedure
     addProcedure(new RetrieveCounts());
   }
 }
