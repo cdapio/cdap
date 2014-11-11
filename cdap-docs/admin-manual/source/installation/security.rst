@@ -17,10 +17,10 @@ In cases where secure Hadoop is not or cannot be used, it is inherently insecure
 running on the cluster are effectively "trusted”. Though there is still value in having the perimeter access
 be authenticated in that situation, whenever possible a secure Hadoop cluster should be employed with CDAP security.
 
-CDAP Security is configured in ``cdap-site.xml`` and ``cdap-security.xml``.
+CDAP Security is configured in ``cdap-site.xml`` and ``cdap-security.xml``:
 
-* ``cdap-site.xml`` has non-sensitive information like the type of authentication mechanism and their configuration.
-* ``cdap-security.xml`` is used to store sensitive security related configuration like keystore passwords,
+* ``cdap-site.xml`` has non-sensitive information, like the type of authentication mechanism and their configuration.
+* ``cdap-security.xml`` is used to store sensitive information like keystore passwords,
   SSL certificate keys, etc. ``cdap-security.xml`` should be owned and readable only by the CDAP user.
 
 .. _enabling-security:
@@ -243,11 +243,11 @@ security.authentication.handler.userRdnAttribute        <userRdnAttribute>
 security.authentication.handler.userObjectClass         <userObjectClass>
 ===================================================== =========================================================
 
-In addition, configure these optional properties in ``cdap-site.xml``:
+In addition, you may configure these optional properties in ``cdap-site.xml``:
 
-======================================================= ==================================================
+===================================================== ==================================================
    Property                                               Value
-======================================================= ==================================================
+===================================================== ==================================================
 security.authentication.handler.bindDn                    <bindDn>
 security.authentication.handler.bindPassword              <bindPassword>
 security.authentication.handler.userIdAttribute           <userIdAttribute>
@@ -256,17 +256,17 @@ security.authentication.handler.roleBaseDn                <roleBaseDn>
 security.authentication.handler.roleNameAttribute         <roleNameAttribute>
 security.authentication.handler.roleMemberAttribute       <roleMemberAttribute>
 security.authentication.handler.roleObjectClass           <roleObjectClass>
-======================================================= ==================================================
+===================================================== ==================================================
 
-To enable SSL between the ``Authentication Server`` and the ``LDAP`` instance, configure
+To enable SSL between the authentication server and the LDAP instance, configure
 these properties in ``cdap-site.xml``:
 
-======================================================= ================= ==============================================
-   Property                                                Default                    Value
-======================================================= ================= ==============================================
-security.authentication.handler.useLdaps                   false                      true/false
-security.authentication.handler.ldapsVerifyCertificate     true                       true/false
-======================================================= ================= ==============================================
+====================================================== ================= ==============================================
+   Property                                                Value                     Default Value
+====================================================== ================= ==============================================
+security.authentication.handler.useLdaps                   true/false                   false
+security.authentication.handler.ldapsVerifyCertificate     true/false                   true
+====================================================== ================= ==============================================
 
 
 Java Authentication Service Provider Interface (JASPI) Authentication

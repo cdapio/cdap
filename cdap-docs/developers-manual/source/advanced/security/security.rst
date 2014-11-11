@@ -7,7 +7,7 @@
 =============
 CDAP Security
 =============
-Cask Data Application Platform (CDAP) supports securing clusters using a perimeter
+Cask Data Application Platform (CDAP) supports securing clusters using perimeter
 security model. With perimeter security, cluster nodes can communicate with each other,
 but outside clients can only communicate with the cluster through a secured host. Using
 CDAP security, the CDAP authentication server issues credentials (access tokens) to
@@ -18,18 +18,18 @@ In addition, access logging can be enabled in CDAP to provide an audit log of al
 Client Authentication
 =====================
 
-Authentication in CDAP consists of two components:
+Client authentication in CDAP consists of two components:
 
-- **Authentication Server:** the authentication server integrates with different authentication
-  backends (LDAP, JASPI plugins) using a plugin API.  Clients must first authenticate with the
-  authentication server through this configured backend.  Once authenticated, clients are issued
-  an access token representing their identity.
+- **Authentication Server:** Clients must first authenticate with the authentication server using valid credentials.
+  The authentication server integrates with different authentication
+  backends (LDAP, JASPI plugins) using a plugin API. Once authenticated, clients are issued an access token
+  representing their identity.
 - **CDAP Router:** the CDAP router serves as the secured host in the perimeter security
   model.  All client calls to the cluster go through the router, and must present a valid access
   token when security is enabled.
 
-CDAP Authentication Server
---------------------------
+CDAP Authentication Process
+---------------------------
 
 CDAP provides support for authenticating clients using OAuth 2 Bearer tokens, which are issued
 by the CDAP authentication server.  The authentication server provides the integration point
@@ -59,7 +59,7 @@ follows:
 
 Supported Authentication Mechanisms
 -----------------------------------
-CDAP provides several ways to authenticate a user's identity:
+CDAP provides several ways to authenticate a client's identity:
 
 - `Basic Authentication`_ [TODO: Link to the other page]
 - `LDAP Authentication`_
