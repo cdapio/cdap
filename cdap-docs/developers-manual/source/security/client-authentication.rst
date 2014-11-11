@@ -56,9 +56,7 @@ CDAP provides several ways to authenticate a client's identity:
 - :ref:`installation-jaspi-authentication`
 - :ref:`Custom Authentication <custom-authentication>`
 
-To configure security, see the :ref:`Administration Manual's <admin-index>` 
-:ref:`installation-security`.
-
+To configure security, see the Administration Manual's :ref:`configuration-security`.
 
 Obtaining an Access Token
 -------------------------

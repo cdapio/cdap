@@ -30,9 +30,9 @@ In addition, :ref:`access logging can be enabled <enable-access-logging>` in CDA
 provide an audit log of all operations.
 
 
-.. rubric:: Installing Security
+.. rubric:: Configuring Security
 
-Security installation is covered in the Administration Manual's :ref:`installation-security`.
+Security configuration is covered in the Administration Manual's :ref:`configuration-security`.
 
 
 .. rubric:: Client Authentication

@@ -12,7 +12,7 @@ Here are the parameters that can be defined in the ``cdap-security.xml`` file,
 their default values, descriptions and notes.
 
 For information on configuring the ``cdap-security.xml`` file and CDAP for security,
-see the :ref:`installation-security` section.
+see the :ref:`configuration-security` section.
 
 ..   :widths: 20 20 30
 
