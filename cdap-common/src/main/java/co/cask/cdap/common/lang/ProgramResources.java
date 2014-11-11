@@ -49,7 +49,7 @@ final class ProgramResources {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResources.class);
 
-  private static final List<String> PROVIDED_PACKAGES = ImmutableList.of("org.apache.hadoop");
+  private static final List<String> PROVIDED_PACKAGES = ImmutableList.of("org.apache.hadoop", "org.apache.spark");
   private static final List<String> CDAP_API_PACKAGES = ImmutableList.of("co.cask.cdap.api", "co.cask.cdap.internal");
   private static final List<String> JAVAX_WS_RS_PACKAGES = ImmutableList.of("javax.ws.rs");
 
