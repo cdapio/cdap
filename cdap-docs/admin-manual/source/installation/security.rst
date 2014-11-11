@@ -206,7 +206,7 @@ You may also configure the file being logged to by changing the path under ``<fi
 
 Configuring Authentication Mechanisms
 -------------------------------------
-CDAP provides several ways to authenticate a user's identity:
+CDAP provides several ways to authenticate a clients’s identity:
 
 - :ref:`installation-basic-authentication`
 - :ref:`installation-ldap-authentication`
@@ -217,7 +217,7 @@ CDAP provides several ways to authenticate a user's identity:
 
 Basic Authentication
 ....................
-The simplest way to identity a user is to authenticate against a realm file.
+The simplest way to identity a client is to authenticate against a realm file.
 To configure basic authentication add the following properties to ``cdap-site.xml``:
 
 ====================================================== =========================================================
@@ -308,12 +308,12 @@ To use a Custom Authentication mechanism, set the
 handler's classname. Any properties set in ``cdap-site.xml`` are available through a
 ``CConfiguration`` object and can be used to configure the handler. 
 
-The Developers’ Manual :ref:`Custom Authentication <custom-authentication>` section shows
-how to create a Custom Authentication Mechanism.
-
 To make your custom handler class available to the authentication service, copy your
 packaged jar file (and any additional dependency jars) to the ``security/lib/`` directory
 within your CDAP installation (typically under ``/opt/cdap``).
+
+The Developers’ Manual :ref:`Custom Authentication <custom-authentication>` section shows
+how to create a Custom Authentication Mechanism.
 
 
 Testing Security
