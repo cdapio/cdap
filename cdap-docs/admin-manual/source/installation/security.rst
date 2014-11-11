@@ -165,6 +165,8 @@ dashboard.ssl.key                              SSL key file location; the file s
 
 **Note:** To allow self signed certificates, set dashboard.ssl.disable.cert.check field to true in cdap-site.xml
 
+.. _enable-access-logging:
+
 Enabling Access Logging
 .......................
 

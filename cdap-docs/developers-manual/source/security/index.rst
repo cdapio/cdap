@@ -26,8 +26,8 @@ but outside clients can only communicate with the cluster through a secured host
 Using CDAP security, the CDAP authentication server issues credentials (access tokens) to
 authenticated clients. Clients then send these credentials on requests to CDAP. Only calls
 with valid access tokens will be accepted, rejecting access to un-authenticated clients.
-In addition, access logging can be enabled in CDAP to provide an audit log of all
-operations.
+In addition, :ref:`access logging can be enabled <enable-access-logging>` in CDAP to
+provide an audit log of all operations.
 
 
 .. rubric:: Installing Security
