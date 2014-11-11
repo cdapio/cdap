@@ -106,7 +106,7 @@ public class HelloWorld extends AbstractApplication {
     @Handle("greet")
     public void greet(ProcedureRequest request, ProcedureResponder responder) throws Exception {
       byte[] name = whom.read(NameSaver.NAME);
-      String toGreet = name != null ? new String(name) : "World";
+      String toGreet = name != null ? Bytes.toString(name) : "World";
       if (toGreet.equals("Jane Doe")) {
         procedureMetrics.count("greetings.count.jane_doe", 1);
       }

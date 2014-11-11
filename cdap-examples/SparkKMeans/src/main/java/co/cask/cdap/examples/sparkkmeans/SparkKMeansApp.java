@@ -53,11 +53,20 @@ public class SparkKMeansApp extends AbstractApplication {
   public void configure() {
     setName("SparkKMeans");
     setDescription("Spark KMeans app");
+    
+    // Ingest data into the Application via a Stream
     addStream(new Stream("pointsStream"));
+    
+    // Process points data in real-time using a Flow
     addFlow(new PointsFlow());
+    
+    // Run a Spark program on the acquired data
     addSpark(new SparkKMeansSpecification());
+    
+    // Query the processed data using a Procedure
     addProcedure(new CentersProcedure());
 
+    // Store input and processed data in ObjectStore Datasets
     try {
       ObjectStores.createObjectStore(getConfigurer(), "points", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "centers", String.class);
