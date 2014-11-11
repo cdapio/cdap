@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.api.common;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSortedMap;
 
 import java.io.DataOutput;
@@ -191,6 +192,23 @@ public class Bytes {
     } catch (UnsupportedEncodingException e) {
       return null;
     }
+  }
+
+  /**
+   * This method will convert the remaining bytes of a UTF8
+   * encoded byte buffer into a string.
+   *
+   * @param buf Presumed UTF-8 encoded byte buffer.
+   * @return String made from <code>buf</code> or null
+   */
+  public static String toString(ByteBuffer buf) {
+    if (buf == null) {
+      return null;
+    }
+    buf.mark();
+    String s = Charsets.UTF_8.decode(buf).toString();
+    buf.reset();
+    return s;
   }
 
   /**
