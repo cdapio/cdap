@@ -39,7 +39,6 @@ Security configuration is covered in the Administration Manual's :ref:`configura
 
 :ref:`client-authentication` covers:
 
-- The two components of client authentication: an Authentication Server and a CDAP Router
 - Authentication Process
 - Supported Authentication Mechanisms
 - Obtaining an Access Token
@@ -48,9 +47,9 @@ Security configuration is covered in the Administration Manual's :ref:`configura
 
 .. _authentication-clients:
 
-.. rubric:: Authentication Clients
+.. rubric:: Authentication Client Libraries
 
-Two authentication client APIs are included with CDAP: 
+Two authentication client libraries are included with CDAP: 
 
 .. |cdap-authentication-clients-java| replace:: **CDAP Authentication Client for Java**
 .. _cdap-authentication-clients-java: cdap-authentication-clients-java.html
