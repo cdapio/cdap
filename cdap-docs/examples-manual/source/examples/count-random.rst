@@ -28,20 +28,7 @@ The Count Random Application
 .. highlight:: java
 
 As in the other `examples <index.html>`__, the components
-of the Application are tied together by the class ``CountRandom``::
-
-  public class CountRandom extends AbstractApplication {
-
-    public static final String TABLE_NAME = "randomTable";
-
-    @Override
-    public void configure() {
-      setName("CountRandom");
-      setDescription("Example random count application");
-      createDataset(TABLE_NAME, KeyValueTable.class);
-      addFlow(new CountRandomFlow());
-    }
-  }
+of the Application are tied together by the class ``CountRandom``:
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandom.java
    :language: java
@@ -53,18 +40,7 @@ The Flow contains three flowlets:
    :language: java
    :lines: 25-
 
-The Flowlet (*source*) that generates random numbers every 1 millisecond::
-
-  public class RandomSource extends AbstractFlowlet {
-    private OutputEmitter<Integer> randomOutput;
-
-    private final Random random = new Random();
-
-    @Tick(delay = 1L, unit = TimeUnit.MILLISECONDS)
-    public void generate() throws InterruptedException {
-      randomOutput.emit(random.nextInt(10000));
-    }
-  }
+The Flowlet (*source*) that generates random numbers every 1 millisecond:
 
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/RandomSource.java
    :language: java
