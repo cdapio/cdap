@@ -4,16 +4,22 @@
 
 .. _client-authentication:
 
-============================================
+=====================
 Client Authentication
-============================================
+=====================
 
-Cask Data Application Platform (CDAP) supports securing clusters using a perimeter
-security model. Details of a secure CDAP instance, its installation and configuration, are
-covered in :ref:`CDAP Security. <security>`
+Client authentication in CDAP consists of two components:
 
-CDAP Authentication Server
-==========================
+- **Authentication Server:** Clients must first authenticate with the authentication server using valid credentials.
+  The authentication server integrates with different authentication
+  backends (LDAP, JASPI plugins) using a plugin API. Once authenticated, clients are issued an access token
+  representing their identity.
+- **CDAP Router:** the CDAP router serves as the secured host in the perimeter security
+  model.  All client calls to the cluster go through the router, and must present a valid access
+  token when security is enabled.
+
+CDAP Authentication Process
+---------------------------
 
 CDAP provides support for authenticating clients using OAuth 2 Bearer tokens, which are issued
 by the CDAP authentication server.  The authentication server provides the integration point
@@ -41,8 +47,19 @@ follows:
    #. If the submitted token is expired, an "expired token" error is returned.  In this case, the
       client should restart authorization from step #1.
 
+Supported Authentication Mechanisms
+-----------------------------------
+CDAP provides several ways to authenticate a client's identity:
+
+- :ref:`installation-basic-authentication`
+- :ref:`installation-ldap-authentication`
+- :ref:`installation-jaspi-authentication`
+- :ref:`Custom Authentication <custom-authentication>`
+
+To configure security, see the Administration Manual's :ref:`configuration-security`.
+
 Obtaining an Access Token
-==========================
+-------------------------
 Obtain a new access token by calling::
 
    GET <base-auth-url>/token
@@ -117,7 +134,7 @@ Comments
 
 
 Authentication with RESTful Endpoints
-=====================================
+-------------------------------------
 When security is enabled on a CDAP cluster, only requests with a valid access token will be
 allowed by CDAP.  Clients accessing CDAP RESTful endpoints will first need to obtain an access token
 from the authentication server, as described above, which will be passed to the Router daemon on
