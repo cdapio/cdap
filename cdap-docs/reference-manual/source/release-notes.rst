@@ -59,7 +59,11 @@ Other Changes
 
 Known Issues
 ------------
-See *Known Issues* of `the previous version. <#known-issues-251>`_
+- Currently, applications that include Spark or Scala classes in user classes not extended
+  from either ``JavaSparkProgram`` or ``ScalaSparkProgram`` (depending upon the language)
+  fail with a class loading error. Spark or Scala classes should not be used outside of the
+  Spark program. (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__)
+- See also the *Known Issues* of `version 2.5.0. <#known-issues-250>`_
 
 
 Release 2.5.1
@@ -92,7 +96,7 @@ Other Changes
 
 Known Issues
 ------------
-See *Known Issues* of `the previous version. <#known-issues-251>`_
+See *Known Issues* of `the previous version. <#known-issues-250>`_
 
 
 Release 2.5.0
@@ -160,7 +164,7 @@ Major CDAP Bug Fixes
 - Fixed an issue with the Dataset size metric showing data operations size instead of resource usage
 
 
-.. _known-issues-251:
+.. _known-issues-250:
 
 Known Issues
 ------------
