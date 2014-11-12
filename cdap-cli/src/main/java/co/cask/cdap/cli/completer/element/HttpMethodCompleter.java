@@ -11,27 +11,20 @@
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
- * the License.
+ * the License
  */
 
-package co.cask.cdap.client.app;
+package co.cask.cdap.cli.completer.element;
 
-import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceRequest;
-import co.cask.cdap.api.service.http.HttpServiceResponder;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
+import co.cask.cdap.cli.completer.StringsCompleter;
+import com.google.common.collect.ImmutableList;
 
 /**
- * Fake no-op Service.
+ *
  */
-public final class PingService extends AbstractHttpServiceHandler {
-  public static final String NAME = "pingService";
+public class HttpMethodCompleter extends StringsCompleter {
 
-  @Path("ping")
-  @GET
-  public void ping(HttpServiceRequest request, HttpServiceResponder responder) {
-    responder.sendString("OK");
+  public HttpMethodCompleter() {
+    super(ImmutableList.of("GET", "POST", "PUT", "DELETE"));
   }
 }

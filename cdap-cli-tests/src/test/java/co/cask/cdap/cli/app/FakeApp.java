@@ -55,7 +55,7 @@ public class FakeApp extends AbstractApplication {
     createDataset(DS_NAME, FakeDataset.class.getName());
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
-    addService(FakeService.NAME, new FakeService());
     addSpark(new FakeSpark());
+    addService(EchoHandler.NAME, new EchoHandler());
   }
 }
