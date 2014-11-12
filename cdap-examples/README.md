@@ -29,10 +29,10 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 ## HelloWorld
 
 - This is a simple HelloWorld example that uses one Stream, one Dataset, one Flow and one
-  Procedure.
+  Service.
 - A Stream, to send names to.
 - A Flow, with a single Flowlet that reads the Stream and stores each name in a KeyValueTable.
-- A Procedure, that reads the name from the KeyValueTable and prints "Hello [Name]!"
+- A Service, that reads the name from the KeyValueTable and prints "Hello [Name]!"
 
 ## Purchase
 

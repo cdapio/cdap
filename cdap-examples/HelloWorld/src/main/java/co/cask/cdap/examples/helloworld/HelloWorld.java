@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.examples.helloworld;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -27,19 +26,20 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
+import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 
-import static co.cask.cdap.api.procedure.ProcedureResponse.Code.SUCCESS;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 /**
- * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one procedure.
+ * This is a simple HelloWorld example that uses one stream, one dataset, one flow and one service.
  * <uL>
  *   <li>A stream to send names to.</li>
  *   <li>A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable</li>
- *   <li>A procedure that reads the name from the KeyValueTable and prints 'Hello [Name]!'</li>
+ *   <li>A service that reads the name from the KeyValueTable and prints 'Hello [Name]!'</li>
  * </uL>
  */
 public class HelloWorld extends AbstractApplication {
@@ -51,7 +51,7 @@ public class HelloWorld extends AbstractApplication {
     addStream(new Stream("who"));
     createDataset("whom", KeyValueTable.class);
     addFlow(new WhoFlow());
-    addProcedure(new Greeting());
+    addService(new Greeting());
   }
 
   /**
@@ -95,23 +95,37 @@ public class HelloWorld extends AbstractApplication {
   }
 
   /**
-   * Sample Procedure.
+   * Sample Service.
    */
-  public static class Greeting extends AbstractProcedure {
+  public static class Greeting extends AbstractService {
+    public static final String SERVICE_NAME = "Greeting";
 
+    @Override
+    protected void configure() {
+      setName(SERVICE_NAME);
+      setDescription("Hello world service.");
+      addHandler(new GreetingHandler());
+    }
+  }
+
+  /**
+   * Sample Service handler.
+   */
+  public static class GreetingHandler extends AbstractHttpServiceHandler {
     @UseDataSet("whom")
-    KeyValueTable whom;
-    Metrics procedureMetrics;
+    private KeyValueTable whom;
 
-    @Handle("greet")
-    public void greet(ProcedureRequest request, ProcedureResponder responder) throws Exception {
+    Metrics metrics;
+
+    @Path("greet")
+    @GET
+    public void greet(HttpServiceRequest request, HttpServiceResponder responder) {
       byte[] name = whom.read(NameSaver.NAME);
       String toGreet = name != null ? new String(name) : "World";
       if (toGreet.equals("Jane Doe")) {
-        procedureMetrics.count("greetings.count.jane_doe", 1);
+        metrics.count("greetings.count.jane_doe", 1);
       }
-      responder.sendJson(new ProcedureResponse(SUCCESS), "Hello " + toGreet + "!");
+      responder.sendJson(String.format("Hello %s!", toGreet));
     }
   }
 }
-
