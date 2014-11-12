@@ -87,7 +87,7 @@ angular.module(PKG.name+'.services')
           buffer = [];
 
       function init (attempt) {
-        console.log('socket init');
+        console.log('[mySocket] init');
 
         attempt = attempt || 1;
         socket = new window.SockJS(self.prefix);
@@ -95,7 +95,7 @@ angular.module(PKG.name+'.services')
         socket.onmessage = function (event) {
           try {
             var data = JSON.parse(event.data);
-            console.log('incoming socket message', data);
+            console.log('[mySocket] <-', data);
             $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
           }
           catch(e) {
@@ -104,7 +104,7 @@ angular.module(PKG.name+'.services')
         };
 
         socket.onopen = function (event) {
-          console.info('socket opened');
+          console.info('[mySocket] opened');
           angular.forEach(buffer, send);
           buffer = [];
         };
@@ -117,7 +117,7 @@ angular.module(PKG.name+'.services')
           var d = Math.max(500, Math.round(
             (Math.random() + 1) * 500 * Math.pow(2, attempt)
           ));
-          console.log('will try again in ',d+'ms');
+          console.log('[mySocket] will try again in ',d+'ms');
           setTimeout(function () {
             init(attempt+1);
           }, d);
@@ -133,7 +133,7 @@ angular.module(PKG.name+'.services')
         var msg = angular.extend({
           user: myAuth.currentUser
         }, obj);
-        console.log('outgoing socket message', msg);
+        console.log('[mySocket] ->', msg);
         socket.send(JSON.stringify(msg));
         return true;
       }

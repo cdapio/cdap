@@ -15,7 +15,7 @@ function ($scope, $alert, MyDataSource) {
     dataSrc.fetch('something.result', {url:url});
   };
 
-  dataSrc.poll('pollthing', {url:'http://date.jsontest.com/'})
+  dataSrc.poll('pollthing', {url:'http://date.jsontest.com/'});
 
 });
 

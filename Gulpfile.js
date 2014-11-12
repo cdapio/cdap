@@ -199,7 +199,7 @@ gulp.task('html', ['html:main', 'html:partials']);
   JS hint
  */
 gulp.task('lint', function() {
-  return gulp.src('./app/**/*.js')
+  return gulp.src(['./app/**/*.js', './server/*.js'])
     .pipe(plug.jshint())
     .pipe(plug.jshint.reporter())
     .pipe(plug.jshint.reporter('fail'));

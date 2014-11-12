@@ -1,6 +1,8 @@
+/*global require, module */
+
 /**
  * send socket msgs to the aggregator
- * a new Dispatch is instantiated for each websocket connection
+ * a new Aggregator is instantiated for each websocket connection
  */
 
 var colors = require('colors/safe'),
@@ -19,10 +21,10 @@ HashTable.prototype.remove = function (obj) {
   }
 };
 
-function Dispatch (conn) {
+function Aggregator (conn) {
   // make "new" optional
-  if ( !(this instanceof Dispatch) ) {
-    return new Dispatch(conn);
+  if ( !(this instanceof Aggregator) ) {
+    return new Aggregator(conn);
   }
 
   conn.on('data', _onSocketData.bind(this));
@@ -34,7 +36,7 @@ function Dispatch (conn) {
   this.log('init');
 }
 
-Dispatch.prototype.log = function (msg) {
+Aggregator.prototype.log = function (msg) {
   console.log(colors.cyan('sock'), colors.dim(this.connection.id), msg);
 };
 
@@ -61,15 +63,12 @@ function _onSocketData (message) {
     var r = message.resource;
 
     switch(message.action) {
-
       case 'poll-start':
         this.polledResources.add(r);
-        /* intentional fall-through */
-
+        /* falls through */
       case 'fetch':
         request(r, _emit.bind(this, r));
         break;
-
       case 'poll-stop':
         this.polledResources.remove(r);
         break;
@@ -79,13 +78,13 @@ function _onSocketData (message) {
   catch (e) {
     console.error(e);
   }
-};
+}
 
 function _onSocketClose () {
   this.log('closed');
   this.polledResources.reset();
-};
+}
 
 
-module.exports = Dispatch;
+module.exports = Aggregator;
 
