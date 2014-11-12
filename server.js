@@ -12,15 +12,11 @@ var pkg = require('./package.json'),
 
     PORT = 8080,
 
-    color = {
-      hilite: function (v) { return '\x1B[7m' + v + '\x1B[27m'; },
-      green: function (v) { return '\x1B[40m\x1B[32m' + v + '\x1B[39m\x1B[49m'; },
-      pink: function (v) { return '\x1B[40m\x1B[35m' + v + '\x1B[39m\x1B[49m'; }
-    };
+    colors = require('colors/safe');
 
 
 morgan.token('cooprcred', function(req, res){
-  return color.pink(req.headers['coopr-userid'] + '/' + req.headers['coopr-tenantid']);
+  return colors.cyan(req.headers['coopr-userid'] + '/' + req.headers['coopr-tenantid']);
 });
 
 morgan.token('ms', function(req, res){
@@ -31,11 +27,10 @@ morgan.token('ms', function(req, res){
 });
 
 var app = express(),
-    httpLabel = color.green('http'),
-    httpStaticLogger = morgan(httpLabel+' :method '+color.green(':url')+' :ms :status'),
-    httpIndexLogger = morgan(httpLabel+' :method '+color.hilite(':url')+' :ms :status');
+    httpStaticLogger = morgan(colors.green('http')+' :method :url :ms :status'),
+    httpIndexLogger = morgan(colors.inverse('http')+' :method :url :ms :status');
 
-console.log(color.hilite(pkg.name) + ' v' + pkg.version + ' starting up...');
+console.log(colors.underline(pkg.name) + ' v' + pkg.version + ' starting up...');
 
 try { app.use(serveFavicon(__dirname + '/dist/assets/img/favicon.png')); }
 catch(e) { console.error("Favicon missing! Did you run `gulp build`?"); }
@@ -88,14 +83,14 @@ app.all('*', [
 var httpServer = http.createServer(app);
 
 httpServer.listen(PORT, '0.0.0.0', function () {
-  console.info(httpLabel+' listening on port %s', PORT);
+  console.info(colors.yellow('http')+' listening on port %s', PORT);
 });
 
 
 // sockjs
 var sockServer = sockjs.createServer({
   log: function(lvl, msg) {
-    console.log(color.green('sock'), msg);
+    console.log(colors.blue('sock'), msg);
   }
 });
 

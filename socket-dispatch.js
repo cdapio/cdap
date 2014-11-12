@@ -3,9 +3,12 @@
  * a new Dispatch is instantiated for each websocket connection
  */
 
-var hash = require('object-hash'),
+var colors = require('colors/safe'),
+    request = require('request'),
+    hash = require('object-hash'),
     HashTable = hash.HashTable;
 
+// https://github.com/puleos/object-hash/pull/12
 HashTable.prototype.remove = function (obj) {
   var key = hash(obj),
       count = this.getCount(key);
@@ -16,41 +19,61 @@ HashTable.prototype.remove = function (obj) {
   }
 };
 
-
 function Dispatch (conn) {
-  console.log('socket init', conn.id);
+  // make "new" optional
+  if ( !(this instanceof Dispatch) ) {
+    return new Dispatch(conn);
+  }
 
-  conn.on('data', this.onSocketData.bind(this));
-  conn.on('close', this.onSocketClosed.bind(this));
+  conn.on('data', _onSocketData.bind(this));
+  conn.on('close', _onSocketClose.bind(this));
 
   this.connection = conn;
   this.polledResources = new HashTable();
+
+  this.log('init');
 }
 
+Dispatch.prototype.log = function (msg) {
+  console.log(colors.cyan('sock'), colors.dim(this.connection.id), msg);
+};
 
-Dispatch.prototype.onSocketData = function (message) {
+function _emit (resource, error, response, body) {
+  if(!error) {
+    var output = { resource: resource };
+    try {
+      output.response = JSON.parse(body);
+      output.json = true;
+    }
+    catch (e) {
+      output.response = response.toJSON();
+    }
+    this.log('emit', output.resource.url);
+    this.connection.write(JSON.stringify(output));
+  }
+}
+
+function _onSocketData (message) {
   try {
     message = JSON.parse(message);
-    console.log('socket data', conn.id, message);
+    this.log('data', message.action);
+
+    var r = message.resource;
 
     switch(message.action) {
 
       case 'poll-start':
-        this.polledResources.add(message.resource);
+        this.polledResources.add(r);
         /* intentional fall-through */
 
       case 'fetch':
-        conn.write(JSON.stringify({
-          response: [ Date.now(), Math.random() ],
-          resource: message.resource
-        }));
+        request(r, _emit.bind(this, r));
         break;
 
       case 'poll-stop':
-        this.polledResources.remove(message.resource);
+        this.polledResources.remove(r);
         break;
     }
-
 
   }
   catch (e) {
@@ -58,10 +81,11 @@ Dispatch.prototype.onSocketData = function (message) {
   }
 };
 
-Dispatch.prototype.onSocketClosed = function () {
-  console.log('socket closed', this.connection.id);
+function _onSocketClose () {
+  this.log('closed');
   this.polledResources.reset();
 };
+
 
 module.exports = Dispatch;
 
