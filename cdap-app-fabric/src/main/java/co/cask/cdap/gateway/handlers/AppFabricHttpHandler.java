@@ -1808,11 +1808,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       public void handleError(Throwable t) {
         try {
-          fos.close();
+          Closeables.closeQuietly(fos);
           sessionInfo.setStatus(DeployStatus.FAILED);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getCause().getMessage());
-        } catch (IOException e) {
-          LOG.error("Error while saving deploy jar.", e);
         } finally {
           if (!tmpArchive.delete()) {
             LOG.debug("Could not delete archive in temporary location: {}", tmpArchive.getAbsolutePath());
