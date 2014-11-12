@@ -24,6 +24,7 @@ var sockServer = sockjs.createServer({
   }
 });
 
+// TODO: make sure new aggregator gets destroyed upon connection end
 sockServer.on('connection', Aggregator);
 
 sockServer.installHandlers(httpServer, { prefix: '/_sock' });

@@ -43,6 +43,20 @@ Aggregator.prototype.log = function (msg) {
   console.log(colors.cyan('sock'), colors.dim(this.connection.id), msg);
 };
 
+Aggregator.prototype.planPolling = function () {
+  this.timeout = setTimeout(_doPoll.bind(this), 1000);
+};
+
+Aggregator.prototype.stopPolling = function () {
+  clearTimeout(this.timeout);
+};
+
+function _doPoll () {
+  console.log('polling...');
+
+  this.planPolling();
+}
+
 function _emit (resource, error, response, body) {
   if(!error) {
     var output = { resource: resource };
@@ -66,12 +80,18 @@ function _onSocketData (message) {
     switch(message.action) {
       case 'poll-start':
         this.polledResources.add(r);
+        if(!this.timeout) {
+          this.planPolling();
+        }
         /* falls through */
       case 'fetch':
         request(r, _emit.bind(this, r));
         break;
       case 'poll-stop':
         this.polledResources.remove(r);
+        if(!Object.keys(this.polledResources.table()).length) {
+          this.stopPolling();
+        }
         break;
     }
 
@@ -84,6 +104,7 @@ function _onSocketData (message) {
 function _onSocketClose () {
   this.log('closed');
   this.polledResources.reset();
+  this.stopPolling();
 }
 
 
