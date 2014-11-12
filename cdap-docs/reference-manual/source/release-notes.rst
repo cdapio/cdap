@@ -59,11 +59,10 @@ Other Changes
 
 Known Issues
 ------------
-- The CDAP App `MovieRecommender <https://github.com/caskdata/cdap-apps/tree/develop/MovieRecommender>`__
-  does not work with CDAP version 2.5.2 due to a class loading problem. Currently, 
-  applications that include Spark or Scala classes in user classes not extended from
-  either ``JavaSparkProgram`` or ``ScalaSparkProgram`` (depending upon the language) fail
-  with a class loading error.  (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__)
+- Currently, applications that include Spark or Scala classes in user classes not extended
+  from either ``JavaSparkProgram`` or ``ScalaSparkProgram`` (depending upon the language)
+  fail with a class loading error. Spark or Scala classes should not be used outside of the
+  Spark program. (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__)
 - See also the *Known Issues* of `version 2.5.0. <#known-issues-250>`_
 
 
