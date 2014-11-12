@@ -22,6 +22,46 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+Release 2.5.2
+=============
+
+CDAP Bug Fixes
+--------------
+
+- Fixed a problem with a Coopr-provisioned secure cluster failing to start due to a classpath
+  issue (`CDAP-478 <https://issues.cask.co/browse/CDAP-478>`__).
+- Fixed a problem with the WISE app zip distribution not packaged correctly; a new version
+  (0.2.1) has been released (`CDAP-533 <https://issues.cask.co/browse/CDAP-533>`__).
+- Fixed a problem with the examples and tests incorrectly using the ByteBuffer.array
+  method when reading a Stream event (`CDAP-549 <https://issues.cask.co/browse/CDAP-549>`__).
+- Fixed a problem with the Authentication Server so that it can now communicate with an LDAP
+  instance over SSL (`CDAP-556 <https://issues.cask.co/browse/CDAP-556>`__).
+- Fixed a problem with the program class loader to allow applications to use a different
+  version of a library than the one that the CDAP platform uses; for example, a different
+  Kafka library (`CDAP-559 <https://issues.cask.co/browse/CDAP-559>`__).
+- Fixed a problem with CDAP master not obtaining new delegation tokens after running for 
+  ``hbase.auth.key.update.interval`` milliseconds (`CDAP-562 <https://issues.cask.co/browse/CDAP-562>`__).
+
+Other Changes
+-------------
+
+- Improved the CDAP documentation:
+
+  - Re-organized the documentation into three manuals—Developers' Manual, Administration
+    Manual, Reference Manual—and a set of examples, how-to guides and tutorials;
+  - Documents are now in smaller chapters, with numerous updates and revisions;
+  - Added a link for downloading an archive of the documentation for offline use;
+  - Added links to examples relevant to a particular component;
+  - Added suggested deployment architectures for Distributed CDAP installations;
+  - Added a glossary;
+  - Added navigation aids at the bottom of each page; and
+  - Tested and updated the Standalone CDAP examples and their documentation.
+
+Known Issues
+------------
+See *Known Issues* of `the previous version. <#known-issues-251>`_
+
+
 Release 2.5.1
 =============
 

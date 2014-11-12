@@ -40,7 +40,7 @@ described in the section on :ref:`development environment setup. <dev-env>`
 
 There are three ways to `download <http://cask.co/downloads/#cdap>`__ and install the CDAP SDK: 
 
-- as a :doc:`binary zip file <zip>`
+- as a :doc:`binary zip file <zip>`;
 - as a :doc:`Virtual Machine image <virtual-machine>`; or 
 - as a :doc:`Docker image <docker>`.
 

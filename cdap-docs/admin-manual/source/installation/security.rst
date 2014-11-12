@@ -2,34 +2,17 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _security:
+.. _configuration-security:
 
-============================================
+=============
 CDAP Security
-============================================
+=============
 
-Cask Data Application Platform (CDAP) supports securing clusters using a perimeter
-security model. With perimeter security, cluster nodes can communicate with each other,
-but outside clients can only communicate with the cluster through a secured host. Using
-CDAP security, the CDAP authentication server issues credentials (access tokens) to
-authenticated clients. Clients then send these credentials on requests to CDAP. Calls that
-lack valid access tokens will be rejected, limiting access to only authenticated clients.
+Cask Data Application Platform (CDAP) supports securing clusters using perimeter
+security. Here, we’ll discuss how to setup a secure CDAP instance.
 
-Authentication in CDAP consists of two components:
-
-- **Authentication Server:** the authentication server integrates with different authentication
-  backends (LDAP, JASPI plugins) using a plugin API.  Clients must first authenticate with the
-  authentication server through this configured backend.  Once authenticated, clients are issued
-  an access token representing their identity.
-- **CDAP Router:** the CDAP router serves as the secured host in the perimeter security
-  model.  All client calls to the cluster go through the router, and must present a valid access
-  token when security is enabled.
-
-For more details on the authentication process, see :ref:`Client Authentication. <client-authentication>`
-
-By enabling perimeter security for CDAP, you can prevent access by any clients without valid
-credentials.  In addition, access logging can be enabled in CDAP to provide an audit log of all
-operations.
+Additional security information, including client APIs and the authentication process, is covered
+in the Developers’ Manual :ref:`security-index` section.
 
 We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
 `secure Hadoop clusters <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html>`__.
@@ -37,12 +20,19 @@ In cases where secure Hadoop is not or cannot be used, it is inherently insecure
 running on the cluster are effectively "trusted”. Though there is still value in having the perimeter access
 be authenticated in that situation, whenever possible a secure Hadoop cluster should be employed with CDAP security.
 
+CDAP Security is configured in ``cdap-site.xml`` and ``cdap-security.xml``:
+
+* ``cdap-site.xml`` has non-sensitive information, such as the type of authentication mechanism and their configuration.
+* ``cdap-security.xml`` is used to store sensitive information such as keystore passwords and
+  SSL certificate keys. It should be owned and readable only by the CDAP user.
+  
+These files are shown in :ref:`appendix-cdap-site.xml` and :ref:`appendix-cdap-security.xml`.
+
 .. _enabling-security:
 
 Enabling Security
 -----------------
-To enable security in CDAP, add these properties to ``cdap-site.xml``
-(Note that the ``cdap-security.xml`` file should be owned and readable only by the CDAP user):
+To enable security in CDAP, add these properties to ``cdap-site.xml``:
 
 ============================================= ===============================================================
    Property                                     Value
@@ -175,6 +165,8 @@ dashboard.ssl.key                              SSL key file location; the file s
 
 **Note:** To allow self signed certificates, set dashboard.ssl.disable.cert.check field to true in cdap-site.xml
 
+.. _enable-access-logging:
+
 Enabling Access Logging
 .......................
 
@@ -214,24 +206,26 @@ You may also configure the file being logged to by changing the path under ``<fi
 
 Configuring Authentication Mechanisms
 -------------------------------------
-CDAP provides several ways to authenticate a user's identity:
+CDAP provides several ways to authenticate a clients’s identity:
 
-- `Basic Authentication`_
-- `LDAP Authentication`_
-- `Java Authentication Service Provider Interface (JASPI) Authentication`_
-- `Custom Authentication`_
+- :ref:`installation-basic-authentication`
+- :ref:`installation-ldap-authentication`
+- :ref:`installation-jaspi-authentication`
+- :ref:`installation-custom-authentication`
+
+.. _installation-basic-authentication:
 
 Basic Authentication
 ....................
-The simplest way to identity a user is to authenticate against a realm file.
+The simplest way to identity a client is to authenticate against a realm file.
 To configure basic authentication add the following properties to ``cdap-site.xml``:
 
-===================================================== ==================================================================
+====================================================== =========================================================
    Property                                             Value
-===================================================== ==================================================================
+====================================================== =========================================================
 security.authentication.handlerClassName                co.cask.cdap.security.server.BasicAuthenticationHandler
 security.authentication.basic.realmfile                 <path>
-===================================================== ==================================================================
+====================================================== =========================================================
 
 The realm file is of the following format::
 
@@ -240,88 +234,86 @@ The realm file is of the following format::
 Note that it is not advisable to use this method of authentication. In production, we recommend using any of the
 other methods described below.
 
+.. _installation-ldap-authentication:
+
 LDAP Authentication
 ...................
 You can configure CDAP to authenticate against an LDAP instance by adding these
 properties to ``cdap-site.xml``:
 
-===================================================== ==================================================================
+====================================================== =========================================================
    Property                                             Value
-===================================================== ==================================================================
+====================================================== =========================================================
 security.authentication.handlerClassName                co.cask.cdap.security.server.LDAPAuthenticationHandler
-security.authentication.loginmodule.className           org.eclipse.jetty.plus.jaas.spi.LdapLoginModule
+security.authentication.loginmodule.className           co.cask.cdap.security.server.LDAPLoginModule
 security.authentication.handler.debug                   true/false
 security.authentication.handler.hostname                <hostname>
 security.authentication.handler.port                    <port>
 security.authentication.handler.userBaseDn              <userBaseDn>
 security.authentication.handler.userRdnAttribute        <userRdnAttribute>
 security.authentication.handler.userObjectClass         <userObjectClass>
-===================================================== ==================================================================
+====================================================== =========================================================
 
-In addition, you may also configure these optional properties:
+In addition, you may configure these optional properties in ``cdap-site.xml``:
 
-===================================================== ==================================================================
+====================================================== =========================================================
    Property                                               Value
-===================================================== ==================================================================
-security.authentication.handler.bindDn                  <bindDn>
-security.authentication.handler.bindPassword            <bindPassword>
-security.authentication.handler.userIdAttribute         <userIdAttribute>
-security.authentication.handler.userPasswordAttribute   <userPasswordAttribute>
-security.authentication.handler.roleBaseDn              <roleBaseDn>
-security.authentication.handler.roleNameAttribute       <roleNameAttribute>
-security.authentication.handler.roleMemberAttribute     <roleMemberAttribute>
-security.authentication.handler.roleObjectClass         <roleObjectClass>
-===================================================== ==================================================================
+====================================================== =========================================================
+security.authentication.handler.bindDn                    <bindDn>
+security.authentication.handler.bindPassword              <bindPassword>
+security.authentication.handler.userIdAttribute           <userIdAttribute>
+security.authentication.handler.userPasswordAttribute     <userPasswordAttribute>
+security.authentication.handler.roleBaseDn                <roleBaseDn>
+security.authentication.handler.roleNameAttribute         <roleNameAttribute>
+security.authentication.handler.roleMemberAttribute       <roleMemberAttribute>
+security.authentication.handler.roleObjectClass           <roleObjectClass>
+====================================================== =========================================================
 
-Java Authentication Service Provider Interface (JASPI) Authentication
-.....................................................................
-To authenticate a user using JASPI add the following properties to ``cdap-site.xml``:
+To enable SSL between the authentication server and the LDAP instance, configure
+these properties in ``cdap-site.xml``:
 
-===================================================== ==================================================================
+====================================================== ================= =======================================
+   Property                                                Value                     Default Value
+====================================================== ================= =======================================
+security.authentication.handler.useLdaps                   true/false                   false
+security.authentication.handler.ldapsVerifyCertificate     true/false                   true
+====================================================== ================= =======================================
+
+.. _installation-jaspi-authentication:
+
+JASPI Authentication
+....................
+To authenticate a user using JASPI (Java Authentication Service Provider Interface) add 
+the following properties to ``cdap-site.xml``:
+
+====================================================== =========================================================
    Property                                             Value
-===================================================== ==================================================================
+====================================================== =========================================================
 security.authentication.handlerClassName                co.cask.cdap.security.server.JASPIAuthenticationHandler
 security.authentication.loginmodule.className           <custom-login-module>
-===================================================== ==================================================================
+====================================================== =========================================================
 
 In addition, any properties with the prefix ``security.authentication.handler.``,
-such as ``security.authentication.handler.hostname``, will also be used by the handler.
-These properties, without the prefix, will be used to instantiate the ``javax.security.auth.login.Configuration`` used
+such as ``security.authentication.handler.hostname``, will be provided to the handler.
+These properties, stripped off the prefix, will be used to instantiate the ``javax.security.auth.login.Configuration`` used
 by the ``LoginModule``.
 
-.. highlight:: java
+.. _installation-custom-authentication:
 
 Custom Authentication
 .....................
-To provide a custom authentication mechanism you may create your own ``AuthenticationHandler`` by overriding
-``AbstractAuthenticationHandler`` and implementing the abstract methods. ::
 
-  public class CustomAuthenticationHandler extends AbstractAuthenticationHandler {
+To use a Custom Authentication mechanism, set the
+``security.authentication.handlerClassName`` in ``cdap-site.xml`` with the custom
+handler's classname. Any properties set in ``cdap-site.xml`` are available through a
+``CConfiguration`` object and can be used to configure the handler. 
 
-    @Inject
-    public CustomAuthenticationHandler(CConfiguration configuration) {
-      super(configuration);
-    }
+To make your custom handler class available to the authentication service, copy your
+packaged jar file (and any additional dependency jars) to the ``security/lib/`` directory
+within your CDAP installation (typically under ``/opt/cdap``).
 
-    @Override
-    protected LoginService getHandlerLoginService() {
-      // ...
-    }
-
-    @Override
-    protected IdentityService getHandlerIdentityService() {
-      // ...
-    }
-
-    @Override
-    protected Configuration getLoginModuleConfiguration() {
-      // ...
-    }
-  }
-
-To make your custom handler class available to the authentication service, copy your packaged jar file (and any
-additional dependency jars) to the ``security/lib/`` directory within your CDAP installation
-(typically under ``/opt/cdap``).
+The Developers’ Manual :ref:`Custom Authentication <custom-authentication>` section shows
+how to create a Custom Authentication Mechanism.
 
 
 Testing Security

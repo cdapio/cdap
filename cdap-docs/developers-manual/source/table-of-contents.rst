@@ -13,8 +13,8 @@ CDAP Developers’ Manual
     Getting Started </getting-started/index>
     Overview </overview/index>
     Building Blocks </building-blocks/index>
+    Security </security/index>
     Testing and Debugging </testing/index>
     Ingesting Data </ingesting-tools/index>
-    Authentication Clients </authentication-clients/index>
     Advanced Topics <advanced/index>
     Troubleshooting </troubleshooting>

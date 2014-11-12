@@ -77,18 +77,11 @@ public class SparkProgramWrapper {
   private SparkProgramWrapper(String[] args) {
     arguments = validateArgs(args);
     try {
-      // get the Spark program main class with the custom classloader created by spark which has the program and
-      // dependency jar.
-      Class<?> userClass = Class.forName(arguments[0], true, Thread.currentThread().getContextClassLoader());
-      if (!SparkProgram.class.isAssignableFrom(userClass)) {
-        throw new IllegalArgumentException("User class " + arguments[0] +
-                                           " does not implements " + SparkProgram.class.getName());
-      }
-      userProgramClass = (Class<? extends SparkProgram>) userClass;
-
-    } catch (ClassNotFoundException cnfe) {
-      LOG.warn("Unable to find the program class: {}", arguments[0], cnfe);
-      throw Throwables.propagate(cnfe);
+      // Load the user class from the ProgramClassLoader
+      userProgramClass = loadUserSparkClass(arguments[0]);
+    } catch (ClassNotFoundException e) {
+      LOG.error("Unable to load program class: {}", arguments[0], e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -163,6 +156,16 @@ public class SparkProgramWrapper {
       LOG.warn("Program class run method threw an exception", t);
       throw Throwables.propagate(t);
     }
+  }
+
+  private Class<? extends SparkProgram> loadUserSparkClass(String className) throws ClassNotFoundException {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    Class<?> cls = classLoader.loadClass(className);
+    if (!SparkProgram.class.isAssignableFrom(cls)) {
+      throw new IllegalArgumentException("User class " + arguments[0] +
+                                           " does not implements " + SparkProgram.class.getName());
+    }
+    return (Class<? extends SparkProgram>) cls;
   }
 
   /**
