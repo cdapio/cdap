@@ -30,11 +30,12 @@ angular.module(PKG.name+'.services')
         scope.$apply(function(){
           angular.forEach(bindings[id], function (val, key) {
             if(angular.equals(val, data.resource)) {
+              var z = data.json || data.response;
               if(key.indexOf('.')===-1) {
-                scope[key] = data.response;
+                scope[key] = z;
               }
               else { // slower version supports nested keys
-                scope.$eval(key+' = '+JSON.stringify(data.response));
+                scope.$eval(key+' = '+JSON.stringify(z));
               }
             }
           });

@@ -1,12 +1,7 @@
 /*global require, module */
 
-/**
- * send socket msgs to the aggregator
- * a new Aggregator is instantiated for each websocket connection
- */
-
-var colors = require('colors/safe'),
-    request = require('request'),
+var request = require('request'),
+    colors = require('colors/safe'),
     hash = require('object-hash'),
     HashTable = hash.HashTable;
 
@@ -21,6 +16,14 @@ HashTable.prototype.remove = function (obj) {
   }
 };
 
+
+/**
+ * Aggregator
+ * receives resourceObj, aggregate them,
+ * and send poll responses back through socket
+ *
+ * @param {Object} SockJS connection
+ */
 function Aggregator (conn) {
   // make "new" optional
   if ( !(this instanceof Aggregator) ) {
@@ -43,13 +46,11 @@ Aggregator.prototype.log = function (msg) {
 function _emit (resource, error, response, body) {
   if(!error) {
     var output = { resource: resource };
+    output.response = response.toJSON();
     try {
-      output.response = JSON.parse(body);
-      output.json = true;
+      output.json = JSON.parse(body);
     }
-    catch (e) {
-      output.response = response.toJSON();
-    }
+    catch (e) {}
     this.log('emit', output.resource.url);
     this.connection.write(JSON.stringify(output));
   }

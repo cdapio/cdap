@@ -11,8 +11,9 @@ var pkg = require('../package.json'),
     serveFavicon = require('serve-favicon'),
     colors = require('colors/safe'),
 
-    path = require('path'),
-    ASSETS_PATH = path.normalize(__dirname + '../dist/assets');
+    DIST_PATH = require('path').normalize(
+      __dirname + '/../dist'
+    );
 
 morgan.token('ms', function(req, res){
   if (!res._header || !req._startAt) { return ''; }
@@ -27,7 +28,7 @@ var app = express(),
 
 console.log(colors.underline(pkg.name) + ' v' + pkg.version + ' starting up...');
 
-try { app.use(serveFavicon(ASSETS_PATH + '/img/favicon.png')); }
+try { app.use(serveFavicon(DIST_PATH + '/assets/img/favicon.png')); }
 catch(e) { console.error('Favicon missing! Did you run `gulp build`?'); }
 
 // serve the config file
@@ -49,7 +50,7 @@ app.get('/config.js', function (req, res) {
 // serve static assets
 app.use('/assets', [
   httpStaticLogger,
-  express.static(ASSETS_PATH, {
+  express.static(DIST_PATH + '/assets', {
     index: false
   }),
   function(req, res) {
@@ -70,7 +71,7 @@ app.get('/robots.txt', [
 app.all('*', [
   httpIndexLogger,
   function (req, res) {
-    res.sendFile(ASSETS_PATH + '/index.html');
+    res.sendFile(DIST_PATH + '/index.html');
   }
 ]);
 
