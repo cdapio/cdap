@@ -9,15 +9,9 @@ var pkg = require('./package.json'),
     http = require('http'),
     finalhandler = require('finalhandler'),
     serveFavicon = require('serve-favicon'),
+    colors = require('colors/safe'),
 
-    PORT = 8080,
-
-    colors = require('colors/safe');
-
-
-morgan.token('cooprcred', function(req, res){
-  return colors.cyan(req.headers['coopr-userid'] + '/' + req.headers['coopr-tenantid']);
-});
+    PORT = 8080;
 
 morgan.token('ms', function(req, res){
   if (!res._header || !req._startAt) return '';
