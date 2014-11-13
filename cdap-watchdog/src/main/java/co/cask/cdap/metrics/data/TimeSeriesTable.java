@@ -414,14 +414,6 @@ public final class TimeSeriesTable {
     return deltas;
   }
 
-  private static final Function<byte[], Long> BYTE_ARRAY_TO_LONG = new Function<byte[], Long>() {
-    @Nullable
-    @Override
-    public Long apply(@Nullable byte[] input) {
-      return Bytes.toLong(input);
-    }
-  };
-
   private ImmutablePair<byte[], byte[]> createDefaultTagFuzzyPair() {
     byte[] key = entityCodec.encode(MetricsEntityType.TAG, MetricsConstants.EMPTY_TAG);
     byte[] mask = new byte[key.length];
