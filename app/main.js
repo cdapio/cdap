@@ -78,6 +78,17 @@ angular
     ]);
   })
 
+
+  .run(function ($rootScope, MYSOCKET_EVENT, $alert) {
+    $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, sockEvent) {
+      $alert({
+        title: 'Error',
+        content: sockEvent.reason || 'could not connect to the server',
+        type: 'danger'
+      });
+    });
+  })
+
   /**
    * BodyCtrl
    * attached to the <body> tag, mostly responsible for

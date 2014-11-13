@@ -3,6 +3,7 @@ angular.module(PKG.name+'.services')
   .constant('MYSOCKET_EVENT', {
     message: 'mysocket-message',
     closed: 'mysocket-closed',
+    reconnected: 'mysocket-reconnected'
   })
 
   /*
@@ -13,12 +14,11 @@ angular.module(PKG.name+'.services')
     dataSrc.poll('foo.bar', {method:'GET', path: '/whatever'});
 
    */
-  .factory('MyDataSource', function (mySocket, MYSOCKET_EVENT) {
+  .factory('MyDataSource', function ($state, mySocket, MYSOCKET_EVENT) {
 
     var bindings = {};
 
     function DataSource (scope) {
-      this.scope = scope;
       var id = scope.$id;
 
       if(bindings[id]) {
@@ -27,21 +27,35 @@ angular.module(PKG.name+'.services')
       bindings[id] = {};
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
-        scope.$apply(function(){
-          angular.forEach(bindings[id], function (val, key) {
-            if(angular.equals(val, data.resource)) {
-              var z = data.json || data.response;
-              if(key.indexOf('.')===-1) {
+        angular.forEach(bindings[id], function (val, key) {
+          if(angular.equals(val, data.resource)) {
+            var z = data.json || data.response;
+            if(key.indexOf('.')===-1) {
+              scope.$apply(function(){
                 scope[key] = z;
-              }
-              else { // slower version supports nested keys
-                scope.$eval(key+' = '+JSON.stringify(z));
-              }
+              });
             }
-          });
+            else { // slower version supports nested keys
+              scope.$eval(key+' = '+JSON.stringify(z));
+            }
+          }
         });
       });
 
+      scope.$on(MYSOCKET_EVENT.reconnected, function (event, data) {
+        console.log('[DataSource] reconnected, reloading...');
+
+        // https://github.com/angular-ui/ui-router/issues/582
+        $state.transitionTo($state.current, $state.$current.params,
+          { reload: true, inherit: true, notify: true }
+        );
+      });
+
+      scope.$on('$destroy', function () {
+        delete bindings[id];
+      });
+
+      this.scope = scope;
     }
 
 
@@ -105,15 +119,23 @@ angular.module(PKG.name+'.services')
         };
 
         socket.onopen = function (event) {
+
+          if(attempt>1) {
+            $rootScope.$broadcast(MYSOCKET_EVENT.reconnected, event);
+            attempt = 1;
+          }
+
           console.info('[mySocket] opened');
           angular.forEach(buffer, send);
           buffer = [];
-          attempt = 1;
         };
 
         socket.onclose = function (event) {
           console.error(event.reason);
-          $rootScope.$broadcast(MYSOCKET_EVENT.closed, event);
+
+          if(attempt<2) {
+            $rootScope.$broadcast(MYSOCKET_EVENT.closed, event);
+          }
 
           // reconnect with exponential backoff
           var d = Math.max(500, Math.round(

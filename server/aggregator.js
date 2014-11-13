@@ -87,7 +87,7 @@ function doPoll () {
     request(resource, function(error, response, body){
 
       if(error || _.isEqual(that.bodyCache[one.hash], body)) {
-        that.log('not emitting', one.hash);
+        that.log('not emitting', resource.url);
         return; // we do not send down identical bodies
       }
 
