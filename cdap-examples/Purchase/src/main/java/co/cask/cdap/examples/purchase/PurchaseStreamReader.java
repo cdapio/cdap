@@ -33,7 +33,7 @@ public class PurchaseStreamReader extends AbstractFlowlet {
 
   @ProcessInput
   public void process(StreamEvent event) {
-    String body = new String(Bytes.toBytes(event.getBody()), Charsets.UTF_8);
+    String body = Bytes.toString(event.getBody());
     // <name> bought <n> <items> for $<price>
     String[] tokens =  body.split(" ");
     if (tokens.length != 6) {
