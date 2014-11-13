@@ -73,28 +73,6 @@ public class PurchaseAppTest extends TestBase {
                                                                   ImmutableMap.<String, String>of());
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
-    // Start Purchase Service
-    ServiceManager serviceManager = appManager.startService(PurchaseService.SERVICE_NAME);
-
-    // Test service to retrieve a product id
-    Assert.assertEquals("Catalog-comb", requestService(new URL(serviceManager.getServiceURL(), "catalogLookup/comb")));
-
-    // Test service to retrieve a customer's purchase history
-    PurchaseHistory history =
-      GSON.fromJson(requestService(new URL(serviceManager.getServiceURL(), "history/joe")), PurchaseHistory.class);
-    Assert.assertEquals("joe", history.getCustomer());
-    Assert.assertEquals(2, history.getPurchases().size());
-
     appManager.stopAll();
-  }
-
-  private String requestService(URL url) throws IOException {
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
-    try {
-      return new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-    } finally {
-      conn.disconnect();
-    }
   }
 }
