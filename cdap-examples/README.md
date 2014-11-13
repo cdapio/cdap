@@ -32,7 +32,7 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
   Service.
 - A Stream, to send names to.
 - A Flow, with a single Flowlet that reads the Stream and stores each name in a KeyValueTable.
-- A Service, that reads the name from the KeyValueTable and prints "Hello [Name]!"
+- A Service, that reads the name from the KeyValueTable and responds with "Hello [Name]!"
 
 ## Purchase
 

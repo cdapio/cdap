@@ -20,9 +20,7 @@
  * <uL>
  *   <li>A Stream to send names to.</li>
  *   <li>A Flow with a single Flowlet that reads the Stream and stores each name in a KeyValueTable</li>
- *   <li>A Service that reads the name from the KeyValueTable and prints 'Hello [Name]!'</li>
+ *   <li>A Service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
  * </uL>
  */
 package co.cask.cdap.examples.helloworld;
-
-

@@ -41,7 +41,7 @@ import javax.ws.rs.Path;
  * <uL>
  *   <li>A stream to send names to.</li>
  *   <li>A flow with a single flowlet that reads the stream and stores each name in a KeyValueTable</li>
- *   <li>A service that reads the name from the KeyValueTable and prints 'Hello [Name]!'</li>
+ *   <li>A service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
  * </uL>
  */
 public class HelloWorld extends AbstractApplication {
