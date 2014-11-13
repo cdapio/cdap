@@ -173,41 +173,24 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    //runnable metric request with runId1
-    String runnableRequest1 =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/run-id/" + runId1 +
-        "/rid_metric?aggregate=true";
-
-    //runnable metric request with runId2
-    String runnableRequest2 =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/run-id/" + runId2 +
-        "/rid_metric?aggregate=true";
-
-    //service metric request with runId2
-    String serviceRequest2 =
-      "/user/apps/WordCount/services/CounterService/run-id/" + runId2 + "/rid_metric?aggregate=true";
+    String serviceRequest =
+      "/user/apps/WordCount/services/CounterService/runs/" + runId2 + "/rid_metric?aggregate=true";
 
     //service metric request with invliad runId
     String serviceRequestInvalidId =
-      "/user/apps/WordCount/services/CounterService/run-id/fff/rid_metric?aggregate=true";
+      "/user/apps/WordCount/services/CounterService/runs/fff/rid_metric?aggregate=true";
 
     //service metric request without specifying the runId and aggregate will run the sum of these two runIds
     String serviceRequestTotal =
       "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true";
 
     String mapreduceMetric =
-      "/user/apps/WordCount/mapreduce/CounterMapper/run-id/" + runId3 + "/mr_metric?aggregate=true";
+      "/user/apps/WordCount/mapreduce/CounterMapper/runs/" + runId3 + "/mr_metric?aggregate=true";
 
-    String mapperMetric =
-      "/user/apps/WordCount/mapreduce/CounterMapper/mappers/run-id/" + runId3 + "/mr_metric?aggregate=true";
-
-    testSingleMetric(runnableRequest1, 1);
-    testSingleMetric(runnableRequest2, 2);
-    testSingleMetric(serviceRequest2, 2);
+    testSingleMetric(serviceRequest, 2);
     testSingleMetric(serviceRequestInvalidId, 0);
     testSingleMetric(serviceRequestTotal, 3);
     testSingleMetric(mapreduceMetric, 10);
-    testSingleMetric(mapperMetric, 10);
   }
 
   @Test
