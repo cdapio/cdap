@@ -31,9 +31,8 @@ import javax.annotation.Nullable;
 public final class Updates {
 
   public static final Function<Long, Update> LONG_TO_PUTS = new Function<Long, Update>() {
-    @Nullable
     @Override
-    public Update apply(@Nullable Long input) {
+    public Update apply(Long input) {
       return new PutValue(Bytes.toBytes(input));
     }
   };

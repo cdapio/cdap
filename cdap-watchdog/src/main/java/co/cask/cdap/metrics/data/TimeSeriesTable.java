@@ -61,7 +61,7 @@ public final class TimeSeriesTable {
   private static final byte[] FOUR_ZERO_BYTES = {0, 0, 0, 0};
   private static final byte[] FOUR_ONE_BYTES = {1, 1, 1, 1};
 
-  static final Function<byte[], Long> BYTES_TO_LONG = new Function<byte[], Long>() {
+  private static final Function<byte[], Long> BYTES_TO_LONG = new Function<byte[], Long>() {
     @Override
     public Long apply(byte[] input) {
       return Bytes.toLong(input);
@@ -110,6 +110,14 @@ public final class TimeSeriesTable {
     save(records.iterator());
   }
 
+  private static final Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>
+    TRANSFORM_MAP_BYTE_ARRAY_TO_LONG = new Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>() {
+    @Override
+    public NavigableMap<byte[], Long> apply(NavigableMap<byte[], byte[]> input) {
+      return Maps.transformValues(input, BYTES_TO_LONG);
+    }
+  };
+
   public void save(Iterator<MetricsRecord> records) throws OperationException {
     if (!records.hasNext()) {
       return;
@@ -124,13 +132,7 @@ public final class TimeSeriesTable {
     }
 
     NavigableMap<byte[], NavigableMap<byte[], Long>> convertedTable =
-      Maps.transformValues(table,
-                           new Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>() {
-                             @Override
-                             public NavigableMap<byte[], Long> apply(NavigableMap<byte[], byte[]> input) {
-                               return Maps.transformValues(input, BYTES_TO_LONG);
-                             }
-                           });
+      Maps.transformValues(table, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
 
     try {
       timeSeriesTable.put(convertedTable);
