@@ -343,10 +343,17 @@ public class TestFrameworkTest extends TestBase {
 
     LOG.info("Service Started");
 
+    // Call the ping endpoint
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
+
+    // Call the failure endpoint
+    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "failure");
+    request = HttpRequest.get(url).build();
+    response = HttpRequests.execute(request);
+    Assert.assertEquals(response.getResponseCode(), 500);
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);

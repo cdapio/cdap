@@ -33,12 +33,24 @@ public class PurchaseApp extends AbstractApplication {
   @Override
   public void configure() {
     setName(APP_NAME);
-    setDescription("Purchase history application");
+    setDescription("Purchase history application.");
+
+    // Ingest data into the Application via Streams
     addStream(new Stream("purchaseStream"));
+
+    // Store processed data in Datasets
     createDataset("frequentCustomers", KeyValueTable.class);
+
+    // Process events in real-time using Flows
     addFlow(new PurchaseFlow());
+
+    // Run a MapReduce job on the acquired data using a Workflow
     addWorkflow(new PurchaseHistoryWorkflow());
+
+    // Retrieve the processed data using a Service
     addService(new PurchaseService());
+
+    // Provide a Service to Application components
     addService(new CatalogLookupService());
 
     try {

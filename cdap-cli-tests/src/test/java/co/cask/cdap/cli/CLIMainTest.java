@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.cli.app.EchoHandler;
 import co.cask.cdap.cli.app.FakeApp;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
@@ -93,6 +94,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "send stream " + streamId + " helloworld", "Successfully send stream event");
     testCommandOutputContains(cli, "get stream " + streamId, "helloworld");
+    testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s 1", "helloworld");
+    testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s", "helloworld");
+    testCommandOutputContains(cli, "get stream " + streamId + " -10m", "helloworld");
     testCommandOutputContains(cli, "truncate stream " + streamId, "Successfully truncated stream");
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 123", "Successfully set TTL of stream");
@@ -113,6 +117,14 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
       + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
     testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
+
+    //test service commands
+    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, EchoHandler.NAME);
+    testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
+    testCommandOutputContains(cli, "get service " + qualifiedServiceId + " endpoints", "POST");
+    testCommandOutputContains(cli, "get service " + qualifiedServiceId + " endpoints", "/echo");
+    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"", "testBody");
+    testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
 
     // test spark commands
     String sparkId = FakeApp.SPARK.get(0);
@@ -173,6 +185,7 @@ public class CLIMainTest extends StandaloneTestBase {
 
     String status;
     int numTries = 0;
+    int maxTries = 10;
     do {
       status = programClient.getStatus(appId, programType, programId);
       numTries++;

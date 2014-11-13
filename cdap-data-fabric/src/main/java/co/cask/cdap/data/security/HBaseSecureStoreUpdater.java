@@ -49,8 +49,11 @@ public final class HBaseSecureStoreUpdater implements SecureStoreUpdater {
 
   private void refreshCredentials() {
     try {
-      HBaseTokenUtils.obtainToken(hConf, credentials);
-      YarnUtils.addDelegationTokens(hConf, locationFactory, credentials);
+      // Use a fresh Credentials instance each time to avoid use of cached credentials
+      Credentials creds = new Credentials();
+      HBaseTokenUtils.obtainToken(hConf, creds);
+      YarnUtils.addDelegationTokens(hConf, locationFactory, creds);
+      this.credentials = creds;
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
     }

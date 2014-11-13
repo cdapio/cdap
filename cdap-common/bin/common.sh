@@ -194,6 +194,13 @@ set_hive_classpath() {
   fi
 }
 
+# Check that directory /var/tmp/cdap exists in the master node, or create it
+check_or_create_master_local_dir() {
+  if [ ! -d "$LOCAL_DIR" ]; then
+    mkdir -p "$LOCAL_DIR"
+  fi
+}
+
 # check and set classpath if in development enviroment
 check_and_set_classpath_for_dev_environment ()
 {

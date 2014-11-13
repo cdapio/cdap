@@ -28,7 +28,9 @@ import os
 import subprocess
 import sys
 
-VERSION = "0.0.6"
+VERSION = "0.0.7"
+
+COPYRIGHT_YEAR = "2014"
 
 MASTER_CSV = "cdap-dependencies-master.csv"
 
@@ -36,7 +38,7 @@ ENTERPRISE = "cdap-enterprise-dependencies"
 LEVEL_1    = "cdap-level-1-dependencies"
 STANDALONE = "cdap-standalone-dependencies"
 
-LICENSES_SOURCE = "../../developer-guide/source/licenses"
+LICENSES_SOURCE = "../../developers-manual/source/licenses"
 
 SPACE = " "*3
 BACK_DASH = "\-"
@@ -364,10 +366,10 @@ def print_rst_standalone(input_file, options):
    
 def print_dependencies(title, file_base, header, widths, data_list):
 # Example: "Level 1", LEVEL_1, ...
-    RST_HEADER=""".. :author: Cask Data, Inc.
-   :version: %(version)s
-
-:orphan:
+    RST_HEADER=""".. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © %(year)s Cask Data, Inc.
+    :version: %(version)s
 
 =================================================
 Cask Data Application Platform |version|
@@ -379,9 +381,9 @@ Cask Data Application Platform %(title)s Dependencies
 .. rst2pdf: PageBreak
 .. rst2pdf: .. contents::
 
-.. rst2pdf: build ../../../developer-guide/licenses-pdf/
-.. rst2pdf: config ../../../developer-guide/source/_templates/pdf-config
-.. rst2pdf: stylesheets ../../../developer-guide/source/_templates/pdf-stylesheet
+.. rst2pdf: build ../../../reference/licenses-pdf/
+.. rst2pdf: config ../../../_common/_templates/pdf-config
+.. rst2pdf: stylesheets ../../../_common/_templates/pdf-stylesheet
 
 .. csv-table:: **Cask Data Application Platform %(title)s Dependencies**
    :header: %(header)s
@@ -389,7 +391,7 @@ Cask Data Application Platform %(title)s Dependencies
 
 """
     sdk_version = get_sdk_version()        
-    RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths}
+    RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths, 'year': COPYRIGHT_YEAR}
     rst_path = os.path.join(SCRIPT_DIR_PATH, file_base + ".rst")
 
     try:

@@ -1,0 +1,74 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :description: Examples
+    :copyright: Copyright © 2014 Cask Data, Inc.
+
+:hide-toc: true
+
+.. _examples-index:
+
+============================================
+Examples
+============================================
+
+.. toctree::
+   :maxdepth: 1
+   :titlesonly:
+   
+   Hello World <hello-world>
+   Word Count <word-count>
+   Count Random <count-random>
+   Purchase <purchase>
+   Spark K-Means <spark-k-means>
+   Spark Page Rank <spark-page-rank>
+   Web Analytics <web-analytics>
+
+
+In addition to the :ref:`Getting Started's <getting-started-index>` 
+:ref:`Quick Start/Web Log Analytics example, <quick-start>` the SDK includes these examples:
+
+.. list-table::
+  :widths: 15 60
+  :header-rows: 1
+
+  * - Example Name
+    - Description
+  * - :doc:`Hello World<hello-world>`
+    - A simple HelloWorld App that's written using CDAP. It introduces how the elements Stream, Flow, Dataset,
+      and Procedure are used in a CDAP application.
+  * - :doc:`Word Count<word-count>`
+    - A simple application that counts words, and tracks word associations and unique words seen on the Stream.
+      It demonstrates the power of using datasets and how they can be employed to simplify storing complex data.
+  * - :doc:`Count Random<count-random>`
+    - An application that demonstrates the ``@Tick`` feature of Flows. It uses a tick method to generate random
+      numbers which are then counted by downstream Flowlets.
+  * - :doc:`Purchase<purchase>`
+    - This example demonstrates use of many of the CDAP elements—Streams, Flows, Flowlets, Datasets, Queries,
+      Procedures, MapReduce, Workflows, and Services—in a single Application.
+      
+      A Flow receives events from a Stream, each event describing a purchase ("John bought 5 apples for $2");
+      the Flow processes the events and stores them in a Dataset. A Mapreduce Job reads the Dataset, compiles
+      the purchases for each customer into a purchase history and stores the histories in a second Dataset.
+      The purchase histories can then be queried either through a Procedure or an ad-hoc SQL query.
+  * - :doc:`Spark K-Means<spark-k-means>`
+    - An application that demonstrates streaming text analysis using a Spark program. It calculates the centers
+      of points from an input stream using the K-Means Clustering method.
+  * - :doc:`Spark Page Rank<spark-page-rank>`
+    - An application that demonstrates streaming text analysis using a Spark program. It computes the page rank
+      of URLs from an input stream.
+  * - :doc:`Web Analytics<web-analytics>`
+    - An application to generate statistics and to provide insights about web usage through the analysis
+      of web traffic.
+
+
+.. rubric:: What's Next
+
+You can learn more about developing data application using CDAP by:
+
+- Look at our :ref:`How-To Guides<guides-index>` and
+  :ref:`Tutorials<tutorials>`, with a collection of quick how-to-guides and
+  longer tutorials covering a complete range of Big Data application topics.
+- Exploring the Web Analytics Application :doc:`source code.<web-analytics>` It includes 
+  test cases that show unit-testing an application.
+- For a detailed understanding of what CDAP is capable of, read our :ref:`Overview <cdap-overview>` and 
+  :ref:`Building Blocks <building-blocks>` sections.

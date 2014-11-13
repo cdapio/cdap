@@ -16,8 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.type;
 
-import co.cask.cdap.common.lang.ApiResourceListHolder;
-import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import com.google.common.io.Files;
@@ -49,6 +48,6 @@ public class DistributedDatasetTypeClassLoaderFactory implements DatasetTypeClas
     // creating tempDir is fine since it will be created inside a YARN container, so it will be cleaned up
     File tempDir = Files.createTempDir();
     BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), tempDir);
-    return ClassLoaders.newProgramClassLoader(tempDir, ApiResourceListHolder.getResourceList(), parentClassLoader);
+    return ProgramClassLoader.create(tempDir, parentClassLoader);
   }
 }

@@ -42,6 +42,7 @@ final class MetricsRequestParser {
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
   private static final String END_TIME = "end";
+  private static final String RUN_ID = "run-id";
   private static final String INTERPOLATE = "interpolate";
   private static final String STEP_INTERPOLATOR = "step";
   private static final String LINEAR_INTERPOLATOR = "linear";
@@ -333,10 +334,11 @@ final class MetricsRequestParser {
   /**
    * From the query string determine the query type and related parameters.
    */
-  private static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) {
+  private static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
 
     Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
-
+    //Extract RunId from Query - if present
+    parseRunIdFromQueryParam(queryParams, builder);
     // Extracts the query type.
     if (isTimeseriesRequest(queryParams)) {
       parseTimeseries(queryParams, builder);
@@ -353,6 +355,16 @@ final class MetricsRequestParser {
       if (!foundType) {
         throw new IllegalArgumentException("Unknown query type for " + requestURI);
       }
+    }
+  }
+
+  private static void parseRunIdFromQueryParam(Map<String, List<String>> queryParams, MetricsRequestBuilder builder)
+    throws MetricsPathException {
+    if (queryParams.containsKey(RUN_ID)) {
+      if (queryParams.get(RUN_ID).size() > 1) {
+        throw new MetricsPathException("Should supply only one run-id");
+      }
+      builder.setRunId(queryParams.get(RUN_ID).get(0));
     }
   }
 

@@ -268,12 +268,15 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
     private final ExploreHttpClient exploreClient;
     private final QueryHandle handle;
+    private final boolean canContainResults;
     private final boolean hasResults;
 
-    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle, boolean hasResults) {
+    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle,
+                                        boolean canContainResults) {
       this.exploreClient = exploreClient;
       this.handle = handle;
-      this.hasResults = hasResults;
+      this.canContainResults = canContainResults;
+      this.hasResults = canContainResults;
     }
 
     @Override
@@ -336,6 +339,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
         LOG.error("Caught exception when retrieving results schema", e);
         throw new ExploreException(e);
       }
+    }
+
+    @Override
+    public boolean canContainResults() {
+      return canContainResults;
     }
   }
 

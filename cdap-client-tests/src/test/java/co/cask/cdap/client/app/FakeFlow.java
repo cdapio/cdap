@@ -53,7 +53,7 @@ public class FakeFlow implements Flow {
 
     @ProcessInput
     public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
-      String eventBody = new String(event.getBody().array());
+      String eventBody = Bytes.toString(event.getBody());
       int separatorIndex = eventBody.indexOf(":");
       if (separatorIndex != -1) {
         fakeDataset.put(Bytes.toBytes(eventBody.substring(0, separatorIndex)),

@@ -24,6 +24,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
@@ -32,6 +34,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -84,12 +87,22 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   /**
    * Sets the TTL for the stream events.
    *
-   * @param job The job to modify
+   * @param job  The job to modify
    * @param ttl TTL of the stream in milliseconds.
    */
   public static void setTTL(Job job, long ttl) {
+    setTTL(job.getConfiguration(), ttl);
+  }
+
+  /**
+   * Sets the TTL for the stream events.
+   *
+   * @param conf  The configuration to modify
+   * @param ttl TTL of the stream in milliseconds.
+   */
+  public static void setTTL(Configuration conf, long ttl) {
     Preconditions.checkArgument(ttl >= 0, "TTL must be >= 0");
-    job.getConfiguration().setLong(STREAM_TTL, ttl);
+    conf.setLong(STREAM_TTL, ttl);
   }
 
   /**
@@ -100,11 +113,22 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param endTime Timestamp in milliseconds of the event end time (exclusive).
    */
   public static void setTimeRange(Job job, long startTime, long endTime) {
+    setTimeRange(job.getConfiguration(), startTime, endTime);
+  }
+
+  /**
+   * Sets the time range for the stream events.
+   *
+   * @param conf The configuration to modify
+   * @param startTime Timestamp in milliseconds of the event start time (inclusive).
+   * @param endTime Timestamp in milliseconds of the event end time (exclusive).
+   */
+  public static void setTimeRange(Configuration conf, long startTime, long endTime) {
     Preconditions.checkArgument(startTime >= 0, "Start time must be >= 0");
     Preconditions.checkArgument(endTime >= 0, "End time must be >= 0");
 
-    job.getConfiguration().setLong(EVENT_START_TIME, startTime);
-    job.getConfiguration().setLong(EVENT_END_TIME, endTime);
+    conf.setLong(EVENT_START_TIME, startTime);
+    conf.setLong(EVENT_END_TIME, endTime);
   }
 
   /**
@@ -114,7 +138,17 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param path The file path to stream base directory.
    */
   public static void setStreamPath(Job job, URI path) {
-    job.getConfiguration().set(STREAM_PATH, path.toString());
+    setStreamPath(job.getConfiguration(), path);
+  }
+
+  /**
+   * Sets the base path to stream files.
+   *
+   * @param conf The conf to modify.
+   * @param path The file path to stream base directory.
+   */
+  public static void setStreamPath(Configuration conf, URI path) {
+    conf.set(STREAM_PATH, path.toString());
   }
 
   /**
@@ -124,7 +158,17 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param maxSplits Maximum split size in bytes.
    */
   public static void setMaxSplitSize(Job job, long maxSplits) {
-    job.getConfiguration().setLong(MAX_SPLIT_SIZE, maxSplits);
+    setMaxSplitSize(job.getConfiguration(), maxSplits);
+  }
+
+  /**
+   * Sets the maximum split size.
+   *
+   * @param conf The conf to modify.
+   * @param maxSplits Maximum split size in bytes.
+   */
+  public static void setMaxSplitSize(Configuration conf, long maxSplits) {
+    conf.setLong(MAX_SPLIT_SIZE, maxSplits);
   }
 
   /**
@@ -134,18 +178,37 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
    * @param minSplits Minimum split size in bytes.
    */
   public static void setMinSplitSize(Job job, long minSplits) {
-    job.getConfiguration().setLong(MIN_SPLIT_SIZE, minSplits);
+    setMinSplitSize(job.getConfiguration(), minSplits);
   }
 
+  /**
+   * Sets the minimum split size.
+   *
+   * @param conf The conf to modify.
+   * @param minSplits Minimum split size in bytes.
+   */
+  public static void setMinSplitSize(Configuration conf, long minSplits) {
+    conf.setLong(MIN_SPLIT_SIZE, minSplits);
+  }
 
   /**
    * Sets the class name for the {@link StreamEventDecoder}.
    *
    * @param job The job to modify.
-   * @param decoderType Class name of the decoder class
+   * @param decoderClassName Class name of the decoder class
    */
-  public static void setDecoderType(Job job, String decoderType) {
-    job.getConfiguration().set(DECODER_TYPE, decoderType);
+  public static void setDecoderClassName(Job job, String decoderClassName) {
+    setDecoderClassName(job.getConfiguration(), decoderClassName);
+  }
+
+  /**
+   * Sets the class name for the {@link StreamEventDecoder}.
+   *
+   * @param conf The conf to modify.
+   * @param decoderClassName Class name of the decoder class
+   */
+  public static void setDecoderClassName(Configuration conf, String decoderClassName) {
+    conf.set(DECODER_TYPE, decoderClassName);
   }
 
   /**
@@ -156,6 +219,23 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
    */
   public static Class<? extends StreamEventDecoder> getDecoderClass(Configuration conf) {
     return conf.getClass(DECODER_TYPE, null, StreamEventDecoder.class);
+  }
+
+  /**
+   * Tries to set the {@link StreamInputFormat#DECODER_TYPE} depending upon the supplied value class
+   *
+   * @param conf   the conf to modify
+   * @param vClass the value class Type
+   */
+  public static void inferDecoderClass(Configuration conf, Type vClass) {
+    if (Text.class.equals(vClass)) {
+      setDecoderClassName(conf, TextStreamEventDecoder.class.getName());
+    } else if (BytesWritable.class.equals(vClass)) {
+      setDecoderClassName(conf, BytesStreamEventDecoder.class.getName());
+    } else {
+      throw new IllegalArgumentException("The value class must be of type BytesWritable or Text if no decoder type " +
+                                           "is provided");
+    }
   }
 
   @Override
