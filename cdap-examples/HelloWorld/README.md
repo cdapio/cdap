@@ -4,7 +4,7 @@
 - A Stream, to send names to.
 - A Dataset, a KeyValueTable.
 - A Flow, with a single Flowlet that reads from the Stream and stores each name in the KeyValueTable.
-- A Service, that reads the name from the KeyValueTable and prints "Hello [Name]!"
+- A Service, that reads the name from the KeyValueTable and responds with "Hello [Name]!"
 
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.

@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.helloworld;
 
 import co.cask.cdap.api.annotation.ProcessInput;
@@ -30,6 +31,7 @@ import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.base.Charsets;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -43,7 +45,6 @@ import javax.ws.rs.Path;
  * </uL>
  */
 public class HelloWorld extends AbstractApplication {
-
   @Override
   public void configure() {
     setName("HelloWorld");
@@ -57,8 +58,7 @@ public class HelloWorld extends AbstractApplication {
   /**
    * Sample Flow.
    */
-  public static class WhoFlow implements Flow {
-
+  public static final class WhoFlow implements Flow {
     @Override
     public FlowSpecification configure() {
       return FlowSpecification.Builder.with().
@@ -73,55 +73,56 @@ public class HelloWorld extends AbstractApplication {
   /**
    * Sample Flowlet.
    */
-  public static class NameSaver extends AbstractFlowlet {
-
+  public static final class NameSaver extends AbstractFlowlet {
     static final byte[] NAME = { 'n', 'a', 'm', 'e' };
 
     @UseDataSet("whom")
-    KeyValueTable whom;
-    Metrics flowletMetrics;
+    private KeyValueTable whom;
+
+    private Metrics metrics;
 
     @ProcessInput
     public void process(StreamEvent event) {
       byte[] name = Bytes.toBytes(event.getBody());
       if (name != null && name.length > 0) {
         whom.write(NAME, name);
+
+        if (name.length > 10) {
+          metrics.count("names.longnames", 1);
+        }
+        metrics.count("names.bytes", name.length);
       }
-      if (name.length > 10) {
-        flowletMetrics.count("names.longnames", 1);
-      }
-      flowletMetrics.count("names.bytes", name.length);
     }
   }
 
   /**
-   * Sample Service.
+   * Greeting Service.
    */
-  public static class Greeting extends AbstractService {
+  public static final class Greeting extends AbstractService {
     public static final String SERVICE_NAME = "Greeting";
 
     @Override
     protected void configure() {
       setName(SERVICE_NAME);
-      setDescription("Hello world service.");
+      setDescription("Service that creates a greeting by a user name.");
       addHandler(new GreetingHandler());
     }
   }
 
   /**
-   * Sample Service handler.
+   * Greeting Service handler.
    */
-  public static class GreetingHandler extends AbstractHttpServiceHandler {
+  public static final class GreetingHandler extends AbstractHttpServiceHandler {
     @UseDataSet("whom")
     private KeyValueTable whom;
 
-    Metrics metrics;
+    private Metrics metrics;
 
     @Path("greet")
     @GET
     public void greet(HttpServiceRequest request, HttpServiceResponder responder) {
       byte[] name = whom.read(NameSaver.NAME);
-      String toGreet = name != null ? new String(name) : "World";
+      String toGreet = name != null ? new String(name, Charsets.UTF_8) : "World";
       if (toGreet.equals("Jane Doe")) {
         metrics.count("greetings.count.jane_doe", 1);
       }
