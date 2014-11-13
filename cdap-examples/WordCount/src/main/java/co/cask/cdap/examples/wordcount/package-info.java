@@ -35,7 +35,7 @@
  *    - getCount() accesses the word count of a specified word and its word associations;
  *    - getAssoc() accesses the top associated words.
  *
- * 4. Four DataSets used by the Flow and Procedure to model, store, and serve the necessary data:
+ * 4. Four DataSets used by the Flow and Service to model, store, and serve the necessary data:
  *    - A core Table named wordStats to track global word statistics;
  *    - A system KeyValueTable DataSet named wordCounts counts the occurrences of each word;
  *    - A custom UniqueCountTable DataSet named uniqueCount determines and counts the number of unique words seen;
