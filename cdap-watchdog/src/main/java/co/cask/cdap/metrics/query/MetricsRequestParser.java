@@ -312,12 +312,12 @@ final class MetricsRequestParser {
     }
     if (!nextPath.equals(componentType)) {
       String exception = String.format("Expecting '%s' after the %s name ", componentType,
-                                       requestType.substring(0, requestType.length()-1));
+                                       requestType.substring(0, requestType.length() - 1));
       throw new MetricsPathException(exception);
     }
     if (!pathParts.hasNext()) {
       String exception = String.format("'%s' must be followed by a %s name ", componentType,
-                                       componentType.substring(0, componentType.length()-1));
+                                       componentType.substring(0, componentType.length() - 1));
       throw new MetricsPathException(exception);
     }
     builder.setComponentId(urlDecode(pathParts.next()));
