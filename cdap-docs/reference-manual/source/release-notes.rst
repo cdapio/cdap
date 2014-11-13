@@ -41,6 +41,8 @@ CDAP Bug Fixes
   Kafka library (`CDAP-559 <https://issues.cask.co/browse/CDAP-559>`__).
 - Fixed a problem with CDAP master not obtaining new delegation tokens after running for 
   ``hbase.auth.key.update.interval`` milliseconds (`CDAP-562 <https://issues.cask.co/browse/CDAP-562>`__).
+- Fixed a problem with the transaction not being rolled back when a user service handler throws an exception 
+  (`CDAP-607 <https://issues.cask.co/browse/CDAP-607>`__).
 
 Other Changes
 -------------
