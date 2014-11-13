@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.annotation.Retry;
 import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FailureReason;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.app.queue.InputDatum;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -39,6 +41,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -140,6 +143,43 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
     if (latch != null) {
       suspendBarrier.reset();
       latch.countDown();
+    }
+  }
+
+  /**
+   * Call the callback when the number of instances of a flowlet changes.
+   */
+  public void callChangeInstancesCallback() {
+    Method method = null;
+    try {
+      method = txCallback.getClass().getMethod("onChangeInstances", FlowletContext.class);
+    } catch (NoSuchMethodException e) {
+      // This should never happen
+      LOG.error("onChangeInstances() not found in class: {}", txCallback.getClass(), e);
+      Throwables.propagate(e);
+    }
+    Retry retryAnnotation = method.getAnnotation(Retry.class);
+    int maxRetries = (retryAnnotation == null) ? 0 : retryAnnotation.value();
+    int retries = 0;
+
+    TransactionExecutor transactionExecutor = dataFabricFacade.createTransactionExecutor();
+    while (retries <= maxRetries) {
+      try {
+        transactionExecutor.execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            txCallback.onChangeInstances(flowletContext);
+          }
+        });
+      } catch (Throwable e) {
+        Throwable cause = e.getCause() == null ? e : e.getCause();
+        LOG.error("Flowlet throws exception during flowlet instances change: " + flowletContext, cause);
+        if (retries >= maxRetries) {
+          throw Throwables.propagate(cause);
+        }
+      } finally {
+        retries++;
+      }
     }
   }
 

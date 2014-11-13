@@ -79,6 +79,11 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
     return flowletContext.getSpecification().getFailurePolicy();
   }
 
+  @Override
+  public void onChangeInstances(FlowletContext flowletContext) throws Exception {
+    // No-op by default
+  }
+
   /**
    * @return An instance of {@link FlowletContext} when this flowlet is running. Otherwise return
    *         {@code null} if it is not running or not yet initialized by the runtime environment.

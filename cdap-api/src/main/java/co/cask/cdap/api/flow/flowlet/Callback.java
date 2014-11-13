@@ -48,4 +48,16 @@ public interface Callback {
    * @return A {@link FailurePolicy} indicating how to handle the failure input.
    */
   FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason reason);
+
+  /**
+   * This method will be called when the number of instances for the flowlet is changed, for all the instances
+   * of the flowlet which existed before the change. Each method call is transactional.
+   * The {@link co.cask.cdap.api.annotation.Retry} annotation can be tagged to this method to define the maximum
+   * number of retries to perform if Exception are thrown before giving up. If this tag is not present, we don't
+   * retry at all.
+   *
+   * @param flowletContext the {@link FlowletContext} of the flowlet.
+   * @throws Exception in case of any error.
+   */
+  void onChangeInstances(FlowletContext flowletContext) throws Exception;
 }
