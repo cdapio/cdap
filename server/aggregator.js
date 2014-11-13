@@ -1,6 +1,7 @@
 /*global require, module */
 
-var request = require('request'),
+var _ = require('lodash'),
+    request = require('request'),
     colors = require('colors/safe'),
     hash = require('object-hash'),
     HashTable = hash.HashTable;
@@ -30,8 +31,8 @@ function Aggregator (conn) {
     return new Aggregator(conn);
   }
 
-  conn.on('data', _onSocketData.bind(this));
-  conn.on('close', _onSocketClose.bind(this));
+  conn.on('data', _.bind(onSocketData, this));
+  conn.on('close', _.bind(onSocketClose, this));
 
   this.connection = conn;
   this.polledResources = new HashTable();
@@ -39,25 +40,54 @@ function Aggregator (conn) {
   this.log('init');
 }
 
+/**
+ * log something
+ */
 Aggregator.prototype.log = function (msg) {
   console.log(colors.cyan('sock'), colors.dim(this.connection.id), msg);
 };
 
+/**
+ * schedule polling
+ */
 Aggregator.prototype.planPolling = function () {
-  this.timeout = setTimeout(_doPoll.bind(this), 1000);
+  this.timeout = setTimeout(_.bind(doPoll, this), 1000);
 };
 
+/**
+ * stop polling
+ */
 Aggregator.prototype.stopPolling = function () {
   clearTimeout(this.timeout);
 };
 
-function _doPoll () {
-  console.log('polling...');
 
-  this.planPolling();
+/**
+ * @private doPoll
+ * requests all the polled resources
+ */
+function doPoll () {
+  var rscs = this.polledResources.toArray(),
+      pollAgain = _.after(rscs.length, _.bind(this.planPolling, this));
+
+  _.forEach(rscs, function(one){
+    var r = one.value;
+    request(r, _.bind(emitResponse, this, r)).on('response', pollAgain);
+  }, this);
 }
 
-function _emit (resource, error, response, body) {
+
+/**
+ * @private emitResponse
+ *
+ * sends data back to the client through socket
+ *
+ * @param  {object} resource that was requested
+ * @param  {error|null} error
+ * @param  {object} response
+ * @param  {string} body
+ */
+function emitResponse (resource, error, response, body) {
   if(!error) {
     var output = { resource: resource };
     output.response = response.toJSON();
@@ -70,7 +100,11 @@ function _emit (resource, error, response, body) {
   }
 }
 
-function _onSocketData (message) {
+/**
+ * @private onSocketData
+ * @param  {string} message received via socket
+ */
+function onSocketData (message) {
   try {
     message = JSON.parse(message);
     this.log('data', message.action);
@@ -85,7 +119,7 @@ function _onSocketData (message) {
         }
         /* falls through */
       case 'fetch':
-        request(r, _emit.bind(this, r));
+        request(r, _.bind(emitResponse, this, r));
         break;
       case 'poll-stop':
         this.polledResources.remove(r);
@@ -101,10 +135,13 @@ function _onSocketData (message) {
   }
 }
 
-function _onSocketClose () {
+/**
+ * @private onSocketClose
+ */
+function onSocketClose () {
   this.log('closed');
-  this.polledResources.reset();
   this.stopPolling();
+  this.polledResources.reset();
 }
 
 
