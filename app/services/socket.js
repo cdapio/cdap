@@ -96,7 +96,7 @@ angular.module(PKG.name+'.services')
         socket.onmessage = function (event) {
           try {
             var data = JSON.parse(event.data);
-            console.log('[mySocket] <-', data);
+            console.log('[mySocket] ←', data);
             $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
           }
           catch(e) {
@@ -108,6 +108,7 @@ angular.module(PKG.name+'.services')
           console.info('[mySocket] opened');
           angular.forEach(buffer, send);
           buffer = [];
+          attempt = 1;
         };
 
         socket.onclose = function (event) {
@@ -134,7 +135,7 @@ angular.module(PKG.name+'.services')
         var msg = angular.extend({
           user: myAuth.currentUser
         }, obj);
-        console.log('[mySocket] ->', msg);
+        console.log('[mySocket] →', msg);
         socket.send(JSON.stringify(msg));
         return true;
       }

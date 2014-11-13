@@ -67,6 +67,7 @@ Aggregator.prototype.planPolling = function () {
  */
 Aggregator.prototype.stopPolling = function () {
   clearTimeout(this.timeout);
+  this.timeout = null;
 };
 
 
@@ -124,7 +125,7 @@ function emitResponse (resource, error, response, body) {
   }
   catch (e) {}
 
-  this.log('emit', output.resource.url);
+  this.log('emit', resource.url);
   this.connection.write(JSON.stringify(output));
 }
 

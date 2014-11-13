@@ -24,6 +24,11 @@ var sockServer = sockjs.createServer({
   }
 });
 
-sockServer.on('connection', Aggregator);
+sockServer.on('connection', function(c) {
+  var a = new Aggregator(c);
+  c.on('close', function () {
+    delete a;
+  });
+});
 
 sockServer.installHandlers(httpServer, { prefix: '/_sock' });
