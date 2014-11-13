@@ -19,36 +19,21 @@ package co.cask.cdap.common.lang;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Enumeration;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
  * ClassLoader that implements bundle jar feature, in which the application jar contains
  * its dependency jars inside.
  */
-public class ProgramClassLoader extends URLClassLoader {
-
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramClassLoader.class);
-  private static final FilenameFilter JAR_FILE_FILTER = new FilenameFilter() {
-    @Override
-    public boolean accept(File dir, String name) {
-      return name.endsWith(".jar");
-    }
-  };
+public class ProgramClassLoader extends DirectoryClassLoader {
 
   /**
    * Constructs an instance that load classes from the given directory, without program type. See
@@ -77,33 +62,8 @@ public class ProgramClassLoader extends URLClassLoader {
     return new ProgramClassLoader(unpackedJarDir, filteredParent);
   }
 
-
   private ProgramClassLoader(File dir, ClassLoader parent) {
-    super(getClassPathUrls(dir), parent);
-  }
-
-  private static URL[] getClassPathUrls(File dir) {
-    try {
-      List<URL> urls = Lists.newArrayList(dir.toURI().toURL());
-      addJarURLs(dir, urls);
-      addJarURLs(new File(dir, "lib"), urls);
-      return urls.toArray(new URL[urls.size()]);
-    } catch (MalformedURLException e) {
-      // Should never happen
-      LOG.error("Error in adding jar URLs to classPathUrls", e);
-      throw Throwables.propagate(e);
-    }
-  }
-
-  private static void addJarURLs(File dir, List<URL> result) throws MalformedURLException {
-    File[] files = dir.listFiles(JAR_FILE_FILTER);
-    if (files == null) {
-      return;
-    }
-
-    for (File file : files) {
-      result.add(file.toURI().toURL());
-    }
+    super(dir, parent, "dir");
   }
 
   /**
