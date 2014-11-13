@@ -126,6 +126,12 @@ public class AppWithServices extends AbstractApplication {
     public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.sendStatus(200);
     }
+
+    @Path("/failure")
+    @GET
+    public void failure(HttpServiceRequest request, HttpServiceResponder responder) {
+      throw new IllegalStateException("Failed");
+    }
   }
 
   private static final class DatasetUpdateService extends AbstractService {
