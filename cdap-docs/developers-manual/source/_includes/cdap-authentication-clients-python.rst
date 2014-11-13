@@ -18,7 +18,7 @@ authentication mechanisms supported by CDAP:
 
 -  Basic Authentication
 -  LDAP
--  JAASPI
+-  JASPI
 
 Custom Authentication Mechanism
 -------------------------------
@@ -33,11 +33,21 @@ the custom authentication client.
 Installation
 ------------
 
-To install the CDAP Authentication Client, run
+To install the latest release version of CDAP Authentication Client, run
 
 ::
 
     $ pip install cdap-auth-client
+
+To install the development version, clone the repository
+
+::
+
+    $ git clone https://github.com/caskdata/cdap-clients.git
+    $ cd cdap-clients/cdap-authentication-clients/python/
+    $ python setup.py install
+
+Supported Python versions: 2.6, 2.7
 
 Usage
 -----
@@ -155,3 +165,9 @@ retrieved credentials.
          properties[credential.get_name()] = credential_value
       authentication_client.configure(properties)
 
+Tests
+-----
+
+To run tests from the command-line:
+
+``python tests/BasicAuthenticationClientTest.py``
