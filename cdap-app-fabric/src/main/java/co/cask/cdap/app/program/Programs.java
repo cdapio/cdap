@@ -42,12 +42,16 @@ public final class Programs {
 
   /**
    * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
-   * would not function from the program this method returns.
+   * will be the given ClassLoader.
    */
   public static Program create(Location location, ClassLoader classLoader) throws IOException {
     return new DefaultProgram(location, classLoader);
   }
 
+  /**
+   * Creates a {@link Program} without expanding the location jar. The {@link Program#getClassLoader()}
+   * will be the context class loader or cdap system ClassLoader.
+   */
   public static Program create(Location location) throws IOException {
     return new DefaultProgram(location, getClassLoader());
   }
