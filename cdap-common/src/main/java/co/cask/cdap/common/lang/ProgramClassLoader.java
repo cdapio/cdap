@@ -63,7 +63,7 @@ public class ProgramClassLoader extends DirectoryClassLoader {
   }
 
   private ProgramClassLoader(File dir, ClassLoader parent) {
-    super(dir, parent, "dir");
+    super(dir, parent, "lib");
   }
 
   /**
