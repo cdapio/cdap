@@ -72,7 +72,7 @@ public abstract class AbstractMapReduceContextBuilder {
     // Initializing Program
     Program program = mrProgram;
 
-    // See if it is launched from Workflow, if it is, change the Program.
+    // See if it was launched from Workflow; if it was, change the Program.
     if (workflowBatch != null) {
       MapReduceSpecification mapReduceSpec = program.getSpecification().getMapReduce().get(workflowBatch);
       Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s", workflowBatch);

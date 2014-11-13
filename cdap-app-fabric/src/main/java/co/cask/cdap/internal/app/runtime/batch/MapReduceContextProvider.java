@@ -101,8 +101,8 @@ public final class MapReduceContextProvider {
   }
 
   private Program createProgram() {
-    // If Program is already created, returns it.
-    // It is needed so that in distributed mode, there is only one ProgramClassLoader is created, even
+    // If Program is already created, return it.
+    // It is needed so that in distributed mode, there is only one ProgramClassLoader created, even if
     // there are multiple instances of this class being created (one from creating RecordReader/Writer, one from
     // MapperWrapper/ReducerWrapper).
 
