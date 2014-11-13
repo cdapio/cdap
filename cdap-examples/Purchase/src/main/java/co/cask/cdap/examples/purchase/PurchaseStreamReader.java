@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import com.google.common.base.Charsets;
 
 /**
  * This Flowlet reads events from a Stream and parses them as sentences of the form
@@ -32,7 +33,7 @@ public class PurchaseStreamReader extends AbstractFlowlet {
 
   @ProcessInput
   public void process(StreamEvent event) {
-    String body = Bytes.toString(event.getBody());
+    String body = new String(Bytes.toBytes(event.getBody()), Charsets.UTF_8);
     // <name> bought <n> <items> for $<price>
     String[] tokens =  body.split(" ");
     if (tokens.length != 6) {
