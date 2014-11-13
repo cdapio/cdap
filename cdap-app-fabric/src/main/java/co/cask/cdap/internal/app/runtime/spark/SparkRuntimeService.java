@@ -18,8 +18,6 @@ package co.cask.cdap.internal.app.runtime.spark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -31,9 +29,10 @@ import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
+import com.clearspring.analytics.util.Lists;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -46,15 +45,15 @@ import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
 
 /**
  * Performs the actual execution of Spark job.
@@ -281,9 +280,26 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * @return String[] of arguments with which {@link SparkProgramWrapper} will be submitted
    */
   private String[] prepareSparkSubmitArgs(SparkSpecification sparkSpec, Configuration conf, Location jobJarCopy,
-                                          Location dependencyJar) {
+                                          Location dependencyJar) throws Exception {
+
+    List<String> jars = Lists.newArrayList();
+    jars.add(dependencyJar.toURI().getPath());
+
+    // Spark doesn't support bundle jar. However, the ProgramClassLoader already has everything expanded.
+    // We can just add those jars as dependency for spark submit.
+    // It is a little hacky since we know the ProgramClassLoader is a URLClassLoader. Revisit in CDAP-598
+    ClassLoader programClassLoader = spark.getClass().getClassLoader();
+    if (programClassLoader instanceof URLClassLoader) {
+      for (URL url : ((URLClassLoader) programClassLoader).getURLs()) {
+        File file = new File(url.toURI()).getAbsoluteFile();
+        if (file.isFile() && file.getName().endsWith(".jar")) {
+          jars.add(file.getAbsolutePath());
+        }
+      }
+    }
+
     return new String[]{"--class", SparkProgramWrapper.class.getCanonicalName(), "--jars",
-      dependencyJar.toURI().getPath(), "--master", conf.get(MRConfig.FRAMEWORK_NAME), jobJarCopy.toURI().getPath(),
+      Joiner.on(',').join(jars), "--master", conf.get(MRConfig.FRAMEWORK_NAME), jobJarCopy.toURI().getPath(),
       sparkSpec.getMainClassName()};
   }
 
@@ -334,78 +350,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                                                    programId.getApplicationId(), programId.getId(),
                                                                    context.getRunId().getId()));
 
-    Set<String> entries = Sets.newHashSet();
-    JarInputStream programInput = new JarInputStream(jobJarLocation.getInputStream());
-    try {
-      Manifest manifest = getManifest(programInput, context.getProgram());
-      JarOutputStream programOutput = new JarOutputStream(programJarCopy.getOutputStream(), manifest);
-      try {
-        JarEntry entry;
-        while ((entry = programInput.getNextJarEntry()) != null) {
-          String entryName = entry.getName();
-          if (!entries.add(entryName)) {
-            continue;
-          }
-
-          // See if it is JAR in top level or under "/lib"
-          if (entryName.endsWith(".jar")) {
-            int idx = entryName.indexOf('/');
-            if (idx < 0 || entryName.indexOf('/', idx + 1) < 0) {
-              // It's a jar that we need to expand
-              copyJarContent(new JarInputStream(programInput), programOutput, entries);
-              continue;
-            }
-          }
-
-          // If no need to expand, just copy the entry
-          programOutput.putNextEntry(entry);
-          ByteStreams.copy(programInput, programOutput);
-          programOutput.closeEntry();
-        }
-      } finally {
-        Closeables.closeQuietly(programOutput);
-      }
-    } finally {
-      Closeables.closeQuietly(programInput);
-    }
-
+    ByteStreams.copy(Locations.newInputSupplier(jobJarLocation), Locations.newOutputSupplier(programJarCopy));
     return programJarCopy;
-  }
-
-  /**
-   * Copies everything from a given Jar to another one.
-   */
-  private void copyJarContent(JarInputStream input, JarOutputStream output, Set<String> entries) throws IOException {
-    JarEntry entry;
-    while ((entry = input.getNextJarEntry()) != null) {
-      if (entries.add(entry.getName())) {
-        output.putNextEntry(entry);
-        ByteStreams.copy(input, output);
-        output.closeEntry();
-      }
-    }
-  }
-
-  /**
-   * Returns the {@link Manifest} from the given Jar input. If not found, then creates a new Manifest from the given
-   * {@link Program}.
-   */
-  private Manifest getManifest(JarInputStream input, Program program) {
-    Manifest manifest = input.getManifest();
-    if (manifest != null) {
-      return manifest;
-    }
-    manifest = new Manifest();
-    Attributes mainAttributes = manifest.getMainAttributes();
-    mainAttributes.put(ManifestFields.MAIN_CLASS, program.getMainClassName());
-    mainAttributes.put(ManifestFields.ACCOUNT_ID, program.getAccountId());
-    mainAttributes.put(ManifestFields.APPLICATION_ID, program.getApplicationId());
-    mainAttributes.put(ManifestFields.PROGRAM_NAME, program.getName());
-    mainAttributes.put(ManifestFields.PROCESSOR_TYPE, program.getType().getPrettyName());
-    mainAttributes.put(ManifestFields.SPEC_FILE, ManifestFields.MANIFEST_SPEC_FILE);
-    mainAttributes.put(ManifestFields.MANIFEST_VERSION, ManifestFields.VERSION);
-
-    return manifest;
   }
 
   private Runnable createCleanupTask(final Location... locations) {
