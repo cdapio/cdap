@@ -64,18 +64,14 @@ public final class ScheduleTaskRunner {
    * @throws JobExecutionException If fails to execute the program.
    */
   public void run(Id.Program programId, ProgramType programType, Arguments arguments) throws JobExecutionException {
-    ProgramRuntimeService.RuntimeInfo existingRuntimeInfo = findRuntimeInfo(programId, programType);
-    if (existingRuntimeInfo != null) {
-      throw new JobExecutionException(UserMessages.getMessage(UserErrors.ALREADY_RUNNING), false);
-    }
+    Preconditions.checkArgument(programType == ProgramType.WORKFLOW, "Only Workflows can be scheduled");
+
     Map<String, String> userArgs;
     Program program;
     try {
-      program =  store.loadProgram(programId, ProgramType.WORKFLOW);
+      program = store.loadProgram(programId, programType);
       Preconditions.checkNotNull(program, "Program not found");
-
       userArgs = store.getRunArguments(programId);
-
     } catch (Throwable t) {
       throw new JobExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), t, false);
     }
