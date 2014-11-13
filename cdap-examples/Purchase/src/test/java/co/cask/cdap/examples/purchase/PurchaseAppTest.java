@@ -13,23 +13,27 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.ProcedureManager;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
-import co.cask.cdap.test.WorkflowManager;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -69,14 +73,28 @@ public class PurchaseAppTest extends TestBase {
                                                                   ImmutableMap.<String, String>of());
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
-    // Start PurchaseProcedure and query
-    ProcedureManager procedureManager = appManager.startProcedure("PurchaseProcedure");
-    String response = procedureManager.getClient().query("history", ImmutableMap.of("customer", "joe"));
-    PurchaseHistory historyResponse = GSON.fromJson(response, PurchaseHistory.class);
+    // Start Purchase Service
+    ServiceManager serviceManager = appManager.startService(PurchaseService.SERVICE_NAME);
 
-    Assert.assertEquals("joe", historyResponse.getCustomer());
-    Assert.assertEquals(2, historyResponse.getPurchases().size());
+    // Test service to retrieve a product id
+    Assert.assertEquals("Catalog-comb", requestService(new URL(serviceManager.getServiceURL(), "catalogLookup/comb")));
+
+    // Test service to retrieve a customer's purchase history
+    PurchaseHistory history =
+      GSON.fromJson(requestService(new URL(serviceManager.getServiceURL(), "history/joe")), PurchaseHistory.class);
+    Assert.assertEquals("joe", history.getCustomer());
+    Assert.assertEquals(2, history.getPurchases().size());
+
     appManager.stopAll();
   }
 
+  private String requestService(URL url) throws IOException {
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+    try {
+      return new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+    } finally {
+      conn.disconnect();
+    }
+  }
 }

@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.app.AbstractApplication;
@@ -22,23 +23,22 @@ import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 
 /**
- *
  * This implements a simple purchase history application via a scheduled MapReduce Workflow --
  * see package-info for more details.
  */
 public class PurchaseApp extends AbstractApplication {
 
-  public static final String SERVICE_NAME = "CatalogLookup";
+  public static final String APP_NAME = "PurchaseHistory";
 
   @Override
   public void configure() {
-    setName("PurchaseHistory");
-    setDescription("Purchase history app");
+    setName(APP_NAME);
+    setDescription("Purchase history application");
     addStream(new Stream("purchaseStream"));
     createDataset("frequentCustomers", KeyValueTable.class);
     addFlow(new PurchaseFlow());
-    addProcedure(new PurchaseProcedure());
     addWorkflow(new PurchaseHistoryWorkflow());
+    addService(new PurchaseService());
     addService(new CatalogLookupService());
 
     try {
