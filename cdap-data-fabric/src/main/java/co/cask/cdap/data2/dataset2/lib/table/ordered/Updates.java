@@ -23,7 +23,6 @@ import com.google.common.base.Function;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
-import javax.annotation.Nullable;
 
 /**
  * Utility class for working with {@link Update} instances.
