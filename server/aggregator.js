@@ -18,6 +18,9 @@ HashTable.prototype.remove = function (obj) {
 };
 
 
+
+var POLL_INTERVAL = 3000; // 3 seconds
+
 /**
  * Aggregator
  * receives resourceObj, aggregate them,
@@ -36,6 +39,7 @@ function Aggregator (conn) {
 
   this.connection = conn;
   this.polledResources = new HashTable();
+  this.bodyCache = {};
 
   this.log('init');
 }
@@ -43,15 +47,19 @@ function Aggregator (conn) {
 /**
  * log something
  */
-Aggregator.prototype.log = function (msg) {
-  console.log(colors.cyan('sock'), colors.dim(this.connection.id), msg);
+Aggregator.prototype.log = function () {
+  console.log(
+    colors.cyan('sock'),
+    colors.dim(this.connection.id),
+    _(arguments).join(' ')
+  );
 };
 
 /**
  * schedule polling
  */
 Aggregator.prototype.planPolling = function () {
-  this.timeout = setTimeout(_.bind(doPoll, this), 1000);
+  this.timeout = setTimeout(_.bind(doPoll, this), POLL_INTERVAL);
 };
 
 /**
@@ -67,20 +75,36 @@ Aggregator.prototype.stopPolling = function () {
  * requests all the polled resources
  */
 function doPoll () {
-  var rscs = this.polledResources.toArray(),
+  var that = this,
+      rscs = this.polledResources.toArray(),
       pollAgain = _.after(rscs.length, _.bind(this.planPolling, this));
 
+  this.log('poll', rscs.length);
+
   _.forEach(rscs, function(one){
-    var r = one.value;
-    request(r, _.bind(emitResponse, this, r)).on('response', pollAgain);
-  }, this);
+    var resource = one.value, k = one.hash;
+    request(resource, function(error, response, body){
+
+      if(error || _.isEqual(that.bodyCache[one.hash], body)) {
+        that.log('not emitting', one.hash);
+        return; // we do not send down identical bodies
+      }
+
+      that.bodyCache[one.hash] = body;
+      emitResponse.call(that, resource, false, response, body);
+
+    }).on('response', pollAgain);
+  });
 }
+
+
 
 
 /**
  * @private emitResponse
  *
  * sends data back to the client through socket
+ * TODO: only send it down if it changed
  *
  * @param  {object} resource that was requested
  * @param  {error|null} error
@@ -88,16 +112,20 @@ function doPoll () {
  * @param  {string} body
  */
 function emitResponse (resource, error, response, body) {
-  if(!error) {
-    var output = { resource: resource };
-    output.response = response.toJSON();
-    try {
-      output.json = JSON.parse(body);
-    }
-    catch (e) {}
-    this.log('emit', output.resource.url);
-    this.connection.write(JSON.stringify(output));
+  if(error) {
+    this.log(error);
+    return;
   }
+
+  var output = { resource: resource };
+  output.response = response.toJSON();
+  try {
+    output.json = JSON.parse(body);
+  }
+  catch (e) {}
+
+  this.log('emit', output.resource.url);
+  this.connection.write(JSON.stringify(output));
 }
 
 /**
