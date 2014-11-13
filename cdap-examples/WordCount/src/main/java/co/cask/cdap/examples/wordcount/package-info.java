@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 /**
  * This package contains the WordCount sample Application that counts words and tracks the associations between words.
  * This is a slightly modified version of the classic WordCount example. 
@@ -28,10 +29,11 @@
  *    - The unique Flowlet calculates the unique number of words seen;
  *    - The associator stores word associations between all of the words in each input string.
  *
- * 3. A Procedure named RetrieveCounts serves read requests for the calculated word counts,
- *    statistics and associations. It supports two methods:
+ * 3. A Service named RetrieveCounts serves read requests for the calculated statistics,
+ *    word counts and associations. It supports next methods:
+ *    - getStats() accesses the global word statistics;
  *    - getCount() accesses the word count of a specified word and its word associations;
- *    - getStats() accesses the global word statistics.
+ *    - getAssoc() accesses the top associated words.
  *
  * 4. Four DataSets used by the Flow and Procedure to model, store, and serve the necessary data:
  *    - A core Table named wordStats to track global word statistics;
@@ -40,5 +42,3 @@
  *    - A custom AssociationTable DataSet named wordAssocs tracks associations between words.
  */
 package co.cask.cdap.examples.wordcount;
-
-
