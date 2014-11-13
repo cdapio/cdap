@@ -43,9 +43,9 @@ public final class MapReduceMetrics extends AbstractProgramMetrics {
   }
 
   public MapReduceMetrics(MetricsCollectionService collectionService, String applicationId,
-                          String mapReduceId, TaskType type) {
+                          String mapReduceId, TaskType type, String runId) {
     super(collectionService.getCollector(
       MetricsScope.USER,
-      String.format("%s.b.%s.%s", applicationId, mapReduceId, type.getId()), "0"));
+      String.format("%s.b.%s.%s", applicationId, mapReduceId, type.getId()), runId));
   }
 }

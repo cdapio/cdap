@@ -1,4 +1,5 @@
 /*
+/*
  * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -17,12 +18,13 @@
 package co.cask.cdap.api.procedure;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DataSetContext;
 
 /**
  * This interface represents the Procedure context.
  */
-public interface ProcedureContext extends RuntimeContext, DataSetContext {
+public interface ProcedureContext extends RuntimeContext, DataSetContext, ServiceDiscoverer {
   /**
    * @return The specification used to configure this {@link Procedure} instance.
    */

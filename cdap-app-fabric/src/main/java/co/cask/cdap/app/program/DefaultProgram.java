@@ -17,8 +17,7 @@
 package co.cask.cdap.app.program;
 
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.common.lang.ApiResourceListHolder;
-import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.proto.Id;
@@ -157,8 +156,7 @@ public final class DefaultProgram implements Program {
     if (classLoader == null) {
       expandIfNeeded();
       try {
-        classLoader = ClassLoaders.newProgramClassLoader(
-          expandFolder, ApiResourceListHolder.getResourceList(), parentClassLoader);
+        classLoader = ProgramClassLoader.create(expandFolder, parentClassLoader, processorType);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

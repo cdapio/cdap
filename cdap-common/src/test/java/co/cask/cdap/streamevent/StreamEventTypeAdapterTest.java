@@ -17,7 +17,6 @@
 package co.cask.cdap.streamevent;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.stream.DefaultStreamEvent;
 import co.cask.cdap.common.stream.StreamEventTypeAdapter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Equivalence;
@@ -64,7 +63,7 @@ public class StreamEventTypeAdapterTest {
 
     List<StreamEvent> events = Lists.newArrayList();
     for (int i = 0; i < 10; i++) {
-      events.add(new DefaultStreamEvent(ImmutableMap.of("k" + i, "v" + i), Charsets.UTF_8.encode("Msg " + i), i));
+      events.add(new StreamEvent(ImmutableMap.of("k" + i, "v" + i), Charsets.UTF_8.encode("Msg " + i), i));
     }
 
     List<StreamEvent> decoded = gson.fromJson(gson.toJson(events), new TypeToken<List<StreamEvent>>() { }.getType());
