@@ -16,20 +16,9 @@
 
 package co.cask.cdap.api.spark;
 
-import java.io.Serializable;
-
 /**
  * Defines an interface for User's Spark job written in Scala
- * This interface extends serializable because the closures are anonymous class in Java and Spark Serializes the
- * closures before sending it to worker nodes. This serialization of inner anonymous class expects the outer
- * containing class to be serializable else java.io.NotSerializableException is thrown. We do not expect user job
- * class to be serializable so we serialize this interface which user job class implements to have a neater API.
  */
-public interface ScalaSparkProgram extends Serializable {
-  /**
-   * User Spark job which will be executed
-   *
-   * @param context {@link SparkContext} for this job
-   */
-  public void run(SparkContext context);
+public interface ScalaSparkProgram extends SparkProgram {
+
 }

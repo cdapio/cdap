@@ -49,8 +49,12 @@ public enum ArgumentName {
   APP_JAR_FILE("app-jar-file"),
   DATASET_MODULE_JAR_FILE("module-jar-file"),
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
-  QUERY("TODO:query"),
-  APP("app-id");
+  QUERY("query"),
+  APP("app-id"),
+  HTTP_METHOD("http-method"),
+  ENDPOINT("endpoint"),
+  HEADERS("headers"),
+  HTTP_BODY("body");
 
   private final String name;
 

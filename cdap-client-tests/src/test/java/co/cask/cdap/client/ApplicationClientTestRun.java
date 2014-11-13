@@ -72,22 +72,19 @@ public class ApplicationClientTestRun extends ClientTestBase {
     verifyProgramNames(FakeApp.PROCEDURES, programs.get(ProgramType.PROCEDURE));
     verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
     verifyProgramNames(FakeApp.WORKFLOWS, programs.get(ProgramType.WORKFLOW));
-    // TODO: can't list services atm
-//    verifyProgramNames(FakeApp.SERVICES, programs.get(ProgramType.SERVICE));
+    verifyProgramNames(FakeApp.SERVICES, programs.get(ProgramType.SERVICE));
 
     verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.FLOW));
     verifyProgramNames(FakeApp.PROCEDURES, appClient.listPrograms(FakeApp.NAME, ProgramType.PROCEDURE));
     verifyProgramNames(FakeApp.MAPREDUCES, appClient.listPrograms(FakeApp.NAME, ProgramType.MAPREDUCE));
     verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(FakeApp.NAME, ProgramType.WORKFLOW));
-    // TODO: can't list services atm
-//    verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(FakeApp.NAME, ProgramType.SERVICE));
+    verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(FakeApp.NAME, ProgramType.SERVICE));
 
     verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(ProgramType.FLOW));
     verifyProgramNames(FakeApp.PROCEDURES, appClient.listAllPrograms(ProgramType.PROCEDURE));
     verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(ProgramType.MAPREDUCE));
     verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(ProgramType.WORKFLOW));
-    // TODO: can't list services atm
-//    verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
+    verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(ProgramType.SERVICE));
 
     verifyProgramNames(FakeApp.ALL_PROGRAMS, appClient.listAllPrograms());
 

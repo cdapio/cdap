@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
@@ -53,11 +54,20 @@ public class SparkKMeansApp extends AbstractApplication {
   public void configure() {
     setName("SparkKMeans");
     setDescription("Spark KMeans app");
+    
+    // Ingest data into the Application via a Stream
     addStream(new Stream("pointsStream"));
+    
+    // Process points data in real-time using a Flow
     addFlow(new PointsFlow());
+    
+    // Run a Spark program on the acquired data
     addSpark(new SparkKMeansSpecification());
+    
+    // Query the processed data using a Procedure
     addProcedure(new CentersProcedure());
 
+    // Store input and processed data in ObjectStore Datasets
     try {
       ObjectStores.createObjectStore(getConfigurer(), "points", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "centers", String.class);
@@ -96,7 +106,7 @@ public class SparkKMeansApp extends AbstractApplication {
 
     @ProcessInput
     public void process(StreamEvent event) {
-      String body = new String(event.getBody().array());
+      String body = Bytes.toString(event.getBody());
       LOG.trace("Points info: {}", body);
       pointsStore.write(getIdAsByte(UUID.randomUUID()), body);
     }
@@ -147,8 +157,13 @@ public class SparkKMeansApp extends AbstractApplication {
         return;
       }
       LOG.debug("get center for index {}", index);
-      // Send response with JSON format.
-      responder.sendJson(centers.read(index.getBytes()));
+      String clusterCenters = centers.read(index.getBytes());
+      if (clusterCenters == null) {
+        responder.error(ProcedureResponse.Code.NOT_FOUND, "Index not found");
+      } else {
+        // Send response with JSON format.
+        responder.sendJson(clusterCenters);
+      }
     }
   }
 }

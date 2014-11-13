@@ -27,7 +27,6 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.stream.DefaultStreamEvent;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueEntry;
@@ -167,8 +166,8 @@ public class FlowTest {
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 10; i++) {
       String msg = "Testing message " + i;
-      StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of(),
-                                                 ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
+      StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(),
+                                          ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
       producer.enqueue(new QueueEntry(codec.encodePayload(event)));
     }
 

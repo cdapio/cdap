@@ -31,6 +31,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -444,13 +445,14 @@ final class HttpHandlerGenerator {
      *       txContext.start();
      *       try {
      *          delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
-     *          txContext.finish();
      *       } catch (Throwable t) {
      *         LOG.error("User handler exception", e);
      *         txContext.abort(new TransactionFailureException("User handler exception", e));
      *       }
+     *       txContext.finish();
      *     } catch (TransactionFailureException e) {
      *        LOG.error("Transaction failure: ", e);
+     *        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
      *     }
      *   }
      * }
@@ -461,6 +463,7 @@ final class HttpHandlerGenerator {
       Type txFailureExceptionType = Type.getType(TransactionFailureException.class);
       Type loggerType = Type.getType(Logger.class);
       Type throwableType = Type.getType(Throwable.class);
+      Type httpResponseStatusType = Type.getType(HttpResponseStatus.class);
 
       Label txTryBegin = mg.newLabel();
       Label txTryEnd = mg.newLabel();
@@ -495,9 +498,6 @@ final class HttpHandlerGenerator {
       // this.getHandler(wrapRequest(request), wrapResponder(responder), ...);
       generateInvokeDelegate(mg, method);
 
-      mg.loadLocal(txContext, txContextType);
-      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
-
       // } // end of inner try
       mg.mark(handlerTryEnd);
       mg.goTo(handlerFinish);
@@ -511,7 +511,7 @@ final class HttpHandlerGenerator {
       mg.getStatic(classType, "LOG", loggerType);
       mg.visitLdcInsn("User handler exception: ");
       mg.loadLocal(throwable);
-      mg.invokeVirtual(loggerType, Methods.getMethod(void.class, "error", String.class, Throwable.class));
+      mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class, Throwable.class));
 
       // transactionContext.abort(new TransactionFailureException("User handler exception: ", e));
       mg.loadLocal(txContext, txContextType);
@@ -524,6 +524,10 @@ final class HttpHandlerGenerator {
       mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "abort", TransactionFailureException.class));
 
       mg.mark(handlerFinish);
+
+      mg.loadLocal(txContext, txContextType);
+      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
+
       mg.goTo(txTryEnd);
 
       // } // end of outer try
@@ -539,8 +543,14 @@ final class HttpHandlerGenerator {
       mg.getStatic(classType, "LOG", loggerType);
       mg.visitLdcInsn("Transaction Failure: ");
       mg.loadLocal(txFailureException);
-      mg.invokeVirtual(loggerType, Methods.getMethod(void.class, "error", String.class,
-                                                                          TransactionFailureException.class));
+      mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
+                                                       Throwable.class));
+
+      // responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      mg.loadArg(1);
+      mg.getStatic(httpResponseStatusType, "INTERNAL_SERVER_ERROR", httpResponseStatusType);
+      mg.invokeInterface(Type.getType(HttpResponder.class),
+                         Methods.getMethod(void.class, "sendStatus", HttpResponseStatus.class));
 
       mg.mark(txFinish);
 

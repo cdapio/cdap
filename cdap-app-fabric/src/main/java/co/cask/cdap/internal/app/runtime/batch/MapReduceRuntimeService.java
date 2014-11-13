@@ -26,10 +26,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.data.stream.BytesStreamEventDecoder;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data.stream.TextStreamEventDecoder;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -55,9 +53,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -433,7 +429,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // If the user don't specify the decoder, detect the type from Mapper/Reducer
       setStreamEventDecoder(job);
     } else {
-      StreamInputFormat.setDecoderType(job, decoderType);
+      StreamInputFormat.setDecoderClassName(job, decoderType);
     }
     job.setInputFormatClass(StreamInputFormat.class);
 
@@ -493,15 +489,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (typeArgs.length < 2 || !LongWritable.class.equals(typeArgs[0])) {
         continue;
       }
-      // It might make sense to move the following mapping to some centralized place when more types are supported
-      // or when it needs to be shared with other program runner (e.g. Spark).
-      if (Text.class.equals(typeArgs[1])) {
-        StreamInputFormat.setDecoderType(job, TextStreamEventDecoder.class.getName());
+      try {
+        StreamInputFormat.inferDecoderClass(job.getConfiguration(), typeArgs[1]);
         return true;
-      }
-      if (BytesWritable.class.equals(typeArgs[1])) {
-        StreamInputFormat.setDecoderType(job, BytesStreamEventDecoder.class.getName());
-        return true;
+      } catch (IllegalArgumentException iae) {
+        LOG.debug("Failed to set decoder", iae);
       }
     }
     throw new IOException("Failed to determine decoder for consuming StreamEvent from " + userClass);
@@ -531,7 +523,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * @return a new {@link Location} containing the job jar
    */
   private Location buildJobJar(BasicMapReduceContext context) throws IOException {
-    ApplicationBundler appBundler = new ApplicationBundler(ImmutableList.of("org.apache.hadoop"),
+    // Excludes libraries that are for sure not needed.
+    // Hadoop - Available from the cluster
+    // Spark - MR never uses Spark
+    // Fastutil - 16MB library that only used in tehpra server
+    ApplicationBundler appBundler = new ApplicationBundler(ImmutableList.of("org.apache.hadoop",
+                                                                            "org.apache.spark",
+                                                                            "it.unimi.dsi.fastutil"),
                                                            ImmutableList.of("org.apache.hadoop.hbase",
                                                                             "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();

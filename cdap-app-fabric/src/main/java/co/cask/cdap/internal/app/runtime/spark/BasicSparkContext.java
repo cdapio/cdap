@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -111,6 +113,22 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     throw new IllegalStateException("Writing  dataset is not supported here");
   }
 
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass) {
+    throw new IllegalStateException("Reading stream is not supported here");
+  }
+
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
+    throw new IllegalStateException("Reading stream is not supported here");
+  }
+
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                              Class<? extends StreamEventDecoder> decoderType) {
+    throw new IllegalStateException("Reading stream is not supported here");
+  }
+
   private static String getMetricContext(Program program) {
     return String.format("%s.%s.%s.%s", program.getApplicationId(), TypeId.getMetricContextId(ProgramType.SPARK),
                          program.getName(), INSTANCE_ID);
@@ -135,6 +153,11 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
       LOG.warn("Argument with key {} not found in Runtime Arguments", argsKey);
       return NO_ARGS;
     }
+  }
+
+  @Override
+  public ServiceDiscoverer getServiceDiscoverer() {
+    throw new IllegalStateException("Service Discovery is not supported in this Context");
   }
 
   @Override
