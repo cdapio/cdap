@@ -343,10 +343,17 @@ public class TestFrameworkTest extends TestBase {
 
     LOG.info("Service Started");
 
+    // Call the ping endpoint
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
+
+    // Call the failure endpoint
+    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "failure");
+    request = HttpRequest.get(url).build();
+    response = HttpRequests.execute(request);
+    Assert.assertEquals(response.getResponseCode(), 500);
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
@@ -574,14 +581,31 @@ public class TestFrameworkTest extends TestBase {
   }
 
 
-  @Test (timeout = 30000L)
-  public void testInitDataSetAccess() throws TimeoutException, InterruptedException {
+  @Test (timeout = 60000L)
+  public void testFlowletInitAndSetInstances() throws TimeoutException, InterruptedException {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
     FlowManager flowManager = appManager.startFlow("DataSetFlow");
 
     RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
 
     flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
+
+    // Now change generator to 3 instances
+    flowManager.setFlowletInstances("Generator", 3);
+
+    // Now should have 3 processed from the consumer flowlet
+    flowletMetrics.waitForProcessed(3, 10, TimeUnit.SECONDS);
+
+    // Now reset to 1 instances
+    flowManager.setFlowletInstances("Generator", 1);
+
+    // Shouldn't have new item
+    TimeUnit.SECONDS.sleep(3);
+    Assert.assertEquals(3, flowletMetrics.getProcessed());
+
+    // Now set to 2 instances again. Since there is a new instance, expect one new item emitted
+    flowManager.setFlowletInstances("Generator", 2);
+    flowletMetrics.waitForProcessed(4, 10, TimeUnit.SECONDS);
 
     flowManager.stop();
 

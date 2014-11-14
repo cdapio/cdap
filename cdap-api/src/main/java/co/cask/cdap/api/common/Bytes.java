@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.api.common;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSortedMap;
 
 import java.io.DataOutput;
@@ -191,6 +192,23 @@ public class Bytes {
     } catch (UnsupportedEncodingException e) {
       return null;
     }
+  }
+
+  /**
+   * This method will convert the remaining bytes of a UTF8
+   * encoded byte buffer into a string.
+   *
+   * @param buf Presumed UTF-8 encoded byte buffer.
+   * @return String made from <code>buf</code> or null
+   */
+  public static String toString(ByteBuffer buf) {
+    if (buf == null) {
+      return null;
+    }
+    buf.mark();
+    String s = Charsets.UTF_8.decode(buf).toString();
+    buf.reset();
+    return s;
   }
 
   /**
@@ -1397,8 +1415,8 @@ public class Bytes {
    * @param value value of the entry
    * @return instance of {@link NavigableMap}
    */
-  public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key, byte[] value) {
-    return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
+  public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key, T value) {
+    return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR).put(key, value).build();
   }
 
   /**
@@ -1409,9 +1427,9 @@ public class Bytes {
    * @param value2 value of the second entry
    * @return instance of {@link NavigableMap}
    */
-  public static NavigableMap<byte[], byte[]> immutableSortedMapOf(byte[] key1, byte[] value1,
-                                                                  byte[] key2, byte[] value2) {
-    return ImmutableSortedMap.<byte[], byte[]>orderedBy(Bytes.BYTES_COMPARATOR)
+  public static <T> NavigableMap<byte[], T> immutableSortedMapOf(byte[] key1, T value1,
+                                                                  byte[] key2, T value2) {
+    return ImmutableSortedMap.<byte[], T>orderedBy(Bytes.BYTES_COMPARATOR)
       .put(key1, value1)
       .put(key2, value2).build();
   }

@@ -19,10 +19,8 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.common.lang.ApiResourceListHolder;
-import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.lang.jar.ProgramClassLoader;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
@@ -63,9 +61,7 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationSpecLoca
     File unpackedLocation = Files.createTempDir();
     try {
       BundleJarUtil.unpackProgramJar(input.getArchive(), unpackedLocation);
-      ProgramClassLoader classLoader = ClassLoaders.newProgramClassLoader(unpackedLocation,
-                                                                          ApiResourceListHolder.getResourceList(),
-                                                                          this.getClass().getClassLoader());
+      ClassLoader classLoader = ProgramClassLoader.create(unpackedLocation, getClass().getClassLoader());
       for (Map.Entry<String, String> moduleEntry : specification.getDatasetModules().entrySet()) {
         // note: using app class loader to load module class
         @SuppressWarnings("unchecked")

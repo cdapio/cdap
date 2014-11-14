@@ -21,7 +21,6 @@ import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.app.queue.InputDatum;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,30 +81,23 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   public ProcessResult<T> invoke(InputDatum<T> input) {
     try {
       Preconditions.checkState(!hasParam || input.needProcess(), "Empty input provided to method that needs input.");
-
       InputContext inputContext = input.getInputContext();
 
-      try {
-        if (hasParam) {
-          if (needsIterator) {
-            invoke(method, input.iterator(), inputContext);
-          } else {
-            for (T event : input) {
-              invoke(method, event, inputContext);
-            }
-          }
+      if (hasParam) {
+        if (needsIterator) {
+          invoke(method, input.iterator(), inputContext);
         } else {
-          method.invoke(flowlet);
+          for (T event : input) {
+            invoke(method, event, inputContext);
+          }
         }
-
-        return createResult(input, null);
-      } catch (Throwable t) {
-        return createResult(input, t.getCause());
+      } else {
+        method.invoke(flowlet);
       }
-    } catch (Exception e) {
-      // System error if we reached here. E.g. failed to dequeue/decode event
-      LOG.error("Fail to process input: {}", method, e);
-      throw Throwables.propagate(e);
+
+      return createResult(input, null);
+    } catch (Throwable t) {
+      return createResult(input, t.getCause());
     }
   }
 

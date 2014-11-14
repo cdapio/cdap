@@ -29,6 +29,7 @@ import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
@@ -59,12 +60,13 @@ public class SparkProgramRunner implements ProgramRunner {
   private final TransactionSystemClient txSystemClient;
   private final LocationFactory locationFactory;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final StreamAdmin streamAdmin;
 
   @Inject
   public SparkProgramRunner(DatasetFramework datasetFramework, CConfiguration cConf,
                             MetricsCollectionService metricsCollectionService, Configuration hConf,
                             TransactionSystemClient txSystemClient, LocationFactory locationFactory,
-                            DiscoveryServiceClient discoveryServiceClient) {
+                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
     this.hConf = hConf;
     this.datasetFramework = datasetFramework;
     this.cConf = cConf;
@@ -72,6 +74,7 @@ public class SparkProgramRunner implements ProgramRunner {
     this.locationFactory = locationFactory;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.streamAdmin = streamAdmin;
   }
 
   @Override
@@ -115,7 +118,7 @@ public class SparkProgramRunner implements ProgramRunner {
 
     Service sparkRuntimeService = new SparkRuntimeService(cConf, hConf, spark, spec, context,
                                                           program.getJarLocation(), locationFactory,
-                                                          txSystemClient);
+                                                          txSystemClient, streamAdmin);
     ProgramController controller = new SparkProgramController(sparkRuntimeService, context);
 
     LOG.info("Starting Spark Job: {}", context.toString());

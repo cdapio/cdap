@@ -16,12 +16,13 @@ To create a project from the archetype, use this script as an example:
  mvn archetype:generate 					
   -DarchetypeGroupId=co.cask.cdap 			
   -DarchetypeArtifactId=cdap-spark-scala-archetype 	
-  -DarchetypeVersion=2.5.1
-  -DgroupId=org.company 					
-  -DartifactId=SparkKMeans 				
+  -DarchetypeVersion=2.6.0
+  -DgroupId=com.example 					
+  -DartifactId=SparkKMeansExample
   -Dversion=1.0						
 
 ```  
+To confirm project creation, type Y and press ENTER.
 
 ## License and Trademarks
 
@@ -37,3 +38,7 @@ License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF 
 either express or implied. See the License for the specific language governing permissions
 and limitations under the License.
 
+Cask is a trademark of Cask Data, Inc. All rights reserved.
+
+Apache, Apache HBase, and HBase are trademarks of The Apache Software Foundation. Used with
+permission. No endorsement by The Apache Software Foundation is implied by the use of these marks.
