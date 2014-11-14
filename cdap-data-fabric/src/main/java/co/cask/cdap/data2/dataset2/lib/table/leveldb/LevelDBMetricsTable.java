@@ -35,14 +35,21 @@ import javax.annotation.Nullable;
  */
 public class LevelDBMetricsTable implements MetricsTable {
 
-  private final LevelDBOrderedTableCore core;
-
   private static final Function<Long, byte[]> LONG_TO_BYTES = new Function<Long, byte[]>() {
     @Override
     public byte[] apply(Long input) {
       return Bytes.toBytes(input);
     }
   };
+  private static final Function<NavigableMap<byte[], Long>, NavigableMap<byte[], byte[]>>
+    TRANSFORM_MAP_LONG_TO_BYTE_ARRAY = new Function<NavigableMap<byte[], Long>, NavigableMap<byte[], byte[]>>() {
+    @Override
+    public NavigableMap<byte[], byte[]> apply(NavigableMap<byte[], Long> input) {
+      return Maps.transformValues(input, LONG_TO_BYTES);
+    }
+  };
+
+  private final LevelDBOrderedTableCore core;
 
   public LevelDBMetricsTable(String tableName, LevelDBOrderedTableService service) throws IOException {
     this.core = new LevelDBOrderedTableCore(tableName, service);
@@ -57,13 +64,6 @@ public class LevelDBMetricsTable implements MetricsTable {
     return null;
   }
 
-  private static final Function<NavigableMap<byte[], Long>, NavigableMap<byte[], byte[]>>
-    TRANSFORM_MAP_LONG_TO_BYTE_ARRAY = new Function<NavigableMap<byte[], Long>, NavigableMap<byte[], byte[]>>() {
-    @Override
-    public NavigableMap<byte[], byte[]> apply(NavigableMap<byte[], Long> input) {
-      return Maps.transformValues(input, LONG_TO_BYTES);
-    }
-  };
   @Override
   public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> convertedUpdates =
