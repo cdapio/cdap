@@ -114,16 +114,15 @@ public final class AggregatesTable {
           }
           aggregatesTable.increment(rowKey, increments);
         } else if (record.getType() == MetricType.GAUGE) {
-          NavigableMap<byte[], byte[]> gauges = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-
+          NavigableMap<byte[], Long> gauges = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
           // The no tag value
-          gauges.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), Bytes.toBytes(record.getValue()));
+          gauges.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
 
           // For each tag, sets corresponding values
           for (TagMetric tag : record.getTags()) {
-            gauges.put(Bytes.toBytes(tag.getTag()), Bytes.toBytes(record.getValue()));
+            gauges.put(Bytes.toBytes(tag.getTag()), record.getValue());
           }
-          NavigableMap<byte[], NavigableMap<byte[], byte[]>> keyMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+          NavigableMap<byte[], NavigableMap<byte[], Long>> keyMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
           keyMap.put(rowKey, gauges);
           aggregatesTable.put(keyMap);
         }

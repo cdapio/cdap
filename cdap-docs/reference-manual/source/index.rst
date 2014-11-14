@@ -29,7 +29,7 @@ CDAP Reference Manual: APIs, Licenses, and Dependencies
 
 
 .. |cli| replace:: **Command-Line Interface API:**
-.. _cli: cli-api/index.html
+.. _cli: cli-api.html
 
 - |cli|_ methods for interacting with a CDAP instance from within a shell.
 

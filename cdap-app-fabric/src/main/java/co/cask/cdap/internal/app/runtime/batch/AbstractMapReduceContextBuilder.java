@@ -21,7 +21,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -30,16 +29,10 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -51,8 +44,6 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractMapReduceContextBuilder {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractMapReduceContextBuilder.class);
-
   /**
    * Build the instance of {@link BasicMapReduceContext}.
    *
@@ -60,8 +51,7 @@ public abstract class AbstractMapReduceContextBuilder {
    * @param logicalStartTime The logical start time of the job.
    * @param workflowBatch Tells whether the batch job is started by workflow.
    * @param tx transaction to use
-   * @param classLoader classloader to use
-   * @param programLocation program location
+   * @param mrProgram program containing the MapReduce job
    * @param inputDataSetName name of the input dataset if specified for this mapreduce job, null otherwise
    * @param inputSplits input splits if specified for this mapreduce job, null otherwise
    * @param outputDataSetName name of the output dataset if specified for this mapreduce job, null otherwise
@@ -73,27 +63,20 @@ public abstract class AbstractMapReduceContextBuilder {
                                      String workflowBatch,
                                      Arguments runtimeArguments,
                                      Transaction tx,
-                                     ClassLoader classLoader,
-                                     URI programLocation,
+                                     Program mrProgram,
                                      @Nullable String inputDataSetName,
                                      @Nullable List<Split> inputSplits,
                                      @Nullable String outputDataSetName) {
     Injector injector = prepare();
 
     // Initializing Program
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    Program program;
-    try {
-      program = Programs.create(locationFactory.create(programLocation), classLoader);
-      // See if it is launched from Workflow, if it is, change the Program.
-      if (workflowBatch != null) {
-        MapReduceSpecification mapReduceSpec = program.getSpecification().getMapReduce().get(workflowBatch);
-        Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s", workflowBatch);
-        program = new WorkflowMapReduceProgram(program, mapReduceSpec);
-      }
-    } catch (IOException e) {
-      LOG.error("Could not init Program based on location: " + programLocation);
-      throw Throwables.propagate(e);
+    Program program = mrProgram;
+
+    // See if it was launched from Workflow; if it was, change the Program.
+    if (workflowBatch != null) {
+      MapReduceSpecification mapReduceSpec = program.getSpecification().getMapReduce().get(workflowBatch);
+      Preconditions.checkArgument(mapReduceSpec != null, "Cannot find MapReduceSpecification for %s", workflowBatch);
+      program = new WorkflowMapReduceProgram(program, mapReduceSpec);
     }
 
     // Initializing dataset context and hooking it up with mapreduce job transaction

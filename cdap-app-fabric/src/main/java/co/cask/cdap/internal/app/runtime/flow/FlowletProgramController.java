@@ -35,14 +35,14 @@ final class FlowletProgramController extends AbstractProgramController {
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramController.class);
 
   private final BasicFlowletContext flowletContext;
-  private final FlowletProcessDriver driver;
+  private final FlowletRuntimeService driver;
   private final Collection<ConsumerSupplier<?>> consumerSuppliers;
 
   /**
    * Constructs an instance. The instance must be constructed before the flowlet driver starts.
    */
   FlowletProgramController(String programName, String flowletName,
-                           BasicFlowletContext flowletContext, FlowletProcessDriver driver,
+                           BasicFlowletContext flowletContext, FlowletRuntimeService driver,
                            Collection<ConsumerSupplier<?>> consumerSuppliers) {
     super(programName + ":" + flowletName, flowletContext.getRunId());
     this.flowletContext = flowletContext;
@@ -111,7 +111,7 @@ final class FlowletProgramController extends AbstractProgramController {
     flowletContext.setInstanceCount(instanceCount);
   }
 
-  private void listenDriveState(FlowletProcessDriver driver) {
+  private void listenDriveState(FlowletRuntimeService driver) {
     driver.addListener(new ServiceListenerAdapter() {
       @Override
       public void running() {

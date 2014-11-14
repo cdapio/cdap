@@ -18,7 +18,7 @@ authentication mechanisms supported by CDAP:
 
 -  Basic Authentication
 -  LDAP
--  JAASPI
+-  JASPI
 
 Custom Authentication Mechanism
 -------------------------------

@@ -19,7 +19,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.kafka.client.TopicPartition;
 
@@ -41,9 +40,9 @@ public final class KafkaConsumerMetaTable {
 
   public synchronized void save(Map<TopicPartition, Long> offsets) throws OperationException {
 
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> updates = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<TopicPartition, Long> entry : offsets.entrySet()) {
-      updates.put(getKey(entry.getKey()), Bytes.immutableSortedMapOf(OFFSET_COLUMN, Bytes.toBytes(entry.getValue())));
+      updates.put(getKey(entry.getKey()), Bytes.immutableSortedMapOf(OFFSET_COLUMN, entry.getValue()));
     }
     try {
       metaTable.put(updates);

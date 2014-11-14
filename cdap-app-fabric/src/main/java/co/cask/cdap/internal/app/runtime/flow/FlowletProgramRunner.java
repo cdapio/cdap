@@ -238,19 +238,19 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                                           dataFabricFacade, queueSpecs)));
 
       ImmutableList.Builder<ConsumerSupplier<?>> queueConsumerSupplierBuilder = ImmutableList.builder();
-      Collection<ProcessSpecification> processSpecs =
+      Collection<ProcessSpecification<?>> processSpecs =
         createProcessSpecification(flowletContext, flowletType,
                                    processMethodFactory(flowlet),
                                    processSpecificationFactory(flowletContext, dataFabricFacade, queueReaderFactory,
                                                                flowletName, queueSpecs, queueConsumerSupplierBuilder,
                                                                createSchemaCache(program)),
-                                   Lists.<ProcessSpecification>newLinkedList());
+                                   Lists.<ProcessSpecification<?>>newLinkedList());
       List<ConsumerSupplier<?>> consumerSuppliers = queueConsumerSupplierBuilder.build();
 
       // Create the flowlet driver
       AtomicReference<FlowletProgramController> controllerRef = new AtomicReference<FlowletProgramController>();
       Service serviceHook = createServiceHook(flowletName, consumerSuppliers, controllerRef);
-      FlowletProcessDriver driver = new FlowletProcessDriver(flowlet, flowletContext, processSpecs,
+      FlowletRuntimeService driver = new FlowletRuntimeService(flowlet, flowletContext, processSpecs,
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
                                                              dataFabricFacade, serviceHook);
 
@@ -288,11 +288,9 @@ public final class FlowletProgramRunner implements ProgramRunner {
    * @return The same {@link Collection} as the {@code result} parameter.
    */
   @SuppressWarnings("unchecked")
-  private Collection<ProcessSpecification> createProcessSpecification(BasicFlowletContext flowletContext,
-                                                                      TypeToken<? extends Flowlet> flowletType,
-                                                                      ProcessMethodFactory processMethodFactory,
-                                                                      ProcessSpecificationFactory processSpecFactory,
-                                                                      Collection<ProcessSpecification> result)
+  private <T extends Collection<ProcessSpecification<?>>> T createProcessSpecification(
+    BasicFlowletContext flowletContext, TypeToken<? extends Flowlet> flowletType,
+    ProcessMethodFactory processMethodFactory, ProcessSpecificationFactory processSpecFactory, T result)
     throws NoSuchMethodException {
 
     Set<FlowletMethod> seenMethods = Sets.newHashSet();
@@ -672,7 +670,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   /**
    * This service is for start/stop listening to changes in stream property, through the help of
    * {@link StreamCoordinator}, so that it can react to changes and properly reconfigure stream consumers used by
-   * the flowlet. This hook is provided to {@link FlowletProcessDriver} and being start/stop
+   * the flowlet. This hook is provided to {@link FlowletRuntimeService} and being start/stop
    * when the driver start/stop.
    */
   private static final class FlowletServiceHook extends AbstractService {
