@@ -384,7 +384,8 @@ public class DefaultStore implements Store {
         // Create a new spec copy from the old one, except with updated instances number
         serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
                                                serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                               serviceSpec.getWorkers(), serviceSpec.getResources(), instances);
+                                               serviceSpec.getWorkers(), serviceSpec.getResources(),
+                                               instances, serviceSpec.isLocal());
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
@@ -434,7 +435,8 @@ public class DefaultStore implements Store {
         updatedWorkers.put(workerName, workerSpec);
         serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
                                                serviceSpec.getDescription(), serviceSpec.getHandlers(),
-                                               updatedWorkers, serviceSpec.getResources(), serviceSpec.getInstances());
+                                               updatedWorkers, serviceSpec.getResources(),
+                                               serviceSpec.getInstances(), serviceSpec.isLocal());
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);

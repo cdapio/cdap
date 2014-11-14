@@ -210,4 +210,23 @@ public abstract class AbstractApplication implements Application {
   protected void addService(String name, HttpServiceHandler handler, HttpServiceHandler...handlers) {
     configurer.addService(new BasicService(name, handler, handlers));
   }
+
+  /**
+   * @see ApplicationConfigurer#addLocalService(Service)
+   */
+  protected void addLocalService(Service service) {
+    configurer.addLocalService(service);
+  }
+
+  /**
+   * Adds a local {@link Service} that consists of the given {@link HttpServiceHandler}.
+   * This service will only be visible from within the same application.
+   *
+   * @param name Name of the Service
+   * @param handler handler for the Service
+   * @param handlers more handlers for the Service
+   */
+  protected void addLocalService(String name, HttpServiceHandler handler, HttpServiceHandler...handlers) {
+    configurer.addLocalService(new BasicService(name, handler, handlers));
+  }
 }

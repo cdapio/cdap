@@ -62,8 +62,8 @@ public class AppUsingGetServiceURL extends AbstractApplication {
   public void configure() {
       setName(APP_NAME);
       addProcedure(new ForwardingProcedure());
-      addService(new CentralService());
       addService(new ServiceWithWorker());
+      addLocalService(new CentralService());
       createDataset(DATASET_NAME, KeyValueTable.class);
   }
 
@@ -148,8 +148,8 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           return;
         }
 
-        URL url = null;
-        String response = null;
+        URL url;
+        String response;
         try {
           url = new URL(baseURL, "ping");
         } catch (MalformedURLException e) {
@@ -169,7 +169,6 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           }
         } catch (IOException e) {
           LOG.error("Got exception {}", e);
-          return;
         }
       }
     }

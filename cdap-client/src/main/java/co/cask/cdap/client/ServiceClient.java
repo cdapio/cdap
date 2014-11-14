@@ -85,8 +85,10 @@ public class ServiceClient {
 
     ServiceSpecification specification = get(appId, serviceId);
     ImmutableList.Builder<ServiceHttpEndpoint> builder = new ImmutableList.Builder<ServiceHttpEndpoint>();
-    for (HttpServiceHandlerSpecification handlerSpecification : specification.getHandlers().values()) {
-      builder.addAll(handlerSpecification.getEndpoints());
+    if (!specification.isLocal()) {
+      for (HttpServiceHandlerSpecification handlerSpecification : specification.getHandlers().values()) {
+        builder.addAll(handlerSpecification.getEndpoints());
+      }
     }
     return builder.build();
   }

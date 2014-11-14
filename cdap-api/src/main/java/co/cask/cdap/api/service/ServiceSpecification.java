@@ -35,11 +35,12 @@ public final class ServiceSpecification implements ProgramSpecification {
   private final Map<String, ServiceWorkerSpecification> workers;
   private final Resources resources;
   private final int instances;
+  private final boolean local;
 
   public ServiceSpecification(String className, String name, String description,
                               Map<String, HttpServiceHandlerSpecification> handlers,
                               Map<String, ServiceWorkerSpecification> workers,
-                              Resources resources, int instances) {
+                              Resources resources, int instances, boolean local) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -47,6 +48,7 @@ public final class ServiceSpecification implements ProgramSpecification {
     this.workers = Collections.unmodifiableMap(new HashMap<String, ServiceWorkerSpecification>(workers));
     this.resources = resources;
     this.instances = instances;
+    this.local = local;
   }
 
   @Override
@@ -90,5 +92,13 @@ public final class ServiceSpecification implements ProgramSpecification {
    */
   public Resources getResources() {
     return resources;
+  }
+
+  /**
+   * Returns the visibility scope of the Service.
+   * @return true if visible only within the same application, false otherwise.
+   */
+  public boolean isLocal() {
+    return local;
   }
 }

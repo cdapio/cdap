@@ -17,6 +17,7 @@
 package co.cask.cdap.app.services;
 
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
@@ -25,6 +26,7 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.PayloadDiscoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,7 +103,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   }
 
   private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceId) {
-    if (discoverable == null) {
+    if (discoverable == null || !isVisible(discoverable, applicationId)) {
       return null;
     }
     String hostName = discoverable.getSocketAddress().getHostName();
@@ -114,6 +116,16 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
       LOG.error("Got exception while creating serviceURL", e);
       return null;
     }
+  }
+
+  // Local services are discoverable from programs only within the same application.
+  private boolean isVisible(Discoverable discoverable, String applicationId) {
+    if (discoverable instanceof PayloadDiscoverable) {
+      PayloadDiscoverable payloadDiscoverable = (PayloadDiscoverable) discoverable;
+      String scope = Bytes.toString(payloadDiscoverable.getPayload());
+      return !(scope.equals("local") && !this.applicationId.equals(applicationId));
+    }
+    return true;
   }
 
   /**

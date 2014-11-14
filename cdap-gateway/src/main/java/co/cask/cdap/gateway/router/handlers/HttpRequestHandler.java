@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.router.handlers;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.gateway.router.ProxyRule;
@@ -24,6 +25,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.io.Closeables;
 import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.PayloadDiscoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
@@ -185,12 +187,22 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                   httpRequest.getUri()));
     }
     Discoverable discoverable = strategy.pick();
-    if (discoverable == null) {
+    if (discoverable == null || !isVisible(discoverable)) {
       throw  new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
                                   String.format("No discoverable found for request : %s",
                                                 httpRequest.getUri()));
     }
     return new WrappedDiscoverable(discoverable);
+  }
+
+  // Local service discoverables have a payload set to "local"s
+  private boolean isVisible(Discoverable discoverable) {
+    if (discoverable instanceof PayloadDiscoverable) {
+      PayloadDiscoverable payloadDiscoverable = (PayloadDiscoverable) discoverable;
+      String scope = Bytes.toString(payloadDiscoverable.getPayload());
+      return !scope.equals("local");
+    }
+    return true;
   }
 
   /**

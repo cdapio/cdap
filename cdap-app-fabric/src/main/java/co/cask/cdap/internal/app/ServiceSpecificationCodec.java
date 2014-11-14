@@ -74,8 +74,9 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
                                                                      ServiceWorkerSpecification.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     int instances = jsonObj.get("instances").getAsInt();
+    boolean local = jsonObj.get("local").getAsBoolean();
 
-    return new ServiceSpecification(className, name, description, handlers, workers, resources, instances);
+    return new ServiceSpecification(className, name, description, handlers, workers, resources, instances, local);
   }
 
   @Override
@@ -88,6 +89,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     object.add("workers", serializeMap(spec.getWorkers(), context, ServiceWorkerSpecification.class));
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.addProperty("instances", spec.getInstances());
+    object.addProperty("local", spec.isLocal());
     return object;
   }
 
@@ -144,6 +146,6 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();
     return new ServiceSpecification(className, twillSpec.getName(), twillSpec.getName(), handlers, workers,
                                     new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
-                                    resourceSpec.getInstances());
+                                    resourceSpec.getInstances(), false);
   }
 }

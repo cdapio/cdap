@@ -146,4 +146,12 @@ public interface ApplicationConfigurer {
    * @param service The service to include in the Application
    */
   void addService(Service service);
+
+  /**
+   * Adds a {@link Service} to the Application.
+   * The service  will be visible only to programs within the same application. It will not be discoverable
+   * or usable from outside the application.
+   * @param service The service to include in the Application
+   */
+  void addLocalService(Service service);
 }

@@ -51,6 +51,7 @@ import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.PayloadDiscoverable;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -158,6 +159,12 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
           return new InetSocketAddress(hostname, port);
         }
       });
+    }
+
+    @Override
+    public Cancellable announce(final String serviceName, final int port, final byte[] payload) {
+      return discoveryService.register(new PayloadDiscoverable(serviceName, new InetSocketAddress(hostname, port),
+                                                               payload));
     }
   }
 }

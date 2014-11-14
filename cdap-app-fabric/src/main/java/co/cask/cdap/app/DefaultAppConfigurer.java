@@ -172,9 +172,19 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     mapReduces.putAll(spec.getMapReduce());
   }
 
+  @Override
   public void addService(Service service) {
+    addService(service, false);
+  }
+
+  @Override
+  public void addLocalService(Service service) {
+    addService(service, true);
+  }
+
+  private void addService(Service service, boolean local) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, local);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();

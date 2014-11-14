@@ -36,6 +36,7 @@ import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -53,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -251,7 +253,6 @@ public class TestFrameworkTest extends TestBase {
     // Verify that the procedure was able to hit the CentralService and retrieve the answer.
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
 
-
     // Test serviceWorker's getServiceURL
     ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
     serviceStatusCheck(serviceWithWorker, true);
@@ -262,13 +263,38 @@ public class TestFrameworkTest extends TestBase {
     serviceStatusCheck(serviceWithWorker, false);
 
     result = procedureClient.query("readDataSet", ImmutableMap.of(AppUsingGetServiceURL.DATASET_WHICH_KEY,
-                                                           AppUsingGetServiceURL.DATASET_KEY));
+                                                                  AppUsingGetServiceURL.DATASET_KEY));
     decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
     procedureManager.stop();
 
+    ApplicationManager appWithServicesManager = deployApplication(AppWithServices.class);
+    // Test that a local service, Central Service, is not discoverable from a differenct app
+    ServiceManager serverServiceManager = appWithServicesManager.startService(AppWithServices.SERVER_SERVICE_NAME);
+    serviceStatusCheck(serverServiceManager, true);
+    URL url = new URL(serverServiceManager.getServiceURL(), String.format("discover/%s/%s",
+                                                                          AppUsingGetServiceURL.APP_NAME,
+                                                                          AppUsingGetServiceURL.CENTRAL_SERVICE));
+    HttpRequest request = HttpRequest.builder(HttpMethod.GET, url).build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+    // Test that a local service, DatasetUpdateService, is discoverable from the same app
+    String datasetUpdateServiceName = AppWithServices.DATASET_UPDATE_SERVICE_NAME;
+    ServiceManager datasetUpdateServiceManager = appWithServicesManager.startService(datasetUpdateServiceName);
+    url = new URL(serverServiceManager.getServiceURL(), String.format("discover/%s/%s",
+                                                                      AppWithServices.APP_NAME,
+                                                                      datasetUpdateServiceName));
+    request = HttpRequest.builder(HttpMethod.GET, url).build();
+    response = HttpRequests.execute(request);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
     centralServiceManager.stop();
+    serverServiceManager.stop();
+    datasetUpdateServiceManager.stop();
     serviceStatusCheck(centralServiceManager, false);
+    serviceStatusCheck(serverServiceManager, false);
+    serviceStatusCheck(datasetUpdateServiceManager, false);
   }
 
   /**
@@ -338,7 +364,7 @@ public class TestFrameworkTest extends TestBase {
   public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
     LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
+    ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVER_SERVICE_NAME);
     serviceStatusCheck(serviceManager, true);
 
     LOG.info("Service Started");
@@ -363,7 +389,7 @@ public class TestFrameworkTest extends TestBase {
     // TestMetricsCollectionService
 
     LOG.info("DatasetUpdateService Started");
-    serviceManager = applicationManager.startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
+    serviceManager = applicationManager.startService(AppWithServices.DATASET_UPDATE_SERVICE_NAME);
     serviceStatusCheck(serviceManager, true);
 
     ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");

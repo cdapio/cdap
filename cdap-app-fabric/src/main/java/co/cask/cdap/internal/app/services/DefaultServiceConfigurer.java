@@ -44,6 +44,7 @@ import java.util.Map;
  * A default implementation of {@link ServiceConfigurer}.
  */
 public class DefaultServiceConfigurer implements ServiceConfigurer {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceConfigurer.class);
   private final String className;
   private String name;
   private String description;
@@ -51,12 +52,13 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private List<HttpServiceHandler> handlers;
   private Resources resources;
   private int instances;
-  private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceConfigurer.class);
+  private final boolean local;
+
 
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
    */
-  public DefaultServiceConfigurer(Service service) {
+  public DefaultServiceConfigurer(Service service, boolean local) {
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
@@ -64,6 +66,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     this.handlers = Lists.newArrayList();
     this.resources = new Resources();
     this.instances = 1;
+    this.local = local;
   }
 
   @Override
@@ -112,7 +115,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   public ServiceSpecification createSpecification() {
     Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new ServiceSpecification(className, name, description, handleSpecs, workers, resources, instances);
+    return new ServiceSpecification(className, name, description, handleSpecs, workers, resources, instances, local);
   }
 
   /**
