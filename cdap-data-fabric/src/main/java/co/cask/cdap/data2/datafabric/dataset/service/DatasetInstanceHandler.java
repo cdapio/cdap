@@ -26,14 +26,13 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
-import co.cask.cdap.explore.client.DatasetExploreFacade;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -46,16 +45,12 @@ import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -79,18 +74,18 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetTypeManager implManager;
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
-  private final DatasetExploreFacade datasetExploreFacade;
+  private final ExploreFacade exploreFacade;
 
   private final CConfiguration conf;
 
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
-                                DatasetOpExecutor opExecutorClient, DatasetExploreFacade datasetExploreFacade,
+                                DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 CConfiguration conf) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
-    this.datasetExploreFacade = datasetExploreFacade;
+    this.exploreFacade = exploreFacade;
     this.conf = conf;
   }
 
@@ -168,7 +163,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Enable ad-hoc exploration of dataset
     // Note: today explore enable is not transactional with dataset create - CDAP-8
     try {
-      datasetExploreFacade.enableExplore(name);
+      exploreFacade.enableExploreDataset(name);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
                                  name, creationProperties.getProperties(), e.getMessage());
@@ -216,8 +211,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // Note: today explore enable is not transactional with dataset create - CDAP-8
 
     try {
-      datasetExploreFacade.disableExplore(name);
-      datasetExploreFacade.enableExplore(name);
+      exploreFacade.disableExploreDataset(name);
+      exploreFacade.enableExploreDataset(name);
     } catch (Exception e) {
       String msg = String.format("Cannot enable exploration of dataset instance %s of type %s: %s",
                                  name, creationProperties.getProperties(), e.getMessage());
@@ -347,7 +342,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     // First disable ad-hoc exploration of dataset
     // Note: today explore disable is not transactional with dataset delete - CDAP-8
     try {
-      datasetExploreFacade.disableExplore(name);
+      exploreFacade.disableExploreDataset(name);
     } catch (ExploreException e) {
       String msg = String.format("Cannot disable exploration of dataset instance %s: %s",
                                  name, e.getMessage());

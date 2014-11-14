@@ -28,6 +28,7 @@ import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.SerializableServiceDiscoverer;
 import co.cask.cdap.data.stream.StreamInputFormat;
+import co.cask.cdap.data.stream.StreamInputFormatConfigurer;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
@@ -209,16 +210,16 @@ abstract class AbstractSparkContext implements SparkContext {
     StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
-    StreamInputFormat.setTTL(hConf, streamConfig.getTTL());
-    StreamInputFormat.setStreamPath(hConf, streamPath.toURI());
-    StreamInputFormat.setTimeRange(hConf, stream.getStartTime(), stream.getEndTime());
+    StreamInputFormatConfigurer.setTTL(hConf, streamConfig.getTTL());
+    StreamInputFormatConfigurer.setStreamPath(hConf, streamPath.toURI());
+    StreamInputFormatConfigurer.setTimeRange(hConf, stream.getStartTime(), stream.getEndTime());
 
     String decoderType = stream.getDecoderType();
     if (decoderType == null) {
         // If the user don't specify the decoder, detect the type
-        StreamInputFormat.inferDecoderClass(hConf, vClass);
+        StreamInputFormatConfigurer.inferDecoderClass(hConf, vClass);
     } else {
-      StreamInputFormat.setDecoderClassName(hConf, decoderType);
+      StreamInputFormatConfigurer.setDecoderClassName(hConf, decoderType);
     }
     hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, StreamInputFormat.class, InputFormat.class);
 

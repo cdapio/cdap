@@ -22,6 +22,8 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
@@ -40,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
+import java.util.Map;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -47,25 +50,59 @@ import javax.ws.rs.PathParam;
 /**
  * Handler that implements internal explore APIs.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.GATEWAY_VERSION + "/data/explore")
 public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
 
   private final ExploreService exploreService;
   private final DatasetFramework datasetFramework;
+  private final StreamAdmin streamAdmin;
 
   @Inject
-  public ExploreExecutorHttpHandler(ExploreService exploreService, DatasetFramework datasetFramework) {
+  public ExploreExecutorHttpHandler(ExploreService exploreService,
+                                    DatasetFramework datasetFramework,
+                                    StreamAdmin streamAdmin) {
     this.exploreService = exploreService;
     this.datasetFramework = datasetFramework;
+    this.streamAdmin = streamAdmin;
+  }
+
+  @POST
+  @Path("streams/{stream}/enable")
+  public void enableStream(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                           @PathParam("stream") final String streamName) {
+    try {
+
+      LOG.debug("Enabling explore for stream {}", streamName);
+      String createStatement;
+      try {
+        StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+        String streamLocation = streamConfig.getLocation().toURI().toString();
+        createStatement = generateStreamCreateStatement(streamName, streamLocation);
+      } catch (UnsupportedTypeException e) {
+        LOG.error("Exception while generating create statement for stream {}", streamName, e);
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        return;
+      }
+
+      LOG.debug("Running create statement for stream {}", streamName);
+
+      QueryHandle handle = exploreService.execute(createStatement);
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", handle.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   /**
    * Enable ad-hoc exploration of a dataset instance.
    */
   @POST
-  @Path("data/explore/datasets/{dataset}/enable")
-  public void enableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+  @Path("/datasets/{dataset}/enable")
+  public void enableDataset(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                             @PathParam("dataset") final String datasetName) {
     try {
       Dataset dataset;
@@ -85,7 +122,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
       if (dataset == null) {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
       }
 
@@ -106,7 +143,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         createStatement = generateCreateStatement(datasetName, dataset);
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for dataset {}", datasetName, e);
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
       }
 
@@ -121,7 +158,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -139,15 +176,15 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * Disable ad-hoc exploration of a dataset instance.
    */
   @POST
-  @Path("data/explore/datasets/{dataset}/disable")
-  public void disableExplore(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+  @Path("/datasets/{dataset}/disable")
+  public void disableDataset(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
                              @PathParam("dataset") final String datasetName) {
     try {
       LOG.debug("Disabling explore for dataset instance {}", datasetName);
 
       Dataset dataset = datasetFramework.getDataset(datasetName, DatasetDefinition.NO_ARGUMENTS, null);
       if (dataset == null) {
-        responder.sendError(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetName);
         return;
       }
 
@@ -171,7 +208,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, json);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
-      responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
@@ -181,11 +218,31 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     return datasetName.replaceAll("\\.", "_").toLowerCase();
   }
 
+  /**
+   * Generate the hive sql statement for creating a table to query the underlying stream. Note that Hive will put
+   * in a dummy value for an external table if it is not given in the create statement, which will result in a
+   * table that cannot be queried. As such, the location must be given and accurate.
+   *
+   * @param name name of the stream
+   * @param location location of the stream
+   * @return hive statement to use when creating the external table for querying the stream
+   * @throws UnsupportedTypeException
+   */
+  public static String generateStreamCreateStatement(String name, String location) throws UnsupportedTypeException {
+    String hiveSchema = hiveSchemaForStream();
+    String tableName = getHiveTableName("cdap.stream." + name);
+    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Stream\" " +
+                           "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
+                           "LOCATION \"%s\"",
+                         tableName, hiveSchema, Constants.Explore.STREAM_STORAGE_HANDLER_CLASS,
+                         Constants.Explore.STREAM_NAME, name, location);
+  }
+
   public static String generateCreateStatement(String name, Dataset dataset)
     throws UnsupportedTypeException {
     String hiveSchema = hiveSchemaFor(dataset);
     String tableName = getHiveTableName(name);
-    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"Cask CDAP Dataset\" " +
+    return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Dataset\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\")",
                          tableName, hiveSchema, Constants.Explore.DATASET_STORAGE_HANDLER_CLASS,
                          Constants.Explore.DATASET_NAME, name);
@@ -209,6 +266,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       return hiveSchemaFor(((RecordWritable) dataset).getRecordType());
     }
     throw new UnsupportedTypeException("Dataset neither implements RecordScannable not RecordWritable.");
+  }
+
+  static String hiveSchemaForStream() throws UnsupportedTypeException {
+    return hiveSchemaFor(StreamSchema.class);
   }
 
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
@@ -238,5 +299,15 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     sb.append(")");
 
     return sb.toString();
+  }
+
+  // hardcoded schema for a stream. This will be replaced with a schema that comes from the stream when
+  // schema is exposed to users.
+  private static class StreamSchema {
+    private long timestamp;
+    // the body is actually a byte array, but that is not very useful when performing queries.
+    // we therefore assume the body is a string.
+    private String body;
+    private Map<String, String> headers;
   }
 }

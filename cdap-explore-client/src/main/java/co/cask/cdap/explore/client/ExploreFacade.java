@@ -33,16 +33,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Explore client facade to be used by datasets.
+ * Explore client facade to be used by streams and datasets.
  */
-public class DatasetExploreFacade {
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetExploreFacade.class);
+public class ExploreFacade {
+  private static final Logger LOG = LoggerFactory.getLogger(ExploreFacade.class);
 
   private final ExploreClient exploreClient;
   private final boolean exploreEnabled;
 
   @Inject
-  public DatasetExploreFacade(ExploreClient exploreClient, CConfiguration cConf) {
+  public ExploreFacade(ExploreClient exploreClient, CConfiguration cConf) {
     this.exploreClient = exploreClient;
     this.exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (!exploreEnabled) {
@@ -51,53 +51,43 @@ public class DatasetExploreFacade {
   }
 
   /**
-   * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
-   * @param datasetInstance dataset instance name.
+   * Enables ad-hoc exploration of the given stream.
+   *
+   * @param streamName stream name.
    */
-  public void enableExplore(String datasetInstance) throws ExploreException, SQLException {
+  public void enableExploreStream(String streamName) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.enableExplore(datasetInstance);
-    try {
-      futureSuccess.get(20, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      LOG.error("Caught exception", e);
-      Thread.currentThread().interrupt();
-    } catch (ExecutionException e) {
-      Throwable t = Throwables.getRootCause(e);
-      if (t instanceof ExploreException) {
-        LOG.error("Enable explore did not finish successfully for dataset instance {}.",
-                  datasetInstance);
-        throw (ExploreException) t;
-      } else if (t instanceof SQLException) {
-        throw (SQLException) t;
-      } else if (t instanceof HandleNotFoundException) {
-        // Cannot happen unless explore server restarted, or someone calls close in between.
-        LOG.error("Error running enable explore", e);
-        throw Throwables.propagate(e);
-      } else if (t instanceof UnexpectedQueryStatusException) {
-        UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
-        LOG.error("Enable explore operation ended in an unexpected state - {}", sE.getStatus().name(), e);
-        throw Throwables.propagate(e);
-      }
-    } catch (TimeoutException e) {
-      LOG.error("Error running enable explore - operation timed out", e);
-      throw Throwables.propagate(e);
+    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreStream(streamName);
+    waitForExploreEnable(futureSuccess, "stream", streamName);
+  }
+
+
+  /**
+   * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
+   * @param datasetInstance dataset instance name.
+   */
+  public void enableExploreDataset(String datasetInstance) throws ExploreException, SQLException {
+    if (!exploreEnabled) {
+      return;
     }
+
+    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreDataset(datasetInstance);
+    waitForExploreEnable(futureSuccess, "dataset", datasetInstance);
   }
 
   /**
    * Disable ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
    * @param datasetInstance dataset instance name.
    */
-  public void disableExplore(String datasetInstance) throws ExploreException, SQLException {
+  public void disableExploreDataset(String datasetInstance) throws ExploreException, SQLException {
     if (!exploreEnabled) {
       return;
     }
 
-    ListenableFuture<Void> futureSuccess = exploreClient.disableExplore(datasetInstance);
+    ListenableFuture<Void> futureSuccess = exploreClient.disableExploreDataset(datasetInstance);
     try {
       futureSuccess.get(20, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
@@ -122,6 +112,37 @@ public class DatasetExploreFacade {
       }
     } catch (TimeoutException e) {
       LOG.error("Error running disable explore - operation timed out", e);
+      throw Throwables.propagate(e);
+    }
+  }
+
+  // wait for the enable operation to finish and log and throw exceptions as appropriate if there was an error.
+  private void waitForExploreEnable(ListenableFuture<Void> futureSuccess, String type, String name)
+    throws ExploreException, SQLException {
+    try {
+      futureSuccess.get(20, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      LOG.error("Caught exception", e);
+      Thread.currentThread().interrupt();
+    } catch (ExecutionException e) {
+      Throwable t = Throwables.getRootCause(e);
+      if (t instanceof ExploreException) {
+        LOG.error("Enable explore did not finish successfully for {} instance {}.",
+                  type, name);
+        throw (ExploreException) t;
+      } else if (t instanceof SQLException) {
+        throw (SQLException) t;
+      } else if (t instanceof HandleNotFoundException) {
+        // Cannot happen unless explore server restarted, or someone calls close in between.
+        LOG.error("Error running enable explore", e);
+        throw Throwables.propagate(e);
+      } else if (t instanceof UnexpectedQueryStatusException) {
+        UnexpectedQueryStatusException sE = (UnexpectedQueryStatusException) t;
+        LOG.error("Enable explore operation ended in an unexpected state - {}", sE.getStatus().name(), e);
+        throw Throwables.propagate(e);
+      }
+    } catch (TimeoutException e) {
+      LOG.error("Error running enable explore - operation timed out", e);
       throw Throwables.propagate(e);
     }
   }

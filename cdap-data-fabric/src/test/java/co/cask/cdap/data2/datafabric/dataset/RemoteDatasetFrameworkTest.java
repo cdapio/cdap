@@ -35,8 +35,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
@@ -120,7 +120,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework),
                                  mdsDatasetsRegistry,
-                                 new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
+                                 new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
                                  new HashSet<DatasetMetricsReporter>());
     // Start dataset service, wait for it to be discoverable
     service.start();

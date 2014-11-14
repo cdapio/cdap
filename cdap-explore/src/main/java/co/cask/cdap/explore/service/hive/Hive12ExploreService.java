@@ -19,6 +19,7 @@ package co.cask.cdap.explore.service.hive;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.QueryStatus;
@@ -54,8 +55,9 @@ public class Hive12ExploreService extends BaseHiveExploreService {
   @Inject
   public Hive12ExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                               CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                              StreamAdmin streamAdmin,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
-    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir);
+    super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir, streamAdmin);
   }
 
   @Override

@@ -27,6 +27,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data.stream.StreamInputFormat;
+import co.cask.cdap.data.stream.StreamInputFormatConfigurer;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -420,16 +421,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
-    StreamInputFormat.setTTL(job, streamConfig.getTTL());
-    StreamInputFormat.setStreamPath(job, streamPath.toURI());
-    StreamInputFormat.setTimeRange(job, stream.getStartTime(), stream.getEndTime());
+    StreamInputFormatConfigurer.setTTL(job, streamConfig.getTTL());
+    StreamInputFormatConfigurer.setStreamPath(job, streamPath.toURI());
+    StreamInputFormatConfigurer.setTimeRange(job, stream.getStartTime(), stream.getEndTime());
 
     String decoderType = stream.getDecoderType();
     if (decoderType == null) {
       // If the user don't specify the decoder, detect the type from Mapper/Reducer
       setStreamEventDecoder(job);
     } else {
-      StreamInputFormat.setDecoderClassName(job, decoderType);
+      StreamInputFormatConfigurer.setDecoderClassName(job, decoderType);
     }
     job.setInputFormatClass(StreamInputFormat.class);
 
@@ -490,7 +491,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         continue;
       }
       try {
-        StreamInputFormat.inferDecoderClass(job.getConfiguration(), typeArgs[1]);
+        StreamInputFormatConfigurer.inferDecoderClass(job.getConfiguration(), typeArgs[1]);
         return true;
       } catch (IllegalArgumentException iae) {
         LOG.debug("Failed to set decoder", iae);
@@ -554,8 +555,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       classes.add(inputFormatClass);
 
       // If it is StreamInputFormat, also add the StreamEventCodec class as well.
-      if (StreamInputFormat.class.isAssignableFrom(inputFormatClass)) {
-        Class<? extends StreamEventDecoder> decoderType = StreamInputFormat.getDecoderClass(jobConf.getConfiguration());
+      if (StreamInputFormatConfigurer.class.isAssignableFrom(inputFormatClass)) {
+        Class<? extends StreamEventDecoder> decoderType =
+          StreamInputFormatConfigurer.getDecoderClass(jobConf.getConfiguration());
         if (decoderType != null) {
           classes.add(decoderType);
         }

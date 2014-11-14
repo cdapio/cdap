@@ -40,12 +40,12 @@ public class FixedAddressExploreClient extends AbstractExploreClient {
   }
 
   @Override
-  public ListenableFuture<Void> enableExplore(String datasetInstance) {
+  public ListenableFuture<Void> enableExploreDataset(String datasetInstance) {
     throw new UnsupportedOperationException("This client does not allow to enable explore on datasets.");
   }
 
   @Override
-  public ListenableFuture<Void> disableExplore(String datasetInstance) {
+  public ListenableFuture<Void> disableExploreDataset(String datasetInstance) {
     throw new UnsupportedOperationException("This client does not allow to disable explore on datasets");
   }
 

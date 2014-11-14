@@ -26,7 +26,10 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.service.StreamServiceModule;
+import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -44,8 +47,8 @@ import javax.annotation.Nullable;
 public class ContextManager {
   private static Context savedContext;
 
-  public static void saveContext(DatasetFramework datasetFramework) {
-    savedContext = new Context(datasetFramework);
+  public static void saveContext(DatasetFramework datasetFramework, StreamAdmin streamAdmin) {
+    savedContext = new Context(datasetFramework, streamAdmin);
   }
 
   /**
@@ -95,29 +98,36 @@ public class ContextManager {
     zkClientService.startAndWait();
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    return new Context(datasetFramework, zkClientService);
+    StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
+    return new Context(datasetFramework, streamAdmin, zkClientService);
   }
 
   /**
-   * Contains DatasetFramework object required to run Hive queries in MapReduce jobs.
-   */
+      * Contains DatasetFramework object and StreamAdmin object required to run Hive queries in MapReduce jobs.
+      */
   public static class Context implements Closeable {
     private final DatasetFramework datasetFramework;
+    private final StreamAdmin streamAdmin;
     private final ZKClientService zkClientService;
 
-    public Context(DatasetFramework datasetFramework, ZKClientService zkClientService) {
+    public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin, ZKClientService zkClientService) {
       // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
+      this.streamAdmin = streamAdmin;
       this.zkClientService = zkClientService;
     }
 
-    public Context(DatasetFramework datasetFramework) {
+    public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin) {
       // This constructor is called from Hive server, that is the Explore module.
-      this(datasetFramework, null);
+      this(datasetFramework, streamAdmin, null);
     }
 
     public DatasetFramework getDatasetFramework() {
       return datasetFramework;
+    }
+
+    public StreamAdmin getStreamAdmin() {
+      return streamAdmin;
     }
 
     @Override

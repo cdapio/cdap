@@ -13,13 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data.stream;
+package co.cask.cdap.hive.stream;
 
 import com.google.common.base.Objects;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableUtils;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.hadoop.mapred.FileSplit;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -27,7 +27,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Represents a mapreduce InputSplit for stream.
+ * Represents a mapred InputSplit for stream.
  */
 public final class StreamInputSplit extends FileSplit implements Writable {
 
