@@ -129,9 +129,9 @@ final class FlowletRuntimeService extends AbstractIdleService {
         return;
       } catch (Throwable e) {
         Throwable cause = e.getCause() == null ? e : e.getCause();
-        LOG.error("Flowlet throws exception during flowlet instances change: " + flowletContext, cause);
+        LOG.error("Flowlet throws exception during flowlet instances change: {}", flowletContext, cause);
         if (retries++ >= maxRetries) {
-          throw Throwables.propagate(cause);
+          LOG.warn("Retry limit of {} reached, ignoring exception", maxRetries);
         }
       }
     }
