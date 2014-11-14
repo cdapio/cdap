@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  *
  * <pre>
  * <code>
- * {@literal @}Retry(5)
+ * {@literal @}Retry(maxRetries = 5)
  * public void onChangeInstances(FlowletContext flowletContext) {
  *   ...
  * }
@@ -47,5 +47,5 @@ public @interface Retry {
   /**
    * Specifies the maximum number of retries of failure callbacks before giving up.
    */
-  int value();
+  int maxRetries();
 }

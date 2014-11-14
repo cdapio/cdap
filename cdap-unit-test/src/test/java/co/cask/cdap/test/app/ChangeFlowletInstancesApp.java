@@ -107,7 +107,7 @@ public class ChangeFlowletInstancesApp extends AbstractApplication {
     }
 
     @Override
-    @Retry(5)
+    @Retry(maxRetries = 5)
     public void onChangeInstances(FlowletContext flowletContext) throws Exception {
       while (tries++ < 5) {
         throw new Exception("Test exception");

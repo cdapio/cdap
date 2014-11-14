@@ -114,7 +114,7 @@ final class FlowletRuntimeService extends AbstractIdleService {
       Throwables.propagate(e);
     }
     Retry retryAnnotation = method.getAnnotation(Retry.class);
-    int maxRetries = (retryAnnotation == null) ? 0 : retryAnnotation.value();
+    int maxRetries = (retryAnnotation == null) ? 0 : retryAnnotation.maxRetries();
     int retries = 0;
 
     TransactionExecutor transactionExecutor = dataFabricFacade.createTransactionExecutor();

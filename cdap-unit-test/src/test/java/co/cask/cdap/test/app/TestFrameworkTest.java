@@ -617,7 +617,7 @@ public class TestFrameworkTest extends TestBase {
     dataSetManager.flush();
   }
 
-  @Test // (timeout = 30000L)
+  @Test(timeout = 60000L)
   public void testChangeFlowletInstances() throws Exception {
     ApplicationManager appManager = deployApplication(ChangeFlowletInstancesApp.class);
     FlowManager flowManager = appManager.startFlow("DataSetFlow");
