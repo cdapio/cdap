@@ -147,6 +147,18 @@ body.theme-default {
     border-radius: 0;
   }
 
+  // Fix active state of dropdown items in collapsed mode
+  @media (max-width: @grid-float-breakpoint-max) {
+    .navbar .navbar-nav .open .dropdown-menu > .active > a {
+      &,
+      &:hover,
+      &:focus {
+        color: #fff;
+        #gradient > .vertical(@start-color: @dropdown-link-active-bg; @end-color: darken(@dropdown-link-active-bg, 5%));
+      }
+    }
+  }
+
 
   //
   // Alerts
@@ -254,5 +266,6 @@ body.theme-default {
     @shadow: inset 0 1px 3px rgba(0,0,0,.05), 0 1px 0 rgba(255,255,255,.1);
     .box-shadow(@shadow);
   }
+
 
 }
