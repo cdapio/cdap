@@ -622,15 +622,18 @@ public class TestFrameworkTest extends TestBase {
     ApplicationManager appManager = deployApplication(ChangeFlowletInstancesApp.class);
     FlowManager flowManager = appManager.startFlow("DataSetFlow");
 
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("ChangeFlowletInstancesApp", "DataSetFlow",
+                                                                   "Consumer");
     flowManager.setFlowletInstances("Generator", 3);
     flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
 
     flowManager.setFlowletInstances("Generator", 2);
     // Make sure the onChangeInstances callback is called twice on the previous call -
     // once for each flowlet instance that was already present
-    flowletMetrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+    TimeUnit.SECONDS.sleep(3);
+    Assert.assertEquals(3, flowletMetrics.getProcessed());
 
+    // Test the retry logic (see below)
     flowManager.setFlowletInstances("Consumer", 2);
 
     flowManager.stop();

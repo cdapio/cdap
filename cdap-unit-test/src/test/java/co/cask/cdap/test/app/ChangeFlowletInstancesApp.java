@@ -37,8 +37,8 @@ public class ChangeFlowletInstancesApp extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("DataSetInitApp");
-    setDescription("DataSetInitApp");
+    setName("ChangeFlowletInstancesApp");
+    setDescription("ChangeFlowletInstancesApp");
     createDataset("conf", Table.class);
     addFlow(new DataSetFlow());
     addStream(new Stream("generatorStream"));
