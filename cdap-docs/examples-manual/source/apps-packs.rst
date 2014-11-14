@@ -68,7 +68,7 @@ useful when building big data applications:
 .. _etl-pack: https://github.com/caskdata/cdap-packs/blob/develop/etl-pack
 
 - |etl-pack|_ The ETL-pack library is designed to ease the development of common ETL
-  solutions and provide powerful extension capabilities. Download or clone the app at
+  solutions and provide powerful extension capabilities. Download or clone the library at
   `GitHub. <https://github.com/caskdata/cdap-packs/>`__
 
 
@@ -77,5 +77,13 @@ useful when building big data applications:
 
 - |twitter-pack|_ The Twitter-pack library is designed to ease the CDAP apps development
   tasks that require integration with Twitter, such as pulling a tweets stream. Download or
-  clone the app at `GitHub. <https://github.com/caskdata/cdap-packs/>`__
+  clone the library at `GitHub. <https://github.com/caskdata/cdap-packs/>`__
+
+
+.. |kafka-flow-pack| replace:: **Kafka-Flow-pack** *for Kafka Flow Integration:*
+.. _kafka-flow-pack: https://github.com/caskdata/cdap-packs/blob/develop/cdap-twitter-pack
+
+- |kafka-flow-pack|_ The Kafka-Flow-pack library is designed to ease the CDAP Flow
+  development tasks that require integration with Kafka, such as consuming Kafka messages.
+  Download or clone the library at `GitHub. <https://github.com/caskdata/cdap-packs/>`__
 
