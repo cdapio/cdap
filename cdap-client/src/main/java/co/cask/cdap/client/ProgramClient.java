@@ -133,6 +133,32 @@ public class ProgramClient {
     return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
   }
 
+
+  /**
+   * Gets the runId of a running program.
+   *
+   * @param appId ID of the application that the program belongs to
+   * @param programType type of the program
+   * @param programName name of the program
+   * @return the run-id of the program (e.g. ced45b2f-46d1-48b5-a853-f1ad511cf1d0)
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public String getRunId(String appId, ProgramType programType, String programName)
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+
+    URL url = config.resolveURL(String.format("apps/%s/%s/%s/run-id",
+                                              appId, programType.getCategoryName(), programName));
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new ProgramNotFoundException(programType, appId, programName);
+    }
+    return ObjectResponse.fromJsonBody(response,
+                                       new TypeToken<Map<String, String>>() { }).getResponseObject().get("run-id");
+  }
+
   /**
    * Waits for a program to have a certain status.
    *

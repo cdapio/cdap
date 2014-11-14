@@ -127,6 +127,13 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     return response.getStatusLine().getStatusCode();
   }
 
+  private int getRunId(String runnableType, String appId, String runnableId)
+    throws Exception {
+    HttpResponse response =
+      doGet("/v2/apps/" + appId + "/" + runnableType + "/" + runnableId + "/run-id");
+    return response.getStatusLine().getStatusCode();
+  }
+
   private void testHistory(Class<?> app, String appId, String runnableType, String runnableId)
       throws Exception {
     try {
@@ -770,9 +777,15 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start"));
     waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
 
+    // check run-id - successful when program is running
+    Assert.assertEquals(200, getRunId("flows", "WordCountApp", "WordCountFlow"));
+
     //stop the flow and check the status
     Assert.assertEquals(200, getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop"));
     waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
+
+    // getting run-id after program stopped, returns Internal Server Error.
+    Assert.assertEquals(500, getRunId("flows", "WordCountApp", "WordCountFlow"));
 
     //check the status for procedure
     Assert.assertEquals(200, getRunnableStartStop("procedures", "WordCountApp", "WordFrequency", "start"));
