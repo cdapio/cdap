@@ -7,15 +7,13 @@ function ($scope, $alert, MyDataSource) {
 
   var dataSrc = new MyDataSource($scope);
 
-  $scope.url = 'http://ip.jsontest.com/';
+  $scope.something = null;
 
-  $scope.something = {hello:'world'};
-
-  $scope.fetchSomething = function (url) {
-    dataSrc.fetch('something.result', {url:url});
-  };
-
-  dataSrc.poll('pollthing', {url:'http://date.jsontest.com/'});
+  dataSrc.poll('something', {
+    url: '/v2/metrics',
+    method: 'POST',
+    body: ["/system/apps/HelloWorld/process.events.processed?start=now-60s&end=now-0s&count=60"]
+  });
 
 });
 

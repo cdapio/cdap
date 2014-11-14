@@ -113,20 +113,22 @@ function doPoll () {
  * @param  {string} body
  */
 function emitResponse (resource, error, response, body) {
-  if(error) {
-    this.log(error);
+
+  if(error) { // still emit a warning
+    this.log(resource.url, error);
+    this.connection.write(JSON.stringify({
+      resource: resource,
+      warning: error.toString()
+    }));
     return;
   }
 
-  var output = { resource: resource };
-  output.response = response.toJSON();
-  try {
-    output.json = JSON.parse(body);
-  }
-  catch (e) {}
-
   this.log('emit', resource.url);
-  this.connection.write(JSON.stringify(output));
+  this.connection.write(JSON.stringify({
+    resource: resource,
+    statusCode: response.statusCode,
+    response: body
+  }));
 }
 
 /**

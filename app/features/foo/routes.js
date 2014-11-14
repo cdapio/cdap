@@ -12,6 +12,10 @@ angular.module(PKG.name+'.feature.foo')
         templateUrl: '/assets/features/foo/foo.html'
       })
 
+        .state('bar', {
+          parent: 'foo',
+          url: '/bar'
+        })
 
       ;
 

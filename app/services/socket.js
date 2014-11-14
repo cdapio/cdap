@@ -11,7 +11,7 @@ angular.module(PKG.name+'.services')
 
     var dataSrc = new MyDataSource($scope);
     $scope.foo = {};
-    dataSrc.poll('foo.bar', {method:'GET', path: '/whatever'});
+    dataSrc.poll('foo.bar', {method:'GET', url: '/v2/foo/bar'});
 
    */
   .factory('MyDataSource', function ($state, mySocket, MYSOCKET_EVENT) {
@@ -27,9 +27,12 @@ angular.module(PKG.name+'.services')
       bindings[id] = {};
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
+        if(data.warning) { return; }
+
+        // update this scope's bindings
         angular.forEach(bindings[id], function (val, key) {
           if(angular.equals(val, data.resource)) {
-            var z = data.json || data.response;
+            var z = data.response;
             if(key.indexOf('.')===-1) {
               scope.$apply(function(){
                 scope[key] = z;
@@ -154,9 +157,26 @@ angular.module(PKG.name+'.services')
           buffer.push(obj);
           return false;
         }
+
         var msg = angular.extend({
-          user: myAuth.currentUser
-        }, obj);
+
+              user: myAuth.currentUser
+
+            }, obj),
+            r = obj.resource;
+
+        if(r) {
+          // we only support json content-type,
+          // and expect json as response
+          msg.resource.json = true;
+
+          // if the url is a path, prefix with the CDAP protocol/host
+          // @TODO get prefix from config
+          if(r.url.match(/^\/[^\/]/)) {
+            msg.resource.url = 'http://localhost:10000' + r.url;
+          }
+        }
+
         console.log('[mySocket] →', msg);
         socket.send(JSON.stringify(msg));
         return true;
