@@ -81,7 +81,7 @@ useful when building big data applications:
 
 
 .. |kafka-flow-pack| replace:: **Kafka-Flow-pack** *for Kafka Flow Integration:*
-.. _kafka-flow-pack: https://github.com/caskdata/cdap-packs/blob/develop/cdap-twitter-pack
+.. _kafka-flow-pack: https://github.com/caskdata/cdap-packs/tree/develop/cdap-kafka-pack/cdap-kafka-flow
 
 - |kafka-flow-pack|_ The Kafka-Flow-pack library is designed to ease the CDAP Flow
   development tasks that require integration with Kafka, such as consuming Kafka messages.
