@@ -27,8 +27,6 @@ public final class ProgramOptionConstants {
 
   public static final String INSTANCES = "instances";
 
-  public static final String INSTANCES_CALLBACK = "instancesCallback";
-
   public static final String HOST = "host";
 
   public static final String LOGICAL_START_TIME = "logicalStartTime";

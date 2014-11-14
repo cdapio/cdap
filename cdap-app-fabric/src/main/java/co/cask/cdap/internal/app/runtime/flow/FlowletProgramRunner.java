@@ -440,7 +440,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       }
 
       @Override
-      public void onChangeInstances(FlowletContext flowletContext) throws Exception {
+      public void onChangeInstances(FlowletContext flowletContext, int previousInstancesCount) throws Exception {
         // No-op
       }
     };

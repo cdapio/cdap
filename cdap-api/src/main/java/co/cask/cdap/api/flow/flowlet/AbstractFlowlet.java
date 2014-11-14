@@ -80,7 +80,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   }
 
   @Override
-  public void onChangeInstances(FlowletContext flowletContext) throws Exception {
+  public void onChangeInstances(FlowletContext flowletContext, int previousInstancesCount) throws Exception {
     // No-op by default
   }
 

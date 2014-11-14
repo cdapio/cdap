@@ -92,17 +92,15 @@ final class FlowletProgramController extends AbstractProgramController {
   protected void doCommand(String name, Object value) throws Exception {
     Preconditions.checkState(getState() == State.SUSPENDED,
                              "Cannot change instance count when flowlet is running.");
-    if (!(value instanceof Integer)) {
+    if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Integer)) {
       return;
     }
     int instances = (Integer) value;
-    if (ProgramOptionConstants.INSTANCES.equals(name)) {
-      LOG.info("Change flowlet instance count: " + flowletContext + ", new count is " + instances);
-      changeInstanceCount(flowletContext, instances);
-      LOG.info("Flowlet instance count changed: " + flowletContext + ", new count is " + instances);
-    } else if (ProgramOptionConstants.INSTANCES_CALLBACK.equals(name)) {
-      driver.callChangeInstancesCallback();
-    }
+    int previousInstancesCount = flowletContext.getInstanceCount();
+    LOG.info("Change flowlet instance count: " + flowletContext + ", new count is " + instances);
+    changeInstanceCount(flowletContext, instances);
+    LOG.info("Flowlet instance count changed: " + flowletContext + ", new count is " + instances);
+    driver.callChangeInstancesCallback(previousInstancesCount);
   }
 
   private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) {

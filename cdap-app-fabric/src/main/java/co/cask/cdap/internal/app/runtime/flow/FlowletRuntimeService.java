@@ -104,10 +104,10 @@ final class FlowletRuntimeService extends AbstractIdleService {
   /**
    * Call the callback when the number of instances of a flowlet changes.
    */
-  public void callChangeInstancesCallback() {
+  public void callChangeInstancesCallback(final int previousInstancesCount) {
     Method method = null;
     try {
-      method = txCallback.getClass().getMethod("onChangeInstances", FlowletContext.class);
+      method = txCallback.getClass().getMethod("onChangeInstances", FlowletContext.class, int.class);
     } catch (NoSuchMethodException e) {
       // This should never happen
       LOG.error("onChangeInstances() not found in class: {}", txCallback.getClass(), e);
@@ -123,7 +123,7 @@ final class FlowletRuntimeService extends AbstractIdleService {
         transactionExecutor.execute(new TransactionExecutor.Subroutine() {
           @Override
           public void apply() throws Exception {
-            txCallback.onChangeInstances(flowletContext);
+            txCallback.onChangeInstances(flowletContext, previousInstancesCount);
           }
         });
         return;

@@ -302,16 +302,6 @@ public final class FlowProgramRunner implements ProgramRunner {
           }
         })).get();
 
-      // Call the callback triggered when number of instances is changed
-      Futures.successfulAsList(Iterables.transform(
-        liveFlowlets.values(),
-        new Function<ProgramController, ListenableFuture<?>>() {
-          @Override
-          public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.command(ProgramOptionConstants.INSTANCES_CALLBACK, newInstanceCount);
-          }
-        })).get();
-
       // Next resume all current flowlets
       Futures.successfulAsList(Iterables.transform(
         liveFlowlets.values(),
@@ -364,16 +354,6 @@ public final class FlowProgramRunner implements ProgramRunner {
           @Override
           public ListenableFuture<?> apply(ProgramController controller) {
             return controller.command(ProgramOptionConstants.INSTANCES, newInstanceCount);
-          }
-        })).get();
-
-      // Call the callback triggered when number of instances is changed
-      Futures.successfulAsList(Iterables.transform(
-        liveFlowlets.values(),
-        new Function<ProgramController, ListenableFuture<?>>() {
-          @Override
-          public ListenableFuture<?> apply(ProgramController controller) {
-            return controller.command(ProgramOptionConstants.INSTANCES_CALLBACK, newInstanceCount);
           }
         })).get();
 

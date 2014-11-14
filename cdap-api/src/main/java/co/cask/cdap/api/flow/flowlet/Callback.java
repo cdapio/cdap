@@ -57,7 +57,8 @@ public interface Callback {
    * retry at all.
    *
    * @param flowletContext the {@link FlowletContext} of the flowlet.
+   * @param previousInstancesCount the number of flowlet instances there was before the change
    * @throws Exception in case of any error.
    */
-  void onChangeInstances(FlowletContext flowletContext) throws Exception;
+  void onChangeInstances(FlowletContext flowletContext, int previousInstancesCount) throws Exception;
 }

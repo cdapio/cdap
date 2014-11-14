@@ -79,7 +79,7 @@ public class ChangeFlowletInstancesApp extends AbstractApplication {
     }
 
     @Override
-    public void onChangeInstances(FlowletContext flowletContext) throws Exception {
+    public void onChangeInstances(FlowletContext flowletContext, int previousInstancesCount) throws Exception {
       if (flowletContext.getInstanceId() == 0) {
         confTable.put(new Put("key", "column", "generator"));
       }
@@ -108,7 +108,7 @@ public class ChangeFlowletInstancesApp extends AbstractApplication {
 
     @Override
     @Retry(maxRetries = 5)
-    public void onChangeInstances(FlowletContext flowletContext) throws Exception {
+    public void onChangeInstances(FlowletContext flowletContext, int previousInstancesCount) throws Exception {
       while (tries++ < 5) {
         throw new Exception("Test exception");
       }
