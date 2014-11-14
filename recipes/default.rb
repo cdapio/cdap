@@ -34,7 +34,7 @@ end
 
 # Hive is optional
 if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('explore.enabled') &&
-  node['cdap']['cdap_site']['explore.enabled'].to_s == 'true'
+   node['cdap']['cdap_site']['explore.enabled'].to_s == 'true'
 
   log 'hive-explore-enabled' do
     message 'Explore module enabled, installing Hive libraries'
@@ -61,8 +61,8 @@ end
 include_recipe 'cdap::config'
 
 if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.enabled') &&
-  node['cdap']['cdap_site'].key?('security.auth.server.address') &&
-  node['cdap']['cdap_site']['security.auth.server.address'] == node['fqdn']
+   node['cdap']['cdap_site'].key?('security.auth.server.address') &&
+   node['cdap']['cdap_site']['security.auth.server.address'] == node['fqdn']
 
   include_recipe 'cdap::security'
 end

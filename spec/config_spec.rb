@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'cdap::config' do
   context 'on Centos 6.5 x86_64' do
     let(:chef_run) do
-      ChefSpec::Runner.new(platform: 'centos', version: 6.5) do |node|
+      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.5) do |node|
         node.automatic['domain'] = 'example.com'
         node.default['hadoop']['hdfs_site']['dfs.datanode.max.transfer.threads'] = '4096'
         node.default['hadoop']['mapred_site']['mapreduce.framework.name'] = 'yarn'

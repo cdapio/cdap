@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'cdap::repo' do
   context 'on Centos 6.5 x86_64' do
     let(:chef_run) do
-      ChefSpec::Runner.new(platform: 'centos', version: 6.5) do |node|
+      ChefSpec::SoloRunner.new(platform: 'centos', version: 6.5) do |node|
         node.automatic['domain'] = 'example.com'
       end.converge(described_recipe)
     end
@@ -15,7 +15,7 @@ describe 'cdap::repo' do
 
   context 'on Ubuntu 12.04' do
     let(:chef_run) do
-      ChefSpec::Runner.new(platform: 'ubuntu', version: 12.04) do |node|
+      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: 12.04) do |node|
         node.automatic['domain'] = 'example.com'
       end.converge(described_recipe)
     end
