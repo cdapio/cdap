@@ -19,7 +19,7 @@ HashTable.prototype.remove = function (obj) {
 
 
 
-var POLL_INTERVAL = 3000; // 3 seconds
+var POLL_INTERVAL = 1000;
 
 /**
  * Aggregator
