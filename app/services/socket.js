@@ -10,37 +10,32 @@ angular.module(PKG.name+'.services')
     MyDataSource // usage in a controler:
 
     var dataSrc = new MyDataSource($scope);
-    $scope.foo = {};
-    dataSrc.poll('foo.bar', {method:'GET', url: '/v2/foo/bar'});
+    dataSrc.poll({method:'GET', url: '/v2/foo/bar'}, function(result) {
+      $scope.foo = result;
+    });
 
    */
   .factory('MyDataSource', function ($state, mySocket, MYSOCKET_EVENT) {
 
-    var bindings = {};
+    var instances = {}; // keyed by scopeid
 
     function DataSource (scope) {
-      var id = scope.$id;
+      var id = scope.$id,
+          self = this;
 
-      if(bindings[id]) {
+      if(instances[id]) {
         throw new Error('multiple DataSource for scope', id);
       }
-      bindings[id] = {};
+      instances[id] = self;
+
+      this.bindings = [];
 
       scope.$on(MYSOCKET_EVENT.message, function (event, data) {
         if(data.warning) { return; }
 
-        // update this scope's bindings
-        angular.forEach(bindings[id], function (val, key) {
-          if(angular.equals(val, data.resource)) {
-            var z = data.response;
-            if(key.indexOf('.')===-1) {
-              scope.$apply(function(){
-                scope[key] = z;
-              });
-            }
-            else { // slower version supports nested keys
-              scope.$eval(key+' = '+JSON.stringify(z));
-            }
+        angular.forEach(self.bindings, function (b) {
+          if(angular.equals(b.resource, data.resource)) {
+            scope.$apply(b.callback.bind(self, data.response));
           }
         });
       });
@@ -55,38 +50,53 @@ angular.module(PKG.name+'.services')
       });
 
       scope.$on('$destroy', function () {
-        delete bindings[id];
+        delete instances[id];
       });
 
       this.scope = scope;
     }
 
 
-    DataSource.prototype.fetch = function (key, resourceObj) {
-      bindings[this.scope.$id][key] = resourceObj;
+    DataSource.prototype.poll = function (resource, cb) {
 
-      mySocket.send({
-        action: 'fetch',
-        resource: resourceObj
-      });
-    };
-
-
-    DataSource.prototype.poll = function (key, resourceObj) {
-      bindings[this.scope.$id][key] = resourceObj;
-
-      mySocket.send({
-        action: 'poll-start',
-        resource: resourceObj
+      this.bindings.push({
+        resource: resource,
+        callback: cb
       });
 
       this.scope.$on('$destroy', function () {
         mySocket.send({
           action: 'poll-stop',
-          resource: resourceObj
+          resource: resource
         });
       });
+
+      mySocket.send({
+        action: 'poll-start',
+        resource: resource
+      });
     };
+
+
+    DataSource.prototype.fetch = function (resource, cb) {
+      var once = false;
+
+      this.bindings.push({
+        resource: resource,
+        callback: function() {
+          if(!once) {
+            once = true;
+            cb.apply(this, arguments);
+          }
+        }
+      });
+
+      mySocket.send({
+        action: 'fetch',
+        resource: resource
+      });
+    };
+
 
     return DataSource;
   })
@@ -113,7 +123,7 @@ angular.module(PKG.name+'.services')
         socket.onmessage = function (event) {
           try {
             var data = JSON.parse(event.data);
-            console.log('[mySocket] ←', data);
+            console.log('[mySocket] ←', data.statusCode);
             $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
           }
           catch(e) {

@@ -2,18 +2,19 @@
 var ngEpoch = angular.module(PKG.name+'.commons');
 
 var baseDirective = {
-  restrict: 'E',
+  restrict: 'EA',
   replace: true,
   template: '<div class="epoch"></div>',
   scope: {
-    data: '=chartData'
+    history: '=',
+    stream: '='
   },
   controller: 'epochController'
 };
 
-ngEpoch.controller('epochController', function ($scope, $compile) {
+ngEpoch.controller('epochController', function ($scope, $compile, myResizeManager) {
 
-  $scope.renderEpoch = function (elem, type, attr) {
+  $scope.initEpoch = function (elem, type, attr, forcedOpts) {
     if($scope.me) {
       return;
     }
@@ -23,33 +24,61 @@ ngEpoch.controller('epochController', function ($scope, $compile) {
     angular.forEach(attr, function (v, k) {
       if ( v && k.indexOf('chart')===0 ) {
         var key = k.substring(5);
-        this[key.charAt(0).toLowerCase() + key.slice(1)] = v;
+        this[key.charAt(0).toLowerCase() + key.slice(1)] = $scope.$eval(v);
       }
     }, options);
 
-    angular.extend(options, {
-      data: angular.copy($scope.data),
+    angular.extend(options, forcedOpts || {}, {
+      data: angular.copy($scope.history),
       el: elem[0]
     });
 
-    $scope.me = new Epoch._typeMap[type](options);
-    $scope.me.draw();
+    if(!options.data) {
+      options.data = [{values:[{
+        time: ((new Date()).getTime() / 1000)|0,
+        y: 0
+      }]}]
+    }
 
-    $compile(elem)($scope);
+    $scope.type = type;
+    $scope.options = options;
+
+    if(attr.history) {
+      $scope.$watch('history', function (newVal) {
+        if(newVal) {
+          $scope.options.data = newVal;
+          render();
+        }
+      });
+    }
+    else {
+      render();
+    }
 
     if(type.indexOf('time.')===0) {
-      $scope.$watch('data', function (newVal) {
-        if (newVal) {
-          if ($scope.me.update) { // time.gauge
-            $scope.me.update($scope.data);
-          }
-          else {
-            $scope.me.push($scope.data);
-          }
+      $scope.$watch('stream', function (newVal) {
+        if(!$scope.me) {
+          return;
+        }
+        if (type === 'time.gauge') {
+          $scope.me.update(newVal);
+        }
+        else if (newVal && newVal.length) {
+          $scope.me.push(newVal);
         }
       });
     }
   };
+
+  function render () {
+    var o = $scope.options,
+        el = angular.element(o.el).empty();
+    $scope.me = new Epoch._typeMap[$scope.type](o);
+    $scope.me.draw();
+    $compile(el)($scope);
+  };
+
+  $scope.$on(myResizeManager.eventName, render);
 
 });
 
@@ -57,15 +86,35 @@ ngEpoch.controller('epochController', function ($scope, $compile) {
 ngEpoch.directive('epochPie', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.renderEpoch(elem, 'pie', attr);
+      scope.initEpoch(elem, 'pie', attr);
     }
   }, baseDirective);
 });
 
+
+
+ngEpoch.directive('epochBar', function () {
+  return angular.extend({
+    link: function (scope, elem, attr) {
+      scope.initEpoch(elem, 'bar', attr);
+    }
+  }, baseDirective);
+});
+
+ngEpoch.directive('epochLiveBar', function () {
+  return angular.extend({
+    link: function (scope, elem, attr) {
+      scope.initEpoch(elem, 'time.bar', attr);
+    }
+  }, baseDirective);
+});
+
+
+
 ngEpoch.directive('epochLine', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.renderEpoch(elem, 'line', attr);
+      scope.initEpoch(elem, 'line', attr);
     }
   }, baseDirective);
 });
@@ -73,15 +122,24 @@ ngEpoch.directive('epochLine', function () {
 ngEpoch.directive('epochLiveLine', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.renderEpoch(elem, 'time.line', attr);
+      scope.initEpoch(elem, 'time.line', attr, {
+        axes: ['left', 'bottom'],
+        ticks: { left: 5, bottom: 6 },
+        tickFormats: {
+          left: Epoch.Formats.si,
+          bottom: function () { return ''; },
+        }
+      });
     }
   }, baseDirective);
 });
 
+
+
 ngEpoch.directive('epochArea', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.renderEpoch(elem, 'area', attr);
+      scope.initEpoch(elem, 'area', attr);
     }
   }, baseDirective);
 });
@@ -89,7 +147,21 @@ ngEpoch.directive('epochArea', function () {
 ngEpoch.directive('epochLiveArea', function () {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.renderEpoch(elem, 'time.area', attr);
+      scope.initEpoch(elem, 'time.area', attr);
+    }
+  }, baseDirective);
+});
+
+
+
+
+ngEpoch.directive('epochGauge', function () {
+  return angular.extend({
+    link: function (scope, elem, attr) {
+      scope.initEpoch(elem, 'time.gauge', attr, {
+        domain: [0, 1000],
+        format: function(v) { return v.toFixed(2); }
+      });
     }
   }, baseDirective);
 });

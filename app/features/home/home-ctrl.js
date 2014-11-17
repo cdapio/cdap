@@ -7,45 +7,45 @@ function ($scope, $alert, MyDataSource, $interval) {
 
   var dataSrc = new MyDataSource($scope);
 
-  $scope.something = null;
-  $scope.lineData = [{values:[]}];
+  $scope.lineHistory = null;
+  $scope.lineStream = null;
+  $scope.gaugeValue = 0;
 
-  dataSrc.poll('something', {
-    url: '/v2/metrics',
-    method: 'POST',
-    body: ["/system/apps/HelloWorld/process.events.processed?start=now-60s&end=now-5s"]
-  });
+  dataSrc.poll({
+      url: '/v2/metrics',
+      method: 'POST',
+      body: ["/system/apps/HelloWorld/process.events.processed?start=now-61s&end=now-1s"]
+    },
+    function (result) {
+      var d = result && result[0].result.data;
+      if(d.length) {
+        var v = d[d.length-1],
+            convert = function (h) {
+              return {
+                timestamp: h.time,
+                y: h.value
+              };
+            };
 
-  // $scope.$watch('something', function (something) {
-  //   if(something && something[0].result.data) {
-  //     $scope.lineData = [{
-  //       label: 'HelloWorld',
-  //       values: something[0].result.data.map(function(o){
-  //         return { time: o.time, y: o.value };
-  //       })
-  //     }];
-  //   }
-  // });
+        $scope.gaugeValue = v.value;
 
-  $interval(function() {
-    var now = Date.now(),
-        values = [];
+        if($scope.lineHistory) {
+          $scope.lineStream = [convert(v)];
+        }
+        else {
+          $scope.lineHistory = [{
+            label: 'HelloWorld',
+            values: d.map(convert)
+          }];
+        }
 
-    for (var i = 0; i < 100; i++) {
-      values.push({
-        time: now+i,
-        y: Math.floor(Math.random()*1000)
-      });
-    };
-
-    $scope.lineData = [{
-      label: 'HelloWorld',
-      values: values
-    }];
-
-  }, 100);
+      }
+    }
+  );
 
 });
+
+
 
 
 
