@@ -288,4 +288,10 @@ public interface Store {
    * @return true if the program exists, false otherwise.
    */
   boolean programExists(Id.Program id, ProgramType type) throws OperationException;
+
+  /**
+   * Return the runId of the program specified by the argument {@link co.cask.cdap.app.program.Program}
+   * @param id
+   */
+  String getRunId(Id.Program id) throws OperationException;
 }

@@ -115,6 +115,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
+  public String getProgramRunId(String accountId, String appId, String programId) {
+    Key key = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build();
+    RunRecord started = get(key, RunRecord.class);
+    if (started == null) {
+      String msg = String.format("No meta for started run record for account %s app %s program %s pid %s exists",
+                                 accountId, appId, programId);
+      LOG.error(msg);
+      throw new IllegalArgumentException(msg);
+    }
+    return started.getPid();
+  }
+
   public void recordProgramStart(String accountId, String appId, String programId, String pid, long startTs) {
     write(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId, pid).build(),
           new RunRecord(pid, startTs));

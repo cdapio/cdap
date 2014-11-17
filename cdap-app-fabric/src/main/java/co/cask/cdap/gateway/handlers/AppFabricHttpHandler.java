@@ -149,10 +149,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -658,6 +656,18 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Get RunId of the Program if it is running.
+   */
+  @GET
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/run-id")
+  public void getRunIdProgram(HttpRequest request, HttpResponder responder,
+                          @PathParam("app-id") final String appId,
+                          @PathParam("runnable-type") final String runnableType,
+                          @PathParam("runnable-id") final String runnableId) {
+    getRunId(request, responder, appId, runnableId);
+  }
+
+  /**
    * Returns program run history.
    */
   @GET
@@ -754,6 +764,26 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } else {
       List<String> matchedParams = parameters.get(parameterName);
       return matchedParams == null || matchedParams.isEmpty() ? null : matchedParams.get(0);
+    }
+  }
+
+  private void getRunId(HttpRequest request, HttpResponder responder, String id, String runnableId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program programId = Id.Program.from(accountId, id, runnableId);
+      try {
+        Map<String, String> runId = ImmutableMap.of("run-id", store.getRunId(programId));
+        responder.sendJson(HttpResponseStatus.OK, runId);
+      } catch (OperationException e) {
+        LOG.warn(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
+                               programId.toString(), e.getMessage()), e);
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Program is not Running");
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
