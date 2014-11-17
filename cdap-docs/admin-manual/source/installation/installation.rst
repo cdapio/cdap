@@ -126,8 +126,6 @@ To check the Java version installed, run the command::
   
 CDAP is tested with the Oracle JDKs; it may work with other JDKs such as 
 `Open JDK <http://openjdk.java.net>`__, but it has not been tested with them.
-The Apache site maintains a 
-`list of Java versions that work with Hadoop <http://wiki.apache.org/hadoop/HadoopJavaVersions>`__. 
 
 Once you have installed the JDK, you'll need to set the JAVA_HOME environment variable.
 
