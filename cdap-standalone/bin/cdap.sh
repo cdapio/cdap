@@ -161,28 +161,32 @@ check_before_start() {
   fi
 }
 
-# checks for any updates of standalone
+# Checks for any updates of standalone
 check_for_updates() {
-  # check if connected to internet
-  l=`ping -c 3 $VERSION_HOST 2>/dev/null | grep "64 bytes" | wc -l`
-  if [ $l -eq 3 ]
+  # Check if curl is available
+  command -v curl >/dev/null 2>&1 || \
+    { echo >&2 "Require curl to check for an update to the CDAP SDK. Unable to check."; return; }
+  # Check if connected to internet
+  l=`ping -c 3 ${VERSION_HOST} 2>/dev/null | grep "64 bytes" | wc -l`
+  if [ ${l} -eq 3 ]
   then
-    new_curl="curl -s ${VERSION_HOST}/cdap/version"
-    new=`eval $new_curl 2>/dev/null`
+    new=$(curl ${VERSION_HOST}/cdap/version 2>/dev/null)
     if [[ "x${new}" != "x" ]]; then
      current=`cat ${APP_HOME}/VERSION`
-     compare_versions $new $current
-     case $? in
+     compare_versions ${new} ${current}
+     case ${?} in
        0);;
        1) echo ""
           echo "UPDATE: There is a newer version of the CDAP SDK available."
-          echo "        New version: $new"
-          echo "        Current version: $current"
+          echo "        New version: ${new}"
+          echo "        Current version: ${current}"
           echo "        Download it from http://cask.co/downloads"
           echo "";;
        2);;
      esac
     fi
+  else
+    echo >&2 "Require internet connection to check for an update to the CDAP SDK. Unable to check."; return;
   fi
 }
 
