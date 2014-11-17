@@ -5,15 +5,35 @@
 
 .. _http-restful-api-service:
 
-===========================================================
+========================
 Service HTTP RESTful API
-===========================================================
+========================
 
 .. highlight:: console
 
-This interface supports making requests to the methods of an Application’s Services.
+This interface supports listing all Services and making requests to the methods of an Application’s Services.
 See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
 Services.
+
+Listing all Services
+--------------------
+
+You can list all Services in CDAP by issuing an HTTP GET request to the URL::
+
+  GET <base-url>/services
+
+The response body will contain a JSON-formatted list of the existing Datasets::
+
+[
+    {
+        "app": "PurchaseHistory",
+        "description": "Service to lookup product ids.",
+        "id": "CatalogLookup",
+        "name": "CatalogLookup",
+        "type": "Service"
+    }
+    ...
+]
 
 Requesting Service Methods
 --------------------------
