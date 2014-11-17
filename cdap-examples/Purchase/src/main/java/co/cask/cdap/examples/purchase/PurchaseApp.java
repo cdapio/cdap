@@ -48,7 +48,7 @@ public class PurchaseApp extends AbstractApplication {
     addWorkflow(new PurchaseHistoryWorkflow());
 
     // Retrieve the processed data using a Service
-    addService(new PurchaseService());
+    addService(new PurchaseHistoryService());
 
     // Provide a Service to Application components
     addService(new CatalogLookupService());

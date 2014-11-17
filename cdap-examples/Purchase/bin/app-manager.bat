@@ -24,8 +24,8 @@ SET APP_JAR_PREFIX=Purchase
 SET APP_NAME=PurchaseHistory
 SET FLOW_NAME=PurchaseFlow
 SET MAP_REDUCE_NAME=PurchaseHistoryWorkflow_PurchaseHistoryBuilder
-SET PURCHASE_SERVICE_NAME=PurchaseService
-SET SERVICE_NAME=CatalogLookupService
+SET HISTORY_SERVICE_NAME=PurchaseHistoryService
+SET LOOKUP_SERVICE_NAME=CatalogLookupService
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
@@ -72,20 +72,20 @@ GOTO :EOF
 
 :START
 CALL :POST %APP_NAME% flows %FLOW_NAME% start
-CALL :POST %APP_NAME% services %PURCHASE_SERVICE_NAME% start
-CALL :POST %APP_NAME% services %SERVICE_NAME% start
+CALL :POST %APP_NAME% services %HISTORY_SERVICE_NAME% start
+CALL :POST %APP_NAME% services %LOOKUP_SERVICE_NAME% start
 GOTO :EOF
 
 :STOP
 CALL :POST %APP_NAME% flows %FLOW_NAME% stop
-CALL :POST %APP_NAME% services %PURCHASE_SERVICE_NAME% stop
-CALL :POST %APP_NAME% services %SERVICE_NAME% stop
+CALL :POST %APP_NAME% services %HISTORY_SERVICE_NAME% stop
+CALL :POST %APP_NAME% services %LOOKUP_SERVICE_NAME% stop
 GOTO :EOF
 
 :STATUS
 CALL :GET %APP_NAME% flows %FLOW_NAME% status
-CALL :GET %APP_NAME% services %PURCHASE_SERVICE_NAME% status
-CALL :GET %APP_NAME% services %SERVICE_NAME% status
+CALL :GET %APP_NAME% services %HISTORY_SERVICE_NAME% status
+CALL :GET %APP_NAME% services %LOOKUP_SERVICE_NAME% status
 CALL :GET %APP_NAME% mapreduce %MAP_REDUCE_NAME% status
 GOTO :EOF
 

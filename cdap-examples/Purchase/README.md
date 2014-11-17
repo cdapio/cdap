@@ -1,7 +1,7 @@
 # Purchase example
 
 Example application that reads purchase data from a Stream, processes the data via a Workflow,
-and makes it available via REST interface of a Service.
+and makes it available via ad-hoc querying and REST interface of a Service.
 
 Features introduced: Custom Dataset with ad-hoc querying capability, Workflow, and MapReduce.
 
