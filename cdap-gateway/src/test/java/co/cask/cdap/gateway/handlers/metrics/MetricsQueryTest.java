@@ -167,8 +167,12 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     collector2.increment("rid_metric", 2);
 
     MetricsCollector collector3 = collectionService.getCollector(MetricsScope.USER,
-                                                                 "WordCount.b.CounterMapper.m", runId3);
-    collector3.gauge("mr_metric", 10);
+                                                                 "WordCount.b.CounterMapRed.m", runId3);
+    collector3.gauge("entries.out", 10);
+
+    MetricsCollector collector4 = collectionService.getCollector(MetricsScope.USER,
+                                                                 "WordCount.b.CounterMapRed.r", runId3);
+    collector4.gauge("entries.out", 10);
 
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
@@ -184,13 +188,22 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     String serviceRequestTotal =
       "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true";
 
-    String mapreduceMetric =
-      "/user/apps/WordCount/mapreduce/CounterMapper/runs/" + runId3 + "/mr_metric?aggregate=true";
+    String mappersMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/mappers/entries.out?aggregate=true";
+
+    String reducersMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/reducers/entries.out?aggregate=true";
+
+    String mapredMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/entries.out?aggregate=true";
+
 
     testSingleMetric(serviceRequest, 2);
     testSingleMetric(serviceRequestInvalidId, 0);
     testSingleMetric(serviceRequestTotal, 3);
-    testSingleMetric(mapreduceMetric, 10);
+    testSingleMetric(mappersMetric, 10);
+    testSingleMetric(reducersMetric, 10);
+    testSingleMetric(mapredMetric, 20);
   }
 
   @Test

@@ -97,7 +97,7 @@ public class MetricsQueryHandler extends BaseMetricsHandler {
 
   // ex: /system/apps/appX/mapreduce/jobId/runs/897e3c92-f369-43de-94b1-7344ccf2fd13/mappers/process.entries.in
   @GET
-  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/{component-type}/runs/{run-id}/{metric}")
+  @Path("/{scope}/{type}/{type-id}/{request-type}/{request-id}/runs/{run-id}/{component-type}/{metric}")
   public void handleComponentTypeWithRunId(HttpRequest request, HttpResponder responder) throws IOException {
     handleRequest(request, responder);
   }
