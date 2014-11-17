@@ -25,10 +25,9 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -61,7 +60,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     double averageLength = 0.0;
 
     // Read the total_length and total_words to calculate average length
-    Row result = this.wordStatsTable.get(new Get("totals", "total_length", "total_words"));
+    Row result = wordStatsTable.get(new Get("totals", "total_length", "total_words"));
     if (!result.isEmpty()) {
       // Extract the total sum of lengths
       long totalLength = result.getLong("total_length", 0);
@@ -71,40 +70,33 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
 
       // Compute the average length
       if (totalLength != 0 && totalWords != 0) {
-        averageLength = (double) totalLength / (double) totalWords;
+        averageLength = (double) totalLength / totalWords;
 
         // Read the unique word count
-        uniqueWords = this.uniqueCountTable.readUniqueCount();
+        uniqueWords = uniqueCountTable.readUniqueCount();
       }
     }
 
     // Return a map as JSON
-    Map<String, Object> results = new TreeMap<String, Object>();
+    Map<String, Object> results = new HashMap<String, Object>();
     results.put("totalWords", totalWords);
     results.put("uniqueWords", uniqueWords);
     results.put("averageLength", averageLength);
 
-    responder.sendJson(HttpResponseStatus.OK.code(), results);
+    responder.sendJson(results);
   }
 
   @Path("count/{word}/{limit}")
   @GET
   public void getCount(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("word") String word, @PathParam("limit") Integer limit) {
-    // Read the word count
-    byte[] countBytes = this.wordCountsTable.read(Bytes.toBytes(word));
-    Long wordCount = countBytes == null ? 0L : Bytes.toLong(countBytes);
+                       @PathParam("word") String word, @PathParam("limit") int limit) {
+    responder.sendJson(getCount(word, limit));
+  }
 
-    // Read the top associated words
-    Map<String, Long> wordsAssocs = this.associationTable.readWordAssocs(word, limit);
-
-    // Return a map as JSON
-    Map<String, Object> results = new TreeMap<String, Object>();
-    results.put("word", word);
-    results.put("count", wordCount);
-    results.put("assocs", wordsAssocs);
-
-    responder.sendJson(HttpResponseStatus.OK.code(), results);
+  @Path("count/{word}")
+  @GET
+  public void getCount(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("word") String word) {
+    responder.sendJson(getCount(word, 10));
   }
 
   @Path("assoc/{word1}/{word2}")
@@ -112,14 +104,31 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
   public void getAssoc(HttpServiceRequest request, HttpServiceResponder responder,
                        @PathParam("word1") String word1, @PathParam("word2") String word2) {
     // Read the top associated words
-    long count = this.associationTable.getAssoc(word1, word2);
+    long count = associationTable.getAssoc(word1, word2);
 
     // Return a map as JSON
-    Map<String, Object> results = new TreeMap<String, Object>();
+    Map<String, Object> results = new HashMap<String, Object>();
     results.put("word1", word1);
     results.put("word2", word2);
     results.put("count", count);
 
-    responder.sendJson(HttpResponseStatus.OK.code(), results);
+    responder.sendJson(results);
+  }
+
+  private Map<String, Object> getCount(String word, int limit) {
+    // Read the word count
+    byte[] countBytes = wordCountsTable.read(Bytes.toBytes(word));
+    long wordCount = countBytes == null ? 0L : Bytes.toLong(countBytes);
+
+    // Read the top associated words
+    Map<String, Long> wordsAssocs = associationTable.readWordAssocs(word, limit);
+
+    // Build a map with results
+    Map<String, Object> results = new HashMap<String, Object>();
+    results.put("word", word);
+    results.put("count", wordCount);
+    results.put("assocs", wordsAssocs);
+
+    return results;
   }
 }

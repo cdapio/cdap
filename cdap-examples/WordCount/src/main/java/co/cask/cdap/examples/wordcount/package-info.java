@@ -30,10 +30,11 @@
  *    - The associator stores word associations between all of the words in each input string.
  *
  * 3. A Service named RetrieveCounts serves read requests for the calculated statistics,
- *    word counts and associations. It supports next methods:
- *    - getStats() accesses the global word statistics;
- *    - getCount() accesses the word count of a specified word and its word associations;
- *    - getAssoc() accesses the top associated words.
+ *    word counts and associations. It exposes the following endpoints:
+ *    - "/stats" accesses the global word statistics;
+ *    - "/count/{word}/{limit}" accesses the word count of a specified word and its word associations;
+ *    - "/count/{word}" accesses the word count of a specified word and its word associations with limit equal 10;
+ *    - "/assoc/{word1}/{word2}" accesses the top associated words.
  *
  * 4. Four DataSets used by the Flow and Service to model, store, and serve the necessary data:
  *    - A core Table named wordStats to track global word statistics;
