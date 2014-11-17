@@ -31,6 +31,7 @@ import co.cask.cdap.cli.command.DescribeDatasetModuleCommand;
 import co.cask.cdap.cli.command.DescribeDatasetTypeCommand;
 import co.cask.cdap.cli.command.DescribeStreamCommand;
 import co.cask.cdap.cli.command.ExecuteQueryCommand;
+import co.cask.cdap.cli.command.ExitCommand;
 import co.cask.cdap.cli.command.GetProgramHistoryCommandSet;
 import co.cask.cdap.cli.command.GetProgramInstancesCommandSet;
 import co.cask.cdap.cli.command.GetProgramLiveInfoCommandSet;
@@ -70,6 +71,7 @@ public class DefaultCommands implements Supplier<List<Command>> {
   @Inject
   public DefaultCommands(Injector injector) {
     this.commands = ImmutableList.<Command>builder()
+      .add(injector.getInstance(ExitCommand.class))
       .add(injector.getInstance(CallProcedureCommand.class))
       .add(injector.getInstance(ConnectCommand.class))
       .add(injector.getInstance(CreateDatasetInstanceCommand.class))
