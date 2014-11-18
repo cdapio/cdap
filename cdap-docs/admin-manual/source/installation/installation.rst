@@ -129,6 +129,7 @@ CDAP is tested with the Oracle JDKs; it may work with other JDKs such as
 
 Once you have installed the JDK, you'll need to set the JAVA_HOME environment variable.
 
+
 Node.js Runtime
 +++++++++++++++
 You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__:
@@ -382,7 +383,7 @@ and started the services.
 
 Upgrading from a Previous Version
 ---------------------------------
-When upgrade an existing CDAP installation from a previous version, you will need
+When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
 
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
@@ -423,9 +424,8 @@ To verify that the CDAP software is successfully installed and you are able to u
 Hadoop cluster, run an example application.
 We provide in our SDK pre-built ``.JAR`` files for convenience:
 
-#. Download and install the latest CDAP Developer Suite from
-   http://cask.co/download
-
+#. Download and install the latest CDAP Software Development Kit (SDK) from
+   http://cask.co/downloads/#cdap\ .
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
@@ -439,5 +439,5 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
    :ref:`WordCount example. <examples-word-count>`
 #. You should be able to start the application, inject sentences,
    run the Flow and the Procedure, and see results.
-#. When finished, stop and remove the application as described in the
-   :ref:`examples. <examples-index>`
+#. When finished, you can stop and remove the application as described in the section on
+   :ref:`cdap-building-running`.
