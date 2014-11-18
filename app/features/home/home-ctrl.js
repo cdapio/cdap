@@ -22,7 +22,7 @@ function ($scope, $alert, MyDataSource) {
         var v = d[d.length-1],
             convert = function (h) {
               return {
-                timestamp: h.time,
+                time: h.time,
                 y: h.value
               };
             };

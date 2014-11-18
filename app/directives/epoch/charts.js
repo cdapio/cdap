@@ -125,10 +125,7 @@ ngEpoch.directive('epochLiveLine', function () {
     link: function (scope, elem, attr) {
       scope.initEpoch(elem, 'time.line', attr, {
         axes: ['left', 'bottom'],
-        ticks: { left: 5, time: 10 },
-        tickFormats: {
-          bottom: function (time) { return ''; } // wtf???
-        }
+        ticks: { left: 5, time: 15 }
       });
     }
   }, baseDirective);
