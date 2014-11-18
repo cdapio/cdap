@@ -171,16 +171,6 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public String getRunId(final Id.Program id) throws OperationException {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, String>() {
-      @Override
-      public String apply(AppMds mds) throws Exception {
-        return mds.apps.getProgramRunId(id.getAccountId(), id.getApplicationId(), id.getId());
-      }
-    });
-  }
-
-  @Override
   public void setStop(final Id.Program id, final String pid, final long endTime, final String state) {
     Preconditions.checkArgument(state != null, "End state of program run should be defined");
 

@@ -19,8 +19,8 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AsciiTable;
+import co.cask.cdap.cli.util.TimestampUtil;
 import co.cask.cdap.cli.util.ResponseUtil;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.StreamClient;
@@ -31,7 +31,6 @@ import com.google.inject.Inject;
 
 import java.io.PrintStream;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A CLI command for getting stream events.
@@ -52,8 +51,8 @@ public class GetStreamEventsCommand implements Command {
     long currentTime = System.currentTimeMillis();
 
     String streamId = arguments.get(ArgumentName.STREAM.toString());
-    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
-    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    long startTime = TimestampUtil.getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = TimestampUtil.getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
     int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     // Get a list of stream events and prints it.
@@ -94,43 +93,4 @@ public class GetStreamEventsCommand implements Command {
       "Special constants \"min\" and \"max\" can also be used to represent 0 and max timestamp respectively.";
   }
 
-  /**
-   * Returns a timestamp in milliseconds.
-   *
-   * @param arg The string argument user provided.
-   * @param base The base timestamp to relative from if the time format provided is a relative time.
-   * @return Timestamp in milliseconds
-   * @throws CommandInputError if failed to parse input.
-   */
-  private long getTimestamp(String arg, long base) {
-    try {
-      if (arg.startsWith("+") || arg.startsWith("-")) {
-        int dir = arg.startsWith("+") ? 1 : -1;
-        char type = arg.charAt(arg.length() - 1);
-        int offset = Integer.parseInt(arg.substring(1, arg.length() - 1));
-        switch (type) {
-          case 's':
-            return base + dir * TimeUnit.SECONDS.toMillis(offset);
-          case 'm':
-            return base + dir * TimeUnit.MINUTES.toMillis(offset);
-          case 'h':
-            return base + dir * TimeUnit.HOURS.toMillis(offset);
-          case 'd':
-            return base + dir * TimeUnit.DAYS.toMillis(offset);
-          default:
-            throw new CommandInputError("Unsupported relative time format: " + type);
-        }
-      }
-      if (arg.equalsIgnoreCase("min")) {
-        return 0L;
-      }
-      if (arg.equalsIgnoreCase("max")) {
-        return Long.MAX_VALUE;
-      }
-
-      return Long.parseLong(arg);
-    } catch (NumberFormatException e) {
-      throw new CommandInputError("Invalid number value: " + arg + ". Reason: " + e.getMessage());
-    }
-  }
 }

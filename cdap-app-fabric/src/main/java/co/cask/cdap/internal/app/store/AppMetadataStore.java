@@ -26,6 +26,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.proto.RunRecord;
 import com.clearspring.analytics.util.Lists;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -54,6 +55,13 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
+  private static final String STATUS_PROGRAM_COMPLETED = "Completed";
+  private static final String STATUS_PROGRAM_FAILED = "Failed";
+
+  private static final Map<String, String> PROGRAM_STATUS_MAP = new ImmutableMap.Builder<String, String>()
+    .put(ProgramController.State.STOPPED.toString(), STATUS_PROGRAM_COMPLETED)
+    .put(ProgramController.State.ERROR.toString(), STATUS_PROGRAM_FAILED)
+    .build();
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -117,21 +125,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  public String getProgramRunId(String accountId, String appId, String programId) {
-    Key key = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build();
-    RunRecord started = get(key, RunRecord.class);
-    if (started == null) {
-      String msg = String.format("No meta for started run record for account %s app %s program %s pid %s exists",
-                                 accountId, appId, programId);
-      LOG.error(msg);
-      throw new IllegalArgumentException(msg);
-    }
-    return started.getPid();
-  }
-
   public void recordProgramStart(String accountId, String appId, String programId, String pid, long startTs) {
     write(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId, pid).build(),
-          new RunRecord(pid, startTs));
+          new RunRecord(pid, startTs, -1, "Running"));
   }
 
   public void recordProgramStop(String accountId, String appId, String programId,
@@ -151,23 +147,23 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId)
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
-    write(key, new RunRecord(started, stopTs, endStatus));
+    write(key, new RunRecord(started, stopTs, PROGRAM_STATUS_MAP.get(endStatus)));
   }
 
   public List<RunRecord> getRuns(String accountId, String appId, String programId, String status,
                                  final long startTime, final long endTime, int limit) {
-    List<Key> prgrKeys = Lists.newArrayList();
+    List<Key> programKeys = Lists.newArrayList();
     if (status == null) {
-      prgrKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build());
-      prgrKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build());
-    } else if (status.equals("active")) {
-      prgrKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build());
+      programKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build());
+      programKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build());
+    } else if (status.equals("running")) {
+      programKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build());
     } else {
-      prgrKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build());
+      programKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build());
     }
     List<RunRecord> resultRecords = Lists.newArrayList();
 
-    for (Key programKey : prgrKeys) {
+    for (Key programKey : programKeys) {
       // NOTE: ts is inverted to get latest first
       Key start = new Key.Builder(programKey).add(getInvertedTsKeyPart(endTime)).build();
       Key stop = new Key.Builder(programKey).add(getInvertedTsKeyPart(startTime)).build();
@@ -175,9 +171,9 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
       for (RunRecord record : records) {
         // if 'status' is completed , then add records whose record-status is 'STOPPED' , else add error records
-        if ((status == null) || status.equals("active") ||
-          ((status.equals("completed")) && (record.getEndStatus().equals(ProgramController.State.STOPPED.toString())))
-          || ((status.equals("failed")) && (record.getEndStatus().equals(ProgramController.State.ERROR.toString())))) {
+        if ((status == null) || status.equals("running") ||
+          ((status.equals("completed")) && (record.getStatus().equals(STATUS_PROGRAM_COMPLETED)))
+          || ((status.equals("failed")) && (record.getStatus().equals(STATUS_PROGRAM_FAILED)))) {
           resultRecords.add(record);
         }
       }

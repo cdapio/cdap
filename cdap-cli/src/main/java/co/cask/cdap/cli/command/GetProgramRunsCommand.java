@@ -16,8 +16,10 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AsciiTable;
+import co.cask.cdap.cli.util.TimestampUtil;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.RunRecord;
@@ -30,12 +32,12 @@ import java.util.List;
 /**
  * Gets the run history of a program.
  */
-public class GetProgramHistoryCommand implements Command {
+public class GetProgramRunsCommand implements Command {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  protected GetProgramHistoryCommand(ElementType elementType, ProgramClient programClient) {
+  protected GetProgramRunsCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
     this.programClient = programClient;
   }
@@ -44,7 +46,16 @@ public class GetProgramHistoryCommand implements Command {
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
+    long currentTime = System.currentTimeMillis();
 
+    long startTime = TimestampUtil.getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = TimestampUtil.getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
+
+    String state = null;
+    if (arguments.hasArgument(ArgumentName.RUN_STATUS.toString())) {
+      state = arguments.get(ArgumentName.RUN_STATUS.toString());
+    }
     List<RunRecord> history;
     if (elementType == ElementType.RUNNABLE) {
       String serviceId = programIdParts[1];
@@ -52,7 +63,8 @@ public class GetProgramHistoryCommand implements Command {
       history = programClient.getServiceRunnableHistory(appId, serviceId, runnableId);
     } else if (elementType.getProgramType() != null) {
       String programId = programIdParts[1];
-      history = programClient.getProgramHistory(appId, elementType.getProgramType(), programId);
+      history = programClient.getProgramRuns(appId, elementType.getProgramType(), programId, state,
+                                             startTime, endTime, limit);
     } else {
       throw new IllegalArgumentException("Unrecognized program element type for history: " + elementType);
     }
@@ -63,7 +75,7 @@ public class GetProgramHistoryCommand implements Command {
       new RowMaker<RunRecord>() {
         @Override
         public Object[] makeRow(RunRecord object) {
-          return new Object[] { object.getPid(), object.getEndStatus(), object.getStartTs(), object.getStopTs() };
+          return new Object[] { object.getPid(), object.getStatus(), object.getStartTs(), object.getStopTs() };
         }
       }
     ).print(output);
@@ -71,7 +83,9 @@ public class GetProgramHistoryCommand implements Command {
 
   @Override
   public String getPattern() {
-    return String.format("get %s history <%s>", elementType.getName(), elementType.getArgumentName());
+    return String.format("get %s runs <%s> [<%s>] [<%s>] [<%s>] [<%s>]", elementType.getName(),
+                         elementType.getArgumentName(), ArgumentName.RUN_STATUS,
+                         ArgumentName.START_TIME, ArgumentName.END_TIME, ArgumentName.LIMIT);
   }
 
   @Override

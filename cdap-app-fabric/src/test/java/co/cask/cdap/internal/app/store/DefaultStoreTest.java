@@ -154,12 +154,12 @@ public class DefaultStoreTest {
     RunRecord run = successHistory.get(0);
     Assert.assertEquals(now - 1000, run.getStartTs());
     Assert.assertEquals(now - 500, run.getStopTs());
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(), run.getEndStatus());
+    Assert.assertEquals(ProgramController.State.STOPPED.toString(), run.getStatus());
 
     run = failureHistory.get(0);
     Assert.assertEquals(now - 2000, run.getStartTs());
     Assert.assertEquals(now - 1000, run.getStopTs());
-    Assert.assertEquals(ProgramController.State.ERROR.toString(), run.getEndStatus());
+    Assert.assertEquals(ProgramController.State.ERROR.toString(), run.getStatus());
   }
 
   @Test

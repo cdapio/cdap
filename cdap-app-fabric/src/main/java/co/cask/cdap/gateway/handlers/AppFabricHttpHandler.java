@@ -676,9 +676,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String endTs = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_END_TIME);
     String resultLimit = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_LIMIT);
 
-    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
-    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
-    int limit = resultLimit == null ? Constants.AppFabric.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
+    long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
+    int limit = (resultLimit == null || resultLimit.isEmpty()) ?
+      Constants.AppFabric.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
     getRuns(request, responder, appId, runnableId, status, start, end, limit);
   }
 
@@ -762,9 +763,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, runnableId);
       try {
-        if ((status != null) && !(status.equals("completed") || status.equals("failed") || status.equals("active"))) {
+        if ((status != null) && !(status.equals("completed") || status.equals("failed") ||
+          status.equals("running"))) {
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                               "Supported options for status are active/completed/failed");
+                               "Supported options for status of runs are running/completed/failed");
         }
         responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, status, start, end, limit));
       } catch (OperationException e) {
