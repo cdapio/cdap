@@ -25,9 +25,9 @@ the CDAP components so they work with your existing Hadoop cluster.
 
 These are the CDAP components:
 
-- **CDAP Web-App:** User interface—the *Console*—for managing CDAP applications;
-- **CDAP Gateway:** Service supporting REST endpoints for CDAP;
-- **CDAP-Master:** Service for managing runtime, lifecycle and resources of CDAP applications;
+- **CDAP Webapp:** User interface—the *Console*—for managing CDAP applications;
+- **CDAP Router:** Service supporting REST endpoints for CDAP;
+- **CDAP Master:** Service for managing runtime, lifecycle and resources of CDAP applications;
 - **CDAP Kafka:** Metrics and logging transport service, using an embedded version of *Kafka*; and
 - **CDAP Authentication Server:** Performs client authentication for CDAP when security is enabled.
 
@@ -42,8 +42,8 @@ as most of the work is done by the Hadoop cluster. These two
 boxes provide high availability; at any one time, one of them is the leader
 providing services while the other is a follower providing failover support.
 
-Some CDAP components run on YARN, while others orchestrate the Hadoop cluster.
-The CDAP Gateway service starts a router instance on each of the local boxes and instantiates
+Some CDAP components run on YARN, while others orchestrate “containers” in the Hadoop cluster.
+The CDAP Router service starts a router instance on each of the local boxes and instantiates
 one or more gateway instances on YARN as determined by the gateway service configuration.
 
 We have specific
@@ -56,18 +56,17 @@ that need to be met and completed before installation of the CDAP components.
 
 Conventions
 ...........
-In this document, *client* refers to an external application that is calling the
-CDAP using the HTTP interface.
+In this document:
 
-*Application* refers to a user Application that has been deployed into the CDAP.
+- *Client* refers to an external application that is calling CDAP.
+- *Application* refers to a user Application that has been deployed into CDAP.
+- Text that are variables that you are to replace is indicated by a series of angle brackets
+  (``< >``). For example::
 
-Text that are variables that you are to replace is indicated by a series of angle brackets
-(``< >``). For example::
+    WordCount-<cdap-version>.jar
 
-   WordCount-<cdap-version>.jar
-
-indicates that the text ``<cdap-version>`` is a variable and that you are to replace it
-with the correct value.
+  indicates that the text ``<cdap-version>`` is a variable and that you are to replace it
+  with the correct value.
 
 
 System Requirements
@@ -78,26 +77,26 @@ Hardware Requirements
 Systems hosting the CDAP components must meet these hardware specifications,
 in addition to having CPUs with a minimum speed of 2 GHz:
 
-+---------------------------------------+--------------------+-----------------------------------------------+
-| CDAP Component                        | Hardware Component | Specifications                                |
-+=======================================+====================+===============================================+
-| **CDAP Web-App**                      | RAM                | 1 GB minimum, 2 GB recommended                |
-+---------------------------------------+--------------------+-----------------------------------------------+
-| **CDAP Gateway**                      | RAM                | 2 GB minimum, 4 GB recommended                |
-+---------------------------------------+--------------------+-----------------------------------------------+
-| **CDAP-Master**                       | RAM                | 2 GB minimum, 4 GB recommended                |
-+---------------------------------------+--------------------+-----------------------------------------------+
-| **CDAP Kafka**                        | RAM                | 1 GB minimum, 2 GB recommended                |
-+                                       +--------------------+-----------------------------------------------+
-|                                       | Disk Space         | *CDAP Kafka* maintains a data cache in        |
-|                                       |                    | a configurable data directory.                |
-|                                       |                    | Required space depends on the number of       |
-|                                       |                    | CDAP applications deployed and running        |
-|                                       |                    | in the CDAP and the quantity                  |
-|                                       |                    | of logs and metrics that they generate.       |
-+---------------------------------------+--------------------+-----------------------------------------------+
-| **CDAP Authentication Server**        | RAM                | 1 GB minimum, 2 GB recommended                |
-+---------------------------------------+--------------------+-----------------------------------------------+
++--------------------------------+-------------------+--------------------+------------------------------------------+
+| Component                      | Package           | Hardware Component | Specifications                           |
++================================+===================+====================+==========================================+
+| **CDAP Webapp**                | ``cdap-web-app``  | RAM                | 1 GB minimum, 2 GB recommended           |
++--------------------------------+-------------------+--------------------+------------------------------------------+
+| **CDAP Router**                | ``cdap-gateway``  | RAM                | 2 GB minimum, 4 GB recommended           |
++--------------------------------+-------------------+--------------------+------------------------------------------+
+| **CDAP Master**                | ``cdap-master``   | RAM                | 2 GB minimum, 4 GB recommended           |
++--------------------------------+-------------------+--------------------+------------------------------------------+
+| **CDAP Kafka**                 | ``cdap-kafka``    | RAM                | 1 GB minimum, 2 GB recommended           |
++                                +-------------------+--------------------+------------------------------------------+
+|                                |                   | Disk Space         | *CDAP Kafka* maintains a data cache in   |
+|                                |                   |                    | a configurable data directory.           |
+|                                |                   |                    | Required space depends on the number of  |
+|                                |                   |                    | CDAP applications deployed and running   |
+|                                |                   |                    | in the CDAP and the quantity             |
+|                                |                   |                    | of logs and metrics that they generate.  |
++--------------------------------+-------------------+--------------------+------------------------------------------+
+| **CDAP Authentication Server** | ``cdap-security`` | RAM                | 1 GB minimum, 2 GB recommended           |
++--------------------------------+-------------------+--------------------+------------------------------------------+
 
 
 Network Requirements
@@ -114,6 +113,8 @@ You'll need this software installed:
 - Java runtime (on CDAP and Hadoop nodes)
 - Node.js runtime (on CDAP nodes)
 - Hadoop, HBase (and possibly Hive) environment to run against
+- CDAP nodes require Hadoop and HBase client installation and configuration. 
+  **Note:** No Hadoop services need to be running.
 
 Java Runtime
 ++++++++++++
@@ -160,11 +161,8 @@ For a distributed enterprise, you must install these Hadoop components:
 |               | CDH or HDP        | (CDH) 4.3.x or later or (HDP) 2.0 or later  |
 +---------------+-------------------+---------------------------------------------+
 
-CDAP nodes require Hadoop and HBase client installation and configuration. No Hadoop
-services need to be running.
-
-Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and possibly *Hive*)
-cluster configurations by adding your configuration to their class paths.
+**Note:** Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and
+possibly *Hive*) cluster configurations by adding your configuration to their class paths.
 
 
 .. _deployment-architectures:
@@ -334,6 +332,13 @@ Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your cho
 Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
 to your custom directory.
 
+For example::
+
+  sudo update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 50
+ 
+  sudo update-alternatives --set cdap-conf /etc/cdap/conf.mycdap
+
+
 .. _initial-configuration:
 
 Initial Configuration
@@ -409,7 +414,7 @@ The governing properties for the listening bind address and port for each of the
 :ref:`CDAP Webapp <deployment-architectures>`, :ref:`CDAP Router <deployment-architectures>`,
 and :ref:`CDAP Auth Service <deployment-architectures>` are listed below. The listed
 values are the CDAP defaults.  Where noted, in certain cases the 
-`CDAP Chef community cookbook <https://supermarket.getchef.com/cookbooks/cdap>`__
+`CDAP Chef cookbook <https://supermarket.getchef.com/cookbooks/cdap>`__
 defaults the address property to ``node['fqdn']``.
 
 For load-balancing, we currently recommend TCP health-checks for the listening ports. 
@@ -417,7 +422,7 @@ HTTP health-check endpoints are planned.
 
 .. highlight:: xml
 
-- **CDAP Web-App (the CDAP Console)** governing cdap-site.xml configuration::
+- **CDAP Web-App (the CDAP Console)** governing ``conf/cdap-site.xml`` configuration::
 
     <property>
       <name>dashboard.bind.address</name>
@@ -438,7 +443,7 @@ HTTP health-check endpoints are planned.
     </property>
 
 
-- **CDAP Router** governing cdap-site.xml configuration::
+- **CDAP Router** governing ``conf/cdap-site.xml`` configuration::
 
     <property>
       <name>router.bind.address</name>
@@ -461,7 +466,7 @@ HTTP health-check endpoints are planned.
 
   **Note:** the CDAP chef cookbook defaults ``router.bind.address`` to ``node['fqdn']``
 
-- **CDAP Auth Server** governing cdap-site.xml configuration::
+- **CDAP Auth Server** governing ``conf/cdap-site.xml`` configuration::
 
     <property>
       <name>security.auth.server.address</name>
@@ -496,7 +501,7 @@ you can start the services on each of the CDAP boxes by running this command::
 
 When all the services have completed starting, the CDAP Console should then be
 accessible through a browser at port 9999. The URL will be ``http://<console-ip>:9999`` where
-``<console-ip>`` is the IP address of one of the machine where you installed the packages
+``<console-ip>`` is the IP address of one of the machines where you installed the packages
 and started the services.
 
 
@@ -544,8 +549,8 @@ To verify that the CDAP software is successfully installed and you are able to u
 Hadoop cluster, run an example application.
 We provide in our SDK pre-built ``.JAR`` files for convenience:
 
-#. Download and install the latest CDAP Developer Suite from
-   http://cask.co/download\ .
+#. Download and install the latest `CDAP Software Development Kit (SDK)
+   <http://cask.co/downloads/#cdap>`__.
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
@@ -557,7 +562,6 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
    ``CDAP_HOME/examples/WordCount/target/``, substituting your version for *<cdap-version>*. 
 #. Once the application is deployed, instructions on running the example can be found at the
    :ref:`WordCount example. <examples-word-count>`
-#. You should be able to start the application, inject sentences,
-   run the Flow and the Procedure, and see results.
-#. When finished, stop and remove the application as described in the
-   :ref:`examples. <examples-index>`
+#. You should be able to start the application, inject sentences, and retrieve results.
+#. When finished, you can stop and remove the application as described in the section on
+   :ref:`cdap-building-running`.
