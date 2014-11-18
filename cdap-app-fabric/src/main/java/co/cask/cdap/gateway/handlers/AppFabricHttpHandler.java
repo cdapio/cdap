@@ -656,22 +656,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Get RunId of the Program if it is running.
-   */
-  @GET
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/run-id")
-  public void getRunIdProgram(HttpRequest request, HttpResponder responder,
-                          @PathParam("app-id") final String appId,
-                          @PathParam("runnable-type") final String runnableType,
-                          @PathParam("runnable-id") final String runnableId) {
-    getRunId(request, responder, appId, runnableId);
-  }
-
-  /**
    * Returns program run history.
    */
   @GET
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/history")
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runs")
   public void runnableHistory(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") final String appId,
                               @PathParam("runnable-type") final String runnableType,
@@ -683,6 +671,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
+    String status = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_STATUS);
     String startTs = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_START_TIME);
     String endTs = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_END_TIME);
     String resultLimit = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_LIMIT);
@@ -690,7 +679,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
     int limit = resultLimit == null ? Constants.AppFabric.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
-    getHistory(request, responder, appId, runnableId, start, end, limit);
+    getRuns(request, responder, appId, runnableId, status, start, end, limit);
   }
 
   /**
@@ -767,33 +756,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void getRunId(HttpRequest request, HttpResponder responder, String id, String runnableId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program programId = Id.Program.from(accountId, id, runnableId);
-      try {
-        Map<String, String> runId = ImmutableMap.of("run-id", store.getRunId(programId));
-        responder.sendJson(HttpResponseStatus.OK, runId);
-      } catch (OperationException e) {
-        LOG.warn(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
-                               programId.toString(), e.getMessage()), e);
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Program is not Running");
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private void getHistory(HttpRequest request, HttpResponder responder, String appId,
-                          String runnableId, long start, long end, int limit) {
+  private void getRuns(HttpRequest request, HttpResponder responder, String appId,
+                       String runnableId, String status, long start, long end, int limit) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, runnableId);
       try {
-        responder.sendJson(HttpResponseStatus.OK, store.getRunHistory(programId, start, end, limit));
+        if ((status != null) && !(status.equals("completed") || status.equals("failed") || status.equals("active"))) {
+          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                               "Supported options for status are active/completed/failed");
+        }
+        responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, status, start, end, limit));
       } catch (OperationException e) {
         LOG.warn(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
                                programId.toString(), e.getMessage()), e);

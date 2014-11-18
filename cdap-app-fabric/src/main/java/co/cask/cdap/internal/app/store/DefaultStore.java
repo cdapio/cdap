@@ -198,12 +198,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunRecord> getRunHistory(final Id.Program id, final long startTime, final long endTime, final int limit) {
+  public List<RunRecord> getRuns(final Id.Program id, final String status,
+                                 final long startTime, final long endTime, final int limit) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
       public List<RunRecord> apply(AppMds mds) throws Exception {
-        return mds.apps.getRunHistory(id.getAccountId(), id.getApplicationId(), id.getId(),
-                                      startTime, endTime, limit);
+        return mds.apps.getRuns(id.getAccountId(), id.getApplicationId(), id.getId(), status,
+                                startTime, endTime, limit);
       }
     });
   }

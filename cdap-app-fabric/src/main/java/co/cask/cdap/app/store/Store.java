@@ -79,7 +79,8 @@ public interface Store {
    * @return          list of logged runs
    * @throws          OperationException
    */
-  List<RunRecord> getRunHistory(Id.Program id, long startTime, long endTime, int limit) throws OperationException;
+  List<RunRecord> getRuns(Id.Program id, String status,
+                          long startTime, long endTime, int limit) throws OperationException;
 
   /**
    * Creates a new stream if it does not exist.

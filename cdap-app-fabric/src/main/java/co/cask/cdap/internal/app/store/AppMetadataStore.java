@@ -20,10 +20,12 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.proto.RunRecord;
+import com.clearspring.analytics.util.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -152,13 +154,35 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(key, new RunRecord(started, stopTs, endStatus));
   }
 
-  public List<RunRecord> getRunHistory(String accountId, String appId, String programId,
-                                       final long startTime, final long endTime, int limit) {
-    Key prgrKey = new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build();
-    // NOTE: ts is inverted to get latest first
-    Key start = new Key.Builder(prgrKey).add(getInvertedTsKeyPart(endTime)).build();
-    Key stop = new Key.Builder(prgrKey).add(getInvertedTsKeyPart(startTime)).build();
-    return list(start, stop, RunRecord.class, limit);
+  public List<RunRecord> getRuns(String accountId, String appId, String programId, String status,
+                                 final long startTime, final long endTime, int limit) {
+    List<Key> prgrKeys = Lists.newArrayList();
+    if (status == null) {
+      prgrKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build());
+      prgrKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build());
+    } else if (status.equals("active")) {
+      prgrKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build());
+    } else {
+      prgrKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build());
+    }
+    List<RunRecord> resultRecords = Lists.newArrayList();
+
+    for (Key programKey : prgrKeys) {
+      // NOTE: ts is inverted to get latest first
+      Key start = new Key.Builder(programKey).add(getInvertedTsKeyPart(endTime)).build();
+      Key stop = new Key.Builder(programKey).add(getInvertedTsKeyPart(startTime)).build();
+      List<RunRecord> records = list(start, stop, RunRecord.class, limit);
+
+      for (RunRecord record : records) {
+        // if 'status' is completed , then add records whose record-status is 'STOPPED' , else add error records
+        if ((status == null) || status.equals("active") ||
+          ((status.equals("completed")) && (record.getEndStatus().equals(ProgramController.State.STOPPED.toString())))
+          || ((status.equals("failed")) && (record.getEndStatus().equals(ProgramController.State.ERROR.toString())))) {
+          resultRecords.add(record);
+        }
+      }
+    }
+    return resultRecords;
   }
 
   private long getInvertedTsKeyPart(long endTime) {
