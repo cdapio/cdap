@@ -115,6 +115,9 @@ You'll need this software installed:
 - Node.js runtime (on CDAP nodes)
 - Hadoop, HBase (and possibly Hive) environment to run against
 
+If you are using `Chef <https://www.getchef.com>`__ to install CDAP, a `cookbook is
+available <https://supermarket.getchef.com/cookbooks/cdap>`__.
+
 Java Runtime
 ++++++++++++
 The latest `JDK or JRE version 1.6.xx <http://www.java.com/en/download/manual.jsp>`__
@@ -167,8 +170,10 @@ Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and po
 cluster configurations by adding your configuration to their class paths.
 
 
+.. _deployment-architectures:
+
 Deployment Architectures
-........................
+------------------------
 
 .. image:: ../_images/cdap-minimal-deployment.png
    :width: 8in
@@ -180,8 +185,9 @@ Deployment Architectures
    :width: 8in
    :align: center
 
-Prepare the Cluster
-...................
+
+Preparing the Cluster
+------------------------
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
@@ -193,6 +199,8 @@ required.
 
 To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
 (see the :ref:`appendix-cdap-site.xml`) and set appropriate properties.
+
+.. highlight:: xml
 
 - If you want to use an HDFS directory with a name other than ``/cdap``:
 
@@ -242,9 +250,11 @@ To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
   **Note:** This feature cannot be used unless the cluster has a correct version of Hive installed.
   See *Hadoop/HBase Environment* above. This feature is currently not supported on secure Hadoop clusters.
 
+.. highlight:: console
+
 
 Secure Hadoop
-+++++++++++++
+.............
 When running CDAP on top of Secure Hadoop and HBase (using Kerberos
 authentication), the CDAP Master process will need to obtain Kerberos credentials in order to
 authenticate with Hadoop and HBase.  In this case, the setting for ``hdfs.user`` in
@@ -268,7 +278,7 @@ In order to configure CDAP Master for Kerberos authentication:
   first login using the configured keytab file and principal.
 
 ULIMIT Configuration
-++++++++++++++++++++
+....................
 When you install the CDAP packages, the ``ulimit`` settings for the
 CDAP user are specified in the ``/etc/security/limits.d/cdap.conf`` file.
 On Ubuntu, they won't take effect unless you make changes to the ``/etc/pam.d/common-session file``.
@@ -305,7 +315,6 @@ Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your cho
 Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
 to your custom directory.
 
-
 RPM using Yum
 .............
 Download the Cask Yum repo definition file::
@@ -340,6 +349,7 @@ Add the Cask Public GPG Key to your repository::
 
   curl -s http://repository.cask.co/ubuntu/precise/amd64/releases/pubkey.gpg | sudo apt-key add -
 
+
 .. _installation:
 
 Installation
@@ -360,9 +370,94 @@ recommended installation is a minimum of two boxes.
 
 This will download and install the latest version of CDAP with all of its dependencies. 
 
-For instructions on enabling CDAP Security, see :doc:`CDAP Security; <security>`
-and in particular, see the instructions for :ref:`configuring the properties of cdap-site.xml. <enabling-security>`
+Configuration
+.............
+For instructions on enabling CDAP Security, see :doc:`CDAP Security; <security>` and in
+particular, see the instructions for :ref:`configuring the properties of cdap-site.xml.
+<enabling-security>`
 
+The governing properties for the listening bind address and port for each of the
+:ref:`CDAP Webapp, CDAP Router, and CDAP Auth Service <deployment-architectures>` are
+listed below. The listed values are the CDAP defaults.  Where noted, in a couple cases the
+CDAP chef community cookbook defaults the address property to ``node['fqdn']``.
+
+For load-balancing, we currently recommend TCP health-checks for the listening ports. 
+HTTP health-check endpoints are planned.
+
+.. highlight:: xml
+
+- **CDAP Web-App (the CDAP Console)** governing cdap-site.xml configuration::
+
+    <property>
+      <name>dashboard.bind.address</name>
+      <value>0.0.0.0</value>
+      <description>CDAP Console bind address</description>
+    </property>
+
+    <property>
+      <name>dashboard.bind.port</name>
+      <value>9999</value>
+       <description>CDAP console bind port</description>
+    </property>
+
+    <property>
+      <name>dashboard.ssl.bind.port</name>
+      <value>9443</value>
+      <description>CDAP Console bind port for HTTPS</description>
+    </property>
+
+
+- **CDAP Router** governing cdap-site.xml configuration::
+
+    <property>
+      <name>router.bind.address</name>
+      <value>0.0.0.0</value>
+      <description>CDAP Router bind address</description>
+    </property>
+
+    <property>
+      <name>router.bind.port</name>
+      <value>10000</value>
+      <description>CDAP Router bind port</description>
+    </property>
+
+    <property>
+      <name>router.ssl.bind.port</name>
+      <value>10443</value>
+      <description>Secure CDAP Router bind port</description>
+    </property>
+
+
+  **Note:** the CDAP chef cookbook defaults ``router.bind.address`` to ``node['fqdn']``
+
+- **CDAP Auth Server** governing cdap-site.xml configuration::
+
+    <property>
+      <name>security.auth.server.address</name>
+      <value>127.0.0.1</value>
+      <description>CDAP Auth Server bind address for auth server</description>
+    </property>
+
+    <property>
+      <name>security.auth.server.bind.port</name>
+      <value>10009</value>
+      <description>CDAP Auth Server bind port</description>
+    </property>
+
+    <property>
+      <name>security.auth.server.ssl.bind.port</name>
+      <value>10010</value>
+      <description>Secure CDAP Auth Server bind port</description>
+    </property>
+
+
+  **Note:** the CDAP chef cookbook defaults ``security.auth.server.address`` to ``node['fqdn']``
+
+.. highlight:: console
+
+
+Starting CDAP
+.............
 When all the packages and dependencies have been installed,
 you can start the services on each of the CDAP boxes by running this command::
 
@@ -373,9 +468,10 @@ accessible through a browser at port 9999. The URL will be ``http://<console-ip>
 ``<console-ip>`` is the IP address of one of the machine where you installed the packages
 and started the services.
 
+
 Upgrading from a Previous Version
 ---------------------------------
-When upgrade an existing CDAP installation from a previous version, you will need
+When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
 
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
@@ -410,6 +506,7 @@ and then restart CDAP.
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
+
 Verification
 ------------
 To verify that the CDAP software is successfully installed and you are able to use your
@@ -417,8 +514,7 @@ Hadoop cluster, run an example application.
 We provide in our SDK pre-built ``.JAR`` files for convenience:
 
 #. Download and install the latest CDAP Developer Suite from
-   http://cask.co/download
-
+   http://cask.co/download\ .
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
