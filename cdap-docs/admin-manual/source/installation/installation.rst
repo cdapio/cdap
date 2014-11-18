@@ -115,8 +115,8 @@ You'll need this software installed:
 - Node.js runtime (on CDAP nodes)
 - Hadoop, HBase (and possibly Hive) environment to run against
 
-If you are using `Chef <https://www.getchef.com>`__ to install CDAP, a `cookbook is
-available <https://supermarket.getchef.com/cookbooks/cdap>`__.
+If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official cookbook
+is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
 Java Runtime
 ++++++++++++
