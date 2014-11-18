@@ -87,7 +87,7 @@ authentication mechanisms supported by CDAP:</p>
 <ul class="simple">
 <li>Basic Authentication</li>
 <li>LDAP</li>
-<li>JASPI</li>
+<li>JAASPI</li>
 </ul>
 </div>
 <div class="section" id="custom-authentication-mechanism">
@@ -101,17 +101,10 @@ the custom authentication client.</p>
 </div>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p>To install the latest release version of CDAP Authentication Client, run</p>
+<p>To install the CDAP Authentication Client, run</p>
 <div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> pip install cdap-auth-client
 </pre></div>
 </div>
-<p>To install the development version, clone the repository</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> git clone https://github.com/caskdata/cdap-clients.git
-<span class="gp">$</span> <span class="nb">cd </span>cdap-clients/cdap-authentication-clients/python/
-<span class="gp">$</span> python setup.py install
-</pre></div>
-</div>
-<p>Supported Python versions: 2.6, 2.7</p>
 </div>
 <div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
@@ -215,11 +208,6 @@ retrieved credentials.</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="tests">
-<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this headline">¶</a></h2>
-<p>To run tests from the command-line:</p>
-<p><tt class="docutils literal"><span class="pre">python</span> <span class="pre">tests/BasicAuthenticationClientTest.py</span></tt></p>
-</div>
 </div>
 
 
@@ -279,7 +267,6 @@ retrieved credentials.</p>
 <li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#interactive-applications">Interactive Applications</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#tests">Tests</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="custom-authentication.html">Custom Authentication</a></li>
@@ -301,7 +288,7 @@ retrieved credentials.</p>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/current/cdap-docs-2.5.2-web.zip"
+      <li><a href="http://docs.cask.co/cdap/2.5.2/cdap-docs-2.5.2-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>

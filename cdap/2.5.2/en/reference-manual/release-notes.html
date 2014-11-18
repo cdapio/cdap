@@ -103,6 +103,8 @@ version of a library than the one that the CDAP platform uses; for example, a di
 Kafka library (<a class="reference external" href="https://issues.cask.co/browse/CDAP-559">CDAP-559</a>).</li>
 <li>Fixed a problem with CDAP master not obtaining new delegation tokens after running for
 <tt class="docutils literal"><span class="pre">hbase.auth.key.update.interval</span></tt> milliseconds (<a class="reference external" href="https://issues.cask.co/browse/CDAP-562">CDAP-562</a>).</li>
+<li>Fixed a problem with the transaction not being rolled back when a user service handler throws an exception
+(<a class="reference external" href="https://issues.cask.co/browse/CDAP-607">CDAP-607</a>).</li>
 </ul>
 </div>
 <div class="section" id="other-changes">
@@ -312,7 +314,7 @@ unless YARN has been configured to enable virtual cores</li>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
-      <li><a href="http://docs.cask.co/cdap/current/cdap-docs-2.5.2-web.zip"
+      <li><a href="http://docs.cask.co/cdap/2.5.2/cdap-docs-2.5.2-web.zip"
             rel="nofollow">Zip Archive of CDAP Documentation</a></li>
     </ul>
    </div>
