@@ -18,10 +18,14 @@ package co.cask.cdap.app.services;
 
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.security.ACL;
+import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
@@ -33,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +51,7 @@ import javax.annotation.Nullable;
 public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceDiscoverer.class);
+  private static final Gson GSON = new Gson();
 
   protected String accountId;
   protected String applicationId;
@@ -122,8 +128,18 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   private boolean isVisible(Discoverable discoverable, String applicationId) {
     if (discoverable instanceof PayloadDiscoverable) {
       PayloadDiscoverable payloadDiscoverable = (PayloadDiscoverable) discoverable;
-      String scope = Bytes.toString(payloadDiscoverable.getPayload());
-      return !(scope.equals("local") && !this.applicationId.equals(applicationId));
+      String encodedACLS = Bytes.toString(payloadDiscoverable.getPayload());
+      List<ACL> acls = GSON.fromJson(encodedACLS, new TypeToken<List<ACL>>() { }.getType());
+      // If no ACLs are set, or its in the same application, then it is visible
+      if (acls.isEmpty() || this.applicationId.equals(applicationId)) {
+        return true;
+      } else {
+        ACL acl = acls.get(0);
+        // If they're in different applications, and the ACL is set to execute only within the same app, its not visible
+        if (acl.getPrincipal() == null && acl.getPermissions().contains(PermissionType.EXECUTE)) {
+          return false;
+        }
+      }
     }
     return true;
   }

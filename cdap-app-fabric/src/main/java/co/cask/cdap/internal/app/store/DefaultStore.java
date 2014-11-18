@@ -385,7 +385,7 @@ public class DefaultStore implements Store {
         serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
                                                serviceSpec.getDescription(), serviceSpec.getHandlers(),
                                                serviceSpec.getWorkers(), serviceSpec.getResources(),
-                                               instances, serviceSpec.isLocal());
+                                               instances, serviceSpec.getAcls());
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);
@@ -436,7 +436,7 @@ public class DefaultStore implements Store {
         serviceSpec = new ServiceSpecification(serviceSpec.getClassName(), serviceSpec.getName(),
                                                serviceSpec.getDescription(), serviceSpec.getHandlers(),
                                                updatedWorkers, serviceSpec.getResources(),
-                                               serviceSpec.getInstances(), serviceSpec.isLocal());
+                                               serviceSpec.getInstances(), serviceSpec.getAcls());
 
         ApplicationSpecification newAppSpec = replaceServiceSpec(appSpec, id.getId(), serviceSpec);
         replaceAppSpecInProgramJar(id, newAppSpec, ProgramType.SERVICE);

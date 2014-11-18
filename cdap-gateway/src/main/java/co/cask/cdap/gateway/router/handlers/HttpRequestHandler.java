@@ -17,6 +17,8 @@
 package co.cask.cdap.gateway.router.handlers;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.security.ACL;
+import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.gateway.router.ProxyRule;
@@ -24,6 +26,8 @@ import co.cask.cdap.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.io.Closeables;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.PayloadDiscoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
@@ -61,6 +65,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpRequestHandler.class);
+  private static final Gson GSON = new Gson();
 
   private final ClientBootstrap clientBootstrap;
   private final RouterServiceLookup serviceLookup;
@@ -195,12 +200,21 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
     return new WrappedDiscoverable(discoverable);
   }
 
-  // Local service discoverables have a payload set to "local"s
   private boolean isVisible(Discoverable discoverable) {
     if (discoverable instanceof PayloadDiscoverable) {
       PayloadDiscoverable payloadDiscoverable = (PayloadDiscoverable) discoverable;
-      String scope = Bytes.toString(payloadDiscoverable.getPayload());
-      return !scope.equals("local");
+      String encodedACLS = Bytes.toString(payloadDiscoverable.getPayload());
+      if (!encodedACLS.isEmpty()) {
+        List<ACL> acls = GSON.fromJson(encodedACLS, new TypeToken<List<ACL>>() { }.getType());
+        if (acls.isEmpty()) {
+          return true;
+        } else {
+          ACL acl = acls.get(0);
+          if (acl.getPrincipal() == null && acl.getPermissions().contains(PermissionType.EXECUTE)) {
+            return false;
+          }
+        }
+      }
     }
     return true;
   }

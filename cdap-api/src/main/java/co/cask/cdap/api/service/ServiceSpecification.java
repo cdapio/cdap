@@ -18,10 +18,13 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.security.ACL;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,12 +38,12 @@ public final class ServiceSpecification implements ProgramSpecification {
   private final Map<String, ServiceWorkerSpecification> workers;
   private final Resources resources;
   private final int instances;
-  private final boolean local;
+  private final List<ACL> acls;
 
   public ServiceSpecification(String className, String name, String description,
                               Map<String, HttpServiceHandlerSpecification> handlers,
                               Map<String, ServiceWorkerSpecification> workers,
-                              Resources resources, int instances, boolean local) {
+                              Resources resources, int instances, List<ACL> acls) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -48,7 +51,7 @@ public final class ServiceSpecification implements ProgramSpecification {
     this.workers = Collections.unmodifiableMap(new HashMap<String, ServiceWorkerSpecification>(workers));
     this.resources = resources;
     this.instances = instances;
-    this.local = local;
+    this.acls = Collections.unmodifiableList(new ArrayList<ACL>(acls));
   }
 
   @Override
@@ -94,11 +97,8 @@ public final class ServiceSpecification implements ProgramSpecification {
     return resources;
   }
 
-  /**
-   * Returns the visibility scope of the Service.
-   * @return true if visible only within the same application, false otherwise.
-   */
-  public boolean isLocal() {
-    return local;
+  public List<ACL> getAcls() {
+    return acls;
   }
+
 }

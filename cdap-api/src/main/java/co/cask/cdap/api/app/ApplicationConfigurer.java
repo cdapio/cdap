@@ -24,9 +24,12 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
+import co.cask.cdap.api.security.ACL;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
+
+import java.util.List;
 
 /**
  * Configures a CDAP Application.
@@ -147,11 +150,11 @@ public interface ApplicationConfigurer {
    */
   void addService(Service service);
 
+
   /**
-   * Adds a {@link Service} to the Application.
-   * The service  will be visible only to programs within the same application. It will not be discoverable
-   * or usable from outside the application.
+   * Adds a custom {@link Service} to the Application with the given list of {@link ACL}s.
    * @param service The service to include in the Application
+   * @param acls The ACLs for the Service.
    */
-  void addLocalService(Service service);
+  void addService(Service service, List<ACL> acls);
 }

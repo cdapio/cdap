@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.security.ACL;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -30,6 +31,7 @@ import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.clearspring.analytics.util.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -52,13 +54,13 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   private List<HttpServiceHandler> handlers;
   private Resources resources;
   private int instances;
-  private final boolean local;
+  private final List<ACL> acls;
 
 
   /**
    * Create an instance of {@link DefaultServiceConfigurer}
    */
-  public DefaultServiceConfigurer(Service service, boolean local) {
+  public DefaultServiceConfigurer(Service service, List<ACL> acls) {
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
@@ -66,7 +68,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
     this.handlers = Lists.newArrayList();
     this.resources = new Resources();
     this.instances = 1;
-    this.local = local;
+    this.acls = ImmutableList.copyOf(acls);
   }
 
   @Override
@@ -115,7 +117,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
 
   public ServiceSpecification createSpecification() {
     Map<String, HttpServiceHandlerSpecification> handleSpecs = createHandlerSpecs(handlers);
-    return new ServiceSpecification(className, name, description, handleSpecs, workers, resources, instances, local);
+    return new ServiceSpecification(className, name, description, handleSpecs, workers, resources, instances, acls);
   }
 
   /**

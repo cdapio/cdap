@@ -42,6 +42,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.gson.Gson;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
@@ -65,6 +66,7 @@ public class ServiceHttpServer extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpServer.class);
   private static final long HANDLER_CLEANUP_PERIOD_MS = TimeUnit.SECONDS.toMillis(60);
+  private static final Gson GSON = new Gson();
 
   // The following two fields are for tracking GC'ed suppliers of handler and be able to call destroy on them.
   private final Map<Reference<? extends Supplier<HandlerContextPair>>, HandlerContextPair> handlerReferences;
@@ -133,11 +135,8 @@ public class ServiceHttpServer extends AbstractIdleService {
 
     // announce the twill runnable
     int port = service.getBindAddress().getPort();
-    String scope = "global";
-    if (spec.isLocal()) {
-      scope = "local";
-    }
-    cancelDiscovery = serviceAnnouncer.announce(getServiceName(programId), port, Bytes.toBytes(scope));
+    String acls = GSON.toJson(spec.getAcls());
+    cancelDiscovery = serviceAnnouncer.announce(getServiceName(programId), port, Bytes.toBytes(acls));
     LOG.info("Announced HTTP Service for Service {} at {}:{}", programId, host, port);
 
     // Create a Timer thread to periodically collect handler that are no longer in used and call destroy on it

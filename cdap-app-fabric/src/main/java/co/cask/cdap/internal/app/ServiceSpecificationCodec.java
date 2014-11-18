@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.security.ACL;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -74,9 +75,9 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
                                                                      ServiceWorkerSpecification.class);
     Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
     int instances = jsonObj.get("instances").getAsInt();
-    boolean local = jsonObj.get("local").getAsBoolean();
+    List<ACL> acls = deserializeList(jsonObj.get("acls"), context, ACL.class);
 
-    return new ServiceSpecification(className, name, description, handlers, workers, resources, instances, local);
+    return new ServiceSpecification(className, name, description, handlers, workers, resources, instances, acls);
   }
 
   @Override
@@ -89,7 +90,7 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     object.add("workers", serializeMap(spec.getWorkers(), context, ServiceWorkerSpecification.class));
     object.add("resources", context.serialize(spec.getResources(), Resources.class));
     object.addProperty("instances", spec.getInstances());
-    object.addProperty("local", spec.isLocal());
+    object.add("acls", serializeList(spec.getAcls(), context, ACL.class));
     return object;
   }
 
@@ -146,6 +147,6 @@ public class ServiceSpecificationCodec extends AbstractSpecificationCodec<Servic
     ResourceSpecification resourceSpec = handlerSpec.getResourceSpecification();
     return new ServiceSpecification(className, twillSpec.getName(), twillSpec.getName(), handlers, workers,
                                     new Resources(resourceSpec.getMemorySize(), resourceSpec.getVirtualCores()),
-                                    resourceSpec.getInstances(), false);
+                                    resourceSpec.getInstances(), ImmutableList.<ACL>of());
   }
 }
