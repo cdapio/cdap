@@ -81,8 +81,8 @@ These are the available commands:
    ``version``,Prints the version
    ``exit``,Exits the shell
    **Calling and Executing**
-   ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``,Calls a Procedure, passing in the parameters as a JSON String map
-   ``call service <app-id>.<service-id> <http-method> <endpoint> [headers <%s>] [body <%s>]``,Calls an endpoint of a Service, passing in the headers and body
+   ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``,"Calls a Procedure, passing in the parameters as a JSON String map"
+   ``call service <app-id>.<service-id> <http-method> <endpoint> [headers <%s>] [body <%s>]``,"Calls an endpoint of a Service, passing in the headers and body"
    ``execute <query>``,Executes a Dataset query
    **Creating**
    ``create dataset instance <type-name> <new-dataset-name>``,Creates a Dataset
