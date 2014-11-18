@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.home').controller('HomeCtrl',
-function ($scope, $alert, MyDataSource, $interval) {
+function ($scope, $alert, MyDataSource) {
 
   var dataSrc = new MyDataSource($scope);
 
@@ -22,7 +22,7 @@ function ($scope, $alert, MyDataSource, $interval) {
         var v = d[d.length-1],
             convert = function (h) {
               return {
-                timestamp: h.time, // d3 requires GMT ?
+                timestamp: h.time,
                 y: h.value
               };
             };
