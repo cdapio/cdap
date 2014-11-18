@@ -12,7 +12,11 @@ var baseDirective = {
   controller: 'epochController'
 };
 
-ngEpoch.controller('epochController', function ($scope, $compile, myResizeManager) {
+ngEpoch.factory('Epoch', function ($window) {
+  return $window.Epoch;
+});
+
+ngEpoch.controller('epochController', function ($scope, $compile, myResizeManager, Epoch) {
 
   $scope.initEpoch = function (elem, type, attr, forcedOpts) {
     if($scope.me) {
@@ -35,9 +39,9 @@ ngEpoch.controller('epochController', function ($scope, $compile, myResizeManage
 
     if(!options.data) {
       options.data = [{values:[{
-        time: ((new Date()).getTime() / 1000)|0,
+        time: Math.floor((new Date()).getTime() / 1000),
         y: 0
-      }]}]
+      }]}];
     }
 
     $scope.type = type;
@@ -77,7 +81,7 @@ ngEpoch.controller('epochController', function ($scope, $compile, myResizeManage
     $scope.me = new Epoch._typeMap[$scope.type](o);
     $scope.me.draw();
     $compile(el)($scope);
-  };
+  }
 
   $scope.$on(myResizeManager.eventName, render);
 

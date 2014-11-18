@@ -47,50 +47,47 @@ ngResize.provider('myResizeManager', ['MYRESIZE_EVENT', function (MYRESIZE_EVENT
   // service object
   this.$get = ['$rootScope', '$window', '$interval',  function ($rootScope, $window, $interval){
 
-    var _this = this;
+    var _this = this,
+        bound = false,
+        resized = false,
+        timer = null;
 
     // trigger a resize event on provided $scope or $rootScope
-    function trigger($scope){
-      var $scope = $scope || $rootScope;
-      $scope.$broadcast(MYRESIZE_EVENT.name, {
+    function trigger (scope) {
+      (scope || $rootScope).$broadcast(MYRESIZE_EVENT.name, {
         width: $window.innerWidth,
         height: $window.innerHeight
       });
-    };
+    }
 
-    // bind to window resize event, will only ever be bound
-    // one time for entire app
-    var bound = 0;
-    var timer = 0;
-    var resized = 0;
-    function bind(){
+    function bind () {
       if(!bound){
         var w = angular.element($window);
         w.on('resize', function(event) {
           if (!resized) {
             timer = $interval(function() {
               if (resized) {
-                resized = 0;
+                resized = false;
                 $interval.cancel(timer);
                 trigger();
               }
             }, _this.throttle);
           }
-          resized = 1;
+          resized = true;
         });
-        bound = 1;
+        bound = true;
         // w.triggerHandler('resize');
       }
-    };
+    }
 
     // unbind window scroll event
-    function unbind(){
+    function unbind () {
       if(bound){
         var w = angular.element($window);
         w.off('resize');
-        bound = 0;
+        bound = false;
       }
-    };
+    }
 
     // by default bind resize event when service is created
     if(_this.initBind){
@@ -122,7 +119,7 @@ ngResize.provider('myResizeManager', ['MYRESIZE_EVENT', function (MYRESIZE_EVENT
 ngResize.directive('onResize', ['$parse', '$timeout', 'myResizeManager', function($parse, $timeout, myResizeManager) {
   return {
     compile: function($element, attr) {
-      var fn = $parse(attr['onResize']);
+      var fn = $parse(attr.onResize);
       return function(scope, element, attr) {
         scope.$on(myResizeManager.eventName, function(event, data) {
           $timeout(function() {

@@ -13,7 +13,7 @@ function ($scope, $alert, MyDataSource) {
 
   dataSrc.poll({
       _cdap: 'POST /metrics',
-      body: ["/system/apps/HelloWorld/process.events.processed?start=now-61s&end=now-1s"]
+      body: ['/system/apps/HelloWorld/process.events.processed?start=now-61s&end=now-1s']
     },
     function (result) {
       var d = result && result[0].result.data;
