@@ -175,11 +175,21 @@ cluster configurations by adding your configuration to their class paths.
 Deployment Architectures
 ------------------------
 
+.. rubric:: CDAP Minimal Deployment
+
+**Note:** Minimal deployment runs all the services on single host.
+
 .. image:: ../_images/cdap-minimal-deployment.png
    :width: 8in
    :align: center
 
 ------------
+
+.. rubric:: CDAP High Availability and Highly Scalable Deployment
+
+**Note:** Each component in CDAP is horziontally scalable. This diagram presents the high
+availability and highly scalable deployment. The number of nodes for each component can be
+changed based on the requirements.
 
 .. image:: ../_images/cdap-ha-hs-deployment.png
    :width: 8in
@@ -376,10 +386,13 @@ For instructions on enabling CDAP Security, see :doc:`CDAP Security; <security>`
 particular, see the instructions for :ref:`configuring the properties of cdap-site.xml.
 <enabling-security>`
 
+Governing Host and Port Configuration
++++++++++++++++++++++++++++++++++++++
 The governing properties for the listening bind address and port for each of the
-:ref:`CDAP Webapp, CDAP Router, and CDAP Auth Service <deployment-architectures>` are
-listed below. The listed values are the CDAP defaults.  Where noted, in a couple cases the
-CDAP chef community cookbook defaults the address property to ``node['fqdn']``.
+:ref:`CDAP Webapp <deployment-architectures>`, :ref:`CDAP Router <deployment-architectures>`,
+and :ref:`CDAP Auth Service <deployment-architectures>` are
+listed below. The listed values are the CDAP defaults.  Where noted, in a couple of cases
+the CDAP chef community cookbook defaults the address property to ``node['fqdn']``.
 
 For load-balancing, we currently recommend TCP health-checks for the listening ports. 
 HTTP health-check endpoints are planned.
@@ -486,9 +499,9 @@ and then restart CDAP.
    - Using Yum (on one line)::
 
        sudo yum install cdap cdap-gateway
-                              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-kafka cdap-master
-                              cdap-security cdap-web-app
+                               cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
+                               cdap-kafka cdap-master
+                               cdap-security cdap-web-app
 
    - Using APT (on one line)::
 
