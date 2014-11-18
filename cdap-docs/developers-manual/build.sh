@@ -27,37 +27,42 @@ source ../_common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
 
-function version_rewrite() {
-  version
+function version_tag_rewrite() {
+  # Re-writes tags in an RST-snippet file to have the current tag version.
   cd $SCRIPT_PATH
-  echo "Re-writing $1 to $2"
-  # Re-writes the version in an RST-snippet file to have the current version.
-  REWRITE_SOURCE=$1
-  REWRITE_TARGET=$2
+  local rewrite_source=$1
+  local rewrite_target=$2
+  local sub_string=$3
+  local new_sub_string=$4  
+  echo "Re-writing $rewrite_source to $rewrite_target"
+  echo "   $sub_string -> $new_sub_string "
   
-  sed -e "s|<version>|$PROJECT_VERSION|g" $REWRITE_SOURCE > $REWRITE_TARGET
+  sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
 }
 
 function pandoc_includes() {
   # Uses pandoc to translate the README markdown files to rst in the target directory
   INCLUDES_DIR=$1
   
+  local version="1.0.1" # after tagging
   if [ $TEST_INCLUDES == $TEST_INCLUDES_LOCAL ]; then
-    # For the local versions to work, must have the local sources synced to the same tag as the remote.
+    # For the local versions to work, must have the local sources synced to the correct tag as the remote.
     MD_CLIENTS="../../../cdap-clients"
     MD_INGEST="../../../cdap-ingest"
   else
     # https://raw.githubusercontent.com/caskdata/cdap-clients/v1.0.1/cdap-authentication-clients/python/README.md
+    TAG_VERSION="v$version" # after tagging
     GITHUB_URL="https://raw.githubusercontent.com/caskdata"
-    VERSION="v1.0.1" # after tagging
-    MD_CLIENTS="$GITHUB_URL/cdap-clients/$VERSION"
-    MD_INGEST="$GITHUB_URL/cdap-ingest/$VERSION"
+    MD_CLIENTS="$GITHUB_URL/cdap-clients/$TAG_VERSION"
+    MD_INGEST="$GITHUB_URL/cdap-ingest/$TAG_VERSION"
   fi
 
   echo "Using $TEST_INCLUDES includes..."
 
   #   authentication-client java
-  pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-java.rst
+  local java_client_working="$INCLUDES_DIR/cdap-authentication-clients-java_working.rst"
+  local java_client="$INCLUDES_DIR/cdap-authentication-clients-java.rst"
+  pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md  -o $java_client_working
   
   #   authentication-client python
   pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
@@ -77,10 +82,15 @@ function pandoc_includes() {
   #   stream-client python
   pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md  -o $INCLUDES_DIR/cdap-stream-clients-python.rst
   
-  # Fix version
-  version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/dev-env-version.txt $INCLUDES_DIR/dev-env-versioned.rst
-  version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/start-stop-cdap-version.txt $INCLUDES_DIR/start-stop-cdap-versioned.rst
-  version_rewrite $SCRIPT_PATH/$SOURCE/getting-started/standalone/standalone-version.txt $INCLUDES_DIR/standalone-versioned.rst
+  # Fix version(s)
+  version_tag_rewrite $java_client_working $java_client "{version}" $version
+  
+  version
+  cd $SCRIPT_PATH
+  local get_start="$SCRIPT_PATH/$SOURCE/getting-started"
+  version_tag_rewrite $get_start/dev-env-version.txt               $INCLUDES_DIR/dev-env-versioned.rst         "<version>" $PROJECT_VERSION
+  version_tag_rewrite $get_start/start-stop-cdap-version.txt       $INCLUDES_DIR/start-stop-cdap-versioned.rst "<version>" $PROJECT_VERSION
+  version_tag_rewrite $get_start/standalone/standalone-version.txt $INCLUDES_DIR/standalone-versioned.rst      "<version>" $PROJECT_VERSION
 }
 
 function test_includes () {

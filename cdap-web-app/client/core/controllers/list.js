@@ -16,7 +16,7 @@ define([], function () {
             'Stream': 'Collect',
             'Procedure': 'Query',
             'Dataset': 'Store',
-            'Spark': 'Spark'
+            'Spark': 'Process'
         },
 
         __plurals: {

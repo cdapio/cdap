@@ -39,7 +39,7 @@ public interface MetricsTable extends Dataset {
   /**
    * Write multiple rows, each with multiple individual columns to write.
    */
-  void put(NavigableMap<byte[], NavigableMap<byte[], byte[]>> updates) throws Exception;
+  void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception;
 
   /**
    * Atomically compare a single column of a row with a expected value, and if it matches, replace it with a new value.
