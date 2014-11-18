@@ -6,16 +6,18 @@
 Installation and Configuration
 ============================================
 
+.. highlight:: console
+
 .. _install:
 
 Introduction
 ------------
 
 This manual is to help you install and configure Cask Data Application Platform (CDAP). It provides the
-`system, <#system-requirements>`__
-`network, <#network-requirements>`__ and
-`software requirements, <#software-prerequisites>`__
-`packaging options, <#packaging>`__ and
+`system <#system-requirements>`__,
+`network <#network-requirements>`__, and
+`software requirements <#software-prerequisites>`__,
+`packaging options <#packaging>`__, and
 instructions for
 `installation <#installation>`__ and
 `verification <#verification>`__ of
@@ -59,15 +61,13 @@ CDAP using the HTTP interface.
 
 *Application* refers to a user Application that has been deployed into the CDAP.
 
-Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
+Text that are variables that you are to replace is indicated by a series of angle brackets
+(``< >``). For example::
 
-  https://<username>:<password>@repository.cask.co
+   WordCount-<cdap-version>.jar
 
-indicates that the texts ``<username>`` and  ``<password>`` are variables
-and that you are to replace them with your values,
-perhaps username ``john_doe`` and password ``BigData11``::
-
-  https://john_doe:BigData11@repository.cask.co
+indicates that the text ``<cdap-version>`` is a variable and that you are to replace it
+with the correct value.
 
 
 System Requirements
@@ -114,9 +114,6 @@ You'll need this software installed:
 - Java runtime (on CDAP and Hadoop nodes)
 - Node.js runtime (on CDAP nodes)
 - Hadoop, HBase (and possibly Hive) environment to run against
-
-If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official cookbook
-is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
 Java Runtime
 ++++++++++++
@@ -203,64 +200,11 @@ create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
   hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
 
-In the CDAP packages, the default HDFS namespace is ``/cdap``
-and the default HDFS user is ``yarn``. If you set up your cluster as above, no further changes are
-required.
-
-To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
-(see the :ref:`appendix-cdap-site.xml`) and set appropriate properties.
-
-.. highlight:: xml
-
-- If you want to use an HDFS directory with a name other than ``/cdap``:
-
-  1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
-  #. Create an ``hdfs.namespace`` property for the HDFS directory in ``conf/cdap-site.xml``::
-
-       <property>
-         <name>hdfs.namespace</name>
-         <value>/myhadoop/myspace</value>
-         <description>Default HDFS namespace</description>
-       </property>
-
-
-  #. Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
-
-- If you want to use a different HDFS user than ``yarn``:
-
-  1. Check that there is—and create if necessary—a corresponding user on all machines
-     in the cluster on which YARN is running (typically, all of the machines).
-  #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
-
-       <property>
-         <name>hdfs.user</name>
-         <value>my_username</value>
-         <description>User for accessing HDFS</description>
-       </property>
-
-  #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
-
-- Set the ``router.server.address`` property in ``conf/cdap-site.xml`` to the hostname of the CDAP Router.
-  The CDAP Console uses this property to connect to the Router::
-
-      <property>
-        <name>router.server.address</name>
-        <value>{router-host-name}</value>
-      </property>
-
-- To use the ad-hoc querying capabilities of CDAP, enable the CDAP Explore Service in
-  ``conf/cdap-site.xml`` (by default, it is disabled)::
-
-    <property>
-      <name>cdap.explore.enabled</name>
-      <value>true</value>
-      <description>Enable Explore functionality</description>
-    </property>
-
-  **Note:** This feature cannot be used unless the cluster has a correct version of Hive installed.
-  See *Hadoop/HBase Environment* above. This feature is currently not supported on secure Hadoop clusters.
-
-.. highlight:: console
+In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
+``yarn``. If you set up your cluster as above, no further changes are required. To make
+alterations to your setup, you'll need to customize the configuration file, once you have
+installed all the components. Customization of the initial configuration is 
+:ref:`described below <initial-configuration>`.
 
 
 Secure Hadoop
@@ -282,7 +226,7 @@ In order to configure CDAP Master for Kerberos authentication:
 - Edit ``/etc/default/cdap-master``::
 
    CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
-   CDAP_PRINCIPAL="<cdap principal>@EXAMPLE.REALM.COM"
+   CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
 
 - When CDAP Master is started via the init script, it will now start using ``k5start``, which will
   first login using the configured keytab file and principal.
@@ -309,21 +253,8 @@ Available packaging types:
 - Debian: APT repo
 - Tar: For specialized installations only
 
-CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
-
-When you install the CDAP base package, a default configuration is placed in
-``/etc/cdap/conf.dist``. The ``cdap-site.xml`` file is a placeholder
-where you can define your specific configuration for all CDAP components.
-
-Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
-easily switch between multiple configurations. The ``alternatives`` system is used for ease of
-management and allows you to to choose between different directories to fulfill the
-same purpose.
-
-Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your choice
-(such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
-Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
-to your custom directory.
+**Note:** If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an
+`official cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
 RPM using Yum
 .............
@@ -364,7 +295,12 @@ Add the Cask Public GPG Key to your repository::
 
 Installation
 ------------
-Install the CDAP packages by using either of these methods:
+Install the CDAP packages by using one of these methods:
+
+Using Chef:
+
+  If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official cookbook
+  is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
 Using Yum::
 
@@ -381,18 +317,100 @@ recommended installation is a minimum of two boxes.
 This will download and install the latest version of CDAP with all of its dependencies. 
 
 Configuration
-.............
+-------------
+CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
+
+When you install the CDAP base package, a default configuration is placed in
+``/etc/cdap/conf.dist``. The ``cdap-site.xml`` file is a placeholder
+where you can define your specific configuration for all CDAP components.
+
+Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
+easily switch between multiple configurations. The ``alternatives`` system is used for ease of
+management and allows you to to choose between different directories to fulfill the
+same purpose.
+
+Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your choice
+(such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
+Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
+to your custom directory.
+
+.. _initial-configuration:
+
+Initial Configuration
+.....................
+
+When you first install CDAP, an empty ``cdap-site.xml`` and a ``cdap-site.xml.example``
+file are installed. The example file contains settings that are often required to be
+customized. For example, you'll probably need to set the Zookeeper address property,
+``zookeeper.quorum``.
+
 For instructions on enabling CDAP Security, see :doc:`CDAP Security; <security>` and in
-particular, see the instructions for :ref:`configuring the properties of cdap-site.xml.
-<enabling-security>`
+particular, see the instructions for :ref:`configuring the properties <enabling-security>`
+of ``cdap-site.xml``.
+
+To make alterations to your setup, edit the `.xml` file ``conf/cdap-site.xml``
+(see the :ref:`appendix-cdap-site.xml`) and set appropriate properties.
+
+.. highlight:: xml
+
+- If you want to use **an HDFS directory with a name other than** ``/cdap``:
+
+  1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
+  #. Create an ``hdfs.namespace`` property for the HDFS directory in ``conf/cdap-site.xml``::
+
+       <property>
+         <name>hdfs.namespace</name>
+         <value>/myhadoop/myspace</value>
+         <description>Default HDFS namespace</description>
+       </property>
+
+
+  #. Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
+
+- If you want to use **a different HDFS user than** ``yarn``:
+
+  1. Check that there is—and create if necessary—a corresponding user on all machines
+     in the cluster on which YARN is running (typically, all of the machines).
+  #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
+
+       <property>
+         <name>hdfs.user</name>
+         <value>my_username</value>
+         <description>User for accessing HDFS</description>
+       </property>
+
+  #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
+
+- **Set the** ``router.server.address`` **property** in ``conf/cdap-site.xml`` to the hostname of the CDAP Router.
+  The CDAP Console uses this property to connect to the Router::
+
+      <property>
+        <name>router.server.address</name>
+        <value>{router-host-name}</value>
+      </property>
+
+- **To use the ad-hoc querying capabilities of CDAP,** enable the CDAP Explore Service in
+  ``conf/cdap-site.xml`` (by default, it is disabled)::
+
+    <property>
+      <name>cdap.explore.enabled</name>
+      <value>true</value>
+      <description>Enable Explore functionality</description>
+    </property>
+
+  **Note:** This feature cannot be used unless the cluster has a correct version of Hive installed.
+  See *Hadoop/HBase Environment* above. This feature is currently not supported on secure Hadoop clusters.
+
+.. highlight:: console
 
 Governing Host and Port Configuration
-+++++++++++++++++++++++++++++++++++++
+.....................................
 The governing properties for the listening bind address and port for each of the
 :ref:`CDAP Webapp <deployment-architectures>`, :ref:`CDAP Router <deployment-architectures>`,
-and :ref:`CDAP Auth Service <deployment-architectures>` are
-listed below. The listed values are the CDAP defaults.  Where noted, in a couple of cases
-the CDAP chef community cookbook defaults the address property to ``node['fqdn']``.
+and :ref:`CDAP Auth Service <deployment-architectures>` are listed below. The listed
+values are the CDAP defaults.  Where noted, in certain cases the 
+`CDAP Chef community cookbook <https://supermarket.getchef.com/cookbooks/cdap>`__
+defaults the address property to ``node['fqdn']``.
 
 For load-balancing, we currently recommend TCP health-checks for the listening ports. 
 HTTP health-check endpoints are planned.
@@ -470,8 +488,8 @@ HTTP health-check endpoints are planned.
 
 
 Starting CDAP
-.............
-When all the packages and dependencies have been installed,
+-------------
+When all the packages and dependencies have been installed, and the configuration parameters set,
 you can start the services on each of the CDAP boxes by running this command::
 
   for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
@@ -482,8 +500,8 @@ accessible through a browser at port 9999. The URL will be ``http://<console-ip>
 and started the services.
 
 
-Upgrading from a Previous Version
----------------------------------
+Upgrading an Existing Version
+-----------------------------
 When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
 
