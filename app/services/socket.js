@@ -10,7 +10,7 @@ angular.module(PKG.name+'.services')
     MyDataSource // usage in a controler:
 
     var dataSrc = new MyDataSource($scope);
-    dataSrc.poll({method:'GET', url: '/v2/foo/bar'}, function(result) {
+    dataSrc.poll({_cdap: 'GET /foo/bar'}, function(result) {
       $scope.foo = result;
     });
 
@@ -102,13 +102,15 @@ angular.module(PKG.name+'.services')
   })
 
 
-
+  .factory('SockJS', function ($window) {
+    return $window.SockJS;
+  })
 
   .provider('mySocket', function () {
 
     this.prefix = '/_sock';
 
-    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope) {
+    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS) {
 
       var self = this,
           socket = null,
@@ -118,7 +120,7 @@ angular.module(PKG.name+'.services')
         console.log('[mySocket] init');
 
         attempt = attempt || 1;
-        socket = new window.SockJS(self.prefix);
+        socket = new SockJS(self.prefix);
 
         socket.onmessage = function (event) {
           try {
