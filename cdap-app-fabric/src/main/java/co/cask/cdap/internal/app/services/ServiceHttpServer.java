@@ -23,6 +23,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -193,20 +194,26 @@ public class ServiceHttpServer extends AbstractIdleService {
   }
 
   private void initHandler(HttpServiceHandler handler, HttpServiceContext serviceContext) {
+    ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
     try {
       handler.initialize(serviceContext);
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.initialize of class {}", handler.getClass(), t);
       throw Throwables.propagate(t);
+    } finally {
+      ClassLoaders.setContextClassLoader(classLoader);
     }
   }
 
   private void destroyHandler(HttpServiceHandler handler) {
+    ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
     try {
       handler.destroy();
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.destroy of class {}", handler.getClass(), t);
       // Don't propagate
+    } finally {
+      ClassLoaders.setContextClassLoader(classLoader);
     }
   }
 

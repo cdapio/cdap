@@ -140,6 +140,16 @@ public class AppWithServices extends AbstractApplication {
       throw new IllegalStateException("Failed");
     }
 
+    @Path("verifyClassLoader")
+    @GET
+    public void verifyClassLoader(HttpServiceRequest request, HttpServiceResponder responder) {
+      if (Thread.currentThread().getContextClassLoader() != getClass().getClassLoader()) {
+        responder.sendStatus(500);
+      } else {
+        responder.sendStatus(200);
+      }
+    }
+
     /**
      * Used to discover a Service from the specified application.
      */
