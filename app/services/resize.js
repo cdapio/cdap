@@ -22,6 +22,10 @@
 // define ngResize module
 var ngResize = angular.module('ngResize', []);
 
+ngResize.constant('MYRESIZE_EVENT', {
+  name: 'myresize-throttled'
+});
+
 /*
 * ngResize Provider and Service
 *
@@ -31,7 +35,7 @@ var ngResize = angular.module('ngResize', []);
 * $broadcasts 'resize' event from $rootScope
 * which gets inherited by all child scopes
 */
-ngResize.provider('myResizeManager', [function (){
+ngResize.provider('myResizeManager', ['MYRESIZE_EVENT', function (MYRESIZE_EVENT){
 
   // store throttle time
   this.throttle = 500;
@@ -48,7 +52,7 @@ ngResize.provider('myResizeManager', [function (){
     // trigger a resize event on provided $scope or $rootScope
     function trigger($scope){
       var $scope = $scope || $rootScope;
-      $scope.$broadcast('resize', {
+      $scope.$broadcast(MYRESIZE_EVENT.name, {
         width: $window.innerWidth,
         height: $window.innerHeight
       });
@@ -96,9 +100,7 @@ ngResize.provider('myResizeManager', [function (){
     // return api
     return {
       trigger: trigger,
-      bind: bind,
-      unbind: unbind,
-      eventName: 'resize'
+      eventName: MYRESIZE_EVENT.name
     };
 
   }];
@@ -117,7 +119,7 @@ ngResize.provider('myResizeManager', [function (){
 * $timeout is used to debounce any expressions
 * to the end of the current digest
 */
-ngResize.directive('onResize', ['$parse', '$timeout', 'myResizeManager', function($parse, $timeout, resize) {
+ngResize.directive('onResize', ['$parse', '$timeout', 'myResizeManager', function($parse, $timeout, myResizeManager) {
   return {
     compile: function($element, attr) {
       var fn = $parse(attr['onResize']);
