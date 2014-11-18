@@ -180,10 +180,14 @@ angular.module(PKG.name+'.services')
           // and expect json as response
           msg.resource.json = true;
 
-          // if the url is a path, prefix with the CDAP protocol/host
+          // parse the _cdap key, prefix with the CDAP protocol/host
           // @TODO get prefix from config
-          if(r.url.match(/^\/[^\/]/)) {
-            msg.resource.url = 'http://localhost:10000' + r.url;
+          if(r._cdap) {
+            var p = r._cdap.split(' '),
+                path = p.pop();
+            msg.resource.method = p.length ? p[0] : 'GET';
+            msg.resource.url = 'http://localhost:10000/v2' + path;
+            delete msg.resource._cdap;
           }
         }
 

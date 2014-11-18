@@ -12,8 +12,7 @@ function ($scope, $alert, MyDataSource) {
   $scope.gaugeValue = 0;
 
   dataSrc.poll({
-      url: '/v2/metrics',
-      method: 'POST',
+      _cdap: 'POST /metrics',
       body: ["/system/apps/HelloWorld/process.events.processed?start=now-61s&end=now-1s"]
     },
     function (result) {

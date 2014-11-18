@@ -142,6 +142,8 @@ function onSocketData (message) {
 
     var r = message.resource;
 
+    // @TODO whitelist resources
+
     switch(message.action) {
       case 'poll-start':
         this.polledResources.add(r);
