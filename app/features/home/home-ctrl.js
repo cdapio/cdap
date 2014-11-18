@@ -22,7 +22,7 @@ function ($scope, $alert, MyDataSource, $interval) {
         var v = d[d.length-1],
             convert = function (h) {
               return {
-                timestamp: h.time,
+                timestamp: h.time, // d3 requires GMT ?
                 y: h.value
               };
             };

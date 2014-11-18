@@ -73,6 +73,7 @@ ngEpoch.controller('epochController', function ($scope, $compile, myResizeManage
   function render () {
     var o = $scope.options,
         el = angular.element(o.el).empty();
+    console.log('[epoch]', $scope.type, o);
     $scope.me = new Epoch._typeMap[$scope.type](o);
     $scope.me.draw();
     $compile(el)($scope);
@@ -124,10 +125,9 @@ ngEpoch.directive('epochLiveLine', function () {
     link: function (scope, elem, attr) {
       scope.initEpoch(elem, 'time.line', attr, {
         axes: ['left', 'bottom'],
-        ticks: { left: 5, bottom: 6 },
+        ticks: { left: 5, time: 10 },
         tickFormats: {
-          left: Epoch.Formats.si,
-          bottom: function () { return ''; },
+          bottom: function (time) { return ''; } // wtf???
         }
       });
     }
