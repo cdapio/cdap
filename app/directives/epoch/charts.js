@@ -2,7 +2,7 @@
 var ngEpoch = angular.module(PKG.name+'.commons');
 
 var baseDirective = {
-  restrict: 'EA',
+  restrict: 'E',
   replace: true,
   template: '<div class="epoch"></div>',
   scope: {
