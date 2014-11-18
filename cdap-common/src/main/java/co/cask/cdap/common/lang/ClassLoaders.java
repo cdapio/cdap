@@ -74,8 +74,7 @@ public final class ClassLoaders {
 
   /**
    * Loads the class with the given class name with the given classloader. If it is {@code null},
-   * load the class with the context ClassLoader of current thread if it presents, otherwise load the class
-   * with the ClassLoader of the caller object.
+   * load the class with the ClassLoader of the caller object.
    *
    * @param className Name of the class to load.
    * @param classLoader Classloader for loading the class. It could be {@code null}.
@@ -85,9 +84,16 @@ public final class ClassLoaders {
    */
   public static Class<?> loadClass(String className, @Nullable ClassLoader classLoader,
                                    Object caller) throws ClassNotFoundException {
-    ClassLoader cl = Objects.firstNonNull(classLoader,
-                                          Objects.firstNonNull(Thread.currentThread().getContextClassLoader(),
-                                                               caller.getClass().getClassLoader()));
+    ClassLoader cl = Objects.firstNonNull(classLoader, caller.getClass().getClassLoader());
     return cl.loadClass(className);
+  }
+
+  /**
+   * Sets the context ClassLoader and returns the current ClassLoader.
+   */
+  public static ClassLoader setContextClassLoader(ClassLoader classLoader) {
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(classLoader);
+    return oldClassLoader;
   }
 }
