@@ -27,6 +27,7 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -58,6 +59,19 @@ public final class TimeSeriesTable {
   private static final int MAX_ROLL_TIME = 0xfffe;
   private static final byte[] FOUR_ZERO_BYTES = {0, 0, 0, 0};
   private static final byte[] FOUR_ONE_BYTES = {1, 1, 1, 1};
+  private static final Function<byte[], Long> BYTES_TO_LONG = new Function<byte[], Long>() {
+    @Override
+    public Long apply(byte[] input) {
+      return Bytes.toLong(input);
+    }
+  };
+  private static final Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>
+    TRANSFORM_MAP_BYTE_ARRAY_TO_LONG = new Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>() {
+    @Override
+    public NavigableMap<byte[], Long> apply(NavigableMap<byte[], byte[]> input) {
+      return Maps.transformValues(input, BYTES_TO_LONG);
+    }
+  };
 
   private final MetricsTable timeSeriesTable;
   private final MetricsEntityCodec entityCodec;
@@ -109,12 +123,16 @@ public final class TimeSeriesTable {
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> table = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
+
     while (records.hasNext()) {
       getUpdates(records.next(), table);
     }
 
+    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedTable =
+      Maps.transformValues(table, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
+
     try {
-      timeSeriesTable.put(table);
+      timeSeriesTable.put(convertedTable);
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
