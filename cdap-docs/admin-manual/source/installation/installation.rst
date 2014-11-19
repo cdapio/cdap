@@ -115,6 +115,8 @@ You'll need this software installed:
 - Node.js runtime (on CDAP nodes)
 - Hadoop, HBase (and possibly Hive) environment to run against
 
+.. _install-java-runtime:
+
 Java Runtime
 ++++++++++++
 The latest `JDK or JRE version 1.6.xx or 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
