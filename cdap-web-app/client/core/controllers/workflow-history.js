@@ -32,7 +32,7 @@ define([], function () {
 
       }
 
-      this.HTTP.rest('apps', model.app, 'workflows', model.name, 'history', function (response) {
+      this.HTTP.rest('apps', model.app, 'workflows', model.name, 'runs', function (response) {
           if (response) {
             var history = response;
 
