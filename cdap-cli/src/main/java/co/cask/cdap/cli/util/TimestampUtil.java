@@ -21,7 +21,7 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Helper class with static methods that is used by the CLI
+ * Utility for getting Timestamp
  */
 public class TimestampUtil {
 

@@ -30,7 +30,7 @@ import java.io.PrintStream;
 import java.util.List;
 
 /**
- * Gets the run history of a program.
+ * Gets the run records of a program.
  */
 public class GetProgramRunsCommand implements Command {
 
@@ -56,10 +56,10 @@ public class GetProgramRunsCommand implements Command {
     if (arguments.hasArgument(ArgumentName.RUN_STATUS.toString())) {
       state = arguments.get(ArgumentName.RUN_STATUS.toString());
     }
-    List<RunRecord> history;
+    List<RunRecord> records;
     if (elementType.getProgramType() != null) {
       String programId = programIdParts[1];
-      history = programClient.getProgramRuns(appId, elementType.getProgramType(), programId, state,
+      records = programClient.getProgramRuns(appId, elementType.getProgramType(), programId, state,
                                              startTime, endTime, limit);
     } else {
       throw new IllegalArgumentException("Unrecognized program element type for history: " + elementType);
@@ -67,7 +67,7 @@ public class GetProgramRunsCommand implements Command {
 
     new AsciiTable<RunRecord>(
       new String[] { "pid", "end status", "start", "stop" },
-      history,
+      records,
       new RowMaker<RunRecord>() {
         @Override
         public Object[] makeRow(RunRecord object) {

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import akka.dispatch.sysmsg.Failed;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;

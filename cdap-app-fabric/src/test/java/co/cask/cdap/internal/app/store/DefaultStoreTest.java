@@ -46,6 +46,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -72,8 +73,8 @@ import java.util.Set;
 public class DefaultStoreTest {
   private static DefaultStore store;
   private static final Map<String, String> PROGRAM_STATUS_MAP = new ImmutableMap.Builder<String, String>()
-    .put(ProgramController.State.STOPPED.toString(), "Completed")
-    .put(ProgramController.State.ERROR.toString(), "Failed")
+    .put(ProgramController.State.STOPPED.toString(), Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Completed.toString())
+    .put(ProgramController.State.ERROR.toString(), Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Failed.toString())
     .build();
 
 

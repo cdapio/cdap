@@ -26,7 +26,7 @@ import com.google.inject.Inject;
 import java.util.List;
 
 /**
- * Contains commands for getting program history.
+ * Contains commands for getting program runs.
  */
 public class GetProgramRunsCommandSet extends CommandSet<Command> {
 
