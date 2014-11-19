@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
@@ -55,12 +56,11 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
-  private static final String STATUS_PROGRAM_COMPLETED = "Completed";
-  private static final String STATUS_PROGRAM_FAILED = "Failed";
 
   private static final Map<String, String> PROGRAM_STATUS_MAP = new ImmutableMap.Builder<String, String>()
-    .put(ProgramController.State.STOPPED.toString(), STATUS_PROGRAM_COMPLETED)
-    .put(ProgramController.State.ERROR.toString(), STATUS_PROGRAM_FAILED)
+    .put(ProgramController.State.STOPPED.toString(),
+         Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Completed.toString())
+    .put(ProgramController.State.ERROR.toString(), Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Failed.toString())
     .build();
 
   public AppMetadataStore(Table table) {
@@ -127,7 +127,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public void recordProgramStart(String accountId, String appId, String programId, String pid, long startTs) {
     write(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId, pid).build(),
-          new RunRecord(pid, startTs, -1, "Running"));
+          new RunRecord(pid, startTs, -1, Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Running.toString()));
   }
 
   public void recordProgramStop(String accountId, String appId, String programId,
@@ -152,33 +152,52 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
   public List<RunRecord> getRuns(String accountId, String appId, String programId, String status,
                                  final long startTime, final long endTime, int limit) {
-    List<Key> programKeys = Lists.newArrayList();
-    if (status == null) {
-      programKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build());
-      programKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build());
-    } else if (status.equals("running")) {
-      programKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build());
-    } else {
-      programKeys.add(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build());
-    }
     List<RunRecord> resultRecords = Lists.newArrayList();
-
-    for (Key programKey : programKeys) {
-      // NOTE: ts is inverted to get latest first
-      Key start = new Key.Builder(programKey).add(getInvertedTsKeyPart(endTime)).build();
-      Key stop = new Key.Builder(programKey).add(getInvertedTsKeyPart(startTime)).build();
-      List<RunRecord> records = list(start, stop, RunRecord.class, limit);
-
-      for (RunRecord record : records) {
-        // if 'status' is completed , then add records whose record-status is 'STOPPED' , else add error records
-        if ((status == null) || status.equals("running") ||
-          ((status.equals("completed")) && (record.getStatus().equals(STATUS_PROGRAM_COMPLETED)))
-          || ((status.equals("failed")) && (record.getStatus().equals(STATUS_PROGRAM_FAILED)))) {
-          resultRecords.add(record);
-        }
-      }
+    if (status == null) {
+      resultRecords.addAll(getActiveRuns(accountId, appId, programId, status, startTime, endTime, limit));
+      resultRecords.addAll(getHistoricalRuns(accountId, appId, programId, status, startTime, endTime, limit));
+    } else if (status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Running.getStatus())) {
+      resultRecords.addAll(getActiveRuns(accountId, appId, programId, status, startTime, endTime, limit));
+    } else {
+      //completed
+      resultRecords.addAll(getHistoricalRuns(accountId, appId, programId, status, startTime, endTime, limit));
     }
     return resultRecords;
+  }
+
+  private List<RunRecord> getActiveRuns(String accountId, String appId, String programId, String status,
+                                        final long startTime, final long endTime, int limit) {
+    Key activeKey = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build();
+    Key start = new Key.Builder(activeKey).add(getInvertedTsKeyPart(endTime)).build();
+    Key stop = new Key.Builder(activeKey).add(getInvertedTsKeyPart(startTime)).build();
+    return list(start, stop, RunRecord.class, limit);
+  }
+
+  private List<RunRecord> getHistoricalRuns(String accountId, String appId, String programId, String status,
+                                            final long startTime, final long endTime, int limit) {
+    Key historyKey = new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build();
+    Key start = new Key.Builder(historyKey).add(getInvertedTsKeyPart(endTime)).build();
+    Key stop = new Key.Builder(historyKey).add(getInvertedTsKeyPart(startTime)).build();
+    List<RunRecord> records = list(start, stop, RunRecord.class, limit);
+    if (status == null) {
+      //return all records (successful and failed)
+      return records;
+    } else {
+      if (status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Completed.getStatus())) {
+        return filterRunRecordsByStatus(records, Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Completed.toString());
+      } else {
+        return filterRunRecordsByStatus(records, Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Failed.toString());
+      }
+    }
+  }
+  private List<RunRecord> filterRunRecordsByStatus(List<RunRecord> records, String status) {
+    List<RunRecord> filteredRecords = Lists.newArrayList();
+    for (RunRecord record : records) {
+      if (record.getStatus().equals(status)) {
+        filteredRecords.add(record);
+      }
+    }
+    return filteredRecords;
   }
 
   private long getInvertedTsKeyPart(long endTime) {

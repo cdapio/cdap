@@ -119,6 +119,24 @@ public final class Constants {
     public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
+
+    /**
+     * Program Status Types used to query program runs
+     */
+    public static enum QUERY_PROGRAM_STATUS_TYPE {
+      Running("running"),
+      Completed("completed"),
+      Failed("failed");
+      private final String status;
+
+      private QUERY_PROGRAM_STATUS_TYPE(String id) {
+        this.status = id;
+      }
+
+      public String getStatus() {
+        return status;
+      }
+    };
   }
 
   /**
