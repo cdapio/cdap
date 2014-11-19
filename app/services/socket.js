@@ -15,7 +15,7 @@ angular.module(PKG.name+'.services')
     });
 
    */
-  .factory('MyDataSource', function ($state, mySocket, MYSOCKET_EVENT) {
+  .factory('MyDataSource', function ($state, $log, mySocket, MYSOCKET_EVENT) {
 
     var instances = {}; // keyed by scopeid
 
@@ -41,7 +41,7 @@ angular.module(PKG.name+'.services')
       });
 
       scope.$on(MYSOCKET_EVENT.reconnected, function (event, data) {
-        console.log('[DataSource] reconnected, reloading...');
+        $log.log('[DataSource] reconnected, reloading...');
 
         // https://github.com/angular-ui/ui-router/issues/582
         $state.transitionTo($state.current, $state.$current.params,
@@ -110,14 +110,14 @@ angular.module(PKG.name+'.services')
 
     this.prefix = '/_sock';
 
-    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS) {
+    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log) {
 
       var self = this,
           socket = null,
           buffer = [];
 
       function init (attempt) {
-        console.log('[mySocket] init');
+        $log.log('[mySocket] init');
 
         attempt = attempt || 1;
         socket = new SockJS(self.prefix);
@@ -125,11 +125,11 @@ angular.module(PKG.name+'.services')
         socket.onmessage = function (event) {
           try {
             var data = JSON.parse(event.data);
-            console.log('[mySocket] ←', data.statusCode);
+            $log.log('[mySocket] ←', data.statusCode);
             $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
           }
           catch(e) {
-            console.error(e);
+            $log.error(e);
           }
         };
 
@@ -140,13 +140,13 @@ angular.module(PKG.name+'.services')
             attempt = 1;
           }
 
-          console.info('[mySocket] opened');
+          $log.info('[mySocket] opened');
           angular.forEach(buffer, send);
           buffer = [];
         };
 
         socket.onclose = function (event) {
-          console.error(event.reason);
+          $log.error(event.reason);
 
           if(attempt<2) {
             $rootScope.$broadcast(MYSOCKET_EVENT.closed, event);
@@ -156,7 +156,7 @@ angular.module(PKG.name+'.services')
           var d = Math.max(500, Math.round(
             (Math.random() + 1) * 500 * Math.pow(2, attempt)
           ));
-          console.log('[mySocket] will try again in ',d+'ms');
+          $log.log('[mySocket] will try again in ',d+'ms');
           setTimeout(function () {
             init(attempt+1);
           }, d);
@@ -193,7 +193,7 @@ angular.module(PKG.name+'.services')
           }
         }
 
-        console.log('[mySocket] →', msg);
+        $log.log('[mySocket] →', msg);
         socket.send(JSON.stringify(msg));
         return true;
       }
