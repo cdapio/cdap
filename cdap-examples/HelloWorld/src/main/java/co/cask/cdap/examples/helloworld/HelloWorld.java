@@ -28,6 +28,7 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.AbstractService;
+import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -87,7 +88,7 @@ public class HelloWorld extends AbstractApplication {
     @ProcessInput
     public void process(StreamEvent event) {
       byte[] name = Bytes.toBytes(event.getBody());
-      if (name != null && name.length > 0) {
+      if (name.length > 0) {
         whom.write(NAME, name);
 
         if (name.length > 10) {
@@ -99,7 +100,7 @@ public class HelloWorld extends AbstractApplication {
   }
 
   /**
-   * A Service that creates a greeting by a user name.
+   * A {@link Service} that creates a greeting using a user's name.
    */
   public static final class Greeting extends AbstractService {
 
@@ -108,7 +109,7 @@ public class HelloWorld extends AbstractApplication {
     @Override
     protected void configure() {
       setName(SERVICE_NAME);
-      setDescription("Service that creates a greeting by a user name.");
+      setDescription("Service that creates a greeting using a user's name.");
       addHandler(new GreetingHandler());
     }
   }
