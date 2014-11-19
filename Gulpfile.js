@@ -23,7 +23,8 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/angular/angular-csp.css',
       './bower_components/angular-loading-bar/build/loading-bar.min.css',
       './bower_components/angular-motion/dist/angular-motion.min.css',
-      './bower_components/font-awesome/css/font-awesome.min.css'
+      './bower_components/font-awesome/css/font-awesome.min.css',
+      './bower_components/epoch/epoch.min.css'
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
     })))
@@ -97,7 +98,11 @@ gulp.task('js:lib', function() {
       './bower_components/ngstorage/ngStorage.js',
       './bower_components/angular-loading-bar/build/loading-bar.js',
 
-      './bower_components/sockjs-client/dist/sockjs.js'
+      './bower_components/sockjs-client/dist/sockjs.js',
+
+      './bower_components/d3/d3.min.js',
+      './bower_components/epoch/epoch.min.js'
+
 
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
@@ -119,6 +124,7 @@ gulp.task('js:app', function() {
     v: pkg.version
   });
   return gulp.src([
+      './app/main.js',
       './app/features/*/module.js',
       './app/**/*.js',
       '!./app/**/*-test.js'

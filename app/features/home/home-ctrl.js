@@ -7,15 +7,44 @@ function ($scope, $alert, MyDataSource) {
 
   var dataSrc = new MyDataSource($scope);
 
-  $scope.something = null;
+  $scope.lineHistory = null;
+  $scope.lineStream = null;
+  $scope.gaugeValue = 0;
 
-  dataSrc.poll('something', {
-    url: '/v2/metrics',
-    method: 'POST',
-    body: ["/system/apps/HelloWorld/process.events.processed?start=now-60s&end=now-0s&count=60"]
-  });
+  dataSrc.poll({
+      _cdap: 'POST /metrics',
+      body: ['/system/apps/CountRandom/process.events.processed?start=now-61s&end=now-1s']
+    },
+    function (result) {
+      var d = result && result[0].result.data;
+      if(d.length) {
+        var v = d[d.length-1],
+            convert = function (h) {
+              return {
+                time: h.time,
+                y: h.value
+              };
+            };
+
+        $scope.gaugeValue = v.value;
+
+        if($scope.lineHistory) {
+          $scope.lineStream = [convert(v)];
+        }
+        else {
+          $scope.lineHistory = [{
+            label: 'HelloWorld',
+            values: d.map(convert)
+          }];
+        }
+
+      }
+    }
+  );
 
 });
+
+
 
 
 

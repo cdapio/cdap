@@ -3,7 +3,26 @@
 </h1>
 
 
-<p>
-  <pre>{{something | json}}</pre>
-</p>
+
+<div class="row">
+  <div class="col-sm-8">
+
+    <epoch-live-line
+      data-history="lineHistory"
+      data-stream="lineStream"
+
+      chart-height="200"
+    ></epoch-live-line>
+
+  </div>
+  <div class="col-sm-4">
+
+    <epoch-gauge
+      class="gauge-small"
+      data-stream="gaugeValue"
+      chart-height="135"
+    ></epoch-gauge>
+
+  </div>
+</div>
 

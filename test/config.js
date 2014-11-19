@@ -1,7 +1,7 @@
 window.PKG = {
-  name: 'cdap-ngui'
+  name: 'cdap-ui'
 };
 
-angular.module("cdap-ngui.config", []).constant("MY_CONFIG", {
+angular.module(PKG.name + ".config", []).constant("MY_CONFIG", {
   "autorization": "respect my authoritah"
 });

@@ -14,8 +14,9 @@ angular
         PKG.name+'.config',
         'ngAnimate',
         'ngSanitize',
+        'ngResize',
         // 'ngResource',
-        // 'ngStorage',
+        'ngStorage',
         'ui.router',
         'cask-angular-theme'
       ]).name,
