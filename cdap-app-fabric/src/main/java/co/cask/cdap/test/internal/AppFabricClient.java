@@ -162,7 +162,7 @@ public class AppFabricClient {
 
   public List<RunRecord> getHistory(String appId, String wflowId) {
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/workflows/%s/history", appId, wflowId);
+    String uri = String.format("/v2/apps/%s/workflows/%s/runs?status=completed", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");

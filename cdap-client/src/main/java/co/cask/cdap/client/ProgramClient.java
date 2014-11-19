@@ -335,37 +335,12 @@ public class ProgramClient {
   }
 
   /**
-   * Gets the run history of a service runnable.
-   *
-   * @param appId ID of the application that the service runnable belongs to
-   * @param serviceId ID of the service that the service runnable belongs to
-   * @param runnableId ID of the service runnable
-   * @return the run history of the service runnable
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, service, or runnable could not be found
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   */
-  public List<RunRecord> getServiceRunnableHistory(String appId, String serviceId, String runnableId)
-    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
-
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/history",
-                                              appId, serviceId, runnableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
-    }
-
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
-  }
-
-  /**
-   * Gets the run history of a program.
+   * Gets the run records of a program.
    *
    * @param appId ID of the application that the program belongs to
    * @param programType type of the program
    * @param programId ID of the program
-   * @return the run history of the program
+   * @return the run records of the program
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or program could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server

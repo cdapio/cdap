@@ -57,11 +57,7 @@ public class GetProgramRunsCommand implements Command {
       state = arguments.get(ArgumentName.RUN_STATUS.toString());
     }
     List<RunRecord> history;
-    if (elementType == ElementType.RUNNABLE) {
-      String serviceId = programIdParts[1];
-      String runnableId = programIdParts[2];
-      history = programClient.getServiceRunnableHistory(appId, serviceId, runnableId);
-    } else if (elementType.getProgramType() != null) {
+    if (elementType.getProgramType() != null) {
       String programId = programIdParts[1];
       history = programClient.getProgramRuns(appId, elementType.getProgramType(), programId, state,
                                              startTime, endTime, limit);

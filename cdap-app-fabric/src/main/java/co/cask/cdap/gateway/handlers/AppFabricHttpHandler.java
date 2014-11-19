@@ -656,7 +656,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns program run history.
+   * Returns program runs based on options it returns either currently running or completed or failed.
+   * Default it returns all.
    */
   @GET
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runs")
