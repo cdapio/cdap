@@ -41,10 +41,10 @@ Things to check as possible solutions:
    
    Expect to see (where *<version>* is either ``0.94`` or ``0.96``)::
 
-    /opt/cdap/hbase-compat-<version>/lib/*
-    /opt/cdap/master/lib/*
     /etc/cdap/conf/
+    /opt/cdap/hbase-compat-<version>/lib/*
     /opt/cdap/master/conf/
+    /opt/cdap/master/lib/*
 
    If the classpath is incorrect, review the :ref:`installation instructions <install>` and correct.
    
