@@ -1086,6 +1086,15 @@ WebAppServer.prototype.bindRoutes = function() {
     });
   });
 
+
+  /**
+   * Healthcheck endpoint
+   */
+  this.app.get('/status', function (req, res) {
+    res.send(200, 'OK');
+  });
+
+
   /**
    * Catch port binding errors.
    */
