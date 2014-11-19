@@ -22,6 +22,7 @@ import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.base.Charsets;
 
 import java.net.HttpURLConnection;
 import javax.ws.rs.GET;
@@ -61,8 +62,8 @@ public class PurchaseHistoryService extends AbstractService {
                         @PathParam("customer") String customer) {
       PurchaseHistory history = store.read(customer);
       if (history == null) {
-        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND,
-                            String.format("No purchase history found for %s", customer));
+        responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
+                             String.format("No purchase history found for %s", customer), Charsets.UTF_8);
       } else {
         responder.sendJson(history);
       }

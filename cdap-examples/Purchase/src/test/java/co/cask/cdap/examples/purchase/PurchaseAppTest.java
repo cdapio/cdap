@@ -42,6 +42,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class PurchaseAppTest extends TestBase {
 
+  private static final int SERVICE_STARTUP_TIMEOUT_SECONDS = 10;
+
   private static final Gson GSON = new Gson();
 
   @Test
@@ -76,24 +78,31 @@ public class PurchaseAppTest extends TestBase {
     // Start Purchase Service
     ServiceManager serviceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
 
-    TimeUnit.SECONDS.sleep(10);
+    // Wait up to timeout to start service
+    // TODO: The below code should be replaced by method from ServiceManager in future release
+    int trial = 0;
+    while (trial++ < SERVICE_STARTUP_TIMEOUT_SECONDS) {
+      if (serviceManager.isRunning()) {
+        break;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertNotEquals(SERVICE_STARTUP_TIMEOUT_SECONDS, trial);
 
     // Test service to retrieve a customer's purchase history
-    PurchaseHistory history =
-      GSON.fromJson(requestService(new URL(serviceManager.getServiceURL(), "history/joe")), PurchaseHistory.class);
+    URL url = new URL(serviceManager.getServiceURL(), "history/joe");
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
+    String historyJson;
+    try {
+      historyJson = new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
+    } finally {
+      conn.disconnect();
+    }
+    PurchaseHistory history = GSON.fromJson(historyJson, PurchaseHistory.class);
     Assert.assertEquals("joe", history.getCustomer());
     Assert.assertEquals(2, history.getPurchases().size());
 
     appManager.stopAll();
-  }
-
-  private String requestService(URL url) throws IOException {
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
-    try {
-      return new String(ByteStreams.toByteArray(conn.getInputStream()), Charsets.UTF_8);
-    } finally {
-      conn.disconnect();
-    }
   }
 }
