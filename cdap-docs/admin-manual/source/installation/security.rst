@@ -84,6 +84,8 @@ Finally, start Zookeeper server with the following JVM option::
 
   -Djava.security.auth.login.config=/path/to/jaas.conf
 
+.. _running_servers_with_ssl:
+
 Running Servers with SSL
 ........................
 
@@ -150,9 +152,9 @@ router.ssl.keystore.keypassword                      None             Keystore k
 router.ssl.keystore.type                             JKS              Keystore file type
 ============================================= ===================== =========================================
 
-Configuring SSL for UI
-......................
-To enable SSL for the Web-UI, add these properties to ``cdap-security.xml``:
+Configuring SSL for the CDAP Console
+....................................
+To enable SSL for the CDAP Console, add these properties to ``cdap-security.xml``:
 
 ============================================= ===============================================================
    Property                                     Default Value
@@ -163,7 +165,8 @@ dashboard.ssl.key                              SSL key file location; the file s
                                                be owned and readable only by the CDAP user
 ============================================= ===============================================================
 
-**Note:** To allow self signed certificates, set dashboard.ssl.disable.cert.check field to true in cdap-site.xml
+**Note:** To allow self signed certificates, set the ``dashboard.ssl.disable.cert.check``
+property to ``true`` in ``cdap-site.xml``.
 
 .. _enable-access-logging:
 
@@ -321,47 +324,65 @@ Testing Security
 
 .. highlight:: console
 
-From here on out we will use::
+As described in the :ref:`CDAP Reference Manual <http-restful-api-conventions>`, the
+**base URL** (represented by ``<base-url>``) that clients can use for the HTTP RESTful API is::
 
-  <base-url>
+  http://<host>:<port>/v2
 
-to represent the base URL that clients can use for the HTTP REST API::
+**Authentication URLS**, represented by ``<auth-url>``, are the URL that clients can use
+for obtaining access tokens::
 
-  http://<host>:<port>
+  http://<auth-host>:<auth-port>
 
-and::
+where:
 
-  <base-auth-url>
+- ``<host>`` is the host name of the CDAP server;
+- ``<auth-host>`` is the host name of the CDAP authentication server;
+- ``<port>`` is the port that is set as the ``router.bind.port`` in ``cdap-site.xml`` (default: ``10000``); and 
+- ``<auth-port>`` is the port that is set as the ``security.auth.server.bind.port`` (default: ``10009``).
 
-to represent the base URL that clients can use for obtaining access tokens::
+Note that if :ref:`SSL is enabled for CDAP<running_servers_with_ssl>`, then:
 
-  http://<host>:<auth-port>
-
-where ``<host>`` is the host name of the CDAP server, ``<port>`` is the port that is set as the ``router.bind.port``
-in ``cdap-site.xml`` (default: ``10000``), and ``<auth-port>`` is the port that is set as the
-``security.auth.server.bind.port`` (default: ``10009``).
-
-Note that if SSL is enabled for CDAP, then the base URL uses ``https``, ``<port>`` becomes the port that is set
-as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: ``10443``), and ``<auth-port>`` becomes the port that
-is set as the ``security.auth.server.ssl.bind.port`` (default: ``10010``).
+- Both the base URL and the authentication URL use ``https``;
+- ``<port>`` becomes the port that is set as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: ``10443``); and 
+- ``<auth-port>`` becomes the port that is set as the ``security.auth.server.ssl.bind.port`` (default: ``10010``).
 
 To ensure that you've configured security correctly, run these simple tests to verify that the
 security components are working as expected:
 
-- After configuring CDAP as described above, restart CDAP and attempt to use a service::
+.. highlight:: console
 
-	curl -v <base-url>/apps
+- After configuring CDAP as described above, start (or restart) CDAP and attempt to use a service::
 
-- This should return a 401 Unauthorized response. Submit a username and password to obtain an ``AccessToken``::
+      curl -v <base-url>/apps
+	
+ such as::
+	
+	    curl -v http://localhost:10000/v2/apps; echo
 
-	curl -v -u username:password <base-auth-url>/token
+- This should return a ``401 Unauthorized`` response. Submit a username and password to obtain an ``AccessToken``::
 
-- This should return a 200 OK response with the ``AccessToken`` string in the response body.
-  Reattempt the first command, but this time include the ``AccessToken`` as a header in the command::
+	    curl -v -u username:password <auth-url>/token
+	
+ such as (assuming that you have defined a username:password pair such as *cdap:realtime*)::
+	
+	    curl -v -u cdap:realtime http://localhost:10009/token; echo
 
-	curl -v -H "Authorization: Bearer <AccessToken>" <base-url>/apps
+- This should return a ``200 OK`` response with the ``AccessToken`` string in the response body (abbreviated to fit)::
 
-- This should return a 200 OK response.
+      {"access_token":"AghjZGFwAMKo...THHiygVMff7dZgn6yJ/","token_type":"Bearer","expires_in":86400}
+
+- Reattempt the first command, but this time include the ``AccessToken`` as a header in the command::
+
+	    curl -v -H "Authorization: Bearer <AccessToken>" <base-url>/apps
+	  
+ such as (formatted to fit)::
+	
+	    curl -v -H "Authorization: Bearer 
+	      AghjZGFwAMKo05i5UsKYhuu5UrD87psGQAGe076U2XEkwlNU0roe4QOU5rTHHiygVMff7dZgn6yJ" 
+	      http://localhost:10000/v2/apps; echo
+
+- This should return a ``200 OK`` response.
 
 - Visiting the CDAP Console should redirect you to a login page that prompts for credentials.
-  Entering the credentials should let you work with the CDAP Console as normal.
+  Entering the credentials that you have configured should let you work with the CDAP Console as normal.
