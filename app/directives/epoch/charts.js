@@ -39,7 +39,7 @@ ngEpoch.controller('epochController', function ($scope, $compile, myResizeManage
 
     if(!options.data) {
       options.data = [{values:[{
-        time: Math.floor((new Date()).getTime() / 1000),
+        time: Math.floor(Date.now() / 1000),
         y: 0
       }]}];
     }
