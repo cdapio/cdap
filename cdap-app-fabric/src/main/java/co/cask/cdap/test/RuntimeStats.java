@@ -16,6 +16,8 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
@@ -54,6 +56,15 @@ public final class RuntimeStats {
     String inputName = String.format("%s.query.requests", prefix);
     String processedName = String.format("%s.query.processed", prefix);
     String exceptionName = String.format("%s.query.failures", prefix);
+
+    return getMetrics(prefix, inputName, processedName, exceptionName);
+  }
+
+  public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
+    String prefix = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
+    String inputName = String.format("%s.requests.count", prefix);
+    String processedName = String.format("%s.response.successful.count", prefix);
+    String exceptionName = String.format("%s.response.server-error.count", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }

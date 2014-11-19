@@ -47,6 +47,7 @@ import javax.ws.rs.PathParam;
  * AppWithServices with a DummyService for unit testing.
  */
 public class AppWithServices extends AbstractApplication {
+  public static final String APP_NAME = "AppWithServices";
   public static final String SERVICE_NAME = "ServerService";
   public static final String DATASET_WORKER_SERVICE_NAME = "DatasetUpdateService";
   public static final String DATASET_TEST_KEY = "testKey";
@@ -62,7 +63,7 @@ public class AppWithServices extends AbstractApplication {
 
     @Override
     public void configure() {
-      setName("AppWithServices");
+      setName(APP_NAME);
       addStream(new Stream("text"));
       addProcedure(new NoOpProcedure());
       addService(new BasicService(SERVICE_NAME, new ServerService()));

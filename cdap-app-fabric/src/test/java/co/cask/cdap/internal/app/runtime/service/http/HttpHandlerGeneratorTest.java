@@ -23,6 +23,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
@@ -88,7 +89,8 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHandlerGenerator() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", "0",
+                                                        new NoOpMetricsCollectionService(), "test.scope");
 
     HttpHandler httpHandler = factory.createHttpHandler(
       TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {

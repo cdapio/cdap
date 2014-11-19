@@ -55,7 +55,7 @@ final class MetricsRequestParser {
     DATASETS,
     STREAMS,
     CLUSTER,
-    SERVICES;
+    SERVICES
   }
 
   public enum RequestType {
@@ -63,7 +63,7 @@ final class MetricsRequestParser {
     MAPREDUCE("b"),
     PROCEDURES("p"),
     HANDLERS("h"),
-    SERVICES("s");
+    SERVICES("u");
 
     private final String code;
 

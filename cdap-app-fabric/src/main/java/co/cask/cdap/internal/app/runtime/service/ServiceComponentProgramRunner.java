@@ -100,9 +100,9 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
       String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
       Preconditions.checkArgument(host != null, "No hostname is provided");
 
-      component = new ServiceHttpServer(host, program, spec, serviceAnnouncer,
+      component = new ServiceHttpServer(host, program, spec, runId, serviceAnnouncer,
                                         createHttpServiceContextFactory(program, runId, instanceId,
-                                                                        options.getUserArguments()));
+                                        options.getUserArguments()), metricsCollectionService);
     } else {
       ServiceWorkerSpecification workerSpec = spec.getWorkers().get(componentName);
       Preconditions.checkArgument(workerSpec != null, "Missing service worker specification for {}", program.getId());

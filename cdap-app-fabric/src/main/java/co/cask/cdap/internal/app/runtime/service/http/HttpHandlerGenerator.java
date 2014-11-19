@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
@@ -33,7 +34,6 @@ import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -81,8 +81,8 @@ import javax.ws.rs.Path;
  *       super(context);
  *     }
  *
- *     @literal@GET
- *     @literal@Path("/path")
+ *     @literal @GET
+ *     @literal @Path("/path")
  *     public void userMethod(HttpRequest request, HttpResponder responder) {
  *       // see generateTransactionalDelegateBody() for generated body.
  *     }
@@ -202,21 +202,22 @@ final class HttpHandlerGenerator {
    * Generates the constructor. The constructor generated has signature {@code (DelegatorContext)}.
    */
   private void generateConstructor(TypeToken<? extends HttpServiceHandler> delegateType, ClassWriter classWriter) {
-    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class);
-    String signature = Signatures.getMethodSignature(constructor, getContextType(delegateType));
+    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsCollector.class);
+    String signature = Signatures.getMethodSignature(constructor, getContextType(delegateType),
+                                                     TypeToken.of(MetricsCollector.class));
 
-    // Constructor(DelegatorContext)
+    // Constructor(DelegatorContext, MetricsCollector)
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, signature, null, classWriter);
 
-    // super(context);
+    // super(context, metricsCollector);
     mg.loadThis();
     mg.loadArg(0);
+    mg.loadArg(1);
     mg.invokeConstructor(Type.getType(AbstractHttpHandlerDelegator.class),
-                         Methods.getMethod(void.class, "<init>", DelegatorContext.class));
+                         Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsCollector.class));
     mg.returnValue();
     mg.endMethod();
   }
-
 
   /**
    * Generates a static Logger field for logging and a static initialization block to initialize the logger.
@@ -462,7 +463,7 @@ final class HttpHandlerGenerator {
      *       txContext.finish();
      *     } catch (TransactionFailureException e) {
      *        LOG.error("Transaction failure: ", e);
-     *        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+     *        wrapResponder(responder).sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
      *     }
      *   }
      * }
@@ -474,7 +475,6 @@ final class HttpHandlerGenerator {
       Type txFailureExceptionType = Type.getType(TransactionFailureException.class);
       Type loggerType = Type.getType(Logger.class);
       Type throwableType = Type.getType(Throwable.class);
-      Type httpResponseStatusType = Type.getType(HttpResponseStatus.class);
 
       Label txTryBegin = mg.newLabel();
       Label txTryEnd = mg.newLabel();
@@ -565,11 +565,20 @@ final class HttpHandlerGenerator {
       mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
                                                        Throwable.class));
 
-      // responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      // responder = wrapResponder(responder);
+      // responder.sendStatus(500);
+      int responder = mg.newLocal(Type.getType(HttpServiceResponder.class));
+      mg.loadThis();
       mg.loadArg(1);
-      mg.getStatic(httpResponseStatusType, "INTERNAL_SERVER_ERROR", httpResponseStatusType);
-      mg.invokeInterface(Type.getType(HttpResponder.class),
-                         Methods.getMethod(void.class, "sendStatus", HttpResponseStatus.class));
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
+      mg.checkCast(Type.getType(HttpServiceResponder.class));
+      mg.storeLocal(responder, Type.getType(HttpServiceResponder.class));
+
+      mg.loadLocal(responder);
+      mg.visitLdcInsn(500);
+      mg.invokeInterface(Type.getType(HttpServiceResponder.class),
+                         Methods.getMethod(void.class, "sendStatus", int.class));
 
       mg.mark(txFinish);
 

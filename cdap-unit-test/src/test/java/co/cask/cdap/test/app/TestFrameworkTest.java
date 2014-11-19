@@ -361,6 +361,13 @@ public class TestFrameworkTest extends TestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
+    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(AppWithServices.APP_NAME,
+                                                                   AppWithServices.SERVICE_NAME);
+    serviceMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(3, serviceMetrics.getInput());
+    Assert.assertEquals(2, serviceMetrics.getProcessed());
+    Assert.assertEquals(1, serviceMetrics.getException());
+
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
 
