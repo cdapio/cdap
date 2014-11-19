@@ -71,6 +71,11 @@ import java.util.Set;
  */
 public class DefaultStoreTest {
   private static DefaultStore store;
+  private static final Map<String, String> PROGRAM_STATUS_MAP = new ImmutableMap.Builder<String, String>()
+    .put(ProgramController.State.STOPPED.toString(), "Completed")
+    .put(ProgramController.State.ERROR.toString(), "Failed")
+    .build();
+
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -154,12 +159,12 @@ public class DefaultStoreTest {
     RunRecord run = successHistory.get(0);
     Assert.assertEquals(now - 1000, run.getStartTs());
     Assert.assertEquals(now - 500, run.getStopTs());
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(), run.getStatus());
+    Assert.assertEquals(PROGRAM_STATUS_MAP.get(ProgramController.State.STOPPED.toString()), run.getStatus());
 
     run = failureHistory.get(0);
     Assert.assertEquals(now - 2000, run.getStartTs());
     Assert.assertEquals(now - 1000, run.getStopTs());
-    Assert.assertEquals(ProgramController.State.ERROR.toString(), run.getStatus());
+    Assert.assertEquals(PROGRAM_STATUS_MAP.get(ProgramController.State.ERROR.toString()), run.getStatus());
   }
 
   @Test
