@@ -145,5 +145,5 @@ if [ "x$action" == "xdeploy" ]; then
   deploy_action $app $jar_path $host
 else
   program_action $app "WhoFlow" "flow" $action $host
-  program_action $app "Greeting" "procedure" $action $host
+  program_action $app "Greeting" "service" $action $host
 fi
