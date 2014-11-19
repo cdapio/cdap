@@ -77,27 +77,26 @@ Hardware Requirements
 Systems hosting the CDAP components must meet these hardware specifications,
 in addition to having CPUs with a minimum speed of 2 GHz:
 
-+--------------------------------+-------------------+--------------------+------------------------------------------+
-| Component                      | Package           | Hardware Component | Specifications                           |
-+================================+===================+====================+==========================================+
-| **CDAP Webapp**                | ``cdap-web-app``  | RAM                | 1 GB minimum, 2 GB recommended           |
-+--------------------------------+-------------------+--------------------+------------------------------------------+
-| **CDAP Router**                | ``cdap-gateway``  | RAM                | 2 GB minimum, 4 GB recommended           |
-+--------------------------------+-------------------+--------------------+------------------------------------------+
-| **CDAP Master**                | ``cdap-master``   | RAM                | 2 GB minimum, 4 GB recommended           |
-+--------------------------------+-------------------+--------------------+------------------------------------------+
-| **CDAP Kafka**                 | ``cdap-kafka``    | RAM                | 1 GB minimum, 2 GB recommended           |
-+                                +-------------------+--------------------+------------------------------------------+
-|                                |                   | Disk Space         | *CDAP Kafka* maintains a data cache in   |
-|                                |                   |                    | a configurable data directory.           |
-|                                |                   |                    | Required space depends on the number of  |
-|                                |                   |                    | CDAP applications deployed and running   |
-|                                |                   |                    | in the CDAP and the quantity             |
-|                                |                   |                    | of logs and metrics that they generate.  |
-+--------------------------------+-------------------+--------------------+------------------------------------------+
-| **CDAP Authentication Server** | ``cdap-security`` | RAM                | 1 GB minimum, 2 GB recommended           |
-+--------------------------------+-------------------+--------------------+------------------------------------------+
-
++---------------------------------------+--------------------+-----------------------------------------------+
+| CDAP Component                        | Hardware Component | Specifications                                |
++=======================================+====================+===============================================+
+| **CDAP Webapp**                       | RAM                | 1 GB minimum, 2 GB recommended                |
++---------------------------------------+--------------------+-----------------------------------------------+
+| **CDAP Gateway**                      | RAM                | 2 GB minimum, 4 GB recommended                |
++---------------------------------------+--------------------+-----------------------------------------------+
+| **CDAP Master**                       | RAM                | 2 GB minimum, 4 GB recommended                |
++---------------------------------------+--------------------+-----------------------------------------------+
+| **CDAP Kafka**                        | RAM                | 1 GB minimum, 2 GB recommended                |
++                                       +--------------------+-----------------------------------------------+
+|                                       | Disk Space         | *CDAP Kafka* maintains a data cache in        |
+|                                       |                    | a configurable data directory.                |
+|                                       |                    | Required space depends on the number of       |
+|                                       |                    | CDAP applications deployed and running        |
+|                                       |                    | in the CDAP and the quantity                  |
+|                                       |                    | of logs and metrics that they generate.       |
++---------------------------------------+--------------------+-----------------------------------------------+
+| **CDAP Authentication Server**        | RAM                | 1 GB minimum, 2 GB recommended                |
++---------------------------------------+--------------------+-----------------------------------------------+
 
 Network Requirements
 ....................
