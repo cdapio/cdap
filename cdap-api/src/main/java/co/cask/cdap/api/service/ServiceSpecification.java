@@ -97,6 +97,9 @@ public final class ServiceSpecification implements ProgramSpecification {
     return resources;
   }
 
+  /**
+   * @return The list of ACLs associated with the Service.
+   */
   public List<ACL> getAcls() {
     return acls;
   }

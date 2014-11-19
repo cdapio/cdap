@@ -24,6 +24,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import com.clearspring.analytics.util.Preconditions;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.twill.common.Cancellable;
@@ -134,6 +135,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
       if (acls.isEmpty() || this.applicationId.equals(applicationId)) {
         return true;
       } else {
+        Preconditions.checkArgument(acls.size() == 1);
         ACL acl = acls.get(0);
         // If they're in different applications, and the ACL is set to execute only within the same app, its not visible
         if (acl.getPrincipal() == null && acl.getPermissions().contains(PermissionType.EXECUTE)) {
