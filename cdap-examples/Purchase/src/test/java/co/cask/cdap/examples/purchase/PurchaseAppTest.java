@@ -42,8 +42,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class PurchaseAppTest extends TestBase {
 
-  private static final int SERVICE_STARTUP_TIMEOUT_SECONDS = 10;
-
   private static final Gson GSON = new Gson();
 
   @Test
@@ -78,16 +76,8 @@ public class PurchaseAppTest extends TestBase {
     // Start PurchaseHistoryService
     ServiceManager serviceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
 
-    // Wait up to timeout to start service
-    // TODO: The below code should be replaced by method from ServiceManager in future release
-    int trial = 0;
-    while (trial++ < SERVICE_STARTUP_TIMEOUT_SECONDS) {
-      if (serviceManager.isRunning()) {
-        break;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertNotEquals(SERVICE_STARTUP_TIMEOUT_SECONDS, trial);
+    // Wait up to 10 seconds to start service
+    waitServiceStartup(serviceManager, 10);
 
     // Test service to retrieve a customer's purchase history
     URL url = new URL(serviceManager.getServiceURL(), "history/joe");
@@ -104,5 +94,16 @@ public class PurchaseAppTest extends TestBase {
     Assert.assertEquals(2, history.getPurchases().size());
 
     appManager.stopAll();
+  }
+
+  private void waitServiceStartup(ServiceManager serviceManager, int timeout) throws InterruptedException {
+    int trial = 0;
+    while (trial++ < timeout) {
+      if (serviceManager.isRunning()) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.fail("Service startup failed");
   }
 }
