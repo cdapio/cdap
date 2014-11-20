@@ -28,7 +28,37 @@ import java.util.Map;
 public final class RuntimeArguments {
 
   private RuntimeArguments() {
+  }
 
+  public enum Scope {
+    DATASET("dataset");
+
+    private final String displayName;
+
+    private Scope(String name) {
+      displayName = name;
+    }
+
+    @Override
+    public String toString() {
+      return displayName;
+    }
+
+    private static Map<String, Scope> reverseLookupMap;
+    static {
+      reverseLookupMap = Maps.newHashMapWithExpectedSize(Scope.values().length);
+      for (Scope scope: Scope.values()) {
+        reverseLookupMap.put(scope.toString(), scope);
+      }
+    }
+
+    public static Scope scopeFor(String name) {
+      Scope scope = reverseLookupMap.get(name);
+      if (scope != null) {
+        return scope;
+      }
+      throw new IllegalArgumentException("Illegal scope name: " + name);
+    }
   }
 
   /**
@@ -73,16 +103,16 @@ public final class RuntimeArguments {
 
   /**
    * Extract all arguments for a given scope.
-   * @param type The type of the scope, e.g., "dataset"
+   * @param scope The type of the scope, e.g., "dataset"
    * @param name The name of the scope, e.g. "myTable"
    * @param arguments the runtime arguments of the enclosing scope
    * @return a map that contains only the keys that start with &lt;type>.&lt;prefix>., with that prefix removed.
    */
-  public static Map<String, String> selectScope(String type, String name, Map<String, String> arguments) {
+  public static Map<String, String> selectScope(Scope scope, String name, Map<String, String> arguments) {
     if (arguments == null || arguments.isEmpty()) {
       return arguments;
     }
-    final String prefix = type + "." + name + ".";
+    final String prefix = scope + "." + name + ".";
     Map<String, String> result = Maps.newHashMap();
     for (Map.Entry<String, String> entry : arguments.entrySet()) {
       if (entry.getKey().startsWith(prefix)) {
@@ -92,11 +122,11 @@ public final class RuntimeArguments {
     return result;
   }
 
-  public static Map<String, String> addScope(String type, String name, Map<String, String> arguments) {
+  public static Map<String, String> addScope(Scope scope, String name, Map<String, String> arguments) {
     if (arguments == null || arguments.isEmpty()) {
       return arguments;
     }
-    final String prefix = type + "." + name + ".";
+    final String prefix = scope + "." + name + ".";
     Map<String, String> result = Maps.newHashMap();
     for (Map.Entry<String, String> entry : arguments.entrySet()) {
         result.put(prefix + entry.getKey(), entry.getValue());

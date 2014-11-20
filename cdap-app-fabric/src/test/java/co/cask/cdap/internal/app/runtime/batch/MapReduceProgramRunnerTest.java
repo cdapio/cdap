@@ -155,8 +155,8 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingFile.class, TEMP_FOLDER_SUPPLIER);
 
-    final Map<String, String> inputArgs = ImmutableMap.of(File.PROPERTY_INPUT_PATHS, inputPaths);
-    final Map<String, String> outputArgs = ImmutableMap.of(File.PROPERTY_OUTPUT_PATH, outputPath);
+    final Map<String, String> inputArgs = ImmutableMap.of(File.ARGUMENT_INPUT_PATHS, inputPaths);
+    final Map<String, String> outputArgs = ImmutableMap.of(File.ARGUMENT_OUTPUT_PATH, outputPath);
 
     // write a handful of numbers to a file; compute their sum, too.
     final long[] values = { 15L, 17L, 7L, 3L };
@@ -174,8 +174,8 @@ public class MapReduceProgramRunnerTest {
     }
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
-    runtimeArguments.putAll(RuntimeArguments.addScope("dataset", inputDatasetName, inputArgs));
-    runtimeArguments.putAll(RuntimeArguments.addScope("dataset", outputDatasetName, outputArgs));
+    runtimeArguments.putAll(RuntimeArguments.addScope(RuntimeArguments.Scope.DATASET, inputDatasetName, inputArgs));
+    runtimeArguments.putAll(RuntimeArguments.addScope(RuntimeArguments.Scope.DATASET, outputDatasetName, outputArgs));
     runProgram(app, AppWithMapReduceUsingFile.ComputeSum.class, new BasicArguments(runtimeArguments));
 
     // output location in file system is a directory that contains a part file, a _SUCCESS file, and checksums

@@ -24,20 +24,20 @@ import java.io.Closeable;
 import java.util.Map;
 
 /**
- * Helper to create DataSets
+ * Helper to create Datasets.
  */
-public final class DataSets {
+public final class Datasets {
 
-  public static Map<String, Closeable> createDataSets(DataSetContext context,
+  public static Map<String, Closeable> createDatasets(DataSetContext context,
                                                       Iterable<String> datasetNames,
                                                       Map<String, String> arguments) {
-    ImmutableMap.Builder<String, Closeable> builder = ImmutableMap.builder();
 
+    ImmutableMap.Builder<String, Closeable> builder = ImmutableMap.builder();
     for (String name : datasetNames) {
       Closeable dataset;
       if (arguments != null && !arguments.isEmpty()) {
         Map<String, String> datasetArguments = RuntimeArguments.
-          selectScope("dataset", name, arguments);
+          selectScope(RuntimeArguments.Scope.DATASET, name, arguments);
         dataset = context.getDataSet(name, datasetArguments);
       } else {
         dataset = context.getDataSet(name);
@@ -49,5 +49,5 @@ public final class DataSets {
     return builder.build();
   }
 
-  private DataSets() {}
+  private Datasets() {}
 }

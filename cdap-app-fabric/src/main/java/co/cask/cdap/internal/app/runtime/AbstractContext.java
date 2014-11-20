@@ -94,7 +94,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
-    this.datasets = DataSets.createDataSets(dsInstantiator, datasets, arguments);
+    this.datasets = Datasets.createDatasets(dsInstantiator, datasets, arguments);
   }
 
   public abstract Metrics getMetrics();

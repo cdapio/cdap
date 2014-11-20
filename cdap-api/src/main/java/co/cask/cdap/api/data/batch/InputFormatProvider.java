@@ -31,7 +31,7 @@ public interface InputFormatProvider {
   <T> Class<? extends T> getInputFormatClass();
 
   /**
-   * @return the configuration properties, that the input format expects to find in the hadoop configuration.
+   * @return the configuration properties that the input format expects to find in the hadoop configuration.
    */
   Map<String, String> getInputFormatConfiguration();
 

@@ -37,8 +37,8 @@ public class FileTest extends AbstractDatasetTest {
   public static void beforeClass() throws Exception {
     createInstance("file", "testFileSet", DatasetProperties.builder()
       .add(File.PROPERTY_BASE_PATH, "testDir").build());
-    file = getInstance("testFileSet", ImmutableMap.of(File.PROPERTY_INPUT_PATHS, "some?File",
-                                                      File.PROPERTY_OUTPUT_PATH, "some?File"));
+    file = getInstance("testFileSet", ImmutableMap.of(File.ARGUMENT_INPUT_PATHS, "some?File",
+                                                      File.ARGUMENT_OUTPUT_PATH, "some?File"));
   }
 
   @AfterClass

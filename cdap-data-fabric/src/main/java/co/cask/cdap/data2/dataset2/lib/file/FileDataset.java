@@ -67,12 +67,12 @@ public final class FileDataset implements File {
   }
 
   private Location determineOutputLocation() {
-    String outputPath = runtimeArguments.get(PROPERTY_OUTPUT_PATH);
+    String outputPath = runtimeArguments.get(ARGUMENT_OUTPUT_PATH);
     return outputPath == null ? baseLocation : createLocation(outputPath);
   }
 
   private List<Location> determineInputLocations() {
-    String inputPaths = runtimeArguments.get(PROPERTY_INPUT_PATHS);
+    String inputPaths = runtimeArguments.get(ARGUMENT_INPUT_PATHS);
     if (inputPaths == null) {
       return Collections.singletonList(baseLocation);
     } else {
