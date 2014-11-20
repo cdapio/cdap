@@ -16,22 +16,17 @@
 
 package co.cask.cdap.data2.util.hbase;
 
+import co.cask.cdap.test.XSlowTests;
+import org.junit.experimental.categories.Category;
+
 /**
- * Factory for HBase version-specific {@link HBaseTableUtil} instances.
+ *
  */
-public class HBaseTableUtilFactory extends HBaseVersionSpecificFactory<HBaseTableUtil> {
-  @Override
-  protected String getHBase94Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase94TableUtil";
-  }
+@Category(XSlowTests.class)
+public class HBase98TableUtilTest extends AbstractHBaseTableUtilTest {
 
   @Override
-  protected String getHBase96Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase96TableUtil";
-  }
-
-  @Override
-  protected String getHBase98Classname() {
-    return "co.cask.cdap.data2.util.hbase.HBase98TableUtil";
+  protected HBaseTableUtil getTableUtil() {
+    return new HBase98TableUtil();
   }
 }
