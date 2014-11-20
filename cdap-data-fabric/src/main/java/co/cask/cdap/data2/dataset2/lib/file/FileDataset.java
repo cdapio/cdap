@@ -18,6 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.file;
 
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.File;
+import co.cask.cdap.api.dataset.lib.FileArguments;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -28,6 +29,7 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -67,18 +69,18 @@ public final class FileDataset implements File {
   }
 
   private Location determineOutputLocation() {
-    String outputPath = runtimeArguments.get(ARGUMENT_OUTPUT_PATH);
+    String outputPath = FileArguments.getOutputPath(runtimeArguments);
     return outputPath == null ? baseLocation : createLocation(outputPath);
   }
 
   private List<Location> determineInputLocations() {
-    String inputPaths = runtimeArguments.get(ARGUMENT_INPUT_PATHS);
+    Collection<String> inputPaths = FileArguments.getInputPaths(runtimeArguments);
     if (inputPaths == null) {
       return Collections.singletonList(baseLocation);
     } else {
       List<Location> locations = Lists.newLinkedList();
-      for (String path : inputPaths.split(",")) {
-        locations.add(createLocation(path.trim()));
+      for (String path : inputPaths) {
+        locations.add(createLocation(path));
       }
       return locations;
     }

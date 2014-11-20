@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.File;
+import co.cask.cdap.api.dataset.lib.FileArguments;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
@@ -50,7 +51,6 @@ import co.cask.tephra.TxConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
@@ -155,8 +155,10 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingFile.class, TEMP_FOLDER_SUPPLIER);
 
-    final Map<String, String> inputArgs = ImmutableMap.of(File.ARGUMENT_INPUT_PATHS, inputPaths);
-    final Map<String, String> outputArgs = ImmutableMap.of(File.ARGUMENT_OUTPUT_PATH, outputPath);
+    Map<String, String> inputArgs = Maps.newHashMap();
+    Map<String, String> outputArgs = Maps.newHashMap();
+    FileArguments.setInputPaths(inputArgs, inputPaths);
+    FileArguments.setOutputPath(outputArgs, outputPath);
 
     // write a handful of numbers to a file; compute their sum, too.
     final long[] values = { 15L, 17L, 7L, 3L };

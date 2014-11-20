@@ -93,5 +93,4 @@ public interface File extends Dataset, InputFormatProvider, OutputFormatProvider
    * @return the full location of the given relative path within this dataset
    */
   Location getLocation(String relativePath);
-
 }

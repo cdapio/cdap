@@ -18,8 +18,9 @@ package co.cask.cdap.data2.dataset2.lib;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.File;
+import co.cask.cdap.api.dataset.lib.FileArguments;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -28,6 +29,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 
 public class FileTest extends AbstractDatasetTest {
 
@@ -37,8 +39,10 @@ public class FileTest extends AbstractDatasetTest {
   public static void beforeClass() throws Exception {
     createInstance("file", "testFileSet", DatasetProperties.builder()
       .add(File.PROPERTY_BASE_PATH, "testDir").build());
-    file = getInstance("testFileSet", ImmutableMap.of(File.ARGUMENT_INPUT_PATHS, "some?File",
-                                                      File.ARGUMENT_OUTPUT_PATH, "some?File"));
+    Map<String, String> fileArgs = Maps.newHashMap();
+    FileArguments.setInputPath(fileArgs, "some?File");
+    FileArguments.setOutputPath(fileArgs, "some?File");
+    file = getInstance("testFileSet", fileArgs);
   }
 
   @AfterClass
