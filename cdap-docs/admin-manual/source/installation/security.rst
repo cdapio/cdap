@@ -329,60 +329,53 @@ As described in the :ref:`CDAP Reference Manual <http-restful-api-conventions>`,
 
   http://<host>:<port>/v2
 
-**Authentication URLS**, represented by ``<auth-url>``, are the URL that clients can use
-for obtaining access tokens::
-
-  http://<auth-host>:<auth-port>
-
-where:
-
-- ``<host>`` is the host name of the CDAP server;
-- ``<auth-host>`` is the host name of the CDAP authentication server;
-- ``<port>`` is the port that is set as the ``router.bind.port`` in ``cdap-site.xml`` (default: ``10000``); and 
-- ``<auth-port>`` is the port that is set as the ``security.auth.server.bind.port`` (default: ``10009``).
-
-Note that if :ref:`SSL is enabled for CDAP<running_servers_with_ssl>`, then:
-
-- Both the base URL and the authentication URL use ``https``;
-- ``<port>`` becomes the port that is set as the ``router.ssl.bind.port`` in ``cdap-site.xml`` (default: ``10443``); and 
-- ``<auth-port>`` becomes the port that is set as the ``security.auth.server.ssl.bind.port`` (default: ``10010``).
+Note that if :ref:`SSL is enabled for CDAP Servers<running_servers_with_ssl>`, then the
+base URL will use ``https``.
 
 To ensure that you've configured security correctly, run these simple tests to verify that the
 security components are working as expected:
 
 .. highlight:: console
 
-- After configuring CDAP as described above, start (or restart) CDAP and attempt to use a service::
+- After configuring CDAP as described above, start (or restart) CDAP and attempt to make a request::
 
-      curl -v <base-url>/apps
+    curl -v <base-url>/apps
 	
  such as::
 	
-	    curl -v http://localhost:10000/v2/apps; echo
+    curl -vw '\n' http://localhost:10000/v2/apps
 
-- This should return a ``401 Unauthorized`` response. Submit a username and password to obtain an ``AccessToken``::
+ This should return a ``401 Unauthorized`` response with a list of authentication URIs in
+ the response body. For example::
 
-	    curl -v -u username:password <auth-url>/token
+    {"auth_uri":["http://localhost:10009/token"]}
+
+- Submit a username and password to one of the URLs to obtain an ``AccessToken``::
+
+    curl -vw '\n' -u username:password <auth-url>
 	
- such as (assuming that you have defined a username:password pair such as *cdap:realtime*)::
+ such as (assuming an authentication server at the above URI and that you have defined a 
+ username:password pair such as *cdap:realtime*)::
 	
-	    curl -v -u cdap:realtime http://localhost:10009/token; echo
+    curl -vw '\n' -u cdap:realtime http://localhost:10009/token
 
-- This should return a ``200 OK`` response with the ``AccessToken`` string in the response body (abbreviated to fit)::
+ This should return a ``200 OK`` response with the ``AccessToken`` string in the response
+ body (formatted to fit)::
 
-      {"access_token":"AghjZGFwAMKo...THHiygVMff7dZgn6yJ/","token_type":"Bearer","expires_in":86400}
+    {"access_token":"AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS",
+      "token_type":"Bearer","expires_in":86400}
 
-- Reattempt the first command, but this time include the ``AccessToken`` as a header in the command::
+- Reattempt the first command, but this time include the ``AccessToken`` as a header in the request::
 
-	    curl -v -H "Authorization: Bearer <AccessToken>" <base-url>/apps
+    curl -vw '\n' -H "Authorization: Bearer <AccessToken>" <base-url>/apps
 	  
  such as (formatted to fit)::
 	
-	    curl -v -H "Authorization: Bearer 
-	      AghjZGFwAMKo05i5UsKYhuu5UrD87psGQAGe076U2XEkwlNU0roe4QOU5rTHHiygVMff7dZgn6yJ" 
-	      http://localhost:10000/v2/apps; echo
+    curl -vw '\n' -H "Authorization: Bearer 
+      AghjZGFwAI7e8p65Uo7OpfG5UrD87psGQE0u0sFDoqxtacdRR5GxEb6bkTypP7mXdqvqqnLmfxOS" 
+      http://localhost:10000/v2/apps
 
-- This should return a ``200 OK`` response.
+ This should return a ``200 OK`` response.
 
 - Visiting the CDAP Console should redirect you to a login page that prompts for credentials.
   Entering the credentials that you have configured should let you work with the CDAP Console as normal.
