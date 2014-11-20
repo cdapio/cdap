@@ -972,8 +972,8 @@ WebAppServer.prototype.bindRoutes = function() {
    */
   this.app.get('/version', function (req, res) {
     var options = {
-      host: 's3.amazonaws.com',
-      path: '/cdap-docs/VERSION'
+      host: 'docs.cask.co',
+      path: '/cdap/version'
     };
 
     var request = self.lib.request(options, function(response) {
