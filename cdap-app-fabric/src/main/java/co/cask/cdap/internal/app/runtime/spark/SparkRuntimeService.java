@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -74,27 +73,32 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final Spark spark;
   private final SparkSpecification sparkSpecification;
   private final Location programJarLocation;
-  private final BasicSparkContext context;
+  private static BasicSparkContext context;
   private final LocationFactory locationFactory;
   private final TransactionSystemClient txClient;
   private Transaction transaction;
   private Runnable cleanupTask;
   private String[] sparkSubmitArgs;
   private volatile boolean stopRequested;
-  private final StreamAdmin streamAdmin;
 
   SparkRuntimeService(CConfiguration cConf, Configuration hConf, Spark spark, SparkSpecification sparkSpecification,
-                      BasicSparkContext context, Location programJarLocation, LocationFactory locationFactory,
-                      TransactionSystemClient txClient, StreamAdmin streamAdmin) {
+                      BasicSparkContext cont, Location programJarLocation, LocationFactory locationFactory,
+                      TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.spark = spark;
     this.sparkSpecification = sparkSpecification;
     this.programJarLocation = programJarLocation;
-    this.context = context;
+    context = cont;
     this.locationFactory = locationFactory;
     this.txClient = txClient;
-    this.streamAdmin = streamAdmin;
+  }
+
+  /**
+   * @return The {@link BasicSparkContext} which is used by the SparkProgram running outside CDAP
+   */
+  public static BasicSparkContext getContext() {
+    return context;
   }
 
   @Override
@@ -150,7 +154,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // depends on.
       Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
       try {
-        SparkProgramWrapper.setStreamAdmin(streamAdmin);
         SparkProgramWrapper.setSparkProgramRunning(true);
         SparkSubmit.main(sparkSubmitArgs);
       } catch (Exception e) {

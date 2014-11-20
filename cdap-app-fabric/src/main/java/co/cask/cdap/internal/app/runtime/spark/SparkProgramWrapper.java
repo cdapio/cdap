@@ -59,7 +59,6 @@ public class SparkProgramWrapper {
   private final String[] arguments;
   private final Class<? extends SparkProgram> userProgramClass;
   private static SparkContext sparkContext;
-  private static StreamAdmin streamAdmin;
   private static boolean scalaProgram;
 
   // TODO: Get around Spark's limitation of only one SparkContext in a JVM and support multiple spark context:
@@ -132,10 +131,10 @@ public class SparkProgramWrapper {
    */
   private SparkContext createSparkContext() {
     if (JavaSparkProgram.class.isAssignableFrom(userProgramClass)) {
-      return new JavaSparkContext(streamAdmin);
+      return new JavaSparkContext();
     } else if (ScalaSparkProgram.class.isAssignableFrom(userProgramClass)) {
       scalaProgram = true;
-      return new ScalaSparkContext(streamAdmin);
+      return new ScalaSparkContext();
     } else {
       String error = "Spark program must implement either JavaSparkProgram or ScalaSparkProgram";
       throw new IllegalArgumentException(error);
@@ -279,9 +278,5 @@ public class SparkProgramWrapper {
    */
   private static boolean isScalaProgram() {
     return scalaProgram;
-  }
-
-  public static void setStreamAdmin(StreamAdmin streamAdmin) {
-    SparkProgramWrapper.streamAdmin = streamAdmin;
   }
 }
