@@ -118,18 +118,18 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   @Override
   public <T extends Closeable> T getDataSet(String name) {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    T dataSet = (T) datasets.get(name);
-    Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
-    return dataSet;
+    T dataset = (T) datasets.get(name);
+    Preconditions.checkArgument(dataset != null, "%s is not a known Dataset.", name);
+    return dataset;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments) {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    T dataSet = (T) datasets.get(name);
-    Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
-    return dataSet;
+    T dataset = (T) datasets.get(name);
+    Preconditions.checkArgument(dataset != null, "%s is not a known Dataset.", name);
+    return dataset;
   }
 
   public String getAccountId() {

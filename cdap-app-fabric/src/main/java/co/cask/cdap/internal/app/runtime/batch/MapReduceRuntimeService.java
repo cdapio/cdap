@@ -181,8 +181,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     beforeSubmit();
 
     // set input/output datasets info
-    setInputDataSetIfNeeded(job);
-    setOutputDataSetIfNeeded(job);
+    setInputDatasetIfNeeded(job);
+    setOutputDatasetIfNeeded(job);
 
     // replace user's Mapper & Reducer's with our wrappers in job config
     MapperWrapper.wrap(job);
@@ -388,36 +388,36 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   @SuppressWarnings("unchecked")
-  private void setInputDataSetIfNeeded(Job job) throws IOException {
-    String inputDataSetName = context.getInputDatasetName();
-    if (inputDataSetName == null) {
+  private void setInputDatasetIfNeeded(Job job) throws IOException {
+    String inputDatasetName = context.getInputDatasetName();
+    if (inputDatasetName == null) {
       // trying to init input dataset from spec
-      inputDataSetName = context.getSpecification().getInputDataSet();
+      inputDatasetName = context.getSpecification().getInputDataSet();
     }
-    if (inputDataSetName == null) {
+    if (inputDatasetName == null) {
       // not using a dataset as input
       return;
     }
 
     // TODO: It's a hack for stream
-    if (inputDataSetName.startsWith("stream://")) {
-      StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDataSetName));
+    if (inputDatasetName.startsWith("stream://")) {
+      StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDatasetName));
       configureStreamInput(job, stream);
       return;
     }
 
-    LOG.debug("Using Dataset {} as input for MapReduce Job", inputDataSetName);
+    LOG.debug("Using Dataset {} as input for MapReduce Job", inputDatasetName);
 
     // We checked on validation phase that it implements BatchReadable or InputFormatProvider
-    Dataset dataset = context.getDataSet(inputDataSetName);
+    Dataset dataset = context.getDataSet(inputDatasetName);
     if (dataset instanceof BatchReadable) {
-      BatchReadable inputDataSet = (BatchReadable) dataset;
+      BatchReadable inputDataset = (BatchReadable) dataset;
       List<Split> inputSplits = context.getInputDataSelection();
       if (inputSplits == null) {
-        inputSplits = inputDataSet.getSplits();
+        inputSplits = inputDataset.getSplits();
       }
-      context.setInput(inputDataSetName, inputSplits);
-      DataSetInputFormat.setInput(job, inputDataSetName);
+      context.setInput(inputDatasetName, inputSplits);
+      DataSetInputFormat.setInput(job, inputDatasetName);
       return;
     }
 
@@ -425,7 +425,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     InputFormatProvider inputDataset = (InputFormatProvider) dataset;
     Class<? extends InputFormat> inputFormatClass = inputDataset.getInputFormatClass();
     if (inputFormatClass == null) {
-      String message = String.format("Input dataset '%s' provided null as the input format", inputDataSetName);
+      String message = String.format("Input dataset '%s' provided null as the input format", inputDatasetName);
       LOG.error(message);
       throw new DataSetException(message);
     }
@@ -441,24 +441,24 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Sets the configurations for Dataset used for output.
    */
-  private void setOutputDataSetIfNeeded(Job job) {
-    String outputDataSetName = context.getOutputDatasetName();
+  private void setOutputDatasetIfNeeded(Job job) {
+    String outputDatasetName = context.getOutputDatasetName();
     // whatever was set into mapReduceContext e.g. during beforeSubmit(..) takes precedence
-    if (outputDataSetName == null) {
+    if (outputDatasetName == null) {
       // trying to init output dataset from spec
-      outputDataSetName = context.getSpecification().getOutputDataSet();
+      outputDatasetName = context.getSpecification().getOutputDataSet();
     }
-    if (outputDataSetName == null) {
+    if (outputDatasetName == null) {
       // not using a dataset as input
       return;
     }
 
-    LOG.debug("Using Dataset {} as output for MapReduce Job", outputDataSetName);
+    LOG.debug("Using Dataset {} as output for MapReduce Job", outputDatasetName);
 
     // We checked on validation phase that it implements BatchWritable or OutputFormatProvider
-    Dataset dataset = context.getDataSet(outputDataSetName);
+    Dataset dataset = context.getDataSet(outputDatasetName);
     if (dataset instanceof BatchWritable) {
-      DataSetOutputFormat.setOutput(job, outputDataSetName);
+      DataSetOutputFormat.setOutput(job, outputDatasetName);
       return;
     }
 
@@ -466,7 +466,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     OutputFormatProvider outputDataset = (OutputFormatProvider) dataset;
     Class<? extends OutputFormat> outputFormatClass = outputDataset.getOutputFormatClass();
     if (outputFormatClass == null) {
-      String message = String.format("Output dataset '%s' provided null as the output format", outputDataSetName);
+      String message = String.format("Output dataset '%s' provided null as the output format", outputDatasetName);
       LOG.error(message);
       throw new DataSetException(message);
     }
