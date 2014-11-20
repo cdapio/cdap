@@ -17,13 +17,16 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.File;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -47,10 +50,12 @@ import co.cask.tephra.TxConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -60,13 +65,14 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -86,9 +92,9 @@ public class MapReduceProgramRunnerTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
+  private static final Supplier<java.io.File> TEMP_FOLDER_SUPPLIER = new Supplier<java.io.File>() {
     @Override
-    public File get() {
+    public java.io.File get() {
       try {
         return tmpFolder.newFolder();
       } catch (IOException e) {
@@ -130,6 +136,74 @@ public class MapReduceProgramRunnerTest {
       dsFramework.deleteInstance(spec.getName());
     }
   }
+
+  @Test
+  public void testMapreduceWithFile() throws Exception {
+    // test reading and writing distinct datasets, reading more than one path
+    testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001");
+    // test reading and writing same dataset
+    testMapreduceWithFile("boogie", "zzz", "boogie", "f123");
+  }
+
+  private void testMapreduceWithFile(String inputDatasetName, String inputPaths,
+                                     String outputDatasetName, String outputPath) throws Exception {
+
+    // hack to use different datasets at each invocation of this test
+    System.setProperty("INPUT_DATASET_NAME", inputDatasetName);
+    System.setProperty("OUTPUT_DATASET_NAME", outputDatasetName);
+
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingFile.class, TEMP_FOLDER_SUPPLIER);
+
+    final Map<String, String> inputArgs = ImmutableMap.of(File.PROPERTY_INPUT_PATHS, inputPaths);
+    final Map<String, String> outputArgs = ImmutableMap.of(File.PROPERTY_OUTPUT_PATH, outputPath);
+
+    // write a handful of numbers to a file; compute their sum, too.
+    final long[] values = { 15L, 17L, 7L, 3L };
+    final File input = dataSetInstantiator.getDataSet(inputDatasetName, inputArgs);
+    long sum = 0L, count = 1;
+    for (Location inputLocation : input.getInputLocations()) {
+      final PrintWriter writer = new PrintWriter(inputLocation.getOutputStream());
+      for (long value : values) {
+        value *= count;
+        writer.println(value);
+        sum += value;
+      }
+      writer.close();
+      count++;
+    }
+
+    Map<String, String> runtimeArguments = Maps.newHashMap();
+    runtimeArguments.putAll(RuntimeArguments.addScope("dataset", inputDatasetName, inputArgs));
+    runtimeArguments.putAll(RuntimeArguments.addScope("dataset", outputDatasetName, outputArgs));
+    runProgram(app, AppWithMapReduceUsingFile.ComputeSum.class, new BasicArguments(runtimeArguments));
+
+    // output location in file system is a directory that contains a part file, a _SUCCESS file, and checksums
+    // (.<filename>.crc) for these files. Find the actual part file. Its name begins with "part". In this case,
+    // there should be only one part file (with this small data, we have a single reducer).
+    final File results = dataSetInstantiator.getDataSet(outputDatasetName, outputArgs);
+    Location resultLocation = results.getOutputLocation();
+    if (resultLocation.isDirectory()) {
+      for (Location child : resultLocation.list()) {
+        if (!child.isDirectory() && child.getName().startsWith("part")) {
+          resultLocation = child;
+          break;
+        }
+      }
+    }
+    Assert.assertFalse(resultLocation.isDirectory());
+
+    // read output and verify result
+    BufferedReader reader = new BufferedReader(new InputStreamReader(resultLocation.getInputStream()));
+    String line = reader.readLine();
+    Assert.assertNotNull(line);
+    String[] fields = line.split("\t");
+    Assert.assertEquals(2, fields.length);
+    Assert.assertEquals(AppWithMapReduceUsingFile.FileMapper.ONLY_KEY, fields[0]);
+    Assert.assertEquals(sum, Long.parseLong(fields[1]));
+    reader.close();
+  }
+
 
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
@@ -176,7 +250,7 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
     final String inputPath = createInput();
-    final File outputDir = new File(tmpFolder.newFolder(), "output");
+    final java.io.File outputDir = new java.io.File(tmpFolder.newFolder(), "output");
 
     final KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
 
@@ -192,10 +266,10 @@ public class MapReduceProgramRunnerTest {
 
     runProgram(app, AppWithMapReduce.ClassicWordCount.class, false);
 
-    File[] outputFiles = outputDir.listFiles();
+    java.io.File[] outputFiles = outputDir.listFiles();
     Assert.assertNotNull("no output files found", outputFiles);
     Assert.assertTrue("no output files found", outputFiles.length > 0);
-    File outputFile = outputFiles[0];
+    java.io.File outputFile = outputFiles[0];
     int lines = Files.readLines(outputFile, Charsets.UTF_8).size();
     // dummy check that output file is not empty
     Assert.assertTrue(lines > 0);
@@ -361,6 +435,11 @@ public class MapReduceProgramRunnerTest {
     waitForCompletion(submit(app, programClass, frequentFlushing));
   }
 
+  private void runProgram(ApplicationWithPrograms app, Class<?> programClass, Arguments args)
+    throws Exception {
+    waitForCompletion(submit(app, programClass, args));
+  }
+
   private void waitForCompletion(ProgramController controller) throws InterruptedException {
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
@@ -388,10 +467,6 @@ public class MapReduceProgramRunnerTest {
 
   private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass, boolean frequentFlushing)
     throws ClassNotFoundException {
-    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
-    final Program program = getProgram(app, programClass);
-    ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
-
     HashMap<String, String> userArgs = Maps.newHashMap();
     userArgs.put("metric", "metric");
     userArgs.put("startTs", "1");
@@ -400,9 +475,18 @@ public class MapReduceProgramRunnerTest {
     if (frequentFlushing) {
       userArgs.put("frequentFlushing", "true");
     }
+    return submit(app, programClass, new BasicArguments(userArgs));
+  }
+
+  private ProgramController submit(ApplicationWithPrograms app, Class<?> programClass, Arguments userArgs)
+    throws ClassNotFoundException {
+    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
+    final Program program = getProgram(app, programClass);
+    ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
+
     return runner.run(program, new SimpleProgramOptions(program.getName(),
                                                         new BasicArguments(),
-                                                        new BasicArguments(userArgs)));
+                                                        userArgs));
   }
 
   private Program getProgram(ApplicationWithPrograms app, Class<?> programClass) throws ClassNotFoundException {
@@ -415,9 +499,9 @@ public class MapReduceProgramRunnerTest {
   }
 
   private String createInput() throws IOException {
-    File inputDir = tmpFolder.newFolder();
+    java.io.File inputDir = tmpFolder.newFolder();
 
-    File inputFile = new File(inputDir.getPath() + "/words.txt");
+    java.io.File inputFile = new java.io.File(inputDir.getPath() + "/words.txt");
     inputFile.deleteOnExit();
     BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
     try {

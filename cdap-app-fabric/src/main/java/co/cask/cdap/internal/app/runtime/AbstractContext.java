@@ -60,7 +60,19 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
                          MetricsCollectionService metricsCollectionService,
                          DatasetFramework dsFramework,
                          CConfiguration conf,
-                         DiscoveryServiceClient discoveryServiceClient) {
+                         DiscoveryServiceClient discovery) {
+    this(program, runId, datasets, metricsContext, metricsCollectionService, dsFramework, conf, discovery, null);
+  }
+
+  public AbstractContext(Program program, RunId runId,
+                         Set<String> datasets,
+                         String metricsContext,
+                         MetricsCollectionService metricsCollectionService,
+                         DatasetFramework dsFramework,
+                         CConfiguration conf,
+                         DiscoveryServiceClient discoveryServiceClient,
+                         Map<String, String> arguments) {
+
     super(program);
     this.program = program;
     this.runId = runId;
@@ -82,7 +94,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
-    this.datasets = DataSets.createDataSets(dsInstantiator, datasets);
+    this.datasets = DataSets.createDataSets(dsInstantiator, datasets, arguments);
   }
 
   public abstract Metrics getMetrics();

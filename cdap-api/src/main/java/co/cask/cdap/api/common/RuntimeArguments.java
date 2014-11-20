@@ -70,4 +70,38 @@ public final class RuntimeArguments {
     }
     return toPosixArray(userArgMapBuilder.build());
   }
+
+  /**
+   * Extract all arguments for a given scope.
+   * @param type The type of the scope, e.g., "dataset"
+   * @param name The name of the scope, e.g. "myTable"
+   * @param arguments the runtime arguments of the enclosing scope
+   * @return a map that contains only the keys that start with &lt;type>.&lt;prefix>., with that prefix removed.
+   */
+  public static Map<String, String> selectScope(String type, String name, Map<String, String> arguments) {
+    if (arguments == null || arguments.isEmpty()) {
+      return arguments;
+    }
+    final String prefix = type + "." + name + ".";
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> entry : arguments.entrySet()) {
+      if (entry.getKey().startsWith(prefix)) {
+        result.put(entry.getKey().substring(prefix.length()), entry.getValue());
+      }
+    }
+    return result;
+  }
+
+  public static Map<String, String> addScope(String type, String name, Map<String, String> arguments) {
+    if (arguments == null || arguments.isEmpty()) {
+      return arguments;
+    }
+    final String prefix = type + "." + name + ".";
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> entry : arguments.entrySet()) {
+        result.put(prefix + entry.getKey(), entry.getValue());
+    }
+    return result;
+  }
+
 }

@@ -34,6 +34,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.MemoryTable;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.data2.dataset2.lib.file.FileDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableDefinition;
 
 /**
@@ -75,6 +76,9 @@ public class CoreDatasetsModule implements DatasetModule {
     InMemoryOrderedTableDefinition inMemoryOrderedTable = new InMemoryOrderedTableDefinition("inMemoryOrderedTable");
     registry.add(new TableDefinition(MemoryTable.class.getName(), inMemoryOrderedTable));
     registry.add(new TableDefinition("memoryTable", inMemoryOrderedTable));
+
+    // file dataset
+    registry.add(new FileDefinition());
   }
 
 }

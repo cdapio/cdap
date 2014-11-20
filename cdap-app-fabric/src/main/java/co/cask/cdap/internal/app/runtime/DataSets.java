@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DataSetContext;
 import com.google.common.collect.ImmutableMap;
 
@@ -28,13 +29,21 @@ import java.util.Map;
 public final class DataSets {
 
   public static Map<String, Closeable> createDataSets(DataSetContext context,
-                                                    Iterable<String> datasets) {
+                                                      Iterable<String> datasetNames,
+                                                      Map<String, String> arguments) {
     ImmutableMap.Builder<String, Closeable> builder = ImmutableMap.builder();
 
-    for (String dataset : datasets) {
-      Closeable dataSet = context.getDataSet(dataset);
-      if (dataSet != null) {
-        builder.put(dataset, dataSet);
+    for (String name : datasetNames) {
+      Closeable dataset;
+      if (arguments != null && !arguments.isEmpty()) {
+        Map<String, String> datasetArguments = RuntimeArguments.
+          selectScope("dataset", name, arguments);
+        dataset = context.getDataSet(name, datasetArguments);
+      } else {
+        dataset = context.getDataSet(name);
+      }
+      if (dataset != null) {
+        builder.put(name, dataset);
       }
     }
     return builder.build();
