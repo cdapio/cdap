@@ -106,8 +106,8 @@ public class DefaultStoreTest {
     Id.Program programId = Id.Program.from("account1", "concurrentApp", "concurrentFlow");
     long now = System.currentTimeMillis();
 
-    store.setStart(programId, "run1", now - 1000);
-    store.setStart(programId, "run2", now - 1000);
+    store.setStart(programId, "run1", now - 1000, ProgramController.State.STARTING);
+    store.setStart(programId, "run2", now - 1000, ProgramController.State.STARTING);
 
     store.setStop(programId, "run1", now, ProgramController.State.STOPPED);
     store.setStop(programId, "run2", now, ProgramController.State.STOPPED);
@@ -123,23 +123,24 @@ public class DefaultStoreTest {
     Id.Program programId = Id.Program.from("account1", "application1", "flow1");
     long now = System.currentTimeMillis();
 
-    store.setStart(programId, "run1", now - 2000);
+    store.setStart(programId, "run1", now - 2000, ProgramController.State.STARTING);
     store.setStop(programId, "run1", now - 1000, ProgramController.State.ERROR);
 
     // record another finished flow
-    store.setStart(programId, "run2", now - 1000);
+    store.setStart(programId, "run2", now - 1000, ProgramController.State.STARTING);
     store.setStop(programId, "run2", now - 500, ProgramController.State.STOPPED);
 
     // record not finished flow
-    store.setStart(programId, "run3", now);
+    store.setStart(programId, "run3", now, ProgramController.State.STARTING);
 
     // record run of different program
     Id.Program programId2 = Id.Program.from("account1", "application1", "flow2");
-    store.setStart(programId2, "run4", now - 500);
+    store.setStart(programId2, "run4", now - 500, ProgramController.State.STARTING);
     store.setStop(programId2, "run4", now - 400, ProgramController.State.STOPPED);
 
     // record for different account
-    store.setStart(Id.Program.from("account2", "application1", "flow1"), "run3", now - 300);
+    store.setStart(Id.Program.from("account2", "application1", "flow1"), "run3", now - 300,
+                   ProgramController.State.STARTING);
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
     List<RunRecord> successHistory = store.getRuns(programId, Constants.AppFabric.ProgramRunStatusType.COMPLETED,
@@ -550,19 +551,19 @@ public class DefaultStoreTest {
 
     long now = System.currentTimeMillis();
 
-    store.setStart(flowProgramId1, "flowRun1", now - 1000);
+    store.setStart(flowProgramId1, "flowRun1", now - 1000, ProgramController.State.STARTING);
     store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.STOPPED);
 
-    store.setStart(mapreduceProgramId1, "mrRun1", now - 1000);
+    store.setStart(mapreduceProgramId1, "mrRun1", now - 1000, ProgramController.State.STARTING);
     store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.STOPPED);
 
-    store.setStart(procedureProgramId1, "procedureRun1", now - 1000);
+    store.setStart(procedureProgramId1, "procedureRun1", now - 1000, ProgramController.State.STARTING);
     store.setStop(procedureProgramId1, "procedureRun1", now, ProgramController.State.STOPPED);
 
-    store.setStart(workflowProgramId1, "wfRun1", now - 1000);
+    store.setStart(workflowProgramId1, "wfRun1", now - 1000, ProgramController.State.STARTING);
     store.setStop(workflowProgramId1, "wfRun1", now, ProgramController.State.STOPPED);
 
-    store.setStart(flowProgramId2, "flowRun2", now - 1000);
+    store.setStart(flowProgramId2, "flowRun2", now - 1000, ProgramController.State.STARTING);
     store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.STOPPED);
 
     verifyRunHistory(flowProgramId1, 1);

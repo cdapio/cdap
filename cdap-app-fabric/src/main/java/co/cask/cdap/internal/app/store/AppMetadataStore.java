@@ -33,6 +33,7 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -119,9 +120,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  public void recordProgramStart(String accountId, String appId, String programId, String pid, long startTs) {
-    write(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId, pid).build(),
-          new RunRecord(pid, startTs, -1, ProgramController.State.ALIVE.toString()));
+  public void recordProgramStart(String accountId, String appId, String programId, String pid, long startTs,
+                                 ProgramController.State state) {
+    if (!EnumSet.of(ProgramController.State.STOPPED, ProgramController.State.ERROR).contains(state)) {
+      write(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId, pid).build(),
+            new RunRecord(pid, startTs, -1, state.toString()));
+    }
   }
 
   public void recordProgramStop(String accountId, String appId, String programId,

@@ -201,6 +201,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
          Constants.AppFabric.ProgramRunStatusType.COMPLETED.toString())
     .put(ProgramController.State.ERROR.toString(), Constants.AppFabric.ProgramRunStatusType.FAILED.toString())
     .put(ProgramController.State.ALIVE.toString(), Constants.AppFabric.ProgramRunStatusType.RUNNING.toString())
+    .put(ProgramController.State.RESUMING.toString(), Constants.AppFabric.ProgramRunStatusType.RUNNING.toString())
+    .put(ProgramController.State.SUSPENDING.toString(), Constants.AppFabric.ProgramRunStatusType.RUNNING.toString())
+    .put(ProgramController.State.SUSPENDED.toString(), Constants.AppFabric.ProgramRunStatusType.RUNNING.toString())
+    .put(ProgramController.State.STOPPING.toString(), Constants.AppFabric.ProgramRunStatusType.RUNNING.toString())
     .build();
 
   /**
@@ -907,8 +911,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
-
-      store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+      store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
+                     controller.getState());
       return AppFabricServiceStatus.OK;
     } catch (DataSetInstantiationException e) {
       return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
