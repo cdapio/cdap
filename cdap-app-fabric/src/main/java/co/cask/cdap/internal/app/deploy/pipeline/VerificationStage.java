@@ -46,13 +46,13 @@ import java.util.Map;
  * component of specification is achieved by the {@link Verifier}
  * concrete implementations.
  */
-public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
+public class VerificationStage extends AbstractStage<ApplicationDeployable> {
 
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
 
   public VerificationStage(DatasetFramework dsFramework) {
-    super(TypeToken.of(ApplicationSpecLocation.class));
+    super(TypeToken.of(ApplicationDeployable.class));
     this.dsFramework = dsFramework;
   }
 
@@ -60,14 +60,14 @@ public class VerificationStage extends AbstractStage<ApplicationSpecLocation> {
    * Receives an input containing application specification and location
    * and verifies both.
    *
-   * @param input An instance of {@link ApplicationSpecLocation}
+   * @param input An instance of {@link ApplicationDeployable}
    */
   @Override
-  public void process(ApplicationSpecLocation input) throws Exception {
+  public void process(ApplicationDeployable input) throws Exception {
     Preconditions.checkNotNull(input);
 
     ApplicationSpecification specification = input.getSpecification();
-    Id.Application appId = input.getApplicationId();
+    Id.Application appId = input.getId();
 
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {

@@ -23,7 +23,7 @@ SET APP_JAR_PREFIX=HelloWorld
 
 SET APP_NAME=HelloWorld
 SET FLOW_NAME=WhoFlow
-SET PROCEDURE_NAME=Greeting
+SET SERVICE_NAME=Greeting
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
@@ -64,17 +64,17 @@ GOTO :EOF
 
 :START
 CALL :POST %APP_NAME% flows %FLOW_NAME% start
-CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% start
+CALL :POST %APP_NAME% services %SERVICE_NAME% start
 GOTO :EOF
 
 :STOP
 CALL :POST %APP_NAME% flows %FLOW_NAME% stop
-CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% stop
+CALL :POST %APP_NAME% services %SERVICE_NAME% stop
 GOTO :EOF
 
 :STATUS
 CALL :GET %APP_NAME% flows %FLOW_NAME% status
-CALL :GET %APP_NAME% procedures %PROCEDURE_NAME% status
+CALL :GET %APP_NAME% services %SERVICE_NAME% status
 GOTO :EOF
 
 :POST
