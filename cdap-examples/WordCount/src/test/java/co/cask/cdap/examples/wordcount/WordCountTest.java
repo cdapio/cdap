@@ -78,7 +78,7 @@ public class WordCountTest extends TestBase {
     Assert.assertEquals("6", map.get("uniqueWords"));
     Assert.assertEquals(((double) 42) / 9, Double.valueOf(map.get("averageLength")), 0.001);
 
-    // Now verify some statistics for one of the words
+    // Now verify statistics for a specific word
     response = requestService(new URL(serviceManager.getServiceURL(), "count/world"));
     Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
     Assert.assertEquals("world", omap.get("word"));

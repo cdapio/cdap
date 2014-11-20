@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 /**
  * This package contains the WordCount sample Application that counts words and tracks the associations between words.
  * This is a slightly modified version of the classic WordCount example. 
@@ -29,17 +28,18 @@
  *    - The unique Flowlet calculates the unique number of words seen;
  *    - The associator stores word associations between all of the words in each input string.
  *
- * 3. A Service named RetrieveCounts serves read requests for the calculated statistics,
- *    word counts and associations. It exposes the following endpoints:
- *    - "/stats" accesses the global word statistics;
- *    - "/count/{word}/{limit}" accesses the word count of a specified word and its word associations;
- *    - "/count/{word}" accesses the word count of a specified word and its word associations with limit equal 10;
- *    - "/assoc/{word1}/{word2}" accesses the top associated words.
+ * 3. A Service named ``RetrieveCounts`` that serves read requests for calculated statistics,
+ *    word counts and associations. It exposes these endpoints:
+ *    - ``/stats`` returns the total number of words, the number of unique words, and the average word length;
+ *    - ``/count/{word}/{limit}`` returns the word count of a specified word and its word associations,
+ *      up to the specified limit;
+ *    - ``/count/{word}`` returns the word count of a specified word and its word associations, to a limit of ten; and
+ *    - ``/assoc/{word1}/{word2}`` returns the top associated words (those with the highest counts).
  *
- * 4. Four DataSets used by the Flow and Service to model, store, and serve the necessary data:
+ * 4. Four Datasets used by the Flow and Service to model, store, and serve the data:
  *    - A core Table named wordStats to track global word statistics;
- *    - A system KeyValueTable DataSet named wordCounts counts the occurrences of each word;
- *    - A custom UniqueCountTable DataSet named uniqueCount determines and counts the number of unique words seen;
- *    - A custom AssociationTable DataSet named wordAssocs tracks associations between words.
+ *    - A system KeyValueTable Dataset named wordCounts counts the occurrences of each word;
+ *    - A custom UniqueCountTable Dataset named uniqueCount determines and counts the number of unique words seen;
+ *    - A custom AssociationTable Dataset named wordAssocs tracks associations between words.
  */
 package co.cask.cdap.examples.wordcount;

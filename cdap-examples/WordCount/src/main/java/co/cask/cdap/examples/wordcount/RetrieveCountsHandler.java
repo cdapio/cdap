@@ -50,7 +50,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
   private AssociationTable associationTable;
 
   /**
-   * Returns all from the global statistics.
+   * Returns total number of words, the number of unique words, and the average word length.
    */
   @Path("stats")
   @GET
@@ -86,6 +86,9 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     responder.sendJson(results);
   }
 
+  /**
+   * Returns the count for a specific word and its word associations, up to the specified limit.
+   */
   @Path("count/{word}/{limit}")
   @GET
   public void getCount(HttpServiceRequest request, HttpServiceResponder responder,
@@ -93,12 +96,18 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     responder.sendJson(getCount(word, limit));
   }
 
+  /**
+   * Returns the count for a specific word and its word associations, up to a pre-set limit of ten.
+   */
   @Path("count/{word}")
   @GET
   public void getCount(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("word") String word) {
     responder.sendJson(getCount(word, 10));
   }
 
+  /**
+   * Returns the count of associations for a specific word pair.
+   */
   @Path("assoc/{word1}/{word2}")
   @GET
   public void getAssoc(HttpServiceRequest request, HttpServiceResponder responder,
