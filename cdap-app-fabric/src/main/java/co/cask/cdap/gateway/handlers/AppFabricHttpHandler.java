@@ -1840,7 +1840,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       ApplicationWithPrograms applicationWithPrograms =
         manager.deploy(id, appId, archiveLocation).get();
-      ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
+      ApplicationSpecification specification = applicationWithPrograms.getSpecification();
       setupSchedules(accountId, specification);
     } catch (Throwable e) {
       LOG.warn(e.getMessage(), e);

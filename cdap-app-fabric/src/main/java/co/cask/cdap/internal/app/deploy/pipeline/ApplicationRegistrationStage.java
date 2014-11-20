@@ -32,10 +32,8 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
   }
 
   @Override
-  public void process(final ApplicationWithPrograms o) throws Exception {
-    store.addApplication(o.getAppSpecLoc().getApplicationId(),
-                         o.getAppSpecLoc().getSpecification(),
-                         o.getAppSpecLoc().getArchive());
-    emit(o);
+  public void process(ApplicationWithPrograms input) throws Exception {
+    store.addApplication(input.getId(), input.getSpecification(), input.getLocation());
+    emit(input);
   }
 }
