@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
@@ -63,12 +64,17 @@ public class ServiceWorkerDriver extends AbstractExecutionThreadService {
                       new PropertyFieldSetter(spec.getProperties()));
 
     // Initialize worker
-    serviceWorker.initialize(context);
+    initialize();
   }
 
   @Override
   protected void run() throws Exception {
-    serviceWorker.run();
+    ClassLoader classLoader = ClassLoaders.setContextClassLoader(serviceWorker.getClass().getClassLoader());
+    try {
+      serviceWorker.run();
+    } finally {
+      ClassLoaders.setContextClassLoader(classLoader);
+    }
   }
 
   @Override
@@ -76,7 +82,12 @@ public class ServiceWorkerDriver extends AbstractExecutionThreadService {
     if (serviceWorker == null) {
       return;
     }
-    serviceWorker.destroy();
+    ClassLoader classLoader = ClassLoaders.setContextClassLoader(serviceWorker.getClass().getClassLoader());
+    try {
+      serviceWorker.destroy();
+    } finally {
+      ClassLoaders.setContextClassLoader(classLoader);
+    }
   }
 
   @Override
@@ -94,5 +105,14 @@ public class ServiceWorkerDriver extends AbstractExecutionThreadService {
         t.start();
       }
     };
+  }
+
+  private void initialize() throws Exception {
+    ClassLoader classLoader = ClassLoaders.setContextClassLoader(serviceWorker.getClass().getClassLoader());
+    try {
+      serviceWorker.initialize(context);
+    } finally {
+      ClassLoaders.setContextClassLoader(classLoader);
+    }
   }
 }
