@@ -123,19 +123,11 @@ public final class Constants {
     /**
      * Program Status Types used to query program runs
      */
-    public static enum QUERY_PROGRAM_STATUS_TYPE {
-      Running("running"),
-      Completed("completed"),
-      Failed("failed");
-      private final String status;
-
-      private QUERY_PROGRAM_STATUS_TYPE(String id) {
-        this.status = id;
-      }
-
-      public String getStatus() {
-        return status;
-      }
+    public static enum ProgramRunStatusType {
+      ALL,
+      RUNNING,
+      COMPLETED,
+      FAILED
     };
   }
 

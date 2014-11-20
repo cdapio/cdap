@@ -31,6 +31,7 @@ import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -171,7 +172,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStop(final Id.Program id, final String pid, final long endTime, final String state) {
+  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramController.State state) {
     Preconditions.checkArgument(state != null, "End state of program run should be defined");
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
@@ -188,7 +189,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunRecord> getRuns(final Id.Program id, final String status,
+  public List<RunRecord> getRuns(final Id.Program id, final Constants.AppFabric.ProgramRunStatusType status,
                                  final long startTime, final long endTime, final int limit) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
@@ -197,12 +198,6 @@ public class DefaultStore implements Store {
                                 startTime, endTime, limit);
       }
     });
-  }
-
-  @Override
-  public List<RunRecord> getAllRuns(final Id.Program id,
-                                 final long startTime, final long endTime, final int limit) {
-    return getRuns(id, null, startTime, endTime, limit);
   }
 
   @Override

@@ -72,11 +72,6 @@ import java.util.Set;
  */
 public class DefaultStoreTest {
   private static DefaultStore store;
-  private static final Map<String, String> PROGRAM_STATUS_MAP = new ImmutableMap.Builder<String, String>()
-    .put(ProgramController.State.STOPPED.toString(), Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Completed.toString())
-    .put(ProgramController.State.ERROR.toString(), Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Failed.toString())
-    .build();
-
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -101,7 +96,7 @@ public class DefaultStoreTest {
   public void testStopBeforeStart() throws RuntimeException {
     Id.Program programId = Id.Program.from("account1", "invalidApp", "InvalidFlowOperation");
     long now = System.currentTimeMillis();
-    store.setStop(programId, "runx", now, "FAILED");
+    store.setStop(programId, "runx", now, ProgramController.State.ERROR);
   }
 
   @Test
@@ -114,10 +109,11 @@ public class DefaultStoreTest {
     store.setStart(programId, "run1", now - 1000);
     store.setStart(programId, "run2", now - 1000);
 
-    store.setStop(programId, "run1", now, "SUCCEDED");
-    store.setStop(programId, "run2", now, "SUCCEDED");
+    store.setStop(programId, "run1", now, ProgramController.State.STOPPED);
+    store.setStop(programId, "run2", now, ProgramController.State.STOPPED);
 
-    List<RunRecord> history = store.getAllRuns(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+    List<RunRecord> history = store.getRuns(programId, Constants.AppFabric.ProgramRunStatusType.ALL,
+                                            Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(2, history.size());
   }
 
@@ -128,11 +124,11 @@ public class DefaultStoreTest {
     long now = System.currentTimeMillis();
 
     store.setStart(programId, "run1", now - 2000);
-    store.setStop(programId, "run1", now - 1000, ProgramController.State.ERROR.toString());
+    store.setStop(programId, "run1", now - 1000, ProgramController.State.ERROR);
 
     // record another finished flow
     store.setStart(programId, "run2", now - 1000);
-    store.setStop(programId, "run2", now - 500, ProgramController.State.STOPPED.toString());
+    store.setStop(programId, "run2", now - 500, ProgramController.State.STOPPED);
 
     // record not finished flow
     store.setStart(programId, "run3", now);
@@ -140,17 +136,17 @@ public class DefaultStoreTest {
     // record run of different program
     Id.Program programId2 = Id.Program.from("account1", "application1", "flow2");
     store.setStart(programId2, "run4", now - 500);
-    store.setStop(programId2, "run4", now - 400, ProgramController.State.STOPPED.toString());
+    store.setStop(programId2, "run4", now - 400, ProgramController.State.STOPPED);
 
     // record for different account
     store.setStart(Id.Program.from("account2", "application1", "flow1"), "run3", now - 300);
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
-    List<RunRecord> successHistory = store.getRuns(programId, "completed", Long.MIN_VALUE, Long.MAX_VALUE,
-                                                   Integer.MAX_VALUE);
+    List<RunRecord> successHistory = store.getRuns(programId, Constants.AppFabric.ProgramRunStatusType.COMPLETED,
+                                                   Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
 
-    List<RunRecord> failureHistory = store.getRuns(programId, "failed", Long.MIN_VALUE, Long.MAX_VALUE,
-                                                   Integer.MAX_VALUE);
+    List<RunRecord> failureHistory = store.getRuns(programId, Constants.AppFabric.ProgramRunStatusType.FAILED,
+                                                   Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     // only finished + succeeded runs should be returned
     Assert.assertEquals(1, successHistory.size());
@@ -160,12 +156,12 @@ public class DefaultStoreTest {
     RunRecord run = successHistory.get(0);
     Assert.assertEquals(now - 1000, run.getStartTs());
     Assert.assertEquals(now - 500, run.getStopTs());
-    Assert.assertEquals(PROGRAM_STATUS_MAP.get(ProgramController.State.STOPPED.toString()), run.getStatus());
+    Assert.assertEquals(ProgramController.State.STOPPED.toString(), run.getStatus());
 
     run = failureHistory.get(0);
     Assert.assertEquals(now - 2000, run.getStartTs());
     Assert.assertEquals(now - 1000, run.getStopTs());
-    Assert.assertEquals(PROGRAM_STATUS_MAP.get(ProgramController.State.ERROR.toString()), run.getStatus());
+    Assert.assertEquals(ProgramController.State.ERROR.toString(), run.getStatus());
   }
 
   @Test
@@ -555,19 +551,19 @@ public class DefaultStoreTest {
     long now = System.currentTimeMillis();
 
     store.setStart(flowProgramId1, "flowRun1", now - 1000);
-    store.setStop(flowProgramId1, "flowRun1", now, "SUCCEDED");
+    store.setStop(flowProgramId1, "flowRun1", now, ProgramController.State.STOPPED);
 
     store.setStart(mapreduceProgramId1, "mrRun1", now - 1000);
-    store.setStop(mapreduceProgramId1, "mrRun1", now, "SUCCEDED");
+    store.setStop(mapreduceProgramId1, "mrRun1", now, ProgramController.State.STOPPED);
 
     store.setStart(procedureProgramId1, "procedureRun1", now - 1000);
-    store.setStop(procedureProgramId1, "procedureRun1", now, "SUCCEDED");
+    store.setStop(procedureProgramId1, "procedureRun1", now, ProgramController.State.STOPPED);
 
     store.setStart(workflowProgramId1, "wfRun1", now - 1000);
-    store.setStop(workflowProgramId1, "wfRun1", now, "SUCCEDED");
+    store.setStop(workflowProgramId1, "wfRun1", now, ProgramController.State.STOPPED);
 
     store.setStart(flowProgramId2, "flowRun2", now - 1000);
-    store.setStop(flowProgramId2, "flowRun2", now, "SUCCEDED");
+    store.setStop(flowProgramId2, "flowRun2", now, ProgramController.State.STOPPED);
 
     verifyRunHistory(flowProgramId1, 1);
     verifyRunHistory(mapreduceProgramId1, 1);
@@ -596,7 +592,8 @@ public class DefaultStoreTest {
   }
 
   private void verifyRunHistory(Id.Program programId, int count) {
-    List<RunRecord> history = store.getAllRuns(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+    List<RunRecord> history = store.getRuns(programId, Constants.AppFabric.ProgramRunStatusType.ALL,
+                                            Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, history.size());
   }
 

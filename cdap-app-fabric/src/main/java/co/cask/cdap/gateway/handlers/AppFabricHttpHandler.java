@@ -80,12 +80,14 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
@@ -192,6 +194,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     .put("workflows", ProgramType.WORKFLOW)
     .put("webapp", ProgramType.WEBAPP)
     .put("services", ProgramType.SERVICE)
+    .build();
+
+  private static final Map<String, String> PROGRAM_STATUS_MAP = new ImmutableMap.Builder<String, String>()
+    .put(ProgramController.State.STOPPED.toString(),
+         Constants.AppFabric.ProgramRunStatusType.COMPLETED.toString())
+    .put(ProgramController.State.ERROR.toString(), Constants.AppFabric.ProgramRunStatusType.FAILED.toString())
+    .put(ProgramController.State.ALIVE.toString(), Constants.AppFabric.ProgramRunStatusType.RUNNING.toString())
     .build();
 
   /**
@@ -765,17 +774,21 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Program programId = Id.Program.from(accountId, appId, runnableId);
       try {
         if (status == null) {
-          responder.sendJson(HttpResponseStatus.OK, store.getAllRuns(programId, start, end, limit));
+          responder.sendJson(HttpResponseStatus.OK, transformRunRecords(store.getRuns(
+            programId, Constants.AppFabric.ProgramRunStatusType.ALL, start, end, limit)));
           return;
         }
-        if (!(status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Completed.getStatus()) ||
-              status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Failed.getStatus()) ||
-              status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Running.getStatus()))) {
+        try {
+          Constants.AppFabric.ProgramRunStatusType type =
+            Constants.AppFabric.ProgramRunStatusType.valueOf(status.toUpperCase());
+          responder.sendJson(HttpResponseStatus.OK, transformRunRecords(store.getRuns(programId, type,
+                                                                                      start, end, limit)));
+        } catch (IllegalArgumentException e) {
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                                "Supported options for status of runs are running/completed/failed");
           return;
         }
-        responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, status, start, end, limit));
+
       } catch (OperationException e) {
         LOG.warn(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
                                programId.toString(), e.getMessage()), e);
@@ -787,6 +800,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private List<RunRecord> transformRunRecords(List<RunRecord> records) {
+    return Lists.transform(records, new Function<RunRecord, RunRecord>()  {
+      @Override
+      public RunRecord apply(RunRecord input) {
+        return new RunRecord(input.getPid(), input.getStartTs(), input.getStopTs(),
+                             PROGRAM_STATUS_MAP.get(input.getStatus()));
+      }
+    });
   }
 
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder,
@@ -872,7 +895,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         public void stopped() {
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.STOPPED.toString());
+                        ProgramController.State.STOPPED);
         }
 
         @Override
@@ -880,7 +903,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.info("Program stopped with error {}, {}", id, runId, cause);
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.ERROR.toString());
+                        ProgramController.State.ERROR);
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 

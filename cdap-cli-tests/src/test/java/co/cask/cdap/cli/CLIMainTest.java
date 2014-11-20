@@ -84,7 +84,7 @@ public class CLIMainTest extends StandaloneTestBase {
     ProgramClient programClient = new ProgramClient(cliConfig.getClientConfig());
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
-    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "Completed");
+    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "COMPLETED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
 
     // test stream commands
@@ -135,7 +135,7 @@ public class CLIMainTest extends StandaloneTestBase {
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING", 180);
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED", 180);
     testCommandOutputContains(cli, "get spark status " + qualifiedSparkId, "STOPPED");
-    testCommandOutputContains(cli, "get spark runs " + qualifiedSparkId, "Completed");
+    testCommandOutputContains(cli, "get spark runs " + qualifiedSparkId, "COMPLETED");
     testCommandOutputContains(cli, "get spark logs " + qualifiedSparkId, "HelloFakeSpark");
 
     // cleanup

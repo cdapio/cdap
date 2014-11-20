@@ -21,6 +21,8 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -66,34 +68,22 @@ public interface Store {
    * @param endTime end timestamp
    * @param state   State of program
    */
-  void setStop(Id.Program id, String pid, long endTime, String state);
+  void setStop(Id.Program id, String pid, long endTime, ProgramController.State state);
 
   /**
    * Fetches run records for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
    * @param id        program id.
-   * @param status    status of the program running/completed/failed
+   * @param status    status of the program running/completed/failed or all
    * @param startTime fetch run history that has started after the startTime.
    * @param endTime   fetch run history that has started before the endTime.
    * @param limit     max number of entries to fetch for this history call.
    * @return          list of logged runs
    * @throws          OperationException
    */
-  List<RunRecord> getRuns(Id.Program id, String status,
+  List<RunRecord> getRuns(Id.Program id, Constants.AppFabric.ProgramRunStatusType status,
                           long startTime, long endTime, int limit) throws OperationException;
-
-  /**
-   * Fetches all the run records (current and past) for a particular program.
-   *
-   * @param id        program id.
-   * @param startTime fetch run history that has started after the startTime.
-   * @param endTime   fetch run history that has started before the endTime.
-   * @param limit     max number of entries to fetch for this history call.
-   * @return          list of logged runs
-   * @throws          OperationException
-   */
-  List<RunRecord> getAllRuns(Id.Program id, long startTime, long endTime, int limit) throws OperationException;
 
   /**
    * Creates a new stream if it does not exist.

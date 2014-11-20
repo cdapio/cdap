@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
@@ -83,11 +84,12 @@ public class MetadataStoreDataset extends AbstractDataset {
 
   // lists all that has same first id parts
   public <T> List<T> list(Key id, Class<T> classOfT, int limit) {
-    return list(id, null, classOfT, limit);
+    return list(id, null, classOfT, limit, null);
   }
 
   // lists all that has first id parts in range of startId and stopId
-  public <T> List<T> list(Key startId, @Nullable Key stopId, Class<T> classOfT, int limit) {
+  public <T> List<T> list(Key startId, @Nullable Key stopId, Class<T> classOfT, int limit,
+                          @Nullable Predicate<T> filter) {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 
@@ -101,7 +103,14 @@ public class MetadataStoreDataset extends AbstractDataset {
           continue;
         }
         T value = deserialize(columnValue, classOfT);
-        list.add(value);
+        if (filter != null) {
+          // apply the predicate
+          if (filter.apply(value)) {
+            list.add(value);
+          }
+        } else {
+          list.add(value);
+        }
       }
       return list;
     } catch (Exception e) {

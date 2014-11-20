@@ -19,13 +19,11 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.AsciiTable;
-import co.cask.cdap.cli.util.ResponseUtil;
 import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.cli.util.TimestampUtil;
 import co.cask.cdap.client.StreamClient;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -35,7 +33,7 @@ import java.util.List;
 /**
  * A CLI command for getting stream events.
  */
-public class GetStreamEventsCommand implements Command {
+public class GetStreamEventsCommand extends AbstractCommand {
 
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
@@ -51,8 +49,8 @@ public class GetStreamEventsCommand implements Command {
     long currentTime = System.currentTimeMillis();
 
     String streamId = arguments.get(ArgumentName.STREAM.toString());
-    long startTime = TimestampUtil.getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
-    long endTime = TimestampUtil.getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
     int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     // Get a list of stream events and prints it.
@@ -68,9 +66,9 @@ public class GetStreamEventsCommand implements Command {
 
           return new Object[] {
             event.getTimestamp(),
-            event.getHeaders().isEmpty() ? "" : ResponseUtil.formatHeader(event.getHeaders()),
+            event.getHeaders().isEmpty() ? "" : formatHeader(event.getHeaders()),
             bodySize,
-            ResponseUtil.getBody(event.getBody())
+            getBody(event.getBody())
           };
         }
       }

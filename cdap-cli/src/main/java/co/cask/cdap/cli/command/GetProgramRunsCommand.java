@@ -18,13 +18,12 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.cli.util.TimestampUtil;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -32,7 +31,7 @@ import java.util.List;
 /**
  * Gets the run records of a program.
  */
-public class GetProgramRunsCommand implements Command {
+public class GetProgramRunsCommand extends AbstractCommand {
 
   private final ProgramClient programClient;
   private final ElementType elementType;
@@ -48,8 +47,8 @@ public class GetProgramRunsCommand implements Command {
     String appId = programIdParts[0];
     long currentTime = System.currentTimeMillis();
 
-    long startTime = TimestampUtil.getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
-    long endTime = TimestampUtil.getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
+    long startTime = getTimestamp(arguments.get(ArgumentName.START_TIME.toString(), "min"), currentTime);
+    long endTime = getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
     int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
     List<RunRecord> records;
