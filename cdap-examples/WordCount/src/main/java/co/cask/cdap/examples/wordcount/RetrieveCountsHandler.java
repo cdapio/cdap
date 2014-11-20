@@ -70,7 +70,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
 
       // Compute the average length
       if (totalLength != 0 && totalWords != 0) {
-        averageLength = (double) totalLength / totalWords;
+        averageLength = ((double) totalLength) / totalWords;
 
         // Read the unique word count
         uniqueWords = uniqueCountTable.readUniqueCount();

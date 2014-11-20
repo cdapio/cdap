@@ -42,6 +42,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class WordCountTest extends TestBase {
 
+  private static final int SERVICE_STARTUP_TIMEOUT_SECONDS = 10;
+
   static Type stringMapType = new TypeToken<Map<String, String>>() {
   }.getType();
   static Type objectMapType = new TypeToken<Map<String, Object>>() {
@@ -52,9 +54,8 @@ public class WordCountTest extends TestBase {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(WordCount.class);
 
-    // Start the Flow and the Service
+    // Start the Flow
     appManager.startFlow("WordCounter");
-    ServiceManager serviceManager = appManager.startService(RetrieveCounts.SERVICE_NAME);
 
     // Send a few events to the stream
     StreamWriter writer = appManager.getStreamWriter("wordStream");
@@ -65,6 +66,20 @@ public class WordCountTest extends TestBase {
     // Wait for the events to be processed, or at most 5 seconds
     RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("WordCount", "WordCounter", "associator");
     metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+
+    // Start RetrieveCounts service
+    ServiceManager serviceManager = appManager.startService(RetrieveCounts.SERVICE_NAME);
+
+    // Wait up to timeout to start service
+    // TODO: The below code should be replaced by method from ServiceManager in future release
+    int trial = 0;
+    while (trial++ < SERVICE_STARTUP_TIMEOUT_SECONDS) {
+      if (serviceManager.isRunning()) {
+        break;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertNotEquals(SERVICE_STARTUP_TIMEOUT_SECONDS, trial);
 
     // First verify global statistics
     String response = requestService(new URL(serviceManager.getServiceURL(), "stats"));
