@@ -73,7 +73,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final Spark spark;
   private final SparkSpecification sparkSpecification;
   private final Location programJarLocation;
-  private static BasicSparkContext context;
+  private final BasicSparkContext context;
   private final LocationFactory locationFactory;
   private final TransactionSystemClient txClient;
   private Transaction transaction;
@@ -82,23 +82,16 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private volatile boolean stopRequested;
 
   SparkRuntimeService(CConfiguration cConf, Configuration hConf, Spark spark, SparkSpecification sparkSpecification,
-                      BasicSparkContext cont, Location programJarLocation, LocationFactory locationFactory,
+                      BasicSparkContext context, Location programJarLocation, LocationFactory locationFactory,
                       TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.spark = spark;
     this.sparkSpecification = sparkSpecification;
     this.programJarLocation = programJarLocation;
-    context = cont;
+    this.context = context;
     this.locationFactory = locationFactory;
     this.txClient = txClient;
-  }
-
-  /**
-   * @return The {@link BasicSparkContext} which is used by the SparkProgram running outside CDAP
-   */
-  public static BasicSparkContext getContext() {
-    return context;
   }
 
   @Override
@@ -154,6 +147,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // depends on.
       Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
       try {
+        SparkProgramWrapper.setBasicSparkContext(context);
         SparkProgramWrapper.setSparkProgramRunning(true);
         SparkSubmit.main(sparkSubmitArgs);
       } catch (Exception e) {

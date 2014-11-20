@@ -58,6 +58,7 @@ public class SparkProgramWrapper {
   private static final int PROGRAM_WRAPPER_ARGUMENTS_SIZE = 1;
   private final String[] arguments;
   private final Class<? extends SparkProgram> userProgramClass;
+  private static BasicSparkContext basicSparkContext;
   private static SparkContext sparkContext;
   private static boolean scalaProgram;
 
@@ -131,10 +132,10 @@ public class SparkProgramWrapper {
    */
   private SparkContext createSparkContext() {
     if (JavaSparkProgram.class.isAssignableFrom(userProgramClass)) {
-      return new JavaSparkContext();
+      return new JavaSparkContext(basicSparkContext);
     } else if (ScalaSparkProgram.class.isAssignableFrom(userProgramClass)) {
       scalaProgram = true;
-      return new ScalaSparkContext();
+      return new ScalaSparkContext(basicSparkContext);
     } else {
       String error = "Spark program must implement either JavaSparkProgram or ScalaSparkProgram";
       throw new IllegalArgumentException(error);
@@ -278,5 +279,14 @@ public class SparkProgramWrapper {
    */
   private static boolean isScalaProgram() {
     return scalaProgram;
+  }
+
+  /**
+   * Used to set the same {@link BasicSparkContext} which is inside {@link SparkRuntimeService} for accessing resources
+   * like Service Discovery, Metrics collection etc.
+   * @param basicSparkContext the {@link BasicSparkContext} to set from
+   */
+  public static void setBasicSparkContext(BasicSparkContext basicSparkContext) {
+    SparkProgramWrapper.basicSparkContext = basicSparkContext;
   }
 }

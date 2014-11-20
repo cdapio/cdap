@@ -37,8 +37,8 @@ class JavaSparkContext extends AbstractSparkContext {
 
   org.apache.spark.api.java.JavaSparkContext originalSparkContext;
 
-  public JavaSparkContext() {
-    super();
+  public JavaSparkContext(BasicSparkContext basicSparkContext) {
+    super(basicSparkContext);
     this.originalSparkContext = new org.apache.spark.api.java.JavaSparkContext(getSparkConf());
     originalSparkContext.sc().addSparkListener(new SparkProgramListener());
   }
