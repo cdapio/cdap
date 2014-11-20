@@ -68,8 +68,8 @@ public class WordCountTest extends TestBase {
     // Start RetrieveCounts service
     ServiceManager serviceManager = appManager.startService(RetrieveCounts.SERVICE_NAME);
 
-    // Wait up to 5 seconds to start service
-    waitServiceStartup(serviceManager, 5);
+    // Wait service startup
+    serviceStatusCheck(serviceManager, true);
 
     // First verify global statistics
     String response = requestService(new URL(serviceManager.getServiceURL(), "stats"));
@@ -105,14 +105,14 @@ public class WordCountTest extends TestBase {
     }
   }
 
-  private void waitServiceStartup(ServiceManager serviceManager, int timeout) throws InterruptedException {
+  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
     int trial = 0;
-    while (trial++ < timeout) {
-      if (serviceManager.isRunning()) {
+    while (trial++ < 5) {
+      if (serviceManger.isRunning() == running) {
         return;
       }
       TimeUnit.SECONDS.sleep(1);
     }
-    Assert.fail("Service startup failed");
+    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 }
