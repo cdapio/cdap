@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,14 +32,22 @@ import java.util.Map;
  */
 public class FileDefinition implements DatasetDefinition<File, FileAdmin> {
 
-  public static final String NAME = "file";
+  private final String name;
+
+  /**
+   * Constructor with dataset type name.
+   * @param name the type name to beused for this dataset definition.
+   */
+  public FileDefinition(String name) {
+    this.name = name;
+  }
 
   @Inject
   private LocationFactory locationFactory;
 
   @Override
   public String getName() {
-    return NAME;
+    return name;
   }
 
   @Override

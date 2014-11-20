@@ -30,11 +30,17 @@ public final class RuntimeArguments {
   private RuntimeArguments() {
   }
 
+  /**
+   * Enum for the different types of scopes. For now, only "dataset", but more will come.
+   */
   public enum Scope {
     DATASET("dataset");
 
     private final String displayName;
 
+    /**
+     * Private constructor to force using the enum values.
+     */
     private Scope(String name) {
       displayName = name;
     }
@@ -44,20 +50,24 @@ public final class RuntimeArguments {
       return displayName;
     }
 
-    private static Map<String, Scope> reverseLookupMap;
+    // helper map for efficient implementation of scopeFor()
+    private static Map<String, Scope> lookupByDisplayNameMap;
     static {
-      reverseLookupMap = Maps.newHashMapWithExpectedSize(Scope.values().length);
+      lookupByDisplayNameMap = Maps.newHashMapWithExpectedSize(Scope.values().length);
       for (Scope scope: Scope.values()) {
-        reverseLookupMap.put(scope.toString(), scope);
+        lookupByDisplayNameMap.put(scope.toString(), scope);
       }
     }
 
-    public static Scope scopeFor(String name) {
-      Scope scope = reverseLookupMap.get(name);
+    /**
+     * @return the Scope represented by a display name.
+     */
+    public static Scope scopeFor(String displayName) {
+      Scope scope = lookupByDisplayNameMap.get(displayName);
       if (scope != null) {
         return scope;
       }
-      throw new IllegalArgumentException("Illegal scope name: " + name);
+      throw new IllegalArgumentException("Illegal scope name: " + displayName);
     }
   }
 
@@ -103,10 +113,10 @@ public final class RuntimeArguments {
 
   /**
    * Extract all arguments for a given scope.
-   * @param scope The type of the scope, e.g., "dataset"
+   * @param scope The type of the scope
    * @param name The name of the scope, e.g. "myTable"
    * @param arguments the runtime arguments of the enclosing scope
-   * @return a map that contains only the keys that start with &lt;type>.&lt;prefix>., with that prefix removed.
+   * @return a map that contains only the keys that start with &lt;scope>.&lt;name>., with that prefix removed.
    */
   public static Map<String, String> selectScope(Scope scope, String name, Map<String, String> arguments) {
     if (arguments == null || arguments.isEmpty()) {
@@ -122,6 +132,13 @@ public final class RuntimeArguments {
     return result;
   }
 
+  /**
+   * Add a scope prefix to all arguments.
+   * @param scope The type of the scope
+   * @param name The name of the scope, e.g. "myTable"
+   * @param arguments the runtime arguments to be scoped
+   * @return a map that contains all keys, prefixed with with &lt;scope>.&lt;name>.
+   */
   public static Map<String, String> addScope(Scope scope, String name, Map<String, String> arguments) {
     if (arguments == null || arguments.isEmpty()) {
       return arguments;

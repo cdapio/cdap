@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.Beta;
 import com.google.common.collect.Lists;
 
 import java.util.Collection;
@@ -26,6 +27,7 @@ import java.util.Map;
 /**
  * Constants and helper methods to configure runtime arguments for a file dataset.
  */
+@Beta
 public class FileArguments {
 
   /**

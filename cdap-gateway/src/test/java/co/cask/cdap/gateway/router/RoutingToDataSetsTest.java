@@ -55,7 +55,7 @@ import javax.ws.rs.PathParam;
 /**
  *
  */
-public class RoutingToDatasetsTest {
+public class RoutingToDataSetsTest {
   private static NettyRouter nettyRouter;
   private static MockHttpService mockService;
   private static int port;

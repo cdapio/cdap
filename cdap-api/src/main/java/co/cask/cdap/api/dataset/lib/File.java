@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
@@ -26,8 +27,9 @@ import java.util.List;
 /**
  * This dataset represents a collection of files on the file system. The dataset has a base location, under which
  * all of its files are located. When instantiated, runtime arguments are required to specify the individual file
- * that is being used.
+ * or files being used.
  */
+@Beta
 public interface File extends Dataset, InputFormatProvider, OutputFormatProvider {
 
   /**
@@ -47,50 +49,54 @@ public interface File extends Dataset, InputFormatProvider, OutputFormatProvider
 
   /**
    * Prefix for additional properties for the input format. They are added to the
-   * hadoop configuration, with the prefix stripped from the name.
+   * Hadoop configuration, with the prefix stripped from the name.
    */
   String PROPERTY_INPUT_PROPERTIES_PREFIX = "input.properties.";
 
   /**
    * Prefix for additional properties for the output format. They are added to the
-   * hadoop configuration, with the prefix stripped from the name.
+   * Hadoop configuration, with the prefix stripped from the name.
    */
   String PROPERTY_OUTPUT_PROPERTIES_PREFIX = "output.properties.";
 
   /**
-   * The paths of file to read. Specified as a runtime argument for the dataset.
-   * Each path is relative to the dataset's base path, and multiple paths can be
-   * given separated by commas.
+   * The paths of the files to be read. Specified as a runtime argument for the dataset.
+   * Each path is relative to the dataset's base path, and multiple paths can be given,
+   * separated by commas.
    */
   String ARGUMENT_INPUT_PATHS = "input.paths";
 
   /**
-   * The paths of file to write. Specified as a runtime argument for the dataset.
+   * The path of the file to write. Specified as a runtime argument for the dataset.
    * The path is relative to the dataset's base path.
    */
   String ARGUMENT_OUTPUT_PATH = "output.path";
 
   /**
-   * Allows to interact directly with location of this dataset in the underlying file system.
-   * @return the location of the base directory.
+   * Allows to interact directly with the location of this dataset in the underlying file system.
+   *
+   * @return the location of the base directory
    */
   Location getBaseLocation();
 
   /**
-   * Allows to interact directly with location of this dataset in the underlying file system.
-   * @return the full input location
+   * Allows direct access to files of this dataset in the underlying file system.
+   *
+   * @return the list of input locations
    */
   List<Location> getInputLocations();
 
   /**
-   * Allows to interact directly with location of this dataset in the underlying file system.
-   * @return the full output location
+   * Allows direct access to files in the output location, in the underlying file system.
+   *
+   * @return the output location
    */
   Location getOutputLocation();
 
   /**
-   * Allows to interact directly with location of this dataset in the underlying file system.
-   * @return the full location of the given relative path within this dataset
+   * Allows direct access to files in the input locations, in the underlying file system.
+   *
+   * @return the location of the given relative path within this dataset
    */
   Location getLocation(String relativePath);
 }

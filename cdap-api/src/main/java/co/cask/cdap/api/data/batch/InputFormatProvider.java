@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.api.data.batch;
 import java.util.Map;
 
 /**
- * Interface to be implemented by datasets used as input to Map/Reduce.
+ * Interface to be implemented by datasets used as input to a MapReduce.
  */
 public interface InputFormatProvider {
 
@@ -31,7 +31,7 @@ public interface InputFormatProvider {
   <T> Class<? extends T> getInputFormatClass();
 
   /**
-   * @return the configuration properties that the input format expects to find in the hadoop configuration.
+   * @return the configuration properties that the input format expects to find in the Hadoop configuration.
    */
   Map<String, String> getInputFormatConfiguration();
 
