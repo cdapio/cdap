@@ -76,8 +76,8 @@ public class PurchaseAppTest extends TestBase {
     // Start PurchaseHistoryService
     ServiceManager serviceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
 
-    // Wait up to 10 seconds to start service
-    waitServiceStartup(serviceManager, 10);
+    // Wait service startup
+    serviceStatusCheck(serviceManager, true);
 
     // Test service to retrieve a customer's purchase history
     URL url = new URL(serviceManager.getServiceURL(), "history/joe");
@@ -96,14 +96,14 @@ public class PurchaseAppTest extends TestBase {
     appManager.stopAll();
   }
 
-  private void waitServiceStartup(ServiceManager serviceManager, int timeout) throws InterruptedException {
+  private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
     int trial = 0;
-    while (trial++ < timeout) {
-      if (serviceManager.isRunning()) {
+    while (trial++ < 5) {
+      if (serviceManger.isRunning() == running) {
         return;
       }
       TimeUnit.SECONDS.sleep(1);
     }
-    Assert.fail("Service startup failed");
+    throw new IllegalStateException("Service state not executed. Expected " + running);
   }
 }
