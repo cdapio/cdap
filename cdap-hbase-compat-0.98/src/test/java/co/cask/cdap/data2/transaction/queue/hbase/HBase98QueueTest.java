@@ -16,24 +16,13 @@
 
 package co.cask.cdap.data2.transaction.queue.hbase;
 
-import co.cask.cdap.data2.util.hbase.HBaseVersionSpecificFactory;
+import co.cask.cdap.test.XSlowTests;
+import org.junit.experimental.categories.Category;
 
 /**
- * Factory for HBase version-specific instances of {@link HBaseQueueUtil}.
+ * Queue test implementation running on HBase 0.98.
  */
-public class HBaseQueueUtilFactory extends HBaseVersionSpecificFactory<HBaseQueueUtil> {
-  @Override
-  protected String getHBase94Classname() {
-    return "co.cask.cdap.data2.transaction.queue.hbase.HBase94QueueUtil";
-  }
-
-  @Override
-  protected String getHBase96Classname() {
-    return "co.cask.cdap.data2.transaction.queue.hbase.HBase96QueueUtil";
-  }
-
-  @Override
-  protected String getHBase98Classname() {
-    return "co.cask.cdap.data2.transaction.queue.hbase.HBase98QueueUtil";
-  }
+@Category(XSlowTests.class)
+public class HBase98QueueTest extends HBaseQueueTest {
+  // nothing to override
 }
