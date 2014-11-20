@@ -4347,6 +4347,18 @@ div.tooltip-inner {
   line-height: inherit;
 }
 
+.panel-title.center-align.sparks-metrics{
+  font-size: 14px;
+  padding: 0;
+  line-height: inherit;
+}
+
+.sparks-metrics .metrics-row {
+    font-weight: 400;
+    font-size: 12px;
+    color: #9698A5;
+}
+
 #panels .panel .panel-title .logs-link {
   cursor: pointer;
   color: blue;
