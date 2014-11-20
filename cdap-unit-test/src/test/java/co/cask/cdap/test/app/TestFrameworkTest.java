@@ -355,6 +355,12 @@ public class TestFrameworkTest extends TestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(response.getResponseCode(), 500);
 
+    // Call the verify ClassLoader endpoint
+    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "verifyClassLoader");
+    request = HttpRequest.get(url).build();
+    response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
 
