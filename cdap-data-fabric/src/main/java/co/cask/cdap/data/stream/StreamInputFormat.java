@@ -52,9 +52,9 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   }
 
   @Override
-  public RecordReader<K, V> createRecordReader(InputSplit split, TaskAttemptContext context)
-    throws IOException, InterruptedException {
-    return new StreamRecordReader(createStreamEventDecoder(context.getConfiguration()));
+  public RecordReader<K, V> createRecordReader(InputSplit split,
+                                               TaskAttemptContext context) throws IOException, InterruptedException {
+    return new StreamRecordReader<K, V>(createStreamEventDecoder(context.getConfiguration()));
   }
 
   protected long getCurrentTime() {

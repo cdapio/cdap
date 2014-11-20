@@ -35,8 +35,11 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A {@link InputFormat} for reading stream data. Stream data files are organized by partition directories with
- * bucket files inside.
+ * A helper for configuring settings and getting splits for stream input formats implementing the older mapred
+ * api as well as the newer mapreduce api. Ordinarily this logic would be inside the format class, but we want to make
+ * sure common logic is shared across classes used for the older and newer apis.
+ *
+ * Stream data files are organized by partition directories with bucket files inside.
  *
  * <br/><br/>
  *   Each file has path pattern

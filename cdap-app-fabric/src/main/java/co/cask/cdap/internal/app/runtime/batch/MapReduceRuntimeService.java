@@ -555,7 +555,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       classes.add(inputFormatClass);
 
       // If it is StreamInputFormat, also add the StreamEventCodec class as well.
-      if (StreamInputFormatConfigurer.class.isAssignableFrom(inputFormatClass)) {
+      if (StreamInputFormat.class.isAssignableFrom(inputFormatClass)) {
         Class<? extends StreamEventDecoder> decoderType =
           StreamInputFormatConfigurer.getDecoderClass(jobConf.getConfiguration());
         if (decoderType != null) {
