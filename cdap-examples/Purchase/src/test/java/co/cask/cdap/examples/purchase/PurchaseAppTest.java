@@ -75,7 +75,7 @@ public class PurchaseAppTest extends TestBase {
                                                                   ImmutableMap.<String, String>of());
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
-    // Start Purchase Service
+    // Start PurchaseHistoryService
     ServiceManager serviceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
 
     // Wait up to timeout to start service

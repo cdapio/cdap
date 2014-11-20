@@ -30,7 +30,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * A {@link Service} for querying a customer's purchase history from storage.
+ * A {@link Service} for querying a customer's purchase history from a Dataset.
  */
 public class PurchaseHistoryService extends AbstractService {
 
@@ -44,7 +44,7 @@ public class PurchaseHistoryService extends AbstractService {
   }
 
   /**
-   * Purchase history service handler.
+   * Service for retrieving a customer’s purchase history.
    */
   public static final class PurchaseHistoryServiceHandler extends AbstractHttpServiceHandler {
 
@@ -52,9 +52,9 @@ public class PurchaseHistoryService extends AbstractService {
     private PurchaseHistoryStore store;
 
     /**
-     * Responds the specified customer's purchases history in a JSON format.
+     * Retrieves a specified customer's purchase history in a JSON format.
      *
-     * @param customer A customer name to retrieve a history for him, as example - "Tom"
+     * @param customer name of customer whose history is to be retrieved
      */
     @Path("history/{customer}")
     @GET

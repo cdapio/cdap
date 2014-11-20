@@ -35,13 +35,13 @@ public class PurchaseApp extends AbstractApplication {
     setName(APP_NAME);
     setDescription("Purchase history application.");
 
-    // Ingest data into the Application via Streams
+    // Ingest data into the Application via a Stream
     addStream(new Stream("purchaseStream"));
 
-    // Store processed data in Datasets
+    // Store processed data in a Dataset
     createDataset("frequentCustomers", KeyValueTable.class);
 
-    // Process events in real-time using Flows
+    // Process events in realtime using a Flow
     addFlow(new PurchaseFlow());
 
     // Run a MapReduce job on the acquired data using a Workflow
