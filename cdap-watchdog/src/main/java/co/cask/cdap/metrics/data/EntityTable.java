@@ -131,7 +131,7 @@ public final class EntityTable {
         // Not found, generate a new ID
         byte[] maxIdRowKey = Bytes.toBytes(key.getType() + ".maxId");
         long newId = table.incrementAndGet(maxIdRowKey, MAX_ID, 1L);
-        Preconditions.checkState(newId < maxId, "Maximum %s ID generated.", maxId);
+        //Preconditions.checkState(newId < maxId, "Maximum %s ID generated.", maxId);
 
         if (key.getName() == null || key.getName().isEmpty()) {
           LOG.warn("Adding mapping for " + (key.getName() == null ? "null" : "empty") + " name, " +

@@ -75,6 +75,38 @@ public abstract class AggregatesTableTestBase {
     }
   }
 
+
+  @Test
+  public void testRunIdMaxIdGenerated() throws OperationException {
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("maxRunId");
+
+    try {
+      // Insert 65540 metrics with same metric name but different runId
+      for (int i = 1; i <= 65540; i++) {
+        MetricsRecord metric = new MetricsRecord("simple", "runId" + i, "metric",
+                                                 ImmutableList.<TagMetric>of(), 0L, 1, MetricType.GAUGE);
+        aggregatesTable.update(ImmutableList.of(metric));
+      }
+
+      // Scan keys spanning both old and new keys
+      AggregatesScanner scanner = aggregatesTable.scan("simple", "metric");
+      try {
+        long value = 0;
+        while (scanner.hasNext()) {
+          value += scanner.next().getValue();
+        }
+
+        Assert.assertEquals(65540, value);
+        Assert.assertEquals(65540, scanner.getRowScanned());
+
+      } finally {
+        scanner.close();
+      }
+    } finally {
+      aggregatesTable.clear();
+    }
+  }
+
   @Test
   public void testIntOverflow() throws OperationException {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates("intOverflow");
