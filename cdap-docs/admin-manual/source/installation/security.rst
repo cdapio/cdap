@@ -315,7 +315,7 @@ To make your custom handler class available to the authentication service, copy 
 packaged jar file (and any additional dependency jars) to the ``security/lib/`` directory
 within your CDAP installation (typically under ``/opt/cdap``).
 
-The Developers’ Manual :ref:`Custom Authentication <custom-authentication>` section shows
+The Developers’ Manual :ref:`Custom Authentication <developers-custom-authentication>` section shows
 how to create a Custom Authentication Mechanism.
 
 
