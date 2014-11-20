@@ -98,5 +98,5 @@ Note that it is recommended that ``log.saver.event.processing.delay.ms`` always 
 ``log.saver.event.bucket.interval.ms`` by at least a few hundred (300-500) milliseconds.
 
 See the ``log.saver`` parameter section of the :ref:`Appendix cdap-site.xml
-<admin:appendix-cdap-site.xml>` for a list of these configuration parameters and their
+<appendix-cdap-site.xml>` for a list of these configuration parameters and their
 values that can be adjusted.
