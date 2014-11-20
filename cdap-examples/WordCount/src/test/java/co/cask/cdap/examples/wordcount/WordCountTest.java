@@ -42,8 +42,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class WordCountTest extends TestBase {
 
-  private static final int SERVICE_STARTUP_TIMEOUT_SECONDS = 10;
-
   static Type stringMapType = new TypeToken<Map<String, String>>() {
   }.getType();
   static Type objectMapType = new TypeToken<Map<String, Object>>() {
@@ -70,16 +68,8 @@ public class WordCountTest extends TestBase {
     // Start RetrieveCounts service
     ServiceManager serviceManager = appManager.startService(RetrieveCounts.SERVICE_NAME);
 
-    // Wait up to timeout to start service
-    // TODO: The below code should be replaced by method from ServiceManager in future release
-    int trial = 0;
-    while (trial++ < SERVICE_STARTUP_TIMEOUT_SECONDS) {
-      if (serviceManager.isRunning()) {
-        break;
-      }
-      TimeUnit.SECONDS.sleep(1);
-    }
-    Assert.assertNotEquals(SERVICE_STARTUP_TIMEOUT_SECONDS, trial);
+    // Wait up to 5 seconds to start service
+    waitServiceStartup(serviceManager, 5);
 
     // First verify global statistics
     String response = requestService(new URL(serviceManager.getServiceURL(), "stats"));
@@ -113,5 +103,16 @@ public class WordCountTest extends TestBase {
     } finally {
       conn.disconnect();
     }
+  }
+
+  private void waitServiceStartup(ServiceManager serviceManager, int timeout) throws InterruptedException {
+    int trial = 0;
+    while (trial++ < timeout) {
+      if (serviceManager.isRunning()) {
+        return;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.fail("Service startup failed");
   }
 }
