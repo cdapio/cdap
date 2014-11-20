@@ -209,7 +209,7 @@ You may also configure the file being logged to by changing the path under ``<fi
 
 Configuring Authentication Mechanisms
 -------------------------------------
-CDAP provides several ways to authenticate a clients’s identity:
+CDAP provides several ways to authenticate a client’s identity:
 
 - :ref:`installation-basic-authentication`
 - :ref:`installation-ldap-authentication`
