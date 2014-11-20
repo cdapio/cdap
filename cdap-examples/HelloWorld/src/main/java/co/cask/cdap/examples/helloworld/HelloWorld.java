@@ -132,7 +132,7 @@ public class HelloWorld extends AbstractApplication {
       if (toGreet.equals("Jane Doe")) {
         metrics.count("greetings.count.jane_doe", 1);
       }
-      responder.sendJson(String.format("Hello %s!", toGreet));
+      responder.sendString(String.format("Hello %s!", toGreet));
     }
   }
 }

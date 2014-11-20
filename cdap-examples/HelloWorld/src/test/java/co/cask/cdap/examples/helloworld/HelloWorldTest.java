@@ -38,6 +38,8 @@ import java.util.concurrent.TimeoutException;
  */
 public class HelloWorldTest extends TestBase {
 
+  private static final int SERVICE_STARTUP_TIMEOUT_SECONDS = 10;
+
   @Test
   public void test() throws TimeoutException, InterruptedException, IOException {
     // Deploy the HelloWorld application
@@ -64,15 +66,28 @@ public class HelloWorldTest extends TestBase {
 
     // Start Greeting service and use it
     ServiceManager serviceManager = appManager.startService(HelloWorld.Greeting.SERVICE_NAME);
+
+    // Wait up to timeout to start service
+    // TODO: The below code should be replaced by method from ServiceManager in future release
+    int trial = 0;
+    while (trial++ < SERVICE_STARTUP_TIMEOUT_SECONDS) {
+      if (serviceManager.isRunning()) {
+        break;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertNotEquals(SERVICE_STARTUP_TIMEOUT_SECONDS, trial);
+
     URL url = new URL(serviceManager.getServiceURL(), "greet");
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
     String response;
     try {
       response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
     } finally {
       connection.disconnect();
     }
-    Assert.assertEquals("\"Hello 5!\"", response);
+    Assert.assertEquals("Hello 5!", response);
 
     appManager.stopAll();
   }
