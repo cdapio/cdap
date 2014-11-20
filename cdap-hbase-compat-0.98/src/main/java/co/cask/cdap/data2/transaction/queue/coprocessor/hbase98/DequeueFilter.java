@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.transaction.queue.coprocessor.hbase96;
+package co.cask.cdap.data2.transaction.queue.coprocessor.hbase98;
 
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
@@ -155,7 +155,7 @@ public class DequeueFilter extends FilterBase {
     this.queueNamePrefixLength = in.readInt();
   }
 
-  /* Serialization support for HBase 0.96+ */
+  /* Serialization support for HBase 0.98+ */
 
   public byte[] toByteArray() throws IOException {
     // TODO: in the future actual serialization here should be done using protobufs
