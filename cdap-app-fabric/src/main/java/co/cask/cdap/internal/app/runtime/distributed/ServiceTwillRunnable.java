@@ -209,8 +209,12 @@ public class ServiceTwillRunnable implements TwillRunnable {
       ServiceSpecification serviceSpec = appSpec.getServices().get(processorName);
       final RuntimeSpecification runtimeSpec = serviceSpec.getRunnables().get(runnableName);
       String className = runtimeSpec.getRunnableSpecification().getClassName();
-      LOG.info("Getting class : {}", program.getMainClass().getName());
-      Class<?> clz = Class.forName(className, true, program.getClassLoader());
+
+      // Load the Runnable class from the CDAP ClassLoader. Since we no longer supports raw Twill App,
+      // the TwillRunnable must be from CDAP.
+      // Note: When merge back to develop branch, this class will have conflict and the one in develop
+      // should take over. The refactoring done in develop branch get rids of this messy hacky class already.
+      Class<?> clz = Class.forName(className);
       Preconditions.checkArgument(TwillRunnable.class.isAssignableFrom(clz), "%s is not a TwillRunnable.", clz);
 
       if (clz.isAssignableFrom(HttpServiceTwillRunnable.class)) {
