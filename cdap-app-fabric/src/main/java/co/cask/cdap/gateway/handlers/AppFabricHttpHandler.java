@@ -764,12 +764,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, runnableId);
       try {
-        if ((status != null) && !(
-          status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Completed.getStatus()) ||
-          status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Failed.getStatus()) ||
-          status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Running.getStatus()))) {
+        if (status == null) {
+          responder.sendJson(HttpResponseStatus.OK, store.getAllRuns(programId, start, end, limit));
+          return;
+        }
+        if (!(status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Completed.getStatus()) ||
+              status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Failed.getStatus()) ||
+              status.equals(Constants.AppFabric.QUERY_PROGRAM_STATUS_TYPE.Running.getStatus()))) {
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                                "Supported options for status of runs are running/completed/failed");
+          return;
         }
         responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, status, start, end, limit));
       } catch (OperationException e) {

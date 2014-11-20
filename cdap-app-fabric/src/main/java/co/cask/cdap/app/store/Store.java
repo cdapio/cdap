@@ -69,10 +69,11 @@ public interface Store {
   void setStop(Id.Program id, String pid, long endTime, String state);
 
   /**
-   * Fetches run history for particular program. Returns only finished runs.
+   * Fetches run records for particular program. Returns only finished runs.
    * Returned ProgramRunRecords are sorted by their startTime.
    *
    * @param id        program id.
+   * @param status    status of the program running/completed/failed
    * @param startTime fetch run history that has started after the startTime.
    * @param endTime   fetch run history that has started before the endTime.
    * @param limit     max number of entries to fetch for this history call.
@@ -81,6 +82,18 @@ public interface Store {
    */
   List<RunRecord> getRuns(Id.Program id, String status,
                           long startTime, long endTime, int limit) throws OperationException;
+
+  /**
+   * Fetches all the run records (current and past) for a particular program.
+   *
+   * @param id        program id.
+   * @param startTime fetch run history that has started after the startTime.
+   * @param endTime   fetch run history that has started before the endTime.
+   * @param limit     max number of entries to fetch for this history call.
+   * @return          list of logged runs
+   * @throws          OperationException
+   */
+  List<RunRecord> getAllRuns(Id.Program id, long startTime, long endTime, int limit) throws OperationException;
 
   /**
    * Creates a new stream if it does not exist.

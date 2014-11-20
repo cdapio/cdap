@@ -200,6 +200,12 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public List<RunRecord> getAllRuns(final Id.Program id,
+                                 final long startTime, final long endTime, final int limit) {
+    return getRuns(id, null, startTime, endTime, limit);
+  }
+
+  @Override
   public void addApplication(final Id.Application id,
                              final ApplicationSpecification spec, final Location appArchiveLocation) {
 

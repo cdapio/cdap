@@ -52,15 +52,18 @@ public class GetProgramRunsCommand implements Command {
     long endTime = TimestampUtil.getTimestamp(arguments.get(ArgumentName.END_TIME.toString(), "max"), currentTime);
     int limit = arguments.getInt(ArgumentName.LIMIT.toString(), Integer.MAX_VALUE);
 
-    String state = null;
-    if (arguments.hasArgument(ArgumentName.RUN_STATUS.toString())) {
-      state = arguments.get(ArgumentName.RUN_STATUS.toString());
-    }
     List<RunRecord> records;
     if (elementType.getProgramType() != null) {
       String programId = programIdParts[1];
-      records = programClient.getProgramRuns(appId, elementType.getProgramType(), programId, state,
-                                             startTime, endTime, limit);
+      if (arguments.hasArgument(ArgumentName.RUN_STATUS.toString())) {
+        records = programClient.getProgramRuns(appId, elementType.getProgramType(), programId,
+                                               arguments.get(ArgumentName.RUN_STATUS.toString()),
+                                               startTime, endTime, limit);
+      } else {
+        records = programClient.getProgramAllRuns(appId, elementType.getProgramType(), programId,
+                                                  startTime, endTime, limit);
+      }
+
     } else {
       throw new IllegalArgumentException("Unrecognized program element type for history: " + elementType);
     }

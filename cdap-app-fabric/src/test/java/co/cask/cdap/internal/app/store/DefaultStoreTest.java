@@ -117,7 +117,7 @@ public class DefaultStoreTest {
     store.setStop(programId, "run1", now, "SUCCEDED");
     store.setStop(programId, "run2", now, "SUCCEDED");
 
-    List<RunRecord> history = store.getRuns(programId, null, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+    List<RunRecord> history = store.getAllRuns(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(2, history.size());
   }
 
@@ -596,7 +596,7 @@ public class DefaultStoreTest {
   }
 
   private void verifyRunHistory(Id.Program programId, int count) {
-    List<RunRecord> history = store.getRuns(programId, null, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+    List<RunRecord> history = store.getAllRuns(programId, Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, history.size());
   }
 
