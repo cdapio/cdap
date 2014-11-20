@@ -61,6 +61,15 @@ public interface ExploreClient extends Closeable {
   ListenableFuture<Void> enableExploreStream(String streamName);
 
   /**
+   * Disable ad-hoc exploration of the given stream.
+   *
+   * @param streamName stream name.
+   * @return a {@code Future} object that can either successfully complete, or enter a failed state depending on
+   *         the success of the enable operation.
+   */
+  ListenableFuture<Void> disableExploreStream(String streamName);
+
+  /**
    * Execute a Hive SQL statement asynchronously. The returned {@link ListenableFuture} can be used to get the
    * schema of the operation, and it contains an iterator on the results of the statement.
    *

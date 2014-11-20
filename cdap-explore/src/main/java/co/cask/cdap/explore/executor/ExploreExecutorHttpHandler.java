@@ -36,11 +36,13 @@ import com.google.inject.Inject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
+import org.apache.twill.filesystem.Location;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
 import javax.ws.rs.POST;
@@ -73,12 +75,25 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                            @PathParam("stream") final String streamName) {
     try {
 
-      LOG.debug("Enabling explore for stream {}", streamName);
-      String createStatement;
+      String streamLocationURI;
       try {
         StreamConfig streamConfig = streamAdmin.getConfig(streamName);
-        String streamLocation = streamConfig.getLocation().toURI().toString();
-        createStatement = generateStreamCreateStatement(streamName, streamLocation);
+        Location streamLocation = streamConfig.getLocation();
+        if (streamLocation == null) {
+          responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find location of stream " + streamName);
+          return;
+        }
+        streamLocationURI = streamLocation.toURI().toString();
+      } catch (IOException e) {
+        LOG.info("Could not find stream {} to enable explore on.", streamName, e);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
+        return;
+      }
+
+      LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocationURI);
+      String createStatement;
+      try {
+        createStatement = generateStreamCreateStatement(streamName, streamLocationURI);
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for stream {}", streamName, e);
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -88,6 +103,36 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Running create statement for stream {}", streamName);
 
       QueryHandle handle = exploreService.execute(createStatement);
+      JsonObject json = new JsonObject();
+      json.addProperty("handle", handle.getHandle());
+      responder.sendJson(HttpResponseStatus.OK, json);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  @POST
+  @Path("streams/{stream}/disable")
+  public void disableStream(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
+                            @PathParam("stream") final String streamName) {
+    try {
+      LOG.debug("Disabling explore for stream {}", streamName);
+
+      try {
+        // throws io exception if there is no stream
+        streamAdmin.getConfig(streamName);
+      } catch (IOException e) {
+        // 404 to be consistent with dataset api, but should this really be an error? Would 200 with no_op be better?
+        LOG.debug("Could not find stream {} to disable explore on.", streamName, e);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
+        return;
+      }
+
+      String deleteStatement = generateDeleteStatement(getStreamTableName(streamName));
+      LOG.debug("Running delete statement for stream {} - {}", streamName, deleteStatement);
+
+      QueryHandle handle = exploreService.execute(deleteStatement);
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -212,10 +257,14 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  public static String getHiveTableName(String datasetName) {
+  private static String getStreamTableName(String streamName) {
+    return getHiveTableName("cdap_stream_" + streamName);
+  }
+
+  public static String getHiveTableName(String name) {
     // Instance name is like cdap.user.my_table.
     // For now replace . with _ since Hive tables cannot have . in them.
-    return datasetName.replaceAll("\\.", "_").toLowerCase();
+    return name.replaceAll("\\.", "_").toLowerCase();
   }
 
   /**
@@ -230,7 +279,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    */
   public static String generateStreamCreateStatement(String name, String location) throws UnsupportedTypeException {
     String hiveSchema = hiveSchemaForStream();
-    String tableName = getHiveTableName("cdap.stream." + name);
+    String tableName = getStreamTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Stream\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
                            "LOCATION \"%s\"",
@@ -303,6 +352,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   // hardcoded schema for a stream. This will be replaced with a schema that comes from the stream when
   // schema is exposed to users.
+  @SuppressWarnings("unused")
   private static class StreamSchema {
     private long timestamp;
     // the body is actually a byte array, but that is not very useful when performing queries.

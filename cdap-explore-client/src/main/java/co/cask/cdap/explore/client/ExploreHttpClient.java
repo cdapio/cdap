@@ -96,6 +96,15 @@ abstract class ExploreHttpClient implements Explore {
                                  getDetails(response));
   }
 
+  protected QueryHandle doDisableExploreStream(String streamName) throws ExploreException {
+    HttpResponse response = doPost(String.format("data/explore/streams/%s/disable", streamName), null, null);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
+    }
+    throw new ExploreException("Cannot disable explore on stream " + streamName + ". Reason: " +
+                                 getDetails(response));
+  }
+
   protected QueryHandle doEnableExploreDataset(String datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("data/explore/datasets/%s/enable", datasetInstance), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {

@@ -69,6 +69,11 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
+  public ListenableFuture<Void> disableExploreStream(String streamName) {
+    return null;
+  }
+
+  @Override
   public ListenableFuture<ExploreExecutionResult> submit(final String statement) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator(),
