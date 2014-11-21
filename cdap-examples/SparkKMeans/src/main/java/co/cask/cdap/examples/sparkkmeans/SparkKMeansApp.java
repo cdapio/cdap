@@ -35,6 +35,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
+import com.google.common.base.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +97,7 @@ public class SparkKMeansApp extends AbstractApplication {
   }
 
   /**
-   * This Flowlet reads events from a Stream and saves them to a datastore.
+   * This Flowlet reads events from a Stream and saves them to a dataset.
    */
   public static final class PointsReader extends AbstractFlowlet {
 
@@ -167,12 +168,15 @@ public class SparkKMeansApp extends AbstractApplication {
     @GET
     public void centers(HttpServiceRequest request, HttpServiceResponder responder,
                         @PathParam("index") String index) {
-      LOG.debug("Try to get centers for index={}", index);
+      LOG.debug("Try to get centers for index: {}", index);
 
       String centers = store.read(index.getBytes());
       if (centers == null) {
-        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("No centers found for index=%s", index));
+        LOG.debug("No centers found");
+        responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
+                             String.format("No centers found for index: %s", index), Charsets.UTF_8);
       } else {
+        LOG.debug("Retrieved centers: {}", centers);
         responder.sendJson(centers);
       }
     }
