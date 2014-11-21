@@ -33,7 +33,7 @@ import com.google.inject.Inject;
 import java.io.IOException;
 
 /**
- * Factory for creating {@link co.cask.cdap.data2.transaction.stream.StreamConsumerStateStore} in memory.
+ * Factory for creating {@link StreamConsumerStateStore} in memory.
  */
 public final class InMemoryStreamConsumerStateStoreFactory implements StreamConsumerStateStoreFactory {
   private final InMemoryOrderedTableService tableService;
