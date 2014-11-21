@@ -3058,7 +3058,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
     text-align: center;
 }
 
-.batch-item {
+.batch-item, .spark-metrics-item {
     max-width: 200px;
     float: left;
     margin: 30px 60px;
@@ -3081,14 +3081,14 @@ only screen and (min-device-pixel-ratio: 1.5) {
     background-size: 100%;
 }
 
-.batch-map {
+.batch-map, .spark-metrics-block {
     border: 4px solid #396DC7;
     background-color: #396DC7;
     background-size: 100%;
     color: #fff;
 }
 
-.batch-reduce {
+.batch-reduce, .spark-metrics-scheduler {
     border: 4px solid #396DC7;
     background-color: #FFF;
     background-size: 100%;
@@ -3142,11 +3142,11 @@ only screen and (min-device-pixel-ratio: 1.5) {
     margin-top: 12px;
 }
 
-.batch-map>.info-window {
+.batch-map>.info-window, .spark-metrics-block>.info-window {
     margin-top: 12px;
 }
 
-.batch-reduce>.info-window {
+.batch-reduce>.info-window, .spark-metrics-scheduler>.info-window {
     margin-top: 12px;
     color: #396DC7;
 }
@@ -3156,7 +3156,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
     color: #396DC7;
 }
 
-.info-window .batch-phase {
+.info-window .batch-phase, .info-window .metrics-phase {
     margin-bottom: 8px;
     word-wrap: break-word;
     white-space: normal;
@@ -4347,8 +4347,35 @@ div.tooltip-inner {
   line-height: inherit;
 }
 
+.panel-title.center-align.sparks-metrics{
+  font-size: 14px;
+  padding: 0;
+  line-height: inherit;
+}
+
+.sparks-metrics .metrics-row {
+    font-weight: 400;
+    font-size: 12px;
+    color: #9698A5;
+}
+
 #panels .panel .panel-title .logs-link {
   cursor: pointer;
   color: blue;
   text-decoration: underline;
+}
+
+#panels .panel .sparks-metrics{
+    margin: 0 auto;
+    padding: 32px 0;
+    width: 700px;
+}
+
+.sparks-metrics .spark-icon{
+    width: 220px;
+    height: 160px;
+}
+
+.sparks-metrics .metric-row{
+    margin-bottom: 5px;
 }
