@@ -23,16 +23,16 @@ import org.apache.hadoop.io.LongWritable;
 
 /**
  * A {@link StreamEventDecoder} that decodes a {@link StreamEvent} into {@link LongWritable} as key and
- * {@link StreamEventData} as value for Mapper input. The key carries the event timestamp, while the value contains the
+ * {@link StreamEventData} as value. The key carries the event timestamp, while the value contains the
  * entire {@link StreamEvent}.
  */
-public class IdentityStreamEventDecoder implements StreamEventDecoder<LongWritable, StreamEventData> {
+public final class IdentityStreamEventDecoder implements StreamEventDecoder<LongWritable, StreamEventData> {
 
   private final LongWritable key = new LongWritable();
 
   @Override
   public DecodeResult<LongWritable, StreamEventData> decode(StreamEvent event,
-                                                              DecodeResult<LongWritable, StreamEventData> result) {
+                                                            DecodeResult<LongWritable, StreamEventData> result) {
     key.set(event.getTimestamp());
     return result.setKey(key).setValue(event);
   }
