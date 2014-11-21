@@ -29,19 +29,18 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.base.Charsets;
 
 import java.net.HttpURLConnection;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * An Application that calculates page rank of URLs from an input stream.
  */
 public class SparkPageRankApp extends AbstractApplication {
-  static final String SERVICE_NAME = "GoogleTypePR";
 
   @Override
   public void configure() {
@@ -58,7 +57,7 @@ public class SparkPageRankApp extends AbstractApplication {
     addService(new RanksService());
 
     // Service which converts calculated pageranks to Google type page ranks
-    addService(SERVICE_NAME, new GoogleTypePRHandler());
+    addService(new GoogleTypePR());
 
     // Store input and processed data in ObjectStore Datasets
     try {
@@ -76,6 +75,7 @@ public class SparkPageRankApp extends AbstractApplication {
    * A Spark program that calculates page rank.
    */
   public static final class SparkPageRankSpecification extends AbstractSpark {
+
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
@@ -106,41 +106,52 @@ public class SparkPageRankApp extends AbstractApplication {
    */
   public static final class RanksServiceHandler extends AbstractHttpServiceHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RanksService.class);
-
     @UseDataSet("ranks")
     private ObjectStore<Integer> ranks;
 
-    @Path("rank/{url}")
+    @Path("rank")
     @GET
-    public void getRank(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("url") String url) {
-      LOG.trace("Get rank of URL: {}", url);
+    public void getRank(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("url") String url) {
+      if (url == null) {
+        responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
+                             String.format("The url parameter must be specified"), Charsets.UTF_8);
+      }
 
       // Get the rank from the ranks dataset
       Integer rank = ranks.read(url);
       if (rank == null) {
-        LOG.trace("No rank found");
-        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND, String.format("No rank found of %s", url));
-        return;
+        responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
+                             String.format("No rank found of %s", url), Charsets.UTF_8);
+      } else {
+        responder.sendString(rank.toString());
       }
-
-      LOG.trace("Returned rank: {}", rank);
-      responder.sendJson(rank);
     }
   }
 
   /**
-   * A {@link Service} which converts the page rank to a Google Type page rank (from 0 to 10)
+   * A {@link Service} which converts the page rank to a Google Type page rank (from 0 to 10).
    */
-  public class GoogleTypePRHandler extends AbstractHttpServiceHandler {
+  public static final class GoogleTypePR extends AbstractService {
+
+    public static final String SERVICE_NAME = "GoogleTypePR";
+
+    @Override
+    protected void configure() {
+      setName(SERVICE_NAME);
+      setDescription("Service which converts the page rank to a Google Type page rank.");
+      addHandler(new RanksServiceHandler());
+    }
+  }
+
+  /**
+   * GoogleTypePR service handler.
+   */
+  public static final class GoogleTypePRHandler extends AbstractHttpServiceHandler {
+
     @Path("transform/{pr}")
     @GET
     public void transform(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("pr") String pr) {
-      if (pr.isEmpty()) {
-        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "pagerank is empty");
-      } else {
-        responder.sendString(String.valueOf((int) (Math.round(Double.parseDouble(pr) * 10))));
-      }
+      responder.sendString(String.valueOf((int) (Math.round(Double.parseDouble(pr) * 10))));
     }
   }
 }

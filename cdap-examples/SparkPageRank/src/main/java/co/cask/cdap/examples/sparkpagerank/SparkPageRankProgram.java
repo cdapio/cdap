@@ -124,9 +124,9 @@ public class SparkPageRankProgram implements JavaSparkProgram {
       @Override
       public Tuple2<byte[], Integer> call(Tuple2<String, Double> tuple) throws Exception {
         LOG.debug("URL {} has rank {}", Arrays.toString(tuple._1().getBytes(Charsets.UTF_8)), tuple._2());
-        URL serviceURL = discoveryServiceContext.getServiceURL(SparkPageRankApp.SERVICE_NAME);
+        URL serviceURL = discoveryServiceContext.getServiceURL(SparkPageRankApp.GoogleTypePR.SERVICE_NAME);
         if (serviceURL == null) {
-          throw new RuntimeException("Failed to discover service: " + SparkPageRankApp.SERVICE_NAME);
+          throw new RuntimeException("Failed to discover service: " + SparkPageRankApp.GoogleTypePR.SERVICE_NAME);
         }
         try {
           URLConnection connection = new URL(serviceURL, String.format("transform/%s",
@@ -140,7 +140,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
             Closeables.closeQuietly(reader);
           }
         } catch (Exception e) {
-          LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.SERVICE_NAME, e);
+          LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.GoogleTypePR.SERVICE_NAME, e);
           throw Throwables.propagate(e);
         }
       }
