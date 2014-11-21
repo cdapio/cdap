@@ -197,20 +197,9 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     if (!(msg instanceof HttpRequest)) {
       super.messageReceived(ctx, event);
     } else {
-      HttpRequest request = (HttpRequest) msg;
-      // In order to have independent health check for the router status command should
-      // be served by router itself without talking to any downstream services.
-      if (request.getUri().matches(Constants.EndPoints.STATUS)) {
-        String statusString = "OK.\n";
-        ChannelBuffer responseContent = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(statusString));
-        HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-        httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain");
-        httpResponse.setHeader(HttpHeaders.Names.CONTENT_LENGTH, responseContent.readableBytes());
-        httpResponse.setContent(responseContent);
-
-        ChannelFuture writeFuture = Channels.future(event.getChannel());
-        Channels.write(ctx, writeFuture, httpResponse);
-        writeFuture.addListener(ChannelFutureListener.CLOSE);
+      // To have an independent health check of the router status, the command should
+      // be served by the router itself without it talking to any downstream services
+      if (RequestHandlerHelper.isStatusRequest(ctx, event)) {
         return;
       }
 

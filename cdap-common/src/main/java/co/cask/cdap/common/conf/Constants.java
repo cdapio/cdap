@@ -628,7 +628,7 @@ public final class Constants {
    */
   public static final class EndPoints {
     /**
-    * status EndPoint
+    * Status endpoint
     */
     public static final String STATUS = "/status";
   }

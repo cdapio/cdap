@@ -150,7 +150,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
       context.setSecurityHandler(authenticationHandler);
 
-      // status end point should be handled without the authentication
+      // Status endpoint should be handled without the authentication
       ContextHandler statusContext = new ContextHandler();
       statusContext.setContextPath(Constants.EndPoints.STATUS);
       statusContext.setServer(server);

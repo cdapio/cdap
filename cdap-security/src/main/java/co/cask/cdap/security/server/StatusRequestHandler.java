@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * status request handler for authentication server
+ * Handles status requests for authentication server
  */
 public class StatusRequestHandler extends AbstractHandler {
   @Override
@@ -34,6 +34,6 @@ public class StatusRequestHandler extends AbstractHandler {
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
     baseRequest.setHandled(true);
-    response.getWriter().print("OK.\n");
+    response.getWriter().print("OK\n");
   }
 }

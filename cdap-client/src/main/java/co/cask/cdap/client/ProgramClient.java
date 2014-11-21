@@ -20,8 +20,8 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.client.util.ProgramFlowUtil;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.utils.TimeUtils;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
@@ -153,7 +153,7 @@ public class ProgramClient {
     TimeoutException, InterruptedException {
 
     try {
-      ProgramFlowUtil.waitFor(status, new Callable<String>() {
+      TimeUtils.waitFor(status, new Callable<String>() {
         @Override
         public String call() throws Exception {
           return getStatus(appId, programType, programId);
