@@ -401,14 +401,14 @@ and then restart CDAP.
 
        sudo yum install cdap cdap-gateway
                               cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-kafka cdap-master
+                              cdap-hbase-compat-0.98 cdap-kafka cdap-master
                               cdap-security cdap-web-app
 
    - Using APT (on one line)::
 
        sudo apt-get install cdap cdap-gateway
                               cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-kafka cdap-master
+                              cdap-hbase-compat-0.98 cdap-kafka cdap-master
                               cdap-security cdap-web-app
 
 #. Run the upgrade tool (on one line)::

@@ -39,7 +39,7 @@ Things to check as possible solutions:
 
     /opt/cdap/master/bin/svc-master classpath | tr ':' '\n'
    
-   Expect to see (where *<version>* is either ``0.94`` or ``0.96``)::
+   Expect to see (where *<version>* is one of ``0.94``, ``0.96``, or ``0.98``)::
 
     /etc/cdap/conf/
     /opt/cdap/hbase-compat-<version>/lib/*
