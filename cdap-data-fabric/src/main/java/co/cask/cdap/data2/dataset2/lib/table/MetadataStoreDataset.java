@@ -90,7 +90,7 @@ public class MetadataStoreDataset extends AbstractDataset {
 
   // lists all that has first id parts in range of startId and stopId
   public <T> List<T> list(Key startId, @Nullable Key stopId, Class<T> classOfT, int limit,
-                          @Nullable Predicate<T> filter) {
+                          Predicate<T> filter) {
     byte[] startKey = startId.getKey();
     byte[] stopKey = stopId == null ? Bytes.stopKeyForPrefix(startKey) : stopId.getKey();
 

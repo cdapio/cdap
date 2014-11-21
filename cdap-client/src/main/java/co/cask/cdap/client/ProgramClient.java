@@ -378,8 +378,8 @@ public class ProgramClient {
    * @throws NotFoundException if the application or program could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public List<RunRecord> getProgramAllRuns(String appId, ProgramType programType, String programId,
-                                        long startTime, long endTime, int limit)
+  public List<RunRecord> getAllProgramRuns(String appId, ProgramType programType, String programId,
+                                           long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
     String queryParams = String.format("%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
