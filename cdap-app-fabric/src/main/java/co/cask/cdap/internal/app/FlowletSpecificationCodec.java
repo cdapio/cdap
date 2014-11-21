@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.ResourceSpecification;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
@@ -26,7 +26,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
-import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -47,8 +46,7 @@ final class FlowletSpecificationCodec extends AbstractSpecificationCodec<Flowlet
     jsonObj.add("failurePolicy", new JsonPrimitive(src.getFailurePolicy().name()));
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
-    jsonObj.add("resources", context.serialize(src.getResources(),
-                                               new TypeToken<ResourceSpecification>() { }.getType()));
+    jsonObj.add("resources", context.serialize(src.getResources(), Resources.class));
 
     return jsonObj;
   }
@@ -64,8 +62,7 @@ final class FlowletSpecificationCodec extends AbstractSpecificationCodec<Flowlet
     FailurePolicy policy = FailurePolicy.valueOf(jsonObj.get("failurePolicy").getAsString());
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
-    ResourceSpecification resources = context.deserialize(jsonObj.get("resources"),
-                                                          new TypeToken<ResourceSpecification>() { }.getType());
+    Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
 
     return new DefaultFlowletSpecification(className, name, description, policy, dataSets, properties, resources);
   }

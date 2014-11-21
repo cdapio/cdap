@@ -152,6 +152,99 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
     testSingleMetric(serviceRequest, 1);
   }
 
+  @Test
+  public void testingMetricsWithRunIds() throws Exception {
+    String runId1 = "id123";
+    String runId2 = "id124";
+    String runId3 = "id125";
+
+    MetricsCollector collector1 = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.s.CounterService.CountRunnable", runId1);
+    collector1.increment("rid_metric", 1);
+
+    MetricsCollector collector2 = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.s.CounterService.CountRunnable", runId2);
+    collector2.increment("rid_metric", 2);
+
+    MetricsCollector collector3 = collectionService.getCollector(MetricsScope.USER,
+                                                                 "WordCount.b.CounterMapRed.m", runId3);
+    collector3.gauge("entries.out", 10);
+
+    MetricsCollector collector4 = collectionService.getCollector(MetricsScope.USER,
+                                                                 "WordCount.b.CounterMapRed.r", runId3);
+    collector4.gauge("entries.out", 10);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String serviceRequest =
+      "/user/apps/WordCount/services/CounterService/runs/" + runId2 + "/rid_metric?aggregate=true";
+
+    //service metric request with invliad runId
+    String serviceRequestInvalidId =
+      "/user/apps/WordCount/services/CounterService/runs/fff/rid_metric?aggregate=true";
+
+    //service metric request without specifying the runId and aggregate will run the sum of these two runIds
+    String serviceRequestTotal =
+      "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true";
+
+    String mappersMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/mappers/entries.out?aggregate=true";
+
+    String reducersMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/reducers/entries.out?aggregate=true";
+
+    String mapredMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/entries.out?aggregate=true";
+
+
+    testSingleMetric(serviceRequest, 2);
+    testSingleMetric(serviceRequestInvalidId, 0);
+    testSingleMetric(serviceRequestTotal, 3);
+    testSingleMetric(mappersMetric, 10);
+    testSingleMetric(reducersMetric, 10);
+    testSingleMetric(mapredMetric, 20);
+  }
+
+  @Test
+  public void testMetricsQueryInvalidRunId() throws Exception {
+    String runId1 = "id123";
+    String runId2 = "id124";
+
+    MetricsCollector collector2 = collectionService.getCollector(MetricsScope.USER,
+                                                                 "WordCount.s.CounterService.CountRunnableInvalid",
+                                                                 runId2);
+    collector2.increment("rid_metric_invalid", 2);
+
+    //runnable metric request with runId1
+    String runnableRequest =
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnableInvalid/run-id/" + runId1 + "/run-id/" +
+        runId2 + "rid_metric_invalid?aggregate=true";
+    HttpResponse response = doGet("/v2/metrics" + runnableRequest);
+    Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void testingUserServiceGaugeMetrics() throws Exception {
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.s.CounterService.CountRunnable", "0");
+    collector.increment("gmetric", 1);
+    collector.gauge("gmetric", 10);
+    collector.increment("gmetric", 1);
+    collector.gauge("gmetric", 10);
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String runnableRequest =
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/gmetric?aggregate=true";
+
+    String serviceRequest =
+      "/user/apps/WordCount/services/CounterService/gmetric?aggregate=true";
+    testSingleMetric(runnableRequest, 10);
+    testSingleMetric(serviceRequest, 10);
+  }
+
 
   @Test
   public void testingInvalidUserServiceMetrics() throws Exception {

@@ -42,6 +42,7 @@ final class MetricsRequestParser {
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
   private static final String END_TIME = "end";
+  private static final String RUN_ID = "runs";
   private static final String INTERPOLATE = "interpolate";
   private static final String STEP_INTERPOLATOR = "step";
   private static final String LINEAR_INTERPOLATOR = "linear";
@@ -212,6 +213,7 @@ final class MetricsRequestParser {
     }
     MetricsRequestContext context = contextBuilder.build();
     builder.setContextPrefix(context.getContextPrefix());
+    builder.setRunId(context.getRunId());
     if (context.getTag() != null) {
       builder.setTagPrefix(context.getTag());
     }
@@ -256,6 +258,14 @@ final class MetricsRequestParser {
     switch(requestType) {
       case MAPREDUCE:
         String mrTypeStr = pathParts.next();
+        if (mrTypeStr.equals(RUN_ID)) {
+          parseRunId(pathParts, builder);
+          if (pathParts.hasNext()) {
+            mrTypeStr = pathParts.next();
+          } else {
+            return;
+          }
+        }
         MapReduceType mrType;
         try {
           mrType = MapReduceType.valueOf(mrTypeStr.toUpperCase());
@@ -269,41 +279,56 @@ final class MetricsRequestParser {
         buildFlowletContext(pathParts, builder);
         break;
       case HANDLERS:
-        buildHandlerContext(pathParts, builder);
+        buildComponentTypeContext(pathParts, builder, "methods", "handler");
         break;
       case SERVICES:
-        buildUserServiceContext(pathParts, builder);
+        buildComponentTypeContext(pathParts, builder, "runnables", "service");
+        break;
+      case PROCEDURES:
+        if (pathParts.hasNext()) {
+          if (pathParts.next().equals(RUN_ID)) {
+            parseRunId(pathParts, builder);
+          }
+        }
+        break;
     }
-
     if (pathParts.hasNext()) {
       throw new MetricsPathException("path contains too many elements");
     }
   }
 
-  private static void buildUserServiceContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+  private static void buildComponentTypeContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder,
+                                              String componentType, String requestType)
     throws MetricsPathException {
-    if (!pathParts.next().equals("runnables")) {
-      throw new MetricsPathException("expecting 'runnables' after the service name");
+    String nextPath = pathParts.next();
+
+    if (nextPath.equals(RUN_ID)) {
+      parseRunId(pathParts, builder);
+      if (pathParts.hasNext()) {
+        nextPath = pathParts.next();
+      } else {
+        return;
+      }
+    }
+    if (!nextPath.equals(componentType)) {
+      String exception = String.format("Expecting '%s' after the %s name ", componentType,
+                                       requestType.substring(0, requestType.length() - 1));
+      throw new MetricsPathException(exception);
     }
     if (!pathParts.hasNext()) {
-      throw new MetricsPathException("runnables must be followed by a runnable name");
+      String exception = String.format("'%s' must be followed by a %s name ", componentType,
+                                       componentType.substring(0, componentType.length() - 1));
+      throw new MetricsPathException(exception);
     }
     builder.setComponentId(urlDecode(pathParts.next()));
   }
 
-
-  /**
-   * At this point, pathParts should look like methods/{method-name}
-   */
-  private static void buildHandlerContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
+  private static void parseRunId(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
     throws MetricsPathException {
-    if (!pathParts.next().equals("methods")) {
-      throw new MetricsPathException("expecting 'methods' after the handler name");
-    }
     if (!pathParts.hasNext()) {
-      throw new MetricsPathException("methods must be followed by a method name");
+      throw new MetricsPathException("expecting " + RUN_ID + " value after the identifier runs in path");
     }
-    builder.setComponentId(urlDecode(pathParts.next()));
+    builder.setRunId(pathParts.next());
   }
 
   /**
@@ -311,14 +336,8 @@ final class MetricsRequestParser {
    */
   private static void buildFlowletContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder)
     throws MetricsPathException {
-    if (!pathParts.next().equals("flowlets")) {
-      throw new MetricsPathException("expecting 'flowlets' after the flow name");
-    }
-    if (!pathParts.hasNext()) {
-      throw new MetricsPathException("flowlets must be followed by a flowlet name");
-    }
-    builder.setComponentId(urlDecode(pathParts.next()));
 
+    buildComponentTypeContext(pathParts, builder, "flowlets", "flows");
     if (pathParts.hasNext()) {
       if (!pathParts.next().equals("queues")) {
         throw new MetricsPathException("expecting 'queues' after the flowlet name");
@@ -333,10 +352,9 @@ final class MetricsRequestParser {
   /**
    * From the query string determine the query type and related parameters.
    */
-  private static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) {
+  private static void parseQueryString(URI requestURI, MetricsRequestBuilder builder) throws MetricsPathException {
 
     Map<String, List<String>> queryParams = new QueryStringDecoder(requestURI).getParameters();
-
     // Extracts the query type.
     if (isTimeseriesRequest(queryParams)) {
       parseTimeseries(queryParams, builder);

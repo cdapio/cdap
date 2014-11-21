@@ -15,44 +15,19 @@
  */
 package co.cask.cdap.metrics.data;
 
-import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.data.hbase.HBaseTestBase;
-import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
-import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
-import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
-import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Test base for {@link TimeSeriesTable}.
@@ -154,7 +129,7 @@ public abstract class TimeSeriesTableTestBase {
         for (String tag : tags) {
           tagMetrics.add(new TagMetric(tag, j * 2));
         }
-        records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j));
+        records.add(new MetricsRecord(context, runId, metric, tagMetrics, startTime + j, j, MetricType.COUNTER));
         tagMetrics.clear();
       }
       timeSeriesTable.save(records);
@@ -191,6 +166,54 @@ public abstract class TimeSeriesTableTestBase {
     //Scan and verify there are no results for both contexts
     Assert.assertFalse("table should be empty but scan found a next entry.", timeSeriesTable.scan(query1).hasNext());
     Assert.assertFalse("table should be empty but scan found a next entry.", timeSeriesTable.scan(query2).hasNext());
+  }
+
+  @Test
+  public void testIntOverflow() throws OperationException {
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("intOverflow", 1);
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // checking that we can store more than just int
+    long value = Integer.MAX_VALUE * 2L;
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                            ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                            time, value, MetricType.COUNTER)));
+
+    // verify that some metrics are there for both contexts
+    MetricsScanQuery query = new MetricsScanQueryBuilder()
+      .setContext("context").setMetric("bigmetric").build(time,  time + 1000);
+
+    Assert.assertTrue(timeSeriesTable.scan(query).hasNext());
+    MetricsScanResult result = timeSeriesTable.scan(query).next();
+    Assert.assertEquals(value, result.iterator().next().getValue());
+  }
+
+
+  @Test
+  public void testGauge() throws OperationException {
+    TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("testGauge", 1);
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // checking that we can store more than just int
+    long value = Integer.MAX_VALUE;
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "gaugemetric",
+                                                            ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                            time, value, MetricType.GAUGE)));
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "gaugemetric",
+                                                            ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                            time, value, MetricType.COUNTER)));
+    timeSeriesTable.save(ImmutableList.of(new MetricsRecord("context", "runId", "gaugemetric",
+                                                            ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                            time, value, MetricType.GAUGE)));
+
+    MetricsScanQuery query = new MetricsScanQueryBuilder()
+      .setContext("context").setMetric("gaugemetric").build(time,  time + 1000);
+
+    Assert.assertTrue(timeSeriesTable.scan(query).hasNext());
+    MetricsScanResult result = timeSeriesTable.scan(query).next();
+    Assert.assertEquals(value, result.iterator().next().getValue());
   }
 
   @Test
@@ -277,8 +300,10 @@ public abstract class TimeSeriesTableTestBase {
         // 10 timepoints for each metric
         List<MetricsRecord> records = Lists.newArrayListWithCapacity(10);
         for (int k = 0; k < 10; k++) {
-          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15));
-          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15));
+          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15,
+                                        MetricType.COUNTER));
+          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15,
+                                        MetricType.COUNTER));
           timeSeriesTable.save(records);
         }
       }
@@ -362,8 +387,10 @@ public abstract class TimeSeriesTableTestBase {
         // 10 timepoints for each metric
         List<MetricsRecord> records = Lists.newArrayListWithCapacity(10);
         for (int k = 0; k < 10; k++) {
-          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15));
-          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15));
+          records.add(new MetricsRecord(context, runId, "store.bytes", tagMetrics, time + k, 15,
+                                        MetricType.COUNTER));
+          records.add(new MetricsRecord(context, runId, "store.ops", tagMetrics, time + k, 15,
+                                        MetricType.COUNTER));
           timeSeriesTable.save(records);
         }
       }
@@ -458,10 +485,11 @@ public abstract class TimeSeriesTableTestBase {
     try {
       timeSeriesTable.save(ImmutableList.of(
         new MetricsRecord("app.f.flow.flowlet", "0", "store.bytes", ImmutableList.of(
-          new TagMetric("tag1", 1), new TagMetric("tag2", 2), new TagMetric("tag3", 3)), 1234567890, 6)
+          new TagMetric("tag1", 1), new TagMetric("tag2", 2), new TagMetric("tag3", 3)), 1234567890, 6,
+                          MetricType.COUNTER)
       ));
 
-      Map<String, Integer> tagValues = Maps.newHashMap();
+      Map<String, Long> tagValues = Maps.newHashMap();
       MetricsScanQuery query = new MetricsScanQueryBuilder()
         .setContext("app.f.flow.flowlet")
         .setMetric("store.bytes")
@@ -480,9 +508,9 @@ public abstract class TimeSeriesTableTestBase {
       }
 
       Assert.assertEquals(3, tagValues.size());
-      Assert.assertEquals(1, (int) tagValues.get("tag1"));
-      Assert.assertEquals(2, (int) tagValues.get("tag2"));
-      Assert.assertEquals(3, (int) tagValues.get("tag3"));
+      Assert.assertEquals(1, (long) tagValues.get("tag1"));
+      Assert.assertEquals(2, (long) tagValues.get("tag2"));
+      Assert.assertEquals(3, (long) tagValues.get("tag3"));
     } finally {
       timeSeriesTable.clear();
     }

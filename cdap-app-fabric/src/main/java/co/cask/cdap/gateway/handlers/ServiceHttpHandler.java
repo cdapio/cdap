@@ -17,43 +17,33 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.zookeeper.coordination.ServiceDiscoveredCodec;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.UserErrors;
-import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ServiceInstances;
-import co.cask.cdap.proto.ServiceMeta;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import org.apache.twill.api.RuntimeSpecification;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -63,19 +53,15 @@ import javax.ws.rs.PathParam;
 
 
 /**
- *  Handler class for User services.
+ *  {@link HttpHandler} for User Services.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION)
 public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);
+
   private final Store store;
   private final ProgramRuntimeService runtimeService;
-  private static final Gson GSON = new GsonBuilder()
-                                      .registerTypeAdapter(new TypeToken<ServiceDiscovered>() { }.getType(),
-                                                            new ServiceDiscoveredCodec())
-                                      .create();
-
-  private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
@@ -86,59 +72,21 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Return the list of user twill apps for an application.
+   * Returns a list of Services associated with an account.
    */
-  @Path("/apps/{app-id}/services")
   @GET
-  public void listServices(HttpRequest request, HttpResponder responder,
-                           @PathParam("app-id") String appId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
-      if (spec != null) {
-        List<ProgramRecord> services = Lists.newArrayList();
-        for (Map.Entry<String, ServiceSpecification> entry : spec.getServices().entrySet()) {
-          ServiceSpecification specification = entry.getValue();
-          services.add(new ProgramRecord(ProgramType.SERVICE, appId, specification.getName(),
-                                         specification.getName(), specification.getDescription()));
-        }
-        responder.sendJson(HttpResponseStatus.OK, services);
-      } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  @Path("/services")
+  public void getAllServices(HttpRequest request, HttpResponder responder) {
+    programList(request, responder, ProgramType.SERVICE, null, store);
   }
 
   /**
-   * Return the service details of a given service.
+   * Return the list of user Services in an application.
    */
-  @Path("/apps/{app-id}/services/{service-id}")
+  @Path("/apps/{app-id}/services")
   @GET
-  public void getService(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") String appId,
-                         @PathParam("service-id") String serviceId) {
-
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      ServiceSpecification spec = getServiceSpecification(accountId, appId, serviceId);
-      if (spec != null) {
-        responder.sendJson(HttpResponseStatus.OK, new ServiceMeta(
-          spec.getName(), spec.getName(), spec.getDescription(), spec.getRunnables().keySet()));
-      } else {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
+    programList(request, responder, ProgramType.SERVICE, appId, store);
   }
 
   /**
@@ -157,15 +105,29 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Runnable not found");
         return;
       }
-      RuntimeSpecification specification = getRuntimeSpecification(accountId, appId, serviceId, runnableName);
+
+      ServiceSpecification specification = getServiceSpecification(accountId, appId, serviceId);
       if (specification == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else {
-        responder.sendJson(HttpResponseStatus.OK, new ServiceInstances(
-          specification.getResourceSpecification().getInstances(),
-          getRunnableCount(accountId, appId, serviceId, runnableName
-        )));
+        return;
       }
+
+      // If the runnable name is the same as the service name, then uses the service spec, otherwise use the worker spec
+      int instances;
+      if (specification.getName().equals(runnableName)) {
+        instances = specification.getInstances();
+      } else {
+        ServiceWorkerSpecification workerSpec = specification.getWorkers().get(runnableName);
+        if (workerSpec == null) {
+          responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+          return;
+        }
+        instances = workerSpec.getInstances();
+      }
+
+      responder.sendJson(HttpResponseStatus.OK,
+                         new ServiceInstances(instances, getRunnableCount(accountId, appId, serviceId, runnableName)));
+
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -198,15 +160,23 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
         return;
       }
 
-      int oldInstances = store.getServiceRunnableInstances(programId, runnableName);
+      // If the runnable name is the same as the service name, it's setting the service instances
+      // TODO: This REST API is bad, need to update (CDAP-388)
+      int oldInstances = (runnableName.equals(serviceId)) ? store.getServiceInstances(programId)
+                                                          : store.getServiceWorkerInstances(programId, runnableName);
       if (oldInstances != instances) {
-        store.setServiceRunnableInstances(programId, runnableName, instances);
+        if (runnableName.equals(serviceId)) {
+          store.setServiceInstances(programId, instances);
+        } else {
+          store.setServiceWorkerInstances(programId, runnableName, instances);
+        }
+
         ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
                                                                         programId.getApplicationId(),
                                                                         programId.getId(),
-                                                                        ProgramType.SERVICE);
+                                                                        ProgramType.SERVICE, runtimeService);
         if (runtimeInfo != null) {
-          runtimeInfo.getController().command(ProgramOptionConstants.RUNNABLE_INSTANCES,
+          runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                               ImmutableMap.of("runnable", runnableName,
                                                               "newInstances", String.valueOf(instances),
                                                               "oldInstances", String.valueOf(oldInstances))).get();
@@ -226,22 +196,10 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   @GET
   @Path("/apps/{app-id}/services/{service-id}/live-info")
-  public void liveInfo(HttpRequest request, HttpResponder responder,
-                       @PathParam("app-id") String appId,
-                       @PathParam("service-id") String serviceId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      responder.sendJson(HttpResponseStatus.OK,
-                         runtimeService.getLiveInfo(Id.Program.from(accountId,
-                                                                    appId,
-                                                                    serviceId),
-                                                    ProgramType.SERVICE));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+  public void serviceLiveInfo(HttpRequest request, HttpResponder responder,
+                              @PathParam("app-id") String appId,
+                              @PathParam("service-id") String serviceId) {
+    getLiveInfo(request, responder, appId, serviceId, ProgramType.SERVICE, runtimeService);
   }
 
   @Nullable
@@ -259,21 +217,9 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @Nullable
-  private RuntimeSpecification getRuntimeSpecification(String accountId, String appId, String serviceName,
-                                                        String runnableName) throws OperationException {
-    ServiceSpecification specification = getServiceSpecification(accountId, appId, serviceName);
-    if (specification != null) {
-      Map<String, RuntimeSpecification> runtimeSpecs =  specification.getRunnables();
-      return runtimeSpecs.containsKey(runnableName) ? runtimeSpecs.get(runnableName) : null;
-    } else {
-      return null;
-    }
-  }
-
   private int getRunnableCount(String accountId, String appId, String serviceName, String runnable) throws Exception {
-    Id.Program programID = Id.Program.from(accountId, appId, serviceName);
-    ProgramLiveInfo info = runtimeService.getLiveInfo(programID, ProgramType.SERVICE);
+    Id.Program programId = Id.Program.from(accountId, appId, serviceName);
+    ProgramLiveInfo info = runtimeService.getLiveInfo(programId, ProgramType.SERVICE);
     int count = 0;
     if (info instanceof NotRunningProgramLiveInfo) {
       return count;
@@ -286,25 +232,15 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
       }
       return count;
     } else {
-      //Not running on YARN
-      return store.getServiceRunnableInstances(programID, runnable);
-    }
-  }
-
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
-                                                            String flowId, ProgramType typeId) {
-    ProgramType type = ProgramType.valueOf(typeId.name());
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               accountId, flowId);
-
-    Id.Program programId = Id.Program.from(accountId, appId, flowId);
-
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
-      if (programId.equals(info.getProgramId())) {
-        return info;
+      //Not running on YARN, get it from store
+      // If the runnable name is the same as the service name, get the instances from service spec.
+      // Otherwise get it from worker spec.
+      // TODO: This is due to the improper REST API design that treats everything in service as Runnable
+      if (runnable.equals(programId.getId())) {
+        return store.getServiceInstances(programId);
+      } else {
+        return store.getServiceWorkerInstances(programId, runnable);
       }
     }
-    return null;
   }
 }

@@ -31,6 +31,7 @@ import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
+import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Supplier;
@@ -318,19 +319,20 @@ public class NettyRouterPipelineTests {
       private final Logger log = LoggerFactory.getLogger(ServerHandler.class);
       @POST
       @Path("/v1/upload")
-      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException {
+      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException, IOException {
         ChannelBuffer content = request.getContent();
 
         int readableBytes;
         int bytesRead = 0;
-        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
+        ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
+                                                                 ImmutableMultimap.<String, String>of());
         while ((readableBytes = content.readableBytes()) > 0) {
           int read = Math.min(readableBytes, chunkSize);
           bytesRead += read;
-          responder.sendChunk(content.readSlice(read));
+          chunkResponder.sendChunk(content.readSlice(read));
           //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(1));
         }
-        responder.sendChunkEnd();
+        chunkResponder.close();
       }
 
       @POST

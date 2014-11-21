@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.commons.io.FileUtils;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
@@ -38,6 +39,7 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
@@ -87,6 +89,11 @@ public final class AppFabricServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
+    // Delete app fabric temp directory
+    File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
+                           configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    FileUtils.deleteDirectory(tmpDir);
+
     schedulerService.start();
     programRuntimeService.start();
 
@@ -96,14 +103,14 @@ public final class AppFabricServer extends AbstractIdleService {
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.APP_FABRIC_HTTP)))
       .addHttpHandlers(handlers)
-      .setConnectionBacklog(configuration.getInt(Constants.Gateway.BACKLOG_CONNECTIONS,
-                                                 Constants.Gateway.DEFAULT_BACKLOG))
-      .setExecThreadPoolSize(configuration.getInt(Constants.Gateway.EXEC_THREADS,
-                                                  Constants.Gateway.DEFAULT_EXEC_THREADS))
-      .setBossThreadPoolSize(configuration.getInt(Constants.Gateway.BOSS_THREADS,
-                                                  Constants.Gateway.DEFAULT_BOSS_THREADS))
-      .setWorkerThreadPoolSize(configuration.getInt(Constants.Gateway.WORKER_THREADS,
-                                                    Constants.Gateway.DEFAULT_WORKER_THREADS))
+      .setConnectionBacklog(configuration.getInt(Constants.AppFabric.BACKLOG_CONNECTIONS,
+                                                 Constants.AppFabric.DEFAULT_BACKLOG))
+      .setExecThreadPoolSize(configuration.getInt(Constants.AppFabric.EXEC_THREADS,
+                                                  Constants.AppFabric.DEFAULT_EXEC_THREADS))
+      .setBossThreadPoolSize(configuration.getInt(Constants.AppFabric.BOSS_THREADS,
+                                                  Constants.AppFabric.DEFAULT_BOSS_THREADS))
+      .setWorkerThreadPoolSize(configuration.getInt(Constants.AppFabric.WORKER_THREADS,
+                                                    Constants.AppFabric.DEFAULT_WORKER_THREADS))
       .build();
 
     // Add a listener so that when the service started, register with service discovery.

@@ -30,7 +30,7 @@ import java.util.concurrent.Executor;
  * Metrics collection service for tests.
  */
 public class MockMetricsCollectionService implements MetricsCollectionService {
-  private final Table<String, String, Integer> metrics = HashBasedTable.create();
+  private final Table<String, String, Long> metrics = HashBasedTable.create();
 
   @Override
   public MetricsCollector getCollector(MetricsScope scope, String context, String runId) {
@@ -72,8 +72,8 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
     // no-op
   }
 
-  public synchronized int getMetrics(String context, String metricName) {
-    Integer val = metrics.get(context, metricName);
+  public synchronized long getMetrics(String context, String metricName) {
+    Long val = metrics.get(context, metricName);
     return val == null ? 0 : val;
   }
 
@@ -87,8 +87,15 @@ public class MockMetricsCollectionService implements MetricsCollectionService {
     @Override
     public void increment(String metricName, int value, String... tags) {
       synchronized (MockMetricsCollectionService.this) {
-        Integer v = metrics.get(context, metricName);
+        Long v = metrics.get(context, metricName);
         metrics.put(context, metricName, v == null ? value : v + value);
+      }
+    }
+
+    @Override
+    public void gauge(String metricName, long value, String... tags) {
+      synchronized (MockMetricsCollectionService.this) {
+        metrics.put(context, metricName, value);
       }
     }
   }

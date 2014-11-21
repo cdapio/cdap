@@ -24,6 +24,7 @@ import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  *
@@ -45,7 +47,7 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   @Before
   public void setUp() throws Throwable {
-    clientConfig = new ClientConfig(HOSTNAME, null);
+    clientConfig = new ClientConfig.Builder().setHostname(HOSTNAME).setPort(PORT).build();
   }
 
   protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
@@ -97,36 +99,29 @@ public abstract class ClientTestBase extends StandaloneTestBase {
 
   protected void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
                                       String programId)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
 
     assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
   }
 
-
   protected void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
                                       String programId)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
 
     assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
   }
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
                                      String programId, String programStatus)
-    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
 
-    String status;
-    int numTries = 0;
-    int maxTries = 10;
-    do {
-      status = programClient.getStatus(appId, programType, programId);
-      numTries++;
-      try {
-        TimeUnit.SECONDS.sleep(1);
-      } catch (InterruptedException e) {
-        // NO-OP
-      }
-    } while (!status.equals(programStatus) && numTries <= maxTries);
-    Assert.assertEquals(programStatus, status);
+    try {
+      programClient.waitForStatus(appId, programType, programId, programStatus, 30, TimeUnit.SECONDS);
+    } catch (TimeoutException e) {
+      // NO-OP
+    }
+
+    Assert.assertEquals(programStatus, programClient.getStatus(appId, programType, programId));
   }
 
   protected File createAppJarFile(Class<?> cls) {

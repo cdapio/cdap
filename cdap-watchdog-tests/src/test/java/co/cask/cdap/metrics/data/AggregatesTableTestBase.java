@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.data;
 
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.collect.ImmutableList;
@@ -44,14 +45,14 @@ public abstract class AggregatesTableTestBase {
       // Insert 10 metrics.
       for (int i = 1; i <= 10; i++) {
         MetricsRecord metric = new MetricsRecord("simple." + i, "runId", "metric",
-                                                 ImmutableList.<TagMetric>of(), 0L, i);
+                                                 ImmutableList.<TagMetric>of(), 0L, i, MetricType.COUNTER);
         aggregatesTable.update(ImmutableList.of(metric));
       }
 
       // Insert again, so it'll get aggregated.
       for (int i = 1; i <= 10; i++) {
         MetricsRecord metric = new MetricsRecord("simple." + i, "runId", "metric",
-                                                 ImmutableList.<TagMetric>of(), 0L, i);
+                                                 ImmutableList.<TagMetric>of(), 0L, i, MetricType.COUNTER);
         aggregatesTable.update(ImmutableList.of(metric));
       }
 
@@ -75,12 +76,60 @@ public abstract class AggregatesTableTestBase {
   }
 
   @Test
+  public void testIntOverflow() throws OperationException {
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("intOverflow");
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // checking that we can store more than just int
+    long value = Integer.MAX_VALUE * 2L;
+    aggregatesTable.update(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                              ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                              time, value, MetricType.COUNTER)));
+    aggregatesTable.update(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                              ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                              time, value, MetricType.COUNTER)));
+
+    AggregatesScanner scanner = aggregatesTable.scan("context", "bigmetric");
+    Assert.assertTrue(scanner.hasNext());
+    Assert.assertEquals(value * 2, scanner.next().getValue());
+  }
+
+  @Test
+  public void testGaugeValues() throws OperationException {
+    AggregatesTable aggregatesTable = getTableFactory().createAggregates("testGauge");
+
+    // 2012-10-01T12:00:00
+    final long time = 1317470400;
+
+    // checking that we can store more than just int
+    long value = Integer.MAX_VALUE * 2L;
+    aggregatesTable.update(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                              ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                              time, value, MetricType.GAUGE)));
+
+
+    aggregatesTable.update(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                              ImmutableList.<TagMetric>of(new TagMetric("tag", value)),
+                                                              time, value, MetricType.COUNTER)));
+    aggregatesTable.update(ImmutableList.of(new MetricsRecord("context", "runId", "bigmetric",
+                                                              ImmutableList.<TagMetric>of(
+                                                                new TagMetric("tag", value + 10)),
+                                                              time, value + 10, MetricType.GAUGE)));
+
+    AggregatesScanner scanner = aggregatesTable.scan("context", "bigmetric");
+    Assert.assertTrue(scanner.hasNext());
+    Assert.assertEquals(value + 10, scanner.next().getValue());
+  }
+
+  @Test
   public void testScanAllTags() throws OperationException {
     AggregatesTable aggregatesTable = getTableFactory().createAggregates("aggScanAllTags");
     try {
       aggregatesTable.update(ImmutableList.of(
         new MetricsRecord("app1.f.flow1.flowlet1", "0", "metric", ImmutableList.of(
-          new TagMetric("tag1", 1), new TagMetric("tag2", 2), new TagMetric("tag3", 3)), 0L, 6)
+          new TagMetric("tag1", 1), new TagMetric("tag2", 2), new TagMetric("tag3", 3)), 0L, 6, MetricType.COUNTER)
       ));
 
       Map<String, Long> tagValues = Maps.newHashMap();
@@ -111,7 +160,8 @@ public abstract class AggregatesTableTestBase {
     try {
       aggregatesTable.update(ImmutableList.of(
         new MetricsRecord("app1.f.flow1.flowlet1", "0", "metric", ImmutableList.of(
-          new TagMetric("tag.1", 1), new TagMetric("tag.2", 2), new TagMetric("tag3", 3)), 0L, 6)
+          new TagMetric("tag.1", 1), new TagMetric("tag.2", 2), new TagMetric("tag3", 3)), 0L, 6,
+                          MetricType.COUNTER)
       ));
 
       // Scan with "tag" as prefix. It should includes "tag.1" and "tag.2", but not "tag3"
@@ -150,14 +200,14 @@ public abstract class AggregatesTableTestBase {
 
     for (int i = 1; i <= 10; i++) {
       MetricsRecord metric = new MetricsRecord("simple." + i, "runId", "metric",
-                                               ImmutableList.<TagMetric>of(), 0L, i);
+                                               ImmutableList.<TagMetric>of(), 0L, i, MetricType.COUNTER);
       aggregatesTable.update(ImmutableList.of(metric));
     }
 
     // Insert again, so it'll get aggregated.
     for (int i = 1; i <= 10; i++) {
       MetricsRecord metric = new MetricsRecord("simple." + i, "runId", "metric",
-                                               ImmutableList.<TagMetric>of(), 0L, i);
+                                               ImmutableList.<TagMetric>of(), 0L, i, MetricType.COUNTER);
       aggregatesTable.update(ImmutableList.of(metric));
     }
 
@@ -189,7 +239,7 @@ public abstract class AggregatesTableTestBase {
       List<MetricsRecord> records = Lists.newArrayList();
       for (int i = 10; i < 30; i++) {
         records.add(new MetricsRecord("context." + (i % 10), "runId", "metric." + (i / 10) + ".value",
-                                      ImmutableList.<TagMetric>of(), 0L, i));
+                                      ImmutableList.<TagMetric>of(), 0L, i, MetricType.COUNTER));
       }
       aggregatesTable.update(records);
 
@@ -222,7 +272,7 @@ public abstract class AggregatesTableTestBase {
         }
 
         aggregatesTable.update(ImmutableList.of(
-          new MetricsRecord("context." + i, "runId", "metric", tags, 0L, i)
+          new MetricsRecord("context." + i, "runId", "metric", tags, 0L, i, MetricType.COUNTER)
         ));
       }
 
@@ -252,12 +302,12 @@ public abstract class AggregatesTableTestBase {
 
       aggregatesTable.update(ImmutableList.of(
         // context, runId, metric, tags, timestamp, value
-        new MetricsRecord("context.0", "0", "metric.0", tags, 0L, 100),
-        new MetricsRecord("context.0", "0", "metric.1", tags, 0L, 100),
-        new MetricsRecord("context.1", "0", "metric.0", tags, 0L, 100),
-        new MetricsRecord("context.1", "0", "metric.1", tags, 0L, 100),
-        new MetricsRecord("context.2", "0", "metric.0", tags, 0L, 100),
-        new MetricsRecord("context.2", "0", "metric.1", tags, 0L, 100)
+        new MetricsRecord("context.0", "0", "metric.0", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.0", "0", "metric.1", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.1", "0", "metric.0", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.1", "0", "metric.1", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.2", "0", "metric.0", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.2", "0", "metric.1", tags, 0L, 100, MetricType.COUNTER)
       ));
 
       // check values were correctly written
@@ -303,12 +353,12 @@ public abstract class AggregatesTableTestBase {
 
       aggregatesTable.update(ImmutableList.of(
         // context, runId, metric, tags, timestamp, value
-        new MetricsRecord("context.0", "0", "metric.0", tags, 0L, 100),
-        new MetricsRecord("context.0", "0", "metric.1", tags, 0L, 100),
-        new MetricsRecord("context.1", "0", "metric.0", tags, 0L, 100),
-        new MetricsRecord("context.1", "0", "metric.1", tags, 0L, 100),
-        new MetricsRecord("context.2", "0", "metric.0", tags, 0L, 100),
-        new MetricsRecord("context.2", "0", "metric.1", tags, 0L, 100)
+        new MetricsRecord("context.0", "0", "metric.0", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.0", "0", "metric.1", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.1", "0", "metric.0", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.1", "0", "metric.1", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.2", "0", "metric.0", tags, 0L, 100, MetricType.COUNTER),
+        new MetricsRecord("context.2", "0", "metric.1", tags, 0L, 100, MetricType.COUNTER)
       ));
 
       // check values were correctly written
@@ -377,7 +427,7 @@ public abstract class AggregatesTableTestBase {
         tags.add(new TagMetric(tag2, 10));
 
         aggregatesTable.update(ImmutableList.of(
-          new MetricsRecord("context." + i, runId, metric, tags, 0L, 100)
+          new MetricsRecord("context." + i, runId, metric, tags, 0L, 100, MetricType.COUNTER)
         ));
       }
 

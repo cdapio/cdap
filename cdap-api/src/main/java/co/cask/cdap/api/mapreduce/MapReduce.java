@@ -21,11 +21,11 @@ package co.cask.cdap.api.mapreduce;
  * that rely on the Hadoop MapReduce APIs.
  */
 public interface MapReduce {
+
   /**
-   * Configures a {@link MapReduce} job by returning a {@link MapReduceSpecification}.
-   * @return An instance of {@link MapReduceSpecification}.
+   * Configures a {@link MapReduce} job using the given {@link MapReduceConfigurer}.
    */
-  MapReduceSpecification configure();
+  void configure(MapReduceConfigurer configurer);
 
   /**
    * Invoked before starting a MapReduce job.

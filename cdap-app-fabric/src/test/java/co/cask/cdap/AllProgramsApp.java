@@ -24,9 +24,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
@@ -97,22 +95,7 @@ public class AllProgramsApp extends AbstractApplication {
   /**
    *
    */
-  public static class NoOpMR implements MapReduce {
-    @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("NoOpMR")
-        .setDescription("NoOp Mapreduce")
-        .build();
-    }
-
-    @Override
-    public void beforeSubmit(MapReduceContext context) throws Exception {
-    }
-
-    @Override
-    public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    }
+  public static class NoOpMR extends AbstractMapReduce {
   }
 
   /**

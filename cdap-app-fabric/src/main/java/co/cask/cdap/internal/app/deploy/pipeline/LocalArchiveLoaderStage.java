@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.ConfigResponse;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
@@ -32,13 +33,14 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * LocalArchiveLoaderStage gets a {@link Location} and emits a {@link ApplicationSpecification}.
+ * LocalArchiveLoaderStage gets a {@link Location} and emits a {@link ApplicationDeployable}.
  * <p>
  * This stage is responsible for reading the JAR and generating an ApplicationSpecification
  * that is forwarded to the next stage of processing.
  * </p>
  */
 public class LocalArchiveLoaderStage extends AbstractStage<Location> {
+  private final CConfiguration cConf;
   private final ApplicationSpecificationAdapter adapter;
   private final Id.Account id;
   private final String appId;
@@ -46,8 +48,9 @@ public class LocalArchiveLoaderStage extends AbstractStage<Location> {
   /**
    * Constructor with hit for handling type.
    */
-  public LocalArchiveLoaderStage(Id.Account id, @Nullable String appId) {
+  public LocalArchiveLoaderStage(CConfiguration cConf, Id.Account id, @Nullable String appId) {
     super(TypeToken.of(Location.class));
+    this.cConf = cConf;
     this.id = id;
     this.appId = appId;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
@@ -74,7 +77,7 @@ public class LocalArchiveLoaderStage extends AbstractStage<Location> {
         }
       };
     }
-    Id.Application applicationId = Id.Application.from(id, specification.getName());
-    emit(new ApplicationSpecLocation(applicationId, specification, archive));
+
+    emit(new ApplicationDeployable(cConf, Id.Application.from(id, specification.getName()), specification, archive));
   }
 }

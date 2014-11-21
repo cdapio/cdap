@@ -39,7 +39,7 @@ public class CMetrics {
   /**
    * Type of metric the {@link CMetrics} is responsible for collecting.
    */
-  private final MetricType metricType;
+  private final MetricCategory metricCategory;
 
   /**
    * Mapping of metric name to it's equivalent yammer metric counters.
@@ -67,26 +67,26 @@ public class CMetrics {
   private final String metricGroup;
 
   /**
-   * Constructor specifying the type of metric as specified by
-   * the {@link MetricType} and the group the metrics belong to.
+   * Constructor specifying the category of metric as specified by
+   * the {@link MetricCategory} and the group the metrics belong to.
    *
-   * @param metricType collected
+   * @param metricCategory collected
    * @param metricGroup the metrics being collected belong to.
    */
-  public CMetrics(MetricType metricType, String metricGroup)
+  public CMetrics(MetricCategory metricCategory, String metricGroup)
     throws IllegalArgumentException {
 
-    // if a metric type is user or system flow metric then metric
+    // if a metric category is user or system flow metric then metric
     // group has be valid.
-    if (metricType == MetricType.FlowSystem ||
-        metricType == MetricType.FlowUser) {
+    if (metricCategory == MetricCategory.FlowSystem ||
+        metricCategory == MetricCategory.FlowUser) {
       if (metricGroup == null || metricGroup.isEmpty()) {
         throw new IllegalArgumentException("Metric group cannot be empty or null " +
                                              "for a flow metric.");
       }
     }
 
-    this.metricType = metricType;
+    this.metricCategory = metricCategory;
     this.metricGroup = metricGroup;
     this.counters = Maps.newConcurrentMap();
     this.gauges = Maps.newConcurrentMap();
@@ -94,8 +94,8 @@ public class CMetrics {
     this.histograms = Maps.newConcurrentMap();
   }
 
-  public CMetrics(MetricType metricType) throws IllegalArgumentException {
-    this(metricType, "");
+  public CMetrics(MetricCategory metricCategory) throws IllegalArgumentException {
+    this(metricCategory, "");
   }
 
   /**
@@ -130,7 +130,7 @@ public class CMetrics {
    * @return instance of {@link MetricName}
    */
   protected MetricName getMetricName(Class<?> scope, String metricName) {
-    return new MetricName(metricGroup, metricType.name(),
+    return new MetricName(metricGroup, metricCategory.name(),
                                      metricName,
                                      scope == null ? null : getScope(scope));
   }

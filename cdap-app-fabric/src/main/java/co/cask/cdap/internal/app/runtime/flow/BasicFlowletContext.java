@@ -71,7 +71,8 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.instanceCount = instanceCount;
     this.runtimeArguments = runtimeArguments;
     this.flowletSpec = flowletSpec;
-    this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId);
+    this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId,
+                                             runId.getId());
   }
 
   @Override

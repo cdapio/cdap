@@ -24,6 +24,7 @@ import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.base.Preconditions;
@@ -33,6 +34,7 @@ import com.google.common.collect.Maps;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NavigableMap;
 
 /**
  * Table for storing aggregated metrics for all time.
@@ -100,16 +102,30 @@ public final class AggregatesTable {
       while (records.hasNext()) {
         MetricsRecord record = records.next();
         byte[] rowKey = getKey(record.getContext(), record.getName(), record.getRunId());
-        Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+        if (record.getType() == MetricType.COUNTER) {
+          Map<byte[], Long> increments = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-        // The no tag value
-        increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), (long) record.getValue());
+          // The no tag value
+          increments.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
 
-        // For each tag, increments corresponding values
-        for (TagMetric tag : record.getTags()) {
-          increments.put(Bytes.toBytes(tag.getTag()), (long) tag.getValue());
+          // For each tag, increments corresponding values
+          for (TagMetric tag : record.getTags()) {
+            increments.put(Bytes.toBytes(tag.getTag()), tag.getValue());
+          }
+          aggregatesTable.increment(rowKey, increments);
+        } else if (record.getType() == MetricType.GAUGE) {
+          NavigableMap<byte[], Long> gauges = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+          // The no tag value
+          gauges.put(Bytes.toBytes(MetricsConstants.EMPTY_TAG), record.getValue());
+
+          // For each tag, sets corresponding values
+          for (TagMetric tag : record.getTags()) {
+            gauges.put(Bytes.toBytes(tag.getTag()), record.getValue());
+          }
+          NavigableMap<byte[], NavigableMap<byte[], Long>> keyMap = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+          keyMap.put(rowKey, gauges);
+          aggregatesTable.put(keyMap);
         }
-        aggregatesTable.increment(rowKey, increments);
       }
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);

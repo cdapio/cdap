@@ -41,40 +41,40 @@ public abstract class MetricsTableTest {
 
   protected abstract MetricsTable getTable(String name) throws Exception;
 
-  static final byte[] A = { 'a' };
-  static final byte[] B = { 'b' };
-  static final byte[] C = { 'c' };
-  static final byte[] P = { 'p' };
-  static final byte[] Q = { 'q' };
-  static final byte[] R = { 'r' };
-  static final byte[] X = { 'x' };
-  static final byte[] Y = { 'y' };
-  static final byte[] Z = { 'z' };
+  static final byte[] A = Bytes.toBytes(1L);
+  static final byte[] B = Bytes.toBytes(2L);
+  static final byte[] C = Bytes.toBytes(3L);
+  static final byte[] P = Bytes.toBytes(4L);
+  static final byte[] Q = Bytes.toBytes(5L);
+  static final byte[] R = Bytes.toBytes(6L);
+  static final byte[] X = Bytes.toBytes(7L);
+  static final byte[] Y = Bytes.toBytes(8L);
+  static final byte[] Z = Bytes.toBytes(9L);
 
   @Test
   public void testGetPutSwap() throws Exception {
     MetricsTable table = getTable("testGetPutSwap");
     // put two rows
-    table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], byte[]>>orderedBy(Bytes.BYTES_COMPARATOR)
-              .put(A, Bytes.immutableSortedMapOf(P, X, Q, Y))
-              .put(B, Bytes.immutableSortedMapOf(P, X, R, Z)).build());
-    Assert.assertArrayEquals(X, table.get(A, P));
-    Assert.assertArrayEquals(Y, table.get(A, Q));
+    table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+              .put(A, Bytes.immutableSortedMapOf(P, Bytes.toLong(X), Q, Bytes.toLong(Y)))
+              .put(B, Bytes.immutableSortedMapOf(P, Bytes.toLong(X), R, Bytes.toLong(Z))).build());
+    Assert.assertEquals(Bytes.toLong(X), Bytes.toLong(table.get(A, P)));
+    Assert.assertEquals(Bytes.toLong(Y), Bytes.toLong(table.get(A, Q)));
     Assert.assertNull(table.get(A, R));
-    Assert.assertArrayEquals(X, table.get(B, P));
-    Assert.assertArrayEquals(Z, table.get(B, R));
+    Assert.assertEquals(Bytes.toLong(X), Bytes.toLong(table.get(B, P)));
+    Assert.assertEquals(Bytes.toLong(Z), Bytes.toLong(table.get(B, R)));
     Assert.assertNull(table.get(B, Q));
 
     // put one row again, with overlapping key set
-    table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], byte[]>>orderedBy(Bytes.BYTES_COMPARATOR)
-              .put(A, Bytes.immutableSortedMapOf(P, A, R, C)).build());
-    Assert.assertArrayEquals(A, table.get(A, P));
-    Assert.assertArrayEquals(Y, table.get(A, Q));
-    Assert.assertArrayEquals(C, table.get(A, R));
+    table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+              .put(A, Bytes.immutableSortedMapOf(P, Bytes.toLong(A), R, Bytes.toLong(C))).build());
+    Assert.assertEquals(Bytes.toLong(A), Bytes.toLong(table.get(A, P)));
+    Assert.assertEquals(Bytes.toLong(Y), Bytes.toLong(table.get(A, Q)));
+    Assert.assertEquals(Bytes.toLong(C), Bytes.toLong(table.get(A, R)));
 
     // compare and swap an existing value, successfully
     Assert.assertTrue(table.swap(A, P, A, B));
-    Assert.assertArrayEquals(B, table.get(A, P));
+    Assert.assertEquals(Bytes.toLong(B), Bytes.toLong(table.get(A, P)));
     // compare and swap an existing value that does not match
     Assert.assertFalse(table.swap(A, P, A, B));
     Assert.assertArrayEquals(B, table.get(A, P));
@@ -173,9 +173,9 @@ public abstract class MetricsTableTest {
     private final byte[] row;
     private final byte[] col;
     private final AtomicInteger[] counts;
-    private final int rounds;
+    private final long rounds;
 
-    SwapThread(MetricsTable table, byte[] row, byte[] col, AtomicInteger[] counts, int rounds) {
+    SwapThread(MetricsTable table, byte[] row, byte[] col, AtomicInteger[] counts, long rounds) {
       this.table = table;
       this.row = row;
       this.col = col;
@@ -184,7 +184,7 @@ public abstract class MetricsTableTest {
     }
 
     public void run() {
-      for (int i = 0; i < rounds; i++) {
+      for (long i = 0; i < rounds; i++) {
         try {
           boolean success = table.swap(row, col, Bytes.toBytes(i), Bytes.toBytes(i + 1));
           counts[success ? 0 : 1].incrementAndGet();
@@ -199,9 +199,9 @@ public abstract class MetricsTableTest {
   @Test
   public void testConcurrentSwap() throws Exception {
     MetricsTable table = getTable("testConcurrentSwap");
-    final int rounds = 500;
-    table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], byte[]>>orderedBy(Bytes.BYTES_COMPARATOR)
-                .put(A, Bytes.immutableSortedMapOf(B, Bytes.toBytes(0))).build());
+    final long rounds = 500;
+    table.put(ImmutableSortedMap.<byte[], NavigableMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+                .put(A, Bytes.immutableSortedMapOf(B, 0L)).build());
     AtomicInteger[] counts = { new AtomicInteger(), new AtomicInteger() }; // [0] for success, [1] for failures
     Thread t1 = new SwapThread(table, A, B, counts, rounds);
     Thread t2 = new SwapThread(table, A, B, counts, rounds);
@@ -209,7 +209,7 @@ public abstract class MetricsTableTest {
     t2.start();
     t1.join();
     t2.join();
-    Assert.assertArrayEquals(Bytes.toBytes(rounds), table.get(A, B));
+    Assert.assertEquals(rounds, Bytes.toLong(table.get(A, B)));
     Assert.assertEquals(rounds, counts[0].get()); // number of successful swaps
     Assert.assertEquals(rounds, counts[1].get()); // number of failed swaps
   }
@@ -217,9 +217,9 @@ public abstract class MetricsTableTest {
   @Test
   public void testDelete() throws Exception {
     MetricsTable table = getTable("testDelete");
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     for (int i = 0; i < 1024; i++) {
-      writes.put(Bytes.toBytes(i << 22), Bytes.immutableSortedMapOf(A, X));
+      writes.put(Bytes.toBytes(i << 22), Bytes.immutableSortedMapOf(A, Bytes.toLong(X)));
     }
     table.put(writes);
     // verify the first and last are there (sanity test for correctness of test logic)
@@ -275,14 +275,15 @@ public abstract class MetricsTableTest {
   @Test
   public void testFuzzyScan() throws Exception {
     MetricsTable table = getTable("testFuzzyScan");
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {
       for (byte b2 : abc) {
         for (byte b3 : abc) {
           for (byte b4 : abc) {
             // we put two columns, but will scan only one column
-            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, X, B, Y));
+            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, Bytes.toLong(X), B,
+                                                                                 Bytes.toLong(Y)));
           }
         }
       }
@@ -313,14 +314,15 @@ public abstract class MetricsTableTest {
   @Test
   public void testRangeDeleteWithoutFilter() throws Exception {
     MetricsTable table = getTable("rangeDelete");
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {
       for (byte b2 : abc) {
         for (byte b3 : abc) {
           for (byte b4 : abc) {
             // we put two columns, but will scan only one column
-            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, X, B, Y));
+            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, Bytes.toLong(X), B,
+                                                                                 Bytes.toLong(Y)));
           }
         }
       }
@@ -360,14 +362,15 @@ public abstract class MetricsTableTest {
   @Test
   public void testRangeDeleteWithFilter() throws Exception {
     MetricsTable table = getTable("rangeDelete");
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], NavigableMap<byte[], Long>> writes = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     byte[] abc = { 'a', 'b', 'c' };
     for (byte b1 : abc) {
       for (byte b2 : abc) {
         for (byte b3 : abc) {
           for (byte b4 : abc) {
             // we put two columns, but will scan only one column
-            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, X, B, Y));
+            writes.put(new byte[] { b1, b2, b3, b4 }, Bytes.immutableSortedMapOf(A, Bytes.toLong(X), B,
+                                                                                 Bytes.toLong(Y)));
           }
         }
       }

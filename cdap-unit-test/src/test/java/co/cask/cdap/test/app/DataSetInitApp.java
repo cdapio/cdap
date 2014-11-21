@@ -28,6 +28,8 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletException;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -74,13 +76,15 @@ public class DataSetInitApp extends AbstractApplication {
 
 
     @Override
-    public void initialize(FlowletContext context) throws FlowletException {
+    public void initialize(FlowletContext context) throws Exception {
+      super.initialize(context);
+      // Put some data in initialize, expect be able to read it back in the next flowlet.
       confTable.put(new Put("key", "column", "generator"));
     }
 
     @Tick(delay = 10, unit = TimeUnit.MINUTES)
     public void generate() {
-      output.emit("test");
+      output.emit("test" + getContext().getInstanceId());
     }
   }
 
@@ -89,14 +93,19 @@ public class DataSetInitApp extends AbstractApplication {
    */
   public static final class Consumer extends AbstractFlowlet {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Consumer.class);
+
     @UseDataSet("conf")
     private Table confTable;
 
     @ProcessInput (maxRetries = 0)
     public void process(String str) {
+      // Read data from Dataset, supposed to be written from Generator initialize method
       if (!"generator".equals(confTable.get(new Get("key", "column")).getString("column"))) {
         throw new IllegalArgumentException("Illegal value");
       }
+
+      LOG.info("Received: {}", str);
     }
   }
 }

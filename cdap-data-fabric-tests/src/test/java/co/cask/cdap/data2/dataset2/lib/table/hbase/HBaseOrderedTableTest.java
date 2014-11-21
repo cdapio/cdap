@@ -26,14 +26,23 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTable;
 import co.cask.cdap.data2.dataset2.lib.table.ordered.BufferingOrderedTableTest;
+import co.cask.cdap.data2.increment.hbase96.IncrementHandler;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.inmemory.DetachedTxSystemClient;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HRegionInfo;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.regionserver.HRegion;
+import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -48,6 +57,13 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.Nullable;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  *
@@ -160,6 +176,75 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
       Assert.assertArrayEquals(Bytes.toBytes("c"), regions.get(3).getStartKey());
     } finally {
       hBaseAdmin.close();
+    }
+  }
+
+  @Test
+  public void testEnableIncrements() throws Exception {
+    // setup a table with increments disabled and with it enabled
+    String disableTableName = "incr-disable";
+    String enabledTableName = "incr-enable";
+    HBaseOrderedTableAdmin disabledAdmin = getTableAdmin(disableTableName, DatasetProperties.EMPTY);
+    disabledAdmin.create();
+
+    DatasetProperties props =
+      DatasetProperties.builder().add(OrderedTable.PROPERTY_READLESS_INCREMENT, "true").build();
+    HBaseOrderedTableAdmin enabledAdmin = getTableAdmin(enabledTableName, props);
+    enabledAdmin.create();
+
+    try {
+      HBaseAdmin admin = testHBase.getHBaseAdmin();
+      try {
+        HTableDescriptor htd = admin.getTableDescriptor(Bytes.toBytes(disableTableName));
+        List<String> cps = htd.getCoprocessors();
+        assertFalse(cps.contains(IncrementHandler.class.getName()));
+
+        htd = admin.getTableDescriptor(Bytes.toBytes(enabledTableName));
+        cps = htd.getCoprocessors();
+        assertTrue(cps.contains(IncrementHandler.class.getName()));
+      } finally {
+        admin.close();
+      }
+
+      BufferingOrderedTable table = getTable(enabledTableName, ConflictDetection.COLUMN);
+      byte[] row = Bytes.toBytes("row1");
+      byte[] col = Bytes.toBytes("col1");
+      DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
+      Transaction tx = txSystemClient.startShort();
+      table.startTx(tx);
+      table.increment(row, col, 10);
+      table.commitTx();
+      // verify that value was written as a delta value
+      final byte[] expectedValue = Bytes.add(IncrementHandler.DELTA_MAGIC_PREFIX, Bytes.toBytes(10L));
+      final AtomicBoolean foundValue = new AtomicBoolean();
+      testHBase.forEachRegion(Bytes.toBytes(enabledTableName), new Function<HRegion, Object>() {
+        @Nullable
+        @Override
+        public Object apply(@Nullable HRegion hRegion) {
+          Scan scan = new Scan();
+          try {
+            RegionScanner scanner = hRegion.getScanner(scan);
+            List<Cell> results = Lists.newArrayList();
+            boolean hasMore;
+            do {
+              hasMore = scanner.next(results);
+              for (Cell cell : results) {
+                if (CellUtil.matchingValue(cell, expectedValue)) {
+                  foundValue.set(true);
+                }
+              }
+            } while (hasMore);
+          } catch (IOException ioe) {
+            fail("IOException scanning region: " + ioe.getMessage());
+          }
+          return null;
+        }
+      });
+      assertTrue("Should have seen the expected encoded delta value in the " + enabledTableName + " table region",
+                 foundValue.get());
+    } finally {
+      disabledAdmin.drop();
+      enabledAdmin.drop();
     }
   }
 

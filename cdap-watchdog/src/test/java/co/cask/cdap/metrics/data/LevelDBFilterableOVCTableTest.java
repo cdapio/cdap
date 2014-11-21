@@ -29,6 +29,7 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
 import co.cask.cdap.metrics.MetricsConstants;
+import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
 import com.google.common.collect.Lists;
@@ -63,13 +64,20 @@ public class LevelDBFilterableOVCTableTest {
     List<MetricsRecord> records = Lists.newLinkedList();
     List<TagMetric> tags = Lists.newArrayList();
     long ts = 1317470400;
-    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.reads", tags, ts, 10));
-    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.writes", tags, ts, 10));
-    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.attempts", tags, ts, 10));
-    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.errors", tags, ts, 10));
-    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "count.reads", tags, ts, 20));
-    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "count.writes", tags, ts, 20));
-    records.add(new MetricsRecord("app1.p.procedure1", "0", "count", tags, ts, 50));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.reads", tags, ts, 10,
+                                  MetricType.COUNTER));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.writes", tags, ts, 10,
+                                  MetricType.COUNTER));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.attempts", tags, ts, 10,
+                                  MetricType.COUNTER));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet1", "0", "count.errors", tags, ts, 10,
+                                  MetricType.COUNTER));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "count.reads", tags, ts, 20,
+                                  MetricType.COUNTER));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "count.writes", tags, ts, 20,
+                                  MetricType.COUNTER));
+    records.add(new MetricsRecord("app1.p.procedure1", "0", "count", tags, ts, 50,
+                                  MetricType.COUNTER));
     table.update(records);
 
     // check that we get the right flow metrics for the app
@@ -118,7 +126,7 @@ public class LevelDBFilterableOVCTableTest {
     String context = "app1.f.flow1.flowlet1";
     // insert time values that the query should not return
     for (int i = -2; i < secondsToQuery + 2; i++) {
-      records.add(new MetricsRecord(context, "0", "reads", tags, ts + i, i));
+      records.add(new MetricsRecord(context, "0", "reads", tags, ts + i, i, MetricType.COUNTER));
     }
     List<TimeValue> expectedFlowlet1Timevalues = Lists.newArrayListWithExpectedSize(secondsToQuery);
     for (int i = 0; i < secondsToQuery; i++) {
@@ -127,13 +135,15 @@ public class LevelDBFilterableOVCTableTest {
     expectedResults.put("app1.f.flow1.flowlet1", expectedFlowlet1Timevalues);
 
     // add some other metrics in other contexts that should not get returned
-    records.add(new MetricsRecord("app1.p.procedure1", "0", "reads", tags, ts, 5));
-    records.add(new MetricsRecord("app1.f.flow2.flowlet1", "0", "reads", tags, ts, 10));
+    records.add(new MetricsRecord("app1.p.procedure1", "0", "reads", tags, ts, 5, MetricType.COUNTER));
+    records.add(new MetricsRecord("app1.f.flow2.flowlet1", "0", "reads", tags, ts, 10, MetricType.COUNTER));
 
     // this one should get returned
-    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts, 15));
-    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + secondsToQuery - 1, 20));
-    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + secondsToQuery + 5, 100));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts, 15, MetricType.COUNTER));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + secondsToQuery - 1, 20,
+                                  MetricType.COUNTER));
+    records.add(new MetricsRecord("app1.f.flow1.flowlet2", "0", "reads", tags, ts + secondsToQuery + 5, 100,
+                                  MetricType.COUNTER));
     expectedResults.put("app1.f.flow1.flowlet2",
                         Lists.newArrayList(new TimeValue(ts, 15), new TimeValue(ts + secondsToQuery - 1, 20)));
     tsTable.save(records);

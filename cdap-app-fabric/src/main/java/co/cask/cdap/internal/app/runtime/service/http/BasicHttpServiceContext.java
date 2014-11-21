@@ -16,24 +16,23 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.http.HttpServiceContext;
-import co.cask.cdap.api.service.http.HttpServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Default implementation of HttpServiceContext which simply stores and retrieves the
@@ -41,35 +40,35 @@ import java.util.Set;
  */
 public class BasicHttpServiceContext extends AbstractContext implements TransactionalHttpServiceContext {
 
-  private final HttpServiceSpecification spec;
+  private final HttpServiceHandlerSpecification spec;
   private final Map<String, String> runtimeArgs;
   private final TransactionContext txContext;
   private final ServiceRunnableMetrics serviceRunnableMetrics;
 
   /**
    * Instantiates the context with a spec and a array of runtime arguments.
-   *
-   * @param spec the {@link HttpServiceSpecification} for this context.
+   *  @param spec the {@link HttpServiceHandlerSpecification} for this context.
    * @param runtimeArgs the runtime arguments as a list of strings.
    */
-  public BasicHttpServiceContext(HttpServiceSpecification spec, String[] runtimeArgs, Program program, RunId runId,
-                                 Set<String> datasets, String metricsContext,
+  public BasicHttpServiceContext(HttpServiceHandlerSpecification spec,
+                                 Program program, RunId runId, int instanceId, Arguments runtimeArgs,
                                  MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
-                                 CConfiguration conf,
-                                 DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient) {
-    super(program, runId, datasets, metricsContext, metricsCollectionService, dsFramework, conf,
-          discoveryServiceClient);
+                                 CConfiguration conf, DiscoveryServiceClient discoveryServiceClient,
+                                 TransactionSystemClient txClient) {
+    super(program, runId, spec.getDatasets(), getMetricsContext(program, instanceId),
+          metricsCollectionService, dsFramework, conf, discoveryServiceClient);
     this.spec = spec;
-    this.runtimeArgs = ImmutableMap.copyOf(RuntimeArguments.fromPosixArray(runtimeArgs));
+    this.runtimeArgs = runtimeArgs.asMap();
     this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
-    this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService, metricsContext);
+    this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService,
+                                                             getMetricsContext(program, instanceId), runId.getId());
   }
 
   /**
-   * @return the {@link HttpServiceSpecification} for this context
+   * @return the {@link HttpServiceHandlerSpecification} for this context
    */
   @Override
-  public HttpServiceSpecification getSpecification() {
+  public HttpServiceHandlerSpecification getSpecification() {
     return spec;
   }
 
@@ -89,5 +88,11 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public TransactionContext getTransactionContext() {
     return txContext;
+  }
+
+  private static String getMetricsContext(Program program, int instanceId) {
+    return String.format("%s.%s.%s.%s.%d",
+                         program.getApplicationId(), TypeId.getMetricContextId(program.getType()),
+                         program.getName(), program.getName(), instanceId);
   }
 }

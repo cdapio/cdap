@@ -34,7 +34,6 @@ import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
@@ -102,12 +101,10 @@ public class WordCountApp extends AbstractApplication {
    * Map reduce job to test MDS.
    */
   public static class VoidMapReduceJob extends AbstractMapReduce {
+
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("VoidMapReduceJob")
-        .setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here for testing MDS")
-        .build();
+    protected void configure() {
+      setDescription("Mapreduce that does nothing (and actually doesn't run) - it is here for testing MDS");
     }
   }
 

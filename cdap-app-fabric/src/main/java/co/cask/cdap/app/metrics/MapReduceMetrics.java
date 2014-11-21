@@ -18,6 +18,8 @@ package co.cask.cdap.app.metrics;
 
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.proto.ProgramType;
 
 /**
  * Metrics collector for MapReduce job.
@@ -43,9 +45,10 @@ public final class MapReduceMetrics extends AbstractProgramMetrics {
   }
 
   public MapReduceMetrics(MetricsCollectionService collectionService, String applicationId,
-                          String mapReduceId, TaskType type) {
+                          String mapReduceId, TaskType type, String runId) {
     super(collectionService.getCollector(
       MetricsScope.USER,
-      String.format("%s.b.%s.%s", applicationId, mapReduceId, type.getId()), "0"));
+      String.format("%s.%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.MAPREDUCE), mapReduceId,
+                    type.getId()), runId));
   }
 }
