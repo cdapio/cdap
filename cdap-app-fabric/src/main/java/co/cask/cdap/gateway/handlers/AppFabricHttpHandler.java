@@ -54,7 +54,6 @@ import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
@@ -248,8 +247,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final StreamConsumerFactory streamConsumerFactory;
 
-  private final ExploreFacade exploreFacade;
-
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
@@ -318,8 +315,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               StreamConsumerFactory streamConsumerFactory,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DatasetFramework dsFramework,
-                              ExploreFacade exploreFacade) {
+                              DatasetFramework dsFramework) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
@@ -340,7 +336,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.dsFramework =
       new NamespacedDatasetFramework(dsFramework,
                                      new DefaultDatasetNamespace(configuration, Namespace.USER));
-    this.exploreFacade = exploreFacade;
   }
 
   /**
@@ -2146,24 +2141,14 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     QUEUES, STREAMS
   }
 
-  private void dropAllStreams(Id.Account accountId) throws Exception {
-    for (StreamSpecification streamSpec : store.getAllStreams(accountId)) {
-      String streamName = streamSpec.getName();
-      exploreFacade.disableExploreStream(streamName);
-      streamAdmin.drop(streamName);
-    }
-    streamAdmin.dropAll();
-  }
-
   private void clear(HttpRequest request, final HttpResponder responder, ToClear toClear) {
     try {
-      String account = getAuthenticatedAccountId(request);
-      final Id.Account accountId = Id.Account.from(account);
+      getAuthenticatedAccountId(request);
       try {
         if (toClear == ToClear.QUEUES) {
           queueAdmin.dropAll();
         } else if (toClear == ToClear.STREAMS) {
-          dropAllStreams(accountId);
+          streamAdmin.dropAll();
         }
         responder.sendStatus(HttpResponseStatus.OK);
       } catch (Exception e) {
@@ -3156,13 +3141,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       dsFramework.deleteAllModules();
 
       deleteMetrics(account, null);
+      // delete all meta data
+      store.removeAll(accountId);
       // todo: delete only for specified account
       // delete queues and streams data
       queueAdmin.dropAll();
-      dropAllStreams(accountId);
-
-      // delete all meta data. Delete last, as it might be needed to delete other things.
-      store.removeAll(accountId);
+      streamAdmin.dropAll();
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);
