@@ -177,7 +177,7 @@ public class SparkKMeansApp extends AbstractApplication {
                              String.format("No centers found for index: %s", index), Charsets.UTF_8);
       } else {
         LOG.debug("Retrieved centers: {}", centers);
-        responder.sendJson(centers);
+        responder.sendString(centers);
       }
     }
   }
