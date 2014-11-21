@@ -200,7 +200,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       HttpRequest request = (HttpRequest) msg;
       // In order to have independent health check for the router status command should
       // be served by router itself without talking to any downstream services.
-      // Please see jira CDAP-663 for the details -
       if (request.getUri().matches(Constants.EndPoints.STATUS)) {
         String statusString = "OK.\n";
         ChannelBuffer responseContent = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(statusString));
