@@ -142,4 +142,5 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
                Lists.<QueryResult>newArrayList());
   }
+
 }

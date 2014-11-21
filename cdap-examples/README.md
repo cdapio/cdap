@@ -5,9 +5,9 @@ They are not compiled as part of the master build, and they should only depend
 on the API jars (plus their dependencies). However, they may also be provided 
 in their compiled forms as JAR files in a release.
 
-Additional information about selected examples is available at the Cask website:
+Additional information about examples is available at the Cask documentation website:
 
->   http://docs.cask.co/cdap/current/en/examples/
+>   http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html
 
 
 # Building
@@ -29,10 +29,10 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 ## HelloWorld
 
 - This is a simple HelloWorld example that uses one Stream, one Dataset, one Flow and one
-  Procedure.
+  Service.
 - A Stream, to send names to.
 - A Flow, with a single Flowlet that reads the Stream and stores each name in a KeyValueTable.
-- A Procedure, that reads the name from the KeyValueTable and prints "Hello [Name]!"
+- A Service, that reads the name from the KeyValueTable and responds with "Hello [Name]!"
 
 ## Purchase
 
@@ -69,12 +69,16 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 - An application that demonstrates streaming text analysis using a Spark program.
 - It computes the page rank of URLs from an input stream.
 
+## WebAnalytics
+
+- An application to generate statistics and to provide insights about web usage through 
+  the analysis of web traffic.
+
 ## WordCount
 
 - A simple application that counts words and tracks word associations and unique words
   seen on the Stream. It demonstrates the power of using Datasets and how they can be used
   to simplify storing complex data.
-
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.
 

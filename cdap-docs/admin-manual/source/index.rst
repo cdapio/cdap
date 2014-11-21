@@ -70,6 +70,10 @@ introduces the CDAP Console.**
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
 
+.. |troubleshooting| replace:: **Troubleshooting:**
+.. _troubleshooting: operations/troubleshooting.html
+
+- |troubleshooting|_ Selected examples of potential problems and possible resolutions.
 
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
