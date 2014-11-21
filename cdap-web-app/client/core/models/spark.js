@@ -136,7 +136,7 @@ define(['core/models/program'], function (Program) {
             var paths = [];
             var pathMap = {};
             for (var path in METRICS_PATHS) {
-                var url = new S(path).template({'appId': appId, 'programId': programId}).s;
+                var url = S(path).template({'appId': appId, 'programId': programId}).s;
                 paths.push(url);
                 pathMap[url] = METRICS_PATHS[path];
             }
