@@ -24,7 +24,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -69,10 +68,9 @@ public class LocalManagerTest {
       JarFinder.getJar(ToyApp.class, AppFabricClient.getManifestWithMainClass(ToyApp.class))
     );
 
-    ListenableFuture<?> p = AppFabricTestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar);
-    ApplicationWithPrograms input = (ApplicationWithPrograms) p.get();
+    ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(DefaultId.ACCOUNT,
+                                                                                 null, deployedJar).get();
 
-    Assert.assertEquals(input.getAppSpecLoc().getArchive(), deployedJar);
     Assert.assertEquals(input.getPrograms().iterator().next().getType(), ProgramType.FLOW);
     Assert.assertEquals(input.getPrograms().iterator().next().getName(), "ToyFlow");
   }

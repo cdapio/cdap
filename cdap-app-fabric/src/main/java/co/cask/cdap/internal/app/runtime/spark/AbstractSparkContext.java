@@ -70,23 +70,16 @@ abstract class AbstractSparkContext implements SparkContext {
   private final long logicalStartTime;
   private final SparkSpecification spec;
   private final Arguments runtimeArguments;
-  final BasicSparkContext basicSparkContext;
+  private final BasicSparkContext basicSparkContext;
   private final SparkConf sparkConf;
-  private final StreamAdmin streamAdmin;
-  private final SerializableServiceDiscoverer serializableServiceDiscoverer;
 
-  public AbstractSparkContext(StreamAdmin streamAdmin) {
+  public AbstractSparkContext(BasicSparkContext basicSparkContext) {
     hConf = loadHConf();
-    // Create an instance of BasicSparkContext from the Hadoop Configuration file which was just loaded
-    SparkContextProvider sparkContextProvider = new SparkContextProvider(hConf);
-    basicSparkContext = sparkContextProvider.get();
+    this.basicSparkContext = basicSparkContext;
     this.logicalStartTime = basicSparkContext.getLogicalStartTime();
     this.spec = basicSparkContext.getSpecification();
     this.runtimeArguments = basicSparkContext.getRuntimeArgs();
-    this.streamAdmin = streamAdmin;
     this.sparkConf = initializeSparkConf();
-    SerializableServiceDiscoverer.setDiscoveryServiceClient(basicSparkContext.getDiscoveryServiceClient());
-    this.serializableServiceDiscoverer = new SerializableServiceDiscoverer(basicSparkContext.getProgram());
   }
 
   /**
@@ -206,7 +199,7 @@ abstract class AbstractSparkContext implements SparkContext {
    */
   private void configureStreamInput(Configuration hConf, StreamBatchReadable stream, Class<?> vClass)
     throws IOException {
-    StreamConfig streamConfig = streamAdmin.getConfig(stream.getStreamName());
+    StreamConfig streamConfig = basicSparkContext.getStreamAdmin().getConfig(stream.getStreamName());
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
     StreamInputFormat.setTTL(hConf, streamConfig.getTTL());
@@ -275,6 +268,6 @@ abstract class AbstractSparkContext implements SparkContext {
 
   @Override
   public ServiceDiscoverer getServiceDiscoverer() {
-    return serializableServiceDiscoverer;
+    return basicSparkContext.getSerializableServiceDiscoverer();
   }
 }

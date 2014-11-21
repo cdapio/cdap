@@ -11,11 +11,15 @@ Introduction
 
 .. highlight:: console
 
+.. _http-restful-api-conventions:
+
 Conventions
 ============
 
 In this API, *client* refers to an external application that is calling CDAP using the HTTP interface.
 *Application* refers to a user Application that has been deployed into CDAP.
+
+.. rubric:: Base URL
 
 All URLs referenced in this API have this base URL::
 
@@ -35,11 +39,12 @@ For example::
 
   PUT <base-url>/streams/<new-stream-id>
 
-means
-::
+means::
 
   PUT http://<host>:<port>/v2/streams/<new-stream-id>
-  
+
+
+.. rubric:: Variable Replacement
 
 Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
 
