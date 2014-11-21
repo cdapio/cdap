@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.proto.ProgramRunStatus;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -56,42 +57,52 @@ public interface ProgramController {
     /**
      * Program is starting.
      */
-    STARTING,
+    STARTING(ProgramRunStatus.RUNNING),
 
     /**
      * Program is alive.
      */
-    ALIVE,
+    ALIVE(ProgramRunStatus.RUNNING),
 
     /**
      * Trying to suspend the program.
      */
-    SUSPENDING,
+    SUSPENDING(ProgramRunStatus.RUNNING),
 
     /**
      * Program is suspended.
      */
-    SUSPENDED,
+    SUSPENDED(ProgramRunStatus.RUNNING),
 
     /**
      * Trying to resume a suspended program.
      */
-    RESUMING,
+    RESUMING(ProgramRunStatus.RUNNING),
 
     /**
      * Trying to stop a program.
      */
-    STOPPING,
+    STOPPING(ProgramRunStatus.RUNNING),
 
     /**
      * Program stopped. It is a terminal state, no more state transition is allowed.
      */
-    STOPPED,
+    STOPPED(ProgramRunStatus.COMPLETED),
 
     /**
      * Program runs into error. It is a terminal state, no more state transition is allowed.
      */
-    ERROR
+    ERROR(ProgramRunStatus.FAILED);
+
+    private final ProgramRunStatus runStatus;
+
+    private State(ProgramRunStatus runStatus) {
+      this.runStatus = runStatus;
+    }
+
+    public ProgramRunStatus getRunStatus() {
+      return runStatus;
+    }
   }
 
   RunId getRunId();

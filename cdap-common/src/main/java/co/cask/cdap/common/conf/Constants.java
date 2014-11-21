@@ -119,16 +119,6 @@ public final class Constants {
     public static final int DEFAULT_HISTORY_RESULTS_LIMIT = 100;
 
     public static final String SERVICE_DESCRIPTION = "Service for managing application lifecycle.";
-
-    /**
-     * Program Status Types used to query program runs
-     */
-    public static enum ProgramRunStatusType {
-      ALL,
-      RUNNING,
-      COMPLETED,
-      FAILED
-    };
   }
 
   /**

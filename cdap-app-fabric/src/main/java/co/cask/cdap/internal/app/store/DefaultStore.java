@@ -49,6 +49,7 @@ import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -190,7 +191,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunRecord> getRuns(final Id.Program id, final Constants.AppFabric.ProgramRunStatusType status,
+  public List<RunRecord> getRuns(final Id.Program id, final ProgramRunStatus status,
                                  final long startTime, final long endTime, final int limit) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override

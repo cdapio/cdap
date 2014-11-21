@@ -39,7 +39,7 @@ public abstract class AbstractCommand implements Command {
    * Creates a string representing the body in the output. It only prints up to {@link #DEFAULT_MAX_BODY_SIZE},
    * with line wrap at each {@link #DEFAULT_LINE_WRAP_LIMIT} character.
    */
-  public static String getBody(ByteBuffer body) {
+  public String getBody(ByteBuffer body) {
     return getBody(body, DEFAULT_MAX_BODY_SIZE, DEFAULT_LINE_WRAP_LIMIT, DEFAULT_LINE_SEPARATOR);
   }
 
@@ -47,7 +47,7 @@ public abstract class AbstractCommand implements Command {
    * Creates a string representing the body in the output. It only prints up to {@code maxBodySize}, with line
    * wrap at each {@code lineWrapLimit} character.
    */
-  public static String getBody(ByteBuffer body, int maxBodySize, int lineWrapLimit, String lineSeparator) {
+  public String getBody(ByteBuffer body, int maxBodySize, int lineWrapLimit, String lineSeparator) {
     ByteBuffer bodySlice = body.slice();
     boolean hasMore = false;
     if (bodySlice.remaining() > maxBodySize) {
@@ -66,7 +66,7 @@ public abstract class AbstractCommand implements Command {
    * Creates a string representing the output of response headers. Each key/value pair is outputted on its own
    * line in the form {@code <key> : <value>}.
    */
-  public static String formatHeader(Map<String, String> headers) {
+  public String formatHeader(Map<String, String> headers) {
     StringBuilder builder = new StringBuilder();
     String separator = "";
     for (Map.Entry<String, String> entry : headers.entrySet()) {
@@ -84,7 +84,7 @@ public abstract class AbstractCommand implements Command {
    * @return Timestamp in milliseconds
    * @throws co.cask.cdap.cli.exception.CommandInputError if failed to parse input.
    */
-  public static long getTimestamp(String arg, long base) {
+  public long getTimestamp(String arg, long base) {
     try {
       if (arg.startsWith("+") || arg.startsWith("-")) {
         int dir = arg.startsWith("+") ? 1 : -1;

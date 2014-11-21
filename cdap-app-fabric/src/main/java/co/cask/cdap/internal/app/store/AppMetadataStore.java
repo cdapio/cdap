@@ -21,12 +21,13 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -124,7 +125,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                  ProgramController.State state) {
     if (!EnumSet.of(ProgramController.State.STOPPED, ProgramController.State.ERROR).contains(state)) {
       write(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId, pid).build(),
-            new RunRecord(pid, startTs, -1, state.toString()));
+            new RunRecord(pid, startTs, -1, state.getRunStatus()));
     }
   }
 
@@ -145,45 +146,43 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId)
       .add(getInvertedTsKeyPart(started.getStartTs()))
       .add(pid).build();
-    write(key, new RunRecord(started, stopTs, endStatus.toString()));
+    write(key, new RunRecord(started, stopTs, endStatus.getRunStatus()));
   }
 
   public List<RunRecord> getRuns(String accountId, String appId, String programId,
-                                 Constants.AppFabric.ProgramRunStatusType status,
-                                 final long startTime, final long endTime, int limit) {
-    List<RunRecord> resultRecords = Lists.newArrayList();
-    if (status.equals(Constants.AppFabric.ProgramRunStatusType.ALL)) {
-      resultRecords.addAll(getActiveRuns(accountId, appId, programId, status, startTime, endTime, limit));
+                                 ProgramRunStatus status,
+                                 long startTime, long endTime, int limit) {
+    if (status.equals(ProgramRunStatus.ALL)) {
+      List<RunRecord> resultRecords = Lists.newArrayList();
+      resultRecords.addAll(getActiveRuns(accountId, appId, programId, startTime, endTime, limit));
       resultRecords.addAll(getHistoricalRuns(accountId, appId, programId, status, startTime, endTime, limit));
-    } else if (status.equals(Constants.AppFabric.ProgramRunStatusType.RUNNING)) {
-      resultRecords.addAll(getActiveRuns(accountId, appId, programId, status, startTime, endTime, limit));
+      return resultRecords;
+    } else if (status.equals(ProgramRunStatus.RUNNING)) {
+      return getActiveRuns(accountId, appId, programId, startTime, endTime, limit);
     } else {
-      //completed
-      resultRecords.addAll(getHistoricalRuns(accountId, appId, programId, status, startTime, endTime, limit));
+      return getHistoricalRuns(accountId, appId, programId, status, startTime, endTime, limit);
     }
-    return resultRecords;
   }
 
   private List<RunRecord> getActiveRuns(String accountId, String appId, String programId,
-                                        Constants.AppFabric.ProgramRunStatusType status,
                                         final long startTime, final long endTime, int limit) {
     Key activeKey = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId).build();
     Key start = new Key.Builder(activeKey).add(getInvertedTsKeyPart(endTime)).build();
     Key stop = new Key.Builder(activeKey).add(getInvertedTsKeyPart(startTime)).build();
-    return list(start, stop, RunRecord.class, limit, null);
+    return list(start, stop, RunRecord.class, limit, Predicates.<RunRecord>alwaysTrue());
   }
 
   private List<RunRecord> getHistoricalRuns(String accountId, String appId, String programId,
-                                            Constants.AppFabric.ProgramRunStatusType status,
+                                            ProgramRunStatus status,
                                             final long startTime, final long endTime, int limit) {
     Key historyKey = new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId, appId, programId).build();
     Key start = new Key.Builder(historyKey).add(getInvertedTsKeyPart(endTime)).build();
     Key stop = new Key.Builder(historyKey).add(getInvertedTsKeyPart(startTime)).build();
-    if (status.equals(Constants.AppFabric.ProgramRunStatusType.ALL)) {
+    if (status.equals(ProgramRunStatus.ALL)) {
       //return all records (successful and failed)
-      return list(start, stop, RunRecord.class, limit, null);
+      return list(start, stop, RunRecord.class, limit, Predicates.<RunRecord>alwaysTrue());
     }
-    if (status.equals(Constants.AppFabric.ProgramRunStatusType.COMPLETED)) {
+    if (status.equals(ProgramRunStatus.COMPLETED)) {
       return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.STOPPED));
     }
     return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.ERROR));
@@ -192,8 +191,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private Predicate<RunRecord> getPredicate(final ProgramController.State state) {
     return new Predicate<RunRecord>() {
       @Override
-      public boolean apply(@Nullable RunRecord record) {
-        return record.getStatus().equals(state.toString());
+      public boolean apply(RunRecord record) {
+        return record.getStatus().equals(state.getRunStatus());
       }
     };
   }

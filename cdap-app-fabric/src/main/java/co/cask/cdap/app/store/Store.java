@@ -24,7 +24,9 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import org.apache.twill.filesystem.Location;
@@ -82,7 +84,7 @@ public interface Store {
    * @return          list of logged runs
    * @throws          OperationException
    */
-  List<RunRecord> getRuns(Id.Program id, Constants.AppFabric.ProgramRunStatusType status,
+  List<RunRecord> getRuns(Id.Program id, ProgramRunStatus status,
                           long startTime, long endTime, int limit) throws OperationException;
 
   /**

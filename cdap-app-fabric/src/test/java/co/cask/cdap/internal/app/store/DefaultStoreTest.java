@@ -46,9 +46,9 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.Specifications;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
@@ -112,7 +112,7 @@ public class DefaultStoreTest {
     store.setStop(programId, "run1", now, ProgramController.State.STOPPED);
     store.setStop(programId, "run2", now, ProgramController.State.STOPPED);
 
-    List<RunRecord> history = store.getRuns(programId, Constants.AppFabric.ProgramRunStatusType.ALL,
+    List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                             Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(2, history.size());
   }
@@ -143,10 +143,10 @@ public class DefaultStoreTest {
                    ProgramController.State.STARTING);
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
-    List<RunRecord> successHistory = store.getRuns(programId, Constants.AppFabric.ProgramRunStatusType.COMPLETED,
+    List<RunRecord> successHistory = store.getRuns(programId, ProgramRunStatus.COMPLETED,
                                                    Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
 
-    List<RunRecord> failureHistory = store.getRuns(programId, Constants.AppFabric.ProgramRunStatusType.FAILED,
+    List<RunRecord> failureHistory = store.getRuns(programId, ProgramRunStatus.FAILED,
                                                    Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     // only finished + succeeded runs should be returned
@@ -157,12 +157,12 @@ public class DefaultStoreTest {
     RunRecord run = successHistory.get(0);
     Assert.assertEquals(now - 1000, run.getStartTs());
     Assert.assertEquals(now - 500, run.getStopTs());
-    Assert.assertEquals(ProgramController.State.STOPPED.toString(), run.getStatus());
+    Assert.assertEquals(ProgramController.State.STOPPED.getRunStatus(), run.getStatus());
 
     run = failureHistory.get(0);
     Assert.assertEquals(now - 2000, run.getStartTs());
     Assert.assertEquals(now - 1000, run.getStopTs());
-    Assert.assertEquals(ProgramController.State.ERROR.toString(), run.getStatus());
+    Assert.assertEquals(ProgramController.State.ERROR.getRunStatus(), run.getStatus());
   }
 
   @Test
@@ -593,7 +593,7 @@ public class DefaultStoreTest {
   }
 
   private void verifyRunHistory(Id.Program programId, int count) {
-    List<RunRecord> history = store.getRuns(programId, Constants.AppFabric.ProgramRunStatusType.ALL,
+    List<RunRecord> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                             Long.MIN_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, history.size());
   }
