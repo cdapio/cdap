@@ -104,7 +104,7 @@ public final class ScheduleTaskRunner {
   private void executeAndBlock(final Program program, ProgramOptions options) throws JobExecutionException {
     ProgramController controller = runtimeService.run(program, options).getController();
     store.setStart(program.getId(), controller.getRunId().getId(),
-                   TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS), controller.getState());
+                   TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
 
     final Id.Program programId = program.getId();
     final String runId = controller.getRunId().getId();

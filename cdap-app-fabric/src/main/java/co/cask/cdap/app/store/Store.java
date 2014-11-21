@@ -60,7 +60,7 @@ public interface Store {
    * @param pid       run id
    * @param startTime start timestamp
    */
-  void setStart(Id.Program id, String pid, long startTime, ProgramController.State state);
+  void setStart(Id.Program id, String pid, long startTime);
 
   /**
    * Logs end of program run.

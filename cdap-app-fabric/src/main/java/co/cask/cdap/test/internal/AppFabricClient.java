@@ -51,7 +51,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.zip.ZipException;
 
 /**
  * Client tool for AppFabricHttpHandler.
@@ -164,7 +163,7 @@ public class AppFabricClient {
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/workflows/%s/runs?status=completed", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId, null, null , null, "100");
+    httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId, null, null , null, 100);
     Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
 
     return responder.decodeResponseContent(new TypeToken<List<RunRecord>>() { });

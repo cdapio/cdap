@@ -664,13 +664,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runs")
   public void runnableHistory(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId,
-                              @PathParam("runnable-type") final String runnableType,
-                              @PathParam("runnable-id") final String runnableId,
-                              @QueryParam("status") final String status,
-                              @QueryParam("start") final String startTs,
-                              @QueryParam("end") final String endTs,
-                              @QueryParam("limit") @DefaultValue("100") final String resultLimit) {
+                              @PathParam("app-id") String appId,
+                              @PathParam("runnable-type") String runnableType,
+                              @PathParam("runnable-id") String runnableId,
+                              @QueryParam("status") String status,
+                              @QueryParam("start") String startTs,
+                              @QueryParam("end") String endTs,
+                              @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
     ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -678,8 +678,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
     long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
-    int limit = Integer.parseInt(resultLimit);
-    getRuns(request, responder, appId, runnableId, status, start, end, limit);
+    getRuns(request, responder, appId, runnableId, status, start, end, resultLimit);
   }
 
   /**
@@ -860,6 +859,17 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       final String runId = controller.getRunId().getId();
 
       controller.addListener(new AbstractListener() {
+
+        @Override
+        public void init(ProgramController.State state) {
+          store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+          if (state == ProgramController.State.STOPPED) {
+            stopped();
+          }
+          if (state == ProgramController.State.ERROR) {
+            error(new Exception("Error Starting the Program"));
+          }
+        }
         @Override
         public void stopped() {
           store.setStop(id, runId,
@@ -876,8 +886,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
-      store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                     controller.getState());
       return AppFabricServiceStatus.OK;
     } catch (DataSetInstantiationException e) {
       return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());

@@ -162,12 +162,11 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(final Id.Program id, final String pid, final long startTime,
-                       final ProgramController.State state) {
+  public void setStart(final Id.Program id, final String pid, final long startTime) {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.recordProgramStart(id.getAccountId(), id.getApplicationId(), id.getId(), pid, startTime, state);
+        mds.apps.recordProgramStart(id.getAccountId(), id.getApplicationId(), id.getId(), pid, startTime);
         return null;
       }
     });
