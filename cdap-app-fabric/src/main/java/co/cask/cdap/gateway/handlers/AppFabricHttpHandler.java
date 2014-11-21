@@ -54,6 +54,7 @@ import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
@@ -149,10 +150,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -249,6 +248,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final StreamConsumerFactory streamConsumerFactory;
 
+  private final ExploreFacade exploreFacade;
+
   /**
    * Number of seconds for timing out a service endpoint discovery.
    */
@@ -317,7 +318,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               StreamConsumerFactory streamConsumerFactory,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DatasetFramework dsFramework) {
+                              DatasetFramework dsFramework,
+                              ExploreFacade exploreFacade) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
@@ -338,6 +340,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.dsFramework =
       new NamespacedDatasetFramework(dsFramework,
                                      new DefaultDatasetNamespace(configuration, Namespace.USER));
+    this.exploreFacade = exploreFacade;
   }
 
   /**
@@ -2143,14 +2146,24 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     QUEUES, STREAMS
   }
 
+  private void dropAllStreams(Id.Account accountId) throws Exception {
+    for (StreamSpecification streamSpec : store.getAllStreams(accountId)) {
+      String streamName = streamSpec.getName();
+      exploreFacade.disableExploreStream(streamName);
+      streamAdmin.drop(streamName);
+    }
+    streamAdmin.dropAll();
+  }
+
   private void clear(HttpRequest request, final HttpResponder responder, ToClear toClear) {
     try {
-      getAuthenticatedAccountId(request);
+      String account = getAuthenticatedAccountId(request);
+      final Id.Account accountId = Id.Account.from(account);
       try {
         if (toClear == ToClear.QUEUES) {
           queueAdmin.dropAll();
         } else if (toClear == ToClear.STREAMS) {
-          streamAdmin.dropAll();
+          dropAllStreams(accountId);
         }
         responder.sendStatus(HttpResponseStatus.OK);
       } catch (Exception e) {
@@ -3143,12 +3156,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       dsFramework.deleteAllModules();
 
       deleteMetrics(account, null);
-      // delete all meta data
-      store.removeAll(accountId);
       // todo: delete only for specified account
       // delete queues and streams data
       queueAdmin.dropAll();
-      streamAdmin.dropAll();
+      dropAllStreams(accountId);
+
+      // delete all meta data. Delete last, as it might be needed to delete other things.
+      store.removeAll(accountId);
 
       LOG.info("All data for account '" + account + "' deleted.");
       responder.sendStatus(HttpResponseStatus.OK);
