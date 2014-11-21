@@ -23,7 +23,6 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.gateway.router.ProxyRule;
 import co.cask.cdap.gateway.router.RouterServiceLookup;
-import com.clearspring.analytics.util.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.io.Closeables;
@@ -204,16 +203,16 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private boolean isVisible(Discoverable discoverable) {
     if (discoverable instanceof PayloadDiscoverable) {
       PayloadDiscoverable payloadDiscoverable = (PayloadDiscoverable) discoverable;
-      String encodedACLS = Bytes.toString(payloadDiscoverable.getPayload());
-      if (!encodedACLS.isEmpty()) {
-        List<ACL> acls = GSON.fromJson(encodedACLS, new TypeToken<List<ACL>>() { }.getType());
+      String encodedACLs = Bytes.toString(payloadDiscoverable.getPayload());
+      if (encodedACLs != null && !encodedACLs.isEmpty()) {
+        List<ACL> acls = GSON.fromJson(encodedACLs, new TypeToken<List<ACL>>() { }.getType());
         if (acls.isEmpty()) {
           return true;
         } else {
-          Preconditions.checkArgument(acls.size() == 1);
-          ACL acl = acls.get(0);
-          if (acl.getPrincipal() == null && acl.getPermissions().contains(PermissionType.EXECUTE)) {
-            return false;
+          for (ACL acl : acls) {
+            if (acl.getPrincipal() == null && acl.getPermissions().contains(PermissionType.EXECUTE)) {
+              return false;
+            }
           }
         }
       }
