@@ -1126,9 +1126,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   }
 
 
-   static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
+  static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
 
-   void createStream(String name) throws Exception {
+  void createStream(String name) throws Exception {
     // create stream
     Assert.assertEquals(200, doPut("/v2/streams/" + name).getStatusLine().getStatusCode());
 
@@ -1137,13 +1137,13 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     enqueue(queueName, STREAM_ENTRY);
   }
 
-   void createQueue(String name) throws Exception {
+  void createQueue(String name) throws Exception {
     // write smth to a queue
     QueueName queueName = getQueueName(name);
     enqueue(queueName, STREAM_ENTRY);
   }
 
-   boolean dequeueOne(QueueName queueName) throws Exception {
+  boolean dequeueOne(QueueName queueName) throws Exception {
     QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
     final QueueConsumer consumer = queueClientFactory.createConsumer(queueName,
                                                                       new ConsumerConfig(1L, 0, 1,

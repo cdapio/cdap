@@ -1008,6 +1008,12 @@
   </property>
 
   <property>
+      <name>security.authorization.enabled</name>
+      <value>false</value>
+      <description>If this is set to true, authorization checks will be made</description>
+  </property>
+
+  <property>
     <name>kerberos.auth.enabled</name>
     <value>${security.enabled}</value>
     <description>If true, Kerberos authentication will be enabled</description>
