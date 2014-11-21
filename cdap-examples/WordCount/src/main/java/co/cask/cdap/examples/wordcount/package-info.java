@@ -31,9 +31,8 @@
  * 3. A Service named ``RetrieveCounts`` that serves read requests for calculated statistics,
  *    word counts and associations. It exposes these endpoints:
  *    - ``/stats`` returns the total number of words, the number of unique words, and the average word length;
- *    - ``/count/{word}/{limit}`` returns the word count of a specified word and its word associations,
- *      up to the specified limit;
- *    - ``/count/{word}`` returns the word count of a specified word and its word associations, up to a limit of ten;
+ *    - ``/count/{word}`` returns the word count of a specified word and its word associations,
+ *      up to the specified limit or a pre-set limit of ten if not specified;
  *    - ``/assoc/{word1}/{word2}`` returns the top associated words (those with the highest counts).
  *
  * 4. Four Datasets used by the Flow and Service to model, store, and serve the data:
