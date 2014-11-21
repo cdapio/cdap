@@ -149,16 +149,20 @@ define(['core/models/program'], function (Program) {
                 while (i--) {
                     metric = pathMap[result[i]['path']];
                     if (metric) {
-                        if (result[i]['result']['data'] instanceof Array) {
-                            result[i]['result']['data'] = result[i]['result']['data'].map(function (entry) {
-                                return entry.value;
-                            });
-                            self.setMetricData(metric, result[i]['result']['data']);
-                        }
-                        else if (METRIC_TYPES[metric] === 'number') {
-                            self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
-                        } else {
-                            self.setMetricData(metric, result[i]['result']['data']);
+                        var res = result[i]['result'];
+                        if (res) {
+                            var respData = res['data'];
+                            if (respData instanceof Array) {
+                                res['data'] = respData.map(function (entry) {
+                                    return entry.value;
+                                });
+                                self.setMetricData(metric, respData);
+                            }
+                            else if (METRIC_TYPES[metric] === 'number') {
+                                self.setMetricData(metric, C.Util.numberArrayToString(respData));
+                            } else {
+                                self.setMetricData(metric, respData);
+                            }
                         }
                     }
                     metric = null;
@@ -170,8 +174,9 @@ define(['core/models/program'], function (Program) {
             var metricsData = this.get('metricsData');
             //todo remove it when services will be fixed
             //never zero
-            if (value == 0)
+            if (value == 0) {
                 value = Math.floor((Math.random() * 30) + 1);
+            }
             metricsData.set(name, value);
         }
     });
