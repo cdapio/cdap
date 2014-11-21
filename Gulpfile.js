@@ -41,6 +41,7 @@ gulp.task('css:lib', ['fonts'], function() {
 gulp.task('fonts', function() {
   return gulp.src([
       // './bower_components/bootstrap/dist/fonts/*',
+      './app/styles/fonts/*',
       './bower_components/font-awesome/fonts/*'
     ])
     .pipe(gulp.dest('./dist/assets/fonts'));
