@@ -115,10 +115,11 @@ public class SparkPageRankApp extends AbstractApplication {
       if (url == null) {
         responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
                              String.format("The url parameter must be specified"), Charsets.UTF_8);
+        return;
       }
 
       // Get the rank from the ranks dataset
-      Integer rank = ranks.read(url);
+      Integer rank = ranks.read(url.getBytes(Charsets.UTF_8));
       if (rank == null) {
         responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
                              String.format("No rank found of %s", url), Charsets.UTF_8);
