@@ -278,6 +278,28 @@ public abstract class ExternalAuthenticationServerTestBase {
   }
 
   /**
+   * Test an unauthorized status request to server.
+   * @throws Exception
+   */
+  @Test
+  public void testStatusResponse() throws Exception {
+    server.startAndWait();
+    ldapServer.startListening();
+    TimeUnit.SECONDS.sleep(3);
+    HttpClient client = getHTTPClient();
+    String uri = String.format("%s://127.0.0.1:%d/%s", getProtocol(), port, Constants.EndPoints.STATUS);
+    HttpGet request = new HttpGet(uri);
+
+    HttpResponse response = client.execute(request);
+
+    // status request is authorized without any extra headers
+    assertEquals(200, response.getStatusLine().getStatusCode());
+
+    server.stopAndWait();
+    ldapServer.shutDown(true);
+  }
+
+  /**
    * Test getting a long lasting Access Token.
    * @throws Exception
    */
