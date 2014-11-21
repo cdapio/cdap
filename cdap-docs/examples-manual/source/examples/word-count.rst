@@ -102,8 +102,8 @@ There are two ways to query the  ``RetrieveCounts`` procedure:
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
-	curl -v -d '{"word": "CDAP"}' \
-	  'http://localhost:10000/v2/apps/WordCount/procedures/RetrieveCounts/methods/getCount'; echo
+	curl -w '\n' -v -d '{"word": "CDAP"}' \
+	  'http://localhost:10000/v2/apps/WordCount/procedures/RetrieveCounts/methods/getCount'
 
   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the project SDK.
 

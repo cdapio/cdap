@@ -106,9 +106,15 @@ For example, in Flows::
       securityURL = getContext().getServiceURL("SecurityApplication", "SecurityService");
 
       // Access the IPGeoLookupService using its URL
-      URLConnection connection = new URL(serviceURL, String.format("lookup/%s", ip)).openConnection();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      if (serviceURL != null) {
+        URLConnection connection = new URL(serviceURL, String.format("lookup/%s", ip)).openConnection();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+      }
       ...
+      // Access the SecurityService using its URL
+      if (securityURL != null) {
+        ...
+      }
     }
   }
 
