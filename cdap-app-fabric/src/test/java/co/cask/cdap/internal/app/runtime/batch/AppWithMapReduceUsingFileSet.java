@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.lib.FileProperties;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import com.google.common.base.Throwables;
@@ -34,7 +34,7 @@ import java.io.IOException;
 /**
  * App used to test whether M/R can read from file datasets.
  */
-public class AppWithMapReduceUsingFile extends AbstractApplication {
+public class AppWithMapReduceUsingFileSet extends AbstractApplication {
 
   public static String inputDataset = System.getProperty("INPUT_DATASET_NAME");
   public static String outputDataset = System.getProperty("OUTPUT_DATASET_NAME");
@@ -44,11 +44,11 @@ public class AppWithMapReduceUsingFile extends AbstractApplication {
     try {
       setName("AppWithMapReduceUsingFile");
       setDescription("Application with MapReduce job using file as dataset");
-      createDataset(inputDataset, "file", FileProperties.builder()
+      createDataset(inputDataset, "fileSet", FileSetProperties.builder()
         .setInputFormat(TextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class).build());
       if (!outputDataset.equals(inputDataset)) {
-        createDataset(outputDataset, "file", FileProperties.builder()
+        createDataset(outputDataset, "fileSet", FileSetProperties.builder()
           .setBasePath("/foo/my-file-output")
           .setInputFormat(TextInputFormat.class)
           .setOutputFormat(TextOutputFormat.class).build());

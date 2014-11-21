@@ -18,9 +18,10 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.File;
-import co.cask.cdap.api.dataset.lib.FileArguments;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.TimeseriesTable;
@@ -31,6 +32,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -52,6 +54,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
@@ -65,11 +68,9 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -138,7 +139,7 @@ public class MapReduceProgramRunnerTest {
   }
 
   @Test
-  public void testMapreduceWithFile() throws Exception {
+  public void testMapreduceWithFileSet() throws Exception {
     // test reading and writing distinct datasets, reading more than one path
     testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001");
     // test reading and writing same dataset
@@ -153,16 +154,16 @@ public class MapReduceProgramRunnerTest {
     System.setProperty("OUTPUT_DATASET_NAME", outputDatasetName);
 
     final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingFile.class, TEMP_FOLDER_SUPPLIER);
+      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingFileSet.class, TEMP_FOLDER_SUPPLIER);
 
     Map<String, String> inputArgs = Maps.newHashMap();
     Map<String, String> outputArgs = Maps.newHashMap();
-    FileArguments.setInputPaths(inputArgs, inputPaths);
-    FileArguments.setOutputPath(outputArgs, outputPath);
+    FileSetArguments.setInputPaths(inputArgs, inputPaths);
+    FileSetArguments.setOutputPath(outputArgs, outputPath);
 
     // write a handful of numbers to a file; compute their sum, too.
     final long[] values = { 15L, 17L, 7L, 3L };
-    final File input = dataSetInstantiator.getDataSet(inputDatasetName, inputArgs);
+    final FileSet input = dataSetInstantiator.getDataSet(inputDatasetName, inputArgs);
     long sum = 0L, count = 1;
     for (Location inputLocation : input.getInputLocations()) {
       final PrintWriter writer = new PrintWriter(inputLocation.getOutputStream());
@@ -176,14 +177,14 @@ public class MapReduceProgramRunnerTest {
     }
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
-    runtimeArguments.putAll(RuntimeArguments.addScope(RuntimeArguments.Scope.DATASET, inputDatasetName, inputArgs));
-    runtimeArguments.putAll(RuntimeArguments.addScope(RuntimeArguments.Scope.DATASET, outputDatasetName, outputArgs));
-    runProgram(app, AppWithMapReduceUsingFile.ComputeSum.class, new BasicArguments(runtimeArguments));
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, inputDatasetName, inputArgs));
+    runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, outputDatasetName, outputArgs));
+    runProgram(app, AppWithMapReduceUsingFileSet.ComputeSum.class, new BasicArguments(runtimeArguments));
 
     // output location in file system is a directory that contains a part file, a _SUCCESS file, and checksums
     // (.<filename>.crc) for these files. Find the actual part file. Its name begins with "part". In this case,
     // there should be only one part file (with this small data, we have a single reducer).
-    final File results = dataSetInstantiator.getDataSet(outputDatasetName, outputArgs);
+    final FileSet results = dataSetInstantiator.getDataSet(outputDatasetName, outputArgs);
     Location resultLocation = results.getOutputLocation();
     if (resultLocation.isDirectory()) {
       for (Location child : resultLocation.list()) {
@@ -196,14 +197,14 @@ public class MapReduceProgramRunnerTest {
     Assert.assertFalse(resultLocation.isDirectory());
 
     // read output and verify result
-    BufferedReader reader = new BufferedReader(new InputStreamReader(resultLocation.getInputStream()));
-    String line = reader.readLine();
+    String line = CharStreams.readFirstLine(
+      CharStreams.newReaderSupplier(
+        Locations.newInputSupplier(resultLocation), Charsets.UTF_8));
     Assert.assertNotNull(line);
     String[] fields = line.split("\t");
     Assert.assertEquals(2, fields.length);
-    Assert.assertEquals(AppWithMapReduceUsingFile.FileMapper.ONLY_KEY, fields[0]);
+    Assert.assertEquals(AppWithMapReduceUsingFileSet.FileMapper.ONLY_KEY, fields[0]);
     Assert.assertEquals(sum, Long.parseLong(fields[1]));
-    reader.close();
   }
 
 

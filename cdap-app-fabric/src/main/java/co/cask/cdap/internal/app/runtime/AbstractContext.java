@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
@@ -47,7 +48,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   private final Program program;
   private final RunId runId;
-  private final Map<String, Closeable> datasets;
+  private final Map<String, Dataset> datasets;
 
   private final MetricsCollector programMetrics;
 
@@ -72,7 +73,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
                          CConfiguration conf,
                          DiscoveryServiceClient discoveryServiceClient,
                          Map<String, String> arguments) {
-
+    // TODO: this class should implememnt getRuntimeArguments (see CDAP-717)
     super(program);
     this.program = program;
     this.runId = runId;

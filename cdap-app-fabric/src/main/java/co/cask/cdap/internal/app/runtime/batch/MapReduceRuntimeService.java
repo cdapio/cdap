@@ -425,9 +425,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     InputFormatProvider inputDataset = (InputFormatProvider) dataset;
     Class<? extends InputFormat> inputFormatClass = inputDataset.getInputFormatClass();
     if (inputFormatClass == null) {
-      String message = String.format("Input dataset '%s' provided null as the input format", inputDatasetName);
-      LOG.error(message);
-      throw new DataSetException(message);
+      throw new DataSetException("Input dataset '" + inputDatasetName + "' provided null as the input format");
     }
     job.setInputFormatClass(inputFormatClass);
     Map<String, String> inputConfig = inputDataset.getInputFormatConfiguration();
@@ -466,9 +464,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     OutputFormatProvider outputDataset = (OutputFormatProvider) dataset;
     Class<? extends OutputFormat> outputFormatClass = outputDataset.getOutputFormatClass();
     if (outputFormatClass == null) {
-      String message = String.format("Output dataset '%s' provided null as the output format", outputDatasetName);
-      LOG.error(message);
-      throw new DataSetException(message);
+      throw new DataSetException("Output dataset '" + outputDatasetName + "' provided null as the output format");
     }
     job.setOutputFormatClass(outputFormatClass);
     Map<String, String> outputConfig = outputDataset.getOutputFormatConfiguration();

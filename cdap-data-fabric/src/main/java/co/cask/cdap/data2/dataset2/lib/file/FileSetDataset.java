@@ -17,8 +17,9 @@
 package co.cask.cdap.data2.dataset2.lib.file;
 
 import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.lib.File;
-import co.cask.cdap.api.dataset.lib.FileArguments;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -33,11 +34,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of file dataset.
  */
-public final class FileDataset implements File {
+public final class FileSetDataset implements FileSet {
 
   private final Map<String, String> properties;
   private final Map<String, String> runtimeArguments;
@@ -50,31 +53,42 @@ public final class FileDataset implements File {
   private final Class<? extends InputFormat> inputFormatClass;
   private final Class<? extends OutputFormat> outputFormatClass;
 
-  public FileDataset(String name, LocationFactory locationFactory,
-                     Map<String, String> properties, Map<String, String> runtimeArguments) {
+  /**
+   * Contructor.
+   * @param name name of the dataset
+   * @param locationFactory the location factory
+   * @param properties the dataset's properties from the spec
+   * @param runtimeArguments the runtime arguments
+   * @param classLoader the class loader to instantiate the input and output format class
+   */
+  public FileSetDataset(String name, LocationFactory locationFactory,
+                        @Nonnull Map<String, String> properties,
+                        @Nonnull Map<String, String> runtimeArguments,
+                        @Nullable ClassLoader classLoader) {
 
     Preconditions.checkNotNull(name, "Dataset name must not be null");
     Preconditions.checkArgument(!name.isEmpty(), "Dataset name must not be empty");
+    Preconditions.checkNotNull(runtimeArguments, "Runtime arguments must not be null");
     Preconditions.checkNotNull(properties, "Dataset properties must not be null");
-    Preconditions.checkNotNull(properties.get(PROPERTY_BASE_PATH), "Base path must not be null");
+    Preconditions.checkNotNull(properties.get(FileSetProperties.BASE_PATH), "Base path must not be null");
 
     this.name = name;
     this.properties = properties;
-    this.baseLocation = locationFactory.create(properties.get(PROPERTY_BASE_PATH));
-    this.runtimeArguments = runtimeArguments == null ? Collections.<String, String>emptyMap() : runtimeArguments;
-    this.inputFormatClass = getFormat(PROPERTY_INPUT_FORMAT, InputFormat.class);
-    this.outputFormatClass = getFormat(PROPERTY_OUTPUT_FORMAT, OutputFormat.class);
+    this.baseLocation = locationFactory.create(properties.get(FileSetProperties.BASE_PATH));
+    this.runtimeArguments = runtimeArguments;
+    this.inputFormatClass = getFormat(FileSetProperties.INPUT_FORMAT, InputFormat.class, classLoader);
+    this.outputFormatClass = getFormat(FileSetProperties.OUTPUT_FORMAT, OutputFormat.class, classLoader);
     this.outputLocation = determineOutputLocation();
     this.inputLocations = determineInputLocations();
   }
 
   private Location determineOutputLocation() {
-    String outputPath = FileArguments.getOutputPath(runtimeArguments);
+    String outputPath = FileSetArguments.getOutputPath(runtimeArguments);
     return outputPath == null ? baseLocation : createLocation(outputPath);
   }
 
   private List<Location> determineInputLocations() {
-    Collection<String> inputPaths = FileArguments.getInputPaths(runtimeArguments);
+    Collection<String> inputPaths = FileSetArguments.getInputPaths(runtimeArguments);
     if (inputPaths == null) {
       return Collections.singletonList(baseLocation);
     } else {
@@ -95,13 +109,16 @@ public final class FileDataset implements File {
     }
   }
 
-  private <T> Class<? extends T> getFormat(String propertyName, Class<?> baseClass) {
+  private <T> Class<? extends T> getFormat(String propertyName, Class<?> baseClass, ClassLoader classLoader) {
     String className = properties.get(propertyName);
     if (className == null) {
       return null;
     }
     try {
-      Class<?> actualClass = Class.forName(className);
+      Class<?> actualClass = classLoader == null
+        ? Class.forName(className)
+        : classLoader.loadClass(className);
+
       if (baseClass.isAssignableFrom(actualClass)) {
         @SuppressWarnings("unchecked")
         Class<? extends T> returnClass = (Class<? extends T>) actualClass;
@@ -164,16 +181,12 @@ public final class FileDataset implements File {
   @Override
   public Map<String, String> getInputFormatConfiguration() {
     StringBuilder paths = new StringBuilder();
-    boolean first = true;
+    String sep = "";
     for (Location location : inputLocations) {
-      if (first) {
-        first = false;
-      } else {
-        paths.append(",");
-      }
-      paths.append(getFileSystemPath(location));
+      paths.append(sep).append(getFileSystemPath(location));
+      sep = ",";
     }
-    return getFormatConfiguration(PROPERTY_INPUT_PROPERTIES_PREFIX,
+    return getFormatConfiguration(FileSetProperties.INPUT_PROPERTIES_PREFIX,
                                   ImmutableMap.of("mapred.input.dir", paths.toString()));
   }
 
@@ -185,7 +198,7 @@ public final class FileDataset implements File {
 
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
-    return getFormatConfiguration(PROPERTY_OUTPUT_PROPERTIES_PREFIX,
+    return getFormatConfiguration(FileSetProperties.OUTPUT_PROPERTIES_PREFIX,
                                   ImmutableMap.of(FileOutputFormat.OUTDIR, getFileSystemPath(outputLocation)));
   }
 

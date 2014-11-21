@@ -16,9 +16,9 @@
 
 package co.cask.cdap.data2.dataset2.lib;
 
-import co.cask.cdap.api.dataset.lib.File;
-import co.cask.cdap.api.dataset.lib.FileArguments;
-import co.cask.cdap.api.dataset.lib.FileProperties;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import com.google.common.collect.Maps;
 import org.junit.AfterClass;
@@ -31,18 +31,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
-public class FileTest extends AbstractDatasetTest {
+public class FileSetTest extends AbstractDatasetTest {
 
-  static File file;
+  static FileSet fileSet;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    createInstance("file", "testFileSet", FileProperties.builder()
+    createInstance("fileSet", "testFileSet", FileSetProperties.builder()
       .setBasePath("testDir").build());
     Map<String, String> fileArgs = Maps.newHashMap();
-    FileArguments.setInputPath(fileArgs, "some?File");
-    FileArguments.setOutputPath(fileArgs, "some?File");
-    file = getInstance("testFileSet", fileArgs);
+    FileSetArguments.setInputPath(fileArgs, "some?File");
+    FileSetArguments.setOutputPath(fileArgs, "some?File");
+    fileSet = getInstance("testFileSet", fileArgs);
   }
 
   @AfterClass
@@ -52,11 +52,11 @@ public class FileTest extends AbstractDatasetTest {
 
   @Test
   public void testWriteRead() throws IOException {
-    OutputStream out = file.getOutputLocation().getOutputStream();
+    OutputStream out = fileSet.getOutputLocation().getOutputStream();
     out.write(42);
     out.close();
 
-    InputStream in = file.getInputLocations().get(0).getInputStream();
+    InputStream in = fileSet.getInputLocations().get(0).getInputStream();
     Assert.assertEquals(42, in.read());
     in.close();
   }

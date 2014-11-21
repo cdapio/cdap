@@ -19,31 +19,33 @@ package co.cask.cdap.data2.dataset2.lib.file;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.File;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 /**
  * Dataset definition for File datasets.
  */
-public class FileDefinition implements DatasetDefinition<File, FileAdmin> {
+public class FileSetDefinition implements DatasetDefinition<FileSet, FileAdmin> {
+
+  @Inject
+  private LocationFactory locationFactory;
 
   private final String name;
 
   /**
    * Constructor with dataset type name.
-   * @param name the type name to beused for this dataset definition.
+   * @param name the type name to be used for this dataset definition.
    */
-  public FileDefinition(String name) {
+  public FileSetDefinition(String name) {
     this.name = name;
   }
-
-  @Inject
-  private LocationFactory locationFactory;
 
   @Override
   public String getName() {
@@ -53,11 +55,11 @@ public class FileDefinition implements DatasetDefinition<File, FileAdmin> {
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
     Map<String, String> props = properties.getProperties();
-    String basePath = props.get(File.PROPERTY_BASE_PATH);
+    String basePath = props.get(FileSetProperties.BASE_PATH);
     if (basePath == null) {
       basePath = instanceName.replace('.', '/');
       props = Maps.newHashMap(props);
-      props.put(File.PROPERTY_BASE_PATH, basePath);
+      props.put(FileSetProperties.BASE_PATH, basePath);
     }
     return DatasetSpecification.builder(instanceName, getName()).properties(props).build();
   }
@@ -68,8 +70,10 @@ public class FileDefinition implements DatasetDefinition<File, FileAdmin> {
   }
 
   @Override
-  public File getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+  public FileSet getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
-    return new FileDataset(spec.getName(), locationFactory, spec.getProperties(), arguments);
+    return new FileSetDataset(spec.getName(), locationFactory, spec.getProperties(),
+                           arguments == null ? Collections.<String, String>emptyMap() : arguments,
+                           classLoader);
   }
 }

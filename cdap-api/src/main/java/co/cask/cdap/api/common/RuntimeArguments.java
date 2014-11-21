@@ -31,47 +31,6 @@ public final class RuntimeArguments {
   }
 
   /**
-   * Enum for the different types of scopes. For now, only "dataset", but more will come.
-   */
-  public enum Scope {
-    DATASET("dataset");
-
-    private final String displayName;
-
-    /**
-     * Private constructor to force using the enum values.
-     */
-    private Scope(String name) {
-      displayName = name;
-    }
-
-    @Override
-    public String toString() {
-      return displayName;
-    }
-
-    // helper map for efficient implementation of scopeFor()
-    private static Map<String, Scope> lookupByDisplayNameMap;
-    static {
-      lookupByDisplayNameMap = Maps.newHashMapWithExpectedSize(Scope.values().length);
-      for (Scope scope: Scope.values()) {
-        lookupByDisplayNameMap.put(scope.toString(), scope);
-      }
-    }
-
-    /**
-     * @return the Scope represented by a display name.
-     */
-    public static Scope scopeFor(String displayName) {
-      Scope scope = lookupByDisplayNameMap.get(displayName);
-      if (scope != null) {
-        return scope;
-      }
-      throw new IllegalArgumentException("Illegal scope name: " + displayName);
-    }
-  }
-
-  /**
    * Converts a POSIX compliant program argument array to a String-to-String Map.
    * @param args Array of Strings where each element is a POSIX compliant program argument (Ex: "--os=Linux" ).
    * @return Map of argument Keys and Values (Ex: Key = "os" and Value = "Linux").
@@ -118,11 +77,21 @@ public final class RuntimeArguments {
    * @param arguments the runtime arguments of the enclosing scope
    * @return a map that contains only the keys that start with &lt;scope>.&lt;name>., with that prefix removed.
    */
-  public static Map<String, String> selectScope(Scope scope, String name, Map<String, String> arguments) {
+  public static Map<String, String> extractScope(Scope scope, String name, Map<String, String> arguments) {
+    String prefix = scope + "." + name + ".";
+    return extractPrefix(prefix, arguments);
+  }
+
+  /**
+   * Extract all arguments that start with a prefix, and removes that prefix.
+   * @param prefix The prefix to filter and remove
+   * @param arguments the runtime arguments to extract from
+   * @return a map that contains only the keys that start with the prefix, with the prefix removed.
+   */
+  public static Map<String, String> extractPrefix(String prefix, Map<String, String> arguments) {
     if (arguments == null || arguments.isEmpty()) {
       return arguments;
     }
-    final String prefix = scope + "." + name + ".";
     Map<String, String> result = Maps.newHashMap();
     for (Map.Entry<String, String> entry : arguments.entrySet()) {
       if (entry.getKey().startsWith(prefix)) {

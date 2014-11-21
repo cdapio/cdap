@@ -18,7 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.file;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.lib.File;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class FileAdmin implements DatasetAdmin {
   public FileAdmin(LocationFactory locationFactory, DatasetSpecification spec) {
     this.locationFactory = locationFactory;
     this.name = spec.getName();
-    this.basePath = spec.getProperties().get(File.PROPERTY_BASE_PATH);
+    this.basePath = spec.getProperties().get(FileSetProperties.BASE_PATH);
   }
 
   @Override

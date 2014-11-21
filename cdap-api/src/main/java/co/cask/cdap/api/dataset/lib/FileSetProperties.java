@@ -21,7 +21,34 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 /**
  * Helper to build properties for files datasets.
  */
-public class FileProperties {
+public class FileSetProperties {
+
+  /**
+   * The base path of the dataset.
+   */
+  public static final String BASE_PATH = "base.path";
+
+  /**
+   * The name of the input format class.
+   */
+  public static final String INPUT_FORMAT = "input.format";
+
+  /**
+   * The name of the output format class.
+   */
+  public static final String OUTPUT_FORMAT = "output.format";
+
+  /**
+   * Prefix for additional properties for the input format. They are added to the
+   * Hadoop configuration, with the prefix stripped from the name.
+   */
+  public static final String INPUT_PROPERTIES_PREFIX = "input.properties.";
+
+  /**
+   * Prefix for additional properties for the output format. They are added to the
+   * Hadoop configuration, with the prefix stripped from the name.
+   */
+  public static final String OUTPUT_PROPERTIES_PREFIX = "output.properties.";
 
   public static Builder builder() {
     return new Builder();
@@ -40,7 +67,7 @@ public class FileProperties {
      * Sets the base path for the file dataset.
      */
     public Builder setBasePath(String path) {
-      delegate.add(File.PROPERTY_BASE_PATH, path);
+      delegate.add(BASE_PATH, path);
       return this;
     }
 
@@ -48,7 +75,7 @@ public class FileProperties {
      * Sets the output format of the file dataset.
      */
     public Builder setOutputFormat(Class<?> outputFormatClass) {
-      delegate.add(File.PROPERTY_OUTPUT_FORMAT, outputFormatClass.getName());
+      delegate.add(OUTPUT_FORMAT, outputFormatClass.getName());
       return this;
     }
 
@@ -56,7 +83,7 @@ public class FileProperties {
      * Sets the output format of the file dataset.
      */
     public Builder setInputFormat(Class<?> inputFormatClass) {
-      delegate.add(File.PROPERTY_INPUT_FORMAT, inputFormatClass.getName());
+      delegate.add(INPUT_FORMAT, inputFormatClass.getName());
       return this;
     }
 
@@ -64,7 +91,7 @@ public class FileProperties {
      * Sets a property for the input format of the file dataset.
      */
     public Builder setInputProperty(String name, String value) {
-      delegate.add(File.PROPERTY_INPUT_PROPERTIES_PREFIX + name, value);
+      delegate.add(INPUT_PROPERTIES_PREFIX + name, value);
       return this;
     }
 
@@ -72,7 +99,7 @@ public class FileProperties {
      * Sets a property for the output format of the file dataset.
      */
     public Builder setOutputProperty(String name, String value) {
-      delegate.add(File.PROPERTY_OUTPUT_PROPERTIES_PREFIX + name, value);
+      delegate.add(OUTPUT_PROPERTIES_PREFIX + name, value);
       return this;
     }
 

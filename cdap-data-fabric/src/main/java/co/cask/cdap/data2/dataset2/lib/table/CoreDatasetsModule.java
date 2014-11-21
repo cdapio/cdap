@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.CounterTimeseriesTable;
 import co.cask.cdap.api.dataset.lib.CounterTimeseriesTableDefinition;
-import co.cask.cdap.api.dataset.lib.File;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.IndexedObjectStore;
 import co.cask.cdap.api.dataset.lib.IndexedObjectStoreDefinition;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
@@ -35,7 +35,7 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.MemoryTable;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.lib.file.FileDefinition;
+import co.cask.cdap.data2.dataset2.lib.file.FileSetDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryOrderedTableDefinition;
 
 /**
@@ -79,7 +79,7 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new TableDefinition("memoryTable", inMemoryOrderedTable));
 
     // file dataset
-    registry.add(new FileDefinition(File.class.getName()));
-    registry.add(new FileDefinition("file"));
+    registry.add(new FileSetDefinition(FileSet.class.getName()));
+    registry.add(new FileSetDefinition("fileSet"));
   }
 }

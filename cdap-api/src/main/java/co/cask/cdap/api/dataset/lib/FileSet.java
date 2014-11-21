@@ -30,47 +30,7 @@ import java.util.List;
  * or files being used.
  */
 @Beta
-public interface File extends Dataset, InputFormatProvider, OutputFormatProvider {
-
-  /**
-   * The base path of the dataset.
-   */
-  String PROPERTY_BASE_PATH = "base.path";
-
-  /**
-   * The name of the input format class.
-   */
-  String PROPERTY_INPUT_FORMAT = "input.format";
-
-  /**
-   * The name of the output format class.
-   */
-  String PROPERTY_OUTPUT_FORMAT = "output.format";
-
-  /**
-   * Prefix for additional properties for the input format. They are added to the
-   * Hadoop configuration, with the prefix stripped from the name.
-   */
-  String PROPERTY_INPUT_PROPERTIES_PREFIX = "input.properties.";
-
-  /**
-   * Prefix for additional properties for the output format. They are added to the
-   * Hadoop configuration, with the prefix stripped from the name.
-   */
-  String PROPERTY_OUTPUT_PROPERTIES_PREFIX = "output.properties.";
-
-  /**
-   * The paths of the files to be read. Specified as a runtime argument for the dataset.
-   * Each path is relative to the dataset's base path, and multiple paths can be given,
-   * separated by commas.
-   */
-  String ARGUMENT_INPUT_PATHS = "input.paths";
-
-  /**
-   * The path of the file to write. Specified as a runtime argument for the dataset.
-   * The path is relative to the dataset's base path.
-   */
-  String ARGUMENT_OUTPUT_PATH = "output.path";
+public interface FileSet extends Dataset, InputFormatProvider, OutputFormatProvider {
 
   /**
    * Allows to interact directly with the location of this dataset in the underlying file system.
@@ -94,9 +54,9 @@ public interface File extends Dataset, InputFormatProvider, OutputFormatProvider
   Location getOutputLocation();
 
   /**
-   * Allows direct access to files in the input locations, in the underlying file system.
+   * Allows direct access to files in this dataset, in the underlying file system.
    *
-   * @return the location of the given relative path within this dataset
+   * @return the full location given by the path, relative to the base path.
    */
   Location getLocation(String relativePath);
 }
