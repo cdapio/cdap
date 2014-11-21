@@ -127,7 +127,7 @@ define(['core/lib/date', 'core/models/program'],
       var paths = [];
       var pathMap = {};
       for (var path in METRICS_PATHS) {
-        var url = new S(path).template({'appId': appId, 'jobId': jobId}).s;
+        var url = S(path).template({'appId': appId, 'jobId': jobId}).s;
         paths.push(url);
         pathMap[url] = METRICS_PATHS[path];
       }
