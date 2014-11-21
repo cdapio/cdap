@@ -132,7 +132,7 @@
     <profile>
       <id>dist</id>
       <properties>
-        <package.depends>--depends cdap --depends cdap-hbase-compat-0.94 --depends cdap-hbase-compat-0.96</package.depends>
+        <package.depends>--depends cdap --depends cdap-hbase-compat-0.94 --depends cdap-hbase-compat-0.96 --depends cdap-hbase-compat-0.98</package.depends>
       </properties>
       <build>
         <plugins>

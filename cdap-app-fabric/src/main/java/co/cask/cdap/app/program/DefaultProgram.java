@@ -156,7 +156,7 @@ public final class DefaultProgram implements Program {
     if (classLoader == null) {
       expandIfNeeded();
       try {
-        classLoader = ProgramClassLoader.create(expandFolder, parentClassLoader);
+        classLoader = ProgramClassLoader.create(expandFolder, parentClassLoader, processorType);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

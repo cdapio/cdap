@@ -65,6 +65,13 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   to build Big Data applications.
 
 
+.. |security| replace:: **Security:**
+.. _security: security/index.html
+
+- |security|_ CDAP supports securing clusters using perimeter security. Configuration
+  and client authentication are covered in this section.
+
+
 .. |testing| replace:: **Testing and Debugging:**
 .. _testing: testing/index.html
 
@@ -80,13 +87,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   a daemon to tail local files and an Apache Flume Sink implementation.
 
 
-.. |authentication-clients| replace:: **Authentication Clients:**
-.. _authentication-clients: authentication-clients/index.html
-
-- |authentication-clients|_ These tools **fetch access tokens from the
-  authentication service.** Two APIs are currently available: Java and Python.
-
-
 .. |advanced| replace:: **Advanced Topics:**
 .. _advanced: advanced/index.html
 
@@ -94,12 +94,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   developers who want a deeper dive into CDAP, with presentations on the Data Exploration
   of Datasets, Client Authentication for Secure CDAP Instances, and Best Practices for
   CDAP development.
-
-
-.. |troubleshooting| replace:: **Troubleshooting:**
-.. _troubleshooting: troubleshooting.html
-
-- |troubleshooting|_ Selected examples of potential problems and possible resolutions.
   
 
 .. |(TM)| unicode:: U+2122 .. trademark sign

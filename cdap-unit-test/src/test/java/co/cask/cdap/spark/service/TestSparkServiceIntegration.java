@@ -51,7 +51,7 @@ public class TestSparkServiceIntegration extends TestBase {
 
       SparkManager sparkManager = applicationManager.startSpark(
         TestSparkServiceIntegrationApp.SparkServiceProgram.class.getSimpleName());
-      sparkManager.waitForFinish(5, TimeUnit.MINUTES);
+      sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
       DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("result");
       KeyValueTable results = datasetManager.get();

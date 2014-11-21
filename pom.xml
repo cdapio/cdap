@@ -58,10 +58,6 @@
 
   <repositories>
     <repository>
-      <id>apache.snapshots</id>
-      <url>https://repository.apache.org/content/repositories/snapshots</url>
-    </repository>
-    <repository>
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
@@ -106,7 +102,8 @@
     <guice.version>3.0</guice.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
-    <hbase96.version>0.96.0-hadoop2</hbase96.version>
+    <hbase96.version>0.96.2-hadoop2</hbase96.version>
+    <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
     <hive.version>0.13.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
@@ -120,16 +117,16 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.5.0</netty.http.version>
+    <netty.http.version>0.6.0</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <servlet.api.version>3.0.1</servlet.api.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.3.0</tephra.version>
+    <tephra.version>0.3.1</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>[0.4.0-incubating-SNAPSHOT,0.5.0-incubating-SNAPSHOT)</twill.version>
+    <twill.version>0.4.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.1.0</spark.version>
@@ -149,6 +146,7 @@
     <module>cdap-data-fabric-tests</module>
     <module>cdap-hbase-compat-0.94</module>
     <module>cdap-hbase-compat-0.96</module>
+    <module>cdap-hbase-compat-0.98</module>
     <module>cdap-watchdog</module>
     <module>cdap-watchdog-tests</module>
     <module>cdap-app-fabric</module>
@@ -177,11 +175,6 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-nop</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
@@ -240,6 +233,17 @@
       <dependency>
         <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.96</artifactId>
+        <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.tephra</groupId>
+        <artifactId>tephra-hbase-compat-0.98</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>

@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
 import co.cask.cdap.internal.app.runtime.spark.inmemory.InMemorySparkContextBuilder;
 import co.cask.tephra.Transaction;
@@ -71,7 +72,7 @@ public abstract class AbstractSparkContextBuilder {
       program = Programs.create(locationFactory.create(programLocation), classLoader);
       //TODO: This should be changed when we support Spark in Workflow
     } catch (IOException e) {
-      LOG.error("Could not init Program based on location: " + programLocation);
+      LOG.error("Could not init Program based on location: {}", programLocation, e);
       throw Throwables.propagate(e);
     }
 
@@ -86,13 +87,14 @@ public abstract class AbstractSparkContextBuilder {
     MetricsCollectionService metricsCollectionService = null;
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
 
     // Creating Spark job context
     SparkSpecification sparkSpec = program.getSpecification().getSpark().get(program.getName());
     BasicSparkContext context =
       new BasicSparkContext(program, RunIds.fromString(runId), runtimeArguments, appSpec.getDatasets().keySet(),
                             sparkSpec, logicalStartTime, workflowBatch, metricsCollectionService,
-                            datasetFramework, configuration, discoveryServiceClient);
+                            datasetFramework, configuration, discoveryServiceClient, streamAdmin);
 
     // propagating tx to all txAware guys
     // The tx is committed or aborted depending upon the job success by the ProgramRunner and DatasetRecordWriter

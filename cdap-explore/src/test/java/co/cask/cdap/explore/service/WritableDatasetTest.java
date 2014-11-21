@@ -288,11 +288,11 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
       exploreClient.submit("insert into table simple_table select * from test").get().close();
 
       ExploreExecutionResult result = exploreClient.submit("select * from simple_table").get();
-      Assert.assertEquals(ImmutableList.of(1.0, "one"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(2.0, "two"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(3.0, "three"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(4.0, "four"), result.next().getColumns());
-      Assert.assertEquals(ImmutableList.of(5.0, "five"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(1, "one"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(2, "two"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(3, "three"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(4, "four"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(5, "five"), result.next().getColumns());
       Assert.assertFalse(result.hasNext());
       result.close();
 
@@ -331,7 +331,7 @@ public class WritableDatasetTest extends BaseHiveExploreServiceTest {
       exploreClient.submit("insert into table test select * from simple_table").get().close();
 
       ExploreExecutionResult result = exploreClient.submit("select * from test").get();
-      Assert.assertEquals(ImmutableList.of(10.0, "ten"), result.next().getColumns());
+      Assert.assertEquals(ImmutableList.of(10, "ten"), result.next().getColumns());
       Assert.assertFalse(result.hasNext());
       result.close();
 

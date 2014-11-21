@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
@@ -31,6 +32,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -81,7 +83,7 @@ import javax.ws.rs.Path;
  *     @literal@GET
  *     @literal@Path("/path")
  *     public void userMethod(HttpRequest request, HttpResponder responder) {
- *       getHandler().userMethod(wrapRequest(request), wrapResponder(responder));
+ *       // see generateTransactionalDelegateBody() for generated body.
  *     }
  *   }
  * }</pre>
@@ -439,28 +441,37 @@ final class HttpHandlerGenerator {
      *
      * <pre>{@code
      *   public void handle(HttpRequest request, HttpResponder responder, ...) {
+     *     T handler = getHandler();
      *     TransactionContext txContext = getTransactionContext();
      *     try {
      *       txContext.start();
      *       try {
-     *          delegate.handle(wrapRequest(request), wrapResponder(responder), ...);
-     *          txContext.finish();
+     *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
+     *         try {
+     *           handler.handle(wrapRequest(request), wrapResponder(responder), ...);
+     *         } finally {
+     *           ClassLoaders.setContextClassLoader(classLoader);
+     *         }
      *       } catch (Throwable t) {
      *         LOG.error("User handler exception", e);
      *         txContext.abort(new TransactionFailureException("User handler exception", e));
      *       }
+     *       txContext.finish();
      *     } catch (TransactionFailureException e) {
      *        LOG.error("Transaction failure: ", e);
+     *        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
      *     }
      *   }
      * }
      * </pre>
      */
     private void generateTransactionalDelegateBody(GeneratorAdapter mg, Method method) {
+      Type handlerType = Type.getType(delegateType.getRawType());
       Type txContextType = Type.getType(TransactionContext.class);
       Type txFailureExceptionType = Type.getType(TransactionFailureException.class);
       Type loggerType = Type.getType(Logger.class);
       Type throwableType = Type.getType(Throwable.class);
+      Type httpResponseStatusType = Type.getType(HttpResponseStatus.class);
 
       Label txTryBegin = mg.newLabel();
       Label txTryEnd = mg.newLabel();
@@ -474,6 +485,14 @@ final class HttpHandlerGenerator {
 
       mg.visitTryCatchBlock(txTryBegin, txTryEnd, txCatch, txFailureExceptionType.getInternalName());
       mg.visitTryCatchBlock(handlerTryBegin, handlerTryEnd, handlerCatch, throwableType.getInternalName());
+
+      // T handler = getHandler();
+      int handler = mg.newLocal(handlerType);
+      mg.loadThis();
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceHandler.class, "getHandler"));
+      mg.checkCast(handlerType);
+      mg.storeLocal(handler, handlerType);
 
       // TransactionContext txContext = getTransactionContext();
       int txContext = mg.newLocal(txContextType);
@@ -493,10 +512,7 @@ final class HttpHandlerGenerator {
       mg.mark(handlerTryBegin);
 
       // this.getHandler(wrapRequest(request), wrapResponder(responder), ...);
-      generateInvokeDelegate(mg, method);
-
-      mg.loadLocal(txContext, txContextType);
-      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
+      generateInvokeDelegate(mg, handler, method);
 
       // } // end of inner try
       mg.mark(handlerTryEnd);
@@ -511,7 +527,7 @@ final class HttpHandlerGenerator {
       mg.getStatic(classType, "LOG", loggerType);
       mg.visitLdcInsn("User handler exception: ");
       mg.loadLocal(throwable);
-      mg.invokeVirtual(loggerType, Methods.getMethod(void.class, "error", String.class, Throwable.class));
+      mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class, Throwable.class));
 
       // transactionContext.abort(new TransactionFailureException("User handler exception: ", e));
       mg.loadLocal(txContext, txContextType);
@@ -524,6 +540,10 @@ final class HttpHandlerGenerator {
       mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "abort", TransactionFailureException.class));
 
       mg.mark(handlerFinish);
+
+      mg.loadLocal(txContext, txContextType);
+      mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
+
       mg.goTo(txTryEnd);
 
       // } // end of outer try
@@ -539,8 +559,14 @@ final class HttpHandlerGenerator {
       mg.getStatic(classType, "LOG", loggerType);
       mg.visitLdcInsn("Transaction Failure: ");
       mg.loadLocal(txFailureException);
-      mg.invokeVirtual(loggerType, Methods.getMethod(void.class, "error", String.class,
-                                                                          TransactionFailureException.class));
+      mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
+                                                       Throwable.class));
+
+      // responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      mg.loadArg(1);
+      mg.getStatic(httpResponseStatusType, "INTERNAL_SERVER_ERROR", httpResponseStatusType);
+      mg.invokeInterface(Type.getType(HttpResponder.class),
+                         Methods.getMethod(void.class, "sendStatus", HttpResponseStatus.class));
 
       mg.mark(txFinish);
 
@@ -548,11 +574,42 @@ final class HttpHandlerGenerator {
       mg.endMethod();
     }
 
-    private void generateInvokeDelegate(GeneratorAdapter mg, Method method) {
-      mg.loadThis();
-      mg.invokeVirtual(classType,
-                       Methods.getMethod(HttpServiceHandler.class, "getHandler"));
-      mg.checkCast(Type.getType(delegateType.getRawType()));
+    /**
+     * Generates the code block for setting context ClassLoader, calling user handler method
+     * and resetting context ClassLoader.
+     */
+    private void generateInvokeDelegate(GeneratorAdapter mg, int handler, Method method) {
+      Type classLoaderType = Type.getType(ClassLoader.class);
+      Type handlerType = Type.getType(delegateType.getRawType());
+
+      Label contextTryBegin = mg.newLabel();
+      Label contextTryEnd = mg.newLabel();
+      Label contextCatch = mg.newLabel();
+      Label contextEnd = mg.newLabel();
+      Label contextCatchEnd = mg.newLabel();
+
+      // For the try-finally block
+      // In bytecode, it's done by two try-catch instructions. The finally code are in both
+      // the tryEnd and catchEnd blocks.
+      mg.visitTryCatchBlock(contextTryBegin, contextTryEnd, contextCatch, null);
+      mg.visitTryCatchBlock(contextCatch, contextCatchEnd, contextCatch, null);
+
+      int throwable = mg.newLocal(Type.getType(Throwable.class));
+
+      // ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
+      int classLoader = mg.newLocal(classLoaderType);
+      mg.loadLocal(handler, handlerType);
+      mg.invokeVirtual(Type.getType(Object.class), Methods.getMethod(Class.class, "getClass"));
+      mg.invokeVirtual(Type.getType(Class.class), Methods.getMethod(ClassLoader.class, "getClassLoader"));
+      mg.invokeStatic(Type.getType(ClassLoaders.class),
+                      Methods.getMethod(ClassLoader.class, "setContextClassLoader", ClassLoader.class));
+      mg.storeLocal(classLoader, classLoaderType);
+
+      // try {
+      mg.mark(contextTryBegin);
+
+      // handler.method(wrapRequest(request), wrapResponder(responder), ...);
+      mg.loadLocal(handler);
 
       mg.loadThis();
       mg.loadArg(0);
@@ -569,6 +626,35 @@ final class HttpHandlerGenerator {
       }
 
       mg.invokeVirtual(Type.getType(delegateType.getRawType()), method);
+
+      // }
+      mg.mark(contextTryEnd);
+
+      // Reset ClassLoader, like in finally {}
+      // ClassLoaders.setContextClassLoader(classLoader);
+      setClassLoader(mg, classLoader);
+      mg.goTo(contextEnd);
+
+      // } catch and rethrow
+      mg.mark(contextCatch);
+      mg.storeLocal(throwable);
+
+      mg.mark(contextCatchEnd);
+
+      // A duplicate of finally block is needed in bytecode so that it gets executed when there is exception
+      // ClassLoaders.setContextClassLoader(classLoader);
+      setClassLoader(mg, classLoader);
+      mg.loadLocal(throwable);
+      mg.throwException();
+
+      mg.mark(contextEnd);
+    }
+
+    private void setClassLoader(GeneratorAdapter mg, int classLoader) {
+      mg.loadLocal(classLoader);
+      mg.invokeStatic(Type.getType(ClassLoaders.class),
+                      Methods.getMethod(ClassLoader.class, "setContextClassLoader", ClassLoader.class));
+      mg.pop();
     }
   }
 }

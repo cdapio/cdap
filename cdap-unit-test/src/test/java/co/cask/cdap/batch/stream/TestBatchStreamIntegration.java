@@ -47,7 +47,7 @@ public class TestBatchStreamIntegration extends TestBase {
       }
 
       MapReduceManager mapReduceManager = applicationManager.startMapReduce("StreamTestBatch");
-      mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+      mapReduceManager.waitForFinish(300, TimeUnit.SECONDS);
 
       // The MR job simply turns every stream event body into key/value pairs, with key==value.
       DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("results");
@@ -76,7 +76,7 @@ public class TestBatchStreamIntegration extends TestBase {
       }
 
       MapReduceManager mapReduceManager = applicationManager.startMapReduce("NoMapperMapReduce");
-      mapReduceManager.waitForFinish(2, TimeUnit.MINUTES);
+      mapReduceManager.waitForFinish(120, TimeUnit.SECONDS);
 
       // The Reducer in the MR simply turns every stream event body into key/value pairs, with key==value.
       DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("results");

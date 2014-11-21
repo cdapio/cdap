@@ -32,8 +32,9 @@ To install File Tailer, execute one of these commands:
 
        sudo rpm -ivh --force cdap-file-tailer-1.0.1.rpm
 
-Repository information can be found at
-http://docs.cask.co/cdap/current/en/admin.html#packaging
+Repository information can be found in the `Distributed CDAP
+Installation
+instructions <http://docs.cask.co/cdap/current/en/admin-manual/installation/installation.html#packaging>`__.
 
 Once installed, configure the daemon by editing the file:
 

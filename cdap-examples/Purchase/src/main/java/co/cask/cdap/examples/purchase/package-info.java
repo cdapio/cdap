@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 /**
  *
  * An app that uses scheduled MapReduce Workflows to read from one ObjectStore DataSet and write to another.
@@ -29,10 +30,10 @@
  *     Or you can manually (in the Process screen in the CDAP Console) or programmatically execute 
  *     the PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the history DataSet.
  *   </li><li>
- *     Execute the PurchaseQuery procedure to query the history DataSet to discover the purchase history of each user.
+ *     Request the PurchaseHistoryService retrieve from the history Dataset the purchase history of a user.
  *     <p>
  *       Note: Because by default the PurchaseHistoryWorkflow process doesn't run until 4:00 A.M., you'll have to wait 
- *       until the next day (or manually or programmatically execute the PurcaseHistoryBuilder)
+ *       until the next day (or manually or programmatically execute the PurchaseHistoryBuilder.)
  *       after entering the first customers' purchases or the PurchaseQuery will return a "not found" error.
  *     </p>
  *   </li>

@@ -23,7 +23,7 @@ SET APP_JAR_PREFIX=WordCount
 
 SET APP_NAME=WordCount
 SET FLOW_NAME=WordCounter
-SET PROCEDURE_NAME=RetrieveCounts
+SET SERVICE_NAME=RetrieveCounts
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
@@ -64,17 +64,17 @@ GOTO :EOF
 
 :START
 CALL :POST %APP_NAME% flows %FLOW_NAME% start
-CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% start
+CALL :POST %APP_NAME% services %SERVICE_NAME% start
 GOTO :EOF
 
 :STOP
 CALL :POST %APP_NAME% flows %FLOW_NAME% stop
-CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% stop
+CALL :POST %APP_NAME% services %SERVICE_NAME% stop
 GOTO :EOF
 
 :STATUS
 CALL :GET %APP_NAME% flows %FLOW_NAME% status
-CALL :GET %APP_NAME% procedures %PROCEDURE_NAME% status
+CALL :GET %APP_NAME% services %SERVICE_NAME% status
 GOTO :EOF
 
 :POST

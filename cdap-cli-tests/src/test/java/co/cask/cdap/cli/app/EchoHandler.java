@@ -17,10 +17,21 @@
 package co.cask.cdap.cli.app;
 
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
+
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 
 /**
- * Fake no-op Service.
+ * Echo handler.
  */
-public final class FakeService extends AbstractHttpServiceHandler {
-  public static final String NAME = "fakeService";
+public final class EchoHandler extends AbstractHttpServiceHandler {
+  public static final String NAME = "echoHandler";
+
+  @POST
+  @Path("/echo")
+  public void echo(HttpServiceRequest request, HttpServiceResponder responder) {
+    responder.send(200, request.getContent(), "text/plain", null);
+  }
 }

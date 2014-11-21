@@ -46,7 +46,7 @@ public class TestSparkStreamIntegration extends TestBase {
       }
 
       SparkManager sparkManager = applicationManager.startSpark("SparkStreamProgram");
-      sparkManager.waitForFinish(2, TimeUnit.MINUTES);
+      sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
       // The Spark job simply turns every stream event body into key/value pairs, with key==value.
       DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("result");

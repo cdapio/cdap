@@ -21,7 +21,7 @@ details on available system metrics in the :ref:`Metrics HTTP API. <http-restful
 
 You embed user-defined metrics in the methods defining the elements of your application.
 They will then emit their metrics and you can retrieve them (along with system metrics)
-via the `Metrics Explorer <../user-interface#metrics-explorer>`__ in the CDAP Console or
+via the *Metrics Explorer* in the :ref:`CDAP Console <cdap-console>` or
 via the CDAP’s :ref:`restful-api`. The names given to the metrics (such as
 ``names.longnames`` and ``names.bytes`` as in the example below) should be composed only
 of alphanumeric characters.
@@ -52,5 +52,5 @@ An example of user-defined metrics is in ``PurchaseStore`` in the :ref:`Purchase
 
 Using Metrics Explorer
 ----------------------
-See the `Metrics Explorer <../user-interface#metrics-explorer>`__ in the `CDAP Console <../user-interface>`__
-for details of using it to examine and set metrics in the CDAP.
+The *Metrics Explorer* of the :ref:`CDAP Console <cdap-console>`
+can be used to examine and set metrics in a CDAP instance.

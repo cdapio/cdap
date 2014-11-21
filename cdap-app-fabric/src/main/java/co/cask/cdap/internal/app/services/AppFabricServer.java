@@ -20,6 +20,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
+import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -30,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.commons.io.FileUtils;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.ServiceListenerAdapter;
 import org.apache.twill.common.Threads;
@@ -38,6 +40,7 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
@@ -87,11 +90,16 @@ public final class AppFabricServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
+    // Delete app fabric temp directory
+    File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
+                           configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    FileUtils.deleteDirectory(tmpDir);
+
     schedulerService.start();
     programRuntimeService.start();
 
     // Run http service on random port
-    httpService = NettyHttpService.builder()
+    httpService = new CommonNettyHttpServiceBuilder(configuration)
       .setHost(hostname.getCanonicalHostName())
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.APP_FABRIC_HTTP)))
