@@ -84,7 +84,7 @@ public abstract class AggregatesTableTestBase {
 
     try {
       // Insert 65540 metrics with same metric name but different runId
-      for (int i = 1; i <= 65540; i++) {
+      for (int i = 1; i <= 0xffff+5; i++) {
         MetricsRecord metric = new MetricsRecord("simple", "runId" + i, "metric",
                                                  ImmutableList.<TagMetric>of(), 0L, 1, MetricType.COUNTER);
         aggregatesTable.update(ImmutableList.of(metric));
@@ -98,8 +98,8 @@ public abstract class AggregatesTableTestBase {
           value += scanner.next().getValue();
         }
 
-        Assert.assertEquals(65540, value);
-        Assert.assertEquals(65535, scanner.getRowScanned());
+        Assert.assertEquals(0xffff+5, value);
+        Assert.assertEquals(0xffff, scanner.getRowScanned());
 
       } finally {
         scanner.close();
