@@ -140,7 +140,7 @@ public class SparkPageRankApp extends AbstractApplication {
     protected void configure() {
       setName(SERVICE_NAME);
       setDescription("Service which converts the page rank to a Google Type page rank.");
-      addHandler(new RanksServiceHandler());
+      addHandler(new GoogleTypePRHandler());
     }
   }
 

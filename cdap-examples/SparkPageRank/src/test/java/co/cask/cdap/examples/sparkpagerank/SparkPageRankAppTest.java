@@ -38,7 +38,7 @@ public class SparkPageRankAppTest extends TestBase {
   private static final String URL_PAIR21 = "http://example.com/page2 http://example.com/page1";
   private static final String URL_PAIR31 = "http://example.com/page3 http://example.com/page1";
 
-  private static final String RANK = "1.3690036520596678";
+  private static final String RANK = "14";
 
   @Test
   public void test() throws Exception {
@@ -52,13 +52,17 @@ public class SparkPageRankAppTest extends TestBase {
     streamWriter.send(URL_PAIR21);
     streamWriter.send(URL_PAIR31);
 
+    // Start GoogleTypePR
+    ServiceManager transformServiceManager = appManager.startService(SparkPageRankApp.GoogleTypePR.SERVICE_NAME);
+    // Wait service startup
+    serviceStatusCheck(transformServiceManager, true);
+
     // Start the SparkPageRankProgram
     SparkManager sparkManager = appManager.startSpark("SparkPageRankProgram");
     sparkManager.waitForFinish(60, TimeUnit.SECONDS);
 
     // Start CentersService
     ServiceManager serviceManager = appManager.startService(SparkPageRankApp.RanksService.SERVICE_NAME);
-
     // Wait service startup
     serviceStatusCheck(serviceManager, true);
 
