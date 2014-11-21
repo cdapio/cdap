@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
+import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -82,10 +83,9 @@ public class DatasetService extends AbstractExecutionThreadService {
                         DatasetExploreFacade datasetExploreFacade,
                         Set<DatasetMetricsReporter> metricReporters) throws Exception {
 
-    NettyHttpService.Builder builder = NettyHttpService.builder();
-
     this.typeManager = typeManager;
 
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
                                              new DatasetInstanceHandler(typeManager, instanceManager, opExecutorClient,
                                                                         datasetExploreFacade, cConf)));

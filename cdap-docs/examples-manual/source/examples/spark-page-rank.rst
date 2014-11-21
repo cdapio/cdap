@@ -119,8 +119,8 @@ There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
-     curl -v -d '{"url": "http://example.com/page1"}' \
-       'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/methods/rank'; echo
+     curl -w '\n' -v -d '{"url": "http://example.com/page1"}' \
+       'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/methods/rank'
 
    On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 

@@ -48,7 +48,7 @@
 
   <properties>
     <cdap.version>@project.version@</cdap.version>
-    <netty.http.version>0.5.0</netty.http.version>
+    <netty.http.version>0.6.0</netty.http.version>
     <hadoop.version>2.3.0</hadoop.version>
     <power.pack.version>[2.0.0,)</power.pack.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>

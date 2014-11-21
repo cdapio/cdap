@@ -19,6 +19,7 @@ package co.cask.cdap.metrics.query;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
+import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -59,7 +60,7 @@ public class MetricsQueryService extends AbstractIdleService {
     int bossthreads = cConf.getInt(Constants.Metrics.BOSS_THREADS, 1);
     int workerthreads = cConf.getInt(Constants.Metrics.WORKER_THREADS, 10);
 
-    NettyHttpService.Builder builder = NettyHttpService.builder();
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(handlers);
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.METRICS)));

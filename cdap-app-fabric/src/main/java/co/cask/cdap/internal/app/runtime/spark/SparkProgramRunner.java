@@ -112,13 +112,13 @@ public class SparkProgramRunner implements ProgramRunner {
                                                             program.getSpecification().getDatasets().keySet(), spec,
                                                             logicalStartTime, workflowBatch,
                                                             metricsCollectionService, datasetFramework, cConf,
-                                                            discoveryServiceClient);
+                                                            discoveryServiceClient, streamAdmin);
 
     LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
     Service sparkRuntimeService = new SparkRuntimeService(cConf, hConf, spark, spec, context,
                                                           program.getJarLocation(), locationFactory,
-                                                          txSystemClient, streamAdmin);
+                                                          txSystemClient);
     ProgramController controller = new SparkProgramController(sparkRuntimeService, context);
 
     LOG.info("Starting Spark Job: {}", context.toString());
