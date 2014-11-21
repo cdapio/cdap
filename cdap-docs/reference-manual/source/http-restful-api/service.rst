@@ -12,7 +12,7 @@ Service HTTP RESTful API
 .. highlight:: console
 
 This interface supports making requests to the methods of an Application’s Services.
-See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
+See the :ref:`http-restful-api-lifecycle` for how to control the life cycle of
 Services.
 
 Requesting Service Methods
