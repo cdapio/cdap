@@ -63,7 +63,6 @@ public final class RunRecord {
     return stopTs;
   }
 
-  @Nullable
   public ProgramRunStatus getStatus() {
     return status;
   }
