@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -141,5 +142,24 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                false,
                Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
                Lists.<QueryResult>newArrayList());
+  }
+
+  @Test
+  public void testJoinOnStreams() throws Exception {
+    createStream("jointest1");
+    createStream("jointest2");
+    sendStreamEvent("jointest1", Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+    sendStreamEvent("jointest1", Collections.<String, String>emptyMap(), Bytes.toBytes("XYZ"));
+    sendStreamEvent("jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("ABC"));
+    sendStreamEvent("jointest2", Collections.<String, String>emptyMap(), Bytes.toBytes("DEF"));
+
+    runCommand("select cdap_stream_jointest1.body, cdap_stream_jointest2.body" +
+                 " from cdap_stream_jointest1 join cdap_stream_jointest2" +
+                 " on (cdap_stream_jointest1.body = cdap_stream_jointest2.body)",
+               true,
+               Lists.newArrayList(new ColumnDesc("jointest1.body", "STRING", 1, null),
+                                  new ColumnDesc("jointest2.body", "STRING", 2, null)),
+               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("ABC", "ABC")))
+    );
   }
 }
