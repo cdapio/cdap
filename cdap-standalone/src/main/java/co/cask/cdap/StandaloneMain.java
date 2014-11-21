@@ -112,7 +112,7 @@ public class StandaloneMain {
     streamHttpService = injector.getInstance(StreamHttpService.class);
 
     sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
-    securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
+    securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
     if (securityEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }

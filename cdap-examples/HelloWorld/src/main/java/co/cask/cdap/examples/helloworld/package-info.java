@@ -14,7 +14,7 @@
  * the License.
  */
 /**
- * Package for HelloWorld sample Application.
+ * Package for HelloWorld example Application.
  * 
  * This is a simple HelloWorld example that uses one Stream, one DataSet, one Flow and one Service.
  * <uL>

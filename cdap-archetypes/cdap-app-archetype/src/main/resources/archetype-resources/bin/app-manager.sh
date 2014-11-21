@@ -22,7 +22,7 @@ script=`basename $0`
 user=$USER
 epoch=`date +%s`
 
-app="WordCount"
+app="HelloWorld"
 
 auth_token=
 auth_file="$HOME/.cdap.accesstoken"
@@ -141,9 +141,9 @@ fi
 get_auth_token
 
 if [ "x$action" == "xdeploy" ]; then
-  jar_path=`ls $dir/../target/WordCount-*.jar`
+  jar_path=`ls $dir/../target/HelloWorld-*.jar`
   deploy_action $app $jar_path $host
 else
-  program_action $app "WordCounter" "flow" $action $host
-  program_action $app "RetrieveCounts" "service" $action $host
+  program_action $app "WhoFlow" "flow" $action $host
+  program_action $app "Greeting" "service" $action $host
 fi

@@ -18,12 +18,12 @@ REM ## the License.
 REM ##
 REM #################################################################################
 
-REM Application Manager for managing application lifecycle for WordCount application 
-SET APP_JAR_PREFIX=WordCount
+REM Application Manager for managing application lifecycle for HelloWorld application 
+SET APP_JAR_PREFIX=HelloWorld
 
-SET APP_NAME=WordCount
-SET FLOW_NAME=WordCounter
-SET SERVICE_NAME=RetrieveCounts
+SET APP_NAME=HelloWorld
+SET FLOW_NAME=WhoFlow
+SET SERVICE_NAME=Greeting
 
 REM Set the base directory
 for %%i in ("%~dp0..\") do (SET APP_HOME=%%~dpi)
