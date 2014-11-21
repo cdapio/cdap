@@ -103,7 +103,7 @@ public class ProgramClientTestRun extends ClientTestBase {
     assertProgramRunning(programClient, FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
 
     LOG.info("Getting flow history");
-    programClient.getProgramRuns(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME, null, 0, Long.MAX_VALUE,
+    programClient.getAllProgramRuns(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME, 0, Long.MAX_VALUE,
                                  Integer.MAX_VALUE);
 
     LOG.info("Scaling flowlet");
