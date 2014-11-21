@@ -137,8 +137,8 @@ There are two ways to query the *history* ObjectStore through the ``PurchaseProc
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
-    curl -v -d '{"customer": "Alice"}' \
-      'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseProcedure/methods/history'; echo
+    curl -w '\n' -v -d '{"customer": "Alice"}' \
+      'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseProcedure/methods/history'
 
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
 
@@ -217,8 +217,8 @@ If you prefer to use ``curl`` directly, here is the sequence of steps to execute
 
 First, submit the query for execution::
 
-  curl -v -d '{"query": "'"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"'"}' \
-    http://localhost:10000/v2/data/explore/queries; echo
+  curl -w '\n' -v -d '{"query": "'"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"'"}' \
+    http://localhost:10000/v2/data/explore/queries;
 
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
 correctly at the shell command prompt. On success, this will return a handle for the query, such as::
@@ -228,7 +228,7 @@ correctly at the shell command prompt. On success, this will return a handle for
 This handle is needed to inquire about the status of the query and to retrieve query results. To get the
 status, issue a GET to the query's URL using the handle::
 
-  curl -v -X GET http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/status; echo
+  curl -w '\n' -v -X GET http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/status
 
 Because a SQL query can run for several minutes, you may have to repeat the call until it returns a status of *finished*::
 
@@ -236,7 +236,7 @@ Because a SQL query can run for several minutes, you may have to repeat the call
 
 Once execution has finished, you can retrieve the results of the query using the handle::
 
-  curl -v -X POST http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/next; echo
+  curl -w '\n' -v -X POST http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782/next
 
 This will return—up to a limited number—the results in JSON format::
 

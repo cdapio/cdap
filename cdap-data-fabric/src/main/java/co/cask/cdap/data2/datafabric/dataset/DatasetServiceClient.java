@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
+import co.cask.cdap.common.http.SecurityRequestContext;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.InstanceConflictException;
@@ -246,7 +247,11 @@ class DatasetServiceClient {
 
     String url = resolve(resource);
     try {
-      return HttpRequests.execute(HttpRequest.builder(method, new URL(url)).addHeaders(headers).withBody(body).build());
+      return HttpRequests.execute(processBuilder(
+        HttpRequest.builder(method, new URL(url))
+          .addHeaders(headers)
+          .withBody(body)
+      ).build());
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
@@ -262,13 +267,24 @@ class DatasetServiceClient {
 
     String url = resolve(resource);
     try {
-      return HttpRequests.execute(HttpRequest.builder(method, new URL(url)).addHeaders(headers).withBody(body).build());
+      return HttpRequests.execute(processBuilder(
+        HttpRequest.builder(method, new URL(url))
+          .addHeaders(headers)
+          .withBody(body)
+      ).build());
     } catch (IOException e) {
       throw new DatasetManagementException(
         String.format("Error during talking to Dataset Service at %s while doing %s with headers %s and body %s",
                       url, method, headers == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(headers),
                       body == null ? "null" : body), e);
     }
+  }
+
+  private HttpRequest.Builder processBuilder(HttpRequest.Builder builder) {
+    if (SecurityRequestContext.getUserId() != null) {
+      builder.addHeader(Constants.Security.Headers.USER_ID, SecurityRequestContext.getUserId());
+    }
+    return builder;
   }
 
   private HttpResponse doRequest(HttpMethod method, String url) throws DatasetManagementException {

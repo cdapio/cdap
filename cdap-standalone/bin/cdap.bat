@@ -156,7 +156,7 @@ if exist %~dsp0MyProg.pid (
 attrib +h %~dsp0MyProg.pid >NUL
 
 REM Check for new version of CDAP
-bitsadmin /Transfer NAME http://s3.amazonaws.com/cdap-docs/VERSION %~f0_version.txt > NUL 2>&1
+bitsadmin /Transfer NAME http://docs.cask.co/cdap/version %~f0_version.txt > NUL 2>&1
 if exist %~f0_version.txt (
   for /f "tokens=* delims= " %%f in (%~f0_version.txt) do (
     SET new_version = %%f
@@ -168,6 +168,8 @@ if exist %~f0_version.txt (
 
   if not "%current_version%" == "%new_version%" (
     echo UPDATE: There is a newer version of the CDAP SDK available.
+    echo         New version: %new_version%
+    echo         Current version: %current_version%
     echo         Download it from http://cask.co/downloads
   )
 )

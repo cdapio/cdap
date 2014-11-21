@@ -1,7 +1,7 @@
 # Purchase example
 
 Example application that reads purchase data from a Stream, processes the data via a Workflow,
-and makes it available via ad-hoc querying and a Procedure.
+and makes it available via ad-hoc querying and the RESTful interface of a Service.
 
 Features introduced: Custom Dataset with ad-hoc querying capability, Workflow, and MapReduce.
 
@@ -17,8 +17,7 @@ Features introduced: Custom Dataset with ad-hoc querying capability, Workflow, a
     Process page in the CDAP Console) or programmatically execute the
     PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the
     history Dataset.
-  - Execute the PurchaseQuery procedure to query the history Dataset to discover the
-    purchase history of each user.
+  - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
   - You can use SQL to formulate ad-hoc queries over the history Dataset. This is done by
     a series of ``curl`` calls, as described in the RESTful API section of the Developer Guide.
 

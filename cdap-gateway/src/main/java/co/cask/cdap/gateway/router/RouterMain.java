@@ -62,7 +62,7 @@ public class RouterMain extends DaemonMain {
       // Load configuration
       CConfiguration cConf = CConfiguration.create();
 
-      if (cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
+      if (cConf.getBoolean(Constants.Security.ENABLED)) {
         // Enable Kerberos login
         SecurityUtil.enableKerberosLogin(cConf);
       }

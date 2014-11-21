@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.wordcount;
 
 import co.cask.cdap.api.app.AbstractApplication;
@@ -24,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Table;
  * Word count sample Application.
  */
 public class WordCount extends AbstractApplication {
+
   @Override
   public void configure() {
     setName("WordCount");
@@ -40,8 +42,8 @@ public class WordCount extends AbstractApplication {
     
     // Process events in real-time using Flows
     addFlow(new WordCounter());
-    
-    // Query the processed data using a Procedure
-    addProcedure(new RetrieveCounts());
+
+    // Retrieve the processed data using a Service
+    addService(new RetrieveCounts());
   }
 }

@@ -115,12 +115,22 @@ You'll need this software installed:
 - Node.js runtime (on CDAP nodes)
 - Hadoop, HBase (and possibly Hive) environment to run against
 
+.. _install-java-runtime:
+
 Java Runtime
 ++++++++++++
-The latest `JDK or JRE version 1.6.xx <http://www.java.com/en/download/manual.jsp>`__
+The latest `JDK or JRE version 1.6.xx or 1.7.xx <http://www.java.com/en/download/manual.jsp>`__
 for Linux and Solaris must be installed in your environment.
 
+To check the Java version installed, run the command::
+
+  java -version
+  
+CDAP is tested with the Oracle JDKs; it may work with other JDKs such as 
+`Open JDK <http://openjdk.java.net>`__, but it has not been tested with them.
+
 Once you have installed the JDK, you'll need to set the JAVA_HOME environment variable.
+
 
 Node.js Runtime
 +++++++++++++++
@@ -375,7 +385,7 @@ and started the services.
 
 Upgrading from a Previous Version
 ---------------------------------
-When upgrade an existing CDAP installation from a previous version, you will need
+When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
 
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
@@ -391,14 +401,14 @@ and then restart CDAP.
 
        sudo yum install cdap cdap-gateway
                               cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-kafka cdap-master
+                              cdap-hbase-compat-0.98 cdap-kafka cdap-master
                               cdap-security cdap-web-app
 
    - Using APT (on one line)::
 
        sudo apt-get install cdap cdap-gateway
                               cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-kafka cdap-master
+                              cdap-hbase-compat-0.98 cdap-kafka cdap-master
                               cdap-security cdap-web-app
 
 #. Run the upgrade tool (on one line)::
@@ -416,9 +426,8 @@ To verify that the CDAP software is successfully installed and you are able to u
 Hadoop cluster, run an example application.
 We provide in our SDK pre-built ``.JAR`` files for convenience:
 
-#. Download and install the latest CDAP Developer Suite from
-   http://cask.co/download
-
+#. Download and install the latest CDAP Software Development Kit (SDK) from
+   http://cask.co/downloads/#cdap\ .
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
@@ -432,5 +441,5 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
    :ref:`WordCount example. <examples-word-count>`
 #. You should be able to start the application, inject sentences,
    run the Flow and the Procedure, and see results.
-#. When finished, stop and remove the application as described in the
-   :ref:`examples. <examples-index>`
+#. When finished, you can stop and remove the application as described in the section on
+   :ref:`cdap-building-running`.

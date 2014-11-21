@@ -14,6 +14,41 @@ Here are some selected examples of potential problems and possible resolutions.
 Check HDFS write permissions. It should show an obvious exception in the YARN logs.
  
 
+.. rubric:: CDAP services on distributed CDAP don’t start up due to ``java.lang.ClassNotFoundException``
+
+If the CDAP services on a distributed CDAP environment wouldn't start up, you will see errors
+in the logs. You will find in the logs for ``cdap-master`` under ``/var/log/cdap/master*.log``
+errors such as these::
+
+ "Exception in thread "main" java.lang.NoClassDefFoundError:
+   co.cask.cdap.data.runtime.main.MasterServiceMain
+     at gnu.java.lang.MainThread.run(libgcj.so.10)"
+
+Things to check as possible solutions:
+
+1. Check if the JDK being used is :ref:`supported by CDAP<install-java-runtime>`::
+
+    java -version
+
+#. Check if the CDAP user is using a correct version of the JDK::
+
+    sudo su - <cdap-user> 
+    java -version
+   
+#. Run this command to see if all the CDAP classpaths are included::
+
+    /opt/cdap/master/bin/svc-master classpath | tr ':' '\n'
+   
+   Expect to see (where *<version>* is one of ``0.94``, ``0.96``, or ``0.98``)::
+
+    /etc/cdap/conf/
+    /opt/cdap/hbase-compat-<version>/lib/*
+    /opt/cdap/master/conf/
+    /opt/cdap/master/lib/*
+
+   If the classpath is incorrect, review the :ref:`installation instructions <install>` and correct.
+   
+
 .. rubric:: No Metrics/logs
 
 Make sure the *Kafka* server is running, and make sure local the logs directory is created and accessible.
@@ -63,6 +98,5 @@ Note that it is recommended that ``log.saver.event.processing.delay.ms`` always 
 ``log.saver.event.bucket.interval.ms`` by at least a few hundred (300-500) milliseconds.
 
 See the ``log.saver`` parameter section of the :ref:`Appendix cdap-site.xml
-<admin:appendix-cdap-site.xml>` for a list of these configuration parameters and their
+<appendix-cdap-site.xml>` for a list of these configuration parameters and their
 values that can be adjusted.
-

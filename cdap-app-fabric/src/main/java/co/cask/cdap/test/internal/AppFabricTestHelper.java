@@ -123,8 +123,8 @@ public class AppFabricTestHelper {
       ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
       // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
 
-      List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
-                                                                        new Function<Program, Program>() {
+      final List<Program> programs = ImmutableList.copyOf(Iterables.transform(appWithPrograms.getPrograms(),
+                                                                              new Function<Program, Program>() {
             @Override
             public Program apply(Program program) {
               try {
@@ -135,7 +135,12 @@ public class AppFabricTestHelper {
             }
           }
       ));
-      return new ApplicationWithPrograms(appWithPrograms.getAppSpecLoc(), programs);
+      return new ApplicationWithPrograms(appWithPrograms) {
+        @Override
+        public Iterable<Program> getPrograms() {
+          return programs;
+        }
+      };
     } finally {
       deployedJar.delete(true);
     }

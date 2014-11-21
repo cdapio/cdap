@@ -14,21 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.internal.pipeline;
+package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.pipeline.Pipeline;
-import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.pipeline.AbstractStage;
+import com.google.common.reflect.TypeToken;
+
+import java.io.Closeable;
 
 /**
- * A factory for providing asynchronous pipeline.
+ * Stage for cleaning up resources created during deployment time.
  */
-public class AsynchronousPipelineFactory implements PipelineFactory {
+public class DeployCleanupStage extends AbstractStage<Closeable> {
 
-  /**
-   * @return A asynchronous pipeline.
-   */
+  public DeployCleanupStage() {
+    super(TypeToken.of(Closeable.class));
+  }
+
   @Override
-  public <T> Pipeline<T> getPipeline() {
-    return new AsynchronousPipeline<T>();
+  public void process(Closeable input) throws Exception {
+    input.close();
   }
 }
