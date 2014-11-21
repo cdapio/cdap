@@ -68,19 +68,22 @@ public class PurchaseAppTest extends TestBase {
       flowManager.stop();
     }
 
+    ServiceManager userProfileServiceManager = appManager.startService(UserProfileService.SERVICE_NAME);
+    serviceStatusCheck(userProfileServiceManager, true);
+
     // Run PurchaseHistoryWorkflow which will process the data
     MapReduceManager mapReduceManager = appManager.startMapReduce("PurchaseHistoryWorkflow_PurchaseHistoryBuilder",
                                                                   ImmutableMap.<String, String>of());
     mapReduceManager.waitForFinish(3, TimeUnit.MINUTES);
 
     // Start PurchaseHistoryService
-    ServiceManager serviceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
+    ServiceManager purchaseHistoryServiceManager = appManager.startService(PurchaseHistoryService.SERVICE_NAME);
 
     // Wait service startup
-    serviceStatusCheck(serviceManager, true);
+    serviceStatusCheck(purchaseHistoryServiceManager, true);
 
     // Test service to retrieve a customer's purchase history
-    URL url = new URL(serviceManager.getServiceURL(), "history/joe");
+    URL url = new URL(purchaseHistoryServiceManager.getServiceURL(), "history/joe");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
     String historyJson;

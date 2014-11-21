@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.examples.purchase;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -28,6 +29,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * MapReduce job that reads purchases from the purchases DataSet and creates a purchase history for every user.
@@ -58,6 +61,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
    * Mapper class.
    */
   public static class PurchaseMapper extends Mapper<byte[], Purchase, Text, Text> {
+
     private Metrics mapMetrics;
 
     @Override
@@ -74,14 +78,38 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   /**
    * Reducer class.
    */
-  public static class PerUserReducer extends Reducer<Text, Text, String, PurchaseHistory> {
+  public static class PerUserReducer extends Reducer<Text, Text, String, PurchaseHistory>
+    implements ProgramLifecycle<MapReduceContext> {
+
     @UseDataSet("frequentCustomers")
     private KeyValueTable frequentCustomers;
+
     private Metrics reduceMetrics;
+
+    private URL userProfileServiceURL;
+
+    @Override
+    public void initialize(MapReduceContext context) throws Exception {
+      userProfileServiceURL = context.getServiceURL(UserProfileService.SERVICE_NAME);
+    }
 
     public void reduce(Text customer, Iterable<Text> values, Context context)
       throws IOException, InterruptedException {
-      PurchaseHistory purchases = new PurchaseHistory(customer.toString());
+
+      URL getUserProfileURL = new URL(userProfileServiceURL, "user");
+      UserProfile userProfile;
+      try {
+        HttpURLConnection urlConnection = (HttpURLConnection) getUserProfileURL.openConnection();
+        if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_NO_CONTENT) {
+          userProfile = null;
+        } else {
+          // parse UserProfile
+        }
+      } catch (Exception e) {
+        userProfile = null;
+      }
+
+      PurchaseHistory purchases = new PurchaseHistory(customer.toString(), userProfile);
       int numPurchases = 0;
       for (Text val : values) {
         purchases.add(new Gson().fromJson(val.toString(), Purchase.class));
@@ -95,6 +123,11 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
       }
 
       context.write(customer.toString(), purchases);
+    }
+
+    @Override
+    public void destroy() {
+      // no-op
     }
   }
 }
