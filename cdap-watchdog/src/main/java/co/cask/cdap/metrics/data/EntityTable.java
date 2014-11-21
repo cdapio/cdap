@@ -131,6 +131,10 @@ public final class EntityTable {
         // Not found, generate a new ID
         byte[] maxIdRowKey = Bytes.toBytes(key.getType() + ".maxId");
         long newId = table.incrementAndGet(maxIdRowKey, MAX_ID, 1L);
+        if (newId % maxId == 0) {
+          newId = 1L;
+          table.swap(maxIdRowKey, MAX_ID, Bytes.toBytes(maxId), Bytes.toBytes(newId));
+        }
         //Preconditions.checkState(newId < maxId, "Maximum %s ID generated.", maxId);
 
         if (key.getName() == null || key.getName().isEmpty()) {
