@@ -20,6 +20,9 @@ define([], function () {
 
             });
         },
+        __updateMetrics: function () {
+            this.get('model').getMetricsRequest(this.HTTP);
+        },
 
         load: function () {
             var model = this.get('model');
@@ -28,7 +31,7 @@ define([], function () {
             var runStatusUpdate = function() {
                 self.__updateStatusTimeout = setTimeout(function () {
                     self.__updateStatus(model.app, model.name);
-
+                    self.__updateMetrics();
                     runStatusUpdate();
                 }, self.__STATUS_UPDATE_TIMEOUT);
             };
@@ -72,7 +75,6 @@ define([], function () {
         logsLinkHandler: function() {
           this.transitionToRoute("Spark.Log");
         }
-
     });
 
     Controller.reopenClass({

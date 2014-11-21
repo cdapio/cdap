@@ -123,6 +123,15 @@ define(['core/lib/date', 'core/models/program'],
       var appId = this.get('app');
       var jobId = this.get('name');
       var datasetId = this.get('inputDataSet');
+
+      var paths = [];
+      var pathMap = {};
+      for (var path in METRICS_PATHS) {
+        var url = S(path).template({'appId': appId, 'jobId': jobId}).s;
+        paths.push(url);
+        pathMap[url] = METRICS_PATHS[path];
+      }
+
       var self = this;
 
       http.rest('apps', appId, 'mapreduce', jobId, 'runs?limit=1', function (runIdResponse, status) {
