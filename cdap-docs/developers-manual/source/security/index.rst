@@ -65,4 +65,4 @@ Two authentication client libraries are included with CDAP:
 .. rubric:: Custom Authentication
 
 If the standard authentication mechanisms are not sufficient, you can provide a
-:ref:`custom authentication mechanism <custom-authentication>`.
+:ref:`custom authentication mechanism <developers-custom-authentication>`.

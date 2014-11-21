@@ -24,6 +24,7 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.Configuration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.pipeline.AbstractStage;
@@ -51,27 +52,27 @@ import java.util.concurrent.Executors;
 /**
  *
  */
-public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocation> {
+public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable> {
   private final LocationFactory locationFactory;
   private final Configuration configuration;
 
   public ProgramGenerationStage(Configuration configuration, LocationFactory locationFactory) {
-    super(TypeToken.of(ApplicationSpecLocation.class));
+    super(TypeToken.of(ApplicationDeployable.class));
     this.configuration = configuration;
     this.locationFactory = locationFactory;
   }
 
   @Override
-  public void process(final ApplicationSpecLocation o) throws Exception {
+  public void process(final ApplicationDeployable input) throws Exception {
     ImmutableList.Builder<Program> programs = ImmutableList.builder();
-    final ApplicationSpecification appSpec = o.getSpecification();
+    final ApplicationSpecification appSpec = input.getSpecification();
     final String applicationName = appSpec.getName();
 
-    final ArchiveBundler bundler = new ArchiveBundler(o.getArchive());
+    final ArchiveBundler bundler = new ArchiveBundler(input.getLocation());
 
     // Make sure we have a directory to store the original artifact.
     Location outputDir = locationFactory.create(configuration.get(Constants.AppFabric.OUTPUT_DIR));
-    final Location newOutputDir = outputDir.append(o.getApplicationId().getAccountId());
+    final Location newOutputDir = outputDir.append(input.getId().getAccountId());
 
     // Check exists, create, check exists again to avoid failure due to race condition.
     if (!newOutputDir.exists() && !newOutputDir.mkdirs() && !newOutputDir.exists()) {
@@ -89,7 +90,9 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     );
 
     // Generate webapp program if required
-    Set<String> servingHostNames = WebappProgramRunner.getServingHostNames(o.getArchive().getInputStream());
+    Set<String> servingHostNames = WebappProgramRunner.getServingHostNames(
+      Locations.newInputSupplier(input.getLocation()));
+
     if (!servingHostNames.isEmpty()) {
       specifications = Iterables.concat(specifications, ImmutableList.of(
         createWebappSpec(ProgramType.WEBAPP.toString().toLowerCase())));
@@ -112,8 +115,8 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
               programDir.mkdirs();
             }
             Location output = programDir.append(String.format("%s.jar", spec.getName()));
-            return ProgramBundle.create(o.getApplicationId(), bundler, output, spec.getName(),
-                                          spec.getClassName(), type, appSpec);
+            return ProgramBundle.create(input.getId(), bundler, output, spec.getName(),
+                                        spec.getClassName(), type, appSpec);
             }
         });
         futures.add(future);
@@ -127,7 +130,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationSpecLocatio
     }
 
     // Emits the received specification with programs.
-    emit(new ApplicationWithPrograms(o, programs.build()));
+    emit(new ApplicationWithPrograms(input, programs.build()));
   }
 
   private WebappSpecification createWebappSpec(final String name) {
