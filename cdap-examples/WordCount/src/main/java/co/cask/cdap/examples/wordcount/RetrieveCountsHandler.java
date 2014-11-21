@@ -94,9 +94,9 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
   @Path("count/{word}")
   @GET
   public void getCount(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("word") String word, @QueryParam("limit") int limit) {
+                       @PathParam("word") String word, @QueryParam("limit") Integer limit) {
     // Set default limit of ten if not specified
-    if (limit == 0) {
+    if (limit == null) {
       limit = 10;
     }
 
