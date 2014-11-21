@@ -29,6 +29,7 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
@@ -169,10 +170,18 @@ public class BundleJarApp extends AbstractApplication {
     @UseDataSet("simpleInputDataset")
     private KeyValueTable input;
 
+    public SimpleMapReduce() {
+
+    }
+
     @Override
-    public void configure() {
-      setInputDataset("simpleInputDataset");
-      setOutputDataset("simpleOutputDataset");
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("SimpleMapReduce")
+        .setDescription("Description")
+        .useInputDataSet("simpleInputDataset")
+        .useOutputDataSet("simpleOutputDataset")
+        .build();
     }
 
     /**

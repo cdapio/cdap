@@ -17,7 +17,6 @@
 package co.cask.cdap.logging.write;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
@@ -81,7 +80,7 @@ public class LogCleanupTest {
     CConfiguration cConf = CConfiguration.create();
 
     Configuration conf = HBaseConfiguration.create();
-    CConfigurationUtil.copyTxProperties(cConf, conf);
+    cConf.copyTxProperties(conf);
     TransactionManager txManager = new TransactionManager(conf);
     txManager.startAndWait();
     TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);

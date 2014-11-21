@@ -26,9 +26,6 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.map.WrappedMapper;
 import org.slf4j.Logger;
@@ -42,23 +39,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapperWrapper extends Mapper {
 
-  private static final String ATTR_MAPPER_CLASS = "c.mapper.class";
+  public static final String ATTR_MAPPER_CLASS = "c.mapper.class";
 
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
-
-  /**
-   * Wraps the mapper defined in the job with this {@link MapperWrapper} if it is defined.
-   * @param job
-   */
-  public static void wrap(Job job) {
-    // NOTE: we don't use job.getMapperClass() as we don't need to load user class here
-    Configuration conf = job.getConfiguration();
-    String mapClass = conf.get(MRJobConfig.MAP_CLASS_ATTR);
-    if (mapClass != null) {
-      conf.set(MapperWrapper.ATTR_MAPPER_CLASS, mapClass);
-      job.setMapperClass(MapperWrapper.class);
-    }
-  }
 
   @SuppressWarnings("unchecked")
   @Override

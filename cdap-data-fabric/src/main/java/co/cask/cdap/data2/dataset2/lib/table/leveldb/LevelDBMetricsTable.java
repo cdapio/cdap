@@ -16,13 +16,10 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -34,20 +31,6 @@ import javax.annotation.Nullable;
  * A metrics table client based on leveldb.
  */
 public class LevelDBMetricsTable implements MetricsTable {
-
-  private static final Function<Long, byte[]> LONG_TO_BYTES = new Function<Long, byte[]>() {
-    @Override
-    public byte[] apply(Long input) {
-      return Bytes.toBytes(input);
-    }
-  };
-  private static final Function<NavigableMap<byte[], Long>, NavigableMap<byte[], byte[]>>
-    TRANSFORM_MAP_LONG_TO_BYTE_ARRAY = new Function<NavigableMap<byte[], Long>, NavigableMap<byte[], byte[]>>() {
-    @Override
-    public NavigableMap<byte[], byte[]> apply(NavigableMap<byte[], Long> input) {
-      return Maps.transformValues(input, LONG_TO_BYTES);
-    }
-  };
 
   private final LevelDBOrderedTableCore core;
 
@@ -65,10 +48,8 @@ public class LevelDBMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
-    NavigableMap<byte[], NavigableMap<byte[], byte[]>> convertedUpdates =
-      Maps.transformValues(updates, TRANSFORM_MAP_LONG_TO_BYTE_ARRAY);
-    core.persist(convertedUpdates, System.currentTimeMillis());
+  public void put(NavigableMap<byte[], NavigableMap<byte[], byte[]>> updates) throws Exception {
+    core.persist(updates, System.currentTimeMillis());
   }
 
   @Override
@@ -112,5 +93,4 @@ public class LevelDBMetricsTable implements MetricsTable {
   public void close() throws IOException {
     // Do nothing
   }
-
 }

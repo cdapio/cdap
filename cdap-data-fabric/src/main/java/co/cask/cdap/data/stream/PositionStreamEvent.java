@@ -16,42 +16,11 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.stream.StreamEventData;
-
-import java.nio.ByteBuffer;
-import java.util.Map;
 
 /**
  * A {@link StreamEvent} which also carries the file position where this event starts.
  */
-class PositionStreamEvent extends StreamEvent {
+public interface PositionStreamEvent extends StreamEvent {
 
-  private final StreamEventData delegate;
-  private final long timestamp;
-  private final long position;
-
-  PositionStreamEvent(StreamEventData delegate, long timestamp, long position) {
-    this.delegate = delegate;
-    this.timestamp = timestamp;
-    this.position = position;
-  }
-
-  @Override
-  public long getTimestamp() {
-    return timestamp;
-  }
-
-  @Override
-  public ByteBuffer getBody() {
-    return delegate.getBody();
-  }
-
-  @Override
-  public Map<String, String> getHeaders() {
-    return delegate.getHeaders();
-  }
-
-  public long getStart() {
-    return position;
-  }
+  long getStart();
 }

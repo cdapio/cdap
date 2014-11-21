@@ -16,11 +16,13 @@
 
 package co.cask.cdap.explore.client;
 
+import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.MetaDataInfo;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**

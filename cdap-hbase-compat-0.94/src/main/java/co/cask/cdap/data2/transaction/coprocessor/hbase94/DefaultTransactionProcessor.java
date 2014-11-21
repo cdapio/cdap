@@ -25,7 +25,6 @@ import co.cask.tephra.hbase94.coprocessor.TransactionVisibilityFilter;
 import com.google.common.base.Supplier;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
-import org.apache.hadoop.hbase.regionserver.ScanType;
 
 /**
  * Implementation of the {@link co.cask.tephra.hbase94.coprocessor.TransactionProcessor}
@@ -46,7 +45,7 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   }
 
   @Override
-  protected Filter getTransactionFilter(Transaction tx, ScanType scanType) {
-    return new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues, scanType, new IncrementFilter());
+  protected Filter getTransactionFilter(Transaction tx) {
+    return new TransactionVisibilityFilter(tx, ttlByFamily, allowEmptyValues, new IncrementFilter());
   }
 }

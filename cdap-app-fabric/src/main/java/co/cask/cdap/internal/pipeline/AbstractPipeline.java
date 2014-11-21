@@ -33,7 +33,6 @@ public abstract class AbstractPipeline<T> implements Pipeline<T> {
    * List of stages in the pipeline.
    */
   private List<Stage> stages = Lists.newLinkedList();
-  private Stage finalStage;
 
   /**
    * Adds a {@link Stage} to the {@link Pipeline}.
@@ -45,19 +44,10 @@ public abstract class AbstractPipeline<T> implements Pipeline<T> {
     stages.add(stage);
   }
 
-  @Override
-  public void setFinally(Stage stage) {
-    this.finalStage = stage;
-  }
-
   /**
    * @return list of Stages.
    */
-  protected final List<Stage> getStages() {
+  protected List<Stage> getStages() {
     return Collections.unmodifiableList(stages);
-  }
-
-  protected final Stage getFinalStage() {
-    return finalStage;
   }
 }

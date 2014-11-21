@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.http.AbstractHttpHandler;
-import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Supplier;
@@ -533,18 +532,17 @@ public abstract class NettyRouterTestBase {
 
       @POST
       @Path("/v1/upload")
-      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException, IOException {
+      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException {
         ChannelBuffer content = request.getContent();
 
         int readableBytes;
-        ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                                 ImmutableMultimap.<String, String>of());
+        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
         while ((readableBytes = content.readableBytes()) > 0) {
           int read = Math.min(readableBytes, CHUNK_SIZE);
-          chunkResponder.sendChunk(content.readSlice(read));
+          responder.sendChunk(content.readSlice(read));
           //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(1));
         }
-        chunkResponder.close();
+        responder.sendChunkEnd();
       }
     }
   }

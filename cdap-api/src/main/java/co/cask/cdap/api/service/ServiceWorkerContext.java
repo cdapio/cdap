@@ -17,21 +17,15 @@
 package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.ServiceDiscoverer;
 
 /**
  * Context for custom Service workers.
  */
-public interface ServiceWorkerContext extends RuntimeContext, ServiceDiscoverer {
-
-  /**
-   * Returns the specification used to configure the {@link ServiceWorker} bounded to this context.
-   */
-  ServiceWorkerSpecification getSpecification();
+public interface ServiceWorkerContext extends RuntimeContext {
 
   /**
    * Execute a set of operations on datasets via a {@link TxRunnable} that are committed as a single transaction.
-   * @param runnable The runnable to be executed in the transaction
+   * @param runnable
    */
   void execute(TxRunnable runnable);
 }

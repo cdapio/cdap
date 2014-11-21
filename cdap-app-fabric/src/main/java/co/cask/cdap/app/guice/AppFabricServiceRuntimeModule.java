@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.app.authorization.AuthorizationFactory;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.store.StoreFactory;
@@ -30,6 +31,7 @@ import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
+import co.cask.cdap.internal.app.authorization.PassportAuthorizationFactory;
 import co.cask.cdap.internal.app.deploy.LocalManager;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
@@ -199,6 +201,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                      new TypeLiteral<LocalManager<Location, ApplicationWithPrograms>>() { })
           .build(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() { })
       );
+
+      bind(AuthorizationFactory.class).to(PassportAuthorizationFactory.class);
 
       bind(StoreFactory.class).to(DefaultStoreFactory.class);
 

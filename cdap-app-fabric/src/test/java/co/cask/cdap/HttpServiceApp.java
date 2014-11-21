@@ -22,10 +22,11 @@ import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
-import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -48,7 +49,7 @@ public class HttpServiceApp extends AbstractApplication {
   public void configure() {
     setName("HttpServiceApp");
     setDescription("Application with Http Service");
-    addService(new BasicService("HttpService", new BaseHttpHandler()));
+    addService("HttpService", ImmutableList.<HttpServiceHandler>of(new BaseHttpHandler()));
     addProcedure(new NoOpProcedure());
   }
 

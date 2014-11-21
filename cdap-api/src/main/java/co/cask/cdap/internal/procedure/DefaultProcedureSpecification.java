@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.procedure;
 
-import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.ResourceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.internal.lang.Reflections;
@@ -41,12 +41,12 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   private final String description;
   private final Set<String> dataSets;
   private final Map<String, String> properties;
-  private final Resources resources;
+  private final ResourceSpecification resources;
   private final int instances;
 
   public DefaultProcedureSpecification(String name, String description,
                                        Set<String> dataSets, Map<String, String> properties,
-                                       Resources resources) {
+                                       ResourceSpecification resources) {
     this(null, name, description, dataSets, properties, resources);
   }
 
@@ -70,13 +70,13 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
 
   public DefaultProcedureSpecification(String className, String name, String description,
                                        Set<String> dataSets, Map<String, String> properties,
-                                       Resources resources) {
+                                       ResourceSpecification resources) {
       this(className, name, description, dataSets, properties, resources, 1);
   }
 
   public DefaultProcedureSpecification(String className, String name, String description,
                                        Set<String> dataSets, Map<String, String> properties,
-                                       Resources resources, int instances) {
+                                       ResourceSpecification resources, int instances) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -118,7 +118,7 @@ public final class DefaultProcedureSpecification implements ProcedureSpecificati
   }
 
   @Override
-  public Resources getResources() {
+  public ResourceSpecification getResources() {
     return resources;
   }
 

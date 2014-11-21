@@ -25,6 +25,7 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.service.Service;
+import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
 
@@ -139,6 +140,20 @@ public interface ApplicationConfigurer {
    * @param workflow The {@link Workflow} to include in the Application
    */
   void addWorkflow(Workflow workflow);
+
+  /**
+   * Adds a list of {@link HttpServiceHandler} as a Custom Service to the Application.
+   *
+   * @param handlers The handlers to include in the Application
+   */
+  void addService(String name, Iterable<? extends HttpServiceHandler> handlers);
+
+  /**
+   * Adds a {@link HttpServiceHandler} as a Custom Service to the Application.
+   *
+   * @param handler The handler to include in the Application
+   */
+  void addService(String name, HttpServiceHandler handler);
 
   /**
    * Adds a custom {@link Service} to the Application.

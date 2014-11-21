@@ -41,7 +41,7 @@ public enum ProgramType {
   WEBAPP(5, "webapp", "Webapp", false),
 
   @SerializedName("Service")
-  SERVICE(6, "services", "Service", true),
+  SERVICE(6, "services", "Service", false),
 
   @SerializedName("Spark")
   SPARK(7, "spark", "Spark", true);

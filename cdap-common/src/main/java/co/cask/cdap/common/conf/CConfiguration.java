@@ -19,6 +19,8 @@ package co.cask.cdap.common.conf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Properties;
+
 /**
  * CConfiguration is an extension of the Hadoop Configuration class. By default,
  * this class provides a empty configuration. To add a set of resources from an
@@ -50,5 +52,14 @@ public class CConfiguration extends Configuration {
     conf.addResource("cdap-default.xml");
     conf.addResource("cdap-site.xml");
     return conf;
+  }
+
+  public void copyTxProperties(org.apache.hadoop.conf.Configuration destination) {
+    Properties props = getProps();
+    for (String property : props.stringPropertyNames()) {
+      if (property.startsWith("data.tx") || property.startsWith("tx.persist")) {
+        destination.set(property, get(property));
+      }
+    }
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.ResourceSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
@@ -23,8 +24,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -86,8 +85,8 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(WorkflowSpecification.class, new WorkflowSpecificationCodec())
       .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
       .registerTypeAdapter(Schedule.class, new ScheduleCodec())
+      .registerTypeAdapter(ResourceSpecification.class, new ResourceSpecificationCodec())
       .registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec())
-      .registerTypeAdapter(HttpServiceHandlerSpecification.class, new HttpServiceSpecificationCodec())
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 

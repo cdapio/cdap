@@ -119,7 +119,7 @@ public final class InMemoryConfigurator implements Configurator {
     // Now, we call configure, which returns application specification.
     DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
     app.configure(configurer, new ApplicationContext());
-    ApplicationSpecification specification = configurer.createSpecification();
+    ApplicationSpecification specification = configurer.createApplicationSpec();
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.

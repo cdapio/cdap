@@ -109,7 +109,7 @@ public final class StreamEventDataCodec {
       }
       len = decoder.readInt();
     }
-    return new StreamEventData(headers.build(), body);
+    return new DefaultStreamEventData(headers.build(), body);
   }
 
   /**

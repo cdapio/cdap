@@ -19,8 +19,6 @@ package co.cask.cdap.internal.app.runtime.spark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.ScalaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.api.spark.SparkProgram;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Throwables;
 import org.apache.spark.network.ConnectionManager;
 import org.slf4j.Logger;
@@ -28,6 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.channels.Selector;
 
 /**
@@ -57,8 +57,7 @@ public class SparkProgramWrapper {
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramWrapper.class);
   private static final int PROGRAM_WRAPPER_ARGUMENTS_SIZE = 1;
   private final String[] arguments;
-  private final Class<? extends SparkProgram> userProgramClass;
-  private static BasicSparkContext basicSparkContext;
+  private final Class userProgramClass;
   private static SparkContext sparkContext;
   private static boolean scalaProgram;
 
@@ -73,7 +72,6 @@ public class SparkProgramWrapper {
    * @param args the command line arguments
    * @throws RuntimeException if the user's program class is not found
    */
-  @SuppressWarnings("unchecked")
   private SparkProgramWrapper(String[] args) {
     arguments = validateArgs(args);
     try {
@@ -83,10 +81,11 @@ public class SparkProgramWrapper {
       LOG.error("Unable to load program class: {}", arguments[0], e);
       throw Throwables.propagate(e);
     }
+    setSparkContext();
   }
 
   public static void main(String[] args) {
-    new SparkProgramWrapper(args).runUserProgram();
+    new SparkProgramWrapper(args).instantiateUserProgramClass();
   }
 
   /**
@@ -106,23 +105,20 @@ public class SparkProgramWrapper {
   }
 
   /**
-   * Instantiate an object of user's program class and call {@link #runUserProgram(SparkProgram)} to run it
+   * Instantiate an object of user's program class and call {@link #runUserProgram(Object)} to run it
    *
    * @throws RuntimeException if failed to instantiate an object of user's program class
    */
-  private void runUserProgram() {
-    sparkContext = createSparkContext();
-
+  private void instantiateUserProgramClass() {
     try {
-      runUserProgram(userProgramClass.newInstance());
+      Object userProgramObject = userProgramClass.newInstance();
+      runUserProgram(userProgramObject);
     } catch (InstantiationException ie) {
       LOG.warn("Unable to instantiate an object of program class: {}", arguments[0], ie);
       throw Throwables.propagate(ie);
     } catch (IllegalAccessException iae) {
       LOG.warn("Illegal access to class: {}", arguments[0] + "or to its constructor", iae);
       throw Throwables.propagate(iae);
-    } finally {
-      stopSparkProgram();
     }
   }
 
@@ -130,12 +126,12 @@ public class SparkProgramWrapper {
    * Sets the {@link SparkContext} to {@link JavaSparkContext} or to {@link ScalaSparkContext} depending on whether
    * the user class implements {@link JavaSparkProgram} or {@link ScalaSparkProgram}
    */
-  private SparkContext createSparkContext() {
+  void setSparkContext() {
     if (JavaSparkProgram.class.isAssignableFrom(userProgramClass)) {
-      return new JavaSparkContext(basicSparkContext);
+      sparkContext = new JavaSparkContext();
     } else if (ScalaSparkProgram.class.isAssignableFrom(userProgramClass)) {
-      scalaProgram = true;
-      return new ScalaSparkContext(basicSparkContext);
+      sparkContext = new ScalaSparkContext();
+      setScalaProgram(true);
     } else {
       String error = "Spark program must implement either JavaSparkProgram or ScalaSparkProgram";
       throw new IllegalArgumentException(error);
@@ -146,26 +142,28 @@ public class SparkProgramWrapper {
    * Extracts arguments which belongs to user's program and then invokes the run method on the user's program object
    * with the arguments and the appropriate implementation {@link SparkContext}
    *
-   * @param sparkProgram the user program's object
+   * @param userProgramObject the user program's object
    * @throws RuntimeException if failed to invokeUserProgram main function on the user's program object
    */
-  private void runUserProgram(SparkProgram sparkProgram) {
+  private void runUserProgram(Object userProgramObject) {
     try {
-      sparkProgram.run(sparkContext);
-    } catch (Throwable t) {
-      LOG.warn("Program class run method threw an exception", t);
-      throw Throwables.propagate(t);
+      Method userProgramMain = userProgramClass.getMethod("run", SparkContext.class);
+      userProgramMain.invoke(userProgramObject, sparkContext);
+    } catch (NoSuchMethodException nsme) {
+      LOG.warn("Unable to find run method in program class: {}", userProgramObject.getClass().getName(), nsme);
+      throw Throwables.propagate(nsme);
+    } catch (IllegalAccessException iae) {
+      LOG.warn("Unable to access run method in program class: {}", userProgramObject.getClass().getName(), iae);
+      throw Throwables.propagate(iae);
+    } catch (InvocationTargetException ite) {
+      LOG.warn("Program class run method threw an exception", ite);
+      throw Throwables.propagate(ite);
     }
   }
 
-  private Class<? extends SparkProgram> loadUserSparkClass(String className) throws ClassNotFoundException {
+  private Class<?> loadUserSparkClass(String className) throws ClassNotFoundException {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    Class<?> cls = classLoader.loadClass(className);
-    if (!SparkProgram.class.isAssignableFrom(cls)) {
-      throw new IllegalArgumentException("User class " + arguments[0] +
-                                           " does not implements " + SparkProgram.class.getName());
-    }
-    return (Class<? extends SparkProgram>) cls;
+    return classLoader.loadClass(className);
   }
 
   /**
@@ -282,11 +280,9 @@ public class SparkProgramWrapper {
   }
 
   /**
-   * Used to set the same {@link BasicSparkContext} which is inside {@link SparkRuntimeService} for accessing resources
-   * like Service Discovery, Metrics collection etc.
-   * @param basicSparkContext the {@link BasicSparkContext} to set from
+   * @param scalaProgram a boolean which sets whether the user's program is in Scala or not
    */
-  public static void setBasicSparkContext(BasicSparkContext basicSparkContext) {
-    SparkProgramWrapper.basicSparkContext = basicSparkContext;
+  public static void setScalaProgram(boolean scalaProgram) {
+    SparkProgramWrapper.scalaProgram = scalaProgram;
   }
 }

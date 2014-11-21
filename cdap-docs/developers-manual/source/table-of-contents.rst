@@ -17,3 +17,4 @@ CDAP Developers’ Manual
     Testing and Debugging </testing/index>
     Ingesting Data </ingesting-tools/index>
     Advanced Topics <advanced/index>
+    Troubleshooting </troubleshooting>

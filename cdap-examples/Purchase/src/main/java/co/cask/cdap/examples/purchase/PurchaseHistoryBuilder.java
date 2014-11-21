@@ -15,11 +15,11 @@
  */
 package co.cask.cdap.examples.purchase;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.Text;
@@ -36,18 +36,21 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
 
   @Override
-  public void configure() {
-    setDescription("Purchase History Builder MapReduce job");
-    useDatasets("frequentCustomers");
-    setInputDataset("purchases");
-    setOutputDataset("history");
-    setMapperResources(new Resources(1024));
-    setReducerResources(new Resources(1024));
+  public MapReduceSpecification configure() {
+    return MapReduceSpecification.Builder.with()
+      .setName("PurchaseHistoryBuilder")
+      .setDescription("Purchase History Builder MapReduce job")
+      .useDataSet("frequentCustomers")
+      .useInputDataSet("purchases")
+      .useOutputDataSet("history")
+      .setMapperMemoryMB(1024)
+      .setReducerMemoryMB(1024)
+      .build();
   }
 
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
-    Job job = context.getHadoopJob();
+    Job job = (Job) context.getHadoopJob();
     job.setMapperClass(PurchaseMapper.class);
     job.setMapOutputKeyClass(Text.class);
     job.setMapOutputValueClass(Text.class);

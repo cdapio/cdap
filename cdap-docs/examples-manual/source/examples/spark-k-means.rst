@@ -92,8 +92,8 @@ There are three ways to start the Spark program:
 
 2. Send a query via an HTTP request using the ``curl`` command::
 
-    curl -w '\n' -v -d '{args="3"}' \
-      'http://localhost:10000/v2/apps/SparkKMeansProgram/spark/SparkKMeansProgram/start'
+    curl -v -d '{args="3"}' \
+      'http://localhost:10000/v2/apps/SparkKMeansProgram/spark/SparkKMeansProgram/start'; echo
 
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
@@ -119,8 +119,8 @@ There are two ways to query the *centers* ObjectStore using the ``CentersProcedu
 
 1. Send a query via an HTTP request using the ``curl`` command. For example::
 
-     curl -w '\n' -v -d '{"index": "1"}' \
-       'http://localhost:10000/v2/apps/SparkKMeans/procedures/CentersProcedure/methods/centers'
+     curl -v -d '{"index": "1"}' \
+       'http://localhost:10000/v2/apps/SparkKMeans/procedures/CentersProcedure/methods/centers'; echo
 
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 

@@ -41,7 +41,6 @@ import com.google.common.reflect.TypeToken;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -53,9 +52,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Deleted program handler stage. Figures out which programs are deleted and handles callback.
  */
-public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeployable> {
+public class DeletedProgramHandlerStage extends AbstractStage<ApplicationSpecLocation> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DeletedProgramHandlerStage.class);
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(DeletedProgramHandlerStage.class);
 
   /**
    * Number of seconds for timing out a service endpoint discovery.
@@ -76,7 +75,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     StreamConsumerFactory streamConsumerFactory,
                                     QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient) {
-    super(TypeToken.of(ApplicationDeployable.class));
+    super(TypeToken.of(ApplicationSpecLocation.class));
     this.store = store;
     this.programTerminator = programTerminator;
     this.streamConsumerFactory = streamConsumerFactory;
@@ -85,16 +84,16 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   }
 
   @Override
-  public void process(ApplicationDeployable appSpec) throws Exception {
-    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getId(),
+  public void process(ApplicationSpecLocation appSpec) throws Exception {
+    List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getApplicationId(),
                                                                                     appSpec.getSpecification());
 
     List<String> deletedFlows = Lists.newArrayList();
     for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
-      Id.Program programId = Id.Program.from(appSpec.getId(), spec.getName());
-      programTerminator.stop(Id.Account.from(appSpec.getId().getAccountId()),
+      Id.Program programId = Id.Program.from(appSpec.getApplicationId(), spec.getName());
+      programTerminator.stop(Id.Account.from(appSpec.getApplicationId().getAccountId()),
                                    programId, type);
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
@@ -121,7 +120,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       }
     }
     if (!deletedFlows.isEmpty()) {
-      deleteMetrics(appSpec.getId().getAccountId(), appSpec.getId().getId(), deletedFlows);
+      deleteMetrics(appSpec.getApplicationId().getAccountId(), appSpec.getApplicationId().getId(), deletedFlows);
     }
 
     emit(appSpec);

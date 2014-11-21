@@ -160,8 +160,8 @@ public class MetricsRequestExecutor {
 
     for (int i = 0; i < metricsRequest.getCount(); i++) {
       long resultTime = metricsRequest.getStartTime() + i;
-      long tupleRead = 0;
-      long eventProcessed = 0;
+      int tupleRead = 0;
+      int eventProcessed = 0;
       if (tuplesReadItor.hasNext() && tuplesReadItor.peek().getTime() == resultTime) {
         tupleRead = tuplesReadItor.next().getValue();
       }
@@ -283,7 +283,6 @@ public class MetricsRequestExecutor {
       .setContext(request.getContextPrefix())
       .setMetric(request.getMetricPrefix())
       .setTag(request.getTagPrefix())
-      .setRunId(request.getRunId())
       .build(start, end);
   }
 }

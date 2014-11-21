@@ -23,16 +23,18 @@ import com.google.common.base.Function;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import javax.annotation.Nullable;
 
 /**
  * Utility class for working with {@link Update} instances.
  */
 public final class Updates {
 
-  public static final Function<Long, Update> LONG_TO_PUTS = new Function<Long, Update>() {
+  public static final Function<byte[], Update> BYTES_TO_PUTS = new Function<byte[], Update>() {
+    @Nullable
     @Override
-    public Update apply(Long input) {
-      return new PutValue(Bytes.toBytes(input));
+    public Update apply(@Nullable byte[] input) {
+      return new PutValue(input);
     }
   };
 
@@ -88,11 +90,11 @@ public final class Updates {
       if (base instanceof PutValue) {
         PutValue put = (PutValue) base;
         byte[] putBytes = put.getBytes();
-        if (putBytes != null && putBytes.length != Bytes.SIZEOF_LONG) {
+        if (putBytes.length != Bytes.SIZEOF_LONG) {
           throw new NumberFormatException("Attempted to increment a value that is not convertible to long");
         }
 
-        long newValue = (putBytes == null ? 0L : Bytes.toLong(putBytes)) + increment.getValue();
+        long newValue = Bytes.toLong(putBytes) + increment.getValue();
         return new PutValue(Bytes.toBytes(newValue));
       } else if (base instanceof IncrementValue) {
         IncrementValue baseIncrement = (IncrementValue) base;

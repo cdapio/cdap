@@ -16,13 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Preconditions;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.filesystem.Location;
@@ -59,38 +59,20 @@ public class ServiceTwillApplication implements TwillApplication {
 
     Location programLocation = program.getJarLocation();
     String programName = programLocation.getName();
+    TwillSpecification.Builder.RunnableSetter runnableSetter = null;
+    for (Map.Entry<String, RuntimeSpecification> entry : spec.getRunnables().entrySet()) {
+      RuntimeSpecification runtimeSpec = entry.getValue();
+      ResourceSpecification resourceSpec = runtimeSpec.getResourceSpecification();
 
-    // Add a runnable for the service handler
-    Resources resources = spec.getResources();
-    TwillSpecification.Builder.RunnableSetter runnableSetter;
-    runnableSetter = moreRunnable.add(spec.getName(),
-                                      new ServiceTwillRunnable(spec.getName(), "hConf.xml", "cConf.xml"),
-                                      createResourceSpec(resources, spec.getInstances()))
-                                  .withLocalFiles()
-                                    .add(programName, programLocation.toURI())
-                                    .add("hConf.xml", hConfig.toURI())
-                                    .add("cConf.xml", cConfig.toURI()).apply();
-
-    // Add runnables for all workers
-    for (Map.Entry<String, ServiceWorkerSpecification> entry : spec.getWorkers().entrySet()) {
-      ServiceWorkerSpecification workerSpec = entry.getValue();
-      runnableSetter = runnableSetter.add(workerSpec.getName(),
-                                          new ServiceTwillRunnable(workerSpec.getName(), "hConf.xml", "cConf.xml"),
-                                          createResourceSpec(workerSpec.getResources(), workerSpec.getInstances()))
-                                     .withLocalFiles()
-                                       .add(programName, programLocation.toURI())
-                                       .add("hConf.xml", hConfig.toURI())
-                                       .add("cConf.xml", cConfig.toURI()).apply();
+      String runnableName = entry.getKey();
+      runnableSetter = moreRunnable
+        .add(runnableName, new ServiceTwillRunnable(runnableName, "hConf.xml", "cConf.xml"), resourceSpec)
+        .withLocalFiles().add(programName, programLocation.toURI())
+                         .add("hConf.xml", hConfig.toURI())
+                         .add("cConf.xml", cConfig.toURI()).apply();
     }
 
+    Preconditions.checkState(runnableSetter != null, "No Runnable for the Service.");
     return runnableSetter.anyOrder().withEventHandler(eventHandler).build();
-  }
-
-  private ResourceSpecification createResourceSpec(Resources resources, int instances) {
-    return ResourceSpecification.Builder.with()
-      .setVirtualCores(resources.getVirtualCores())
-      .setMemory(resources.getMemoryMB(), ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
   }
 }

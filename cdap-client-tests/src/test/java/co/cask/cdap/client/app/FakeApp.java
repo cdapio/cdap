@@ -36,7 +36,7 @@ public class FakeApp extends AbstractApplication {
   public static final List<String> PROCEDURES = Lists.newArrayList(FakeProcedure.NAME);
   public static final List<String> MAPREDUCES = Lists.newArrayList();
   public static final List<String> WORKFLOWS = Lists.newArrayList();
-  public static final List<String> SERVICES = Lists.newArrayList(PingService.NAME);
+  public static final List<String> SERVICES = Lists.newArrayList();
   public static final List<String> ALL_PROGRAMS = ImmutableList.<String>builder()
     .addAll(FLOWS)
     .addAll(PROCEDURES)
@@ -53,6 +53,6 @@ public class FakeApp extends AbstractApplication {
     createDataset(DS_NAME, FakeDataset.class.getName());
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
-    addService(PingService.NAME, new PingService());
+    addService(FakeService.NAME, new FakeService());
   }
 }

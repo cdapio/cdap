@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>2.6.0-SNAPSHOT</version>
+  <version>2.5.2</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -58,6 +58,10 @@
 
   <repositories>
     <repository>
+      <id>apache.snapshots</id>
+      <url>https://repository.apache.org/content/repositories/snapshots</url>
+    </repository>
+    <repository>
       <id>sonatype</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
     </repository>
@@ -92,7 +96,6 @@
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
-    <cask.common.cli.version>0.1.0-SNAPSHOT</cask.common.cli.version>
     <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
@@ -102,8 +105,7 @@
     <guice.version>3.0</guice.version>
     <hadoop.version>2.3.0</hadoop.version>
     <hbase94.version>0.94.6.1.continuuity</hbase94.version>
-    <hbase96.version>0.96.2-hadoop2</hbase96.version>
-    <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
+    <hbase96.version>0.96.0-hadoop2</hbase96.version>
     <hive.version>0.13.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
@@ -117,23 +119,22 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.6.0</netty.http.version>
+    <netty.http.version>0.4.1</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <servlet.api.version>3.0.1</servlet.api.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.3.1</tephra.version>
+    <tephra.version>0.3.0</tephra.version>
     <thrift.version>0.9.0</thrift.version>
-    <twill.version>0.4.0-incubating</twill.version>
+    <twill.version>[0.4.0-incubating-SNAPSHOT,0.5.0-incubating-SNAPSHOT)</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.1.0</spark.version>
-    <cdap.client.version>1.1.0-SNAPSHOT</cdap.client.version>
+    <cdap.client.version>1.0.1</cdap.client.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
-    <cask.common.version>0.1.0-SNAPSHOT</cask.common.version>
   </properties>
 
   <modules>
@@ -146,7 +147,6 @@
     <module>cdap-data-fabric-tests</module>
     <module>cdap-hbase-compat-0.94</module>
     <module>cdap-hbase-compat-0.96</module>
-    <module>cdap-hbase-compat-0.98</module>
     <module>cdap-watchdog</module>
     <module>cdap-watchdog-tests</module>
     <module>cdap-app-fabric</module>
@@ -157,14 +157,12 @@
     <module>cdap-explore-jdbc</module>
     <module>cdap-explore</module>
     <module>cdap-unit-test</module>
-    <module>cdap-unit-test-standalone</module>
     <module>cdap-master</module>
     <module>cdap-web-app</module>
     <module>cdap-proto</module>
     <module>cdap-client</module>
     <module>cdap-client-tests</module>
     <module>cdap-cli</module>
-    <module>cdap-cli-tests</module>
     <module>cdap-standalone</module>
     <module>cdap-distributions</module>
     <module>cdap-archetypes</module>
@@ -178,9 +176,9 @@
         <version>${slf4j.version}</version>
       </dependency>
       <dependency>
-        <groupId>co.cask.common</groupId>
-        <artifactId>common-cli</artifactId>
-        <version>${cask.common.cli.version}</version>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-nop</artifactId>
+        <version>${slf4j.version}</version>
       </dependency>
       <dependency>
         <groupId>javax.ws.rs</groupId>
@@ -233,17 +231,6 @@
       <dependency>
         <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-0.96</artifactId>
-        <version>${tephra.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.tephra</groupId>
-        <artifactId>tephra-hbase-compat-0.98</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>
@@ -1198,16 +1185,6 @@
         <artifactId>cdap-authentication-client</artifactId>
         <version>${cdap.client.version}</version>
       </dependency>
-      <dependency>
-        <groupId>co.cask.common</groupId>
-        <artifactId>common-http</artifactId>
-        <version>${cask.common.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>co.cask.common</groupId>
-        <artifactId>common-io</artifactId>
-        <version>${cask.common.version}</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -1228,7 +1205,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.14.1</version>
           <configuration>
-            <argLine>-Xmx5000m -Djava.awt.headless=true -XX:MaxPermSize=256m -XX:+UseConcMarkSweepGC -XX:OnOutOfMemoryError="kill -9 %p"</argLine>
+            <argLine>-Xmx4096m -Djava.awt.headless=true -XX:MaxPermSize=256m</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
             <reuseForks>false</reuseForks>
             <reportFormat>plain</reportFormat>
@@ -1609,32 +1586,6 @@
                       <resource>
                         <directory>conf</directory>
                         <targetPath>conf</targetPath>
-                      </resource>
-                    </resources>
-                  </configuration>
-                </execution>
-                <!-- Copy CLI scripts -->
-                <execution>
-                  <id>copy-cli-scripts</id>
-                  <phase>prepare-package</phase>
-                  <goals>
-                    <goal>copy-resources</goal>
-                  </goals>
-                  <configuration combine.self="override">
-                    <outputDirectory>${stage.opt.dir}</outputDirectory>
-                    <useDefaultDelimiters>false</useDefaultDelimiters>
-                    <delimiters>
-                      <delimiter>@@</delimiter>
-                    </delimiters>
-                    <resources>
-                      <resource>
-                        <directory>${project.parent.basedir}/cdap-cli/bin</directory>
-                        <targetPath>bin</targetPath>
-                        <includes>
-                          <include>cdap-cli.sh</include>
-                          <include>cdap-cli.bat</include>
-                        </includes>
-                        <filtering>true</filtering>
                       </resource>
                     </resources>
                   </configuration>

@@ -47,9 +47,6 @@ export IDENT_STRING=$USER
 # The directory where pid files are stored. /tmp by default.
 export PID_DIR=/var/cdap/run
 
-# The directory serving as the user directory for master
-export LOCAL_DIR=/var/tmp/cdap
-
 # Specifies the JAVA_HEAPMAX
 export JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx128m}
 

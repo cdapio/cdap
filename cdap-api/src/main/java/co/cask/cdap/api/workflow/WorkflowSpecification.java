@@ -15,12 +15,10 @@
  */
 package co.cask.cdap.api.workflow;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.builder.Creator;
 import co.cask.cdap.api.builder.DescriptionSetter;
 import co.cask.cdap.api.builder.NameSetter;
 import co.cask.cdap.api.mapreduce.MapReduce;
-import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramSpecification;
 import co.cask.cdap.api.schedule.Schedule;
@@ -33,14 +31,11 @@ import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import co.cask.cdap.internal.workflow.MapReduceWorkflowAction;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Specification for a {@link Workflow} -- an instance of this class is created by the {@link Builder} class.
@@ -147,9 +142,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
      * @return A {@link MapReduceSpecification} used for the given MapReduce job.
      */
     private MapReduceSpecification addWorkflowMapReduce(MapReduce mapReduce) {
-      WorkflowMapReduceConfigurer configurer = new WorkflowMapReduceConfigurer(mapReduce);
-      mapReduce.configure(configurer);
-      MapReduceSpecification mapReduceSpec = configurer.createSpecification();
+      MapReduceSpecification mapReduceSpec = new DefaultMapReduceSpecification(mapReduce);
 
       // Rename the MapReduce job based on the step in the workflow.
       final String mapReduceName = String.format("%s_%s", name, mapReduceSpec.getName());
@@ -197,7 +190,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       public MoreAction<T> startWith(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
         MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
-        return startWith(new MapReduceWorkflowAction(mapReduceSpec.getName(), mapReduceSpec.getName()));
+        return startWith(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
       }
 
       @Override
@@ -211,7 +204,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       public T onlyWith(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
         MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
-        return onlyWith(new MapReduceWorkflowAction(mapReduceSpec.getName(), mapReduceSpec.getName()));
+        return onlyWith(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
       }
     }
 
@@ -240,7 +233,7 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
       public MoreAction<T> then(MapReduce mapReduce) {
         Preconditions.checkArgument(mapReduce != null, "MapReduce is null.");
         MapReduceSpecification mapReduceSpec = builder.addWorkflowMapReduce(mapReduce);
-        return then(new MapReduceWorkflowAction(mapReduceSpec.getName(), mapReduceSpec.getName()));
+        return then(new MapReduceWorkflowAction(mapReduce.configure().getName(), mapReduceSpec.getName()));
       }
 
       @Override
@@ -257,71 +250,6 @@ public interface WorkflowSpecification extends SchedulableProgramSpecification {
     }
 
     private Builder() {
-    }
-
-    // TODO (CDAP-450): Temporary. Remove when move workflow to use Configurer to configure
-    private static final class WorkflowMapReduceConfigurer implements MapReduceConfigurer {
-      private final String className;
-      private String name;
-      private String description;
-      private Map<String, String> properties;
-      private Set<String> datasets;
-      private String inputDataset;
-      private String outputDataset;
-      private Resources mapperResources;
-      private Resources reducerResources;
-
-      public WorkflowMapReduceConfigurer(MapReduce mapReduce) {
-        this.className = mapReduce.getClass().getName();
-        this.name = mapReduce.getClass().getSimpleName();
-        this.description = "";
-        this.datasets = ImmutableSet.of();
-      }
-
-      @Override
-      public void setName(String name) {
-        this.name = name;
-      }
-
-      @Override
-      public void setDescription(String description) {
-        this.description = description;
-      }
-
-      @Override
-      public void setProperties(Map<String, String> properties) {
-        this.properties = ImmutableMap.copyOf(properties);
-      }
-
-      @Override
-      public void useDatasets(Iterable<String> datasets) {
-        this.datasets = ImmutableSet.copyOf(datasets);
-      }
-
-      @Override
-      public void setInputDataset(String dataset) {
-        this.inputDataset = dataset;
-      }
-
-      @Override
-      public void setOutputDataset(String dataset) {
-        this.outputDataset = dataset;
-      }
-
-      @Override
-      public void setMapperResources(Resources resources) {
-        this.mapperResources = resources;
-      }
-
-      @Override
-      public void setReducerResources(Resources resources) {
-        this.reducerResources = resources;
-      }
-
-      MapReduceSpecification createSpecification() {
-        return new DefaultMapReduceSpecification(className, name, description, inputDataset, outputDataset, datasets,
-                                                 properties, mapperResources, reducerResources);
-      }
     }
   }
 }

@@ -44,7 +44,7 @@ final class FlowTwillProgramController extends AbstractTwillProgramController {
   @SuppressWarnings("unchecked")
   @Override
   protected void doCommand(String name, Object value) throws Exception {
-    if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Map)) {
+    if (!ProgramOptionConstants.FLOWLET_INSTANCES.equals(name) || !(value instanceof Map)) {
       return;
     }
     Map<String, String> command = (Map<String, String>) value;

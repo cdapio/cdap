@@ -18,13 +18,10 @@ package co.cask.cdap.internal.app.runtime.webapp;
 
 import co.cask.cdap.common.utils.Networks;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.Resources;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Set;
 
 /**
@@ -33,28 +30,26 @@ import java.util.Set;
 public class WebappProgramRunnerTest {
   @Test
   public void testGetServingHostNames() throws Exception {
+    InputStream jarInputStream = getClass().getResourceAsStream("/CountRandomWebapp-localhost.jar");
+    Assert.assertNotNull(jarInputStream);
+
     Set<String> expected = ImmutableSet.of(Networks.normalizeWebappDiscoveryName("127.0.0.1:20000/geo"),
                                            Networks.normalizeWebappDiscoveryName("127.0.0.1:20000/netlens"),
                                            Networks.normalizeWebappDiscoveryName("127.0.0.1:20000"),
                                            Networks.normalizeWebappDiscoveryName("default/netlens"),
                                            Networks.normalizeWebappDiscoveryName("www.abc.com:80/geo"));
 
-    URL jarResource = getClass().getResource("/CountRandomWebapp-localhost.jar");
-    Assert.assertNotNull(jarResource);
-    InputSupplier<InputStream> jarInputSupplier = Resources.newInputStreamSupplier(jarResource);
-
-    Set<String> hostnames = WebappProgramRunner.getServingHostNames(jarInputSupplier);
+    Set<String> hostnames = WebappProgramRunner.getServingHostNames(jarInputStream);
     Assert.assertEquals(expected, hostnames);
   }
 
 
   @Test
   public void testGetNoServingHostNames() throws Exception {
-    URL jarResource = getClass().getResource("/test_explode.jar");
-    Assert.assertNotNull(jarResource);
+    InputStream jarInputStream = getClass().getResourceAsStream("/test_explode.jar");
+    Assert.assertNotNull(jarInputStream);
 
-    InputSupplier<InputStream> jarInputSupplier = Resources.newInputStreamSupplier(jarResource);
-    Set<String> hostnames = WebappProgramRunner.getServingHostNames(jarInputSupplier);
+    Set<String> hostnames = WebappProgramRunner.getServingHostNames(jarInputStream);
     Assert.assertTrue(hostnames.isEmpty());
   }
 }

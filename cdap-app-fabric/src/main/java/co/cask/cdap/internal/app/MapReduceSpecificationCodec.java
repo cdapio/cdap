@@ -16,13 +16,13 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 
 import java.lang.reflect.Type;
@@ -38,21 +38,16 @@ final class MapReduceSpecificationCodec extends AbstractSpecificationCodec<MapRe
   public JsonElement serialize(MapReduceSpecification src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject jsonObj = new JsonObject();
 
-    jsonObj.addProperty("className", src.getClassName());
-    jsonObj.addProperty("name", src.getName());
-    jsonObj.addProperty("description", src.getDescription());
-
-    if (src.getMapperResources() != null) {
-      jsonObj.add("mapperResources", context.serialize(src.getMapperResources()));
-    }
-    if (src.getReducerResources() != null) {
-      jsonObj.add("reducerResources", context.serialize(src.getReducerResources()));
-    }
+    jsonObj.add("className", new JsonPrimitive(src.getClassName()));
+    jsonObj.add("name", new JsonPrimitive(src.getName()));
+    jsonObj.add("description", new JsonPrimitive(src.getDescription()));
+    jsonObj.add("mapperMemoryMB", new JsonPrimitive(src.getMapperMemoryMB()));
+    jsonObj.add("reducerMemoryMB", new JsonPrimitive(src.getReducerMemoryMB()));
     if (src.getInputDataSet() != null) {
-      jsonObj.addProperty("inputDataSet", src.getInputDataSet());
+      jsonObj.add("inputDataSet", new JsonPrimitive(src.getInputDataSet()));
     }
     if (src.getOutputDataSet() != null) {
-      jsonObj.addProperty("outputDataSet", src.getOutputDataSet());
+      jsonObj.add("outputDataSet", new JsonPrimitive(src.getOutputDataSet()));
     }
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
@@ -68,8 +63,8 @@ final class MapReduceSpecificationCodec extends AbstractSpecificationCodec<MapRe
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
-    Resources mapperResources = deserializeResources(jsonObj, "mapper", context);
-    Resources reducerResources = deserializeResources(jsonObj, "reducer", context);
+    int mapperMemoryMB = jsonObj.get("mapperMemoryMB").getAsInt();
+    int reducerMemoryMB = jsonObj.get("reducerMemoryMB").getAsInt();
     JsonElement inputDataSetElem = jsonObj.get("inputDataSet");
     String inputDataSet = inputDataSetElem == null ? null : inputDataSetElem.getAsString();
     JsonElement outputDataSetElem = jsonObj.get("outputDataSet");
@@ -79,31 +74,6 @@ final class MapReduceSpecificationCodec extends AbstractSpecificationCodec<MapRe
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
     return new DefaultMapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
-                                             dataSets, properties, mapperResources, reducerResources);
-  }
-
-  /**
-   * Deserialize the resources field from the serialized object.
-   *
-   * @param jsonObj The object representing the MapReduceSpecification
-   * @param prefix Field name prefix. Either "mapper" or "reducer"
-   * @param context The context to deserialize object.
-   * @return A {@link Resources} or {@code null}.
-   */
-  private Resources deserializeResources(JsonObject jsonObj, String prefix, JsonDeserializationContext context) {
-    // See if it of new format
-    String name = prefix + "Resources";
-    JsonElement element = jsonObj.get(name);
-    if (element != null) {
-      return context.deserialize(element, Resources.class);
-    }
-
-    // Try the old format, which is an int field representing the memory in MB.
-    name = prefix + "MemoryMB";
-    element = jsonObj.get(name);
-    if (element != null) {
-      return new Resources(element.getAsInt());
-    }
-    return null;
+                                             dataSets, properties, mapperMemoryMB, reducerMemoryMB);
   }
 }

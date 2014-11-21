@@ -22,13 +22,13 @@ import java.util.Map;
 
 /**
  * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the
- * {@link HttpServiceHandlerSpecification} and the runtime arguments passed by the user.
+ * {@link HttpServiceSpecification} and the runtime arguments passed by the user.
  */
 public interface HttpServiceContext extends DataSetContext {
   /**
    * @return the specification bound to this HttpServiceContext
    */
-  HttpServiceHandlerSpecification getSpecification();
+  HttpServiceSpecification getSpecification();
 
   /**
    * @return the user runtime arguments for the {@link HttpServiceHandler}s

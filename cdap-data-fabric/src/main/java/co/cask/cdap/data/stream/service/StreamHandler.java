@@ -272,6 +272,7 @@ public final class StreamHandler extends AuthenticatedHttpHandler {
       @Override
       public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
         if (!executor.isShutdown()) {
+          // TODO: Should be a gauge, not increment. Need to wait till metrics system supports it
           metricsCollector.increment("collect.async.reject", 1);
           r.run();
         }

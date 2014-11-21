@@ -103,7 +103,7 @@ public class TimeValueAggregator implements Iterable<TimeValue> {
 
       // Aggregates values from the same timestamp, using interpolated values if there is not data at the timestamp.
       boolean atEnd = true;
-      long currentTsValue = 0;
+      int currentTsValue = 0;
       Iterator<BiDirectionalPeekingIterator> timeseriesIter = timeseriesList.iterator();
       while (timeseriesIter.hasNext()) {
         BiDirectionalPeekingIterator timeseries = timeseriesIter.next();

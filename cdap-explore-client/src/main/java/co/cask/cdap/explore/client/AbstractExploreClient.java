@@ -25,11 +25,8 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import com.google.common.base.Functions;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -42,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -269,19 +265,15 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
     private int fetchSize = DEFAULT_FETCH_SIZE;
     private Iterator<QueryResult> delegate;
-    private List<ColumnDesc> resultSchema = null;
 
     private final ExploreHttpClient exploreClient;
     private final QueryHandle handle;
-    private final boolean canContainResults;
     private final boolean hasResults;
 
-    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle,
-                                        boolean canContainResults) {
+    public ClientExploreExecutionResult(ExploreHttpClient exploreClient, QueryHandle handle, boolean hasResults) {
       this.exploreClient = exploreClient;
       this.handle = handle;
-      this.canContainResults = canContainResults;
-      this.hasResults = canContainResults;
+      this.hasResults = hasResults;
     }
 
     @Override
@@ -295,7 +287,7 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       }
       try {
         // call the endpoint 'next' to get more results and set delegate
-        List<QueryResult> nextResults = convertRows(exploreClient.nextResults(handle, fetchSize));
+        List<QueryResult> nextResults = exploreClient.nextResults(handle, fetchSize);
         delegate = nextResults.iterator();
 
         // At this point, if delegate has no result, there are no more results at all
@@ -311,58 +303,6 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
         LOG.debug("Received exception", e);
         return endOfData();
       }
-    }
-
-    private List<QueryResult> convertRows(List<QueryResult> rows) throws ExploreException {
-      List<ColumnDesc> schema = getResultSchema();
-      ImmutableList.Builder<QueryResult> builder = ImmutableList.builder();
-
-      for (QueryResult row : rows) {
-        Preconditions.checkArgument(row.getColumns().size() == schema.size(), "Row and schema length differ.");
-        List<Object> newRow = Lists.newArrayList();
-        Iterator<Object> rowIterator = row.getColumns().iterator();
-        Iterator<ColumnDesc> schemaIterator = schema.iterator();
-        while (rowIterator.hasNext() && schemaIterator.hasNext()) {
-          Object columnValue = rowIterator.next();
-          ColumnDesc schemaColumn = schemaIterator.next();
-          if (columnValue != null && columnValue instanceof Double
-            && schemaColumn.getType() != null) {
-            if (schemaColumn.getType().equals("INT")) {
-              columnValue = ((Double) columnValue).intValue();
-            } else if (schemaColumn.getType().equals("SMALLINT")) {
-              columnValue = ((Double) columnValue).shortValue();
-            } else if (schemaColumn.getType().equals("BIGINT")) {
-              columnValue = ((Double) columnValue).longValue();
-            } else if (schemaColumn.getType().equals("TINYINT")) {
-              columnValue = ((Double) columnValue).byteValue();
-            }
-          } else if (schemaColumn.getType() != null && schemaColumn.getType().equals("BINARY")) {
-            // A BINARY value is a byte array, which is deserialized by GSon into a list of
-            // double objects - here we recreate a byte[] object.
-            List<Object> binary;
-            if (columnValue instanceof List) {
-              binary = (List) columnValue;
-            } else if (columnValue instanceof Double[]) {
-              binary = (List) Arrays.asList((Double[]) columnValue);
-            } else {
-              throw new ExploreException("Unsupported format for BINARY data type: " +
-                                           columnValue.getClass().getCanonicalName());
-            }
-            Object newColumnValue = new byte[binary.size()];
-            for (int i = 0; i < ((byte[]) newColumnValue).length; i++) {
-              if (!(binary.get(i) instanceof Double)) {
-                newColumnValue = columnValue;
-                break;
-              }
-              ((byte[]) newColumnValue)[i] = ((Double) binary.get(i)).byteValue();
-            }
-            columnValue = newColumnValue;
-          }
-          newRow.add(columnValue);
-        }
-        builder.add(new QueryResult(newRow));
-      }
-      return builder.build();
     }
 
     @Override
@@ -389,21 +329,13 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     }
 
     @Override
-    public synchronized List<ColumnDesc> getResultSchema() throws ExploreException {
-      if (resultSchema == null) {
-        try {
-          resultSchema = exploreClient.getResultSchema(handle);
-        } catch (HandleNotFoundException e) {
-          LOG.error("Caught exception when retrieving results schema", e);
-          throw new ExploreException(e);
-        }
+    public List<ColumnDesc> getResultSchema() throws ExploreException {
+      try {
+        return exploreClient.getResultSchema(handle);
+      } catch (HandleNotFoundException e) {
+        LOG.error("Caught exception when retrieving results schema", e);
+        throw new ExploreException(e);
       }
-      return resultSchema;
-    }
-
-    @Override
-    public boolean canContainResults() {
-      return canContainResults;
     }
   }
 

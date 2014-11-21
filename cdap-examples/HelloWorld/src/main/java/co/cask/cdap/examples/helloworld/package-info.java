@@ -16,11 +16,13 @@
 /**
  * Package for HelloWorld sample Application.
  * 
- * This is a simple HelloWorld example that uses one Stream, one DataSet, one Flow and one Service.
+ * This is a simple HelloWorld example that uses one Stream, one DataSet, one Flow and one Procedure.
  * <uL>
  *   <li>A Stream to send names to.</li>
  *   <li>A Flow with a single Flowlet that reads the Stream and stores each name in a KeyValueTable</li>
- *   <li>A Service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
+ *   <li>A Procedure that reads the name from the KeyValueTable and prints 'Hello [Name]!'</li>
  * </uL>
  */
 package co.cask.cdap.examples.helloworld;
+
+

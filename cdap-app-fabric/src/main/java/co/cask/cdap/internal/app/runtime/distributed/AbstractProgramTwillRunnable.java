@@ -293,7 +293,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       .put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(context.getInstanceId()))
       .put(ProgramOptionConstants.INSTANCES, Integer.toString(context.getInstanceCount()))
       .put(ProgramOptionConstants.RUN_ID, context.getApplicationRunId().getId())
-      .put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName())
       .putAll(Maps.filterKeys(configs, Predicates.not(Predicates.in(ImmutableSet.of("hConf", "cConf")))))
       .build();
 

@@ -22,6 +22,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.ReadFilter;
 import co.cask.cdap.data.file.ReadFilters;
+import co.cask.cdap.data.stream.ForwardingStreamEvent;
 import co.cask.cdap.data.stream.StreamEventOffset;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -634,7 +635,7 @@ public abstract class AbstractStreamFileConsumer implements StreamConsumer {
   /**
    * Represents a {@link StreamEvent} created by the {@link #poll(int, long, java.util.concurrent.TimeUnit)} call.
    */
-  private static final class PollStreamEvent extends StreamEvent {
+  private static final class PollStreamEvent extends ForwardingStreamEvent {
 
     private final byte[] stateRow;
     private final StreamEventOffset streamEventOffset;

@@ -19,7 +19,6 @@ package co.cask.cdap.logging.save;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.AccountLoggingContext;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
@@ -125,7 +124,7 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
     Configuration conf = HBaseConfiguration.create();
-    CConfigurationUtil.copyTxProperties(cConf, conf);
+    cConf.copyTxProperties(conf);
     TransactionManager txManager = new TransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);

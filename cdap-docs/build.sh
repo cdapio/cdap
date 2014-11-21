@@ -183,8 +183,7 @@ function build_zip() {
 }
 
 function build_sdk() {
-  cd developers-manual
-  ./build.sh sdk $ARG_2 $ARG_3
+  build_specific_doc developers-manual sdk
 }
 
 set_project_path

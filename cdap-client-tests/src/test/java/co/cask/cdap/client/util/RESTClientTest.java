@@ -17,11 +17,13 @@
 
 package co.cask.cdap.client.util;
 
+import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.security.authentication.client.AccessToken;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequestConfig;
-import co.cask.common.http.HttpResponse;
+import co.cask.cdap.security.authentication.client.AuthenticationClient;
+import co.cask.cdap.security.authentication.client.basic.BasicAuthenticationClient;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
@@ -61,9 +63,10 @@ public class RESTClientTest {
 
   @Before
   public void setUp() throws IOException {
+    ClientConfig clientConfig = new ClientConfig("localhost", null);
+    restClient = RESTClient.create(clientConfig);
     httpService = new TestHttpService();
     httpService.startAndWait();
-    restClient = new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT);
   }
 
   @After
@@ -76,7 +79,7 @@ public class RESTClientTest {
     URL url = getBaseURI().resolve("/api/testPostAuth").toURL();
     HttpRequest request = HttpRequest.post(url).build();
     HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
-    verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
+    verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
   }
 
   @Test(expected = UnAuthorizedAccessTokenException.class)
@@ -91,7 +94,7 @@ public class RESTClientTest {
     URL url = getBaseURI().resolve("/api/testPutAuth").toURL();
     HttpRequest request = HttpRequest.put(url).build();
     HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
-    verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
+    verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
   }
 
   @Test(expected = UnAuthorizedAccessTokenException.class)
@@ -106,7 +109,7 @@ public class RESTClientTest {
     URL url = getBaseURI().resolve("/api/testGetAuth").toURL();
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
-    verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
+    verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
   }
 
   @Test(expected = UnAuthorizedAccessTokenException.class)
@@ -121,7 +124,7 @@ public class RESTClientTest {
     URL url = getBaseURI().resolve("/api/testDeleteAuth").toURL();
     HttpRequest request = HttpRequest.delete(url).build();
     HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
-    verifyResponse(response, only(200), any(), only("Access token received: " + ACCESS_TOKEN));
+    verifyResponse(response, only(200),  any(),  only("Access token received: " + ACCESS_TOKEN));
   }
 
   @Test(expected = UnAuthorizedAccessTokenException.class)
@@ -143,7 +146,8 @@ public class RESTClientTest {
                       expectedMessage.matches(response.getResponseMessage()));
 
     String actualResponseBody = new String(response.getResponseBody());
-    Assert.assertTrue("Response body - expected: " + expectedBody.toString() + " actual: " + actualResponseBody,
+    Assert.assertTrue("Response body - expected: " + expectedBody.toString()
+                        + " actual: " + actualResponseBody,
                       expectedBody.matches(actualResponseBody));
   }
 

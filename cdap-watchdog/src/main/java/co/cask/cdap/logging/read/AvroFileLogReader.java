@@ -128,23 +128,26 @@ public class AvroFileLogReader {
         }
 
         List<LogEvent> logSegment = Lists.newArrayList();
+        long boundaryTimeMs = Long.MAX_VALUE;
 
-        long lastSeekPos;
         long seekPos = file.length();
         while (seekPos > 0) {
-          lastSeekPos = seekPos;
           seekPos = seekPos < skipLen ? 0 : seekPos - skipLen;
           dataFileReader.sync(seekPos);
 
           logSegment = logSegment.isEmpty() ? logSegment : Lists.<LogEvent>newArrayList();
-          // read all the elements in the current segment (seekPos up to lastSeekPos)
-          while (dataFileReader.tell() < lastSeekPos && dataFileReader.tell() < file.length()) {
+          long segmentStartTimeMs = Long.MAX_VALUE;
+          while (dataFileReader.hasNext()) {
             datum = dataFileReader.next();
 
             ILoggingEvent loggingEvent = LoggingEvent.decode(datum);
 
-            // Stop when reached fromTimeMs
-            if (loggingEvent.getTimeStamp() > fromTimeMs) {
+            if (segmentStartTimeMs == Long.MAX_VALUE) {
+              segmentStartTimeMs = loggingEvent.getTimeStamp();
+            }
+
+            // Stop when reached fromTimeMs, or at the end of current segment.
+            if (loggingEvent.getTimeStamp() > fromTimeMs || loggingEvent.getTimeStamp() >= boundaryTimeMs) {
               break;
             }
 
@@ -153,6 +156,8 @@ public class AvroFileLogReader {
               logSegment.add(new LogEvent(loggingEvent, loggingEvent.getTimeStamp()));
             }
           }
+
+          boundaryTimeMs = segmentStartTimeMs;
 
           if (!logSegment.isEmpty()) {
             logSegments.add(logSegment);

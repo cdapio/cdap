@@ -24,10 +24,8 @@ import co.cask.cdap.data2.StatusCode;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.metrics.MetricsConstants;
-import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -59,19 +57,6 @@ public final class TimeSeriesTable {
   private static final int MAX_ROLL_TIME = 0xfffe;
   private static final byte[] FOUR_ZERO_BYTES = {0, 0, 0, 0};
   private static final byte[] FOUR_ONE_BYTES = {1, 1, 1, 1};
-  private static final Function<byte[], Long> BYTES_TO_LONG = new Function<byte[], Long>() {
-    @Override
-    public Long apply(byte[] input) {
-      return Bytes.toLong(input);
-    }
-  };
-  private static final Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>
-    TRANSFORM_MAP_BYTE_ARRAY_TO_LONG = new Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>() {
-    @Override
-    public NavigableMap<byte[], Long> apply(NavigableMap<byte[], byte[]> input) {
-      return Maps.transformValues(input, BYTES_TO_LONG);
-    }
-  };
 
   private final MetricsTable timeSeriesTable;
   private final MetricsEntityCodec entityCodec;
@@ -123,16 +108,12 @@ public final class TimeSeriesTable {
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
     NavigableMap<byte[], NavigableMap<byte[], byte[]>> table = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
 
-
     while (records.hasNext()) {
       getUpdates(records.next(), table);
     }
 
-    NavigableMap<byte[], NavigableMap<byte[], Long>> convertedTable =
-      Maps.transformValues(table, TRANSFORM_MAP_BYTE_ARRAY_TO_LONG);
-
     try {
-      timeSeriesTable.put(convertedTable);
+      timeSeriesTable.put(table);
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
     }
@@ -292,32 +273,21 @@ public final class TimeSeriesTable {
     // delta is guaranteed to be 2 bytes.
     byte[] column = deltaCache[(int) (timestamp - timeBase)];
 
-    addValue(rowKey, column, table, record.getValue(), record.getType());
+    addValue(rowKey, column, table, record.getValue());
 
     // Save tags metrics
     for (TagMetric tag : record.getTags()) {
       rowKey = getKey(record.getContext(), record.getRunId(), record.getName(), tag.getTag(), timeBase);
-      addValue(rowKey, column, table, tag.getValue(), record.getType());
+      addValue(rowKey, column, table, tag.getValue());
     }
   }
 
-
   private void addValue(byte[] rowKey, byte[] column,
-                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, long value, MetricType type) {
+                        NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, int value) {
     byte[] oldValue = get(table, rowKey, column);
-    long newValue = value;
-    if (oldValue != null && type == MetricType.COUNTER) {
-      if (Bytes.SIZEOF_LONG == oldValue.length) {
-        newValue = Bytes.toLong(oldValue) + value;
-      } else if (Bytes.SIZEOF_INT == oldValue.length) {
-        // In 2.4 and older versions we stored it as int
-        newValue = Bytes.toInt(oldValue) + value;
-      } else {
-        // should NEVER happen, unless the table is screwed up manually
-        throw new IllegalStateException(
-          String.format("Could not parse metric @row %s @column %s value %s as int or long",
-                        Bytes.toStringBinary(rowKey), Bytes.toStringBinary(column), Bytes.toStringBinary(oldValue)));
-      }
+    int newValue = value;
+    if (oldValue != null) {
+      newValue = Bytes.toInt(oldValue) + value;
     }
     put(table, rowKey, column, Bytes.toBytes(newValue));
   }
