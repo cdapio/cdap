@@ -25,6 +25,7 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 
@@ -78,10 +79,13 @@ public class ResourceApp extends AbstractApplication {
    */
   public static class DummyBatch extends AbstractMapReduce {
     @Override
-    public void configure() {
-      setName("dummy-batch");
-      setMapperResources(new Resources(512));
-      setReducerResources(new Resources(1024));
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("dummy-batch")
+        .setDescription("dummy mapred job")
+        .setMapperMemoryMB(512)
+        .setReducerMemoryMB(1024)
+        .build();
     }
   }
 

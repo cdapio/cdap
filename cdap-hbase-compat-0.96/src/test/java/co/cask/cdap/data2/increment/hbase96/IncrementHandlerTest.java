@@ -31,7 +31,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -61,7 +60,6 @@ public class IncrementHandlerTest {
     conf = testUtil.getConfiguration();
   }
 
-  @AfterClass
   public static void tearDown() throws Exception {
     testUtil.shutdownMiniCluster();
   }

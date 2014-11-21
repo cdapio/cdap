@@ -17,7 +17,7 @@
 package co.cask.cdap.api.procedure;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.ResourceSpecification;
 import co.cask.cdap.api.common.PropertyProvider;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import com.google.common.base.Preconditions;
@@ -42,9 +42,9 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
   Set<String> getDataSets();
 
   /**
-   * @return The {@link Resources} requirements for the procedure, containing how many resources to use.
+   * @return The {@link ResourceSpecification} for the procedure, containing how many resources to use.
    */
-  Resources getResources();
+  ResourceSpecification getResources();
 
   /**
    * @return number of instances.
@@ -58,7 +58,7 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
     private String name;
     private String description;
     private Map<String, String> arguments;
-    private Resources resources = new Resources();
+    private ResourceSpecification resources = ResourceSpecification.BASIC;
     private final ImmutableSet.Builder<String> dataSets = ImmutableSet.builder();
 
     public static NameSetter with() {
@@ -129,9 +129,9 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
         return this;
       }
 
-      public AfterDescription withResources(Resources resources) {
-        Preconditions.checkArgument(resources != null, "Resources cannot be null.");
-        Builder.this.resources = resources;
+      public AfterDescription withResources(ResourceSpecification resourceSpec) {
+        Preconditions.checkArgument(resourceSpec != null, "Resources cannot be null.");
+        resources = resourceSpec;
         return this;
       }
 

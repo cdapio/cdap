@@ -21,6 +21,9 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpRequests;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
@@ -36,9 +39,6 @@ import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -328,12 +328,6 @@ public class TestFrameworkTest extends TestBase {
   }
 
   @Category(SlowTests.class)
-  @Test(expected = IllegalArgumentException.class)
-  public void testServiceWithInvalidHandler() throws Exception {
-      deployApplication(AppWithInvalidHandler.class);
-  }
-
-  @Category(SlowTests.class)
   @Test
   public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
@@ -344,22 +338,16 @@ public class TestFrameworkTest extends TestBase {
     LOG.info("Service Started");
 
     // Call the ping endpoint
-    URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
+    URL url = new URL(serviceManager.getServiceURL(), "ping2");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
+    Assert.assertEquals(response.getResponseCode(), 200);
 
     // Call the failure endpoint
-    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "failure");
+    url = new URL(serviceManager.getServiceURL(), "failure");
     request = HttpRequest.get(url).build();
     response = HttpRequests.execute(request);
     Assert.assertEquals(response.getResponseCode(), 500);
-
-    // Call the verify ClassLoader endpoint
-    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "verifyClassLoader");
-    request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
 
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
@@ -402,7 +390,7 @@ public class TestFrameworkTest extends TestBase {
     LOG.info("Service Started");
 
 
-    final URL baseUrl = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
+    final URL baseUrl = serviceManager.getServiceURL();
 
     // Make a request to write in a separate thread and wait for it to return.
     ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -587,31 +575,14 @@ public class TestFrameworkTest extends TestBase {
   }
 
 
-  @Test (timeout = 60000L)
-  public void testFlowletInitAndSetInstances() throws TimeoutException, InterruptedException {
+  @Test (timeout = 30000L)
+  public void testInitDataSetAccess() throws TimeoutException, InterruptedException {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
     FlowManager flowManager = appManager.startFlow("DataSetFlow");
 
     RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
 
     flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
-
-    // Now change generator to 3 instances
-    flowManager.setFlowletInstances("Generator", 3);
-
-    // Now should have 3 processed from the consumer flowlet
-    flowletMetrics.waitForProcessed(3, 10, TimeUnit.SECONDS);
-
-    // Now reset to 1 instances
-    flowManager.setFlowletInstances("Generator", 1);
-
-    // Shouldn't have new item
-    TimeUnit.SECONDS.sleep(3);
-    Assert.assertEquals(3, flowletMetrics.getProcessed());
-
-    // Now set to 2 instances again. Since there is a new instance, expect one new item emitted
-    flowManager.setFlowletInstances("Generator", 2);
-    flowletMetrics.waitForProcessed(4, 10, TimeUnit.SECONDS);
 
     flowManager.stop();
 
@@ -695,8 +666,9 @@ public class TestFrameworkTest extends TestBase {
     }
   }
 
-  @Test(timeout = 90000L)
+  @Test(timeout = 60000L)
   public void testSQLQuery() throws Exception {
+
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
     DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =

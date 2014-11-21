@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
-import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
@@ -194,20 +193,24 @@ public abstract class AbstractApplication implements Application {
   }
 
   /**
+   * @see ApplicationConfigurer#addService(String, Iterable) ApplicationConfigurer.addService(String, 
+   * Iterable&lt;HttpServiceHandler&gt;)
+   */
+  protected void addService(String name, Iterable<HttpServiceHandler> handlers) {
+    configurer.addService(name, handlers);
+  }
+
+  /**
+   * @see ApplicationConfigurer#addService(String, HttpServiceHandler)
+   */
+  protected void addService(String name, HttpServiceHandler handler) {
+    configurer.addService(name, handler);
+  }
+
+  /**
    * @see ApplicationConfigurer#addService(Service)
    */
   protected void addService(Service service) {
     configurer.addService(service);
-  }
-
-  /**
-   * Adds a {@link Service} that consists of the given {@link HttpServiceHandler}.
-   *
-   * @param name Name of the Service
-   * @param handler handler for the Service
-   * @param handlers more handlers for the Service
-   */
-  protected void addService(String name, HttpServiceHandler handler, HttpServiceHandler...handlers) {
-    configurer.addService(new BasicService(name, handler, handlers));
   }
 }

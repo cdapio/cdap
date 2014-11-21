@@ -59,7 +59,7 @@ final class TimeValueIterable implements Iterable<TimeValue> {
           if (timestamp > endTime) {
             return endOfData();
           }
-          return new TimeValue(timestamp, Bytes.toLong(entry.getValue()));
+          return new TimeValue(timestamp, Bytes.toInt(entry.getValue()));
         }
         return endOfData();
       }

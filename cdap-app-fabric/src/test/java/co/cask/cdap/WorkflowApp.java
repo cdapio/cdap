@@ -17,8 +17,9 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
@@ -65,12 +66,14 @@ public class WorkflowApp extends AbstractApplication {
   /**
    *
    */
-  public static final class WordCountMapReduce extends AbstractMapReduce {
+  public static final class WordCountMapReduce implements MapReduce {
 
     @Override
-    public void configure() {
-      setName("ClassicWordCount");
-      setDescription("WordCount job from Hadoop examples");
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("ClassicWordCount")
+        .setDescription("WordCount job from Hadoop examples")
+        .build();
     }
 
     @Override

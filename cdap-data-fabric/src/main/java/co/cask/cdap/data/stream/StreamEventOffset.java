@@ -21,7 +21,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
  * This class is a {@link StreamEvent} that also carries the corresponding {@link StreamFileOffset} that mark
  * the beginning offset of this stream event.
  */
-public final class StreamEventOffset extends StreamEvent {
+public final class StreamEventOffset extends ForwardingStreamEvent {
 
   private final StreamFileOffset offset;
 

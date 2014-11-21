@@ -21,8 +21,6 @@ import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.Stage;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Concrete implementation of synchronous {@link Pipeline}.
@@ -35,9 +33,6 @@ import org.slf4j.LoggerFactory;
  * @param <T> Type of object produced by this pipeline.
  */
 public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(SynchronousPipeline.class);
-
   /**
    * Executes a pipeline in synchronous mode.
    * <p>
@@ -50,25 +45,19 @@ public final class SynchronousPipeline<T> extends AbstractPipeline<T> {
   @SuppressWarnings("unchecked")
   @Override
   public ListenableFuture<T> execute(Object o) {
-    Context ctx = new StageContext(o);
     try {
+      Object input = o;
+      Object output = null;
       for (Stage stage : getStages()) {
+        Context ctx = new StageContext(input);
         stage.process(ctx);
-        // Output of previous stage is input to next stage
-        ctx = new StageContext(ctx.getDownStream());
+        output = ctx.getDownStream();
+        input = output;  // Output of previous stage is input to next stage.
       }
-      return Futures.immediateFuture((T) ctx.getUpStream());
+      return (ListenableFuture<T>) Futures.immediateFuture(output);
     } catch (Throwable th) {
       return Futures.immediateFailedFuture(th);
-    } finally {
-      Stage finalStage = getFinalStage();
-      if (finalStage != null) {
-        try {
-          finalStage.process(ctx);
-        } catch (Throwable t) {
-          LOG.warn("Exception thrown when executing final stage {}", finalStage, t);
-        }
-      }
     }
   }
+
 }

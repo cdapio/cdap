@@ -76,12 +76,12 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void put(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+  public void put(NavigableMap<byte[], NavigableMap<byte[], byte[]>> updates) throws Exception {
     List<Put> puts = Lists.newArrayList();
-    for (Map.Entry<byte[], NavigableMap<byte[], Long>> row : updates.entrySet()) {
+    for (Map.Entry<byte[], NavigableMap<byte[], byte[]>> row : updates.entrySet()) {
       Put put = new Put(row.getKey());
-      for (Map.Entry<byte[], Long> column : row.getValue().entrySet()) {
-        put.add(DATA_COLUMN_FAMILY, column.getKey(), Bytes.toBytes(column.getValue()));
+      for (Map.Entry<byte[], byte[]> column : row.getValue().entrySet()) {
+        put.add(DATA_COLUMN_FAMILY, column.getKey(), column.getValue());
       }
       puts.add(put);
     }

@@ -37,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -484,7 +485,7 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
         try {
           if (filter.acceptOffset(startPos)) {
-            event = new PositionStreamEvent(readStreamData(), timestamp, startPos);
+            event = new DefaultPositionStreamEvent(readStreamData(), timestamp, startPos);
           } else {
             skipStreamData();
           }
@@ -508,6 +509,40 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
     }
 
     return event;
+  }
+
+
+  private static final class DefaultPositionStreamEvent implements PositionStreamEvent {
+
+    private final StreamEventData delegate;
+    private final long timestamp;
+    private final long position;
+
+    private DefaultPositionStreamEvent(StreamEventData delegate, long timestamp, long position) {
+      this.delegate = delegate;
+      this.timestamp = timestamp;
+      this.position = position;
+    }
+
+    @Override
+    public long getTimestamp() {
+      return timestamp;
+    }
+
+    @Override
+    public ByteBuffer getBody() {
+      return delegate.getBody();
+    }
+
+    @Override
+    public Map<String, String> getHeaders() {
+      return delegate.getHeaders();
+    }
+
+    @Override
+    public long getStart() {
+      return position;
+    }
   }
 
   private interface SkipCondition {

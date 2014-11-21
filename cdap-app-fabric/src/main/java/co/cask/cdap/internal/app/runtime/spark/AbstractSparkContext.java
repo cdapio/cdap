@@ -16,21 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
-import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.services.SerializableServiceDiscoverer;
-import co.cask.cdap.data.stream.StreamInputFormat;
-import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
@@ -38,19 +29,13 @@ import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.rdd.NewHadoopRDD;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -70,12 +55,14 @@ abstract class AbstractSparkContext implements SparkContext {
   private final long logicalStartTime;
   private final SparkSpecification spec;
   private final Arguments runtimeArguments;
-  private final BasicSparkContext basicSparkContext;
+  final BasicSparkContext basicSparkContext;
   private final SparkConf sparkConf;
 
-  public AbstractSparkContext(BasicSparkContext basicSparkContext) {
+  public AbstractSparkContext() {
     hConf = loadHConf();
-    this.basicSparkContext = basicSparkContext;
+    // Create an instance of BasicSparkContext from the Hadoop Configuration file which was just loaded
+    SparkContextProvider sparkContextProvider = new SparkContextProvider(hConf);
+    basicSparkContext = sparkContextProvider.get();
     this.logicalStartTime = basicSparkContext.getLogicalStartTime();
     this.spec = basicSparkContext.getSpecification();
     this.runtimeArguments = basicSparkContext.getRuntimeArgs();
@@ -150,75 +137,6 @@ abstract class AbstractSparkContext implements SparkContext {
   }
 
   /**
-   * Gets a {@link Stream} as a {@link JavaPairRDD} for Java program and {@link NewHadoopRDD} for Scala Program
-   *
-   * @param streamName the name of the {@link Stream} to be read as an RDD
-   * @param vClass     the value class
-   * @return the RDD created from the {@link Stream} to be read
-   */
-  @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass) {
-    return readFromStream(streamName, vClass, 0, System.currentTimeMillis(), null);
-  }
-
-  /**
-   * Gets a {@link Stream} as a {@link JavaPairRDD} for Java program and {@link NewHadoopRDD} for Scala Program
-   *
-   * @param streamName the name of the {@link Stream} to be read as an RDD
-   * @param vClass     the value class
-   * @param startTime  the starting time of the stream to be read
-   * @param endTime    the ending time of the streams to be read
-   * @return the RDD created from the {@link Stream} to be read
-   */
-  @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
-    return readFromStream(streamName, vClass, startTime, endTime, null);
-  }
-
-  /**
-   * Sets the input to a {@link Stream}
-   *
-   * @param stream the stream to which input will be set to
-   * @param vClass the value class which can be either {@link Text} or {@link BytesWritable}
-   * @return updated {@link Configuration}
-   * @throws IOException if the given {@link Stream} is not found or the {@link StreamEventDecoder} was not identified
-   */
-  Configuration setStreamInputDataset(StreamBatchReadable stream, Class<?> vClass) throws IOException {
-    Configuration hConf = new Configuration(getHConf());
-    configureStreamInput(hConf, stream, vClass);
-    return hConf;
-  }
-
-  /**
-   * Adds the needed information to read from the given {@link Stream} in the {@link Configuration}
-   *
-   * @param hConf  the {@link Configuration} to which the stream info will be added
-   * @param stream a {@link StreamBatchReadable} for the given stream
-   * @param vClass the value class which can be either {@link Text} or {@link BytesWritable}
-   * @throws IOException
-   */
-  private void configureStreamInput(Configuration hConf, StreamBatchReadable stream, Class<?> vClass)
-    throws IOException {
-    StreamConfig streamConfig = basicSparkContext.getStreamAdmin().getConfig(stream.getStreamName());
-    Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
-                                                               StreamUtils.getGeneration(streamConfig));
-    StreamInputFormat.setTTL(hConf, streamConfig.getTTL());
-    StreamInputFormat.setStreamPath(hConf, streamPath.toURI());
-    StreamInputFormat.setTimeRange(hConf, stream.getStartTime(), stream.getEndTime());
-
-    String decoderType = stream.getDecoderType();
-    if (decoderType == null) {
-        // If the user don't specify the decoder, detect the type
-        StreamInputFormat.inferDecoderClass(hConf, vClass);
-    } else {
-      StreamInputFormat.setDecoderClassName(hConf, decoderType);
-    }
-    hConf.setClass(MRJobConfig.INPUT_FORMAT_CLASS_ATTR, StreamInputFormat.class, InputFormat.class);
-
-    LOG.info("Using Stream as input from {}", stream.toURI());
-  }
-
-  /**
    * Sets the output {@link Dataset} with splits in the {@link Configuration}
    *
    * @param datasetName the name of the {@link Dataset} to write to
@@ -266,8 +184,4 @@ abstract class AbstractSparkContext implements SparkContext {
     return arguments.build();
   }
 
-  @Override
-  public ServiceDiscoverer getServiceDiscoverer() {
-    return basicSparkContext.getSerializableServiceDiscoverer();
-  }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app;
 
+import co.cask.cdap.api.SingleRunnableApplication;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.stream.Stream;
@@ -29,23 +30,31 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.Service;
+import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
-import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
-import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
+import co.cask.cdap.internal.app.services.ServiceTwillApplication;
+import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
+import co.cask.cdap.internal.service.DefaultServiceSpecification;
 import co.cask.cdap.internal.spark.DefaultSparkSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.twill.api.ResourceSpecification;
+import org.apache.twill.api.TwillApplication;
+import org.apache.twill.api.TwillRunnable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,6 +72,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   private final Map<String, SparkSpecification> sparks = Maps.newHashMap();
   private final Map<String, WorkflowSpecification> workflows = Maps.newHashMap();
   private final Map<String, ServiceSpecification> services = Maps.newHashMap();
+  private final List<co.cask.cdap.api.service.Service> servicesToCreate = Lists.newArrayList();
 
   // passed app to be used to resolve default name and description
   public DefaultAppConfigurer(Application app) {
@@ -147,10 +157,7 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addMapReduce(MapReduce mapReduce) {
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
-    DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce);
-    mapReduce.configure(configurer);
-
-    MapReduceSpecification spec = configurer.createSpecification();
+    MapReduceSpecification spec = new DefaultMapReduceSpecification(mapReduce);
     mapReduces.put(spec.getName(), spec);
   }
 
@@ -172,16 +179,59 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     mapReduces.putAll(spec.getMapReduce());
   }
 
-  public void addService(Service service) {
-    Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
-    service.configure(configurer);
 
-    ServiceSpecification spec = configurer.createSpecification();
+  /**
+   * Adds a Custom Service {@link TwillApplication} to the Application.
+   *
+   * @param application Custom Service {@link TwillApplication} to include in the Application
+   */
+  private void addService(TwillApplication application) {
+    Preconditions.checkNotNull(application, "Service cannot be null.");
+
+    DefaultServiceSpecification spec = new DefaultServiceSpecification(application.getClass().getName(),
+                                                                       application.configure());
     services.put(spec.getName(), spec);
   }
 
-  public ApplicationSpecification createSpecification() {
+  /**
+   * Adds {@link TwillRunnable} TwillRunnable as a Custom Service {@link TwillApplication} to the Application.
+   * @param runnable TwillRunnable to run as service
+   * @param specification ResourceSpecification for Twill container.
+   */
+  private void addService(TwillRunnable runnable, ResourceSpecification specification) {
+    addService(new SingleRunnableApplication(runnable, specification));
+  }
+
+  @Override
+  public void addService(final String serviceName, final Iterable<? extends HttpServiceHandler> handlers) {
+    AbstractService serviceFromHandler = new AbstractService() {
+      @Override
+      protected void configure() {
+        setName(serviceName);
+        for (HttpServiceHandler handler : handlers) {
+          addHandler(handler);
+        }
+      }
+    };
+    servicesToCreate.add(serviceFromHandler);
+  }
+
+  @Override
+  public void addService(String name, HttpServiceHandler handler) {
+    addService(name, Arrays.asList(handler));
+  }
+
+  public void addService(co.cask.cdap.api.service.Service service) {
+    // We need to know the name of the application when we create the service's TwillApplication, so we defer the
+    // creation of the service's TwillApplication until createApplicationSpec is called, where we know for sure that the
+    // application's name will not change after that point.
+    servicesToCreate.add(service);
+  }
+
+  public ApplicationSpecification createApplicationSpec() {
+    for (co.cask.cdap.api.service.Service service : servicesToCreate) {
+      addService(new ServiceTwillApplication(service, name));
+    }
     return new DefaultApplicationSpecification(name, description, streams,
                                                dataSetModules, dataSetInstances,
                                                flows, procedures, mapReduces, sparks, workflows, services);

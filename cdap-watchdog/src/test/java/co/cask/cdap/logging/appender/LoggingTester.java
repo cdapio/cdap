@@ -22,10 +22,9 @@ import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogReader;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
@@ -33,6 +32,7 @@ import java.util.concurrent.CountDownLatch;
  *
  */
 public class LoggingTester {
+
   public void testGetNext(LogReader logReader, LoggingContext loggingContext) throws Exception {
     LogCallback logCallback1 = new LogCallback();
     logReader.getLogNext(loggingContext, -1, 10, Filter.EMPTY_FILTER, logCallback1);
@@ -175,7 +175,7 @@ public class LoggingTester {
     public void init() {
       firstOffset = -1;
       lastOffset = -1;
-      events = Collections.synchronizedList(new ArrayList<LogEvent>());
+      events = Lists.newArrayList();
     }
 
     @Override

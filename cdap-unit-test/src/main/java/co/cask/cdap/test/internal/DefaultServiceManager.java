@@ -96,11 +96,6 @@ public class DefaultServiceManager implements ServiceManager {
 
   @Override
   public URL getServiceURL() {
-    return getServiceURL(1, TimeUnit.SECONDS);
-  }
-
-  @Override
-  public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
     ServiceDiscovered serviceDiscovered = discoveryServiceClient.discover(String.format("service.%s.%s.%s",
                                                                                         accountId,
                                                                                         applicationId,
@@ -125,7 +120,7 @@ public class DefaultServiceManager implements ServiceManager {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     try {
-      URL url = discoverableQueue.poll(timeout, timeoutUnit);
+      URL url = discoverableQueue.poll(1, TimeUnit.SECONDS);
       if (url == null) {
         LOG.debug("Discoverable endpoint not found for appID: {}, serviceName: {}.", applicationId, serviceName);
       }

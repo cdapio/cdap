@@ -463,9 +463,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
                                  getConsumerStateColumn(removeGroupId, i));
           }
         }
-        if (!delete.isEmpty()) {
-          mutations.add(delete);
-        }
+        mutations.add(delete);
       }
 
       // For each group that changed (either a new group or number of instances change), update the startRow
@@ -476,7 +474,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
         if (!oldGroupInfo.containsKey(groupId)) {
           // For new group, simply put with smallest rowKey from other group or an empty byte array if none exists.
           for (int i = 0; i < instances; i++) {
-            put.add(QueueEntryRow.COLUMN_FAMILY, getConsumerStateColumn(groupId, i),
+            put.add(QueueEntryRow.COLUMN_FAMILY,
+                    getConsumerStateColumn(groupId, i),
                     smallest == null ? Bytes.EMPTY_BYTE_ARRAY : smallest);
           }
         } else if (oldGroupInfo.get(groupId) != instances) {
@@ -488,9 +487,7 @@ public class HBaseQueueAdmin implements QueueAdmin {
           mutations = getConfigMutations(groupId, instances, rowKey, HBaseConsumerState.create(columnMap), mutations);
         }
       }
-      if (!put.isEmpty()) {
-        mutations.add(put);
-      }
+      mutations.add(put);
 
       // Compute and applies changes
       if (!mutations.isEmpty()) {

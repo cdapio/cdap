@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api;
 
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -26,4 +27,20 @@ public interface RuntimeContext {
    * @return A map of argument key and value.
    */
   Map<String, String> getRuntimeArguments();
+
+
+  /**
+   * Used to discover services inside a given application.
+   * @param applicationId Application name
+   * @param serviceId Service name
+   * @return URL
+   */
+  URL getServiceURL(String applicationId, String serviceId);
+
+  /**
+   * Omitting an applicationId assumes that the program wants to discover a service within its own application.
+   * @param serviceId Service Name
+   * @return URL
+   */
+  URL getServiceURL(String serviceId);
 }

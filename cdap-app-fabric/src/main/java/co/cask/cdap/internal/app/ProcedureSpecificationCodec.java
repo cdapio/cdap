@@ -16,9 +16,10 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.ResourceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -44,7 +45,8 @@ final class ProcedureSpecificationCodec extends AbstractSpecificationCodec<Proce
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
     jsonObj.add("datasets", serializeSet(src.getDataSets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
-    jsonObj.add("resources", context.serialize(src.getResources(), Resources.class));
+    jsonObj.add("resources", context.serialize(src.getResources(),
+                                               new TypeToken<ResourceSpecification>() { }.getType()));
     jsonObj.addProperty("instances", src.getInstances());
     return jsonObj;
   }
@@ -59,11 +61,12 @@ final class ProcedureSpecificationCodec extends AbstractSpecificationCodec<Proce
     String description = jsonObj.get("description").getAsString();
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
-    Resources resources = context.deserialize(jsonObj.get("resources"), Resources.class);
+    ResourceSpecification resourceSpec = context.deserialize(jsonObj.get("resources"),
+                                                             new TypeToken<ResourceSpecification>() { }.getType());
 
     JsonElement instanceElem = jsonObj.get("instances");
     int instances = (instanceElem == null || instanceElem.isJsonNull()) ? 1 : jsonObj.get("instances").getAsInt();
     return new DefaultProcedureSpecification(className, name, description, dataSets,
-                                             properties, resources, instances);
+                                             properties, resourceSpec, instances);
   }
 }

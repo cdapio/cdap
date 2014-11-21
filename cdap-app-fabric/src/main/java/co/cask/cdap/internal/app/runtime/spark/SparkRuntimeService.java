@@ -147,7 +147,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // depends on.
       Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
       try {
-        SparkProgramWrapper.setBasicSparkContext(context);
         SparkProgramWrapper.setSparkProgramRunning(true);
         SparkSubmit.main(sparkSubmitArgs);
       } catch (Exception e) {

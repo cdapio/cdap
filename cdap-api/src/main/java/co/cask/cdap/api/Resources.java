@@ -17,53 +17,31 @@
 package co.cask.cdap.api;
 
 /**
- * Carries system resources requirements.
+ * Implementation of {@link ResourceSpecification}.
  */
-public final class Resources {
-
-  private static final int DEFAULT_VIRTUAL_CORES = 1;
-  private static final int DEFAULT_MEMORY_MB = 512;
-
+public final class Resources implements ResourceSpecification {
   private final int virtualCores;
   private final int memoryMB;
 
-  /**
-   * Constructs a Resources instance that represents 1 virtual core and 512MB of memory.
-   */
   public Resources() {
-    this(DEFAULT_MEMORY_MB, DEFAULT_VIRTUAL_CORES);
+    this(ResourceSpecification.DEFAULT_MEMORY_MB, ResourceSpecification.DEFAULT_VIRTUAL_CORES);
   }
 
-  /**
-   * Constructs a Resources instance that represents 1 virtual core and custom memory size.
-   *
-   * @param memoryMB memory requirement in MB.
-   */
   public Resources(int memoryMB) {
-    this(memoryMB, DEFAULT_VIRTUAL_CORES);
+    this(memoryMB, ResourceSpecification.DEFAULT_VIRTUAL_CORES);
   }
 
-  /**
-   * Constructs a Resources instance.
-   *
-   * @param memoryMB memory requirement in MB.
-   * @param cores number of virtual cores.
-   */
   public Resources(int memoryMB, int cores) {
     this.memoryMB = memoryMB;
     this.virtualCores = cores;
   }
 
-  /**
-   * Returns the number of virtual cores.
-   */
+  @Override
   public int getVirtualCores() {
     return virtualCores;
   }
 
-  /**
-   * Returns the memory size in MB.
-   */
+  @Override
   public int getMemoryMB() {
     return memoryMB;
   }

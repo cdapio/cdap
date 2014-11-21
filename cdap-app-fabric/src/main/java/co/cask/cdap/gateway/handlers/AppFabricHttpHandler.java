@@ -26,7 +26,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -43,7 +43,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.Namespace;
@@ -82,7 +81,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
-import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
@@ -98,7 +96,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import com.google.common.util.concurrent.Futures;
@@ -116,6 +113,7 @@ import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.RunId;
+import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -131,9 +129,7 @@ import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -145,7 +141,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -168,6 +163,9 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
+
+  private static final java.lang.reflect.Type MAP_STRING_STRING_TYPE
+    = new TypeToken<Map<String, String>>() { }.getType();
 
   /**
    * Json serializer.
@@ -360,8 +358,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       InputStream in = txClient.getSnapshotInputStream();
       LOG.trace("Took and retrieved transaction manager snapshot successfully.");
       try {
-        ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                                 ImmutableMultimap.<String, String>of());
+        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.<String, String>of());
         while (true) {
           // netty doesn't copy the readBytes buffer, so we have to reallocate a new buffer
           byte[] readBytes = new byte[4096];
@@ -369,11 +366,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           if (res == -1) {
             break;
           }
-          // If failed to send chunk, IOException will be raised.
-          // It'll just propagated to the netty-http library to handle it
-          chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
+          responder.sendChunk(ChannelBuffers.wrappedBuffer(readBytes, 0, res));
         }
-        Closeables.closeQuietly(chunkResponder);
+        responder.sendChunkEnd();
       } finally {
         in.close();
       }
@@ -1071,7 +1066,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       if (args == null) {
         return;
       }
-      for (BatchEndpointInstances requestedObj : args) {
+      for (int i = 0; i < args.size(); ++i) {
+        BatchEndpointInstances requestedObj = (BatchEndpointInstances) args.get(i);
         String appId = requestedObj.getAppId();
         String programTypeStr = requestedObj.getProgramType();
         String programId = requestedObj.getProgramId();
@@ -1082,72 +1078,62 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "App: " + appId + " not found");
           continue;
         }
-
         ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
-
-        // cant get instances for things that are not flows, services, or procedures
-        if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType)) {
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                       "Program type: " + programType + " is not a valid program type to get instances");
-          continue;
-        }
-
         String runnableId;
         if (programType == ProgramType.PROCEDURE) {
           // the "runnable" for procedures has the same id as the procedure name
           runnableId = programId;
-          if (!spec.getProcedures().containsKey(programId)) {
+          if (spec.getProcedures().containsKey(programId)) {
+            requested = store.getProcedureInstances(Id.Program.from(accountId, appId, programId));
+          } else {
             addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
                          "Procedure: " + programId + " not found");
             continue;
           }
-          requested = store.getProcedureInstances(Id.Program.from(accountId, appId, programId));
-
         } else {
-          // services and flows must have runnable id
-          if (requestedObj.getRunnableId() == null) {
+          // cant get instances for things that are not flows, services, or procedures
+          if (programType != ProgramType.FLOW && programType != ProgramType.SERVICE) {
             addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                         "Must provide a string runnableId for flows/services");
+                         "Program type: " + programType + " is not a valid program type to get instances");
             continue;
           }
-
+          // services and flows must have runnable id
+          if (requestedObj.getRunnableId() == null) {
+            responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Must provide a string runnableId for flows/services");
+            return;
+          }
           runnableId = requestedObj.getRunnableId();
           if (programType == ProgramType.FLOW) {
             FlowSpecification flowSpec = spec.getFlows().get(programId);
-            if (flowSpec == null) {
+            if (flowSpec != null) {
+              Map<String, FlowletDefinition> flowletSpecs = flowSpec.getFlowlets();
+              if (flowletSpecs != null && flowletSpecs.containsKey(runnableId)) {
+                requested = flowletSpecs.get(runnableId).getInstances();
+              } else {
+                addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                             "Flowlet: " + runnableId + " not found");
+                continue;
+              }
+            } else {
               addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "Flow: " + programId + " not found");
               continue;
             }
-
-            FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
-            if (flowletDefinition == null) {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                           "Flowlet: " + runnableId + " not found");
-              continue;
-            }
-            requested = flowletDefinition.getInstances();
-
-         } else {
+          } else {
             // Services
             ServiceSpecification serviceSpec = spec.getServices().get(programId);
-            if (serviceSpec == null) {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                           "Service: " + programId + " not found");
-              continue;
-            }
-
-            if (serviceSpec.getName().equals(runnableId)) {
-              // If runnable name is the same as the service name, returns the service http server instances
-              requested = serviceSpec.getInstances();
-            } else {
-              // Otherwise, get it from the worker
-              ServiceWorkerSpecification workerSpec = serviceSpec.getWorkers().get(runnableId);
-              if (workerSpec == null) {
+            if (serviceSpec != null) {
+              Map<String, RuntimeSpecification> runtimeSpecs = serviceSpec.getRunnables();
+              if (runtimeSpecs != null && runtimeSpecs.containsKey(runnableId)) {
+                requested = runtimeSpecs.get(runnableId).getResourceSpecification().getInstances();
+              } else {
                 addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
                              "Runnable: " + runnableId + " not found");
                 continue;
               }
-              requested = workerSpec.getInstances();
+            } else {
+              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
+                           "Service: " + programId + " not found");
+              continue;
             }
           }
         }
@@ -1358,10 +1344,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       int oldInstances = store.getFlowletInstances(programID, flowletId);
       if (oldInstances != instances) {
         store.setFlowletInstances(programID, flowletId, instances);
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, ProgramType.FLOW,
-                                                                        runtimeService);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, ProgramType.FLOW);
         if (runtimeInfo != null) {
-          runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+          runtimeInfo.getController().command(ProgramOptionConstants.FLOWLET_INSTANCES,
                                               ImmutableMap.of("flowlet", flowletId,
                                                               "newInstances", String.valueOf(instances),
                                                               "oldInstances", String.valueOf(oldInstances))).get();
@@ -1486,7 +1471,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       return deployAppStream(request, responder, null);
     } catch (Exception ex) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
     }
   }
@@ -1636,7 +1621,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId,
                                 @PathParam("procedure-id") final String procedureId) {
-    getLiveInfo(request, responder, appId, procedureId, ProgramType.PROCEDURE, runtimeService);
+    getLiveInfo(request, responder, appId, procedureId, ProgramType.PROCEDURE);
   }
 
   @GET
@@ -1645,7 +1630,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void flowLiveInfo(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") final String appId,
                            @PathParam("flow-id") final String flowId) {
-    getLiveInfo(request, responder, appId, flowId, ProgramType.FLOW, runtimeService);
+    getLiveInfo(request, responder, appId, flowId, ProgramType.FLOW);
   }
 
   /**
@@ -1703,14 +1688,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     runnableSpecification(request, responder, appId, ProgramType.WORKFLOW, workflowId);
   }
 
-  @GET
-  @Path("/apps/{app-id}/services/{service-id}")
-  public void serviceSpecification(HttpRequest request, HttpResponder responder,
-                                   @PathParam("app-id") String appId,
-                                   @PathParam("service-id") String serviceId) {
-    runnableSpecification(request, responder, appId, ProgramType.SERVICE, serviceId);
-  }
-
 
 
   private void runnableSpecification(HttpRequest request, HttpResponder responder,
@@ -1740,17 +1717,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     final String accountId = getAuthenticatedAccountId(request);
     final Location uploadDir = locationFactory.create(archiveDir + "/" + accountId);
     final Location archive = uploadDir.append(archiveName);
-
-    // Copy archive to a temporary location
-    File tempDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
-                                     configuration.get(Constants.AppFabric.TEMP_DIR)),
-                            accountId).getAbsoluteFile();
-    if (!tempDir.exists() && !tempDir.mkdirs() && !tempDir.exists()) {
-      throw new IOException("Could not create temporary directory at: " + tempDir.getAbsolutePath());
-    }
-    final File tmpArchive = File.createTempFile("app-", ".jar", tempDir);
-    LOG.debug("Moving archive to temporary file on local disk: {}", tmpArchive.getAbsolutePath());
-    final OutputStream fos = new FileOutputStream(tmpArchive);
+    final OutputStream os = archive.getOutputStream();
 
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
@@ -1763,7 +1730,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       public void chunk(ChannelBuffer request, HttpResponder responder) {
         try {
-          request.readBytes(fos, request.readableBytes());
+          request.readBytes(os, request.readableBytes());
         } catch (IOException e) {
           sessionInfo.setStatus(DeployStatus.FAILED);
           LOG.error("Failed to write deploy jar", e);
@@ -1773,24 +1740,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       public void finished(HttpResponder responder) {
         try {
-          fos.close();
-          // Moving archive from temporary location in local file system to temporary location in targeted file system
-          Location tmpLocation = archive.getTempFile("");
-          try {
-            LOG.debug("Moving archive to temporary file on final file system: {}", tmpLocation.toURI().toString());
-            Files.copy(tmpArchive, Locations.newOutputSupplier(tmpLocation));
-            // Finally, move archive to final location
-            Location finalLocation = tmpLocation.renameTo(archive);
-            if (finalLocation == null) {
-              throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                  tmpLocation.toURI().toString(), archive.toURI().toString()));
-            }
-          } catch (IOException e) {
-            // In case copy to temporary file failed, or rename failed
-            tmpLocation.delete();
-            throw Throwables.propagate(e);
-          }
-
+          os.close();
           sessionInfo.setStatus(DeployStatus.VERIFYING);
           deploy(accountId, appId, archive);
           sessionInfo.setStatus(DeployStatus.DEPLOYED);
@@ -1800,9 +1750,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } finally {
-          if (!tmpArchive.delete()) {
-            LOG.debug("Could not delete archive in temporary location: {}", tmpArchive.getAbsolutePath());
-          }
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
         }
@@ -1810,13 +1757,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       public void handleError(Throwable t) {
         try {
-          Closeables.closeQuietly(fos);
+          os.close();
           sessionInfo.setStatus(DeployStatus.FAILED);
           responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getCause().getMessage());
+        } catch (IOException e) {
+          LOG.error("Error while saving deploy jar.", e);
         } finally {
-          if (!tmpArchive.delete()) {
-            LOG.debug("Could not delete archive in temporary location: {}", tmpArchive.getAbsolutePath());
-          }
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
         }
@@ -1840,7 +1786,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       ApplicationWithPrograms applicationWithPrograms =
         manager.deploy(id, appId, archiveLocation).get();
-      ApplicationSpecification specification = applicationWithPrograms.getSpecification();
+      ApplicationSpecification specification = applicationWithPrograms.getAppSpecLoc().getSpecification();
       setupSchedules(accountId, specification);
     } catch (Throwable e) {
       LOG.warn(e.getMessage(), e);
@@ -1920,7 +1866,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
       Map<String, String> content = null;
       try {
-        content = GSON.fromJson(postBody, STRING_MAP_TYPE);
+        content = GSON.fromJson(postBody, MAP_STRING_STRING_TYPE);
       } catch (JsonSyntaxException e) {
         responder.sendError(HttpResponseStatus.BAD_REQUEST, "Not a valid body specified.");
         return;
@@ -2457,10 +2403,24 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       switch (type) {
         case FLOW:
-          stopProgramIfRunning(programId, type);
+          //Stop the flow if it not running
+          ProgramRuntimeService.RuntimeInfo flowRunInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                          programId.getApplicationId(),
+                                                                          programId.getId(),
+                                                                          type);
+          if (flowRunInfo != null) {
+            doStop(flowRunInfo);
+          }
           break;
         case PROCEDURE:
-          stopProgramIfRunning(programId, type);
+          //Stop the procedure if it not running
+          ProgramRuntimeService.RuntimeInfo procedureRunInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                               programId.getApplicationId(),
+                                                                               programId.getId(),
+                                                                               type);
+          if (procedureRunInfo != null) {
+            doStop(procedureRunInfo);
+          }
           break;
         case WORKFLOW:
           List<String> scheduleIds = scheduler.getScheduleIds(programId, type);
@@ -2469,23 +2429,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         case MAPREDUCE:
           //no-op
           break;
-        case SERVICE:
-          stopProgramIfRunning(programId, type);
-          break;
       }
     } catch (InterruptedException e) {
       throw new ExecutionException(e);
-    }
-  }
-
-  private void stopProgramIfRunning(Id.Program programId, ProgramType type)
-    throws InterruptedException, ExecutionException {
-    ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getAccountId(),
-                                                                        programId.getApplicationId(),
-                                                                        programId.getId(),
-                                                                        type, runtimeService);
-    if (programRunInfo != null) {
-      doStop(programRunInfo);
     }
   }
 
@@ -2622,52 +2568,52 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of flows associated with an account.
+   * Returns a list of flows associated with account.
    */
   @GET
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.FLOW, null, store);
+    programList(request, responder, ProgramType.FLOW, null);
   }
 
   /**
-   * Returns a list of procedures associated with an account.
+   * Returns a list of procedures associated with account.
    */
   @GET
   @Path("/procedures")
   public void getAllProcedures(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.PROCEDURE, null, store);
+    programList(request, responder, ProgramType.PROCEDURE, null);
   }
 
   /**
-   * Returns a list of map/reduces associated with an account.
+   * Returns a list of map/reduces associated with account.
    */
   @GET
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.MAPREDUCE, null, store);
+    programList(request, responder, ProgramType.MAPREDUCE, null);
   }
 
   /**
-   * Returns a list of spark jobs associated with an account.
+   * Returns a list of spark jobs associated with account.
    */
   @GET
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.SPARK, null, store);
+    programList(request, responder, ProgramType.SPARK, null);
   }
 
   /**
-   * Returns a list of workflows associated with an account.
+   * Returns a list of workflows associated with account.
    */
   @GET
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.WORKFLOW, null, store);
+    programList(request, responder, ProgramType.WORKFLOW, null);
   }
 
   /**
-   * Returns a list of applications associated with an account.
+   * Returns a list of applications associated with account.
    */
   @GET
   @Path("/apps")
@@ -2692,7 +2638,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.FLOW, appId, store);
+    programList(request, responder, ProgramType.FLOW, appId);
   }
 
   /**
@@ -2702,7 +2648,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.PROCEDURE, appId, store);
+    programList(request, responder, ProgramType.PROCEDURE, appId);
   }
 
   /**
@@ -2712,7 +2658,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.MAPREDUCE, appId, store);
+    programList(request, responder, ProgramType.MAPREDUCE, appId);
   }
 
   /**
@@ -2722,7 +2668,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.SPARK, appId, store);
+    programList(request, responder, ProgramType.SPARK, appId);
   }
 
   /**
@@ -2732,7 +2678,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows")
   public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.WORKFLOW, appId, store);
+    programList(request, responder, ProgramType.WORKFLOW, appId);
   }
 
 
@@ -2775,6 +2721,132 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception : ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private void programList(HttpRequest request, HttpResponder responder, ProgramType type, String appid) {
+    if (appid != null && appid.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is null or empty");
+      return;
+    }
+
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      String list;
+      if (appid == null) {
+        Id.Account accId = Id.Account.from(accountId);
+        list = listPrograms(accId, type);
+      } else {
+        Id.Application appId = Id.Application.from(accountId, appid);
+        list = listProgramsByApp(appId, type);
+      }
+
+      if (list.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, list.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception: ", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private String listProgramsByApp(Id.Application appId, ProgramType type) throws Exception {
+    ApplicationSpecification appSpec;
+    try {
+      appSpec = store.getApplication(appId);
+      if (appSpec == null) {
+        return "";
+      } else {
+        return listPrograms(Collections.singletonList(appSpec), type);
+      }
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new Exception("Could not retrieve application spec for " + appId.toString() + ", reason: " +
+                            throwable.getMessage());
+    }
+  }
+
+  private String listPrograms(Id.Account accId, ProgramType type) throws Exception {
+    try {
+      Collection<ApplicationSpecification> appSpecs = store.getAllApplications(accId);
+      if (appSpecs == null) {
+        return "";
+      } else {
+        return listPrograms(appSpecs, type);
+      }
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new Exception("Could not retrieve application spec for " + accId.toString() + ", reason: " +
+                            throwable.getMessage());
+    }
+  }
+
+  private String listPrograms(Collection<ApplicationSpecification> appSpecs, ProgramType type) throws Exception {
+    List<ProgramRecord> result = Lists.newArrayList();
+    for (ApplicationSpecification appSpec : appSpecs) {
+      if (type == ProgramType.FLOW) {
+        for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), flowSpec, ProgramType.FLOW));
+        }
+      } else if (type == ProgramType.PROCEDURE) {
+        for (ProcedureSpecification procedureSpec : appSpec.getProcedures().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), procedureSpec, ProgramType.PROCEDURE));
+        }
+      } else if (type == ProgramType.MAPREDUCE) {
+        for (MapReduceSpecification mrSpec : appSpec.getMapReduce().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), mrSpec, ProgramType.MAPREDUCE));
+        }
+      } else if (type == ProgramType.SPARK) {
+        for (SparkSpecification sparkSpec : appSpec.getSpark().values()) {
+            result.add(makeProgramRecord(appSpec.getName(), sparkSpec, ProgramType.SPARK));
+        }
+      } else if (type == ProgramType.WORKFLOW) {
+        for (WorkflowSpecification wfSpec : appSpec.getWorkflows().values()) {
+          result.add(makeProgramRecord(appSpec.getName(), wfSpec, ProgramType.WORKFLOW));
+        }
+      } else {
+        throw new Exception("Unknown program type: " + type.name());
+      }
+    }
+    return GSON.toJson(result);
+  }
+
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
+                                                            String flowId, ProgramType typeId) {
+    ProgramType type = ProgramType.valueOf(typeId.name());
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               accountId, flowId);
+
+    Id.Program programId = Id.Program.from(accountId, appId, flowId);
+
+    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
+      if (programId.equals(info.getProgramId())) {
+        return info;
+      }
+    }
+    return null;
+  }
+
+  private void getLiveInfo(HttpRequest request, HttpResponder responder,
+                           final String appId, final String programId, ProgramType type) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      responder.sendJson(HttpResponseStatus.OK,
+                         runtimeService.getLiveInfo(Id.Program.from(accountId,
+                                                                    appId,
+                                                                    programId),
+                                                    type));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -3095,6 +3167,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
     return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());
+  }
+
+  private static ProgramRecord makeProgramRecord (String appId, ProgramSpecification spec, ProgramType type) {
+    return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
   private static DatasetRecord makeDataSetRecord(String name, String classname) {

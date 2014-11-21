@@ -18,12 +18,12 @@ package co.cask.cdap.client.util;
 
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.http.HttpMethod;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpRequestConfig;
+import co.cask.cdap.common.http.HttpRequests;
+import co.cask.cdap.common.http.HttpResponse;
 import co.cask.cdap.security.authentication.client.AccessToken;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequestConfig;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang.ArrayUtils;
 
@@ -41,28 +41,19 @@ public class RESTClient {
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
 
-  public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig) {
+  private RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig) {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
   }
 
   /**
-   * Creates a {@link RESTClient}.
-   *
-   * @param clientConfig default {@link ClientConfig} that configures timeouts
-   * @return {@link RESTClient} instance
-   */
-  public static RESTClient create(ClientConfig clientConfig) {
-    return new RESTClient(clientConfig.getDefaultHttpConfig(), clientConfig.getUploadHttpConfig());
-  }
-
-  /**
    * Creates a default {@link RESTClient}.
    *
+   * @param config {@link ClientConfig} that configures hostname and timeouts
    * @return {@link RESTClient} instance
    */
-  public static RESTClient create() {
-    return new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT);
+  public static RESTClient create(ClientConfig config) {
+    return new RESTClient(config.getDefaultConfig(), config.getUploadConfig());
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)

@@ -16,9 +16,6 @@
 
 package co.cask.cdap.api.service.http;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -83,33 +80,29 @@ public abstract class AbstractHttpServiceHandler implements HttpServiceHandler {
   }
 
   /**
-   * @see HttpServiceConfigurer#setProperties(java.util.Map)
+   * @see HttpServiceConfigurer#setName(String)
    *
-   * @param properties the properties to set
+   * @param name the name to set
    */
-  protected void setProperties(Map<String, String> properties) {
-    configurer.setProperties(properties);
+  protected final void setName(String name) {
+    configurer.setName(name);
   }
 
   /**
-   * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the Service.
+   * @see HttpServiceConfigurer#setDescription(String)
    *
-   * @param dataset Dataset name.
-   * @param datasets More Dataset names.
+   * @param description the description to set
    */
-  protected void useDatasets(String dataset, String...datasets) {
-    List<String> datasetList = new ArrayList<String>();
-    datasetList.add(dataset);
-    datasetList.addAll(Arrays.asList(datasets));
-    useDatasets(datasetList);
+  protected final void setDescription(String description) {
+    configurer.setDescription(description);
   }
 
   /**
-   * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the Service.
+   * @see HttpServiceConfigurer#setArguments(java.util.Map)
    *
-   * @param datasets Dataset names.
+   * @param arguments the runtime arguments to store
    */
-  protected void useDatasets(Iterable<String> datasets) {
-    configurer.useDatasets(datasets);
+  protected final void setArguments(Map<String, String> arguments) {
+    configurer.setArguments(arguments);
   }
 }

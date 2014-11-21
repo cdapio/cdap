@@ -16,9 +16,11 @@
 
 package co.cask.cdap.internal.io;
 
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.lang.Instantiator;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.stream.DefaultStreamEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Longs;
@@ -51,7 +53,10 @@ public final class ReflectionDatumReader<T> implements DatumReader<T> {
   @SuppressWarnings("unchecked")
   public ReflectionDatumReader(Schema schema, TypeToken<T> type) {
     this.schema = schema;
-    this.type = type;
+
+    this.type = type.getRawType().equals(StreamEvent.class)
+                      ? (TypeToken<T>) TypeToken.of(DefaultStreamEvent.class) : type;
+
     this.creatorFactory = new InstantiatorFactory(true);
     this.creators = Maps.newIdentityHashMap();
     this.fieldAccessorFactory = new ReflectionFieldAccessorFactory();

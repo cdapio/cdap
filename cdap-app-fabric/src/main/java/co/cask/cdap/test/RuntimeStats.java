@@ -33,7 +33,7 @@ public final class RuntimeStats {
 
   private static ConcurrentMap<String, AtomicLong> counters = Maps.newConcurrentMap();
 
-  public static void count(String name, long count) {
+  public static void count(String name, int count) {
     AtomicLong oldValue = counters.putIfAbsent(name, new AtomicLong(count));
     if (oldValue != null) {
       oldValue.addAndGet(count);

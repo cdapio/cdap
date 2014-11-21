@@ -32,9 +32,4 @@ public class HBaseTestFactory extends HBaseVersionSpecificFactory<HBaseTestBase>
   protected String getHBase96Classname() {
     return "co.cask.cdap.data.hbase.HBase96Test";
   }
-
-  @Override
-  protected String getHBase98Classname() {
-    return "co.cask.cdap.data.hbase.HBase98Test";
-  }
 }

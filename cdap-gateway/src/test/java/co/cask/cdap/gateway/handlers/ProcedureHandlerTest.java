@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.http.AbstractHttpHandler;
-import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Joiner;
@@ -46,7 +45,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URLEncoder;
@@ -358,7 +356,7 @@ public class ProcedureHandlerTest extends GatewayTestBase {
     @Path("/v2/apps/{appId}/procedures/{procedureName}/methods/{methodName}")
     public void handle(HttpRequest request, final HttpResponder responder,
                        @PathParam("appId") String appId, @PathParam("procedureName") String procedureName,
-                       @PathParam("methodName") String methodName) throws IOException {
+                       @PathParam("methodName") String methodName) {
 
       // /apps/testApp1/procedures/testProc1/testMethod1
       if ("testApp1".equals(appId) && "testProc1".equals(procedureName) && "testMethod1".equals(methodName)) {
@@ -381,11 +379,10 @@ public class ProcedureHandlerTest extends GatewayTestBase {
       } else if ("testApp2".equals(appId) && "testProc2".equals(procedureName) &&
         "testChunkedMethod".equals(methodName)) {
         // /apps/testApp2/procedures/testProc2/testChunkedMethod
-        ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK,
-                                                                 ImmutableMultimap.of(CONTENT_TYPE, "text/plain"));
-        chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(request.getContent().array()));
-        chunkResponder.sendChunk(ChannelBuffers.wrappedBuffer(request.getContent().array()));
-        chunkResponder.close();
+        responder.sendChunkStart(HttpResponseStatus.OK, ImmutableMultimap.of(CONTENT_TYPE, "text/plain"));
+        responder.sendChunk(ChannelBuffers.wrappedBuffer(request.getContent().array()));
+        responder.sendChunk(ChannelBuffers.wrappedBuffer(request.getContent().array()));
+        responder.sendChunkEnd();
 
       } else if ("testApp2".equals(appId) && "testProc2".equals(procedureName) &&
         "testExceptionMethod".equals(methodName)) {

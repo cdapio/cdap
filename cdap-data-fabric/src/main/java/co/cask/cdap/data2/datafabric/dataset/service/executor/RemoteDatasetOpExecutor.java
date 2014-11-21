@@ -23,13 +23,14 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.exception.HandlerException;
+import co.cask.cdap.common.http.HttpRequest;
+import co.cask.cdap.common.http.HttpRequests;
+import co.cask.cdap.common.http.HttpResponse;
+import co.cask.cdap.common.http.ObjectResponse;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
-import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -41,6 +42,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,10 +75,10 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
   public DatasetSpecification create(String instanceName, DatasetTypeMeta typeMeta, DatasetProperties props)
     throws Exception {
 
-    InternalDatasetCreationParams creationParams = new InternalDatasetCreationParams(typeMeta, props);
-    HttpRequest request = HttpRequest.post(resolve(instanceName, "create"))
-      .withBody(GSON.toJson(creationParams))
-      .build();
+
+    Map<String, String> headers = ImmutableMap.of("instance-props", GSON.toJson(props),
+                                                  "type-meta", GSON.toJson(typeMeta));
+    HttpRequest request = HttpRequest.post(resolve(instanceName, "create")).addHeaders(headers).build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
 
@@ -85,8 +87,9 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
 
   @Override
   public void drop(DatasetSpecification spec, DatasetTypeMeta typeMeta) throws Exception {
-    InternalDatasetDropParams dropParams = new InternalDatasetDropParams(typeMeta, spec);
-    HttpRequest request = HttpRequest.post(resolve(spec.getName(), "drop")).withBody(GSON.toJson(dropParams)).build();
+    Map<String, String> headers = ImmutableMap.of("instance-spec", GSON.toJson(spec),
+                                                  "type-meta", GSON.toJson(typeMeta));
+    HttpRequest request = HttpRequest.post(resolve(spec.getName(), "drop")).addHeaders(headers).build();
     HttpResponse response = HttpRequests.execute(request);
     verifyResponse(response);
   }
@@ -105,7 +108,10 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
     throws IOException, HandlerException {
 
     HttpResponse httpResponse = HttpRequests.execute(HttpRequest.post(resolve(instanceName, opName)).build());
-    verifyResponse(httpResponse);
+    if (httpResponse.getResponseCode() != 200) {
+      throw new HandlerException(HttpResponseStatus.valueOf(httpResponse.getResponseCode()),
+                                 httpResponse.getResponseMessage());
+    }
 
     return GSON.fromJson(new String(httpResponse.getResponseBody()), DatasetAdminOpResponse.class);
   }

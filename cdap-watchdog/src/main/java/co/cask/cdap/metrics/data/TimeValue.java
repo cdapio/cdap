@@ -21,9 +21,9 @@ package co.cask.cdap.metrics.data;
 public final class TimeValue {
 
   private final long time;
-  private final long value;
+  private final int value;
 
-  public TimeValue(long time, long value) {
+  public TimeValue(long time, int value) {
     this.time = time;
     this.value = value;
   }
@@ -32,7 +32,7 @@ public final class TimeValue {
     return time;
   }
 
-  public long getValue() {
+  public int getValue() {
     return value;
   }
 }

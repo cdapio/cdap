@@ -697,8 +697,7 @@ public abstract class QueueTest {
   }
 
   private void testOneEnqueueDequeue(DequeueStrategy strategy) throws Exception {
-    // since this is used by more than one test method, ensure uniqueness of the queue name by adding strategy
-    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queue1" + strategy.toString());
+    QueueName queueName = QueueName.fromFlowlet("app", "flow", "flowlet", "queue1");
     configureGroups(queueName, ImmutableMap.of(0L, 1, 1L, 1));
     QueueProducer producer = queueClientFactory.createProducer(queueName);
     TransactionContext txContext = createTxContext(producer);

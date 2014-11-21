@@ -113,7 +113,7 @@ public class StreamEventTypeAdapter extends TypeAdapter<StreamEvent> {
 
     if (timestamp >= 0 && headers != null && body != null) {
       in.endObject();
-      return new StreamEvent(headers, body, timestamp);
+      return new DefaultStreamEvent(headers, body, timestamp);
     }
     throw new IOException(String.format("Failed to read StreamEvent. Timestamp: %d, headers: %s, body: %s",
                                         timestamp, headers, body));

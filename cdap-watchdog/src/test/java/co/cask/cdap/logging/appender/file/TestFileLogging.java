@@ -19,7 +19,6 @@ package co.cask.cdap.logging.appender.file;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
@@ -78,7 +77,7 @@ public class TestFileLogging {
 
 
     Configuration conf = HBaseConfiguration.create();
-    CConfigurationUtil.copyTxProperties(cConf, conf);
+    cConf.copyTxProperties(conf);
     TransactionManager txManager = new TransactionManager(conf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);

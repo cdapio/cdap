@@ -35,6 +35,7 @@ import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
@@ -251,10 +252,13 @@ public class WordCountApp extends AbstractApplication {
    */
   public static class CountTotal extends AbstractMapReduce {
     @Override
-    public void configure() {
-      setName("countTotal");
-      setInputDataset("mydataset");
-      setOutputDataset("totals");
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("countTotal")
+        .setDescription("Counts total words count")
+        .useInputDataSet("mydataset")
+        .useOutputDataSet("totals")
+        .build();
     }
 
     @Override
@@ -300,10 +304,13 @@ public class WordCountApp extends AbstractApplication {
   public static final class CountFromStream extends AbstractMapReduce {
 
     @Override
-    public void configure() {
-      setName("countFromStream");
-      useStreamInput("text");
-      setOutputDataset("totals");
+    public MapReduceSpecification configure() {
+      return MapReduceSpecification.Builder.with()
+        .setName("countFromStream")
+        .setDescription("Word count from stream")
+        .useOutputDataSet("totals")
+        .useInputDataSet("stream://text")
+        .build();
     }
 
     @Override

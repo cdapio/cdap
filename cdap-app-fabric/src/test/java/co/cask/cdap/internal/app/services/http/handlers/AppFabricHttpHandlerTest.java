@@ -28,9 +28,6 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
-import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.DequeueStrategy;
@@ -38,9 +35,6 @@ import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
-import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
-import co.cask.cdap.internal.app.HttpServiceSpecificationCodec;
-import co.cask.cdap.internal.app.ServiceSpecificationCodec;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
@@ -56,9 +50,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -78,7 +70,7 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * Tests for {@link AppFabricHttpHandler}.
+ * Test {@link co.cask.cdap.gateway.handlers.AppFabricHttpHandler}
  */
 public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
@@ -1098,9 +1090,9 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   }
 
 
-  static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
+   static final QueueEntry STREAM_ENTRY = new QueueEntry("x".getBytes());
 
-  void createStream(String name) throws Exception {
+   void createStream(String name) throws Exception {
     // create stream
     Assert.assertEquals(200, doPut("/v2/streams/" + name).getStatusLine().getStatusCode());
 
@@ -1109,13 +1101,13 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     enqueue(queueName, STREAM_ENTRY);
   }
 
-  void createQueue(String name) throws Exception {
+   void createQueue(String name) throws Exception {
     // write smth to a queue
     QueueName queueName = getQueueName(name);
     enqueue(queueName, STREAM_ENTRY);
   }
 
-  boolean dequeueOne(QueueName queueName) throws Exception {
+   boolean dequeueOne(QueueName queueName) throws Exception {
     QueueClientFactory queueClientFactory = AppFabricTestBase.getInjector().getInstance(QueueClientFactory.class);
     final QueueConsumer consumer = queueClientFactory.createConsumer(queueName,
                                                                       new ConsumerConfig(1L, 0, 1,
@@ -1376,33 +1368,6 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
     waitState("services", "AppWithServices", "NoOpService", "STOPPED");
 
-  }
-
-  @Test
-  public void testServiceSpecification() throws Exception {
-    deploy(AppWithServices.class);
-    HttpResponse response = doGet("/v2/apps/AppWithServices/services/NoOpService/");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-
-    Set<ServiceHttpEndpoint> expectedEndpoints = ImmutableSet.of(new ServiceHttpEndpoint("GET", "/ping"),
-                                                                 new ServiceHttpEndpoint("POST", "/multi"),
-                                                                 new ServiceHttpEndpoint("GET", "/multi"),
-                                                                 new ServiceHttpEndpoint("GET", "/multi/ping"));
-
-    GsonBuilder gsonBuidler = new GsonBuilder();
-    gsonBuidler.registerTypeAdapter(ServiceSpecification.class, new ServiceSpecificationCodec());
-    gsonBuidler.registerTypeAdapter(HttpServiceHandlerSpecification.class, new HttpServiceSpecificationCodec());
-    Gson gson = gsonBuidler.create();
-    ServiceSpecification specification = readResponse(response, ServiceSpecification.class, gson);
-
-    Set<ServiceHttpEndpoint> returnedEndpoints = Sets.newHashSet();
-    for (HttpServiceHandlerSpecification httpServiceHandlerSpecification : specification.getHandlers().values()) {
-      returnedEndpoints.addAll(httpServiceHandlerSpecification.getEndpoints());
-    }
-
-    Assert.assertEquals("NoOpService", specification.getName());
-    Assert.assertTrue(returnedEndpoints.equals(expectedEndpoints));
-    Assert.assertEquals(0, specification.getWorkers().values().size());
   }
 
 }

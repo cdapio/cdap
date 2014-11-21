@@ -18,7 +18,6 @@ package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -89,7 +88,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     // Tx Manager to support working with datasets
     Configuration txConf = HBaseConfiguration.create();
-    CConfigurationUtil.copyTxProperties(cConf, txConf);
+    cConf.copyTxProperties(txConf);
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);

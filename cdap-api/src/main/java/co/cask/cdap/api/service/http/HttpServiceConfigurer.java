@@ -22,19 +22,24 @@ import java.util.Map;
  * Interface which should be implemented to configure a {@link HttpServiceHandler}
  */
 public interface HttpServiceConfigurer {
+  /**
+   * Sets the HTTP Service's name.
+   *
+   * @param name the HTTP Service name
+   */
+  void setName(String name);
 
   /**
-   * Sets a set of properties that will be available through the {@link HttpServiceHandlerSpecification#getProperties()}
-   * at runtime.
+   * Sets the HTTP Service's description.
    *
-   * @param properties the properties to set
+   * @param description the HTTP Service description
    */
-  void setProperties(Map<String, String> properties);
+  void setDescription(String description);
 
   /**
-   * Adds the names of {@link co.cask.cdap.api.dataset.Dataset DataSets} used by the handler.
+   * Sets the runtime arguments.
    *
-   * @param datasets Dataset names.
+   * @param arguments the HTTP Service runtime arguments
    */
-  void useDatasets(Iterable<String> datasets);
+  void setArguments(Map<String, String> arguments);
 }

@@ -26,9 +26,6 @@ import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.reduce.WrappedReducer;
 import org.slf4j.Logger;
@@ -42,24 +39,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReducerWrapper extends Reducer {
 
-  private static final String ATTR_REDUCER_CLASS = "c.reducer.class";
+  public static final String ATTR_REDUCER_CLASS = "c.reducer.class";
 
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
-
-  /**
-   * Wraps the mapper defined in the job with this {@link MapperWrapper} if it is defined.
-   * @param job
-   */
-  public static void wrap(Job job) {
-    // NOTE: we don't use job.getReducerClass() as we don't need to load user class here
-    Configuration conf = job.getConfiguration();
-    String reducerClass = conf.get(MRJobConfig.REDUCE_CLASS_ATTR);
-    if (reducerClass != null) {
-      conf.set(ReducerWrapper.ATTR_REDUCER_CLASS, reducerClass);
-      job.setReducerClass(ReducerWrapper.class);
-    }
-  }
-
 
   @SuppressWarnings("unchecked")
   @Override

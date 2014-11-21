@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.transaction.coprocessor;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV1;
 import co.cask.cdap.data2.transaction.snapshot.SnapshotCodecV2;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
@@ -56,7 +55,7 @@ public class DefaultTransactionStateCache extends TransactionStateCache {
   protected Configuration getSnapshotConfiguration() throws IOException {
     CConfiguration cConf = configTable.read(ConfigurationTable.Type.DEFAULT, tableNamespace);
     Configuration txConf = HBaseConfiguration.create();
-    CConfigurationUtil.copyTxProperties(cConf, txConf);
+    cConf.copyTxProperties(txConf);
     return txConf;
   }
 }

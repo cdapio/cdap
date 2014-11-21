@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.stream.DefaultStreamEvent;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueEntry;
@@ -52,6 +53,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -117,7 +119,7 @@ public class OpenCloseDataSetTest {
     StreamEventCodec codec = new StreamEventCodec();
     for (int i = 0; i < 4; i++) {
       String msg = "x" + i;
-      StreamEvent event = new StreamEvent(ImmutableMap.<String, String>of(),
+      StreamEvent event = new DefaultStreamEvent(ImmutableMap.<String, String>of(),
                                                  ByteBuffer.wrap(msg.getBytes(Charsets.UTF_8)));
       producer.enqueue(new QueueEntry(codec.encodePayload(event)));
     }

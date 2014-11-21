@@ -49,13 +49,5 @@ public interface ExploreExecutionResult extends Iterator<QueryResult>, Closeable
    * @return list of {@link ColumnDesc} representing the schema of the results. Empty list if there are no results.
    * @throws ExploreException on any error fetching schema.
    */
-  List<ColumnDesc> getResultSchema() throws ExploreException;
-
-  /**
-   * Some SQL statememt never return results - like CREATE statements - for which this method will return false.
-   * SQL queries should always return true.
-   *
-   * @return true if this {@link ExploreExecutionResult} may contain results.
-   */
-  boolean canContainResults();
+  public abstract List<ColumnDesc> getResultSchema() throws ExploreException;
 }

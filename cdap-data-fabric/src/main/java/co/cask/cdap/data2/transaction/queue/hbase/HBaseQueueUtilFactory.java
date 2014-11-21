@@ -31,9 +31,4 @@ public class HBaseQueueUtilFactory extends HBaseVersionSpecificFactory<HBaseQueu
   protected String getHBase96Classname() {
     return "co.cask.cdap.data2.transaction.queue.hbase.HBase96QueueUtil";
   }
-
-  @Override
-  protected String getHBase98Classname() {
-    return "co.cask.cdap.data2.transaction.queue.hbase.HBase98QueueUtil";
-  }
 }
