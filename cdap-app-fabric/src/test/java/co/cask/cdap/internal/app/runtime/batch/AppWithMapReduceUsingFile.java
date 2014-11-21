@@ -17,8 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.File;
+import co.cask.cdap.api.dataset.lib.FileProperties;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import com.google.common.base.Throwables;
@@ -45,13 +44,14 @@ public class AppWithMapReduceUsingFile extends AbstractApplication {
     try {
       setName("AppWithMapReduceUsingFile");
       setDescription("Application with MapReduce job using file as dataset");
-      createDataset(inputDataset, "file", DatasetProperties.builder()
-        .add(File.PROPERTY_INPUT_FORMAT, TextInputFormat.class.getName())
-        .add(File.PROPERTY_OUTPUT_FORMAT, TextOutputFormat.class.getName()).build());
+      createDataset(inputDataset, "file", FileProperties.builder()
+        .setInputFormat(TextInputFormat.class)
+        .setOutputFormat(TextOutputFormat.class).build());
       if (!outputDataset.equals(inputDataset)) {
-        createDataset(outputDataset, "file", DatasetProperties.builder()
-          .add(File.PROPERTY_INPUT_FORMAT, TextInputFormat.class.getName())
-          .add(File.PROPERTY_OUTPUT_FORMAT, TextOutputFormat.class.getName()).build());
+        createDataset(outputDataset, "file", FileProperties.builder()
+          .setBasePath("/foo/my-file-output")
+          .setInputFormat(TextInputFormat.class)
+          .setOutputFormat(TextOutputFormat.class).build());
       }
       addMapReduce(new ComputeSum());
     } catch (Throwable t) {

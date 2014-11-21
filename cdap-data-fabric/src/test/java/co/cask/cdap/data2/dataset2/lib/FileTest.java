@@ -16,9 +16,9 @@
 
 package co.cask.cdap.data2.dataset2.lib;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.File;
 import co.cask.cdap.api.dataset.lib.FileArguments;
+import co.cask.cdap.api.dataset.lib.FileProperties;
 import co.cask.cdap.data2.dataset2.AbstractDatasetTest;
 import com.google.common.collect.Maps;
 import org.junit.AfterClass;
@@ -37,8 +37,8 @@ public class FileTest extends AbstractDatasetTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    createInstance("file", "testFileSet", DatasetProperties.builder()
-      .add(File.PROPERTY_BASE_PATH, "testDir").build());
+    createInstance("file", "testFileSet", FileProperties.builder()
+      .setBasePath("testDir").build());
     Map<String, String> fileArgs = Maps.newHashMap();
     FileArguments.setInputPath(fileArgs, "some?File");
     FileArguments.setOutputPath(fileArgs, "some?File");
