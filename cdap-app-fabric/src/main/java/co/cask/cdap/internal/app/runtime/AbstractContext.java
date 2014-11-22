@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
@@ -47,7 +48,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   private final Program program;
   private final RunId runId;
-  private final Map<String, Closeable> datasets;
+  private final Map<String, Dataset> datasets;
 
   private final MetricsCollector programMetrics;
 
@@ -60,7 +61,19 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
                          MetricsCollectionService metricsCollectionService,
                          DatasetFramework dsFramework,
                          CConfiguration conf,
-                         DiscoveryServiceClient discoveryServiceClient) {
+                         DiscoveryServiceClient discovery) {
+    this(program, runId, datasets, metricsContext, metricsCollectionService, dsFramework, conf, discovery, null);
+  }
+
+  public AbstractContext(Program program, RunId runId,
+                         Set<String> datasets,
+                         String metricsContext,
+                         MetricsCollectionService metricsCollectionService,
+                         DatasetFramework dsFramework,
+                         CConfiguration conf,
+                         DiscoveryServiceClient discoveryServiceClient,
+                         Map<String, String> arguments) {
+    // TODO: this class should implememnt getRuntimeArguments (see CDAP-717)
     super(program);
     this.program = program;
     this.runId = runId;
@@ -82,7 +95,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
-    this.datasets = DataSets.createDataSets(dsInstantiator, datasets);
+    this.datasets = Datasets.createDatasets(dsInstantiator, datasets, arguments);
   }
 
   public abstract Metrics getMetrics();
@@ -106,18 +119,18 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   @Override
   public <T extends Closeable> T getDataSet(String name) {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    T dataSet = (T) datasets.get(name);
-    Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
-    return dataSet;
+    T dataset = (T) datasets.get(name);
+    Preconditions.checkArgument(dataset != null, "%s is not a known Dataset.", name);
+    return dataset;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments) {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    T dataSet = (T) datasets.get(name);
-    Preconditions.checkArgument(dataSet != null, "%s is not a known DataSet.", name);
-    return dataSet;
+    T dataset = (T) datasets.get(name);
+    Preconditions.checkArgument(dataset != null, "%s is not a known Dataset.", name);
+    return dataset;
   }
 
   public String getAccountId() {

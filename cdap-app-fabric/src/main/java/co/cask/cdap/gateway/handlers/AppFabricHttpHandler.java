@@ -77,6 +77,7 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
@@ -127,7 +128,6 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,18 +149,18 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  *  HttpHandler class for app-fabric requests.
@@ -658,29 +658,27 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns program run history.
+   * Returns program runs based on options it returns either currently running or completed or failed.
+   * Default it returns all.
    */
   @GET
-  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/history")
+  @Path("/apps/{app-id}/{runnable-type}/{runnable-id}/runs")
   public void runnableHistory(HttpRequest request, HttpResponder responder,
-                              @PathParam("app-id") final String appId,
-                              @PathParam("runnable-type") final String runnableType,
-                              @PathParam("runnable-id") final String runnableId) {
+                              @PathParam("app-id") String appId,
+                              @PathParam("runnable-type") String runnableType,
+                              @PathParam("runnable-id") String runnableId,
+                              @QueryParam("status") String status,
+                              @QueryParam("start") String startTs,
+                              @QueryParam("end") String endTs,
+                              @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
     ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
     }
-
-    QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
-    String startTs = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_START_TIME);
-    String endTs = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_END_TIME);
-    String resultLimit = getQueryParameter(decoder.getParameters(), Constants.AppFabric.QUERY_PARAM_LIMIT);
-
-    long start = startTs == null ? Long.MIN_VALUE : Long.parseLong(startTs);
-    long end = endTs == null ? Long.MAX_VALUE : Long.parseLong(endTs);
-    int limit = resultLimit == null ? Constants.AppFabric.DEFAULT_HISTORY_RESULTS_LIMIT : Integer.parseInt(resultLimit);
-    getHistory(request, responder, appId, runnableId, start, end, limit);
+    long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
+    long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
+    getRuns(request, responder, appId, runnableId, status, start, end, resultLimit);
   }
 
   /**
@@ -757,13 +755,18 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void getHistory(HttpRequest request, HttpResponder responder, String appId,
-                          String runnableId, long start, long end, int limit) {
+  private void getRuns(HttpRequest request, HttpResponder responder, String appId,
+                       String runnableId, String status, long start, long end, int limit) {
     try {
       String accountId = getAuthenticatedAccountId(request);
       Id.Program programId = Id.Program.from(accountId, appId, runnableId);
       try {
-        responder.sendJson(HttpResponseStatus.OK, store.getRunHistory(programId, start, end, limit));
+        ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
+          ProgramRunStatus.valueOf(status.toUpperCase());
+        responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, runStatus, start, end, limit));
+      } catch (IllegalArgumentException e) {
+        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                             "Supported options for status of runs are running/completed/failed");
       } catch (OperationException e) {
         LOG.warn(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND),
                                programId.toString(), e.getMessage()), e);
@@ -856,11 +859,22 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       final String runId = controller.getRunId().getId();
 
       controller.addListener(new AbstractListener() {
+
+        @Override
+        public void init(ProgramController.State state) {
+          store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+          if (state == ProgramController.State.STOPPED) {
+            stopped();
+          }
+          if (state == ProgramController.State.ERROR) {
+            error(new Exception("Error Starting the Program"));
+          }
+        }
         @Override
         public void stopped() {
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.STOPPED.toString());
+                        ProgramController.State.STOPPED);
         }
 
         @Override
@@ -868,12 +882,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.info("Program stopped with error {}, {}", id, runId, cause);
           store.setStop(id, runId,
                         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS),
-                        ProgramController.State.ERROR.toString());
+                        ProgramController.State.ERROR);
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
-
-      store.setStart(id, runId, TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
       return AppFabricServiceStatus.OK;
     } catch (DataSetInstantiationException e) {
       return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
