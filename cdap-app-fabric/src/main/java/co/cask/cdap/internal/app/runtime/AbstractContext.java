@@ -68,10 +68,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
     MetricsCollector datasetMetrics;
     if (metricsCollectionService != null) {
-      // NOTE: RunId metric is not supported now. Need UI refactoring to enable it.
-      this.programMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM, metricsContext, "0");
+      this.programMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM, metricsContext, runId.getId());
       datasetMetrics = metricsCollectionService.getCollector(MetricsScope.SYSTEM,
-                                                             Constants.Metrics.DATASET_CONTEXT, "0");
+                                                             Constants.Metrics.DATASET_CONTEXT, runId.getId());
     } else {
       this.programMetrics = null;
       datasetMetrics = null;
