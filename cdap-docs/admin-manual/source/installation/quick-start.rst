@@ -35,8 +35,8 @@ Preparing the Cluster
 .. "To prepare your cluster"
 
 .. include:: installation.rst 
-   :start-line: 187
-   :end-line:   194
+   :start-line: 196
+   :end-line:   203
 
 - For a *Secure Hadoop* installation, see the discussion in :ref:`the installation guide
   <install-secure-hadoop>`.
@@ -48,8 +48,8 @@ Preparing Package Managers
 --------------------------
 
 .. include:: installation.rst 
-   :start-line: 233
-   :end-line:   282
+   :start-line: 245
+   :end-line:   299
 
 Configuration
 -------------
@@ -57,18 +57,20 @@ Configuration
 .. "When you install the CDAP base package"
 
 .. include:: installation.rst 
-   :start-line: 217
-   :end-line:   220
+   :start-line: 229
+   :end-line:   232
    
+.. "To make alterations"
+
 .. include:: installation.rst 
-   :start-line: 291
-   :end-line:   340
+   :start-line: 305
+   :end-line:   357
 
 .. "Starting Services"
 
 .. include:: installation.rst 
-   :start-line: 384
-   :end-line:   396
+   :start-line: 403
+   :end-line:   414
 
 Making CDAP Highly-available
 ---------------------------------
@@ -88,5 +90,5 @@ Repeat these steps on additional boxes.  The configurations needed to support hi
 .. "Verification"
 
 .. include:: installation.rst 
-   :start-line: 399
-   :end-line:   422
+   :start-line: 417
+   :end-line:   439

@@ -14,10 +14,10 @@ Introduction
 ------------
 
 This manual is to help you install and configure Cask Data Application Platform (CDAP). It provides the
-`system, <#system-requirements>`__
-`network, <#network-requirements>`__ and
-`software requirements, <#software-prerequisites>`__
-`packaging options, <#packaging>`__ and
+`system <#system-requirements>`__, 
+`network <#network-requirements>`__, and
+`software requirements <#software-prerequisites>`__,
+`packaging options <#packaging>`__, and
 instructions for
 `installation <#installation>`__ and
 `verification <#verification>`__ of
@@ -26,9 +26,9 @@ We have specific instructions for :ref:`upgrading existing CDAP installations <i
 
 These are the CDAP components:
 
-- **CDAP Web-App:** User interface—the *Console*—for managing CDAP applications;
-- **CDAP Gateway:** Service supporting REST endpoints for CDAP;
-- **CDAP-Master:** Service for managing runtime, lifecycle and resources of CDAP applications;
+- **CDAP Webapp:** User interface—the *Console*—for managing CDAP applications;
+- **CDAP Router:** Service supporting REST endpoints for CDAP;
+- **CDAP Master:** Service for managing runtime, lifecycle and resources of CDAP applications;
 - **CDAP Kafka:** Metrics and logging transport service, using an embedded version of *Kafka*; and
 - **CDAP Authentication Server:** Performs client authentication for CDAP when security is enabled.
 
@@ -43,8 +43,8 @@ as most of the work is done by the Hadoop cluster. These two
 boxes provide high availability; at any one time, one of them is the leader
 providing services while the other is a follower providing failover support.
 
-Some CDAP components run on YARN, while others orchestrate the Hadoop cluster.
-The CDAP Gateway service starts a router instance on each of the local boxes and instantiates
+Some CDAP components run on YARN, while others orchestrate “containers” in the Hadoop cluster.
+The CDAP Router service starts a router instance on each of the local boxes and instantiates
 one or more gateway instances on YARN as determined by the gateway service configuration.
 
 We have specific
@@ -68,11 +68,11 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 +---------------------------------------+--------------------+-----------------------------------------------+
 | CDAP Component                        | Hardware Component | Specifications                                |
 +=======================================+====================+===============================================+
-| **CDAP Web-App**                      | RAM                | 1 GB minimum, 2 GB recommended                |
+| **CDAP Webapp**                       | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
-| **CDAP Gateway**                      | RAM                | 2 GB minimum, 4 GB recommended                |
+| **CDAP Router**                       | RAM                | 2 GB minimum, 4 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
-| **CDAP-Master**                       | RAM                | 2 GB minimum, 4 GB recommended                |
+| **CDAP Master**                       | RAM                | 2 GB minimum, 4 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 | **CDAP Kafka**                        | RAM                | 1 GB minimum, 2 GB recommended                |
 +                                       +--------------------+-----------------------------------------------+
@@ -101,6 +101,8 @@ You'll need this software installed:
 - Java runtime (on CDAP and Hadoop nodes)
 - Node.js runtime (on CDAP nodes)
 - Hadoop and HBase (and possibly Hive) environment to run against
+- CDAP nodes require Hadoop and HBase client installation and configuration. 
+  **Note:** No Hadoop services need to be running.
 
 .. highlight:: console
 .. _install-java-runtime:
@@ -161,16 +163,17 @@ For a distributed enterprise, you must install these Hadoop components:
 |               | CDH or HDP        | (CDH) 4.3.x or later or (HDP) 2.0 or later  |
 +---------------+-------------------+---------------------------------------------+
 
-CDAP nodes require Hadoop and HBase client installation and configuration. No Hadoop
-services need to be running.
-
-Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and possibly *Hive*)
-cluster configurations by adding your configuration to their class paths.
+**Note:** Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and
+possibly *Hive*) cluster configurations by adding your configuration to their class paths.
 
 .. _deployment-architectures:
 
 Deployment Architectures
 ........................
+
+.. rubric:: CDAP Minimal Deployment
+
+**Note:** Minimal deployment runs all the services on single host.
 
 .. image:: ../_images/cdap-minimal-deployment.png
    :width: 8in
@@ -178,12 +181,18 @@ Deployment Architectures
 
 ------------
 
+.. rubric:: CDAP High Availability and Highly Scalable Deployment
+
+**Note:** Each component in CDAP is horziontally scalable. This diagram presents the high
+availability and highly scalable deployment. The number of nodes for each component can be
+changed based on the requirements.
+
 .. image:: ../_images/cdap-ha-hs-deployment.png
    :width: 8in
    :align: center
 
-Prepare the Cluster
-...................
+Preparing the Cluster
+---------------------
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
@@ -209,6 +218,9 @@ Available packaging types:
 - RPM: YUM repo
 - Debian: APT repo
 - Tar: For specialized installations only
+
+**Note:** If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an
+`official cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
 Configuration
 .............
@@ -264,7 +276,12 @@ Add the Cask Public GPG Key to your repository::
 
 Installation
 ------------
-Install the CDAP packages by using either of these methods:
+Install the CDAP packages by using one of these methods:
+
+Using Chef:
+
+  If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official
+  cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
 Using Yum::
 
@@ -341,7 +358,7 @@ Here are some alterations you may need to make, depending on your setup:
 .. _install-secure-hadoop:
 
 Secure Hadoop
-+++++++++++++
+.............
 When running CDAP on top of Secure Hadoop and HBase (using Kerberos
 authentication), the CDAP Master process will need to obtain Kerberos credentials in order to
 authenticate with Hadoop and HBase.  In this case, the setting for ``hdfs.user`` in
@@ -367,7 +384,7 @@ In order to configure CDAP Master for Kerberos authentication:
 .. _install-ulimit:
 
 ULIMIT Configuration
-++++++++++++++++++++
+....................
 When you install the CDAP packages, the ``ulimit`` settings for the CDAP user are
 specified in the ``/etc/security/limits.d/cdap.conf`` file. On Ubuntu, they won't take
 effect unless you make changes to the ``/etc/pam.d/common-session file``. You can check
@@ -383,8 +400,9 @@ and in particular, see the instructions for
 
 Starting Services
 .................
-When all the packages and dependencies have been installed and configured,
-you can start the services on each of the CDAP boxes by running this command::
+When all the packages and dependencies have been installed, and the configuration
+parameters set, you can start the services on each of the CDAP boxes by running this
+command::
 
   for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
@@ -392,7 +410,7 @@ When all the services have completed starting, the CDAP Console should then be
 accessible through a browser at port 9999. 
 
 The URL will be ``http://<console-ip>:9999`` where ``<console-ip>`` is the IP address of
-one of the machine where you installed the packages and started the services.
+one of the machines where you installed the packages and started the services.
 
 .. _install-verification:
 
@@ -402,8 +420,8 @@ To verify that the CDAP software is successfully installed and you are able to u
 Hadoop cluster, run an example application.
 We provide in our SDK pre-built ``.JAR`` files for convenience.
 
-#. Download and install the latest CDAP Software Development Kit (SDK) from
-   http://cask.co/downloads/#cdap\ .
+#. Download and install the latest `CDAP Software Development Kit (SDK)
+   <http://cask.co/downloads/#cdap>`__.
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
@@ -415,14 +433,13 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    ``CDAP_HOME/examples/WordCount/target/``, substituting your version for *<cdap-version>*. 
 #. Once the application is deployed, instructions on running the example can be found at the
    :ref:`WordCount example. <examples-word-count>`
-#. You should be able to start the application, inject sentences,
-   run the Flow and the Procedure, and see results.
+#. You should be able to start the application, inject sentences, and retrieve results.
 #. When finished, you can stop and remove the application as described in the section on
    :ref:`cdap-building-running`.
 
 .. _install-upgrade:
 
-Upgrading from a Previous Version
+Upgrading an Existing Version
 ---------------------------------
 When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
@@ -439,16 +456,16 @@ and then restart CDAP.
    - Using Yum (on one line)::
 
        sudo yum install cdap cdap-gateway
-                              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-hbase-compat-0.98 cdap-kafka cdap-master
-                              cdap-security cdap-web-app
+                             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
+                             cdap-hbase-compat-0.98 cdap-kafka cdap-master
+                             cdap-security cdap-web-app
 
    - Using APT (on one line)::
 
        sudo apt-get install cdap cdap-gateway
-                              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-hbase-compat-0.98 cdap-kafka cdap-master
-                              cdap-security cdap-web-app
+                            cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
+                            cdap-hbase-compat-0.98 cdap-kafka cdap-master
+                            cdap-security cdap-web-app
 
 #. Run the upgrade tool::
 
