@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -61,6 +62,11 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     sendStreamEvent(streamName, headers, Bytes.toBytes(body1));
     sendStreamEvent(streamName, headers, Bytes.toBytes(body2));
     sendStreamEvent(streamName, headers, Bytes.toBytes(body3));
+  }
+
+  @AfterClass
+  public static void stop() throws Exception {
+    stopServices();
   }
 
   @Test

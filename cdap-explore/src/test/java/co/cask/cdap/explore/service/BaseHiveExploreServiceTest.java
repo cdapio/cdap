@@ -54,7 +54,6 @@ import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
@@ -74,10 +73,6 @@ import javax.ws.rs.HttpMethod;
  * Base class for tests that need explore service to be running.
  */
 public class BaseHiveExploreServiceTest {
-  // Controls for test suite for whether to run BeforeClass/AfterClass
-  public static boolean runBefore = true;
-  public static boolean runAfter = true;
-
   protected static TransactionManager transactionManager;
   protected static DatasetFramework datasetFramework;
   protected static DatasetOpExecutor dsOpService;
@@ -99,10 +94,6 @@ public class BaseHiveExploreServiceTest {
   }
 
   protected static void startServices(CConfiguration cConf, boolean useStandalone) throws Exception {
-    if (!runBefore) {
-      return;
-    }
-
     Configuration hConf = new Configuration();
     List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf) : createInMemoryModules(cConf, hConf);
     injector = Guice.createInjector(modules);
@@ -131,12 +122,7 @@ public class BaseHiveExploreServiceTest {
     streamHttpService.startAndWait();
   }
 
-  @AfterClass
   public static void stopServices() throws Exception {
-    if (!runAfter) {
-      return;
-    }
-
     streamHttpService.stopAndWait();
     exploreClient.close();
     exploreExecutorService.stopAndWait();
