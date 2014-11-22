@@ -24,7 +24,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * General time utils.
  */
-public class TimeUtils {
+public class Tasks {
   /**
    * Calls callable, waiting sleepDelay between each call,
    * until it returns the desiredValue or the timeout has passed.
