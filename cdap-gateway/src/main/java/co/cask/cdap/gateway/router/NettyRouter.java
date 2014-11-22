@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
-import co.cask.cdap.gateway.router.handlers.StatusRequestHandler;
+import co.cask.cdap.gateway.router.handlers.HttpStatusRequestHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
 import co.cask.cdap.security.tools.SSLHandlerFactory;
@@ -242,7 +242,7 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("tracker", connectionTracker);
           pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
           pipeline.addLast("http-decoder", new HttpRequestDecoder());
-          pipeline.addLast("http-status-request-handler", new StatusRequestHandler());
+          pipeline.addLast("http-status-request-handler", new HttpStatusRequestHandler());
           if (securityEnabled) {
             pipeline.addLast("access-token-authenticator", new SecurityAuthenticationHttpHandler(
               realm, tokenValidator, configuration, accessTokenTransformer, discoveryServiceClient));

@@ -36,7 +36,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 /**
  * Handler for the status requests
  */
-public class StatusRequestHandler extends SimpleChannelUpstreamHandler {
+public class HttpStatusRequestHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void messageReceived(ChannelHandlerContext ctx,
