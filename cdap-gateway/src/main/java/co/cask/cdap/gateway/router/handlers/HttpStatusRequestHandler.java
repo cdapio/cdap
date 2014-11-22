@@ -61,8 +61,7 @@ public class HttpStatusRequestHandler extends SimpleChannelUpstreamHandler {
           writeFuture.addListener(ChannelFutureListener.CLOSE);
           return;
         }
-    } else {
-      super.messageReceived(ctx, event);
     }
+    super.messageReceived(ctx, event);
   }
 }
