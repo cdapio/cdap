@@ -24,7 +24,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.common.utils.TimeUtils;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.security.auth.AccessToken;
 import co.cask.cdap.security.auth.AccessTokenCodec;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
@@ -187,17 +187,12 @@ public abstract class ExternalAuthenticationServerTestBase {
    * @throws Exception
    */
   private void waitForServerStartup() throws Exception {
-    try {
-      TimeUtils.waitFor(true, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          return server.isRunning();
-        }
-      }, WAIT_TIME_FOR_SERVER_STARTUP, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
-    } catch (TimeoutException e) {
-      throw new RuntimeException("Service is not running after " + WAIT_TIME_FOR_SERVER_STARTUP + " seconds");
-    }
-
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return server.isRunning();
+      }
+    }, WAIT_TIME_FOR_SERVER_STARTUP, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
   }
 
   @AfterClass

@@ -98,12 +98,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
     } else if (msg instanceof HttpRequest) {
 
-      // To have an independent health check of the router status, the command should
-      // be served by the router itself without it talking to any downstream services
-      if (RequestHandlerHelper.isStatusRequest(ctx, event)) {
-        return;
-      }
-
       // Discover and forward event.
       HttpRequest request = (HttpRequest) msg;
       request = applyProxyRules(request);

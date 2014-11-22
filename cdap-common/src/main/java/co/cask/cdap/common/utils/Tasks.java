@@ -22,9 +22,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * General time utils.
+ * General task utils.
  */
-public class Tasks {
+public final class Tasks {
+
+  private Tasks() { }
+
   /**
    * Calls callable, waiting sleepDelay between each call,
    * until it returns the desiredValue or the timeout has passed.

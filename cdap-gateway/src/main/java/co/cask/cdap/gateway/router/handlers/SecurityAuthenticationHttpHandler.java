@@ -199,11 +199,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     if (!(msg instanceof HttpRequest)) {
       super.messageReceived(ctx, event);
     } else {
-      // To have an independent health check of the router status, the command should
-      // be served by the router itself without it talking to any downstream services
-      if (RequestHandlerHelper.isStatusRequest(ctx, event)) {
-        return;
-      }
 
       AuditLogEntry logEntry = new AuditLogEntry();
       ctx.setAttachment(logEntry);
