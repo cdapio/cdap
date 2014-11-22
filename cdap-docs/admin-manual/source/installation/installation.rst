@@ -2,11 +2,13 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _install:
+
 ============================================
 Installation and Configuration
 ============================================
 
-.. _install:
+.. Note: this file is included in quick-start.rst; check any edits in this file with it!
 
 Introduction
 ------------
@@ -19,7 +21,8 @@ This manual is to help you install and configure Cask Data Application Platform 
 instructions for
 `installation <#installation>`__ and
 `verification <#verification>`__ of
-the CDAP components so they work with your existing Hadoop cluster.
+the CDAP components so they work with your existing Hadoop cluster. 
+We have specific instructions for :ref:`upgrading existing CDAP installations <install-upgrade>`.
 
 These are the CDAP components:
 
@@ -52,26 +55,10 @@ We have specific
 that need to be met and completed before installation of the CDAP components.
 
 
-Conventions
-...........
-In this document, *client* refers to an external application that is calling the
-CDAP using the HTTP interface.
-
-*Application* refers to a user Application that has been deployed into the CDAP.
-
-Text that are variables that you are to replace is indicated by a series of angle brackets (``< >``). For example::
-
-  https://<username>:<password>@repository.cask.co
-
-indicates that the texts ``<username>`` and  ``<password>`` are variables
-and that you are to replace them with your values,
-perhaps username ``john_doe`` and password ``BigData11``::
-
-  https://john_doe:BigData11@repository.cask.co
-
-
 System Requirements
 -------------------
+
+.. _install-hardware-requirements:
 
 Hardware Requirements
 .....................
@@ -113,8 +100,9 @@ You'll need this software installed:
 
 - Java runtime (on CDAP and Hadoop nodes)
 - Node.js runtime (on CDAP nodes)
-- Hadoop, HBase (and possibly Hive) environment to run against
+- Hadoop and HBase (and possibly Hive) environment to run against
 
+.. highlight:: console
 .. _install-java-runtime:
 
 Java Runtime
@@ -132,6 +120,8 @@ CDAP is tested with the Oracle JDKs; it may work with other JDKs such as
 Once you have installed the JDK, you'll need to set the JAVA_HOME environment variable.
 
 
+.. _install-node.js:
+
 Node.js Runtime
 +++++++++++++++
 You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__:
@@ -144,7 +134,8 @@ You can download the latest version of Node.js from `nodejs.org <http://nodejs.o
 #. Ensure that ``nodejs`` is in the ``$PATH``. One method is to use a symlink from the installation:
    ``ln -s /opt/node-[version]/bin/node /usr/bin/node``
 
- 
+.. _install-hadoop-hbase:
+
 Hadoop/HBase Environment
 ++++++++++++++++++++++++
 
@@ -176,6 +167,7 @@ services need to be running.
 Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and possibly *Hive*)
 cluster configurations by adding your configuration to their class paths.
 
+.. _deployment-architectures:
 
 Deployment Architectures
 ........................
@@ -197,93 +189,12 @@ create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
   hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
 
-In the CDAP packages, the default HDFS namespace is ``/cdap``
-and the default HDFS user is ``yarn``. If you set up your cluster as above, no further changes are
-required.
+In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
+``yarn``. If you set up your cluster as above, no further changes are required.
 
-To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
-(see the :ref:`appendix-cdap-site.xml`) and set appropriate properties.
-
-- If you want to use an HDFS directory with a name other than ``/cdap``:
-
-  1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
-  #. Create an ``hdfs.namespace`` property for the HDFS directory in ``conf/cdap-site.xml``::
-
-       <property>
-         <name>hdfs.namespace</name>
-         <value>/myhadoop/myspace</value>
-         <description>Default HDFS namespace</description>
-       </property>
-
-
-  #. Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
-
-- If you want to use a different HDFS user than ``yarn``:
-
-  1. Check that there is—and create if necessary—a corresponding user on all machines
-     in the cluster on which YARN is running (typically, all of the machines).
-  #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
-
-       <property>
-         <name>hdfs.user</name>
-         <value>my_username</value>
-         <description>User for accessing HDFS</description>
-       </property>
-
-  #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
-
-- Set the ``router.server.address`` property in ``conf/cdap-site.xml`` to the hostname of the CDAP Router.
-  The CDAP Console uses this property to connect to the Router::
-
-      <property>
-        <name>router.server.address</name>
-        <value>{router-host-name}</value>
-      </property>
-
-- To use the ad-hoc querying capabilities of CDAP, enable the CDAP Explore Service in
-  ``conf/cdap-site.xml`` (by default, it is disabled)::
-
-    <property>
-      <name>cdap.explore.enabled</name>
-      <value>true</value>
-      <description>Enable Explore functionality</description>
-    </property>
-
-  **Note:** This feature cannot be used unless the cluster has a correct version of Hive installed.
-  See *Hadoop/HBase Environment* above. This feature is currently not supported on secure Hadoop clusters.
-
-
-Secure Hadoop
-+++++++++++++
-When running CDAP on top of Secure Hadoop and HBase (using Kerberos
-authentication), the CDAP Master process will need to obtain Kerberos credentials in order to
-authenticate with Hadoop and HBase.  In this case, the setting for ``hdfs.user`` in
-``cdap-site.xml`` will be ignored and the CDAP Master process will be identified as the
-Kerberos principal it is authenticated as.
-
-In order to configure CDAP Master for Kerberos authentication:
-
-- Create a Kerberos principal for the user running CDAP Master.
-- Install the ``k5start`` package on the servers where CDAP Master is installed.  This is used
-  to obtain Kerberos credentials for CDAP Master on startup.
-- Generate a keytab file for the CDAP Master Kerberos principal and place the file in
-  ``/etc/security/keytabs/cdap.keytab`` on all the CDAP Master hosts.  The file should
-  be readable only by the user running the CDAP Master process.
-- Edit ``/etc/default/cdap-master``::
-
-   CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
-   CDAP_PRINCIPAL="<cdap principal>@EXAMPLE.REALM.COM"
-
-- When CDAP Master is started via the init script, it will now start using ``k5start``, which will
-  first login using the configured keytab file and principal.
-
-ULIMIT Configuration
-++++++++++++++++++++
-When you install the CDAP packages, the ``ulimit`` settings for the
-CDAP user are specified in the ``/etc/security/limits.d/cdap.conf`` file.
-On Ubuntu, they won't take effect unless you make changes to the ``/etc/pam.d/common-session file``.
-For more information, refer to the ``ulimit`` discussion in the
-`Apache HBase Reference Guide <https://hbase.apache.org/book.html#os>`__.
+If your cluster is not setup with these defaults, you'll need to 
+:ref:`edit your CDAP setup <install-configuration>` once you have downloaded and installed
+the packages, and prior to starting services.
 
 Packaging
 ---------
@@ -299,6 +210,8 @@ Available packaging types:
 - Debian: APT repo
 - Tar: For specialized installations only
 
+Configuration
+.............
 CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
 
 When you install the CDAP base package, a default configuration is placed in
@@ -315,6 +228,7 @@ Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your cho
 Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
 to your custom directory.
 
+Configure the ``cdap-site.xml`` after you have installed the CDAP packages.
 
 RPM using Yum
 .............
@@ -330,7 +244,6 @@ This will create the file ``/etc/yum.repos.d/cask.repo`` with::
   enabled=1
   gpgcheck=1
 
-
 Add the Cask Public GPG Key to your repository::
 
   sudo rpm --import http://repository.cask.co/centos/6/x86_64/releases/pubkey.gpg
@@ -345,12 +258,9 @@ This will create the file ``/etc/apt/sources.list.d/cask.list`` with::
 
   deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/releases precise releases
 
-
 Add the Cask Public GPG Key to your repository::
 
   curl -s http://repository.cask.co/ubuntu/precise/amd64/releases/pubkey.gpg | sudo apt-key add -
-
-.. _installation:
 
 Installation
 ------------
@@ -370,18 +280,147 @@ recommended installation is a minimum of two boxes.
 
 This will download and install the latest version of CDAP with all of its dependencies. 
 
-For instructions on enabling CDAP Security, see :doc:`CDAP Security; <security>`
-and in particular, see the instructions for :ref:`configuring the properties of cdap-site.xml. <enabling-security>`
+.. _install-configuration:
 
-When all the packages and dependencies have been installed,
+Configuring
+...........
+
+To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
+(see the :ref:`appendix-cdap-site.xml`) and set appropriate properties.
+
+Here are some alterations you may need to make, depending on your setup:
+
+- If you want to use **an HDFS directory with a name** other than ``/cdap``:
+
+  1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
+  #. Create an ``hdfs.namespace`` property for the HDFS directory in ``conf/cdap-site.xml``::
+
+       <property>
+         <name>hdfs.namespace</name>
+         <value>/myhadoop/myspace</value>
+         <description>Default HDFS namespace</description>
+       </property>
+
+  #. Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
+
+- If you want to use **a different HDFS user** than ``yarn``:
+
+  1. Check that there is—and create if necessary—a corresponding user on all machines
+     in the cluster on which YARN is running (typically, all of the machines).
+  #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
+
+       <property>
+         <name>hdfs.user</name>
+         <value>my_username</value>
+         <description>User for accessing HDFS</description>
+       </property>
+
+  #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
+
+- Set the ``router.server.address`` property in ``conf/cdap-site.xml`` to the **hostname of the CDAP Router**.
+  The CDAP Console uses this property to connect to the Router::
+
+      <property>
+        <name>router.server.address</name>
+        <value>{router-host-name}</value>
+      </property>
+
+- To use the **ad-hoc querying capabilities of CDAP,** enable the CDAP Explore Service in
+  ``conf/cdap-site.xml`` (by default, it is disabled)::
+
+    <property>
+      <name>cdap.explore.enabled</name>
+      <value>true</value>
+      <description>Enable Explore functionality</description>
+    </property>
+
+  **Note:** This feature cannot be used unless the cluster has a correct version of Hive installed.
+  See :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`. This feature is currently 
+  not supported on secure Hadoop clusters.
+
+.. _install-secure-hadoop:
+
+Secure Hadoop
++++++++++++++
+When running CDAP on top of Secure Hadoop and HBase (using Kerberos
+authentication), the CDAP Master process will need to obtain Kerberos credentials in order to
+authenticate with Hadoop and HBase.  In this case, the setting for ``hdfs.user`` in
+``cdap-site.xml`` will be ignored and the CDAP Master process will be identified as the
+Kerberos principal it is authenticated as.
+
+In order to configure CDAP Master for Kerberos authentication:
+
+- Create a Kerberos principal for the user running CDAP Master.
+- Install the ``k5start`` package on the servers where CDAP Master is installed.  This is used
+  to obtain Kerberos credentials for CDAP Master on startup.
+- Generate a keytab file for the CDAP Master Kerberos principal and place the file in
+  ``/etc/security/keytabs/cdap.keytab`` on all the CDAP Master hosts.  The file should
+  be readable only by the user running the CDAP Master process.
+- Edit ``/etc/default/cdap-master``, substituting the Kerberos principal for ``<cdap-principal>``::
+
+   CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
+   CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
+
+- When CDAP Master is started via the init script, it will now start using ``k5start``, which will
+  first login using the configured keytab file and principal.
+
+.. _install-ulimit:
+
+ULIMIT Configuration
+++++++++++++++++++++
+When you install the CDAP packages, the ``ulimit`` settings for the CDAP user are
+specified in the ``/etc/security/limits.d/cdap.conf`` file. On Ubuntu, they won't take
+effect unless you make changes to the ``/etc/pam.d/common-session file``. You can check
+this setting with the command ``ulimit -n`` when logged in as the user which runs HBase.
+For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference
+Guide <https://hbase.apache.org/book.html#ulimit>`__.
+
+Configuring Security
+....................
+For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
+and in particular, see the instructions for 
+:ref:`configuring the properties of cdap-site.xml <enabling-security>`.
+
+Starting Services
+.................
+When all the packages and dependencies have been installed and configured,
 you can start the services on each of the CDAP boxes by running this command::
 
   for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
 When all the services have completed starting, the CDAP Console should then be
-accessible through a browser at port 9999. The URL will be ``http://<console-ip>:9999`` where
-``<console-ip>`` is the IP address of one of the machine where you installed the packages
-and started the services.
+accessible through a browser at port 9999. 
+
+The URL will be ``http://<console-ip>:9999`` where ``<console-ip>`` is the IP address of
+one of the machine where you installed the packages and started the services.
+
+.. _install-verification:
+
+Verification
+------------
+To verify that the CDAP software is successfully installed and you are able to use your
+Hadoop cluster, run an example application.
+We provide in our SDK pre-built ``.JAR`` files for convenience.
+
+#. Download and install the latest CDAP Software Development Kit (SDK) from
+   http://cask.co/downloads/#cdap\ .
+#. Extract to a folder (``CDAP_HOME``).
+#. Open a command prompt and navigate to ``CDAP_HOME/examples``.
+#. Each example folder has a ``.jar`` file in its ``target`` directory.
+   For verification, we will use the ``WordCount`` example.
+#. Open a web browser to the CDAP Console.
+   It is located on port ``9999`` of the box where you installed CDAP.
+#. On the Console, click the button *Load an App*.
+#. Find the pre-built ``WordCount-<cdap-version>.jar`` using the dialog box to navigate to
+   ``CDAP_HOME/examples/WordCount/target/``, substituting your version for *<cdap-version>*. 
+#. Once the application is deployed, instructions on running the example can be found at the
+   :ref:`WordCount example. <examples-word-count>`
+#. You should be able to start the application, inject sentences,
+   run the Flow and the Procedure, and see results.
+#. When finished, you can stop and remove the application as described in the section on
+   :ref:`cdap-building-running`.
+
+.. _install-upgrade:
 
 Upgrading from a Previous Version
 ---------------------------------
@@ -411,35 +450,11 @@ and then restart CDAP.
                               cdap-hbase-compat-0.98 cdap-kafka cdap-master
                               cdap-security cdap-web-app
 
-#. Run the upgrade tool (on one line)::
+#. Run the upgrade tool::
 
-     /opt/cdap/cdap-master/bin/svc-master run
-       com.cdap.data.tools.Main upgrade
+     /opt/cdap/cdap-master/bin/svc-master run com.cdap.data.tools.Main upgrade
 
 #. Restart the CDAP processes::
 
      for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
-Verification
-------------
-To verify that the CDAP software is successfully installed and you are able to use your
-Hadoop cluster, run an example application.
-We provide in our SDK pre-built ``.JAR`` files for convenience:
-
-#. Download and install the latest CDAP Software Development Kit (SDK) from
-   http://cask.co/downloads/#cdap\ .
-#. Extract to a folder (``CDAP_HOME``).
-#. Open a command prompt and navigate to ``CDAP_HOME/examples``.
-#. Each example folder has a ``.jar`` file in its ``target`` directory.
-   For verification, we will use the ``WordCount`` example.
-#. Open a web browser to the CDAP Console.
-   It is located on port ``9999`` of the box where you installed CDAP.
-#. On the Console, click the button *Load an App*.
-#. Find the pre-built ``WordCount-<cdap-version>.jar`` using the dialog box to navigate to
-   ``CDAP_HOME/examples/WordCount/target/``, substituting your version for *<cdap-version>*. 
-#. Once the application is deployed, instructions on running the example can be found at the
-   :ref:`WordCount example. <examples-word-count>`
-#. You should be able to start the application, inject sentences,
-   run the Flow and the Procedure, and see results.
-#. When finished, you can stop and remove the application as described in the section on
-   :ref:`cdap-building-running`.
