@@ -193,6 +193,8 @@ changed based on the requirements.
 
 Preparing the Cluster
 ---------------------
+.. _install-preparing-the-cluster:
+
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
@@ -202,8 +204,10 @@ In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HD
 ``yarn``. If you set up your cluster as above, no further changes are required.
 
 If your cluster is not setup with these defaults, you'll need to 
-:ref:`edit your CDAP setup <install-configuration>` once you have downloaded and installed
+:ref:`edit your CDAP setup <install-configuring-title>` once you have downloaded and installed
 the packages, and prior to starting services.
+
+.. _install-packaging:
 
 Packaging
 ---------
@@ -224,11 +228,18 @@ Available packaging types:
 
 Configuration
 .............
+
+.. _install-configuration:
+
 CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
 
 When you install the CDAP base package, a default configuration is placed in
 ``/etc/cdap/conf.dist``. The ``cdap-site.xml`` file is a placeholder
 where you can define your specific configuration for all CDAP components.
+The ``cdap-site.xml.example`` file shows the properties that usually require customization
+for all installations. Copy these into your ``cdap-site.xml`` and set appropriate values.
+
+.. _install-alternatives:
 
 Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
 easily switch between multiple configurations. The ``alternatives`` system is used for ease of
@@ -241,6 +252,8 @@ Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
 to your custom directory.
 
 Configure the ``cdap-site.xml`` after you have installed the CDAP packages.
+
+.. _install-rpm-using-yum:
 
 RPM using Yum
 .............
@@ -297,13 +310,16 @@ recommended installation is a minimum of two boxes.
 
 This will download and install the latest version of CDAP with all of its dependencies. 
 
-.. _install-configuration:
+.. _install-configuring-title:
 
 Configuring
 ...........
 
-To make alterations to your setup, create an `.xml` file ``conf/cdap-site.xml``
-(see the :ref:`appendix-cdap-site.xml`) and set appropriate properties.
+.. _install-configuring:
+
+To make alterations to your setup, create (or edit if existing) an `.xml` file
+``conf/cdap-site.xml`` (see the :ref:`appendix-cdap-site.xml`) and set appropriate
+properties.
 
 Here are some alterations you may need to make, depending on your setup:
 
@@ -398,16 +414,18 @@ For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
 and in particular, see the instructions for 
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.
 
+.. _install-starting-services:
+
 Starting Services
-.................
+-----------------
 When all the packages and dependencies have been installed, and the configuration
-parameters set, you can start the services on each of the CDAP boxes by running this
+parameters set, you can start the services on each of the CDAP boxes by running the
 command::
 
   for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
 When all the services have completed starting, the CDAP Console should then be
-accessible through a browser at port 9999. 
+accessible through a browser at port ``9999``. 
 
 The URL will be ``http://<console-ip>:9999`` where ``<console-ip>`` is the IP address of
 one of the machines where you installed the packages and started the services.
