@@ -233,7 +233,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
       setDecoderClassName(conf, TextStreamEventDecoder.class.getName());
     } else if (BytesWritable.class.equals(vClass)) {
       setDecoderClassName(conf, BytesStreamEventDecoder.class.getName());
-    } else if (((Class) vClass).isAssignableFrom(StreamEvent.class)) {
+    } else if (vClass instanceof Class && ((Class) vClass).isAssignableFrom(StreamEvent.class)) {
       setDecoderClassName(conf, IdentityStreamEventDecoder.class.getName());
     } else {
       throw new IllegalArgumentException("The value class must be of type BytesWritable, Text, StreamEvent or " +
