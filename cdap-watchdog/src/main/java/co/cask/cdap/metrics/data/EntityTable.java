@@ -132,12 +132,11 @@ public final class EntityTable {
         byte[] maxIdRowKey = Bytes.toBytes(key.getType() + ".maxId");
         long newId = table.incrementAndGet(maxIdRowKey, MAX_ID, 1L);
 
-        /* we recycle the id's after reaching max-id to use the id's start from 1 again.
-        should not happen for any entity other than run-id, as for run-id its okay to recycle, as we would have
-        truncated the old data as our TTL is 2 hours.
-        The likelihood for running 65k programs under 2 hours is very low.
-        For mapping the id -> name , we use (id % maxId)
-         */
+        /* we recycle the id's after reaching max-id to let the id's start from 1 again.
+        this most likely won't happen for any entity other than run-id,
+        Even for run-id - its okay to recycle, as we would have truncated the old data when we reach 65k runs,
+        as our TTL is only 2 hours currently. The reasoning is the likelihood for running 65k programs
+        under 2 hours is very low. For mapping the id -> name , we use (id % maxId) */
         if (newId % maxId == 0) {
           newId = 1L;
           table.swap(maxIdRowKey, MAX_ID, Bytes.toBytes(maxId), Bytes.toBytes(newId));
