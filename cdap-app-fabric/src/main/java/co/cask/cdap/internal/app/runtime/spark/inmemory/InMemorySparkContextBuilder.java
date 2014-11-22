@@ -76,7 +76,7 @@ public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getLocalModule(),
-      new MetricsClientRuntimeModule().getNoopModules(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
       new LoggingModules().getInMemoryModules()
     );
 
@@ -94,7 +94,7 @@ public class InMemorySparkContextBuilder extends AbstractSparkContextBuilder {
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getLocalModule(),
-      new MetricsClientRuntimeModule().getNoopModules(),
+      new MetricsClientRuntimeModule().getStandaloneModules(),
       new LoggingModules().getStandaloneModules()
     );
     return Guice.createInjector(standaloneModules);
