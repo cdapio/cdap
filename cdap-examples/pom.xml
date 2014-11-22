@@ -31,6 +31,7 @@
 
   <modules>
     <module>CountRandom</module>
+    <module>FileExample</module>
     <module>HelloWorld</module>
     <module>Purchase</module>
     <module>WordCount</module>

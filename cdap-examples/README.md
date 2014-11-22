@@ -26,6 +26,13 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 - For each number *i*, generates i%10000, i%1000, i%100, i%10.
 - Increments the counter for each number.
 
+## FileExample
+
+- Illustrates how to use the FileSet dataset in applications.
+- A Service that allows to upload or download files in a FileSet.
+- A MapReduce that implements the classic word count example. The paths are input and output of the MapReduce
+  can be configured through runtime arguments.
+
 ## HelloWorld
 
 - This is a simple HelloWorld example that uses one Stream, one Dataset, one Flow and one
