@@ -71,6 +71,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
     LOG.info("Processing backlinkURLs data");
     JavaPairRDD<LongWritable, Text> backlinkURLs = sc.readFromStream("backlinkURLStream", Text.class);
     int iterationCount = getIterationCount(sc);
+    
     LOG.info("Grouping data by key");
     // Grouping backlinks by unique URL in key
     JavaPairRDD<String, Iterable<String>> links =
