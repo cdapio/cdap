@@ -131,11 +131,17 @@ public final class EntityTable {
         // Not found, generate a new ID
         byte[] maxIdRowKey = Bytes.toBytes(key.getType() + ".maxId");
         long newId = table.incrementAndGet(maxIdRowKey, MAX_ID, 1L);
+
+        /* we recycle the id's after reaching max-id to use the id's start from 1 again.
+        should not happen for any entity other than run-id, as for run-id its okay to recycle, as we would have
+        truncated the old data as our TTL is 2 hours.
+        The likelihood for running 65k programs under 2 hours is very low.
+        For mapping the id -> name , we use (id % maxId)
+         */
         if (newId % maxId == 0) {
           newId = 1L;
           table.swap(maxIdRowKey, MAX_ID, Bytes.toBytes(maxId), Bytes.toBytes(newId));
         }
-        //Preconditions.checkState(newId < maxId, "Maximum %s ID generated.", maxId);
 
         if (key.getName() == null || key.getName().isEmpty()) {
           LOG.warn("Adding mapping for " + (key.getName() == null ? "null" : "empty") + " name, " +
