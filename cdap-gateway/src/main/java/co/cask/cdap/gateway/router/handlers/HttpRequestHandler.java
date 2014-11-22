@@ -97,7 +97,6 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
       chunkSender.send(msg);
 
     } else if (msg instanceof HttpRequest) {
-
       // Discover and forward event.
       HttpRequest request = (HttpRequest) msg;
       request = applyProxyRules(request);

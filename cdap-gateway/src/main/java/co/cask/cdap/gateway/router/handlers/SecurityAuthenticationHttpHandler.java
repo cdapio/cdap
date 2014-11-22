@@ -199,7 +199,6 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
     if (!(msg instanceof HttpRequest)) {
       super.messageReceived(ctx, event);
     } else {
-
       AuditLogEntry logEntry = new AuditLogEntry();
       ctx.setAttachment(logEntry);
       if (validateSecuredInterception(ctx, (HttpRequest) msg, event.getChannel(), logEntry)) {

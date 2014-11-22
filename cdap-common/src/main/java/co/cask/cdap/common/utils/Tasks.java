@@ -39,9 +39,9 @@ public final class Tasks {
    * @param sleepDelay time to wait between calls to callable
    * @param sleepDelayUnit unit of time for sleepDelay
    * @param <T> type of desiredValue
-   * @throws java.util.concurrent.TimeoutException if timeout has passed, but didn't get the desiredValue
+   * @throws TimeoutException if timeout has passed, but didn't get the desiredValue
    * @throws InterruptedException if something interrupted this waiting operation
-   * @throws java.util.concurrent.ExecutionException if there was an exception in calling the callable
+   * @throws ExecutionException if there was an exception in calling the callable
    */
   public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout, TimeUnit timeoutUnit,
                                  long sleepDelay, TimeUnit sleepDelayUnit)
