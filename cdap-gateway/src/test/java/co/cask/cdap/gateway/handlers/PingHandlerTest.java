@@ -38,6 +38,6 @@ public class PingHandlerTest extends GatewayTestBase {
   public void testStatus() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.doGet("/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("OK.\n", EntityUtils.toString(response.getEntity()));
+    Assert.assertEquals("OK\n", EntityUtils.toString(response.getEntity()));
   }
 }
