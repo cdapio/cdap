@@ -14,15 +14,25 @@
  * the License.
  */
 
-/**
- * Package for HelloWorld example Application.
- *
- * This is a simple HelloWorld example that uses one Stream, one DataSet, one Flow and one Service.
- * <uL>
- *   <li>A Stream to send names to.</li>
- *   <li>A Flow with a single Flowlet that reads the Stream and stores each name in a KeyValueTable</li>
- *   <li>A Service that reads the name from the KeyValueTable and responds with 'Hello [Name]!'</li>
- * </uL>
- */
+package co.cask.cdap.api.data.batch;
 
-package $package;
+import java.util.Map;
+
+/**
+ * Interface to be implemented by datasets used as input to a MapReduce.
+ */
+public interface InputFormatProvider {
+
+  /**
+   * @return the class of the input format to use.
+   * @param <T> This should be the InputFormat class. The type parameter is used here to avoid adding a dependency
+   *           on Hadoop.
+   */
+  <T> Class<? extends T> getInputFormatClass();
+
+  /**
+   * @return the configuration properties that the input format expects to find in the Hadoop configuration.
+   */
+  Map<String, String> getInputFormatConfiguration();
+
+}
