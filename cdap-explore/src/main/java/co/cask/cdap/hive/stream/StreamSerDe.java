@@ -50,12 +50,16 @@ import java.util.Properties;
  * SerDe to serialize Dataset Objects.
  */
 public class StreamSerDe extends AbstractSerDe {
-  private static final Logger LOG = LoggerFactory.getLogger(StreamSerDe.class);
-
   private ArrayList<String> columnNames;
   private ArrayList<TypeInfo> columnTypes;
   private ObjectInspector inspector;
 
+  // initialize gets called multiple times by Hive. It may seem like a good idea to put additional settings into
+  // the conf, but be very careful when doing so. If there are multiple hive tables involved in a query, initialize
+  // for each table is called before input splits are fetched for any table. It is therefore not safe to put anything
+  // the input format may need into conf in this method. Rather, use StorageHandler's method to place needed config
+  // into the properties map there, which will get passed here and also copied into the job conf for the input
+  // format to consume.
   @Override
   public void initialize(Configuration conf, Properties properties) throws SerDeException {
     // The column names are saved as the given inspector to #serialize doesn't preserves them
@@ -75,23 +79,6 @@ public class StreamSerDe extends AbstractSerDe {
     }
 
     this.inspector = ObjectInspectorFactory.getStandardStructObjectInspector(columnNames, columnOIs);
-
-    // set mapreduce configuration settings required by the stream input format
-    String streamName = properties.getProperty(Constants.Explore.STREAM_NAME);
-    try {
-      // first get the context we are in
-      ContextManager.Context context = ContextManager.getContext(conf);
-      // get the stream admin from the context, which will let us get stream information such as the path
-      StreamAdmin streamAdmin = context.getStreamAdmin();
-      StreamConfig streamConfig = streamAdmin.getConfig(streamName);
-      Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
-                                                                 StreamUtils.getGeneration(streamConfig));
-      StreamInputFormatConfigurer.setTTL(conf, streamConfig.getTTL());
-      StreamInputFormatConfigurer.setStreamPath(conf, streamPath.toURI());
-    } catch (IOException e) {
-      LOG.error("Could not get the job context.", e);
-      throw new SerDeException(e);
-    }
   }
 
   @Override

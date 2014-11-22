@@ -157,8 +157,8 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                  " from cdap_stream_jointest1 join cdap_stream_jointest2" +
                  " on (cdap_stream_jointest1.body = cdap_stream_jointest2.body)",
                true,
-               Lists.newArrayList(new ColumnDesc("jointest1.body", "STRING", 1, null),
-                                  new ColumnDesc("jointest2.body", "STRING", 2, null)),
+               Lists.newArrayList(new ColumnDesc("cdap_stream_jointest1.body", "STRING", 1, null),
+                                  new ColumnDesc("cdap_stream_jointest2.body", "STRING", 2, null)),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("ABC", "ABC")))
     );
   }

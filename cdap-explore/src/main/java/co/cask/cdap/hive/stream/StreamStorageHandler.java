@@ -22,7 +22,6 @@ import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.mapred.InputFormat;
-import org.apache.hadoop.mapred.OutputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +35,7 @@ public class StreamStorageHandler extends DefaultStorageHandler {
 
   @Override
   public Class<? extends InputFormat> getInputFormatClass() {
-    return StreamInputFormat.class;
+    return HiveStreamInputFormat.class;
   }
 
   @Override
