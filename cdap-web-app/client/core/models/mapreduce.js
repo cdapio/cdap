@@ -125,137 +125,66 @@ define(['core/lib/date', 'core/models/program'],
       var datasetId = this.get('inputDataSet');
       var self = this;
 
-      http.rest('apps', appId, 'mapreduce', jobId, 'runs', function (runIdResponse, status) {
-                                if ((status != 200) || (!runIdResponse.length > 0)) {
-                                  return;
-                                }
-                                var runId = runIdResponse[0]["runid"];
-                                var paths = [];
-                                      var pathMap = {};
-                                      for (var path in METRICS_PATHS) {
-                                        var url = new S(path).template({'appId': appId, 'jobId': jobId, 'runId': runId}).s;
-                                        paths.push(url);
-                                        pathMap[url] = METRICS_PATHS[path];
-                                      }
+      http.rest('apps', appId, 'mapreduce', jobId, 'runs?limit=1', function (runIdResponse, status) {
+        if ((status != 200) || (!runIdResponse.length > 0)) {
+          return;
+        }
+        var runId = runIdResponse[0]["runid"];
+        var paths = [];
+        var pathMap = {};
+        for (var path in METRICS_PATHS) {
+          var url = new S(path).template({'appId': appId, 'jobId': jobId, 'runId': runId}).s;
+          paths.push(url);
+          pathMap[url] = METRICS_PATHS[path];
+        }
 
-                                      http.post('metrics', paths, function(response, status) {
-                                        if(!response.result) {
-                                          return;
-                                        }
+        http.post('metrics', paths, function(response, status) {
+          if(!response.result) {
+            return;
+          }
 
-                                        var result = response.result;
-                                        var i = result.length, metric;
+          var result = response.result;
+          var i = result.length, metric;
 
-                                        while (i--) {
+          while (i--) {
 
-                                          metric = pathMap[result[i]['path']];
+            metric = pathMap[result[i]['path']];
 
-                                          if (metric) {
-                                            if (result[i]['result']['data'] instanceof Array) {
+            if (metric) {
+              if (result[i]['result']['data'] instanceof Array) {
 
-                                              result[i]['result']['data'] = result[i]['result']['data'].map(function (entry) {
-                                                return entry.value;
-                                              });
+                result[i]['result']['data'] = result[i]['result']['data'].map(function (entry) {
+                  return entry.value;
+                });
 
-                                              // Hax for current value of completion.
-                                              if (metric === 'mappersCompletion' ||
-                                                  metric === 'reducersCompletion') {
+                // Hax for current value of completion.
+                if (metric === 'mappersCompletion' ||
+                    metric === 'reducersCompletion') {
 
-                                                var data = result[i]['result']['data'];
+                  var data = result[i]['result']['data'];
 
-                                                self.setMetricData(metric, data[data.length - 1]);
+                  self.setMetricData(metric, data[data.length - 1]);
 
-                                              } else {
+                } else {
 
-                                                self.setMetricData(metric, result[i]['result']['data']);
+                  self.setMetricData(metric, result[i]['result']['data']);
 
-                                              }
+                }
 
-                                            }
-                                            else if (metric in METRIC_TYPES && METRIC_TYPES[metric] === 'number') {
-                                              self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
-                                            } else {
-                                              self.setMetricData(metric, result[i]['result']['data']);
-                                            }
+              }
+              else if (metric in METRIC_TYPES && METRIC_TYPES[metric] === 'number') {
+                self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
+              } else {
+                self.setMetricData(metric, result[i]['result']['data']);
+              }
 
-                                          }
-                                          metric = null;
-                                        }
+            }
+            metric = null;
+          }
 
-                                      });
-                                //promise.resolve(model);
-                              }
-                            );
-
-    },
-
-   getPastMetricsRequest: function(http) {
-
-      var appId = this.get('app');
-      var jobId = this.get('name');
-      var datasetId = this.get('inputDataSet');
-      var self = this;
-
-      http.rest('apps', appId, 'mapreduce', jobId, 'runs', function (runIdResponse, status) {
-                                if (status != 200) {
-                                  return;
-                                }
-                                var runId = runIdResponse[0]["runid"];
-                                var paths = [];
-                                      var pathMap = {};
-                                      for (var path in METRICS_PATHS) {
-                                        var url = new S(path).template({'appId': appId, 'jobId': jobId, 'runId': runId}).s;
-                                        paths.push(url);
-                                        pathMap[url] = METRICS_PATHS[path];
-                                      }
-
-                                      http.post('metrics', paths, function(response, status) {
-                                        if(!response.result) {
-                                          return;
-                                        }
-
-                                        var result = response.result;
-                                        var i = result.length, metric;
-
-                                        while (i--) {
-
-                                          metric = pathMap[result[i]['path']];
-
-                                          if (metric) {
-                                            if (result[i]['result']['data'] instanceof Array) {
-
-                                              result[i]['result']['data'] = result[i]['result']['data'].map(function (entry) {
-                                                return entry.value;
-                                              });
-
-                                              // Hax for current value of completion.
-                                              if (metric === 'mappersCompletion' ||
-                                                  metric === 'reducersCompletion') {
-
-                                                var data = result[i]['result']['data'];
-
-                                                self.setMetricData(metric, data[data.length - 1]);
-
-                                              } else {
-
-                                                self.setMetricData(metric, result[i]['result']['data']);
-
-                                              }
-
-                                            }
-                                            else if (metric in METRIC_TYPES && METRIC_TYPES[metric] === 'number') {
-                                              self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
-                                            } else {
-                                              self.setMetricData(metric, result[i]['result']['data']);
-                                            }
-
-                                          }
-                                          metric = null;
-                                        }
-
-                                      });
-                              }
-                            );
+        });
+      }
+    );
 
     },
 
