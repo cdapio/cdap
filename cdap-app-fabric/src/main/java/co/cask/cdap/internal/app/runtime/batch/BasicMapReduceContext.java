@@ -85,7 +85,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                CConfiguration conf) {
     super(program, runId, datasets,
           getMetricContext(program, type), metricsCollectionService,
-          dsFramework, conf, discoveryServiceClient);
+          dsFramework, conf, discoveryServiceClient, runtimeArguments.asMap());
     this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
