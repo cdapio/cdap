@@ -28,6 +28,8 @@ Install:
   on CDAP and Hadoop nodes. Set the JAVA_HOME environment variable. (:ref:`details <install-java-runtime>`)
 - `Node.js <http://nodejs.org>`__ on CDAP nodes. (:ref:`details <install-node.js>`)
 - Hadoop and HBase (and possibly Hive) environment to run against. (:ref:`details <install-hadoop-hbase>`)
+- CDAP nodes require Hadoop and HBase client installation and configuration. 
+  **Note:** No Hadoop services need to be running.
 
 Preparing the Cluster
 ----------------------
@@ -49,43 +51,25 @@ Preparing Package Managers
 
 .. include:: installation.rst 
    :start-after: .. _install-rpm-using-yum:
-   :end-before:  .. _install-configuring-title:
+   :end-before:  .. _install-configuration:
 
-Configuration
--------------
-
-.. "When you install the CDAP base package"
+.. "Configuration title"
 
 .. include:: installation.rst 
    :start-after: .. _install-configuration:
    :end-before:  .. _install-alternatives:
    
-.. "To make alterations"
+.. "To configure your particular installation"
 
 .. include:: installation.rst 
-   :start-after: .. _install-configuring:
-   :end-before:  .. _install-secure-hadoop:
+   :start-after: .. _install-configuration-options:
+   :end-before:  .. _install-configuring-explore-service:
 
-.. "Starting Services"
+.. "Starting Services title"
 
 .. include:: installation.rst 
    :start-after: .. _install-starting-services:
-   :end-before:  .. _install-verification:
-
-Making CDAP Highly-available
----------------------------------
-Repeat these steps on additional boxes.  The configurations needed to support high-availability are:
-
-- ``kafka.seed.brokers``: ``127.0.0.1:9092,...`` 
-  
-  - Kafka brokers list (comma separated)
-  
-- ``kafka.default.replication.factor``: 2
-
-  - Used to replicate Kafka messages across multiple machines to prevent data loss in 
-    the event of a hardware failure.
-  - The recommended setting is to run at least two Kafka servers.
-  - Set this to the number of Kafka servers.
+   :end-before:  .. _install-highly-available:
 
 .. "Verification"
 

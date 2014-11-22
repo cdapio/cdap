@@ -204,7 +204,7 @@ In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HD
 ``yarn``. If you set up your cluster as above, no further changes are required.
 
 If your cluster is not setup with these defaults, you'll need to 
-:ref:`edit your CDAP setup <install-configuring-title>` once you have downloaded and installed
+:ref:`edit your CDAP setup <install-configuration>` once you have downloaded and installed
 the packages, and prior to starting services.
 
 .. _install-packaging:
@@ -226,32 +226,8 @@ Available packaging types:
 **Note:** If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an
 `official cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
-Configuration
-.............
-
-.. _install-configuration:
-
-CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
-
-When you install the CDAP base package, a default configuration is placed in
-``/etc/cdap/conf.dist``. The ``cdap-site.xml`` file is a placeholder
-where you can define your specific configuration for all CDAP components.
-The ``cdap-site.xml.example`` file shows the properties that usually require customization
-for all installations. Copy these into your ``cdap-site.xml`` and set appropriate values.
-
-.. _install-alternatives:
-
-Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
-easily switch between multiple configurations. The ``alternatives`` system is used for ease of
-management and allows you to to choose between different directories to fulfill the
-same purpose.
-
-Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your choice
-(such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
-Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
-to your custom directory.
-
-Configure the ``cdap-site.xml`` after you have installed the CDAP packages.
+Preparing Package Managers
+--------------------------
 
 .. _install-rpm-using-yum:
 
@@ -310,18 +286,152 @@ recommended installation is a minimum of two boxes.
 
 This will download and install the latest version of CDAP with all of its dependencies. 
 
-.. _install-configuring-title:
+.. _install-configuration:
 
-Configuring
-...........
+Configuration
+-------------
 
-.. _install-configuring:
+CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
 
-To make alterations to your setup, create (or edit if existing) an `.xml` file
-``conf/cdap-site.xml`` (see the :ref:`appendix-cdap-site.xml`) and set appropriate
-properties.
+When you install the CDAP base package, a default configuration is placed in
+``/etc/cdap/conf.dist``. The ``cdap-site.xml`` file is a placeholder
+where you can define your specific configuration for all CDAP components.
+The ``cdap-site.xml.example`` file shows the properties that usually require customization
+for all installations.
 
-Here are some alterations you may need to make, depending on your setup:
+.. _install-alternatives:
+
+Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
+easily switch between multiple configurations. The ``alternatives`` system is used for ease of
+management and allows you to to choose between different directories to fulfill the
+same purpose.
+
+Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your choice
+(such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
+Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
+to your custom directory.
+
+Configure the ``cdap-site.xml`` after you have installed the CDAP packages.
+
+.. _install-configuration-options:
+
+To configure your particular installation, follow one of these two approaches:
+
+1. Modify ``cdap-site.xml``, using ``cdap-site.example`` as a model to follow.
+
+   To make alterations to your configuration, create (or edit if existing) an `.xml` file
+   ``conf/cdap-site.xml`` (see the :ref:`appendix-cdap-site.xml`) and set appropriate
+   properties.
+
+#. Add these properties to ``cdap-site.xml``; they are the minimal required configuration::
+
+    <configuration>
+
+      <!-- Cluster configurations -->
+
+      <property>
+        <name>root.namespace</name>
+        <value>cdap</value>
+        <description>Specifies the root namespace</description>
+      </property>
+
+      <!-- Substitute the zookeeper quorum for components here -->
+      <property>
+        <name>zookeeper.quorum</name>
+        <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
+        <description>Specifies the zookeeper host:port</description>
+      </property>
+
+      <property>
+        <name>hdfs.namespace</name>
+        <value>/${root.namespace}</value>
+        <description>Namespace for HDFS files</description>
+      </property>
+
+      <property>
+        <name>hdfs.user</name>
+        <value>yarn</value>
+        <description>User name for accessing HDFS</description>
+      </property>
+
+      <!-- Router configuration -->
+      <!-- Substitue the IP to which Router service should bind to and listen on -->
+      <property>
+        <name>router.bind.address</name>
+        <value>LOCAL-ROUTER-IP</value>
+        <description>Specifies the inet address on which the Router service will listen</description>
+      </property>
+
+      <!-- App Fabric configuration  -->
+      <!-- Substitute the IP to which App-Fabric service should bind to and listen on -->
+      <property>
+        <name>app.bind.address</name>
+        <value>LOCAL-APP-FABRIC-IP</value>
+        <description>Specifies the inet address on which the app fabric service will listen</description>
+      </property>
+
+      <!-- Data Fabric configuration -->
+      <!-- Substitute the IP to which Data-Fabric tx service should bind to and listen on -->
+      <property>
+        <name>data.tx.bind.address</name>
+        <value>LOCAL-DATA-FABRIC-IP</value>
+        <description>Specifies the inet address on which the transaction service will listen</description>
+      </property>
+
+      <!-- Kafka Configuration -->
+      <property>
+        <name>kafka.log.dir</name>
+        <value>/data/cdap/kafka-logs</value>
+        <description>Directory to store Kafka logs</description>
+      </property>
+
+      <!-- Substitute with a list of all machines which will run the Kafka component -->
+      <property>
+        <name>kafka.seed.brokers</name>
+        <value>FQDN1:9092,FQDN2:9092</value>
+        <description>List of Kafka brokers (comma separated)</description>
+      </property>
+
+      <!-- Must be <= the number of kafka.seed.brokers configured above. 
+           For high-availability, this should be at least two. -->
+      <property>
+        <name>kafka.default.replication.factor</name>
+        <value>1</value>
+        <description>Kafka replication factor</description>
+      </property>
+
+      <!-- Watchdog Configuration -->
+      <!-- Substitute the IP to which metrics-query service should bind to and listen on -->
+      <property>
+        <name>metrics.query.bind.address</name>
+        <value>LOCAL-WATCHDOG-IP</value>
+        <description>Specifies the inet address on which the metrics-query service will listen</description>
+      </property>
+
+      <!-- Webapp Configuration -->
+      <property>
+        <name>dashboard.bind.port</name>
+        <value>9999</value>
+        <description>Specifies the port on which dashboard listens</description>
+      </property>
+
+      <!-- Substitute the IP of the Router service to which the UI should connect -->
+      <property>
+        <name>router.server.address</name>
+        <value>ROUTER-HOST-IP</value>
+        <description>Specifies the destination IP where Router service is running</description>
+      </property>
+
+      <property>
+        <name>router.server.port</name>
+        <value>10000</value>
+        <description>Specifies the destination Port where Router service is listening</description>
+      </property>
+
+    </configuration>
+
+
+Depending on your installation, you want to set these properties:
 
 - If you want to use **an HDFS directory with a name** other than ``/cdap``:
 
@@ -357,6 +467,8 @@ Here are some alterations you may need to make, depending on your setup:
         <name>router.server.address</name>
         <value>{router-host-name}</value>
       </property>
+
+.. _install-configuring-explore-service:
 
 - To use the **ad-hoc querying capabilities of CDAP,** enable the CDAP Explore Service in
   ``conf/cdap-site.xml`` (by default, it is disabled)::
@@ -429,6 +541,23 @@ accessible through a browser at port ``9999``.
 
 The URL will be ``http://<console-ip>:9999`` where ``<console-ip>`` is the IP address of
 one of the machines where you installed the packages and started the services.
+
+.. _install-highly-available:
+
+Making CDAP Highly-available
+---------------------------------
+Repeat these steps on additional boxes.  The configurations needed to support high-availability are:
+
+- ``kafka.seed.brokers``: ``127.0.0.1:9092,...`` 
+  
+  - Kafka brokers list (comma separated)
+  
+- ``kafka.default.replication.factor``: 2
+
+  - Used to replicate Kafka messages across multiple machines to prevent data loss in 
+    the event of a hardware failure.
+  - The recommended setting is to run at least two Kafka servers.
+  - Set this to the number of Kafka servers.
 
 .. _install-verification:
 
