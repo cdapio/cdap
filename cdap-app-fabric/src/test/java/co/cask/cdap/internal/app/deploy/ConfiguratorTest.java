@@ -22,7 +22,7 @@ import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.internal.DefaultId;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.filesystem.Location;
@@ -42,7 +42,7 @@ public class ConfiguratorTest {
 
   @Test
   public void testInMemoryConfigurator() throws Exception {
-    Location appJar = AppFabricTestHelper.createAppJar(WordCountApp.class);
+    Location appJar = AppFabricClient.createAppJar(WordCountApp.class);
 
     // Create a configurator that is testable. Provide it a application.
     Configurator configurator = new InMemoryConfigurator(DefaultId.ACCOUNT, appJar);

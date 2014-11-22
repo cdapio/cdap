@@ -47,16 +47,15 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.services.AppFabricTestHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,13 +69,13 @@ import java.util.Set;
 /**
  *
  */
-public class DefaultStoreTest {
+public class DefaultStoreTest extends AppFabricTestHelper {
   private static DefaultStore store;
 
   @BeforeClass
-  public static void beforeClass() throws Exception {
-    Injector injector = AppFabricTestHelper.getInjector();
-    store = injector.getInstance(DefaultStore.class);
+  public static void beforeClass() throws Throwable {
+    AppFabricTestHelper.beforeClass();
+    store = getInjector().getInstance(DefaultStore.class);
   }
 
   @Before
@@ -86,7 +85,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testLoadingProgram() throws Exception {
-    AppFabricTestHelper.deployApplication(ToyApp.class);
+    deployApplication(ToyApp.class);
     Program program = store.loadProgram(Id.Program.from(DefaultId.ACCOUNT.getId(), "ToyApp", "ToyFlow"),
                                         ProgramType.FLOW);
     Assert.assertNotNull(program);
@@ -347,7 +346,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testServiceInstances() throws Exception {
-    AppFabricTestHelper.deployApplication(AppWithServices.class);
+    deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
     DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
     app.configure(appConfigurer, new ApplicationContext());
@@ -375,7 +374,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testSetFlowletInstances() throws Exception {
-    AppFabricTestHelper.deployApplication(WordCountApp.class);
+    deployApplication(WordCountApp.class);
 
     ApplicationSpecification spec = Specifications.from(new WordCountApp());
     int initialInstances = spec.getFlows().get("WordCountFlow").getFlowlets().get("StreamSource").getInstances();
@@ -400,7 +399,7 @@ public class DefaultStoreTest {
   @Test
   public void testProcedureInstances() throws Exception {
 
-    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
+    deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Id.Application appId = new Id.Application(new Id.Account(DefaultId.ACCOUNT.getId()), spec.getName());
@@ -600,7 +599,7 @@ public class DefaultStoreTest {
   @Test
   public void testCheckDeletedProgramSpecs () throws Exception {
     //Deploy program with all types of programs.
-    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
+    deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeVerified = Sets.newHashSet();
@@ -636,7 +635,7 @@ public class DefaultStoreTest {
   @Test
   public void testCheckDeletedProceduresAndWorkflow () throws Exception {
     //Deploy program with all types of programs.
-    AppFabricTestHelper.deployApplication(AllProgramsApp.class);
+    deployApplication(AllProgramsApp.class);
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     Set<String> specsToBeDeleted = Sets.newHashSet();

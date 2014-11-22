@@ -35,13 +35,12 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.services.AppFabricTestHelper;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.TempFolder;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
-import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -49,7 +48,6 @@ import com.google.common.collect.Maps;
 import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -67,14 +65,12 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Category(XSlowTests.class)
-public class SparkProgramRunnerTest {
+public class SparkProgramRunnerTest extends AppFabricTestHelper {
 
   private static final TempFolder TEMP_FOLDER = new TempFolder();
 
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
-
-  private static TransactionManager txService;
   private static DatasetFramework dsFramework;
   private static DataSetInstantiator dataSetInstantiator;
 
@@ -96,15 +92,15 @@ public class SparkProgramRunnerTest {
   };
 
   @BeforeClass
-  public static void beforeClass() {
+  public static void beforeClass() throws Throwable {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
-    injector = AppFabricTestHelper.getInjector(conf);
-    txService = injector.getInstance(TransactionManager.class);
+    AppFabricTestHelper.beforeClass(conf);
+    injector = getInjector();
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
                                                  new DefaultDatasetNamespace(conf, Namespace.USER));
@@ -114,13 +110,8 @@ public class SparkProgramRunnerTest {
       new DataSetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
                               SparkProgramRunnerTest.class.getClassLoader(), null, null);
 
-    txService.startAndWait();
   }
 
-  @AfterClass
-  public static void afterClass() throws Exception {
-    txService.stopAndWait();
-  }
 
   @After
   public void after() throws Exception {
@@ -132,8 +123,8 @@ public class SparkProgramRunnerTest {
 
   @Test
   public void testSparkWithObjectStore() throws Exception {
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(SparkAppUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApplicationWithManager(SparkAppUsingObjectStore.class,
+                                                                     TEMP_FOLDER_SUPPLIER);
 
     prepareInputData();
     runProgram(app, SparkAppUsingObjectStore.CharCountSpecification.class);
@@ -142,8 +133,8 @@ public class SparkProgramRunnerTest {
 
   @Test
   public void testScalaSparkWithObjectStore() throws Exception {
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(ScalaSparkAppUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApplicationWithManager(ScalaSparkAppUsingObjectStore.class,
+                                                                     TEMP_FOLDER_SUPPLIER);
 
     prepareInputData();
     runProgram(app, ScalaSparkAppUsingObjectStore.CharCountSpecification.class);

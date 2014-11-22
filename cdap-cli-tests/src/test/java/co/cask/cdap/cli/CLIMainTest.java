@@ -27,7 +27,7 @@ import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Function;
@@ -144,7 +144,7 @@ public class CLIMainTest extends StandaloneTestBase {
   }
 
   private File createAppJarFile(Class<?> cls) {
-    return new File(AppFabricTestHelper.createAppJar(cls).toURI());
+    return new File(AppFabricClient.createAppJar(cls).toURI());
   }
 
   private void testCommandOutputContains(CLI cli, String command, final String expectedOutput) throws Exception {

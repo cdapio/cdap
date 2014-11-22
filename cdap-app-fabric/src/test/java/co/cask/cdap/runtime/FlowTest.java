@@ -35,9 +35,9 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.services.AppFabricTestHelper;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -74,7 +74,7 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Category(SlowTests.class)
-public class FlowTest {
+public class FlowTest extends AppFabricTestHelper {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -95,9 +95,9 @@ public class FlowTest {
 
   @Test
   public void testAppWithArgs() throws Exception {
-   final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(ArgumentCheckApp.class,
-                                                                                        TEMP_FOLDER_SUPPLIER);
-   ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+   final ApplicationWithPrograms app = deployApplicationWithManager(ArgumentCheckApp.class,
+                                                                    TEMP_FOLDER_SUPPLIER);
+   ProgramRunnerFactory runnerFactory = getInjector().getInstance(ProgramRunnerFactory.class);
 
     // Only running flow is good. But, in case procedure, we need to send something to procedure as it's lazy
     // load on procedure.
@@ -111,8 +111,7 @@ public class FlowTest {
     TimeUnit.SECONDS.sleep(1);
 
     Gson gson = new Gson();
-    DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
-                                                    getInstance(DiscoveryServiceClient.class);
+    DiscoveryServiceClient discoveryServiceClient = getInjector().getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s",
                     DefaultId.ACCOUNT.getId(), "ArgumentCheckApp", "SimpleProcedure")).iterator().next();
@@ -135,9 +134,8 @@ public class FlowTest {
 
   @Test
   public void testFlow() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WordCountApp.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    final ApplicationWithPrograms app = deployApplicationWithManager(WordCountApp.class, TEMP_FOLDER_SUPPLIER);
+    ProgramRunnerFactory runnerFactory = getInjector().getInstance(ProgramRunnerFactory.class);
 
     List<ProgramController> controllers = Lists.newArrayList();
 
@@ -152,11 +150,10 @@ public class FlowTest {
 
     TimeUnit.SECONDS.sleep(1);
 
-    TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
-                                             getInstance(TransactionSystemClient.class);
+    TransactionSystemClient txSystemClient = getInjector().getInstance(TransactionSystemClient.class);
 
     QueueName queueName = QueueName.fromStream("text");
-    QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
+    QueueClientFactory queueClientFactory = getInjector().getInstance(QueueClientFactory.class);
     QueueProducer producer = queueClientFactory.createProducer(queueName);
 
     // start tx to write in queue in tx
@@ -177,8 +174,7 @@ public class FlowTest {
 
     // Query the procedure for at most 10 seconds for the expected result
     Gson gson = new Gson();
-    DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
-      getInstance(DiscoveryServiceClient.class);
+    DiscoveryServiceClient discoveryServiceClient = getInjector().getInstance(DiscoveryServiceClient.class);
     ServiceDiscovered procedureDiscovered = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s", DefaultId.ACCOUNT.getId(), "WordCountApp", "WordFrequency"));
     EndpointStrategy endpointStrategy = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(procedureDiscovered),
@@ -222,7 +218,7 @@ public class FlowTest {
   @Test (expected = IllegalArgumentException.class)
   public void testInvalidOutputEmitter() throws Throwable {
     try {
-      AppFabricTestHelper.deployApplicationWithManager(InvalidFlowOutputApp.class, TEMP_FOLDER_SUPPLIER);
+      deployApplicationWithManager(InvalidFlowOutputApp.class, TEMP_FOLDER_SUPPLIER);
     } catch (Exception e) {
       throw Throwables.getRootCause(e);
     }

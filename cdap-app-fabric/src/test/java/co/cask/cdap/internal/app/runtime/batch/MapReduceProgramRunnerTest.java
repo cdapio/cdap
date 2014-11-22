@@ -43,12 +43,11 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.services.AppFabricTestHelper;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
-import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
@@ -60,7 +59,6 @@ import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -82,11 +80,10 @@ import java.util.concurrent.TimeUnit;
  *
  */
 @Category(XSlowTests.class)
-public class MapReduceProgramRunnerTest {
+public class MapReduceProgramRunnerTest extends AppFabricTestHelper {
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
 
-  private static TransactionManager txService;
   private static DatasetFramework dsFramework;
   private static DataSetInstantiator dataSetInstantiator;
 
@@ -105,29 +102,22 @@ public class MapReduceProgramRunnerTest {
   };
 
   @BeforeClass
-  public static void beforeClass() {
+  public static void beforeClass() throws Throwable {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
     conf.setInt(TxConstants.Manager.CFG_TX_TIMEOUT, 1);
     conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, 2);
-    injector = AppFabricTestHelper.getInjector(conf);
-    txService = injector.getInstance(TransactionManager.class);
+    AppFabricTestHelper.beforeClass(conf);
+    injector = getInjector();
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = new NamespacedDatasetFramework(injector.getInstance(DatasetFramework.class),
                                                  new DefaultDatasetNamespace(conf, Namespace.USER));
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     dataSetInstantiator =
-      new DataSetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
+      new DataSetInstantiator(datasetFramework, conf,
                               MapReduceProgramRunnerTest.class.getClassLoader(), null, null);
-
-    txService.startAndWait();
-  }
-
-  @AfterClass
-  public static void afterClass() throws Exception {
-    txService.stopAndWait();
   }
 
   @After
@@ -153,8 +143,8 @@ public class MapReduceProgramRunnerTest {
     System.setProperty("INPUT_DATASET_NAME", inputDatasetName);
     System.setProperty("OUTPUT_DATASET_NAME", outputDatasetName);
 
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingFileSet.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApplicationWithManager(AppWithMapReduceUsingFileSet.class,
+                                                                     TEMP_FOLDER_SUPPLIER);
 
     Map<String, String> inputArgs = Maps.newHashMap();
     Map<String, String> outputArgs = Maps.newHashMap();
@@ -210,8 +200,8 @@ public class MapReduceProgramRunnerTest {
 
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
-    final ApplicationWithPrograms app =
-      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class,
+                                                                     TEMP_FOLDER_SUPPLIER);
 
     final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
 
@@ -250,8 +240,7 @@ public class MapReduceProgramRunnerTest {
   @Test
   public void testWordCount() throws Exception {
 
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApplicationWithManager(AppWithMapReduce.class, TEMP_FOLDER_SUPPLIER);
     final String inputPath = createInput();
     final java.io.File outputDir = new java.io.File(tmpFolder.newFolder(), "output");
 
@@ -292,8 +281,7 @@ public class MapReduceProgramRunnerTest {
   }
 
   private void testSuccess(boolean frequentFlushing) throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApplicationWithManager(AppWithMapReduce.class, TEMP_FOLDER_SUPPLIER);
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
     final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
@@ -364,8 +352,7 @@ public class MapReduceProgramRunnerTest {
     // NOTE: the code of this test is similar to testTimeSeriesRecordsCount() test. We put some "bad data" intentionally
     //       here to be recognized by map tasks as a message to emulate failure
 
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
+    final ApplicationWithPrograms app = deployApplicationWithManager(AppWithMapReduce.class, TEMP_FOLDER_SUPPLIER);
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
     final TimeseriesTable table = dataSetInstantiator.getDataSet("timeSeries");

@@ -23,7 +23,7 @@ import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -125,6 +125,6 @@ public abstract class ClientTestBase extends StandaloneTestBase {
   }
 
   protected File createAppJarFile(Class<?> cls) {
-    return new File(AppFabricTestHelper.createAppJar(cls).toURI());
+    return new File(AppFabricClient.createAppJar(cls).toURI());
   }
 }

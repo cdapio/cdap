@@ -18,6 +18,7 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
@@ -32,6 +33,7 @@ import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
@@ -308,6 +310,11 @@ public class AppFabricClient {
     }
 
     return new File(deployJar.toURI());
+  }
+
+  public static Location createAppJar(Class<?> appClass) {
+    LocalLocationFactory lf = new LocalLocationFactory();
+    return lf.create(JarFinder.getJar(appClass, AppFabricClient.getManifestWithMainClass(appClass)));
   }
 
 }
