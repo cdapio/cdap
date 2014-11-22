@@ -34,21 +34,21 @@ public final class RunRecord {
   private final long stopTs;
 
   @SerializedName("status")
-  private final String endStatus;
+  private final ProgramRunStatus status;
 
   public RunRecord(String pid, long startTs) {
     this(pid, startTs, -1, null);
   }
 
-  public RunRecord(String pid, long startTs, long stopTs, String endStatus) {
+  public RunRecord(String pid, long startTs, long stopTs, ProgramRunStatus status) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;
-    this.endStatus = endStatus;
+    this.status = status;
   }
 
-  public RunRecord(RunRecord started, long stopTs, String endStatus) {
-    this(started.pid, started.startTs, stopTs, endStatus);
+  public RunRecord(RunRecord started, long stopTs, ProgramRunStatus status) {
+    this(started.pid, started.startTs, stopTs, status);
   }
 
   public String getPid() {
@@ -63,8 +63,7 @@ public final class RunRecord {
     return stopTs;
   }
 
-  @Nullable
-  public String getEndStatus() {
-    return endStatus;
+  public ProgramRunStatus getStatus() {
+    return status;
   }
 }
