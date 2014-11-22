@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -81,11 +80,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private Runnable cleanupTask;
   private String[] sparkSubmitArgs;
   private volatile boolean stopRequested;
-  private final StreamAdmin streamAdmin;
 
   SparkRuntimeService(CConfiguration cConf, Configuration hConf, Spark spark, SparkSpecification sparkSpecification,
                       BasicSparkContext context, Location programJarLocation, LocationFactory locationFactory,
-                      TransactionSystemClient txClient, StreamAdmin streamAdmin) {
+                      TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.spark = spark;
@@ -94,7 +92,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.context = context;
     this.locationFactory = locationFactory;
     this.txClient = txClient;
-    this.streamAdmin = streamAdmin;
   }
 
   @Override
@@ -150,7 +147,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // depends on.
       Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
       try {
-        SparkProgramWrapper.setStreamAdmin(streamAdmin);
+        SparkProgramWrapper.setBasicSparkContext(context);
         SparkProgramWrapper.setSparkProgramRunning(true);
         SparkSubmit.main(sparkSubmitArgs);
       } catch (Exception e) {

@@ -31,6 +31,7 @@ import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -48,6 +49,7 @@ import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -171,7 +173,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStop(final Id.Program id, final String pid, final long endTime, final String state) {
+  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramController.State state) {
     Preconditions.checkArgument(state != null, "End state of program run should be defined");
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
@@ -188,12 +190,13 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<RunRecord> getRunHistory(final Id.Program id, final long startTime, final long endTime, final int limit) {
+  public List<RunRecord> getRuns(final Id.Program id, final ProgramRunStatus status,
+                                 final long startTime, final long endTime, final int limit) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<RunRecord>>() {
       @Override
       public List<RunRecord> apply(AppMds mds) throws Exception {
-        return mds.apps.getRunHistory(id.getAccountId(), id.getApplicationId(), id.getId(),
-                                      startTime, endTime, limit);
+        return mds.apps.getRuns(id.getAccountId(), id.getApplicationId(), id.getId(), status,
+                                startTime, endTime, limit);
       }
     });
   }

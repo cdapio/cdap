@@ -14,21 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.pipeline;
+package co.cask.cdap.proto;
 
-import co.cask.cdap.pipeline.Pipeline;
-import co.cask.cdap.pipeline.PipelineFactory;
 
 /**
- * A factory for providing asynchronous pipeline.
+ * Program Status Types used to query program runs
  */
-public class AsynchronousPipelineFactory implements PipelineFactory {
-
-  /**
-   * @return A asynchronous pipeline.
-   */
-  @Override
-  public <T> Pipeline<T> getPipeline() {
-    return new AsynchronousPipeline<T>();
-  }
-}
+public enum ProgramRunStatus {
+  ALL,
+  RUNNING,
+  COMPLETED,
+  FAILED
+};

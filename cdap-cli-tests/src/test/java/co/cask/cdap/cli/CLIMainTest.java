@@ -84,7 +84,7 @@ public class CLIMainTest extends StandaloneTestBase {
     ProgramClient programClient = new ProgramClient(cliConfig.getClientConfig());
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
-    testCommandOutputContains(cli, "get flow history " + qualifiedFlowId, "STOPPED");
+    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "COMPLETED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
 
     // test stream commands
@@ -131,11 +131,11 @@ public class CLIMainTest extends StandaloneTestBase {
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
     testCommandOutputContains(cli, "list spark", sparkId);
     testCommandOutputContains(cli, "start spark " + qualifiedSparkId, "Successfully started Spark");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STARTING");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STARTING", 30);
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING", 180);
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED", 180);
     testCommandOutputContains(cli, "get spark status " + qualifiedSparkId, "STOPPED");
-    testCommandOutputContains(cli, "get spark history " + qualifiedSparkId, "STOPPED");
+    testCommandOutputContains(cli, "get spark runs " + qualifiedSparkId, "COMPLETED");
     testCommandOutputContains(cli, "get spark logs " + qualifiedSparkId, "HelloFakeSpark");
 
     // cleanup

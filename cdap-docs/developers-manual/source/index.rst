@@ -94,12 +94,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   developers who want a deeper dive into CDAP, with presentations on the Data Exploration
   of Datasets, Client Authentication for Secure CDAP Instances, and Best Practices for
   CDAP development.
-
-
-.. |troubleshooting| replace:: **Troubleshooting:**
-.. _troubleshooting: troubleshooting.html
-
-- |troubleshooting|_ Selected examples of potential problems and possible resolutions.
   
 
 .. |(TM)| unicode:: U+2122 .. trademark sign

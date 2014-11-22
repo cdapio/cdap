@@ -1,10 +1,10 @@
 # HelloWorld example
 
-- This is a simple HelloWorld example that uses one Stream, one Dataset, one Flow and one Procedure.
+- This is a simple HelloWorld example that uses one Stream, one Dataset, one Flow and one Service.
 - A Stream, to send names to.
 - A Dataset, a KeyValueTable.
 - A Flow, with a single Flowlet that reads from the Stream and stores each name in the KeyValueTable.
-- A Procedure, that reads the name from the KeyValueTable and prints "Hello [Name]!"
+- A Service, that reads the name from the KeyValueTable and responds with "Hello [Name]!"
 
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.

@@ -31,12 +31,12 @@ import java.util.Map;
  * This {@link co.cask.cdap.pipeline.Stage} is responsible for automatic
  * deploy of the {@link co.cask.cdap.api.dataset.module.DatasetModule}s specified by application.
  */
-public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLocation> {
+public class CreateDatasetInstancesStage extends AbstractStage<ApplicationDeployable> {
   private static final Logger LOG = LoggerFactory.getLogger(CreateDatasetInstancesStage.class);
   private final DatasetFramework datasetFramework;
 
   public CreateDatasetInstancesStage(DatasetFramework datasetFramework) {
-    super(TypeToken.of(ApplicationSpecLocation.class));
+    super(TypeToken.of(ApplicationDeployable.class));
     this.datasetFramework = datasetFramework;
   }
 
@@ -44,10 +44,10 @@ public class CreateDatasetInstancesStage extends AbstractStage<ApplicationSpecLo
    * Receives an input containing application specification and location
    * and verifies both.
    *
-   * @param input An instance of {@link ApplicationSpecLocation}
+   * @param input An instance of {@link ApplicationDeployable}
    */
   @Override
-  public void process(ApplicationSpecLocation input) throws Exception {
+  public void process(ApplicationDeployable input) throws Exception {
     // create dataset instances
     ApplicationSpecification specification = input.getSpecification();
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : specification.getDatasets().entrySet()) {
