@@ -30,7 +30,6 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -77,11 +76,11 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
     }
   }
 
-  public static class StreamTestBatchMapper extends Mapper<LongWritable, BytesWritable, Text, Text> {
+  public static class StreamTestBatchMapper extends Mapper<LongWritable, StreamEvent, Text, Text> {
     @Override
-    protected void map(LongWritable key, BytesWritable value,
+    protected void map(LongWritable key, StreamEvent value,
                        Context context) throws IOException, InterruptedException {
-      Text output = new Text(value.copyBytes());
+      Text output = new Text(value.getBody().array());
       context.write(output, output);
     }
   }

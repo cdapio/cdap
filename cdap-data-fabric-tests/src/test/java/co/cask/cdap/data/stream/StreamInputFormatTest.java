@@ -236,6 +236,8 @@ public class StreamInputFormatTest {
     Assert.assertEquals(TextStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
     StreamInputFormat.inferDecoderClass(conf, StreamEvent.class);
     Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, StreamEventData.class);
+    Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
   }
 
   private void generateEvents(File inputDir, int numEvents, long startTime, long timeIncrement,

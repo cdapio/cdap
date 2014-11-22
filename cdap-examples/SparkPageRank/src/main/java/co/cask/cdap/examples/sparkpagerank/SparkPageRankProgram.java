@@ -23,7 +23,6 @@
 package co.cask.cdap.examples.sparkpagerank;
 
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.base.Charsets;
@@ -70,15 +69,15 @@ public class SparkPageRankProgram implements JavaSparkProgram {
   @Override
   public void run(SparkContext sc) {
     LOG.info("Processing backlinkURLs data");
-    JavaPairRDD<LongWritable, StreamEvent> backlinkURLs = sc.readFromStream("backlinkURLStream", StreamEvent.class);
+    JavaPairRDD<LongWritable, Text> backlinkURLs = sc.readFromStream("backlinkURLStream", Text.class);
     int iterationCount = getIterationCount(sc);
     LOG.info("Grouping data by key");
     // Grouping backlinks by unique URL in key
     JavaPairRDD<String, Iterable<String>> links =
-      backlinkURLs.values().mapToPair(new PairFunction<StreamEvent, String, String>() {
+      backlinkURLs.values().mapToPair(new PairFunction<Text, String, String>() {
         @Override
-        public Tuple2<String, String> call(StreamEvent s) {
-          String[] parts = SPACES.split(new String(s.getBody().array(), Charsets.UTF_8));
+        public Tuple2<String, String> call(Text s) {
+          String[] parts = SPACES.split(s.toString());
           return new Tuple2<String, String>(parts[0], parts[1]);
         }
       }).distinct().groupByKey().cache();
