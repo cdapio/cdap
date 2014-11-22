@@ -26,15 +26,22 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.PreferenceTableDataset;
+import co.cask.cdap.proto.ProgramRecord;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,6 +60,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   private final DataSetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final ProgramRecord record;
+  private PreferenceTableDataset table;
 
   public AbstractContext(Program program, RunId runId,
                          Set<String> datasets,
@@ -79,7 +88,18 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
     this.dsInstantiator = new DataSetInstantiator(dsFramework, conf, program.getClassLoader(),
                                                   datasetMetrics, programMetrics);
-
+    DatasetFramework sysds = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(conf,
+                                                                                                     Namespace.SYSTEM));
+    this.table = null;
+    try {
+      this.table = sysds.getDataset(Constants.Preferences.PROPERTY_TABLE, new HashMap<String, String>(),
+                                    program.getClassLoader());
+      this.dsInstantiator.addTransactionAware(table);
+    } catch (Exception e) {
+      LOG.error("Unable to find ProgramPreference Table", e);
+      Throwables.propagate(e);
+    }
+    record = new ProgramRecord(program.getType(), program.getApplicationId(), program.getName(), null, null);
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
     this.datasets = DataSets.createDataSets(dsInstantiator, datasets);
@@ -164,5 +184,25 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   @Override
   public DiscoveryServiceClient getDiscoveryServiceClient() {
     return discoveryServiceClient;
+  }
+
+  @Override
+  public String getNote(String key) {
+    return table.getNote(record, key);
+  }
+
+  @Override
+  public Map<String, String> getNotes() {
+    return table.getNotes(record);
+  }
+
+  @Override
+  public void setNote(String key, String value) {
+    table.setNote(record, key, value);
+  }
+
+  @Override
+  public void setNotes(Map<String, String> notes) {
+    table.setNotes(record, notes);
   }
 }

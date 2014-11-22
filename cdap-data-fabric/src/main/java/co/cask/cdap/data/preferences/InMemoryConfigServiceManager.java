@@ -14,24 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package co.cask.cdap.data.preferences;
 
-import java.util.Map;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 
 /**
- * This interface represents a context for a processor or elements of a processor.
+ * In memory config service manager.
  */
-public interface RuntimeContext {
-  /**
-   * @return A map of argument key and value.
-   */
-  Map<String, String> getRuntimeArguments();
+public class InMemoryConfigServiceManager extends AbstractInMemoryMasterServiceManager {
 
-  void setNote(String key, String value);
-
-  String getNote(String key);
-
-  Map<String, String> getNotes();
-
-  void setNotes(Map<String, String> notes);
+  @Override
+  public String getDescription() {
+    return Constants.Preferences.SERVICE_DESCRIPTION;
+  }
 }

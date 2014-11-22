@@ -277,4 +277,24 @@ abstract class AbstractSparkContext implements SparkContext {
   public ServiceDiscoverer getServiceDiscoverer() {
     return serializableServiceDiscoverer;
   }
+
+  @Override
+  public String getNote(String key) {
+    return basicSparkContext.getNote(key);
+  }
+
+  @Override
+  public void setNote(String key, String value) {
+    basicSparkContext.setNote(key, value);
+  }
+
+  @Override
+  public Map<String, String> getNotes() {
+    return basicSparkContext.getNotes();
+  }
+
+  @Override
+  public void setNotes(Map<String, String> notes) {
+    basicSparkContext.setNotes(notes);
+  }
 }

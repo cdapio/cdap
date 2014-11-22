@@ -27,6 +27,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.OSDetector;
+import co.cask.cdap.data.preferences.PreferencesHttpService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -79,6 +80,7 @@ public class StandaloneMain {
   private final MetricsQueryService metricsQueryService;
   private final AppFabricServer appFabricServer;
   private final StreamHttpService streamHttpService;
+  private final PreferencesHttpService preferencesHttpService;
 
   private final MetricsCollectionService metricsCollectionService;
 
@@ -110,6 +112,7 @@ public class StandaloneMain {
     this.webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
 
     streamHttpService = injector.getInstance(StreamHttpService.class);
+    preferencesHttpService = injector.getInstance(PreferencesHttpService.class);
 
     sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
     securityEnabled = configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED);
@@ -159,6 +162,7 @@ public class StandaloneMain {
     }
 
     metricsQueryService.startAndWait();
+    preferencesHttpService.startAndWait();
     router.startAndWait();
     if (webCloudAppService != null) {
       webCloudAppService.startAndWait();
@@ -203,6 +207,7 @@ public class StandaloneMain {
       exploreClient.close();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
+      preferencesHttpService.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();
       metricsQueryService.stopAndWait();

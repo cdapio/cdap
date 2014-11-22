@@ -149,10 +149,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -346,7 +344,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/ping")
   @GET
   public void ping(HttpRequest request, HttpResponder responder) {
-      responder.sendStatus(HttpResponseStatus.OK);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   /**

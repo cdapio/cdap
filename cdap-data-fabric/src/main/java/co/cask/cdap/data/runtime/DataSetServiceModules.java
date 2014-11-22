@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.ACLTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
+import co.cask.cdap.data2.dataset2.lib.table.PreferenceTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
@@ -69,6 +70,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("metricsTable-memory", new InMemoryMetricsTableModule());
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
     INMEMORY_DATASET_MODULES.put("aclTable", new ACLTableModule());
+    INMEMORY_DATASET_MODULES.put("prefTable", new PreferenceTableModule());
   }
 
   public Module getInMemoryModule() {
@@ -81,8 +83,10 @@ public class DataSetServiceModules {
         defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("aclTable", new ACLTableModule());
+        defaultModules.put("prefTable", new PreferenceTableModule());
 
-        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
+        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() {
+        })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
 
         install(new FactoryModuleBuilder()
@@ -122,8 +126,10 @@ public class DataSetServiceModules {
         defaultModules.put("metricsTable-leveldb", new LevelDBMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("aclTable", new ACLTableModule());
+        defaultModules.put("prefTable", new PreferenceTableModule());
 
-        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
+        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() {
+        })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
 
         install(new FactoryModuleBuilder()
@@ -165,8 +171,10 @@ public class DataSetServiceModules {
         defaultModules.put("metricsTable-hbase", new HBaseMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("aclTable", new ACLTableModule());
+        defaultModules.put("prefTable", new PreferenceTableModule());
 
-        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
+        bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() {
+        })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
 
         install(new FactoryModuleBuilder()

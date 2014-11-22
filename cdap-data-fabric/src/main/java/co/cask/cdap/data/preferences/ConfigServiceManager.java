@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream;
+package co.cask.cdap.data.preferences;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -24,24 +24,23 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
- * CDAP Stream Service management in distributed mode.
+ *
  */
-public class StreamServiceManager extends AbstractDistributedMasterServiceManager {
+public class ConfigServiceManager extends AbstractDistributedMasterServiceManager {
 
   @Inject
-  public StreamServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
+  public ConfigServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
                               DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.STREAMS, twillRunnerService, discoveryServiceClient);
-  }
-
-  @Override
-  public int getMaxInstances() {
-    return cConf.getInt(Constants.Stream.MAX_INSTANCES);
+    super(cConf, Constants.Service.PREFERENCES, twillRunnerService, discoveryServiceClient);
   }
 
   @Override
   public String getDescription() {
-    return Constants.Stream.SERVICE_DESCRIPTION;
+    return Constants.Preferences.SERVICE_DESCRIPTION;
   }
 
+  @Override
+  public int getMaxInstances() {
+    return cConf.getInt(Constants.Preferences.MAX_INSTANCES);
+  }
 }

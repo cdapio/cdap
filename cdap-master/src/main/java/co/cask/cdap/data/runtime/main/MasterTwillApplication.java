@@ -23,6 +23,7 @@ import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.logging.run.LogSaverTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
+import co.cask.cdap.metrics.runtime.PreferencesTwillRunnable;
 import com.google.common.base.Preconditions;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
@@ -68,9 +69,10 @@ public class MasterTwillApplication implements TwillApplication {
             addLogSaverService(
                 addStreamService(
                     addTransactionService(
-                        addMetricsProcessor (
-                            addMetricsService(
-                                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
+                      addConfigService(
+                        addMetricsProcessor(
+                          addMetricsService(
+                            TwillSpecification.Builder.with().setName(NAME).withRunnable())))))));
 
     if (runHiveService) {
       LOG.info("Adding explore runnable.");
@@ -132,6 +134,25 @@ public class MasterTwillApplication implements TwillApplication {
       .apply();
   }
 
+  private TwillSpecification.Builder.RunnableSetter addConfigService(TwillSpecification.Builder.MoreRunnable builder) {
+    int numCores = cConf.getInt(Constants.Preferences.NUM_CORES, 1);
+    int memoryMb = cConf.getInt(Constants.Preferences.MEMORY_MB, 512);
+    int instances = instanceCountMap.get(Constants.Service.PREFERENCES);
+
+    ResourceSpecification spec = ResourceSpecification.Builder
+      .with()
+      .setVirtualCores(numCores)
+      .setMemory(memoryMb, ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(instances)
+      .build();
+
+    return builder.add(new PreferencesTwillRunnable(Constants.Service.PREFERENCES, "cConf.xml", "hConf.xml"), spec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply();
+  }
+
   private TwillSpecification.Builder.RunnableSetter addMetricsService(TwillSpecification.Builder.MoreRunnable
                                                                         builder) {
     int metricsNumCores = cConf.getInt(Constants.Metrics.NUM_CORES, 2);
@@ -150,7 +171,6 @@ public class MasterTwillApplication implements TwillApplication {
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
       .apply();
-
   }
 
   private TwillSpecification.Builder.RunnableSetter addTransactionService(TwillSpecification.Builder.MoreRunnable

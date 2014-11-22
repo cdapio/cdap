@@ -41,6 +41,7 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
+    public static final String PREFERENCES = "preferences";
   }
 
   /**
@@ -267,6 +268,23 @@ public final class Constants {
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String API_KEY = "X-ApiKey";
+  }
+
+  /**
+   * Preferences.
+   */
+  public static final class Preferences {
+    public static final String HTTP_HANDLER = "prefhandler";
+    public static final String ADDRESS = "prefs.bind.address";
+    public static final String BACKLOG_CONNECTIONS = "prefs.backlog.cnxs";
+    public static final String EXEC_THREADS = "prefs.exec.threads";
+    public static final String BOSS_THREADS = "prefs.boss.threads";
+    public static final String WORKER_THREADS = "prefs.worker.threads";
+    public static final String PROPERTY_TABLE = "propTable";
+    public static final String NUM_CORES = "prefs.num.cores";
+    public static final String MEMORY_MB = "prefs.num.memory";
+    public static final String MAX_INSTANCES = "prefs.max.instances";
+    public static final String SERVICE_DESCRIPTION = "Configuration Service";
   }
 
   /**
