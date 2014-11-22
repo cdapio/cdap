@@ -19,15 +19,14 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.AsciiTable;
-import co.cask.cdap.cli.util.ResponseUtil;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.conf.StringUtils;
 import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -47,7 +46,7 @@ import java.util.Map;
 /**
  * Call an endpoint of a {@link Service}.
  */
-public class CallServiceCommand implements Command {
+public class CallServiceCommand extends AbstractCommand {
   private static final Gson GSON = new Gson();
 
 
@@ -97,7 +96,7 @@ public class CallServiceCommand implements Command {
             httpResponse.getResponseCode(),
             formatHeaders(httpResponse),
             bodySize,
-            ResponseUtil.getBody(byteBuffer)
+            getBody(byteBuffer)
           };
         }
       }
@@ -128,6 +127,6 @@ public class CallServiceCommand implements Command {
       Collection<String> value = headers.get(key);
       builder.put(key, StringUtils.arrayToString(value.toArray(new String[value.size()])));
     }
-    return ResponseUtil.formatHeader(builder.build());
+    return formatHeader(builder.build());
   }
 }

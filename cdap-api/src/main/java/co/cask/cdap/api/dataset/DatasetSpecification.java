@@ -199,7 +199,7 @@ public final class DatasetSpecification {
   }
 
   /**
-   * A Builder to construct DataSetSpecification instances.
+   * A Builder to construct DatasetSpecification instances.
    */
   public static final class Builder {
     // private fields
@@ -268,7 +268,7 @@ public final class DatasetSpecification {
 
     /**
      * Prefixes all DataSets embedded inside the given {@link DatasetSpecification} with the name of the enclosing
-     * DataSet.
+     * Dataset.
      */
     private DatasetSpecification namespace(DatasetSpecification spec) {
       return namespace(null, spec);

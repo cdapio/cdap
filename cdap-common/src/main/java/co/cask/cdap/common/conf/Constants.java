@@ -96,12 +96,17 @@ public final class Constants {
     /**
      * Query parameter to indicate start time.
      */
-    public static final String QUERY_PARAM_START_TIME = "before";
+    public static final String QUERY_PARAM_START_TIME = "start";
+
+    /**
+     * Query parameter to indicate status of a program {active, completed, failed}
+     */
+    public static final String QUERY_PARAM_STATUS = "status";
 
     /**
      * Query parameter to indicate end time.
      */
-    public static final String QUERY_PARAM_END_TIME = "after";
+    public static final String QUERY_PARAM_END_TIME = "end";
 
     /**
      * Query parameter to indicate limits on results.

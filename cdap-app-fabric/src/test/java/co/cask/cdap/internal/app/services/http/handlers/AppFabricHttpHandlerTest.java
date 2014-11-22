@@ -140,11 +140,19 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       // second run
       Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "start"));
       waitState(runnableType, appId, runnableId, "RUNNING");
+      String url = String.format("/v2/apps/%s/%s/%s/runs?status=running", appId, runnableType, runnableId);
+
+      //active size should be 1
+      historyStatusWithRetry(url, 1);
+      // completed runs size should be 1
+      url = String.format("/v2/apps/%s/%s/%s/runs?status=completed", appId, runnableType, runnableId);
+      historyStatusWithRetry(url, 1);
+
       Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
       waitState(runnableType, appId, runnableId, "STOPPED");
 
-      String url = String.format("/v2/apps/%s/%s/%s/history", appId, runnableType, runnableId);
       historyStatusWithRetry(url, 2);
+
     } finally {
       Assert.assertEquals(200, doDelete("/v2/apps/" + appId).getStatusLine().getStatusCode());
     }
@@ -208,6 +216,24 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       TimeUnit.SECONDS.sleep(1);
     }
     Assert.assertTrue(trials < 5);
+  }
+
+  private String getLatestRunId(String url) throws Exception {
+    int trials = 0;
+    String runId = null;
+    while (trials++ < 5) {
+      HttpResponse response = doGet(url);
+      List<Map<String, String>> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
+                                                       new TypeToken<List<Map<String, String>>>() { }.getType());
+      if (result.size() > 0) {
+        Assert.assertNotNull(result.get(0).containsKey("runid"));
+        runId = result.get(0).get("runid");
+        break;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(trials < 5);
+    return runId;
   }
 
   private void testRuntimeArgs(Class<?> app, String appId, String runnableType, String runnableId)
@@ -316,7 +342,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       // workflow stops by itself after actions are done
       waitState("workflows", "SleepWorkflowApp", "SleepWorkflow", "STOPPED");
 
-      String url = String.format("/v2/apps/%s/%s/%s/history", "SleepWorkflowApp", "workflows", "SleepWorkflow");
+      String url = String.format("/v2/apps/%s/%s/%s/runs?status=completed", "SleepWorkflowApp", "workflows",
+                                 "SleepWorkflow");
       historyStatusWithRetry(url, 2);
 
     } finally {
@@ -997,7 +1024,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(scheduleId);
     Assert.assertFalse(scheduleId.isEmpty());
 
-    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history", 0);
+    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed", 0);
 
     //Check suspend status
     String scheduleStatus = String.format("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules/%s/status",
@@ -1015,7 +1042,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
 
-    response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
+    response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> history = new Gson().fromJson(json,
                                   LIST_MAP_STRING_STRING_TYPE);
@@ -1024,7 +1051,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
     TimeUnit.SECONDS.sleep(10);
 
-    response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history");
+    response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
     history = new Gson().fromJson(json,
                                   LIST_MAP_STRING_STRING_TYPE);
@@ -1037,7 +1064,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doPost(scheduleResume);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/history", workflowRunsAfterSuspend);
+    scheduleHistoryCheck(5, "/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed",
+                         workflowRunsAfterSuspend);
 
     //check scheduled state
     scheduleStatusCheck(5, scheduleStatus, "SCHEDULED");
@@ -1197,7 +1225,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     waitState(runnableType, appId, runnableId, "RUNNING");
     Assert.assertEquals(200, getRunnableStartStop(runnableType, appId, runnableId, "stop"));
     waitState(runnableType, appId, runnableId, "STOPPED");
-    String url = String.format("/v2/apps/%s/%s/%s/history", appId, runnableType, runnableId);
+    String url = String.format("/v2/apps/%s/%s/%s/runs?status=completed", appId, runnableType, runnableId);
     // verify the run by checking if history has one entry
     historyStatusWithRetry(url, 1);
 
