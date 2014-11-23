@@ -35,7 +35,6 @@ public class NoMapperApp extends AbstractApplication {
 
   @Override
   public void configure() {
-    System.out.println("####### NoMapper");
     addStream(new Stream("nomapper"));
     createDataset("results", KeyValueTable.class);
     addMapReduce(new NoMapperMapReduce());
