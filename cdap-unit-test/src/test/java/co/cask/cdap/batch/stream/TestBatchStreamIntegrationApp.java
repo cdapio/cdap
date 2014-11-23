@@ -30,6 +30,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -56,6 +57,7 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
     createDataset("results", KeyValueTable.class);
     addFlow(new StreamTestFlow());
     addMapReduce(new StreamTestBatch());
+    addMapReduce(new StreamTestBatchIdDecoder());
   }
 
   public static class StreamTestBatch extends AbstractMapReduce {
@@ -69,14 +71,34 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       Job job = context.getHadoopJob();
-      job.setMapperClass(StreamTestBatchMapper.class);
+      setMapperClass(job);
       job.setMapOutputKeyClass(Text.class);
       job.setMapOutputValueClass(Text.class);
       job.setReducerClass(StreamTestBatchReducer.class);
     }
+
+    protected void setMapperClass(Job job) {
+      job.setMapperClass(StreamTestBatchMapper.class);
+    }
   }
 
-  public static class StreamTestBatchMapper extends Mapper<LongWritable, StreamEvent, Text, Text> {
+  public static class StreamTestBatchIdDecoder extends StreamTestBatch {
+    @Override
+    protected void setMapperClass(Job job) {
+      job.setMapperClass(StreamTestBatchIdDecoderMapper.class);
+    }
+  }
+
+  public static class StreamTestBatchMapper extends Mapper<LongWritable, BytesWritable, Text, Text> {
+    @Override
+    protected void map(LongWritable key, BytesWritable value,
+                       Context context) throws IOException, InterruptedException {
+      Text output = new Text(value.copyBytes());
+      context.write(output, output);
+    }
+  }
+
+  public static class StreamTestBatchIdDecoderMapper extends Mapper<LongWritable, StreamEvent, Text, Text> {
     @Override
     protected void map(LongWritable key, StreamEvent value,
                        Context context) throws IOException, InterruptedException {
@@ -84,6 +106,7 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
       context.write(output, output);
     }
   }
+
   public static class StreamTestBatchReducer extends Reducer<Text, Text, byte[], byte[]> {
     @Override
     protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
