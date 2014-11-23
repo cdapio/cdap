@@ -131,8 +131,10 @@ public class ServiceWorkerTwillRunnable implements TwillRunnable {
         ((GuavaServiceWorker) worker).setDelegate((Service) factory.get(type).create());
       }
       int instanceId = context.getInstanceId();
-      worker.initialize(new BasicServiceWorkerContext(program, runId, instanceId, runnableName, programClassLoader,
-                                                      cConfiguration, context.getSpecification().getConfigs(), datasets,
+      int instanceCount = context.getInstanceCount();
+      worker.initialize(new BasicServiceWorkerContext(program, runId, instanceId, instanceCount,
+                                                      runnableName, programClassLoader, cConfiguration,
+                                                      context.getSpecification().getConfigs(), datasets,
                                                       metricsCollectionService, datasetFramework,
                                                       transactionSystemClient,
                                                       discoveryServiceClient));

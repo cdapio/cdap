@@ -64,6 +64,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private final DatasetFramework datasetFramework;
   private final ClassLoader programClassLoader;
   private final ServiceRunnableMetrics serviceRunnableMetrics;
+  private final int instanceId;
+  private final int instanceCount;
 
   /**
    * Create a ServiceWorkerContext with runtime arguments and access to Datasets.
@@ -73,9 +75,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
    * @param datasetFramework used to get datasets.
    * @param transactionSystemClient used to transactionalize operations.
    */
-  public BasicServiceWorkerContext(Program program, RunId runId, int instanceId, String runnableName,
-                                   ClassLoader programClassLoader,
-                                   CConfiguration cConfiguration,
+  public BasicServiceWorkerContext(Program program, RunId runId, int instanceId, int instanceCount,
+                                   String runnableName, ClassLoader programClassLoader, CConfiguration cConfiguration,
                                    Map<String, String> runtimeArgs, Set<String> datasets,
                                    MetricsCollectionService metricsCollectionService,
                                    DatasetFramework datasetFramework,
@@ -83,6 +84,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
                                    DiscoveryServiceClient discoveryServiceClient) {
     super(program, runId, datasets, getMetricContext(program, runnableName, instanceId), metricsCollectionService,
           datasetFramework, cConfiguration, discoveryServiceClient);
+    this.instanceId = instanceId;
+    this.instanceCount = instanceCount;
     this.programClassLoader = programClassLoader;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
     this.datasets = ImmutableSet.copyOf(datasets);
@@ -121,6 +124,16 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     } catch (Exception e) {
       abortTransaction(e, "Exception occurred running user code. Aborting transaction.", context);
     }
+  }
+
+  @Override
+  public int getInstanceCount() {
+    return instanceCount;
+  }
+
+  @Override
+  public int getInstanceId() {
+    return instanceId;
   }
 
   private void abortTransaction(Exception e, String message, TransactionContext context) {
