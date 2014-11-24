@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Set;
@@ -28,15 +27,11 @@ import java.util.Set;
 /**
  * Tests whether txns get closed on stopping explore service.
  */
-public class HiveExploreServiceStopTest extends BaseHiveExploreServiceTest {
-  @BeforeClass
-  public static void start() throws Exception {
-    startServices(CConfiguration.create());
-  }
+public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testServiceStop() throws Exception {
-    ExploreService exploreService = injector.getInstance(ExploreService.class);
+    startServices(CConfiguration.create());
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
     exploreService.execute("show tables");
@@ -53,6 +48,7 @@ public class HiveExploreServiceStopTest extends BaseHiveExploreServiceTest {
                           queryTxns,
                           transactionManager.getCurrentState().getInProgress().keySet()).immutableCopy()
     );
+    stopServices();
   }
 
 }

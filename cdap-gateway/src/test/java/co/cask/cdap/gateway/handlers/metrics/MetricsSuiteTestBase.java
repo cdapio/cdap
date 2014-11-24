@@ -80,10 +80,6 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class MetricsSuiteTestBase {
 
-  // Controls for test suite for whether to run BeforeClass/AfterClass
-  public static boolean runBefore = true;
-  public static boolean runAfter = true;
-
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
@@ -109,11 +105,7 @@ public abstract class MetricsSuiteTestBase {
 
   private static Injector injector;
 
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    if (!runBefore) {
-      return;
-    }
+  public static void setupTests() throws Exception {
     tmpFolder = new TemporaryFolder();
     conf = CConfiguration.create();
     conf.set(Constants.Metrics.ADDRESS, hostname);
@@ -133,11 +125,7 @@ public abstract class MetricsSuiteTestBase {
     initialize();
   }
 
-  @AfterClass
-  public static void afterClass() throws Exception {
-    if (!runAfter) {
-      return;
-    }
+  public static void cleanup() throws Exception {
     stopMetricsService(conf);
     try {
       stop();

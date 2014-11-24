@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * Test LogHandler.
  */
-public class LogHandlerTest extends MetricsSuiteTestBase {
+public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private static final Type LIST_LOGLINE_TYPE = new TypeToken<List<LogLine>>() { }.getType();
   public static String account = "developer";
 

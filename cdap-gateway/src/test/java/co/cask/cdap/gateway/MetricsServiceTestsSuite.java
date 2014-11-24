@@ -16,10 +16,10 @@
 
 package co.cask.cdap.gateway;
 
-import co.cask.cdap.gateway.handlers.log.LogHandlerTest;
-import co.cask.cdap.gateway.handlers.metrics.MetricsDeleteTest;
-import co.cask.cdap.gateway.handlers.metrics.MetricsDiscoveryQueryTest;
-import co.cask.cdap.gateway.handlers.metrics.MetricsQueryTest;
+import co.cask.cdap.gateway.handlers.log.LogHandlerTestRun;
+import co.cask.cdap.gateway.handlers.metrics.MetricsDeleteTestRun;
+import co.cask.cdap.gateway.handlers.metrics.MetricsDiscoveryQueryTestRun;
+import co.cask.cdap.gateway.handlers.metrics.MetricsQueryTestRun;
 import co.cask.cdap.gateway.handlers.metrics.MetricsSuiteTestBase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -31,24 +31,21 @@ import org.junit.runners.Suite;
  */
 @RunWith(value = Suite.class)
 @Suite.SuiteClasses(value = {
-  MetricsQueryTest.class,
-  MetricsDeleteTest.class,
-  MetricsDiscoveryQueryTest.class,
-  LogHandlerTest.class
+  MetricsQueryTestRun.class,
+  MetricsDeleteTestRun.class,
+  MetricsDiscoveryQueryTestRun.class,
+  LogHandlerTestRun.class
 })
 
 public class MetricsServiceTestsSuite  {
 
   @BeforeClass
   public static void init() throws Exception {
-    MetricsSuiteTestBase.beforeClass();
-    MetricsSuiteTestBase.runBefore = false;
-    MetricsSuiteTestBase.runAfter = false;
+    MetricsSuiteTestBase.setupTests();
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    MetricsSuiteTestBase.runAfter = true;
-    MetricsSuiteTestBase.afterClass();
+    MetricsSuiteTestBase.cleanup();
   }
 }

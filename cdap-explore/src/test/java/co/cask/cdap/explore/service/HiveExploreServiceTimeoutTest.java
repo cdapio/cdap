@@ -51,9 +51,6 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    // Need to specify that when this test is run after ExploreServiceTestsSuite has run in the same JVM
-    BaseHiveExploreServiceTest.runBefore = true;
-    BaseHiveExploreServiceTest.runAfter = true;
 
     // Set smaller values for timeouts for testing
     CConfiguration cConfiguration = CConfiguration.create();
@@ -103,6 +100,7 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
   public static void stop() throws Exception {
     datasetFramework.deleteInstance("my_table");
     datasetFramework.deleteModule("keyStructValue");
+    stopServices();
   }
 
   @Test

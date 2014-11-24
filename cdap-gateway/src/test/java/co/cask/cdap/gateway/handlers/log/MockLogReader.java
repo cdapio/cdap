@@ -42,24 +42,24 @@ public class MockLogReader implements LogReader {
 
     // Add log lines for app testApp1, flow testFlow1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(LogHandlerTest.account + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
+      logMap.put(LogHandlerTestRun.account + "/testApp1/flow-testFlow1", new LogLine(i, "testFlow1<img>-" + i));
     }
 
     // Add log lines for app testApp1, flow testService1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(LogHandlerTest.account + "/testApp4/userservice-testService1",
+      logMap.put(LogHandlerTestRun.account + "/testApp4/userservice-testService1",
                  new LogLine(i, "testService1<img>-" + i));
     }
 
     // Add log lines for app testApp2, flow testProcedure1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(LogHandlerTest.account + "/testApp2/procedure-testProcedure1",
+      logMap.put(LogHandlerTestRun.account + "/testApp2/procedure-testProcedure1",
                  new LogLine(i, "testProcedure1<img>-" + i));
     }
 
     // Add log lines for app testApp3, flow testMapReduce1
     for (int i = 0; i < MAX; ++i) {
-      logMap.put(LogHandlerTest.account + "/testApp3/mapred-testMapReduce1",
+      logMap.put(LogHandlerTestRun.account + "/testApp3/mapred-testMapReduce1",
                  new LogLine(i, "testMapReduce1<img>-" + i));
     }
 

@@ -27,24 +27,20 @@ import org.junit.runners.Suite;
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  ExploreExtensiveSchemaTableTest.class,
-  ExploreMetadataTest.class,
-  HiveExploreServiceTest.class,
-  WritableDatasetTest.class,
-  HiveExploreServiceStopTest.class
+  ExploreExtensiveSchemaTableTestRun.class,
+  ExploreMetadataTestRun.class,
+  HiveExploreServiceTestRun.class,
+  WritableDatasetTestRun.class
 })
 public class ExploreServiceTestsSuite {
 
   @BeforeClass
   public static void init() throws Exception {
     BaseHiveExploreServiceTest.startServices(CConfiguration.create());
-    BaseHiveExploreServiceTest.runBefore = false;
-    BaseHiveExploreServiceTest.runAfter = false;
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    BaseHiveExploreServiceTest.runAfter = true;
     BaseHiveExploreServiceTest.stopServices();
   }
 }
