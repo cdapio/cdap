@@ -38,7 +38,11 @@ Preparing the Cluster
 
 .. include:: installation.rst 
    :start-after: .. _install-preparing-the-cluster:
-   :end-before:  .. _install-packaging:
+   :end-before:  .. _install-preparing-the-cluster-defaults:
+
+If your cluster is not setup with these defaults, you'll need to 
+:ref:`edit your CDAP configuration <quick-start-configuration>` once you have downloaded and installed
+the packages, and prior to starting services.
 
 - For a *Secure Hadoop* installation, see the discussion in :ref:`the installation guide
   <install-secure-hadoop>`.
@@ -46,19 +50,22 @@ Preparing the Cluster
 - The ``ulimit`` for the cluster should already be configured correctly for HBase; if not, 
   details are covered in :ref:`the installation guide <install-ulimit>`.
 
-Preparing Package Managers
---------------------------
+Configuring Package Managers
+----------------------------
 
 .. include:: installation.rst 
    :start-after: .. _install-rpm-using-yum:
    :end-before:  .. _install-configuration:
+
+
+.. _quick-start-configuration:
 
 .. "Configuration title"
 
 .. include:: installation.rst 
    :start-after: .. _install-configuration:
    :end-before:  .. _install-alternatives:
-   
+
 .. "To configure your particular installation"
 
 .. include:: installation.rst 

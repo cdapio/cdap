@@ -155,6 +155,6 @@ output, as described in :ref:`datasets-map-reduce-jobs`.
 - For a longer example, the how-to guide :ref:`cdap-mapreduce-guide` also
   demonstrates the use of MapReduce.
 
-- The :ref:`Tutorial <tutorial>` 
+- The :ref:`Tutorial <tutorials>` 
   `WISE: Web Analytics <http://docs.cask.co/tutorial/current/en/tutorial2.html>`__ 
   uses a MapReduce Job.

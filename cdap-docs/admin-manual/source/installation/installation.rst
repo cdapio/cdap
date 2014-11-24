@@ -183,7 +183,7 @@ Deployment Architectures
 
 .. rubric:: CDAP High Availability and Highly Scalable Deployment
 
-**Note:** Each component in CDAP is horziontally scalable. This diagram presents the high
+**Note:** Each component in CDAP is horizontally scalable. This diagram presents the high
 availability and highly scalable deployment. The number of nodes for each component can be
 changed based on the requirements.
 
@@ -203,8 +203,10 @@ create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
 ``yarn``. If you set up your cluster as above, no further changes are required.
 
+.. _install-preparing-the-cluster-defaults:
+
 If your cluster is not setup with these defaults, you'll need to 
-:ref:`edit your CDAP setup <install-configuration>` once you have downloaded and installed
+:ref:`edit your CDAP configuration <install-configuration>` once you have downloaded and installed
 the packages, and prior to starting services.
 
 .. _install-packaging:
@@ -213,7 +215,7 @@ Packaging
 ---------
 CDAP components are available as either Yum ``.rpm`` or APT ``.deb`` packages.
 There is one package for each CDAP component, and each component may have multiple
-services. Additionally, there is a base CDAP package with two utility packages
+services. Additionally, there is a base CDAP package with three utility packages
 installed which creates the base configuration and the ``cdap`` user.
 We provide packages for *Ubuntu 12* and *CentOS 6*.
 
@@ -323,115 +325,13 @@ To configure your particular installation, follow one of these two approaches:
    ``conf/cdap-site.xml`` (see the :ref:`appendix-cdap-site.xml`) and set appropriate
    properties.
 
-#. Add these properties to ``cdap-site.xml``; they are the minimal required configuration::
+#. Add these properties to ``cdap-site.xml``; they are the minimal required configuration:
 
-    <configuration>
+  .. literalinclude:: ../../../../cdap-distributions/src/etc/cdap/conf.dist/cdap-site.xml.example
+     :language: xml
+     :lines: 18-
 
-      <!-- Cluster configurations -->
-
-      <property>
-        <name>root.namespace</name>
-        <value>cdap</value>
-        <description>Specifies the root namespace</description>
-      </property>
-
-      <!-- Substitute the zookeeper quorum for components here -->
-      <property>
-        <name>zookeeper.quorum</name>
-        <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
-        <description>Specifies the zookeeper host:port</description>
-      </property>
-
-      <property>
-        <name>hdfs.namespace</name>
-        <value>/${root.namespace}</value>
-        <description>Namespace for HDFS files</description>
-      </property>
-
-      <property>
-        <name>hdfs.user</name>
-        <value>yarn</value>
-        <description>User name for accessing HDFS</description>
-      </property>
-
-      <!-- Router configuration -->
-      <!-- Substitue the IP to which Router service should bind to and listen on -->
-      <property>
-        <name>router.bind.address</name>
-        <value>LOCAL-ROUTER-IP</value>
-        <description>Specifies the inet address on which the Router service will listen</description>
-      </property>
-
-      <!-- App Fabric configuration  -->
-      <!-- Substitute the IP to which App-Fabric service should bind to and listen on -->
-      <property>
-        <name>app.bind.address</name>
-        <value>LOCAL-APP-FABRIC-IP</value>
-        <description>Specifies the inet address on which the app fabric service will listen</description>
-      </property>
-
-      <!-- Data Fabric configuration -->
-      <!-- Substitute the IP to which Data-Fabric tx service should bind to and listen on -->
-      <property>
-        <name>data.tx.bind.address</name>
-        <value>LOCAL-DATA-FABRIC-IP</value>
-        <description>Specifies the inet address on which the transaction service will listen</description>
-      </property>
-
-      <!-- Kafka Configuration -->
-      <property>
-        <name>kafka.log.dir</name>
-        <value>/data/cdap/kafka-logs</value>
-        <description>Directory to store Kafka logs</description>
-      </property>
-
-      <!-- Substitute with a list of all machines which will run the Kafka component -->
-      <property>
-        <name>kafka.seed.brokers</name>
-        <value>FQDN1:9092,FQDN2:9092</value>
-        <description>List of Kafka brokers (comma separated)</description>
-      </property>
-
-      <!-- Must be <= the number of kafka.seed.brokers configured above. 
-           For high-availability, this should be at least two. -->
-      <property>
-        <name>kafka.default.replication.factor</name>
-        <value>1</value>
-        <description>Kafka replication factor</description>
-      </property>
-
-      <!-- Watchdog Configuration -->
-      <!-- Substitute the IP to which metrics-query service should bind to and listen on -->
-      <property>
-        <name>metrics.query.bind.address</name>
-        <value>LOCAL-WATCHDOG-IP</value>
-        <description>Specifies the inet address on which the metrics-query service will listen</description>
-      </property>
-
-      <!-- Webapp Configuration -->
-      <property>
-        <name>dashboard.bind.port</name>
-        <value>9999</value>
-        <description>Specifies the port on which dashboard listens</description>
-      </property>
-
-      <!-- Substitute the IP of the Router service to which the UI should connect -->
-      <property>
-        <name>router.server.address</name>
-        <value>ROUTER-HOST-IP</value>
-        <description>Specifies the destination IP where Router service is running</description>
-      </property>
-
-      <property>
-        <name>router.server.port</name>
-        <value>10000</value>
-        <description>Specifies the destination Port where Router service is listening</description>
-      </property>
-
-    </configuration>
-
-
-Depending on your installation, you want to set these properties:
+Depending on your installation, you may want to set these properties:
 
 - If you want to use **an HDFS directory with a name** other than ``/cdap``:
 
@@ -516,7 +416,7 @@ ULIMIT Configuration
 When you install the CDAP packages, the ``ulimit`` settings for the CDAP user are
 specified in the ``/etc/security/limits.d/cdap.conf`` file. On Ubuntu, they won't take
 effect unless you make changes to the ``/etc/pam.d/common-session file``. You can check
-this setting with the command ``ulimit -n`` when logged in as the user which runs HBase.
+this setting with the command ``ulimit -n`` when logged in as the CDAP user.
 For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference
 Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
