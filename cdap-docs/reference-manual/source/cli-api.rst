@@ -118,7 +118,7 @@ These are the available commands:
    ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
    ``get status service <app-id>.<program-id>``,Gets the status of a Service
    ``get status workflow <app-id>.<program-id>``,Gets the status of a Workflow
-   ``get service <app-id>.<service-id> endpoints``,Get the endpoints exposed by a Service
+   ``get endpoints service <app-id>.<service-id>``,Get the endpoints exposed by a Service
    **Listing Elements**
    ``list apps``,Lists all applications
    ``list dataset instances``,Lists all Datasets
