@@ -28,4 +28,14 @@ public interface ServiceWorkerContext extends RuntimeContext {
    * @param runnable
    */
   void execute(TxRunnable runnable);
+
+  /**
+   * @return Number of instances of this worker.
+   */
+  int getInstanceCount();
+
+  /**
+   * @return The instance id of this worker.
+   */
+  int getInstanceId();
 }
