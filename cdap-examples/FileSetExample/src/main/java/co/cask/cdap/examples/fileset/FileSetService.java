@@ -14,9 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.examples.fileexample;
+package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.data.DataSetInstantiationException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -37,22 +38,22 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * A service that writes files to the "lines" file set and reads files from the "counts" file set.
+ * A service to upload or download files to the "lines" and "counts" file sets.
  */
-public class FileService extends AbstractService {
+public class FileSetService extends AbstractService {
 
   @Override
   protected void configure() {
-    setName("FileService");
-    setDescription("A service to upload or download files in the \"lines\" and  \"counts\" file sets.");
+    setName("FileSetService");
+    setDescription("A service to upload or download files to the \"lines\" and  \"counts\" file sets.");
     setInstances(1);
-    addHandler(new FileHandler());
+    addHandler(new FileSetHandler());
   }
 
   /**
    * A handler that allows reading and writing files.
    */
-  public static class FileHandler extends AbstractHttpServiceHandler {
+  public static class FileSetHandler extends AbstractHttpServiceHandler {
 
     @UseDataSet("lines")
     private FileSet lines;
@@ -66,12 +67,10 @@ public class FileService extends AbstractService {
                      @PathParam("fileSet") String set, @QueryParam("path") String filePath) {
 
       FileSet fileSet;
-      if ("lines".equals(set)) {
-        fileSet = lines;
-      } else if ("counts".equals(set)) {
-        fileSet = counts;
-      } else {
-        responder.sendError(400, "Invalid file set name '" + set + "'");
+      try {
+        fileSet = getContext().getDataSet(set);
+      } catch (DataSetInstantiationException e) {
+        responder.sendError(400, String.format("Invalid file set name '%s'", set));
         return;
       }
 
@@ -80,7 +79,7 @@ public class FileService extends AbstractService {
       try {
         content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
       } catch (IOException e) {
-        responder.sendError(400, "Unable to read path '" + filePath + "' in file set '" + set + "'");
+        responder.sendError(400, String.format("Unable to read path '%s' in file set '%s'", filePath, set));
         return;
       }
       responder.send(200, content, "application/octet-stream", ImmutableMultimap.<String, String>of());

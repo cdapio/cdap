@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.fileexample;
+package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -28,9 +28,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
 /**
- * A simple word counter. It reads inputs from the "lines" dataset and writes its output to
- * the "counts" dataset. The input and output path can be configured as runtime arguments:
- * <ul></ul>
+ * A simple word counter. It reads inputs from the "lines" FileSet and writes its output to
+ * the "counts" FileSet. The input and output path can be configured as runtime arguments:
+ * <ul>
  * <li>"dataset.lines.input.paths" for the input. Multiple paths can be given, separated by commas.</li>
  * <li>"dataset.counts.output.path" for the output.</li>
  * </ul>
@@ -71,7 +71,7 @@ public class WordCount extends AbstractMapReduce {
   }
 
   /**
-   * A reducer that sums up the numbers for each key.
+   * A reducer that sums up the counts for each key.
    */
   public static class Counter extends Reducer<Text, IntWritable, String, Long> {
 

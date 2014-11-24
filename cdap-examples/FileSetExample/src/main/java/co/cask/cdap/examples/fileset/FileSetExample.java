@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.examples.fileexample;
+package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -25,20 +25,20 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 /**
  * An application that uses files for its MapReduce input and output.
  */
-public class FileExample extends AbstractApplication {
+public class FileSetExample extends AbstractApplication {
 
   @Override
   public void configure() {
     try {
-      setName("FileExample");
-      setDescription("Application with MapReduce job using file as dataset");
+      setName("FileSetExample");
+      setDescription("Application with a MapReduce that uses a FileSet dataset");
       createDataset("lines", "fileSet", FileSetProperties.builder()
         .setInputFormat(TextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class).build());
       createDataset("counts", "fileSet", FileSetProperties.builder()
           .setInputFormat(TextInputFormat.class)
           .setOutputFormat(TextOutputFormat.class).build());
-      addService(new FileService());
+      addService(new FileSetService());
       addMapReduce(new WordCount());
     } catch (Throwable t) {
       throw Throwables.propagate(t);
