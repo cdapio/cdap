@@ -77,6 +77,28 @@ Each request to a method is committed as a single transaction.
     }
   }
 
+Path and Query Parameters
+=========================
+
+Handler endpoints can have Path and Query parameters. Path parameters are used to assist with path-mapping of requests,
+while Query parameters are used to easily parse the query string of a request.
+
+For example, the ``WordCount`` application has a ``Service`` that exposes an endpoint to retrieve the count of a word
+and it's word associations. In the ``@Path`` annotation, ``{word}`` is a path parameter that is mapped
+to a Java String using ``@PathParam("word") String word``. Similarly, the endpoint also allows
+the query parameter ``limit`` with a default value of 10.
+
+::
+
+  @Path("count/{word}")
+  @GET
+  public void getCount(HttpServiceRequest request, HttpServiceResponder responder,
+                       @PathParam("word") String word,
+                       @DefaultValue("10") @QueryParam("limit") Integer limit) {
+
+    // ...
+  }
+
 Service Discovery
 -----------------
 

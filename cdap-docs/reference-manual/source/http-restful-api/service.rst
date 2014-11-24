@@ -22,27 +22,27 @@ You can list all Services in CDAP by issuing an HTTP GET request to the URL::
 
   GET <base-url>/services
 
-The response body will contain a JSON-formatted list of the existing Datasets::
+The response body will contain a JSON-formatted list of the existing Services::
 
-[
-    {
-        "app": "PurchaseHistory",
-        "description": "Service to lookup product ids.",
-        "id": "CatalogLookup",
-        "name": "CatalogLookup",
-        "type": "Service"
-    }
-    ...
-]
+  [
+      {
+          "app": "PurchaseHistory",
+          "description": "Service to lookup product ids.",
+          "id": "CatalogLookup",
+          "name": "CatalogLookup",
+          "type": "Service"
+      }
+      ...
+  ]
 
 Requesting Service Methods
 --------------------------
-To make a request to a Service's method, send the method's path as part of the request URL along with any additional
-headers and body.
+To make a request to a Service's method, send the value of the method's ``@Path`` annotation
+as part of the request URL along with any additional headers, body and query parameters.
 
 The request type is defined by the Service's method::
 
-  <REQUEST-TYPE> <base-url>/apps/<app-id>/services/<service-id>/methods/<method-id>
+  <REQUEST-TYPE> <base-url>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
 
 .. list-table::
    :widths: 20 80
@@ -56,8 +56,8 @@ The request type is defined by the Service's method::
      - Name of the Application being called
    * - ``<service-id>``
      - Name of the Service being called
-   * - ``<method-id>``
-     - Name of the method being called
+   * - ``<endpoint-path>``
+     - Endpoint path of the method being called
 
 HTTP Responses
 ..............
@@ -79,10 +79,11 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/AnalyticsApp/services/IpGeoLookupService/methods/lookup/46.19.42.110``
+     - ``GET <base-url>/apps/WordCount/services/RetrieveCounts/methods/count/Cask?limit=2``
    * - Description
-     - Make a request to the ``lookup/{ip}`` endpoint of the ``IpGeoLookupService`` in ``AnalyticsApp``.
+     - Make a request to the ``count/{word}`` endpoint of the ``RetrieveCounts`` Service in ``WordCount`` to
+       get a count of the word "Cask" and its associated words with a limit of 2.
    * - Response Status Code
      - ``200 OK``
    * - Response Body
-     - ``{"latitude": "76.9285", "longitude": "76.9285"}``
+     - ``{ "assocs": { "CaskData": 1, "CaskInc": 1 }, "count": 5, "word": "Cask"}``
