@@ -156,6 +156,7 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
   public void testingMetricsWithRunIds() throws Exception {
     String runId1 = "id123";
     String runId2 = "id124";
+    String runId3 = "id125";
 
     MetricsCollector collector1 = collectionService.getCollector(MetricsScope.USER,
                                                                 "WordCount.s.CounterService.CountRunnable", runId1);
@@ -165,42 +166,44 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
                                                                 "WordCount.s.CounterService.CountRunnable", runId2);
     collector2.increment("rid_metric", 2);
 
+    MetricsCollector collector3 = collectionService.getCollector(MetricsScope.USER,
+                                                                 "WordCount.b.CounterMapRed.m", runId3);
+    collector3.gauge("entries.out", 10);
+
+    MetricsCollector collector4 = collectionService.getCollector(MetricsScope.USER,
+                                                                 "WordCount.b.CounterMapRed.r", runId3);
+    collector4.gauge("entries.out", 10);
+
     // Wait for collection to happen
     TimeUnit.SECONDS.sleep(2);
 
-    //runnable metric request with runId1
-    String runnableRequest1 =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/rid_metric?aggregate=true&run-id=" + runId1;
-
-    //runnable metric request with runId2
-    String runnableRequest2 =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnable/rid_metric?aggregate=true&run-id=" + runId2;
-
-    //service metric request with runId2
-    String serviceRequest2 =
-      "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true&run-id=" + runId2;
+    String serviceRequest =
+      "/user/apps/WordCount/services/CounterService/runs/" + runId2 + "/rid_metric?aggregate=true";
 
     //service metric request with invliad runId
     String serviceRequestInvalidId =
-      "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true&run-id=fff";
+      "/user/apps/WordCount/services/CounterService/runs/fff/rid_metric?aggregate=true";
 
     //service metric request without specifying the runId and aggregate will run the sum of these two runIds
     String serviceRequestTotal =
       "/user/apps/WordCount/services/CounterService/rid_metric?aggregate=true";
 
-    // metric request without any context
-    String metricRequest1 =
-      "/user/rid_metric?aggregate=true&run-id=" + runId1;
+    String mappersMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/mappers/entries.out?aggregate=true";
 
-    String metricRequestInvalid =
-      "/user/rid_metric?aggregate=true&run-id=" + runId1 + "&run-id=" + runId2;
+    String reducersMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/reducers/entries.out?aggregate=true";
 
-    testSingleMetric(runnableRequest1, 1);
-    testSingleMetric(runnableRequest2, 2);
-    testSingleMetric(serviceRequest2, 2);
+    String mapredMetric =
+      "/user/apps/WordCount/mapreduce/CounterMapRed/runs/" + runId3 + "/entries.out?aggregate=true";
+
+
+    testSingleMetric(serviceRequest, 2);
     testSingleMetric(serviceRequestInvalidId, 0);
     testSingleMetric(serviceRequestTotal, 3);
-    testSingleMetric(metricRequest1, 1);
+    testSingleMetric(mappersMetric, 10);
+    testSingleMetric(reducersMetric, 10);
+    testSingleMetric(mapredMetric, 20);
   }
 
   @Test
@@ -215,8 +218,8 @@ public class MetricsQueryTest extends MetricsSuiteTestBase {
 
     //runnable metric request with runId1
     String runnableRequest =
-      "/user/apps/WordCount/services/CounterService/runnables/CountRunnableInvalid/" +
-        "rid_metric_invalid?aggregate=true&run-id=" + runId1 + "&run-id=" + runId2;
+      "/user/apps/WordCount/services/CounterService/runnables/CountRunnableInvalid/run-id/" + runId1 + "/run-id/" +
+        runId2 + "rid_metric_invalid?aggregate=true";
     HttpResponse response = doGet("/v2/metrics" + runnableRequest);
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
   }

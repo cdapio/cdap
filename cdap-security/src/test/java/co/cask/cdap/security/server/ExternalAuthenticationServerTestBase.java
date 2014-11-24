@@ -68,6 +68,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -215,7 +216,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     HttpResponse response = client.execute(request);
 
     assertEquals(response.getStatusLine().getStatusCode(), 200);
-    verify(TEST_AUDIT_LOGGER, atLeastOnce()).trace(contains("admin"));
+    verify(TEST_AUDIT_LOGGER, timeout(10000).atLeastOnce()).trace(contains("admin"));
 
     // Test correct headers being returned
     String cacheControlHeader = response.getFirstHeader("Cache-Control").getValue();
@@ -271,7 +272,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
     // Request is Unauthorized
     assertEquals(401, response.getStatusLine().getStatusCode());
-    verify(TEST_AUDIT_LOGGER, atLeastOnce()).trace(contains("401"));
+    verify(TEST_AUDIT_LOGGER, timeout(10000).atLeastOnce()).trace(contains("401"));
 
     server.stopAndWait();
     ldapServer.shutDown(true);

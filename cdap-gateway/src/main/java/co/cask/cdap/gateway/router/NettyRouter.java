@@ -124,7 +124,7 @@ public class NettyRouter extends AbstractIdleService {
     this.serviceToPortMap = Maps.newHashMap();
 
     this.serviceLookup = serviceLookup;
-    this.securityEnabled = cConf.getBoolean(Constants.Security.CFG_SECURITY_ENABLED, false);
+    this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED, false);
     this.realm = cConf.get(Constants.Security.CFG_REALM);
     this.tokenValidator = tokenValidator;
     this.accessTokenTransformer = accessTokenTransformer;

@@ -16,28 +16,60 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
+import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableList;
+import org.apache.twill.filesystem.Location;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 
 /**
  *
  */
-public final class ApplicationWithPrograms {
-  private final ApplicationSpecLocation appSpecLoc;
+public class ApplicationWithPrograms implements Closeable {
+  private final Id.Application id;
+  private final ApplicationSpecification specification;
+  private final Location location;
+  private final ApplicationDeployable applicationDeployable;
   private final List<Program> programs;
 
-  public ApplicationWithPrograms(ApplicationSpecLocation appSpecLoc, List<? extends Program> programs) {
-    this.appSpecLoc = appSpecLoc;
+  public ApplicationWithPrograms(ApplicationDeployable applicationDeployable, Iterable<? extends Program> programs) {
+    this.id = applicationDeployable.getId();
+    this.specification = applicationDeployable.getSpecification();
+    this.location = applicationDeployable.getLocation();
+    this.applicationDeployable = applicationDeployable;
     this.programs = ImmutableList.copyOf(programs);
   }
 
-  public ApplicationSpecLocation getAppSpecLoc() {
-    return appSpecLoc;
+  public ApplicationWithPrograms(ApplicationWithPrograms other) {
+    this.id = other.id;
+    this.specification = other.specification;
+    this.location = other.location;
+    this.applicationDeployable = other.applicationDeployable;
+    this.programs = other.programs;
+  }
+
+  public Id.Application getId() {
+    return id;
+  }
+
+  public ApplicationSpecification getSpecification() {
+    return specification;
+  }
+
+  public Location getLocation() {
+    return location;
   }
 
   public Iterable<Program> getPrograms() {
     return programs;
+  }
+
+  @Override
+  public void close() throws IOException {
+    applicationDeployable.close();
   }
 }

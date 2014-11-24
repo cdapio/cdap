@@ -146,15 +146,15 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
       this.offset = new StreamFileOffset(offset);
       this.partitionLocation = Locations.getParent(offset.getEventLocation());
 
-      LOG.debug("Stream reader created for {}", offset.getEventLocation().toURI());
+      LOG.trace("Stream reader created for {}", offset.getEventLocation().toURI());
     }
 
     @Override
     public void initialize() throws IOException {
-      LOG.info("Initialize stream reader {}", offset);
+      LOG.trace("Initialize stream reader {}", offset);
       reader.initialize();
       offset = new StreamFileOffset(offset, reader.getPosition());
-      LOG.info("Stream reader initialized {}", offset);
+      LOG.trace("Stream reader initialized {}", offset);
     }
 
     @Override

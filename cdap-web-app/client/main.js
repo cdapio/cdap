@@ -77,7 +77,7 @@ define(['core/application', 'helpers/localstorage-adapter'], function (Applicati
                 this.route('Config', { path: '/config' });
             });
             this.route('Log', { path: '/log' });
-            this.route('History', { path: '/history' });
+            this.route('History', { path: '/runs' });
         });
 
 
@@ -106,7 +106,7 @@ define(['core/application', 'helpers/localstorage-adapter'], function (Applicati
             });
 
             this.route('Log', { path: '/log' });
-            this.route('History', { path: '/history' });
+            this.route('History', { path: '/runs' });
 
         });
 
@@ -125,7 +125,7 @@ define(['core/application', 'helpers/localstorage-adapter'], function (Applicati
             });
 
             this.route('Log', { path: '/log'});
-            this.route('History', { path: '/history' });
+            this.route('History', { path: '/runs' });
 
         });
 
@@ -137,7 +137,7 @@ define(['core/application', 'helpers/localstorage-adapter'], function (Applicati
                 this.route('Config', { path: '/config' });
             });
 
-            this.route('History', { path: '/history'});
+            this.route('History', { path: '/runs'});
             this.route('Log', { path: '/log' });
 
         });
@@ -150,7 +150,7 @@ define(['core/application', 'helpers/localstorage-adapter'], function (Applicati
             });
 
             this.route('Log', { path: '/log'});
-            this.route('History', { path: '/history'});
+            this.route('History', { path: '/runs'});
 
         });
 
@@ -158,7 +158,7 @@ define(['core/application', 'helpers/localstorage-adapter'], function (Applicati
             this.resource('WorkflowStatus', {path: '/'}, function () {
                 this.route('Config', { path: '/config'});
             });
-            this.route('History', { path: '/history' });
+            this.route('History', { path: '/runs' });
         });
 
         this.route('Analyze', { path: '/analyze' });

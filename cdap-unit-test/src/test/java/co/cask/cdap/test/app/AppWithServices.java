@@ -136,6 +136,16 @@ public class AppWithServices extends AbstractApplication {
     public void failure(HttpServiceRequest request, HttpServiceResponder responder) {
       throw new IllegalStateException("Failed");
     }
+
+    @Path("verifyClassLoader")
+    @GET
+    public void verifyClassLoader(HttpServiceRequest request, HttpServiceResponder responder) {
+      if (Thread.currentThread().getContextClassLoader() != getClass().getClassLoader()) {
+        responder.sendStatus(500);
+      } else {
+        responder.sendStatus(200);
+      }
+    }
   }
 
   private static final class DatasetUpdateService extends AbstractService {

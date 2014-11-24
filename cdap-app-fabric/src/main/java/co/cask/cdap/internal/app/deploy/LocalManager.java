@@ -29,6 +29,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
+import co.cask.cdap.internal.app.deploy.pipeline.DeployCleanupStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArchiveLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
@@ -88,7 +89,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
   @Override
   public ListenableFuture<O> deploy(Id.Account id, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArchiveLoaderStage(id, appId));
+    pipeline.addLast(new LocalArchiveLoaderStage(configuration, id, appId));
     pipeline.addLast(new VerificationStage(datasetFramework));
     pipeline.addLast(new DeployDatasetModulesStage(datasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(datasetFramework));
@@ -96,6 +97,7 @@ public class LocalManager<I, O> implements Manager<I, O> {
                                                     queueAdmin, discoveryServiceClient));
     pipeline.addLast(new ProgramGenerationStage(configuration, locationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store));
+    pipeline.setFinally(new DeployCleanupStage());
     return pipeline.execute(input);
   }
 }

@@ -18,7 +18,8 @@ Operations
     Runtime Arguments <runtime-arguments>
     Scaling Instances <scaling-instances>
     CDAP Console <cdap-console>
-
+    Troubleshooting <troubleshooting>
+    
 
 .. |logging| replace:: **Logging:**
 .. _logging: logging.html
@@ -48,6 +49,12 @@ Operations
 .. _cdap-console: cdap-console.html
 
 - |cdap-console|_ The CDAP Console is available for **deploying, querying and managing CDAP.** 
+
+
+.. |troubleshooting| replace:: **Troubleshooting:**
+.. _troubleshooting: troubleshooting.html
+
+- |troubleshooting|_ Selected examples of potential problems and possible resolutions.
 
 
 .. rubric:: Command-Line Interface

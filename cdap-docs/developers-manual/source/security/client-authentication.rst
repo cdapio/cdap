@@ -54,7 +54,7 @@ CDAP provides several ways to authenticate a client's identity:
 - :ref:`installation-basic-authentication`
 - :ref:`installation-ldap-authentication`
 - :ref:`installation-jaspi-authentication`
-- :ref:`Custom Authentication <custom-authentication>`
+- :ref:`Custom Authentication <developers-custom-authentication>`
 
 To configure security, see the Administration Manual's :ref:`configuration-security`.
 
