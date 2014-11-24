@@ -74,8 +74,8 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
                            MetricsCollectionService metricsCollectionService,
                            DatasetFramework dsFramework, CConfiguration conf,
                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
-    super(program, runId, runtimeArguments, datasets, getMetricContext(program), metricsCollectionService, dsFramework, conf,
-          discoveryServiceClient);
+    super(program, runId, runtimeArguments, datasets, getMetricContext(program), metricsCollectionService,
+          dsFramework, conf, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
     this.metricsCollectionService = metricsCollectionService;
