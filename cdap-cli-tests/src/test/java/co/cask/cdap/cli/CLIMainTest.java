@@ -31,6 +31,8 @@ import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Function;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -143,8 +145,9 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "delete dataset instance " + FakeApp.DS_NAME, "Successfully deleted dataset");
   }
 
-  private File createAppJarFile(Class<?> cls) {
-    return new File(AppFabricClient.createAppJar(cls).toURI());
+  private File createAppJarFile(Class<?> cls) throws IOException {
+    LocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
+    return AppFabricClient.createDeploymentJar(locationFactory, cls);
   }
 
   private void testCommandOutputContains(CLI cli, String command, final String expectedOutput) throws Exception {

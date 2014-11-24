@@ -141,7 +141,9 @@ public abstract class AppFabricTestHelper {
                                                                         final Supplier<File> folderSupplier)
     throws Exception {
 
-    Location deployedJar = AppFabricClient.createAppJar(appClass);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    Location deployedJar = locationFactory.create(
+      AppFabricClient.createDeploymentJar(locationFactory, appClass).toURI());
     try {
       ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
       // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
