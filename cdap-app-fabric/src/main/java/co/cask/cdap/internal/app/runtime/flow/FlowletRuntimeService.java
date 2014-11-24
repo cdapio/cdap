@@ -137,7 +137,7 @@ final class FlowletRuntimeService extends AbstractIdleService {
         txCallback.onSuccess(previousInstancesCount, atomicContext);
         return;
       } catch (Throwable e) {
-        Throwable cause = e.getCause() == null ? e : e.getCause();
+        Throwable cause = Throwables.getRootCause(e);
         FailureReason.Type failureType = FailureReason.Type.IO_ERROR;
         if (!(cause instanceof TransactionFailureException)) {
           failureType = FailureReason.Type.USER;
