@@ -66,18 +66,24 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
   private final ServiceRunnableMetrics serviceRunnableMetrics;
+  private final int instanceId;
+  private final int instanceCount;
+
 
   public BasicServiceWorkerContext(ServiceWorkerSpecification spec, Program program, RunId runId, int instanceId,
-                                   Arguments runtimeArgs, CConfiguration cConf,
+                                   int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
                                    MetricsCollectionService metricsCollectionService,
                                    DatasetFramework datasetFramework,
                                    TransactionSystemClient transactionSystemClient,
                                    DiscoveryServiceClient discoveryServiceClient) {
+
     super(program, runId, spec.getDatasets(), getMetricContext(program, spec.getName(), instanceId),
           metricsCollectionService, datasetFramework, cConf, discoveryServiceClient);
     this.specification = spec;
     this.datasets = ImmutableSet.copyOf(spec.getDatasets());
     this.runtimeArgs = runtimeArgs.asMap();
+    this.instanceId = instanceId;
+    this.instanceCount = instanceCount;
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConf, Namespace.USER));
@@ -118,6 +124,16 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     } catch (Exception e) {
       abortTransaction(e, "Exception occurred running user code. Aborting transaction.", context);
     }
+  }
+
+  @Override
+  public int getInstanceCount() {
+    return instanceCount;
+  }
+
+  @Override
+  public int getInstanceId() {
+    return instanceId;
   }
 
   private void abortTransaction(Exception e, String message, TransactionContext context) {

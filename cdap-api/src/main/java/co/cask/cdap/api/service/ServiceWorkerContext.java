@@ -34,4 +34,14 @@ public interface ServiceWorkerContext extends RuntimeContext, ServiceDiscoverer 
    * @param runnable The runnable to be executed in the transaction
    */
   void execute(TxRunnable runnable);
+
+  /**
+   * @return Number of instances of this worker.
+   */
+  int getInstanceCount();
+
+  /**
+   * @return The instance id of this worker.
+   */
+  int getInstanceId();
 }
