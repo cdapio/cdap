@@ -228,7 +228,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
-                               port, GrantAccessToken.Paths.GET_TOKEN);
+                               server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_TOKEN);
 
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
@@ -284,7 +284,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
-                               port, GrantAccessToken.Paths.GET_TOKEN);
+                               server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "xxxxx");
 
@@ -309,7 +309,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
-                               port, Constants.EndPoints.STATUS);
+                               server.getSocketAddress().getPort(), Constants.EndPoints.STATUS);
     HttpGet request = new HttpGet(uri);
 
     HttpResponse response = client.execute(request);
@@ -332,7 +332,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
-                               port, GrantAccessToken.Paths.GET_EXTENDED_TOKEN);
+                               server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_EXTENDED_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     HttpResponse response = client.execute(request);
@@ -374,7 +374,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
-                               port, "invalid");
+                               server.getSocketAddress().getPort(), "invalid");
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
     HttpResponse response = client.execute(request);
