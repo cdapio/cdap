@@ -43,7 +43,7 @@ The request type is defined by the Service's method::
 
   <request-type> <base-url>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
   
-**Note: ** Any reserved or unsafe characters in the path parameters should be encoded using 
+**Note:** Any reserved or unsafe characters in the path parameters should be encoded using 
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`.
 
 .. list-table::
