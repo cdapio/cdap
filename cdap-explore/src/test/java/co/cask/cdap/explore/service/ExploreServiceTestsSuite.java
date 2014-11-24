@@ -38,10 +38,13 @@ public class ExploreServiceTestsSuite {
   @BeforeClass
   public static void init() throws Exception {
     BaseHiveExploreServiceTest.startServices(CConfiguration.create());
+    BaseHiveExploreServiceTest.runBefore = false;
+    BaseHiveExploreServiceTest.runAfter = false;
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    BaseHiveExploreServiceTest.runAfter = true;
     BaseHiveExploreServiceTest.stopServices();
   }
 }
