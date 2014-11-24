@@ -172,11 +172,6 @@ define(['core/models/program'], function (Program) {
 
         setMetricData: function (name, value) {
             var metricsData = this.get('metricsData');
-            //todo remove it when services will be fixed
-            //never zero
-            if (value == 0) {
-                value = Math.floor((Math.random() * 30) + 1);
-            }
             metricsData.set(name, value);
         }
     });
