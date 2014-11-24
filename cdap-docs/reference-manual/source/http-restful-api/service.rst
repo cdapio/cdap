@@ -12,8 +12,7 @@ Service HTTP RESTful API
 .. highlight:: console
 
 This interface supports listing all Services and making requests to the methods of an Application’s Services.
-See the `CDAP Client HTTP API <#cdap-client-http-api>`__ for how to control the life cycle of
-Services.
+See the :ref:`http-restful-api-lifecycle` for how to control the lifecycle of Services.
 
 Listing all Services
 --------------------
@@ -42,7 +41,7 @@ as part of the request URL along with any additional headers, body and query par
 
 The request type is defined by the Service's method::
 
-  <REQUEST-TYPE> <base-url>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
+  <request-type> <base-url>/apps/<app-id>/services/<service-id>/methods/<endpoint-path>
 
 .. list-table::
    :widths: 20 80
@@ -50,7 +49,7 @@ The request type is defined by the Service's method::
 
    * - Parameter
      - Description
-   * - ``<REQUEST-TYPE>``
+   * - ``<request-type>``
      - One of GET, POST, PUT and DELETE. This is defined by the handler method.
    * - ``<app-id>``
      - Name of the Application being called
