@@ -22,7 +22,6 @@ import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.data.stream.StreamInputFormat;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import org.apache.hadoop.conf.Configuration;
@@ -44,8 +43,8 @@ class ScalaSparkContext extends AbstractSparkContext {
 
   private final SparkContext originalSparkContext;
 
-  public ScalaSparkContext(StreamAdmin streamAdmin) {
-    super(streamAdmin);
+  public ScalaSparkContext(BasicSparkContext basicSparkContext) {
+    super(basicSparkContext);
     this.originalSparkContext = new SparkContext(getSparkConf());
     originalSparkContext.addSparkListener(new SparkProgramListener());
   }

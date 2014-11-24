@@ -16,7 +16,7 @@ define(['helpers/plumber'], function (Plumber) {
             this.interval = setInterval(function () {
                 self.updateStats();
                 self.updateMetrics();
-            }, C.POLLING_INTERVAL);
+            }, C.MR_METRICS_POLLING_INTERVAL);
 
             /*
              * Give the chart Embeddables 100ms to configure

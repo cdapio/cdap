@@ -23,7 +23,8 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.tephra.Transaction;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
-import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.filter.FilterBase;
@@ -107,18 +108,18 @@ public class DequeueFilter extends FilterBase {
   }
 
   @Override
-  public void filterRow(List<KeyValue> kvs) {
+  public void filterRowCells(List<Cell> cells) {
     byte[] dataBytes = null;
     byte[] metaBytes = null;
     byte[] stateBytes = null;
     // list is very short so it is ok to loop thru to find columns
-    for (KeyValue kv : kvs) {
-      if (hasQualifier(kv, QueueEntryRow.DATA_COLUMN)) {
-        dataBytes = kv.getValue();
-      } else if (hasQualifier(kv, QueueEntryRow.META_COLUMN)) {
-        metaBytes = kv.getValue();
-      } else if (hasQualifier(kv, stateColumnName)) {
-        stateBytes = kv.getValue();
+    for (Cell cell : cells) {
+      if (CellUtil.matchingQualifier(cell, QueueEntryRow.DATA_COLUMN)) {
+        dataBytes = CellUtil.cloneValue(cell);
+      } else if (CellUtil.matchingQualifier(cell, QueueEntryRow.META_COLUMN)) {
+        metaBytes = CellUtil.cloneValue(cell);
+      } else if (CellUtil.matchingQualifier(cell, stateColumnName)) {
+        stateBytes = CellUtil.cloneValue(cell);
       }
     }
 
@@ -138,11 +139,6 @@ public class DequeueFilter extends FilterBase {
   @Override
   public boolean filterRow() {
     return skipRow;
-  }
-
-  private static boolean hasQualifier(KeyValue kv, byte[] qual) {
-    return Bytes.equals(kv.getBuffer(), kv.getQualifierOffset(), kv.getQualifierLength(),
-                        qual, 0, qual.length);
   }
 
   /* Writable implementation for HBase 0.94 */

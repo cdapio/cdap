@@ -20,6 +20,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
+import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -98,7 +99,7 @@ public final class AppFabricServer extends AbstractIdleService {
     programRuntimeService.start();
 
     // Run http service on random port
-    httpService = NettyHttpService.builder()
+    httpService = new CommonNettyHttpServiceBuilder(configuration)
       .setHost(hostname.getCanonicalHostName())
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.APP_FABRIC_HTTP)))

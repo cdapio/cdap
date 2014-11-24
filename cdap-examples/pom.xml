@@ -31,6 +31,7 @@
 
   <modules>
     <module>CountRandom</module>
+    <module>FileSetExample</module>
     <module>HelloWorld</module>
     <module>Purchase</module>
     <module>WordCount</module>
@@ -48,7 +49,7 @@
 
   <properties>
     <hadoop.version>2.3.0</hadoop.version>
-    <netty.http.version>0.5.0</netty.http.version>
+    <netty.http.version>0.6.0</netty.http.version>
     <power.pack.version>[2.0.0,)</power.pack.version>
   </properties>
 
@@ -125,7 +126,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.14.1</version>
         <configuration>
-          <argLine>-Xmx2048m</argLine>
+          <argLine>-Xmx2048m -XX:MaxPermSize=256m -XX:+CMSClassUnloadingEnabled</argLine>
         </configuration>
       </plugin>
       <plugin>

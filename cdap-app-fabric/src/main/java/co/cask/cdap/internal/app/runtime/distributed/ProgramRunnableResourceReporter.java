@@ -42,7 +42,8 @@ public class ProgramRunnableResourceReporter extends AbstractResourceReporter {
 
   @Override
   public void reportResources() {
-    sendMetrics(metricContext, 1, runContext.getMaxMemoryMB(), runContext.getVirtualCores());
+    sendMetrics(metricContext, 1, runContext.getMaxMemoryMB(), runContext.getVirtualCores(),
+                runContext.getRunId().getId());
   }
 
   /**

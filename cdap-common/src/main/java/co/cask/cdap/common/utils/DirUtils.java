@@ -29,6 +29,8 @@ import java.util.Deque;
  */
 public final class DirUtils {
 
+  private static final int TEMP_DIR_ATTEMPTS = 10000;
+
   /**
    * Utility classes should have a public constructor or a default constructor
    * hence made it private.
@@ -55,5 +57,25 @@ public final class DirUtils {
         Collections.addAll(stack, files);
       }
     }
+  }
+
+  /**
+   * Creates a temp directory inside the given base directory.
+   *
+   * @return the newly-created directory
+   * @throws IllegalStateException if the directory could not be created
+   */
+  public static File createTempDir(File baseDir) {
+    String baseName = System.currentTimeMillis() + "-";
+
+    for (int counter = 0; counter < TEMP_DIR_ATTEMPTS; counter++) {
+      File tempDir = new File(baseDir, baseName + counter);
+      if (tempDir.mkdirs()) {
+        return tempDir;
+      }
+    }
+    throw new IllegalStateException("Failed to create directory within "
+                                      + TEMP_DIR_ATTEMPTS + " attempts (tried "
+                                      + baseName + "0 to " + baseName + (TEMP_DIR_ATTEMPTS - 1) + ')');
   }
 }

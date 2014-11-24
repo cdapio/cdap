@@ -14,21 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.internal.pipeline;
+package co.cask.cdap.data2.transaction.queue.hbase;
 
-import co.cask.cdap.pipeline.Pipeline;
-import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.test.XSlowTests;
+import org.junit.experimental.categories.Category;
 
 /**
- * A factory for providing asynchronous pipeline.
+ * Queue test implementation running on HBase 0.98.
  */
-public class AsynchronousPipelineFactory implements PipelineFactory {
-
-  /**
-   * @return A asynchronous pipeline.
-   */
-  @Override
-  public <T> Pipeline<T> getPipeline() {
-    return new AsynchronousPipeline<T>();
-  }
+@Category(XSlowTests.class)
+public class HBase98QueueTest extends HBaseQueueTest {
+  // nothing to override
 }

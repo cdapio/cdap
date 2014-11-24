@@ -33,6 +33,7 @@ public class MetricsRequestContext {
   private final String tag;
   private final MetricsRequestParser.RequestType requestType;
   private final MetricsRequestParser.PathType pathType;
+  private final String runId;
 
   /**
    * Represents the tag type for metrics context.
@@ -46,7 +47,7 @@ public class MetricsRequestContext {
 
   private MetricsRequestContext(String typeId, MetricsRequestParser.PathType pathType,
                                 MetricsRequestParser.RequestType requestType,
-                                String requestId, String componentId, TagType tagType, String tag) {
+                                String requestId, String componentId, TagType tagType, String tag, String runId) {
     this.typeId = typeId;
     this.pathType = pathType;
     this.requestType = requestType;
@@ -54,6 +55,7 @@ public class MetricsRequestContext {
     this.componentId = componentId;
     this.tagType = tagType;
     this.tag = tag;
+    this.runId = runId;
 
     List<String> contextParts = Lists.newArrayListWithCapacity(4);
     if (typeId == null || typeId.isEmpty()) {
@@ -107,6 +109,10 @@ public class MetricsRequestContext {
     return tag;
   }
 
+  public String getRunId() {
+    return runId;
+  }
+
   /**
    * Builds a metrics context.
    */
@@ -116,6 +122,7 @@ public class MetricsRequestContext {
     private String componentId;
     private TagType tagType;
     private String tag;
+    private String runId;
     private MetricsRequestParser.RequestType requestType;
     private MetricsRequestParser.PathType pathType;
 
@@ -150,8 +157,13 @@ public class MetricsRequestContext {
       return this;
     }
 
+    public Builder setRunId(String runId) {
+      this.runId = runId;
+      return this;
+    }
+
     public MetricsRequestContext build() {
-      return new MetricsRequestContext(typeId, pathType, requestType, requestId, componentId, tagType, tag);
+      return new MetricsRequestContext(typeId, pathType, requestType, requestId, componentId, tagType, tag, runId);
     }
   }
 }

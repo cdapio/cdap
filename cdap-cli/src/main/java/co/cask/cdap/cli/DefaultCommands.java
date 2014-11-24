@@ -31,10 +31,11 @@ import co.cask.cdap.cli.command.DescribeDatasetModuleCommand;
 import co.cask.cdap.cli.command.DescribeDatasetTypeCommand;
 import co.cask.cdap.cli.command.DescribeStreamCommand;
 import co.cask.cdap.cli.command.ExecuteQueryCommand;
-import co.cask.cdap.cli.command.GetProgramHistoryCommandSet;
+import co.cask.cdap.cli.command.ExitCommand;
 import co.cask.cdap.cli.command.GetProgramInstancesCommandSet;
 import co.cask.cdap.cli.command.GetProgramLiveInfoCommandSet;
 import co.cask.cdap.cli.command.GetProgramLogsCommandSet;
+import co.cask.cdap.cli.command.GetProgramRunsCommandSet;
 import co.cask.cdap.cli.command.GetProgramStatusCommandSet;
 import co.cask.cdap.cli.command.GetServiceEndpointsCommand;
 import co.cask.cdap.cli.command.GetStreamEventsCommand;
@@ -70,6 +71,7 @@ public class DefaultCommands implements Supplier<List<Command>> {
   @Inject
   public DefaultCommands(Injector injector) {
     this.commands = ImmutableList.<Command>builder()
+      .add(injector.getInstance(ExitCommand.class))
       .add(injector.getInstance(CallProcedureCommand.class))
       .add(injector.getInstance(ConnectCommand.class))
       .add(injector.getInstance(CreateDatasetInstanceCommand.class))
@@ -84,7 +86,7 @@ public class DefaultCommands implements Supplier<List<Command>> {
       .add(injector.getInstance(DescribeDatasetTypeCommand.class))
       .add(injector.getInstance(DescribeStreamCommand.class))
       .add(injector.getInstance(ExecuteQueryCommand.class))
-      .addAll(injector.getInstance(GetProgramHistoryCommandSet.class).getCommands())
+      .addAll(injector.getInstance(GetProgramRunsCommandSet.class).getCommands())
       .addAll(injector.getInstance(GetProgramInstancesCommandSet.class).getCommands())
       .addAll(injector.getInstance(GetProgramLiveInfoCommandSet.class).getCommands())
       .addAll(injector.getInstance(GetProgramLogsCommandSet.class).getCommands())

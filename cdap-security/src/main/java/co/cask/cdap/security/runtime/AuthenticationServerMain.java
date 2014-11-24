@@ -54,7 +54,7 @@ public class AuthenticationServerMain extends DaemonMain {
                                              new ZKClientModule());
     configuration = injector.getInstance(CConfiguration.class);
 
-    if (configuration.getBoolean(Constants.Security.CFG_SECURITY_ENABLED)) {
+    if (configuration.getBoolean(Constants.Security.ENABLED)) {
       this.zkClientService = injector.getInstance(ZKClientService.class);
       this.authServer = injector.getInstance(ExternalAuthenticationServer.class);
     }

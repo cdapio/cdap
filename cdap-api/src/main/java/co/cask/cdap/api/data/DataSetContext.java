@@ -31,7 +31,7 @@ public interface DataSetContext {
    *
    * @param name The name of the Dataset
    * @param <T> The type of the Dataset
-   * @return A new instance of the specified Dataset
+   * @return A new instance of the specified Dataset, never null.
    * @throws DataSetInstantiationException If the Dataset cannot be instantiated: its class
    *         cannot be loaded; the default constructor throws an exception; or the Dataset
    *         cannot be opened (for example, one of the underlying tables in the DataFabric
@@ -46,7 +46,7 @@ public interface DataSetContext {
    * @param name The name of the Dataset
    * @param arguments the arguments for this dataset instance
    * @param <T> The type of the Dataset
-   * @return A new instance of the specified Dataset
+   * @return A new instance of the specified Dataset, never null.
    * @throws DataSetInstantiationException If the Dataset cannot be instantiated: its class
    *         cannot be loaded; the default constructor throws an exception; or the Dataset
    *         cannot be opened (for example, one of the underlying tables in the DataFabric
