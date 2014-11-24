@@ -23,7 +23,12 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 /**
- * An application that uses files for its MapReduce input and output.
+ * An application that illustrates how to use the FileSet dataset.
+ * <ul>
+ * <li>Uses a Service that uploads files in—or downloads files to—a FileSet.</li>
+ * <li>Includes a MapReduce that implements the classic word count example. The input and output paths
+ *     of the MapReduce can be configured through runtime arguments.</li>
+ * </ul>
  */
 public class FileSetExample extends AbstractApplication {
 

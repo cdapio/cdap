@@ -38,14 +38,14 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * A service to upload or download files to the "lines" and "counts" file sets.
+ * A Service to uploads files to, or downloads files from, the "lines" and "counts" file sets.
  */
 public class FileSetService extends AbstractService {
 
   @Override
   protected void configure() {
     setName("FileSetService");
-    setDescription("A service to upload or download files to the \"lines\" and  \"counts\" file sets.");
+    setDescription("A Service to uploads files to, or downloads files from, the \"lines\" and \"counts\" file sets.");
     setInstances(1);
     addHandler(new FileSetHandler());
   }
@@ -91,12 +91,10 @@ public class FileSetService extends AbstractService {
                       @PathParam("fileSet") String set, @QueryParam("path") String filePath) {
 
       FileSet fileSet;
-      if ("lines".equals(set)) {
-        fileSet = lines;
-      } else if ("counts".equals(set)) {
-        fileSet = counts;
-      } else {
-        responder.sendError(400, "Invalid file set name '" + set + "'");
+      try {
+        fileSet = getContext().getDataSet(set);
+      } catch (DataSetInstantiationException e) {
+        responder.sendError(400, String.format("Invalid file set name '%s'", set));
         return;
       }
 
@@ -110,7 +108,7 @@ public class FileSetService extends AbstractService {
           channel.close();
         }
       } catch (IOException e) {
-        responder.sendError(400, "Unable to write path '" + filePath + "' in file set '" + set + "'");
+        responder.sendError(400, String.format("Unable to write path '%s' in file set '%s'", filePath, set));
         return;
       }
       responder.sendStatus(200);

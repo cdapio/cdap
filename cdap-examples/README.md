@@ -29,9 +29,9 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 ## FileExample
 
 - Illustrates how to use the FileSet dataset in applications.
-- A Service that allows to upload or download files in a FileSet.
-- A MapReduce that implements the classic word count example. The paths are input and output of the MapReduce
-  can be configured through runtime arguments.
+- Uses a Service that uploads files in—or downloads files to—a FileSet.
+- Includes a MapReduce that implements the classic word count example. The input and output paths
+  of the MapReduce can be configured through runtime arguments.
 
 ## HelloWorld
 
