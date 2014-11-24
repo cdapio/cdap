@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -42,6 +41,9 @@ import javax.ws.rs.QueryParam;
  */
 public class SparkPageRankApp extends AbstractApplication {
 
+  public static final String RANKS_SERVICE_NAME = "RanksService";
+  public static final String GOOGLE_TYPE_PR_SERVICE_NAME = "GoogleTypePR";
+
   @Override
   public void configure() {
     setName("SparkPageRank");
@@ -54,10 +56,10 @@ public class SparkPageRankApp extends AbstractApplication {
     addSpark(new SparkPageRankSpecification());
 
     // Retrieve the processed data using a Service
-    addService(new RanksService());
+    addService(RANKS_SERVICE_NAME, new RanksServiceHandler());
 
     // Service which converts calculated pageranks to Google type page ranks
-    addService(new GoogleTypePR());
+    addService(GOOGLE_TYPE_PR_SERVICE_NAME, new GoogleTypePRHandler());
 
     // Store input and processed data in ObjectStore Datasets
     try {
@@ -89,21 +91,6 @@ public class SparkPageRankApp extends AbstractApplication {
   /**
    * A {@link Service} that responds with rank of the URL.
    */
-  public static final class RanksService extends AbstractService {
-
-    public static final String SERVICE_NAME = "RanksService";
-
-    @Override
-    protected void configure() {
-      setName(SERVICE_NAME);
-      setDescription("Rank service.");
-      addHandler(new RanksServiceHandler());
-    }
-  }
-
-  /**
-   * Ranks Service handler.
-   */
   public static final class RanksServiceHandler extends AbstractHttpServiceHandler {
 
     @UseDataSet("ranks")
@@ -131,21 +118,6 @@ public class SparkPageRankApp extends AbstractApplication {
 
   /**
    * A {@link Service} which converts the page rank to a Google Type page rank (from 0 to 10).
-   */
-  public static final class GoogleTypePR extends AbstractService {
-
-    public static final String SERVICE_NAME = "GoogleTypePR";
-
-    @Override
-    protected void configure() {
-      setName(SERVICE_NAME);
-      setDescription("Service which converts the page rank to a Google Type page rank.");
-      addHandler(new GoogleTypePRHandler());
-    }
-  }
-
-  /**
-   * GoogleTypePR service handler.
    */
   public static final class GoogleTypePRHandler extends AbstractHttpServiceHandler {
 
