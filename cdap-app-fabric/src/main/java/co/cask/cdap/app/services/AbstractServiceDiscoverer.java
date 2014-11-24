@@ -131,7 +131,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
       String encodedACLS = Bytes.toString(payloadDiscoverable.getPayload());
       List<ACL> acls = GSON.fromJson(encodedACLS, new TypeToken<List<ACL>>() { }.getType());
       // If no ACLs are set, or its in the same application, then it is visible
-      if (acls.isEmpty() || this.applicationId.equals(applicationId)) {
+      if (acls == null || acls.isEmpty() || this.applicationId.equals(applicationId)) {
         return true;
       } else {
         // If they're in different applications, and the ACL is set to execute only within the same app, its not visible
