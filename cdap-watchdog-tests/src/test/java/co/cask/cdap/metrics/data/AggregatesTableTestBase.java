@@ -21,13 +21,11 @@ import co.cask.cdap.metrics.MetricsConstants;
 import co.cask.cdap.metrics.transport.MetricType;
 import co.cask.cdap.metrics.transport.MetricsRecord;
 import co.cask.cdap.metrics.transport.TagMetric;
-import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.util.List;
 import java.util.Map;
@@ -74,46 +72,6 @@ public abstract class AggregatesTableTestBase {
       }
     } finally {
       aggregatesTable.clear();
-    }
-  }
-
-  @Category(XSlowTests.class)
-  @Test
-  public void testRunIdMaxRecycle() throws OperationException {
-    AggregatesTable aggregatesTable = getTableFactory().createAggregates("maxRunId");
-
-    try {
-      for (int i = 1; i <= 0xffff + 5; i++) {
-        MetricsRecord metric = new MetricsRecord("context.m" + i, "runId1" , "metric",
-                                                 ImmutableList.<TagMetric>of(), 0L, 1, MetricType.COUNTER);
-        aggregatesTable.update(ImmutableList.of(metric));
-
-        metric = new MetricsRecord("simple", "runId" + i, "metric",
-                                   ImmutableList.<TagMetric>of(), 0L, 1, MetricType.COUNTER);
-        aggregatesTable.update(ImmutableList.of(metric));
-      }
-
-      testScanner(aggregatesTable, "context", "metric");
-      testScanner(aggregatesTable, "simple", "metric");
-
-    } finally {
-      aggregatesTable.clear();
-    }
-  }
-
-  private void testScanner(AggregatesTable aggregatesTable, String contextPrefix, String metricsPrefix) {
-    AggregatesScanner scanner = aggregatesTable.scan(contextPrefix, metricsPrefix);
-    try {
-      long value = 0;
-      while (scanner.hasNext()) {
-        value += scanner.next().getValue();
-      }
-
-      Assert.assertEquals(0xffff + 5, value);
-      Assert.assertEquals(0xffff, scanner.getRowScanned());
-
-    } finally {
-      scanner.close();
     }
   }
 
