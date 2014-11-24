@@ -66,7 +66,7 @@ public class GetServiceEndpointsCommand implements Command {
 
   @Override
   public String getPattern() {
-    return String.format("get service <%s> endpoints", ArgumentName.SERVICE);
+    return String.format("get endpoints service <%s>", ArgumentName.SERVICE);
   }
 
   @Override
