@@ -85,7 +85,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                CConfiguration conf) {
     super(program, runId, datasets,
           getMetricContext(program, type), metricsCollectionService,
-          dsFramework, conf, discoveryServiceClient);
+          dsFramework, conf, discoveryServiceClient, runtimeArguments.asMap());
     this.accountId = program.getAccountId();
     this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
@@ -98,7 +98,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       this.systemMetrics = Maps.newHashMap();
       for (MetricsScope scope : MetricsScope.values()) {
         // Supporting runId only for user metrics now
-        String metricsRunId = (scope == MetricsScope.USER) ? runId.getId() : INSTANCE_ID;
+        String metricsRunId = runId.getId();
         this.systemMapperMetrics.put(
           scope, metricsCollectionService.getCollector(scope,
                                                        getMetricContext(program, MapReduceMetrics.TaskType.Mapper),

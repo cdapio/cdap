@@ -46,6 +46,7 @@ public enum ArgumentName {
   START_TIME("start-time"),
   END_TIME("end-time"),
   LIMIT("limit"),
+  RUN_STATUS("status"),
   APP_JAR_FILE("app-jar-file"),
   DATASET_MODULE_JAR_FILE("module-jar-file"),
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),

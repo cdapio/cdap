@@ -28,6 +28,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -96,12 +97,7 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
   @Path("count/{word}")
   @GET
   public void getCount(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("word") String word, @QueryParam("limit") Integer limit) {
-    // Set default limit if not specified
-    if (limit == null) {
-      limit = WORD_COUNT_LIMIT;
-    }
-
+                       @PathParam("word") String word, @DefaultValue("10") @QueryParam("limit") Integer limit) {
     // Read the word count
     byte[] countBytes = wordCountsTable.read(Bytes.toBytes(word));
     long wordCount = countBytes == null ? 0L : Bytes.toLong(countBytes);
