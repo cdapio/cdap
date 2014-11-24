@@ -69,14 +69,25 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   }
 
   @Override
-  public void onSuccess(@Nullable Object input, @Nullable InputContext inputContext) {
+  public void onSuccess(@Nullable Object change, AtomicContext atomicContext) {
     // No-op by default
   }
 
   @Override
-  public FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason reason) {
+  public FailurePolicy onFailure(@Nullable Object change, AtomicContext atomicContext, FailureReason reason) {
     // Return the policy as specified in the spec
-    return flowletContext.getSpecification().getFailurePolicy();
+    switch (atomicContext.getType()) {
+      case PROCESS_DATA:
+        return flowletContext.getSpecification().getFailurePolicy();
+      case INSTANCE_CHANGE:
+      default:
+        return FailurePolicy.IGNORE;
+    }
+  }
+
+  @Override
+  public void onChangeInstances(FlowletContext flowletContext, int previousInstancesCount) throws Exception {
+    // No-op by default
   }
 
   /**

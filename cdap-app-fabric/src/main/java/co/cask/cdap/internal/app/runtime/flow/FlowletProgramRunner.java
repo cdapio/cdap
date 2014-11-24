@@ -29,8 +29,9 @@ import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FailureReason;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
+import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
@@ -429,13 +430,18 @@ public final class FlowletProgramRunner implements ProgramRunner {
     final FailurePolicy failurePolicy = flowletSpec.getFailurePolicy();
     return new Callback() {
       @Override
-      public void onSuccess(Object input, InputContext inputContext) {
+      public void onSuccess(Object change, AtomicContext atomicContext) {
         // No-op
       }
 
       @Override
-      public FailurePolicy onFailure(Object input, InputContext inputContext, FailureReason reason) {
+      public FailurePolicy onFailure(Object change, AtomicContext atomicContext, FailureReason reason) {
         return failurePolicy;
+      }
+
+      @Override
+      public void onChangeInstances(FlowletContext flowletContext, int previousInstancesCount) throws Exception {
+        // No-op
       }
     };
   }

@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.app.queue.InputDatum;
 import com.google.common.base.Preconditions;
 import com.google.common.reflect.TypeToken;
@@ -81,7 +81,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   public ProcessResult<T> invoke(InputDatum<T> input) {
     try {
       Preconditions.checkState(!hasParam || input.needProcess(), "Empty input provided to method that needs input.");
-      InputContext inputContext = input.getInputContext();
+      AtomicContext inputContext = input.getInputContext();
 
       if (hasParam) {
         if (needsIterator) {
@@ -109,7 +109,7 @@ public final class ReflectionProcessMethod<T> implements ProcessMethod<T> {
   /**
    * Calls the user process method.
    */
-  private void invoke(Method method, Object event, InputContext inputContext) throws Exception {
+  private void invoke(Method method, Object event, AtomicContext inputContext) throws Exception {
     if (needContext) {
       method.invoke(flowlet, event, inputContext);
     } else {

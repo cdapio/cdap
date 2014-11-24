@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.queue;
 
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.app.queue.InputDatum;
 import co.cask.cdap.common.queue.QueueName;
 import com.google.common.base.Objects;
@@ -33,7 +33,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class NullInputDatum<T> implements InputDatum<T> {
 
   private final AtomicInteger retries = new AtomicInteger(0);
-  private final InputContext inputContext =  new InputContext() {
+  private final AtomicContext inputContext =  new AtomicContext() {
+    @Override
+    public Type getType() {
+      return Type.PROCESS_DATA;
+    }
+
     @Override
     public String getOrigin() {
       return "";
@@ -66,7 +71,7 @@ public final class NullInputDatum<T> implements InputDatum<T> {
   }
 
   @Override
-  public InputContext getInputContext() {
+  public AtomicContext getInputContext() {
     return inputContext;
   }
 

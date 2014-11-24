@@ -17,7 +17,10 @@
 package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.flow.flowlet.Callback;
+import co.cask.cdap.api.flow.flowlet.FailurePolicy;
+import co.cask.cdap.api.flow.flowlet.FailureReason;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
@@ -28,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class represents lifecycle of a {@link Flowlet}, Start, Stop, Suspend and Resume.
@@ -96,6 +100,57 @@ final class FlowletRuntimeService extends AbstractIdleService {
    */
   void resume() {
     flowletProcessDriver.startAndWait();
+  }
+
+  /**
+   * Call the callback when the number of instances of a flowlet changes.
+   */
+  public void callChangeInstancesCallback(final int previousInstancesCount) {
+    final AtomicInteger retries = new AtomicInteger(0);
+    AtomicContext atomicContext = new AtomicContext() {
+      @Override
+      public Type getType() {
+        return Type.INSTANCE_CHANGE;
+      }
+
+      @Override
+      public String getOrigin() {
+        return flowletContext.getName();
+      }
+
+      @Override
+      public int getRetryCount() {
+        return retries.get();
+      }
+    };
+
+    TransactionExecutor transactionExecutor = dataFabricFacade.createTransactionExecutor();
+
+    while (true) {
+      try {
+        transactionExecutor.execute(new TransactionExecutor.Subroutine() {
+          @Override
+          public void apply() throws Exception {
+            txCallback.onChangeInstances(flowletContext, previousInstancesCount);
+          }
+        });
+        txCallback.onSuccess(previousInstancesCount, atomicContext);
+        return;
+      } catch (Throwable e) {
+        Throwable cause = Throwables.getRootCause(e);
+        FailureReason.Type failureType = FailureReason.Type.IO_ERROR;
+        if (!(cause instanceof TransactionFailureException)) {
+          failureType = FailureReason.Type.USER;
+        }
+        LOG.error("Flowlet throws exception during flowlet instances change: {}", flowletContext, cause);
+        FailurePolicy failurePolicy = txCallback.onFailure(previousInstancesCount, atomicContext,
+                                                           new FailureReason(failureType, e.getMessage(), e));
+        if (failurePolicy == FailurePolicy.IGNORE) {
+          LOG.warn("Failure policy set to ignore");
+          break;
+        }
+      }
+    }
   }
 
   private void initFlowlet() throws InterruptedException {

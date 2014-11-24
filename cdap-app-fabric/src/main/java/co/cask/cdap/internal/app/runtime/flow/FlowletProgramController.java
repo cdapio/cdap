@@ -96,9 +96,11 @@ final class FlowletProgramController extends AbstractProgramController {
       return;
     }
     int instances = (Integer) value;
+    int previousInstancesCount = flowletContext.getInstanceCount();
     LOG.info("Change flowlet instance count: " + flowletContext + ", new count is " + instances);
     changeInstanceCount(flowletContext, instances);
     LOG.info("Flowlet instance count changed: " + flowletContext + ", new count is " + instances);
+    driver.callChangeInstancesCallback(previousInstancesCount);
   }
 
   private void changeInstanceCount(BasicFlowletContext flowletContext, int instanceCount) {

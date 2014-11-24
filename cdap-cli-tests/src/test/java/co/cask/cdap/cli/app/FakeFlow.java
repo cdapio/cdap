@@ -20,7 +20,7 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 
 import java.nio.charset.CharacterCodingException;
@@ -47,7 +47,7 @@ public class FakeFlow implements Flow {
   public static final class FakeFlowlet extends AbstractFlowlet {
 
     @ProcessInput
-    public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
+    public void process(StreamEvent event, AtomicContext context) throws CharacterCodingException {
       // NO-OP
     }
 

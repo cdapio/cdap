@@ -25,7 +25,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,7 +111,7 @@ public final class GenSinkApp2 extends AbstractApplication {
     private static final Logger LOG = LoggerFactory.getLogger(SinkFlowletBase.class);
 
     @ProcessInput
-    public void process(T event, InputContext context) throws InterruptedException {
+    public void process(T event, AtomicContext context) throws InterruptedException {
       LOG.info(event.toString());
     }
 
@@ -133,7 +133,7 @@ public final class GenSinkApp2 extends AbstractApplication {
    */
   public static final class SinkFlowlet extends SinkFlowletBase<String, Integer> {
     @ProcessInput
-    public void process(String event, InputContext context) throws InterruptedException {
+    public void process(String event, AtomicContext context) throws InterruptedException {
       super.process(event, context);
     }
 

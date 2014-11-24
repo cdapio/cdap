@@ -643,6 +643,39 @@ public class TestFrameworkTest extends TestBase {
   }
 
   @Test(timeout = 60000L)
+  public void testChangeFlowletInstances() throws Exception {
+    ApplicationManager appManager = deployApplication(ChangeFlowletInstancesApp.class);
+    FlowManager flowManager = appManager.startFlow("DataSetFlow");
+
+    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("ChangeFlowletInstancesApp", "DataSetFlow",
+                                                                   "Consumer");
+    flowManager.setFlowletInstances("Generator", 3);
+    flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
+
+    flowManager.setFlowletInstances("Generator", 2);
+    // Make sure the onChangeInstances callback is called twice on the previous call -
+    // once for each flowlet instance that was already present
+    TimeUnit.SECONDS.sleep(3);
+    Assert.assertEquals(3, flowletMetrics.getProcessed());
+
+    // Test the retry logic (see below)
+    flowManager.setFlowletInstances("Consumer", 2);
+
+    flowManager.stop();
+
+    DataSetManager<Table> dataSetManager = appManager.getDataSet("conf");
+    Table confTable = dataSetManager.get();
+
+    // Check that the onChangeInstances method has been called and has been able to access the dataset
+    Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
+
+    // This will ensure that the retry logic is successful
+    Assert.assertEquals("consumer", confTable.get(new Get("key2", "column")).getString("column"));
+
+    dataSetManager.flush();
+  }
+
+  @Test(timeout = 60000L)
   public void testAppWithAutoDeployDatasetModule() throws Exception {
     testAppWithDataset(AppsWithDataset.AppWithAutoDeploy.class, "MyProcedure");
   }
