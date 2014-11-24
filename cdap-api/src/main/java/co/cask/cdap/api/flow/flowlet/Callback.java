@@ -19,42 +19,47 @@ package co.cask.cdap.api.flow.flowlet;
 import javax.annotation.Nullable;
 
 /**
- * Interface for flowlet to implement in order to receive callback on process result.
+ * Interface for Flowlet to implement in order to receive callback on atomic change result.
  */
 public interface Callback {
 
   /**
-   * This method will be called when processing of a given input is completed successfully.
+   * This method will be called when handling a given change in the Flowlet is completed successfully.
    *
-   * @param input The input object that was given to the process method.
-   *              If the process method is annotated with {@link co.cask.cdap.api.annotation.Batch}, the
-   *              input object will be of type {@link java.util.Iterator}, while inside the iterator contains
-   *              all event objects sent to the process method within a batch.
-   * @param inputContext The {@link InputContext} that was given to the process method.
+   * @param change The change object that was handled successfully.
+   *               In case this method is called after processing input, and if the process method is annotated
+   *               with {@link co.cask.cdap.api.annotation.Batch}, the
+   *               change object will be of type {@link java.util.Iterator}, while inside the iterator contains
+   *               all event objects sent to the process method within a batch.
+   *               In case this method is called after changing the number of instances for the Flowlet,
+   *               the change object will be the past number of instances.
+   * @param atomicContext The {@link AtomicContext} that was given to the handling method.
    */
-  void onSuccess(@Nullable Object input, @Nullable InputContext inputContext);
+  void onSuccess(@Nullable Object change, AtomicContext atomicContext);
 
   /**
-   * This method will be called when processing of a given input failed. Failure could be triggered due to
-   * exception thrown in the process method or a system error. The return value of this method
-   * is used to determine what action to take about the failure input.
+   * This method will be called when handling a given change in the Flowlet has failed.
+   * Failure could be triggered due to exception thrown in the handling method or a system error.
+   * The return value of this method is used to determine what action to take about the failure.
    *
-   * @param input The input object that was given to the process method.
-   *              If the process method is annotated with {@link co.cask.cdap.api.annotation.Batch}, the
-   *              input object will be of type {@link java.util.Iterator}, while inside the iterator contains
-   *              all event objects sent to the process method within a batch.
-   * @param inputContext The {@link InputContext} that was given to the process method.
+   * @param change The change object that was handled successfully.
+   *               In case this method is called after processing input, and if the process method is annotated
+   *               with {@link co.cask.cdap.api.annotation.Batch}, the
+   *               change object will be of type {@link java.util.Iterator}, while inside the iterator contains
+   *               all event objects sent to the process method within a batch.
+   *               In case this method is called after changing the number of instances for the Flowlet,
+   *               the change object will be the past number of instances.
+   * @param atomicContext The {@link AtomicContext} that was given to the handling method.
    * @param reason Reason for the failure.
-   * @return A {@link FailurePolicy} indicating how to handle the failure input.
+   * @return A {@link FailurePolicy} indicating how to handle the failure.
    */
-  FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason reason);
+  FailurePolicy onFailure(@Nullable Object change, AtomicContext atomicContext, FailureReason reason);
 
   /**
    * This method will be called when the number of instances for the flowlet is changed, for all the instances
    * of the flowlet which existed before the change. Each method call is transactional.
-   * The {@link co.cask.cdap.api.annotation.Retry} annotation can be tagged to this method to define the maximum
-   * number of retries to perform if Exception are thrown before giving up. If this tag is not present, we don't
-   * retry at all.
+   * The {@link Callback#onFailure} method will be called in case this method fails. The {@link AtomicContext.Type}
+   * will be set to {@code INSTANCE_CHANGE}.
    *
    * @param flowletContext the {@link FlowletContext} of the flowlet.
    * @param previousInstancesCount the number of flowlet instances there was before the change

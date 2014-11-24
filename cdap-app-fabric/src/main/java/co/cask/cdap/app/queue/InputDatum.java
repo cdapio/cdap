@@ -16,7 +16,7 @@
 
 package co.cask.cdap.app.queue;
 
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.common.queue.QueueName;
 
 /**
@@ -32,7 +32,7 @@ public interface InputDatum<T> extends Iterable<T> {
 
   int getRetry();
 
-  InputContext getInputContext();
+  AtomicContext getInputContext();
 
   QueueName getQueueName();
 

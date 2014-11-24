@@ -16,10 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
-import co.cask.cdap.api.annotation.Retry;
 import co.cask.cdap.api.flow.flowlet.Callback;
+import co.cask.cdap.api.flow.flowlet.FailurePolicy;
+import co.cask.cdap.api.flow.flowlet.FailureReason;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
@@ -29,8 +30,8 @@ import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class represents lifecycle of a {@link Flowlet}, Start, Stop, Suspend and Resume.
@@ -105,20 +106,27 @@ final class FlowletRuntimeService extends AbstractIdleService {
    * Call the callback when the number of instances of a flowlet changes.
    */
   public void callChangeInstancesCallback(final int previousInstancesCount) {
-    Method method = null;
-    try {
-      method = txCallback.getClass().getMethod("onChangeInstances", FlowletContext.class, int.class);
-    } catch (NoSuchMethodException e) {
-      // This should never happen
-      LOG.error("onChangeInstances() not found in class: {}", txCallback.getClass(), e);
-      Throwables.propagate(e);
-    }
-    Retry retryAnnotation = method.getAnnotation(Retry.class);
-    int maxRetries = (retryAnnotation == null) ? 0 : retryAnnotation.maxRetries();
-    int retries = 0;
+    final AtomicInteger retries = new AtomicInteger(0);
+    AtomicContext atomicContext = new AtomicContext() {
+      @Override
+      public Type getType() {
+        return Type.INSTANCE_CHANGE;
+      }
+
+      @Override
+      public String getOrigin() {
+        return flowletContext.getName();
+      }
+
+      @Override
+      public int getRetryCount() {
+        return retries.get();
+      }
+    };
 
     TransactionExecutor transactionExecutor = dataFabricFacade.createTransactionExecutor();
-    while (retries <= maxRetries) {
+
+    while (true) {
       try {
         transactionExecutor.execute(new TransactionExecutor.Subroutine() {
           @Override
@@ -126,12 +134,20 @@ final class FlowletRuntimeService extends AbstractIdleService {
             txCallback.onChangeInstances(flowletContext, previousInstancesCount);
           }
         });
+        txCallback.onSuccess(previousInstancesCount, atomicContext);
         return;
       } catch (Throwable e) {
         Throwable cause = e.getCause() == null ? e : e.getCause();
+        FailureReason.Type failureType = FailureReason.Type.IO_ERROR;
+        if (!(cause instanceof TransactionFailureException)) {
+          failureType = FailureReason.Type.USER;
+        }
         LOG.error("Flowlet throws exception during flowlet instances change: {}", flowletContext, cause);
-        if (retries++ >= maxRetries) {
-          LOG.warn("Retry limit of {} reached, ignoring exception", maxRetries);
+        FailurePolicy failurePolicy = txCallback.onFailure(previousInstancesCount, atomicContext,
+                                                           new FailureReason(failureType, e.getMessage(), e));
+        if (failurePolicy == FailurePolicy.IGNORE) {
+          LOG.warn("Failure policy set to ignore");
+          break;
         }
       }
     }

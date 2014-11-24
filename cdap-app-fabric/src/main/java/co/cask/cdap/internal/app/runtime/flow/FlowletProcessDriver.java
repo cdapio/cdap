@@ -20,7 +20,7 @@ import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FailureReason;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.app.queue.InputDatum;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -255,7 +255,7 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
    */
   private void postProcess(ProcessMethodCallback callback, TransactionContext txContext,
                            InputDatum input, ProcessMethod.ProcessResult result) {
-    InputContext inputContext = input.getInputContext();
+    AtomicContext atomicContext = input.getInputContext();
     Throwable failureCause = null;
     FailureReason.Type failureType = FailureReason.Type.IO_ERROR;
     try {
@@ -281,15 +281,15 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
           txContext.abort();
         }
       } catch (Throwable ex) {
-        LOG.error("Fail to abort transaction: {}", inputContext, ex);
+        LOG.error("Fail to abort transaction: {}", atomicContext, ex);
       }
     }
 
     try {
       if (failureCause == null) {
-        callback.onSuccess(result.getEvent(), inputContext);
+        callback.onSuccess(result.getEvent(), atomicContext);
       } else {
-        callback.onFailure(result.getEvent(), inputContext,
+        callback.onFailure(result.getEvent(), atomicContext,
                            new FailureReason(failureType, failureCause.getMessage(), failureCause),
                            createInputAcknowledger(input));
       }
@@ -318,10 +318,10 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
 
     return new ProcessMethodCallback() {
       @Override
-      public void onSuccess(Object object, InputContext inputContext) {
+      public void onSuccess(Object object, AtomicContext atomicContext) {
         try {
           gaugeEventProcessed(input.getQueueName());
-          txCallback.onSuccess(object, inputContext);
+          txCallback.onSuccess(object, atomicContext);
         } catch (Throwable t) {
           LOG.error("Exception on onSuccess call: {}", flowletContext, t);
         } finally {
@@ -330,14 +330,14 @@ final class FlowletProcessDriver extends AbstractExecutionThreadService {
       }
 
       @Override
-      public void onFailure(Object inputObject, InputContext inputContext, FailureReason reason,
+      public void onFailure(Object inputObject, AtomicContext atomicContext, FailureReason reason,
                             InputAcknowledger inputAcknowledger) {
 
         LOG.warn("Process failure: {}, {}, input: {}", flowletContext, reason.getMessage(), input, reason.getCause());
         FailurePolicy failurePolicy;
         try {
           flowletContext.getProgramMetrics().increment("process.errors", 1);
-          failurePolicy = txCallback.onFailure(inputObject, inputContext, reason);
+          failurePolicy = txCallback.onFailure(inputObject, atomicContext, reason);
           if (failurePolicy == null) {
             failurePolicy = FailurePolicy.RETRY;
             LOG.info("Callback returns null for failure policy. Default to {}.", failurePolicy);

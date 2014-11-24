@@ -19,7 +19,7 @@ import co.cask.cdap.api.annotation.Batch;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.internal.lang.MethodVisitor;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Preconditions;
@@ -85,7 +85,7 @@ public final class ProcessMethodExtractor extends MethodVisitor {
 
     // If there is more than one parameter there can only be exactly two; the second one must be InputContext type
     if (methodParams.length == 2) {
-      Preconditions.checkArgument(InputContext.class.equals(TypeToken.of(methodParams[1]).getRawType()),
+      Preconditions.checkArgument(AtomicContext.class.equals(TypeToken.of(methodParams[1]).getRawType()),
                                   "Second parameter must be InputContext type for process method %s.%s.",
                                   inspectType.getRawType().getName(), method);
     }

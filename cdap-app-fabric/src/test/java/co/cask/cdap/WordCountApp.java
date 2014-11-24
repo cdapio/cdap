@@ -30,7 +30,7 @@ import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
 import co.cask.cdap.api.flow.flowlet.FailureReason;
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -135,7 +135,7 @@ public class WordCountApp extends AbstractApplication {
     private Metrics metrics;
 
     @ProcessInput
-    public void process(StreamEvent event, InputContext context) throws CharacterCodingException {
+    public void process(StreamEvent event, AtomicContext context) throws CharacterCodingException {
       if (!"text".equals(context.getOrigin())) {
         return;
       }
@@ -216,11 +216,11 @@ public class WordCountApp extends AbstractApplication {
     }
 
     @Override
-    public void onSuccess(@Nullable Object input, @Nullable InputContext inputContext) {
+    public void onSuccess(@Nullable Object change, AtomicContext atomicContext) {
     }
 
     @Override
-    public FailurePolicy onFailure(@Nullable Object input, @Nullable InputContext inputContext, FailureReason reason) {
+    public FailurePolicy onFailure(@Nullable Object change, AtomicContext atomicContext, FailureReason reason) {
       return FailurePolicy.RETRY;
     }
   }

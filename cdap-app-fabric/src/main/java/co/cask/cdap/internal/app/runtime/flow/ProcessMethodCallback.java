@@ -16,14 +16,14 @@
 package co.cask.cdap.internal.app.runtime.flow;
 
 import co.cask.cdap.api.flow.flowlet.FailureReason;
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 
 /**
  * Interface to represent callback object for commit result.
  */
 interface ProcessMethodCallback {
-  void onSuccess(Object inputObject, InputContext inputContext);
+  void onSuccess(Object inputObject, AtomicContext inputContext);
 
-  void onFailure(Object inputObject, InputContext inputContext,
+  void onFailure(Object inputObject, AtomicContext inputContext,
                  FailureReason reason, InputAcknowledger inputAcknowledger);
 }

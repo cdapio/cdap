@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.internal.app.queue;
 
-import co.cask.cdap.api.flow.flowlet.InputContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.app.queue.InputDatum;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.queue.DequeueResult;
@@ -36,7 +36,7 @@ final class BasicInputDatum<S, T> implements InputDatum<T> {
 
   private final DequeueResult<S> result;
   private final AtomicInteger retry;
-  private final InputContext inputContext;
+  private final AtomicContext inputContext;
   private final QueueName queueName;
   private final Iterable<T> events;
 
@@ -48,7 +48,12 @@ final class BasicInputDatum<S, T> implements InputDatum<T> {
     // how many times iterator() is called. This is to save time as well as a need for the case where
     // metrics has been logged inside the decoder.
     this.events = result.isEmpty() ? ImmutableList.<T>of() : ImmutableList.copyOf(Iterables.transform(result, decoder));
-    this.inputContext = new InputContext() {
+    this.inputContext = new AtomicContext() {
+      @Override
+      public Type getType() {
+        return Type.PROCESS_DATA;
+      }
+
       @Override
       public String getOrigin() {
         return queueName.getSimpleName();
@@ -61,7 +66,7 @@ final class BasicInputDatum<S, T> implements InputDatum<T> {
 
       @Override
       public String toString() {
-        return Objects.toStringHelper(InputContext.class)
+        return Objects.toStringHelper(AtomicContext.class)
           .add("queue", queueName)
           .toString();
       }
@@ -89,7 +94,7 @@ final class BasicInputDatum<S, T> implements InputDatum<T> {
   }
 
   @Override
-  public InputContext getInputContext() {
+  public AtomicContext getInputContext() {
     return inputContext;
   }
 

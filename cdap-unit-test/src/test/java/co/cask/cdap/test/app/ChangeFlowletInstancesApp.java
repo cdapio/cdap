@@ -16,7 +16,6 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.Retry;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
@@ -26,9 +25,14 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
+import co.cask.cdap.api.flow.flowlet.FailurePolicy;
+import co.cask.cdap.api.flow.flowlet.FailureReason;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
+import co.cask.cdap.api.flow.flowlet.AtomicContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+
+import javax.annotation.Nullable;
 
 /**
  * An app with a flowlet that overwrites the onChangeInstances method.
@@ -107,12 +111,26 @@ public class ChangeFlowletInstancesApp extends AbstractApplication {
     }
 
     @Override
-    @Retry(maxRetries = 5)
     public void onChangeInstances(FlowletContext flowletContext, int previousInstancesCount) throws Exception {
       while (tries++ < 5) {
+        // This exception should be considered a FailureReason.Type.USER type of failure
         throw new Exception("Test exception");
       }
       confTable.put(new Put("key2", "column", "consumer"));
+    }
+
+    @Override
+    public FailurePolicy onFailure(@Nullable Object change, AtomicContext atomicContext, FailureReason reason) {
+      switch (atomicContext.getType()) {
+        case PROCESS_DATA:
+          return super.onFailure(change, atomicContext, reason);
+        case INSTANCE_CHANGE:
+          if (atomicContext.getRetryCount() < 5 && reason.getType().equals(FailureReason.Type.USER)) {
+            return FailurePolicy.RETRY;
+          }
+          return FailurePolicy.IGNORE;
+      }
+      return FailurePolicy.IGNORE;
     }
   }
 }

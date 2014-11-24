@@ -17,10 +17,31 @@
 package co.cask.cdap.api.flow.flowlet;
 
 /**
- * Represents the context of the input data that is passed
- * to {@link Flowlet} for processing.
+ * Represents the context of an atomic change made passed to a {@link Flowlet}.
  */
-public interface InputContext {
+public interface AtomicContext {
+
+  /**
+   * Type of atomic change.
+   */
+  public enum Type {
+    /**
+     * This context is an input context, passed to the {@link Flowlet} for processing.
+     */
+    PROCESS_DATA,
+
+    /**
+     * An instance change context, passed to the {@link Flowlet} when the number of
+     * instances changes.
+     */
+    INSTANCE_CHANGE
+  }
+
+  /**
+   * @return Type of atomic change that this {@link AtomicContext} represents.
+   */
+  Type getType();
+
   /**
    * @return Name of the output the event was read from.
    */
