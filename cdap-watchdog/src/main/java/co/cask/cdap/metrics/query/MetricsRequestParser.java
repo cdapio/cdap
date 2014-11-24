@@ -63,7 +63,7 @@ final class MetricsRequestParser {
     MAPREDUCE("b"),
     PROCEDURES("p"),
     HANDLERS("h"),
-    SERVICES("u");
+    SERVICES("s");
 
     private final String code;
 

@@ -64,7 +64,7 @@ public final class RuntimeStats {
     String prefix = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
     String inputName = String.format("%s.requests.count", prefix);
     String processedName = String.format("%s.response.successful.count", prefix);
-    String exceptionName = String.format("%s.response.server-error.count", prefix);
+    String exceptionName = String.format("%s.response.server.error.count", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }

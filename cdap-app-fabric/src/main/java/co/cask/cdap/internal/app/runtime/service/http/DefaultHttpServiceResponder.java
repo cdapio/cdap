@@ -171,9 +171,9 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
     } else if (status < 400) {
       name = "redirect";
     } else if (status < 500) {
-      name = "client-error";
+      name = "client.error";
     } else if (status < 600) {
-      name = "server-error";
+      name = "server.error";
     } else {
       name = "unknown";
     }
