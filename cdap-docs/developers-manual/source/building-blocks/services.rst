@@ -99,7 +99,7 @@ the query parameter ``limit`` with a default value of 10.
     // ...
   }
 
-An example of calling this endpoint with the HTTP RESTful API is shown in the :res:`http-restful-api-service`.
+An example of calling this endpoint with the HTTP RESTful API is shown in the :ref:`http-restful-api-service`.
 
 Service Discovery
 -----------------

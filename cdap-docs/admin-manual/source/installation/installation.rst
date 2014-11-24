@@ -439,7 +439,7 @@ command::
 When all the services have completed starting, the CDAP Console should then be
 accessible through a browser at port ``9999``. 
 
-The URL will be ``http://<console-ip>:9999`` where ``<console-ip>`` is the IP address of
+The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
 one of the machines where you installed the packages and started the services.
 
 .. _install-highly-available:
@@ -458,6 +458,16 @@ Repeat these steps on additional boxes.  The configurations needed to support hi
     the event of a hardware failure.
   - The recommended setting is to run at least two Kafka servers.
   - Set this to the number of Kafka servers.
+
+
+.. _install-health-check:
+
+Getting a Health Check
+----------------------
+
+.. include:: ../operations/index.rst 
+   :start-after: .. _operations-health-check:
+
 
 .. _install-verification:
 
@@ -483,6 +493,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 #. You should be able to start the application, inject sentences, and retrieve results.
 #. When finished, you can stop and remove the application as described in the section on
    :ref:`cdap-building-running`.
+
 
 .. _install-upgrade:
 
