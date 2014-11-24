@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.PreferenceTable;
 import co.cask.cdap.data2.dataset2.lib.table.PreferenceTableDataset;
+import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -95,7 +96,8 @@ public class PreferencesHttpService extends AbstractIdleService {
     PreferenceTableDataset table = DatasetsUtil.getOrCreateDataset(framework, Constants.Preferences.PROPERTY_TABLE,
                                                                    PreferenceTable.class.getName(),
                                                                    DatasetProperties.EMPTY, null, null);
-    builder.addHttpHandlers(ImmutableList.<HttpHandler>of(new PreferencesHandler(table, executorFactory)));
+    builder.addHttpHandlers(ImmutableList.<HttpHandler>of(new PreferencesHandler(table, executorFactory),
+                                                          new PingHandler()));
     httpService = builder.build();
     LOG.info("Starting Config Service...");
     httpService.startAndWait();

@@ -309,6 +309,9 @@ public class MasterServiceMain extends DaemonMain {
     configKeys.put(Constants.Service.EXPLORE_HTTP_USER_SERVICE,
                    ImmutableMap.of("default", Constants.Explore.CONTAINER_INSTANCES,
                                    "max", Constants.Explore.MAX_INSTANCES));
+    configKeys.put(Constants.Service.PREFERENCES,
+                   ImmutableMap.of("default", Constants.Preferences.NUM_INSTANCES,
+                                   "max", Constants.Preferences.MAX_INSTANCES));
     return configKeys;
   }
 

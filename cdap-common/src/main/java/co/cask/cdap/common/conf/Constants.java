@@ -289,6 +289,7 @@ public final class Constants {
     public static final String NUM_CORES = "prefs.num.cores";
     public static final String MEMORY_MB = "prefs.num.memory";
     public static final String MAX_INSTANCES = "prefs.max.instances";
+    public static final String NUM_INSTANCES = "prefs.num.instances";
     public static final String SERVICE_DESCRIPTION = "Configuration Service";
   }
 
