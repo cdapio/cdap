@@ -19,12 +19,17 @@
  * Copyright 2014 The Apache Software Foundation. Licensed under the Apache License, Version 2.0.
  */
 
-
 package $package;
 
+import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
+import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import com.google.common.io.Closeables;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -34,19 +39,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.nio.charset.Charset;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+
 
 /**
  * Spark PageRank program
  */
 public class SparkPageRankProgram implements JavaSparkProgram {
   private static final Logger LOG = LoggerFactory.getLogger(SparkPageRankProgram.class);
-
-  public static final Charset UTF8 = Charset.forName("UTF-8");
 
   private static final int ITERATIONS_COUNT = 10;
   private static final Pattern SPACES = Pattern.compile("\\s+");
@@ -61,19 +68,19 @@ public class SparkPageRankProgram implements JavaSparkProgram {
   @Override
   public void run(SparkContext sc) {
     LOG.info("Processing backlinkURLs data");
-    JavaPairRDD<byte[], String> backlinkURLs = sc.readFromDataset("backlinkURLs", byte[].class, String.class);
+    JavaPairRDD<LongWritable, Text> backlinkURLs = sc.readFromStream("backlinkURLStream", Text.class);
     int iterationCount = getIterationCount(sc);
 
     LOG.info("Grouping data by key");
     // Grouping backlinks by unique URL in key
     JavaPairRDD<String, Iterable<String>> links =
-      backlinkURLs.values().mapToPair(new PairFunction<String, String, String>() {
-      @Override
-      public Tuple2<String, String> call(String s) {
-        String[] parts = SPACES.split(s);
-        return new Tuple2<String, String>(parts[0], parts[1]);
-      }
-    }).distinct().groupByKey().cache();
+      backlinkURLs.values().mapToPair(new PairFunction<Text, String, String>() {
+        @Override
+        public Tuple2<String, String> call(Text s) {
+          String[] parts = SPACES.split(s.toString());
+          return new Tuple2<String, String>(parts[0], parts[1]);
+        }
+      }).distinct().groupByKey().cache();
 
     // Initialize default rank for each key URL
     JavaPairRDD<String, Double> ranks = links.mapValues(new Function<Iterable<String>, Double>() {
@@ -110,11 +117,31 @@ public class SparkPageRankProgram implements JavaSparkProgram {
 
     LOG.info("Writing ranks data");
 
-    JavaPairRDD<byte[], Double> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>, byte[], Double>() {
+    final ServiceDiscoverer discoveryServiceContext = sc.getServiceDiscoverer();
+    JavaPairRDD<byte[], Integer> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>, byte[],
+      Integer>() {
       @Override
-      public Tuple2<byte[], Double> call(Tuple2<String, Double> tuple) throws Exception {
-        LOG.debug("URL {} has rank {}", Arrays.toString(tuple._1().getBytes(UTF8)), tuple._2());
-        return new Tuple2<byte[], Double>(tuple._1().getBytes(UTF8), tuple._2());
+      public Tuple2<byte[], Integer> call(Tuple2<String, Double> tuple) throws Exception {
+        LOG.debug("URL {} has rank {}", Arrays.toString(tuple._1().getBytes(Charsets.UTF_8)), tuple._2());
+        URL serviceURL = discoveryServiceContext.getServiceURL(SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
+        if (serviceURL == null) {
+          throw new RuntimeException("Failed to discover service: " + SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME);
+        }
+        try {
+          URLConnection connection = new URL(serviceURL, String.format("transform/%s",
+                                                                       tuple._2().toString())).openConnection();
+          BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(),
+                                                                           Charsets.UTF_8));
+          try {
+            String pr = reader.readLine();
+            return new Tuple2<byte[], Integer>(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
+          } finally {
+            Closeables.closeQuietly(reader);
+          }
+        } catch (Exception e) {
+          LOG.warn("Failed to read the Stream for service {}", SparkPageRankApp.GOOGLE_TYPE_PR_SERVICE_NAME, e);
+          throw Throwables.propagate(e);
+        }
       }
     });
 
@@ -122,7 +149,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
     // All calculated results are stored in one row.
     // Each result, the calculated URL rank based on backlink contributions, is an entry of the row.
     // The value of the entry is the URL rank.
-    sc.writeToDataset(ranksRaw, "ranks", byte[].class, Double.class);
+    sc.writeToDataset(ranksRaw, "ranks", byte[].class, Integer.class);
 
     LOG.info("Done!");
   }
