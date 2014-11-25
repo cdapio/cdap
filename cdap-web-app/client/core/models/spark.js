@@ -4,42 +4,6 @@
 
 define(['core/models/program'], function (Program) {
 
-    var METRICS_PATHS = {
-        'system/apps/{{appId}}/spark/{{programId}}/{{programId}}.BlockManager.memory.remainingMem_MB?aggregate=true': 'blockRemainingMemory',
-        'system/apps/{{appId}}/spark/{{programId}}/{{programId}}.BlockManager.memory.maxMem_MB?aggregate=true': 'blockMaxMemory',
-        'system/apps/{{appId}}/spark/{{programId}}/{{programId}}.BlockManager.memory.memUsed_MB?aggregate=true': 'blockUsedMemory',
-        'system/apps/{{appId}}/spark/{{programId}}/{{programId}}.BlockManager.disk.diskSpaceUsed_MB?aggregate=true': 'blockDiskSpaceUsed',
-        'system/apps/{{appId}}/spark/{{programId}}/{{programId}}.DAGScheduler.job.activeJobs?aggregate=true': 'schedulerActiveJobs',
-        'system/apps/{{appId}}/spark/{{programId}}/{{programId}}.DAGScheduler.job.allJobs?aggregate=true': 'schedulerAllJobs',
-        'system/apps/{{appId}}/spark/{{programId}}/{{programId}}.DAGScheduler.stage.failedStages?aggregate=true': 'schedulerFailedStages',
-        'system/apps/{{appId}}/spark/{{programId}}/{{programId}}.DAGScheduler.stage.runningStages?aggregate=true': 'schedulerRunningStages',
-        'system/apps/{{appId}}/spark/{{programId}}/{{programId}}.DAGScheduler.stage.waitingStages?aggregate=true': 'schedulerWaitingStages'
-    };
-
-    var METRIC_TYPES = {
-        'blockRemainingMemory': 'sizeNumber',
-        'blockMaxMemory': 'sizeNumber',
-        'blockUsedMemory': 'sizeNumber',
-        'blockDiskSpaceUsed': 'sizeNumber',
-        'schedulerActiveJobs': 'number',
-        'schedulerAllJobs': 'number',
-        'schedulerFailedStages': 'number',
-        'schedulerRunningStages': 'number',
-        'schedulerWaitingStages': 'number'
-    };
-
-    var METRICS = {
-        blockRemainingMemory: 0,
-        blockMaxMemory: 0,
-        blockUsedMemory: 0,
-        blockDiskSpaceUsed: 0,
-        schedulerActiveJobs: 0,
-        schedulerAllJobs: 0,
-        schedulerFailedStages: 0,
-        schedulerRunningStages: 0,
-        schedulerWaitingStages: 0
-    };
-
     var EXPECTED_FIELDS = [
         'name',
         'description'
@@ -55,24 +19,18 @@ define(['core/models/program'], function (Program) {
         currentState: '',
 
         init: function () {
-            var self = this;
+
             this._super();
+
             this.set('id', this.get('app') + ':' + this.get('name'));
             this.set('description', this.get('meta') || 'Spark');
             if (this.get('meta')) {
                 this.set('startTime', this.get('meta').startTime);
             }
 
-            this.set('metricsData', Em.ArrayProxy.create({content: []}));
-            //populate Ember Array for metrics
-            $.each(METRICS, function (k, v) {
-                var type = METRIC_TYPES[k];
-                self.get('metricsData').pushObject(
-                    Em.Object.create({name: k, value: v, type: type, showMB: type === 'sizeNumber'}));
-            })
         },
 
-        start: function (http) {
+        start: function(http) {
             var model = this;
             model.set('currentState', 'STARTING');
 
@@ -88,7 +46,7 @@ define(['core/models/program'], function (Program) {
                 });
         },
 
-        stop: function (http) {
+        stop: function(http) {
             var model = this;
             model.set('currentState', 'STOPPING');
 
@@ -129,61 +87,14 @@ define(['core/models/program'], function (Program) {
 
         startStopDisabled: function () {
 
-            if (this.currentState === 'STARTING' ||
+            if(this.currentState === 'STARTING' ||
                 this.currentState === 'STOPPING') {
                 return true;
             }
 
             return false;
 
-        }.property('currentState'),
-
-        getMetricsRequest: function (http) {
-            var self = this;
-            var appId = this.get('app');
-            var programId = this.get('id');
-            var paths = [];
-            var pathMap = {};
-            for (var path in METRICS_PATHS) {
-                var url = new S(path).template({'appId': appId, 'programId': programId}).s;
-                paths.push(url);
-                pathMap[url] = METRICS_PATHS[path];
-            }
-            http.post('metrics', paths, function (response, status) {
-                if (!response.result) {
-                    return;
-                }
-                var result = response.result;
-                var i = result.length, metric;
-                while (i--) {
-                    metric = pathMap[result[i]['path']];
-                    if (metric) {
-                        if (result[i]['result']['data'] instanceof Array) {
-                            result[i]['result']['data'] = result[i]['result']['data'].map(function (entry) {
-                                return entry.value;
-                            });
-                            self.setMetricData(metric, result[i]['result']['data']);
-                        }
-                        else if (metric.type === 'number' || metric.type === 'sizeNumber') {
-                            self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
-                        } else {
-                            self.setMetricData(metric, result[i]['result']['data']);
-                        }
-                    }
-                    metric = null;
-                }
-            });
-        },
-
-        setMetricData: function (name, value) {
-            var metricsData = this.get('metricsData.content');
-            var metric = $.grep(metricsData, function(e){ return e.name == name; })[0];
-            //todo remove it when services will be fixed
-            //never zero
-            if (value == 0)
-                value = Math.floor((Math.random() * 30) + 1);
-            metric.set('value', value);
-        }
+        }.property('currentState')
     });
 
     Model.reopenClass({
