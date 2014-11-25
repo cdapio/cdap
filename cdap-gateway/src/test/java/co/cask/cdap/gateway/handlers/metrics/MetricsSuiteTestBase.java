@@ -109,6 +109,7 @@ public abstract class MetricsSuiteTestBase {
 
   private static Injector injector;
 
+  @BeforeClass
   public static void beforeClass() throws Exception {
     if (!runBefore) {
       return;
@@ -132,6 +133,7 @@ public abstract class MetricsSuiteTestBase {
     initialize();
   }
 
+  @AfterClass
   public static void afterClass() throws Exception {
     if (!runAfter) {
       return;

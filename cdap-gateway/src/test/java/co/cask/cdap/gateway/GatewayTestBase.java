@@ -100,6 +100,7 @@ public abstract class GatewayTestBase {
   public static boolean runBefore = true;
   public static boolean runAfter = true;
 
+  @BeforeClass
   public static void beforeClass() throws IOException {
     if (!runBefore) {
       return;
@@ -113,6 +114,7 @@ public abstract class GatewayTestBase {
     injector = startGateway(conf);
   }
 
+  @AfterClass
   public static void afterClass() {
     if (!runAfter) {
       return;
