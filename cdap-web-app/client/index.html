@@ -944,20 +944,6 @@
         {{partial "datasets-list"}}
       </div>
 
-      <div class="panel" id ="query-panel">
-        <div class="panel-head">
-          {{#if elements.Procedure.length}}
-            <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
-              <button {{action startAll "Procedure" on="click"}} class="btn start"><img src="/assets/img/v2/play_icon.png" /></button>
-              <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
-              <button {{action stopAll "Procedure" on="click"}} class="btn stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
-            </div>
-          {{/if}}
-          <div class="panel-title">Query</div>
-        </div>
-        {{partial "procedures-list"}}
-      </div>
-
       <div class="panel" id="userservice-panel">
         <div class="panel-head">
           {{#if elements.Userservice.length}}
@@ -2210,38 +2196,6 @@
         </div>
     </div>
     {{/if}}
-  </script>
-
-  <script type="text/x-handlebars" data-template-name="_procedures-list">
-{{!--
-    {{#if elements.Procedure.length}}
-      <table class="table">
-      <thead>
-        <th style="padding-left: 14px;">Procedures</th>
-        <th style="width: 262px;">Request Rate</th>
-        <th style="width: 262px;">Error Rate</th>
-      </thead>
-      <tbody>
-        {{#each elements.Procedure}}
-          <tr>
-            <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
-            </td>
-            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/system/apps/{parent}/procedures/{id}/query.requests"}}</td>
-            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/system/apps/{parent}/procedures/{id}/query.failures"}}</td>
-          </tr>
-        {{/each}}
-      </tbody>
-      </table>
-    {{else}}
-    <div class="object-list-empty">
-    <div class="object-list-empty-content">
-    <div>No Procedures.</div>
-    <span>Add Procedures by uploading an Application JAR.</span>
-    </div>
-    </div>
-    {{/if}}
---}}
   </script>
 
   <script type="text/x-handlebars" data-template-name="_userservices-list">
