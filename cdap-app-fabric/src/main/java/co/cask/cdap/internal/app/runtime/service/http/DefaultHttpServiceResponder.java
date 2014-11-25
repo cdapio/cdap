@@ -161,23 +161,26 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   }
 
   private void emitMetrics(int status) {
-    String name;
+    StringBuilder builder = new StringBuilder(50);
+    builder.append("response.");
     if (status < 100) {
-      name = "unknown";
+      builder.append("unknown");
     } else if (status < 200) {
-      name = "information";
+      builder.append("information");
     } else if (status < 300) {
-      name = "successful";
+      builder.append("successful");
     } else if (status < 400) {
-      name = "redirect";
+      builder.append("redirect");
     } else if (status < 500) {
-      name = "client.error";
+      builder.append("client.error");
     } else if (status < 600) {
-      name = "server.error";
+      builder.append("server.error");
     } else {
-      name = "unknown";
+      builder.append("unknown");
     }
+    builder.append(".count");
+
+    metricsCollector.increment(builder.toString(), 1);
     metricsCollector.increment("requests.count", 1);
-    metricsCollector.increment(String.format("response.%s.count", name), 1);
   }
 }

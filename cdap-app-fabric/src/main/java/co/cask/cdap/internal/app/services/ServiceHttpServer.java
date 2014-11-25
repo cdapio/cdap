@@ -78,8 +78,6 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final ServiceSpecification spec;
   private final ServiceAnnouncer serviceAnnouncer;
   private final BasicHttpServiceContextFactory contextFactory;
-  private final MetricsCollectionService metricsCollectionService;
-  private final RunId runId;
 
   private NettyHttpService service;
   private Cancellable cancelDiscovery;
@@ -90,19 +88,17 @@ public class ServiceHttpServer extends AbstractIdleService {
                            MetricsCollectionService metricsCollectionService) {
     this.host = host;
     this.program = program;
-    this.runId = runId;
     this.spec = spec;
     this.serviceAnnouncer = serviceAnnouncer;
     this.contextFactory = contextFactory;
-    this.metricsCollectionService = metricsCollectionService;
 
     this.handlerReferences = Maps.newConcurrentMap();
     this.handlerReferenceQueue = new ReferenceQueue<Supplier<HandlerContextPair>>();
 
-    constructNettyHttpService();
+    constructNettyHttpService(runId, metricsCollectionService);
   }
 
-  public void constructNettyHttpService() {
+  private void constructNettyHttpService(RunId runId, MetricsCollectionService metricsCollectionService) {
     Id.Program programId = program.getId();
     // Constructs all handler delegator. It is for bridging ServiceHttpHandler and HttpHandler (in netty-http).
     List<HandlerDelegatorContext> delegatorContexts = Lists.newArrayList();
@@ -126,7 +122,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                                       programId.getApplicationId(),
                                       programId.getId());
 
-    service = createNettyHttpService(host, delegatorContexts, pathPrefix);
+    service = createNettyHttpService(runId, host, pathPrefix, delegatorContexts, metricsCollectionService);
   }
 
   /**
@@ -224,13 +220,14 @@ public class ServiceHttpServer extends AbstractIdleService {
    * Creates a {@link NettyHttpService} from the given host, and list of {@link HandlerDelegatorContext}s
    *
    * @param host the host which the service will run on
-   * @param delegatorContexts the list {@link HandlerDelegatorContext}
    * @param pathPrefix a string prepended to the paths which the handlers in handlerContextPairs will bind to
+   * @param delegatorContexts the list {@link HandlerDelegatorContext}
+   * @param metricsCollectionService
    * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
    */
-  private NettyHttpService createNettyHttpService(String host,
+  private NettyHttpService createNettyHttpService(RunId runId, String host, String pathPrefix,
                                                   Iterable<HandlerDelegatorContext> delegatorContexts,
-                                                  String pathPrefix) {
+                                                  MetricsCollectionService metricsCollectionService) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
     HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, runId.getId(),
                                                         metricsCollectionService, getMetricsContext());

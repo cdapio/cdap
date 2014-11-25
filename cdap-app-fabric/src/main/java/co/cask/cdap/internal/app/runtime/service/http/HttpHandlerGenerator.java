@@ -565,17 +565,11 @@ final class HttpHandlerGenerator {
       mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
                                                        Throwable.class));
 
-      // responder = wrapResponder(responder);
-      // responder.sendStatus(500);
-      int responder = mg.newLocal(Type.getType(HttpServiceResponder.class));
+      // wrapResponder(responder).sendStatus(500);
       mg.loadThis();
       mg.loadArg(1);
       mg.invokeVirtual(classType,
                        Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
-      mg.checkCast(Type.getType(HttpServiceResponder.class));
-      mg.storeLocal(responder, Type.getType(HttpServiceResponder.class));
-
-      mg.loadLocal(responder);
       mg.visitLdcInsn(500);
       mg.invokeInterface(Type.getType(HttpServiceResponder.class),
                          Methods.getMethod(void.class, "sendStatus", int.class));
