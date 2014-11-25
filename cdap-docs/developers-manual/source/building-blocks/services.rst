@@ -47,9 +47,9 @@ Services are implemented by extending ``AbstractService``, which consists of
     }
   }
 
-Similarly, you can also add Services using the ``addLocalService`` method. These Services
-will only be accessible by other programs within the same Application—other Applications
-and external clients will not be able to use them.
+.. Similarly, you can also add Services using the ``addLocalService`` method. These Services
+.. will only be accessible by other programs within the same Application—other Applications
+.. and external clients will not be able to use them.
 
 Service Handlers
 ----------------
@@ -152,6 +152,23 @@ For example, in Flows::
   }
 
 .. rubric::  Examples of Using Services
+
+- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using a
+  service to **retrieve a name from a dataset.**
+  
+- The :ref:`Purchase example <examples-purchase>` includes two services, ``CatalogLookupService``
+  and ``PurchaseHistoryService``; the latter **retrieves a specified customer's purchase 
+  history in a JSON format from a dataset.**
+
+- The :ref:`Spark example <examples-spark-k-means>` includes a service that **responds with
+  a calculated center from a dataset based on an index parameter.**
+
+- For another example of **a service reading from a dataset,** see the :ref:`Spark PageRank
+  example <examples-spark-page-rank>`.
+
+- For an example of **using path and query parameters,** see the 
+  :ref:`WordCount example <examples-word-count>`, where the class ``RetrieveCountsHandler``
+  retrieves a variety of statistics from datasets depending on the path supplied. 
 
 - Almost all of the :ref:`how-to guides <guides-index>` demonstrate the use of services.
   (The exception is the :ref:`cdap-bi-guide`.)
