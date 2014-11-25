@@ -36,7 +36,7 @@ import org.jboss.netty.handler.codec.http.HttpVersion;
 /**
  * Handler for the status requests
  */
-public final class HttpStatusRequestHandler extends SimpleChannelUpstreamHandler {
+public class HttpStatusRequestHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void messageReceived(ChannelHandlerContext ctx,
@@ -49,7 +49,7 @@ public final class HttpStatusRequestHandler extends SimpleChannelUpstreamHandler
         // To have an independent health check of the router status, the command should
         // be served by the router itself without it talking to any downstream services
         if (request.getUri().equals(Constants.EndPoints.STATUS)) {
-          String statusString = "OK\n";
+          String statusString = Constants.Monitor.STATUS_OK;
           ChannelBuffer responseContent = ChannelBuffers.wrappedBuffer(Charsets.UTF_8.encode(statusString));
           HttpResponse httpResponse = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
           httpResponse.setHeader(HttpHeaders.Names.CONTENT_TYPE, "text/plain");

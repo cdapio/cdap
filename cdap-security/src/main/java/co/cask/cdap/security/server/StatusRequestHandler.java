@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.server;
 
+import co.cask.cdap.common.conf.Constants;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
@@ -34,6 +35,6 @@ public class StatusRequestHandler extends AbstractHandler {
     response.setContentType("text/plain");
     response.setStatus(HttpServletResponse.SC_OK);
     baseRequest.setHandled(true);
-    response.getWriter().print("OK\n");
+    response.getWriter().print(Constants.Monitor.STATUS_OK);
   }
 }
