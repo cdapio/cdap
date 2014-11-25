@@ -13,10 +13,8 @@ Similar to Flows, Services run in containers and the number of running service i
 Developers can implement Custom Services to interface with a legacy system and perform additional processing beyond
 the CDAP processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-The lifecycle of a Custom Service can be controlled via the CDAP Console or by using the
-:ref:`CDAP Java Client API <client-api>` or :ref:`CDAP RESTful HTTP API <restful-api>`.
-
-Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler``\s to serve requests.
+The lifecycle of a Custom Service can be controlled via the CDAP Console, by using the
+:ref:`CDAP Java Client API <client-api>`, or with the :ref:`CDAP RESTful HTTP API <restful-api>`.
 
 You can add Services to your application by calling the ``addService`` method in the
 Application's ``configure`` method::
@@ -35,7 +33,8 @@ Application's ``configure`` method::
     }
   }
 
-::
+Services are implemented by extending ``AbstractService``, which consists of
+``HttpServiceHandler``\s to serve requests::
 
   public class IPGeoLookupService extends AbstractService {
 
@@ -48,19 +47,22 @@ Application's ``configure`` method::
     }
   }
 
-Similarly, you can also add Services using the ``addLocalService`` method. These Services will only be accessible
-by other programs within the same Application - other Applications and external clients will not be able to use them.
+Similarly, you can also add Services using the ``addLocalService`` method. These Services
+will only be accessible by other programs within the same Application—other Applications
+and external clients will not be able to use them.
 
 Service Handlers
 ----------------
 
 ``ServiceHandler``\s are used to handle and serve HTTP requests.
 
-You add handlers to your Service by calling the ``addHandler`` method in the Service's ``configure`` method.
+You add handlers to your Service by calling the ``addHandler`` method in the Service's
+``configure`` method, as shown above.
 
-To use a Dataset within a handler, specify the Dataset by calling the ``useDataset`` method in the Service's
-``configure`` method and include the ``@UseDataSet`` annotation in the handler to obtain an instance of the Dataset.
-Each request to a method is committed as a single transaction.
+To use a Dataset within a handler, specify the Dataset by calling the ``useDataset``
+method in the Service's ``configure`` method and include the ``@UseDataSet`` annotation in
+the handler to obtain an instance of the Dataset. Each request to a method is committed as
+a single transaction.
 
 ::
 
