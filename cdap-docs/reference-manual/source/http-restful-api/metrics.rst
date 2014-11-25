@@ -37,7 +37,7 @@ The general form of a metrics request is::
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
    * - ``<Run-Id>``
-        - Run-id of the program; see ``Querying by RunId``
+        - Run-id of the program; see `Querying by RunId`_
    * - ``<metric>``
      - Metric being queried; see `Available Metrics`_
    * - ``<time-range>``
@@ -226,6 +226,22 @@ Flowlet, Procedure, Mapper, or Reducer level:
      - ``/datasets/<dataset-id>``
    * - All Datasets across all Applications
      - ``/``
+
+Querying by Run-Id
+------------------
+
+Each Program (Flow, MapReduce, Spark, Services, Procedure) has an associated run-id to uniquely identify a program-run.
+We can query metrics for a program by its run-id to see the metrics for that particular run.
+Please look at :ref:`Program Runs API <rest-program-runs>` to know how to get active and historical program runs.
+
+The run-id is specified after the program-name in the path to query by run-id ::
+
+  /apps/<app-id>/program-type/<program-id>/runs/<run-id>/
+
+Examples ::
+
+    GET /apps/<app-id>/flows/<flow-id>/runs/<run-id>/flowlets/<flowlet-id>/
+    GET /apps/<app-id>/mapreduce/<mapreduce-id>/runs/<run-id>/
 
 Available Metrics
 -----------------

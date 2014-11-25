@@ -457,14 +457,15 @@ Example
    * - Description
      - Retrieve the number of instances of the Service *CatalogLookup* in the application *PurchaseHistory*.
 
+.. _rest-program-runs:
 
 Run Records and Schedule
 ------------------------
 
-To see all the runs of selected elements (Flows, Procedures, MapReduce jobs, Spark, Workflows, and
+To see all the runs of a selected element (Flows, Procedures, MapReduce jobs, Spark, Workflows, and
 Services), issue an HTTP GET to the element’s URL with the ``runs`` parameter.
-This will return a JSON list of current run, all completed runs, each with a start time,
-end time and termination status::
+This will return a JSON list of all runs for the program, each with a start time,
+end time and program status::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/runs
 
@@ -481,12 +482,16 @@ end time and termination status::
    * - ``<element-id>``
      - Name of the element
 
-  You can filter the runs by the specifying end-status of a program, start and end time , and also limit of returned records.
+You can filter the runs either by the status of program, start and end time , and can also limit the returned records.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
    * - Query Parameter
      - Description
    * - ``<status>``
-     - completed/failed
+     - running/completed/failed
    * - ``<start>``
      - start timestamp
    * - ``<end>``
@@ -507,16 +512,16 @@ Example
      - Retrieve the Run records of the Flow *WhoFlow* of the Application *HelloWorld*
    * - Returns
 
-     -``{"runid":"...","start":1382567598,"end":-1,"status":"RUNNING"},``
-      ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
-      ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+     - ``{"runid":"...","start":1382567598,"end":-1,"status":"RUNNING"},``
+       ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
+       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
 
 The *runid* field is a UUID that uniquely identifies a run within CDAP,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
 
-For Services, you can retrieve the history of a Twill Service using::
+For Services, you can retrieve the history of successfully completed Twill Service using::
 
-  GET <base-url>/apps/<app-id>/services/<service-id>/history
+  GET <base-url>/apps/<app-id>/services/<service-id>/runs?status=completed
 
 For Workflows, you can also retrieve:
 
@@ -535,9 +540,9 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookup/history``
+     - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&limit=1``
    * - Description
-     - Retrieve the history of the Service *CatalogLookup* of the Application *PurchaseHistory*
+     - Retrieve the most recent successfully completed run of the Service *CatalogLookup* of the Application *PurchaseHistory*
    * - Returns
      - ``[{"runid":"cad83d45-ecfb-4bf8-8cdb-4928a5601b0e","start":1415051892,"end":1415057103,"status":"STOPPED"}]``
    * - 
