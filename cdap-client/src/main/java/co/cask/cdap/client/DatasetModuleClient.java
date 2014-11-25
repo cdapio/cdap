@@ -23,8 +23,8 @@ import co.cask.cdap.client.exception.DatasetModuleAlreadyExistsException;
 import co.cask.cdap.client.exception.DatasetModuleCannotBeDeletedException;
 import co.cask.cdap.client.exception.DatasetModuleNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.client.util.ProgramFlowUtil;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -154,7 +154,7 @@ public class DatasetModuleClient {
     throws IOException, UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
 
     try {
-      ProgramFlowUtil.waitFor(true, new Callable<Boolean>() {
+      Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
           return exists(moduleName);
@@ -180,7 +180,7 @@ public class DatasetModuleClient {
     throws IOException, UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
 
     try {
-      ProgramFlowUtil.waitFor(false, new Callable<Boolean>() {
+      Tasks.waitFor(false, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
           return exists(moduleName);

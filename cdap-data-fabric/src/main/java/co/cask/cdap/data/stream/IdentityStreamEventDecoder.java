@@ -17,22 +17,21 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import org.apache.hadoop.io.LongWritable;
 
 /**
  * A {@link StreamEventDecoder} that decodes a {@link StreamEvent} into {@link LongWritable} as key and
- * {@link StreamEventData} as value. The key carries the event timestamp, while the value contains the
+ * {@link StreamEvent} as value. The key carries the event timestamp, while the value contains the
  * entire {@link StreamEvent}.
  */
-public final class IdentityStreamEventDecoder implements StreamEventDecoder<LongWritable, StreamEventData> {
+public final class IdentityStreamEventDecoder implements StreamEventDecoder<LongWritable, StreamEvent> {
 
   private final LongWritable key = new LongWritable();
 
   @Override
-  public DecodeResult<LongWritable, StreamEventData> decode(StreamEvent event,
-                                                            DecodeResult<LongWritable, StreamEventData> result) {
+  public DecodeResult<LongWritable, StreamEvent> decode(StreamEvent event,
+                                                        DecodeResult<LongWritable, StreamEvent> result) {
     key.set(event.getTimestamp());
     return result.setKey(key).setValue(event);
   }

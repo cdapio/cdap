@@ -29,6 +29,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
@@ -90,7 +91,9 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
                                       DiscoveryService discoveryService,
                                       @Named("security.handlers") Map<String, Object> handlers,
                                       @Named(NAMED_EXTERNAL_AUTH) AuditLogHandler auditLogHandler) {
-    this.port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+    this.port = configuration.getBoolean(Constants.Security.SSL_ENABLED) ?
+      configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT) :
+      configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
     this.maxThreads = configuration.getInt(Constants.Security.MAX_THREADS);
     this.handlers = handlers;
     this.discoveryService = discoveryService;
@@ -149,9 +152,11 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
       context.setSecurityHandler(authenticationHandler);
 
-      SelectChannelConnector connector = new SelectChannelConnector();
-      connector.setHost(address.getCanonicalHostName());
-      connector.setPort(port);
+      // Status endpoint should be handled without the authentication
+      ContextHandler statusContext = new ContextHandler();
+      statusContext.setContextPath(Constants.EndPoints.STATUS);
+      statusContext.setServer(server);
+      statusContext.setHandler(new StatusRequestHandler());
 
       if (configuration.getBoolean(Constants.Security.SSL_ENABLED, false)) {
         SslContextFactory sslContextFactory = new SslContextFactory();
@@ -173,15 +178,18 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
         // TODO Figure out how to pick a certificate from key store
 
         SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
-        int sslPort = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
         sslConnector.setHost(address.getCanonicalHostName());
-        sslConnector.setPort(sslPort);
+        sslConnector.setPort(port);
         server.setConnectors(new Connector[]{sslConnector});
       } else {
+        SelectChannelConnector connector = new SelectChannelConnector();
+        connector.setHost(address.getCanonicalHostName());
+        connector.setPort(port);
         server.setConnectors(new Connector[]{connector});
       }
 
       HandlerCollection handlers = new HandlerCollection();
+      handlers.addHandler(statusContext);
       handlers.addHandler(context);
       // AuditLogHandler must be last, since it needs the response that was sent to the client
       handlers.addHandler(auditLogHandler);

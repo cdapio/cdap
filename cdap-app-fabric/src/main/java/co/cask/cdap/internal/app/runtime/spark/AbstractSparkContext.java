@@ -25,17 +25,13 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.services.SerializableServiceDiscoverer;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
@@ -69,7 +65,7 @@ abstract class AbstractSparkContext implements SparkContext {
   private final Configuration hConf;
   private final long logicalStartTime;
   private final SparkSpecification spec;
-  private final Arguments runtimeArguments;
+  private final Map<String, String> runtimeArguments;
   private final BasicSparkContext basicSparkContext;
   private final SparkConf sparkConf;
 
@@ -78,7 +74,7 @@ abstract class AbstractSparkContext implements SparkContext {
     this.basicSparkContext = basicSparkContext;
     this.logicalStartTime = basicSparkContext.getLogicalStartTime();
     this.spec = basicSparkContext.getSpecification();
-    this.runtimeArguments = basicSparkContext.getRuntimeArgs();
+    this.runtimeArguments = basicSparkContext.getRuntimeArguments();
     this.sparkConf = initializeSparkConf();
   }
 
@@ -129,7 +125,7 @@ abstract class AbstractSparkContext implements SparkContext {
    *
    * @param datasetName the name of the {@link Dataset} to read from
    * @return updated {@link Configuration}
-   * @throws {@link IllegalArgumentException} if the {@link Dataset} to read is not {@link BatchReadable}
+   * @throws IllegalArgumentException if the {@link Dataset} to read is not {@link BatchReadable}
    */
   Configuration setInputDataset(String datasetName) {
     Configuration hConf = new Configuration(getHConf());
@@ -239,8 +235,8 @@ abstract class AbstractSparkContext implements SparkContext {
    */
   @Override
   public String[] getRuntimeArguments(String argsKey) {
-    if (runtimeArguments.hasOption(argsKey)) {
-      return SPACES.split(runtimeArguments.getOption(argsKey).trim());
+    if (runtimeArguments.containsKey(argsKey)) {
+      return SPACES.split(runtimeArguments.get(argsKey).trim());
     } else {
       LOG.warn("Argument with key {} not found in Runtime Arguments", argsKey);
       return NO_ARGS;
@@ -259,11 +255,7 @@ abstract class AbstractSparkContext implements SparkContext {
 
   @Override
   public Map<String, String> getRuntimeArguments() {
-    ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
-    for (Map.Entry<String, String> runtimeArgument : runtimeArguments) {
-      arguments.put(runtimeArgument);
-    }
-    return arguments.build();
+    return runtimeArguments;
   }
 
   @Override

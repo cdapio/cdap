@@ -86,6 +86,22 @@ public class EntityTableTest {
   }
 
   @Test
+  public void testRecycleAfterMaxId() throws Exception {
+    EntityTable entityTable = new EntityTable(getTable("testRecycleId"), 101);
+
+    // Generate 500 entries, the (101-200) will replace the (1-100) values and so on as we
+    // only have 100 entries as maxId.
+    for (long i = 1; i <= 500; i++) {
+      entityTable.getId("app", "app" + i);
+    }
+
+    // we we call getName for the 100 entries, it will be the latest entries 401-500
+    for (long i = 1; i <= 100; i++) {
+      Assert.assertEquals("app" + String.valueOf(400 + i), entityTable.getName(i, "app"));
+    }
+  }
+
+  @Test
   public void testGetName() throws Exception {
     EntityTable entityTable = new EntityTable(getTable("testGetName"));
 

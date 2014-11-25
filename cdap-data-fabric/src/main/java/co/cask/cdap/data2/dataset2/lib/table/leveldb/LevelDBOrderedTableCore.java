@@ -184,6 +184,9 @@ public class LevelDBOrderedTableCore {
     return new LevelDBScanner(iterator, endKey, filter, columns, tx);
   }
 
+  /**
+   * if columns are not null, then limit param is ignored and limit is columns.length
+   */
   public NavigableMap<byte[], byte[]> getRow(byte[] row, @Nullable byte[][] columns,
                                              byte[] startCol, byte[] stopCol,
                                              int limit, Transaction tx) throws IOException {
@@ -193,6 +196,7 @@ public class LevelDBOrderedTableCore {
       }
       columns = Arrays.copyOf(columns, columns.length);
       Arrays.sort(columns, Bytes.BYTES_COMPARATOR);
+      limit = columns.length;
     }
 
     byte[] startKey = createStartKey(row, columns == null ? startCol : columns[0]);
