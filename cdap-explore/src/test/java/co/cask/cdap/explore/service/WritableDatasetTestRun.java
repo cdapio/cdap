@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.Transaction;
@@ -40,6 +41,7 @@ import java.net.URL;
 public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   @BeforeClass
   public static void start() throws Exception {
+    startServices(CConfiguration.create());
     datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
   }
 

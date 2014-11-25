@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Set;
@@ -29,9 +30,14 @@ import java.util.Set;
  */
 public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
 
+  @BeforeClass
+  public static void start() throws Exception {
+    startServices(CConfiguration.create());
+  }
+
   @Test
   public void testServiceStop() throws Exception {
-    startServices(CConfiguration.create());
+    ExploreService exploreService = injector.getInstance(ExploreService.class);
     Set<Long> beforeTxns = transactionManager.getCurrentState().getInProgress().keySet();
 
     exploreService.execute("show tables");
@@ -48,7 +54,6 @@ public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
                           queryTxns,
                           transactionManager.getCurrentState().getInProgress().keySet()).immutableCopy()
     );
-    stopServices();
   }
 
 }

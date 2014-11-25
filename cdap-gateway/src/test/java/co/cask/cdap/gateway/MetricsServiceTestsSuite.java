@@ -41,11 +41,14 @@ public class MetricsServiceTestsSuite  {
 
   @BeforeClass
   public static void init() throws Exception {
-    MetricsSuiteTestBase.setupTests();
+    MetricsSuiteTestBase.beforeClass();
+    MetricsSuiteTestBase.runBefore = false;
+    MetricsSuiteTestBase.runAfter = false;
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    MetricsSuiteTestBase.cleanup();
+    MetricsSuiteTestBase.runAfter = true;
+    MetricsSuiteTestBase.afterClass();
   }
 }

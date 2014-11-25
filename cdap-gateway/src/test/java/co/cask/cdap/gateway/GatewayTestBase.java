@@ -96,7 +96,14 @@ public abstract class GatewayTestBase {
   private static DatasetService datasetService;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  public static void setupTests() throws IOException {
+  // Controls for test suite for whether to run BeforeClass/AfterClass
+  public static boolean runBefore = true;
+  public static boolean runAfter = true;
+
+  public static void beforeClass() throws IOException {
+    if (!runBefore) {
+      return;
+    }
     tmpFolder.create();
     conf = CConfiguration.create();
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
@@ -106,7 +113,10 @@ public abstract class GatewayTestBase {
     injector = startGateway(conf);
   }
 
-  public static void cleanup() {
+  public static void afterClass() {
+    if (!runAfter) {
+      return;
+    }
     stopGateway(conf);
     tmpFolder.delete();
   }
