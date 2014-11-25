@@ -149,7 +149,7 @@ else
   program_action $app "BackLinkFlow" "flow" $action $host
   program_action $app "GoogleTypePR" "service" $action $host
   program_action $app "RanksService" "service" $action $host
-#  dont start and stop mapreduce if start/stop is specified
+# Don't start Spark Program if start is specified
   if [ "x$action" == "xstatus" ] || [ "x$action" == "xstop" ]; then
     program_action $app "SparkPageRankProgram" "spark" $action $host
   fi
