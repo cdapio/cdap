@@ -48,6 +48,10 @@ define(['core/lib/lodash'], function (lodash) {
       }, 5000);
       this.set('datasets', []);
       this.loadDiscoverableDatasets();
+
+      setTimeout(function() {
+        $('#nav-queries').addClass('active');
+      }, C.EMBEDDABLE_DELAY);
     },
 
     clearAllTooltips: function () {
@@ -169,7 +173,9 @@ define(['core/lib/lodash'], function (lodash) {
       dataset.set('isSelected', true);
     },
 
-    unload: function () {},
+    unload: function () {
+      $('#nav-queries').removeClass('active');
+    },
 
     nextPage: function () {
       this.pageMgr.offset = this.smallest;
