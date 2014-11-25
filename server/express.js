@@ -10,10 +10,21 @@ var pkg = require('../package.json'),
     finalhandler = require('finalhandler'),
     serveFavicon = require('serve-favicon'),
     colors = require('colors/safe'),
-
+    mode = process.env.CDAP_MODE || null,
+    configParser = require('./configParser.js'),
+    config = {},
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
     );
+
+if (mode === 'enterprise') {
+  configParser.extractConfig('enterprise', 'cdap', false /* isSecure*/)
+    .then(function(c) {
+      config = c;
+    })
+} else {
+  config = require('../cdap-config.json');
+}
 
 morgan.token('ms', function(req, res){
   if (!res._header || !req._startAt) { return ''; }
@@ -36,9 +47,11 @@ app.get('/config.js', function (req, res) {
   var data = JSON.stringify({
     // the following will be available in angular via the "MY_CONFIG" injectable
 
-    authorization: req.headers.authorization
-
+    authorization: req.headers.authorization,
+    routerServerUrl: config['router.server.address'],
+    routerServerPort: config['router.server.port']
   });
+
   res.header({
     'Content-Type': 'text/javascript',
     'Cache-Control': 'no-store, must-revalidate'
@@ -75,4 +88,6 @@ app.all('*', [
   }
 ]);
 
-module.exports = app;
+module.exports.app = app;
+
+module.exports.config = config;
