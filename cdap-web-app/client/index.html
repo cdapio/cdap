@@ -1284,27 +1284,13 @@
     <div id="panels">
       <div class="panel">
         <div>
-          <div class="panel-title center-align sparks-metrics">
+          <div class="panel-title center-align beta-info-font">
             {{#if showLogsMessage}}
               <div>
                 <span> To see more details about the job, please see the <span class="logs-link" {{action "logsLinkHandler" on="click"}}> logs </span> </span>
               </div>
             {{/if}}
-            <table class="table table-condensed">
-            <thead>
-              <tr><th>Metrics</th>
-              <th style="width:150px;">Value</th>
-              </tr>
-            </thead>
-            <tbody>
-            {{#each model.metricsData}}
-              <tr class="data-row">
-                <td class="metrics-row">{{name}}</td>
-                <td class="metrics-row">{{value}} {{#if showMB}}MB{{/if}}</td>
-              </tr>
-            {{/each}}
-            </tbody>
-            </table>
+            <div>Beta Feature: Additional components will be added in a future release. </div>
           </div>
         </div>
       </div>
