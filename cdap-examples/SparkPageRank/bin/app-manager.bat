@@ -23,7 +23,8 @@ SET APP_JAR_PREFIX=SparkPageRank
 
 SET APP_NAME=SparkPageRank
 SET FLOW_NAME=BackLinkFlow
-SET PROCEDURE_NAME=RanksProcedure
+SET RANKS_SERVICE_NAME=RanksService
+SET GOOGLE_TYPE_PR_SERVICE_NAME=GoogleTypePR
 SET SPARK_NAME=SparkPageRankProgram
 
 REM Set the base directory
@@ -36,7 +37,6 @@ for /r %APP_HOME%\target %%a in (%APP_JAR_PREFIX%*) do SET JAR_PATH=%%~dpnxa
 
 if %JAR_PATH% == "" (echo "Could not find application jar with name %APP_JAR_PREFIX%"
                      GOTO :EOF)
-
 
 REM Process access token
 SET ACCESS_TOKEN=
@@ -72,18 +72,21 @@ GOTO :EOF
 
 :START
 CALL :POST %APP_NAME% flows %FLOW_NAME% start
-CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% start
+CALL :POST %APP_NAME% services %GOOGLE_TYPE_PR_SERVICE_NAME% start
+CALL :POST %APP_NAME% services %RANKS_SERVICE_NAME% start
 GOTO :EOF
 
 :STOP
 CALL :POST %APP_NAME% flows %FLOW_NAME% stop
-CALL :POST %APP_NAME% procedures %PROCEDURE_NAME% stop
+CALL :POST %APP_NAME% services %GOOGLE_TYPE_PR_SERVICE_NAME% stop
+CALL :POST %APP_NAME% services %RANKS_SERVICE_NAME% stop
 CALL :POST %APP_NAME% spark %SPARK_NAME% stop
 GOTO :EOF
 
 :STATUS
 CALL :GET %APP_NAME% flows %FLOW_NAME% status
-CALL :GET %APP_NAME% procedures %PROCEDURE_NAME% status
+CALL :GET %APP_NAME% services %GOOGLE_TYPE_PR_SERVICE_NAME% status
+CALL :GET %APP_NAME% services %RANKS_SERVICE_NAME% status
 CALL :GET %APP_NAME% spark %SPARK_NAME% status
 GOTO :EOF
 
