@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.Location;
@@ -37,6 +38,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Helper class for getting and setting specific config settings for a spark job context
@@ -64,7 +66,7 @@ public class SparkContextConfig {
   }
 
   public SparkContextConfig(Configuration hConf) {
-    this.hConf = hConf;
+    SparkContextConfig.hConf = hConf;
   }
 
   public static void set(Configuration hadoopConf, BasicSparkContext context, CConfiguration conf, Transaction tx,
@@ -74,19 +76,21 @@ public class SparkContextConfig {
     setLogicalStartTime(context.getLogicalStartTime());
     //TODO: Change this once we start supporting Spark in Workflow
     setWorkflowBatch("Not Supported");
-    setArguments(context.getRuntimeArgs());
+    setArguments(context.getRuntimeArguments());
     setProgramJarName(programJarCopy.getName());
     setProgramLocation(programJarCopy.toURI());
     setConf(conf);
     setTx(tx);
   }
 
-  private static void setArguments(Arguments runtimeArgs) {
+  private static void setArguments(Map<String, String> runtimeArgs) {
     hConf.set(HCONF_ATTR_ARGS, new Gson().toJson(runtimeArgs));
   }
 
   public Arguments getArguments() {
-    return new Gson().fromJson(hConf.get(HCONF_ATTR_ARGS), BasicArguments.class);
+    Map<String, String> arguments = new Gson().fromJson(hConf.get(HCONF_ATTR_ARGS),
+                                                        new TypeToken<Map<String, String>>() { }.getType());
+    return new BasicArguments(arguments);
   }
 
   public URI getProgramLocation() {
@@ -134,6 +138,7 @@ public class SparkContextConfig {
     }
 
     try {
+      @SuppressWarnings("unchecked")
       Class<? extends Split> splitClass =
         (Class<? extends Split>) hConf.getClassLoader().loadClass(splitClassName);
       return new Gson().fromJson(splitsJson, new ListSplitType(splitClass));
