@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.data.DataSetContext;
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.Metrics;
@@ -143,17 +143,17 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     }
 
     @Override
-    public <T extends Dataset> T getDataSet(String name) throws DataSetInstantiationException {
+    public <T extends Dataset> T getDataSet(String name) throws DatasetInstantiationException {
       return getDataSet(name, DatasetDefinition.NO_ARGUMENTS);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
-      throws DataSetInstantiationException {
+      throws DatasetInstantiationException {
 
       if (!datasets.contains(name)) {
-        throw new DataSetInstantiationException(
+        throw new DatasetInstantiationException(
           String.format("Trying to access dataset %s that is not declared as used by the Worker. Specify " +
                           "required datasets using the useDataset() method in the Worker's configure().", name));
       }
@@ -167,10 +167,10 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
           return (T) dataset;
         }
       } catch (Throwable t) {
-        throw new DataSetInstantiationException(String.format("Could not instantiate dataset '%s'", name), t);
+        throw new DatasetInstantiationException(String.format("Could not instantiate dataset '%s'", name), t);
       }
       // if it gets here, then the dataset was null
-      throw new DataSetInstantiationException(String.format("Dataset '%s' does not exist.", name));
+      throw new DatasetInstantiationException(String.format("Dataset '%s' does not exist.", name));
     }
   }
 }

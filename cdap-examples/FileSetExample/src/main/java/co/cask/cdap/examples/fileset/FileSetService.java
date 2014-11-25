@@ -17,7 +17,7 @@
 package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -69,7 +69,7 @@ public class FileSetService extends AbstractService {
       FileSet fileSet;
       try {
         fileSet = getContext().getDataSet(set);
-      } catch (DataSetInstantiationException e) {
+      } catch (DatasetInstantiationException e) {
         responder.sendError(400, String.format("Invalid file set name '%s'", set));
         return;
       }
@@ -93,7 +93,7 @@ public class FileSetService extends AbstractService {
       FileSet fileSet;
       try {
         fileSet = getContext().getDataSet(set);
-      } catch (DataSetInstantiationException e) {
+      } catch (DatasetInstantiationException e) {
         responder.sendError(400, String.format("Invalid file set name '%s'", set));
         return;
       }

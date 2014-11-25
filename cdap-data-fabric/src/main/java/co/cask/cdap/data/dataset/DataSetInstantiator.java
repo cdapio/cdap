@@ -17,7 +17,7 @@
 package co.cask.cdap.data.dataset;
 
 import co.cask.cdap.api.data.DataSetContext;
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
@@ -83,28 +83,28 @@ public class DataSetInstantiator implements DataSetContext {
 
   @Override
   public <T extends Dataset> T getDataSet(String dataSetName)
-    throws DataSetInstantiationException {
+    throws DatasetInstantiationException {
     return getDataSet(dataSetName, DatasetDefinition.NO_ARGUMENTS);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
-    throws DataSetInstantiationException {
+    throws DatasetInstantiationException {
 
     T dataset;
     try {
       if (!datasetFramework.hasInstance(name)) {
-        throw new DataSetInstantiationException("Trying to access dataset that does not exist: " + name);
+        throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + name);
       }
 
       dataset = datasetFramework.getDataset(name, arguments, classLoader);
       if (dataset == null) {
-        throw new DataSetInstantiationException("Failed to access dataset: " + name);
+        throw new DatasetInstantiationException("Failed to access dataset: " + name);
       }
 
     } catch (Exception e) {
-      throw new DataSetInstantiationException("Failed to access dataset: " + name, e);
+      throw new DatasetInstantiationException("Failed to access dataset: " + name, e);
     }
 
     if (dataset instanceof TransactionAware) {

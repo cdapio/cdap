@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DataSetContext;
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
@@ -109,20 +109,20 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   @SuppressWarnings("unchecked")
   @Override
-  public <T extends Dataset> T getDataSet(String name) throws DataSetInstantiationException {
+  public <T extends Dataset> T getDataSet(String name) throws DatasetInstantiationException {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
     try {
       T dataset = (T) datasets.get(name);
       Preconditions.checkArgument(dataset != null, "%s is not a known Dataset.", name);
       return dataset;
     } catch (Throwable t) {
-      throw new DataSetInstantiationException(String.format("Can't instantiate dataset '%s'", name), t);
+      throw new DatasetInstantiationException(String.format("Can't instantiate dataset '%s'", name), t);
     }
   }
 
   @Override
   public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
-    throws DataSetInstantiationException {
+    throws DatasetInstantiationException {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
     return getDataSet(name);
   }
