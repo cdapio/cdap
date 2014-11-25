@@ -22,13 +22,10 @@ import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
-import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
-import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
@@ -36,7 +33,6 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -55,7 +51,6 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -98,39 +93,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/")
   public void list(HttpRequest request, final HttpResponder responder) {
     responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
-  }
-
-  @DELETE
-  @Path("/data/unrecoverable/datasets/")
-  public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
-    if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET)) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-      return;
-    }
-
-    DatasetNamespace systemNamespace = new DefaultDatasetNamespace(conf, Namespace.SYSTEM);
-
-    boolean succeeded = true;
-    for (DatasetSpecification spec : instanceManager.getAll()) {
-      if (systemNamespace.contains(spec.getName())) {
-        opExecutorClient.truncate(spec.getName());
-      } else {
-        try {
-          // It is okay if dataset not exists: someone may be deleting it at same time
-          boolean successful = dropDataset(spec);
-          
-        } catch (Exception e) {
-          String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
-                                     spec.getName(), e.getMessage());
-          LOG.warn(msg, e);
-          succeeded = false;
-          // we continue deleting if something wrong happens.
-          // todo: Will later be improved by doing all in async: see CDAP-7
-        }
-      }
-    }
-
-    responder.sendStatus(succeeded ? HttpResponseStatus.OK : HttpResponseStatus.INTERNAL_SERVER_ERROR);
   }
 
   @GET
