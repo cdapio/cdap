@@ -1283,31 +1283,37 @@
     </div>
     <div id="panels">
       <div class="panel">
-        <div class="sparks-metrics clearfix chart">
-            <div class="spark-metrics-item">
-              <div class="spark-icon spark-metrics-block">
-                <div class="info-window">
-                  <div class="metrics-phase">BLOCKS</div>
-                  <div class="mapper-icon"></div>
-                  <div class="metric-row">{{model.metricsData.blockRemainingMemory}}MB Remaining</div>
-                  <div class="metric-row">{{model.metricsData.blockMaxMemory}}MB Max Available</div>
-                  <div class="metric-row">{{model.metricsData.blockUsedMemory}}MB Used</div>
-                  <div class="metric-row">{{model.metricsData.blockDiskSpaceUsed}}MB Used on disk</div>
+        <div class="sparks-metrics clearfix">
+          <div class="spark-metrics-storage">
+            <div class="title-storage">STORAGE</div>
+            <div class="metric-row">{{model.metricsData.blockRemainingMemory}}MB Remaining</div>
+            <div class="metric-row">{{model.metricsData.blockMaxMemory}}MB Max Available</div>
+            <div class="metric-row">{{model.metricsData.blockUsedMemory}}MB Used</div>
+            <div class="metric-row">{{model.metricsData.blockDiskSpaceUsed}}MB Used on disk</div>
+          </div>
+          <div class="spark-metrics-stages">
+            <div class="title-stage">STAGES</div>
+            <div id="stage-line" class="stage-status-line">
+              <div {{bindAttr style="model.metricsData.schedulerRunningLineSize"}} class="running">
+                <div>{{model.metricsData.schedulerRunningStages}}</div>
+                <div>
+                  <div class="bubble-running"></div>
+                </div>
+              </div>
+              <div {{bindAttr style="model.metricsData.schedulerFailedLineSize"}} class="failed">
+                <div>{{model.metricsData.schedulerFailedStages}}</div>
+                <div>
+                  <div class="bubble-failed"></div>
+                </div>
+              </div>
+              <div {{bindAttr style="model.metricsData.schedulerWaitingLineSize"}} class="waiting">
+                <div>{{model.metricsData.schedulerWaitingStages}}</div>
+                <div>
+                  <div class="bubble-waiting"></div>
                 </div>
               </div>
             </div>
-            <div class="spark-metrics-item">
-              <div class="spark-icon spark-metrics-scheduler">
-                <div class="info-window">
-                  <div class="metrics-phase">SCHEDULER</div>
-                  <div class="reducer-icon"></div>
-                  <div class="metric-row">{{model.metricsData.schedulerActiveJobs}} Active Jobs</div>
-                  <div class="metric-row">{{model.metricsData.schedulerAllJobs}} Total Jobs</div>
-                  <div class="metric-row">{{model.metricsData.schedulerFailedStages}} Failed Stages</div>
-                  <div class="metric-row">{{model.metricsData.schedulerWaitingStages}} Waiting stages</div>
-                </div>
-              </div>
-            </div>
+          </div>
         </div>
       </div>
     </div>
