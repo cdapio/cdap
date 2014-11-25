@@ -25,6 +25,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
@@ -42,6 +44,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
+import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
@@ -80,9 +83,9 @@ public class ServiceHttpServer extends AbstractIdleService {
   private Cancellable cancelDiscovery;
   private Timer timer;
 
-  public ServiceHttpServer(String host, Program program, ServiceSpecification spec,
-                           ServiceAnnouncer serviceAnnouncer,
-                           BasicHttpServiceContextFactory contextFactory) {
+  public ServiceHttpServer(String host, Program program,  ServiceSpecification spec, RunId runId,
+                           ServiceAnnouncer serviceAnnouncer, BasicHttpServiceContextFactory contextFactory,
+                           MetricsCollectionService metricsCollectionService) {
     this.host = host;
     this.program = program;
     this.spec = spec;
@@ -92,10 +95,10 @@ public class ServiceHttpServer extends AbstractIdleService {
     this.handlerReferences = Maps.newConcurrentMap();
     this.handlerReferenceQueue = new ReferenceQueue<Supplier<HandlerContextPair>>();
 
-    constructNettyHttpService();
+    constructNettyHttpService(runId, metricsCollectionService);
   }
 
-  public void constructNettyHttpService() {
+  private void constructNettyHttpService(RunId runId, MetricsCollectionService metricsCollectionService) {
     Id.Program programId = program.getId();
     // Constructs all handler delegator. It is for bridging ServiceHttpHandler and HttpHandler (in netty-http).
     List<HandlerDelegatorContext> delegatorContexts = Lists.newArrayList();
@@ -119,7 +122,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                                       programId.getApplicationId(),
                                       programId.getId());
 
-    service = createNettyHttpService(host, delegatorContexts, pathPrefix);
+    service = createNettyHttpService(runId, host, pathPrefix, delegatorContexts, metricsCollectionService);
   }
 
   /**
@@ -217,15 +220,17 @@ public class ServiceHttpServer extends AbstractIdleService {
    * Creates a {@link NettyHttpService} from the given host, and list of {@link HandlerDelegatorContext}s
    *
    * @param host the host which the service will run on
-   * @param delegatorContexts the list {@link HandlerDelegatorContext}
    * @param pathPrefix a string prepended to the paths which the handlers in handlerContextPairs will bind to
+   * @param delegatorContexts the list {@link HandlerDelegatorContext}
+   * @param metricsCollectionService
    * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
    */
-  private NettyHttpService createNettyHttpService(String host,
+  private NettyHttpService createNettyHttpService(RunId runId, String host, String pathPrefix,
                                                   Iterable<HandlerDelegatorContext> delegatorContexts,
-                                                  String pathPrefix) {
+                                                  MetricsCollectionService metricsCollectionService) {
     // Create HttpHandlers which delegate to the HttpServiceHandlers
-    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix);
+    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, runId.getId(),
+                                                        metricsCollectionService, getMetricsContext());
     List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
     // get the runtime args from the twill context
     for (HandlerDelegatorContext context : delegatorContexts) {
@@ -236,6 +241,12 @@ public class ServiceHttpServer extends AbstractIdleService {
       .setPort(0)
       .addHttpHandlers(nettyHttpHandlers)
       .build();
+  }
+
+  private String getMetricsContext() {
+    return String.format("%s.%s.%s.%s", program.getApplicationId(),
+                                        TypeId.getMetricContextId(ProgramType.SERVICE),
+                                        program.getName(), program.getName());
   }
 
   /**

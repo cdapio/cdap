@@ -380,7 +380,13 @@ public class TestFrameworkTest extends TestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
-    LOG.info("Service Stopped");
+    RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(AppWithServices.APP_NAME,
+                                                                   AppWithServices.SERVICE_NAME);
+    serviceMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
+    Assert.assertEquals(3, serviceMetrics.getInput());
+    Assert.assertEquals(2, serviceMetrics.getProcessed());
+    Assert.assertEquals(1, serviceMetrics.getException());
+
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the system scope test in
     // TestMetricsCollectionService
 
@@ -407,9 +413,10 @@ public class TestFrameworkTest extends TestBase {
 
     datasetWorkerServiceManager.stop();
     serviceStatusCheck(datasetWorkerServiceManager, false);
+    LOG.info("DatasetUpdateService Stopped");
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
-    LOG.info("DatasetUpdateService Stopped");
+    LOG.info("ServerService Stopped");
 
     result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
                                                            AppWithServices.DATASET_TEST_KEY_STOP));
