@@ -120,7 +120,7 @@ public class DatasetTypeMDS extends AbstractObjectsStore {
     }
     modulesToLoad.add(moduleMeta);
 
-    return new DatasetTypeMeta(typeName, modulesToLoad);
+    return new DatasetTypeMeta(typeName, modulesToLoad, moduleMeta.isSystemModule());
   }
 
   // type -> moduleName

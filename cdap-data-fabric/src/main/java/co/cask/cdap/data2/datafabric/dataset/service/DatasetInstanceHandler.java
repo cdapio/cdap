@@ -80,6 +80,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetExploreFacade datasetExploreFacade;
 
   private final CConfiguration conf;
+  private final DefaultDatasetNamespace systemNamespace;
 
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
@@ -90,6 +91,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     this.instanceManager = instanceManager;
     this.datasetExploreFacade = datasetExploreFacade;
     this.conf = conf;
+    this.systemNamespace = new DefaultDatasetNamespace(conf, Namespace.SYSTEM);
   }
 
   @GET
@@ -106,7 +108,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    DatasetNamespace systemNamespace = new DefaultDatasetNamespace(conf, Namespace.SYSTEM);
 
     boolean succeeded = true;
     for (DatasetSpecification spec : instanceManager.getAll()) {
@@ -359,8 +360,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 //      throw e;
     }
 
-    return instanceManager.delete(name);
+    boolean result = instanceManager.delete(name);
+    DatasetTypeMeta typeInfo = implManager.getTypeInfo(spec.getType());
 
+    opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
+    return result;
   }
 
   /**
