@@ -380,16 +380,14 @@ public class TestFrameworkTest extends TestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
-    serviceManager.stop();
-    serviceStatusCheck(serviceManager, false);
-
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the system scope test in
     // TestMetricsCollectionService
 
     LOG.info("DatasetUpdateService Started");
-    serviceManager = applicationManager.startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
-    serviceStatusCheck(serviceManager, true);
+    ServiceManager datasetWorkerServiceManager = applicationManager
+      .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
+    serviceStatusCheck(datasetWorkerServiceManager, true);
 
     ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
     ProcedureClient procedureClient = procedureManager.getClient();
@@ -399,8 +397,19 @@ public class TestFrameworkTest extends TestBase {
     String decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
 
+    // Test that a service can discover another service
+    String path = String.format("discover/%s/%s",
+                                AppWithServices.APP_NAME, AppWithServices.DATASET_WORKER_SERVICE_NAME);
+    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), path);
+    request = HttpRequest.get(url).build();
+    response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    datasetWorkerServiceManager.stop();
+    serviceStatusCheck(datasetWorkerServiceManager, false);
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
+    LOG.info("DatasetUpdateService Stopped");
 
     result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
                                                            AppWithServices.DATASET_TEST_KEY_STOP));
@@ -408,7 +417,6 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
 
     procedureManager.stop();
-    LOG.info("DatasetUpdateService Stopped");
   }
 
   @Test
