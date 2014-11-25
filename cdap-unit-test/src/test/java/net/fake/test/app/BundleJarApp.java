@@ -187,9 +187,6 @@ public class BundleJarApp extends AbstractApplication {
       Job job = context.getHadoopJob();
       context.setInput("simpleInputDataset", input.getSplits());
       job.setMapperClass(SimpleMapper.class);
-      job.setMapOutputKeyClass(BytesWritable.class);
-      job.setMapOutputValueClass(BytesWritable.class);
-
       job.setReducerClass(SimpleReducer.class);
     }
 
