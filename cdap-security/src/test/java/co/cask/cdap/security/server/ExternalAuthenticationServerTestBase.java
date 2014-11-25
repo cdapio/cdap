@@ -24,14 +24,12 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.security.auth.AccessToken;
 import co.cask.cdap.security.auth.AccessTokenCodec;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.inject.AbstractModule;
@@ -61,15 +59,11 @@ import java.io.ByteArrayOutputStream;
 import java.net.SocketAddress;
 import java.net.URL;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.security.auth.login.Configuration;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.contains;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -87,7 +81,6 @@ public abstract class ExternalAuthenticationServerTestBase {
   protected static int ldapPort = Networks.getRandomPort();
 
   private static final Logger TEST_AUDIT_LOGGER = mock(Logger.class);
-  private static final int WAIT_TIME_FOR_SERVER_STARTUP = 10;
 
   // Needs to be set by derived classes.
   protected static CConfiguration configuration;
@@ -204,7 +197,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   @Test
   public void testValidAuthentication() throws Exception {
     HttpClient client = getHTTPClient();
-    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostString(),
+    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getAddress().getHostAddress(),
                                server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_TOKEN);
 
     HttpGet request = new HttpGet(uri);
@@ -254,7 +247,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   @Test
   public void testInvalidAuthentication() throws Exception {
     HttpClient client = getHTTPClient();
-    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostString(),
+    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getAddress().getHostAddress(),
                                server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "xxxxx");
@@ -273,7 +266,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   @Test
   public void testStatusResponse() throws Exception {
     HttpClient client = getHTTPClient();
-    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostString(),
+    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getAddress().getHostAddress(),
                                server.getSocketAddress().getPort(), Constants.EndPoints.STATUS);
     HttpGet request = new HttpGet(uri);
 
@@ -291,7 +284,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   @Test
   public void testExtendedToken() throws Exception {
     HttpClient client = getHTTPClient();
-    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostString(),
+    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getAddress().getHostAddress(),
                                server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_EXTENDED_TOKEN);
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
@@ -327,7 +320,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   @Test
   public void testInvalidPath() throws Exception {
     HttpClient client = getHTTPClient();
-    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostString(),
+    String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getAddress().getHostAddress(),
                                server.getSocketAddress().getPort(), "invalid");
     HttpGet request = new HttpGet(uri);
     request.addHeader("Authorization", "Basic YWRtaW46cmVhbHRpbWU=");
