@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -184,15 +185,15 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
+    public <T extends Dataset> T getDataSet(String name) throws DataSetInstantiationException {
       return getDataSet(name, null);
     }
 
     @Override
-    public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
+    public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
       throws DataSetInstantiationException {
-      throw new DataSetInstantiationException("Dataset '" + name + "' cannot be instantiated. " +
-                                                "Operation not supported in " + getClass().getName());
+      throw new DataSetInstantiationException(
+        String.format("Dataset '%s' cannot be instantiated. Operation not supported", name));
     }
 
     @Override

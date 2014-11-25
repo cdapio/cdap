@@ -17,8 +17,8 @@
 package co.cask.cdap.api.data;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.dataset.Dataset;
 
-import java.io.Closeable;
 import java.util.Map;
 
 /**
@@ -37,7 +37,7 @@ public interface DataSetContext {
    *         cannot be opened (for example, one of the underlying tables in the DataFabric
    *         cannot be accessed).
    */
-  public <T extends Closeable> T getDataSet(String name)
+  public <T extends Dataset> T getDataSet(String name)
     throws DataSetInstantiationException;
 
   /**
@@ -53,6 +53,6 @@ public interface DataSetContext {
    *         cannot be accessed).
    */
   @Beta
-  public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
+  public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
     throws DataSetInstantiationException;
 }

@@ -31,10 +31,7 @@ import co.cask.tephra.TransactionAware;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -53,7 +50,6 @@ import javax.annotation.Nullable;
  */
 public class DataSetInstantiator implements DataSetContext {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataSetInstantiator.class);
   private final DatasetFramework datasetFramework;
   // the class loader to use for data set classes
   private final ClassLoader classLoader;
@@ -86,48 +82,38 @@ public class DataSetInstantiator implements DataSetContext {
   }
 
   @Override
-  public <T extends Closeable> T getDataSet(String dataSetName)
+  public <T extends Dataset> T getDataSet(String dataSetName)
     throws DataSetInstantiationException {
     return getDataSet(dataSetName, DatasetDefinition.NO_ARGUMENTS);
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
-    throws DataSetInstantiationException {
-    T dataSet = (T) getDataset(name, arguments);
-    if (dataSet == null) {
-      throw logAndException(null, "No data set named %s can be instantiated.", name);
-    }
-
-    return dataSet;
-  }
-
-  private <T extends Dataset> T getDataset(String datasetName, Map<String, String> arguments)
+  public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
     throws DataSetInstantiationException {
 
     T dataset;
     try {
-      if (!datasetFramework.hasInstance(datasetName)) {
-        throw new DataSetInstantiationException("Trying to access dataset that does not exist: " + datasetName);
+      if (!datasetFramework.hasInstance(name)) {
+        throw new DataSetInstantiationException("Trying to access dataset that does not exist: " + name);
       }
 
-      dataset = datasetFramework.getDataset(datasetName, arguments, classLoader);
+      dataset = datasetFramework.getDataset(name, arguments, classLoader);
       if (dataset == null) {
-        throw new DataSetInstantiationException("Failed to access dataset: " + datasetName);
+        throw new DataSetInstantiationException("Failed to access dataset: " + name);
       }
 
     } catch (Exception e) {
-      throw new DataSetInstantiationException("Failed to access dataset: " + datasetName, e);
+      throw new DataSetInstantiationException("Failed to access dataset: " + name, e);
     }
 
     if (dataset instanceof TransactionAware) {
       txAware.add((TransactionAware) dataset);
-      txAwareToMetricNames.put((TransactionAware) dataset, datasetName);
+      txAwareToMetricNames.put((TransactionAware) dataset, name);
     }
 
     if (dataset instanceof MeteredDataset) {
-      ((MeteredDataset) dataset).setMetricsCollector(new MetricsCollectorImpl(datasetName,
+      ((MeteredDataset) dataset).setMetricsCollector(new MetricsCollectorImpl(name,
                                                                               dsMetricsCollector,
                                                                               programMetricsCollector));
     }
@@ -149,30 +135,6 @@ public class DataSetInstantiator implements DataSetContext {
 
   public void removeTransactionAware(TransactionAware transactionAware) {
     txAware.remove(transactionAware);
-  }
-
-  /**
-   * Helper method to log a message and create an exception. The caller is
-   * responsible for throwing the exception.
-   */
-  private DataSetInstantiationException logAndException(Throwable e, String message, Object... params)
-    throws DataSetInstantiationException {
-    String msg;
-    DataSetInstantiationException exn;
-    if (e == null) {
-      msg = String.format("Error instantiating data set: %s", String.format(message, params));
-      exn = new DataSetInstantiationException(msg);
-      LOG.error(msg);
-    } else {
-      msg = String.format("Error instantiating data set: %s. %s", String.format(message, params), e.getMessage());
-      if (e instanceof DataSetInstantiationException) {
-        exn = (DataSetInstantiationException) e;
-      } else {
-        exn = new DataSetInstantiationException(msg, e);
-      }
-      LOG.error(msg, e);
-    }
-    return exn;
   }
 
   private static final class MetricsCollectorImpl implements MeteredDataset.MetricsCollector {
