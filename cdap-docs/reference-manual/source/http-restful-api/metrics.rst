@@ -24,7 +24,7 @@ Metrics Requests
 ----------------
 The general form of a metrics request is::
 
-  GET <base-url>/metrics/<scope>/<context>/<metric>?<time-range>
+  GET <base-url>/metrics/<scope>/<context>/<run-id>/<metric>?<time-range>
 
 .. list-table::
    :widths: 20 80
@@ -36,6 +36,8 @@ The general form of a metrics request is::
      - Either ``system`` (system metrics) or ``user`` (user-defined metrics)
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
+   * - ``<Run-Id>``
+        - Run-id of the program; see ``Querying by RunId``
    * - ``<metric>``
      - Metric being queried; see `Available Metrics`_
    * - ``<time-range>``
@@ -56,9 +58,9 @@ Examples
      - 
    * - HTTP Method
      - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
-       ``WhoFlow/flowlets/saver/names.bytes?aggregate=true``
+       ``WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true``
    * - Description
-     - Using a *User-Defined* metric, *names.bytes*
+     - Querying a *User-Defined* metric, *names.bytes* of a Flow by it's run-id
    * - 
      - 
    * - HTTP Method

@@ -458,15 +458,15 @@ Example
      - Retrieve the number of instances of the Service *CatalogLookup* in the application *PurchaseHistory*.
 
 
-Run History and Schedule
+Run Records and Schedule
 ------------------------
 
-To see the history of all runs of selected elements (Flows, Procedures, MapReduce jobs, Workflows, and
-Services), issue an HTTP GET to the element’s URL with the ``history`` parameter.
-This will return a JSON list of all completed runs, each with a start time,
+To see all the runs of selected elements (Flows, Procedures, MapReduce jobs, Spark, Workflows, and
+Services), issue an HTTP GET to the element’s URL with the ``runs`` parameter.
+This will return a JSON list of current run, all completed runs, each with a start time,
 end time and termination status::
 
-  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/history
+  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/runs
 
 .. list-table::
    :widths: 20 80
@@ -477,9 +477,23 @@ end time and termination status::
    * - ``<app-id>``
      - Name of the Application
    * - ``<element-type>``
-     - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
+     - One of ``flows``, ``procedures``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
    * - ``<element-id>``
      - Name of the element
+
+  You can filter the runs by the specifying end-status of a program, start and end time , and also limit of returned records.
+
+   * - Query Parameter
+     - Description
+   * - ``<status>``
+     - completed/failed
+   * - ``<start>``
+     - start timestamp
+   * - ``<end>``
+     - end timestamp
+   * - ``<limit>``
+     - limit of returned records
+
 
 Example
 .......
@@ -488,12 +502,14 @@ Example
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/history``
+     - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/runs``
    * - Description
-     - Retrieve the history of the Flow *WhoFlow* of the Application *HelloWorld*
+     - Retrieve the Run records of the Flow *WhoFlow* of the Application *HelloWorld*
    * - Returns
-     - ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
-       ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
+
+     -``{"runid":"...","start":1382567598,"end":-1,"status":"RUNNING"},``
+      ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
+      ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
 
 The *runid* field is a UUID that uniquely identifies a run within CDAP,
 with the start and end times in seconds since the start of the Epoch (midnight 1/1/1970).
