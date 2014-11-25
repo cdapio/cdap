@@ -45,8 +45,6 @@ implementation of three methods:
       useDatasets("frequentCustomers");
       setInputDataset("purchases");
       setOutputDataset("history");
-      setMapperResources(new Resources(1024));
-      setReducerResources(new Resources(1024));
     }
 
 The configure method is similar to the one found in Flows and
