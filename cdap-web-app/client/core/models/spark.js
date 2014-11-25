@@ -136,10 +136,6 @@ define(['core/models/program'], function (Program) {
             var paths = [];
             var pathMap = {};
             http.rest('apps', appId, 'spark', programId, 'runs?limit=1', function (runIdResponse, status) {
-               if ((status != 200) || (!runIdResponse.length > 0)) {
-                 return;
-               }
-               var runId = runIdResponse[0]["runid"];
 
                 if ((status != 200) || (!runIdResponse.length > 0)) {
                   return;
@@ -148,41 +144,40 @@ define(['core/models/program'], function (Program) {
                 var paths = [];
                 var pathMap = {};
 
-            for (var path in METRICS_PATHS) {
-                var url = S(path).template({'appId': appId, 'programId': programId, 'runId': runId}).s;
-                paths.push(url);
-                pathMap[url] = METRICS_PATHS[path];
-            }
-            http.post('metrics', paths, function (response, status) {
-                if (!response.result) {
-                    return;
+                for (var path in METRICS_PATHS) {
+                    var url = S(path).template({'appId': appId, 'programId': programId, 'runId': runId}).s;
+                    paths.push(url);
+                    pathMap[url] = METRICS_PATHS[path];
                 }
-                var result = response.result;
-                var i = result.length, metric;
-                while (i--) {
-                    metric = pathMap[result[i]['path']];
-                    if (metric) {
-                        var res = result[i]['result'];
-                        if (res) {
-                            var respData = res['data'];
-                            if (respData instanceof Array) {
-                                res['data'] = respData.map(function (entry) {
-                                    return entry.value;
-                                });
-                                self.setMetricData(metric, respData);
-                            }
-                            else if (METRIC_TYPES[metric] === 'number') {
-                                self.setMetricData(metric, C.Util.numberArrayToString(respData));
-                            } else {
-                                self.setMetricData(metric, respData);
+                http.post('metrics', paths, function (response, status) {
+                    if (!response.result) {
+                        return;
+                    }
+                    var result = response.result;
+                    var i = result.length, metric;
+                    while (i--) {
+                        metric = pathMap[result[i]['path']];
+                        if (metric) {
+                            var res = result[i]['result'];
+                            if (res) {
+                                var respData = res['data'];
+                                if (respData instanceof Array) {
+                                    res['data'] = respData.map(function (entry) {
+                                        return entry.value;
+                                    });
+                                    self.setMetricData(metric, respData);
+                                }
+                                else if (METRIC_TYPES[metric] === 'number') {
+                                    self.setMetricData(metric, C.Util.numberArrayToString(respData));
+                                } else {
+                                    self.setMetricData(metric, respData);
+                                }
                             }
                         }
+                        metric = null;
                     }
-                    metric = null;
-                }
+                });
             });
-           }
-          );
         },
 
         setMetricData: function (name, value) {
