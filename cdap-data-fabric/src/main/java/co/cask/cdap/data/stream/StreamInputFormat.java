@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -38,10 +37,38 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Stream mapreduce input format.
+ * Stream mapreduce input format. Stream data files are organized by partition directories with bucket files inside.
  *
- * @param <K> type of the key
- * @param <V> type of the value
+ * <br/><br/>
+ *   Each file has path pattern
+ * <pre>
+ *     [streamName]/[partitionName]/[bucketName].[dat|idx]
+ * OR
+ *     [streamName]/[generation]/[partitionName]/[bucketName].[dat|idx]
+ * </pre>
+ * Where {@code .dat} is the event data file, {@code .idx} is the accompany index file.
+ *
+ * <br/><br/>
+ * The {@code generation} is an integer, representing the stream generation of the data under it. When a stream
+ * is truncated, the generation increment by one. The generation {@code 0} is a special case that there is
+ * no generation directory.
+ *
+ * <br/><br/>
+ * The {@code partitionName} is formatted as
+ * <pre>
+ *   [partitionStartTime].[duration]
+ * </pre>
+ * with both {@code partitionStartTime} and {@code duration} in seconds.
+ *
+ * <br/><br/>
+ * The {@code bucketName} is formatted as
+ * <pre>
+ *   [prefix].[seqNo]
+ * </pre>
+ * The {@code seqNo} is a strictly increasing integer for the same prefix starting with 0.
+ *
+ * @param <K> Key type of input
+ * @param <V> Value type of input
  */
 public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   private static final StreamInputSplitFactory<InputSplit> splitFactory = new StreamInputSplitFactory<InputSplit>() {
@@ -214,11 +241,23 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
       throw new IllegalArgumentException("The value class must be of type BytesWritable, Text, StreamEvent or " +
                                            "StreamEventData if no decoder type is provided");
     }
-  };
+  }
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
-    return StreamInputFormatConfigurer.getSplits(context.getConfiguration(), getCurrentTime(), splitFactory);
+    Configuration conf = context.getConfiguration();
+    long ttl = conf.getLong(STREAM_TTL, Long.MAX_VALUE);
+    long endTime = conf.getLong(EVENT_END_TIME, Long.MAX_VALUE);
+    long startTime = Math.max(conf.getLong(EVENT_START_TIME, 0L), getCurrentTime() - ttl);
+    long maxSplitSize = conf.getLong(MAX_SPLIT_SIZE, Long.MAX_VALUE);
+    long minSplitSize = Math.min(conf.getLong(MIN_SPLIT_SIZE, 1L), maxSplitSize);
+    StreamInputSplitFinder<InputSplit> splitFinder = StreamInputSplitFinder.builder(URI.create(conf.get(STREAM_PATH)))
+      .setStartTime(startTime)
+      .setEndTime(endTime)
+      .setMinSplitSize(minSplitSize)
+      .setMaxSplitSize(maxSplitSize)
+      .build(splitFactory);
+    return splitFinder.getSplits(conf);
   }
 
   @Override
@@ -233,8 +272,8 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
 
   @SuppressWarnings("unchecked")
   protected StreamEventDecoder<K, V> createStreamEventDecoder(Configuration conf) {
-    Class<? extends StreamEventDecoder> decoderClass = StreamInputFormatConfigurer.getDecoderClass(conf);
-    Preconditions.checkNotNull(decoderClass, "Failed to load stream event decoder.");
+    Class<? extends StreamEventDecoder> decoderClass = getDecoderClass(conf);
+    Preconditions.checkNotNull(decoderClass, "Failed to load stream event decoder %s", conf.get(DECODER_TYPE));
     try {
       return decoderClass.newInstance();
     } catch (Exception e) {

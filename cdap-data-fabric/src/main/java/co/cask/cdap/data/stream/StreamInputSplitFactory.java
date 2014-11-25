@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 /**
  * Factory for creating stream input splits. Generic because mapreduce and mapred apis are separate.
  *
- * @param <T>
+ * @param <T> Type of input split to create. Expected to be mapred.InputSplit or mapreduce.InputSplit.
  */
 public interface StreamInputSplitFactory<T> {
 

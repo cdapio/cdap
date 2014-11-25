@@ -18,12 +18,6 @@ package co.cask.cdap.hive.stream;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.stream.StreamInputFormatConfigurer;
-import co.cask.cdap.data.stream.StreamUtils;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
-import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
@@ -37,11 +31,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.twill.filesystem.Location;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;

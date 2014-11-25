@@ -275,10 +275,10 @@ public class StreamInputFormatTest {
     Configuration conf = new Configuration();
     Job job = Job.getInstance(conf);
 
-    StreamInputFormatConfigurer.setTTL(job, ttl);
-    StreamInputFormatConfigurer.setStreamPath(job, inputDir.toURI());
-    StreamInputFormatConfigurer.setTimeRange(job, startTime, endTime);
-    StreamInputFormatConfigurer.setMaxSplitSize(job, splitSize);
+    StreamInputFormat.setTTL(job, ttl);
+    StreamInputFormat.setStreamPath(job, inputDir.toURI());
+    StreamInputFormat.setTimeRange(job, startTime, endTime);
+    StreamInputFormat.setMaxSplitSize(job, splitSize);
     job.setInputFormatClass(TestStreamInputFormat.class);
 
     TextOutputFormat.setOutputPath(job, new Path(outputDir.toURI()));

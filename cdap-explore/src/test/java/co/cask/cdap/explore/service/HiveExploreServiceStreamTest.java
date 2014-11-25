@@ -65,11 +65,6 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testStreamDefaultSchema() throws Exception {
-    runCommand("show tables",
-               true,
-               Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
-               Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(streamTableName))));
-
     runCommand("describe " + streamTableName,
                true,
                Lists.newArrayList(

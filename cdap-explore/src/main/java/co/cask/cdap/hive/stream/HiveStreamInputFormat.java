@@ -17,15 +17,14 @@
 package co.cask.cdap.hive.stream;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.stream.StreamInputFormatConfigurer;
 import co.cask.cdap.data.stream.StreamInputSplitFactory;
+import co.cask.cdap.data.stream.StreamInputSplitFinder;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.hive.context.ContextManager;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
@@ -35,6 +34,7 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -59,9 +59,9 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     // over when initialize is called. If we set job conf settings there, the settings for one stream get clobbered
     // by the settings for another stream if a join over streams is being performed.
     String streamName = conf.get(Constants.Explore.STREAM_NAME);
-    setupJobConf(conf, streamName);
+    StreamInputSplitFinder<InputSplit> splitFinder = getSplitFinder(conf, streamName);
     try {
-      List<InputSplit> splits = StreamInputFormatConfigurer.getSplits(conf, System.currentTimeMillis(), splitFactory);
+      List<InputSplit> splits = splitFinder.getSplits(conf);
       InputSplit[] splitArray = new InputSplit[splits.size()];
       int i = 0;
       for (InputSplit split : splits) {
@@ -80,15 +80,22 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     return new StreamRecordReader(split, conf);
   }
 
-  private void setupJobConf(JobConf conf, String streamName) throws IOException {
+  private StreamInputSplitFinder<InputSplit> getSplitFinder(JobConf conf, String streamName) throws IOException {
     // first get the context we are in
     ContextManager.Context context = ContextManager.getContext(conf);
     // get the stream admin from the context, which will let us get stream information such as the path
     StreamAdmin streamAdmin = context.getStreamAdmin();
     StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+    // make sure we get the current generation so we don't read events that occurred before a truncate.
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
-    StreamInputFormatConfigurer.setTTL(conf, streamConfig.getTTL());
-    StreamInputFormatConfigurer.setStreamPath(conf, streamPath.toURI());
+
+    // TODO: examine query where clause to get a better start and end time based on timestamp filters.
+    // the conf contains a 'hive.io.filter.expr.serialized' key which contains the serialized form of ExprNodeDesc
+    URI path = streamPath.toURI();
+    long startTime = Math.max(0L, System.currentTimeMillis() - streamConfig.getTTL());
+    return StreamInputSplitFinder.builder(path)
+      .setStartTime(startTime)
+      .build(splitFactory);
   }
 }
