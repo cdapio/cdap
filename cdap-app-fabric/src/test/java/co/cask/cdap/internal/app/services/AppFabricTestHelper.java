@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.test.internal;
+package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
@@ -22,7 +22,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -33,6 +32,9 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.test.internal.AppFabricClient;
+import co.cask.cdap.test.internal.DefaultId;
+import co.cask.cdap.test.internal.TempFolder;
 import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Function;
@@ -44,9 +46,10 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,39 +58,58 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * This is helper class to make calls to AppFabricHttpHandler methods directly.
- * TODO: remove it, see CDAP-5
- * 
+ *
  */
-public class AppFabricTestHelper {
-  public static final TempFolder TEMP_FOLDER = new TempFolder();
-  public static CConfiguration configuration;
-  private static Injector injector;
+public abstract class AppFabricTestHelper {
 
-  public static Injector getInjector() {
-    return getInjector(CConfiguration.create());
+  private static Injector injector;
+  public static final TempFolder TEMP_FOLDER = new TempFolder();
+
+  private static TransactionManager txManager;
+  private static DatasetOpExecutor dsOpService;
+  private static DatasetService datasetService;
+  private static SchedulerService schedulerService;
+
+  @BeforeClass
+  public static void beforeClass() throws Throwable {
+    CConfiguration configuration = CConfiguration.create();
+    beforeClass(configuration);
   }
 
-  public static synchronized Injector getInjector(CConfiguration conf) {
-    if (injector == null) {
-      configuration = conf;
-      configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
-      configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
-      configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-      injector = Guice.createInjector(new AppFabricTestModule(configuration));
-      injector.getInstance(TransactionManager.class).startAndWait();
-      injector.getInstance(DatasetOpExecutor.class).startAndWait();
-      injector.getInstance(DatasetService.class).startAndWait();
-      injector.getInstance(SchedulerService.class).startAndWait();
-    }
+  protected static void beforeClass(CConfiguration configuration) throws Throwable {
+    configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
+    configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
+    configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    injector = Guice.createInjector(new AppFabricTestModule(configuration));
+    txManager = injector.getInstance(TransactionManager.class);
+    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    datasetService = injector.getInstance(DatasetService.class);
+    schedulerService = injector.getInstance(SchedulerService.class);
+
+    txManager.startAndWait();
+    dsOpService.startAndWait();
+    datasetService.startAndWait();
+    schedulerService.startAndWait();
+  }
+
+  protected static Injector getInjector() {
     return injector;
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    txManager.stopAndWait();
+    dsOpService.stopAndWait();
+    datasetService.stopAndWait();
+    schedulerService.stopAndWait();
   }
 
   /**
    * @return Returns an instance of {@link co.cask.cdap.internal.app.deploy.LocalManager}
    */
-  public static Manager<Location, ApplicationWithPrograms> getLocalManager() {
+  protected static Manager<Location, ApplicationWithPrograms> getLocalManager() {
     ManagerFactory<Location, ApplicationWithPrograms> factory =
-      getInjector().getInstance(Key.get(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() {
+      injector.getInstance(Key.get(new TypeLiteral<ManagerFactory<Location, ApplicationWithPrograms>>() {
       }));
 
     return factory.create(new ProgramTerminator() {
@@ -106,19 +128,22 @@ public class AppFabricTestHelper {
   /**
    *
    */
-  public static void deployApplication(Class<?> applicationClz, String fileName) throws Exception {
-    AppFabricClient appFabricClient = new AppFabricClient(getInjector().getInstance(AppFabricHttpHandler.class),
-                                                          getInjector().getInstance(ServiceHttpHandler.class),
-                                                          getInjector().getInstance(LocationFactory.class));
+  protected static void deployApplication(Class<?> applicationClz, String fileName)
+    throws Exception {
+    AppFabricClient appFabricClient = new AppFabricClient(injector.getInstance(AppFabricHttpHandler.class),
+                                                          injector.getInstance(ServiceHttpHandler.class),
+                                                          injector.getInstance(LocationFactory.class));
     Location deployedJar = appFabricClient.deployApplication(fileName, applicationClz);
     deployedJar.delete(true);
   }
 
-  public static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
-                                                                     final Supplier<File> folderSupplier)
+  protected static ApplicationWithPrograms deployApplicationWithManager(Class<?> appClass,
+                                                                        final Supplier<File> folderSupplier)
     throws Exception {
 
-    Location deployedJar = createAppJar(appClass);
+    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
+    Location deployedJar = locationFactory.create(
+      AppFabricClient.createDeploymentJar(locationFactory, appClass).toURI());
     try {
       ApplicationWithPrograms appWithPrograms = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
       // Transform program to get loadable, as the one created in deploy pipeline is not loadable.
@@ -144,11 +169,6 @@ public class AppFabricTestHelper {
     } finally {
       deployedJar.delete(true);
     }
-  }
-
-  public static Location createAppJar(Class<?> appClass) {
-    LocalLocationFactory lf = new LocalLocationFactory();
-    return lf.create(JarFinder.getJar(appClass, AppFabricClient.getManifestWithMainClass(appClass)));
   }
 
 }

@@ -26,8 +26,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.services.AppFabricTestHelper;
 import co.cask.cdap.runtime.app.MultiApp;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class MultiConsumerTest {
+public class MultiConsumerTest extends AppFabricTestHelper {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -68,9 +68,8 @@ public class MultiConsumerTest {
   @Test
   public void testMulti() throws Exception {
     // TODO: Fix this test case to really test with numGroups settings.
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(MultiApp.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    final ApplicationWithPrograms app = deployApplicationWithManager(MultiApp.class, TEMP_FOLDER_SUPPLIER);
+    ProgramRunnerFactory runnerFactory = getInjector().getInstance(ProgramRunnerFactory.class);
 
     List<ProgramController> controllers = Lists.newArrayList();
     for (final Program program : app.getPrograms()) {
@@ -78,15 +77,14 @@ public class MultiConsumerTest {
       controllers.add(runner.run(program, new SimpleProgramOptions(program)));
     }
 
-    DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
+    DatasetFramework datasetFramework = getInjector().getInstance(DatasetFramework.class);
 
     DataSetInstantiator dataSetInstantiator =
       new DataSetInstantiator(datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader(), null, null);
 
     final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
-    TransactionExecutorFactory txExecutorFactory =
-      AppFabricTestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
+    TransactionExecutorFactory txExecutorFactory = getInjector().getInstance(TransactionExecutorFactory.class);
 
     // Try to get accumulated result and verify it. Expect result appear in max of 60 seconds.
     int trial = 0;

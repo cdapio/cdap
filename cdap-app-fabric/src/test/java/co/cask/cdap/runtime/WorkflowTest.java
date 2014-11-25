@@ -25,9 +25,9 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.services.AppFabricTestHelper;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -52,7 +52,7 @@ import java.io.IOException;
  *
  */
 @Category(XSlowTests.class)
-public class WorkflowTest {
+public class WorkflowTest extends AppFabricTestHelper {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowTest.class);
 
@@ -72,11 +72,11 @@ public class WorkflowTest {
   };
 
 
+
   @Test(timeout = 120 * 1000L)
   public void testWorkflow() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(WorkflowApp.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    final ApplicationWithPrograms app = deployApplicationWithManager(WorkflowApp.class, TEMP_FOLDER_SUPPLIER);
+    ProgramRunnerFactory runnerFactory = getInjector().getInstance(ProgramRunnerFactory.class);
 
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 
@@ -112,9 +112,8 @@ public class WorkflowTest {
 
   @Test(timeout = 120 * 1000L)
   public void testOneActionWorkflow() throws Exception {
-    final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(OneActionWorkflowApp.class,
-                                                                                         TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    final ApplicationWithPrograms app = deployApplicationWithManager(OneActionWorkflowApp.class, TEMP_FOLDER_SUPPLIER);
+    ProgramRunnerFactory runnerFactory = getInjector().getInstance(ProgramRunnerFactory.class);
     ProgramRunner programRunner = runnerFactory.create(ProgramRunnerFactory.Type.WORKFLOW);
 
     Program program = Iterators.filter(app.getPrograms().iterator(), new Predicate<Program>() {

@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
@@ -32,13 +31,14 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class AppFabricServerTest {
+public class AppFabricServerTest extends AppFabricTestHelper {
   private static AppFabricServer server;
   private static DiscoveryServiceClient discoveryServiceClient;
 
+
   @BeforeClass
   public static void before() throws Exception {
-    Injector injector = AppFabricTestHelper.getInjector();
+    Injector injector = getInjector();
     server = injector.getInstance(AppFabricServer.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
   }

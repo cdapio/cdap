@@ -20,9 +20,9 @@ import co.cask.cdap.ToyApp;
 import co.cask.cdap.WebCrawlApp;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import co.cask.cdap.internal.app.services.AppFabricTestHelper;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricClient;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -37,7 +37,7 @@ import java.util.jar.Manifest;
 /**
  * Tests the functionality of Deploy Manager.
  */
-public class LocalManagerTest {
+public class LocalManagerTest extends AppFabricTestHelper {
   private static LocationFactory lf;
 
   @BeforeClass
@@ -53,7 +53,7 @@ public class LocalManagerTest {
     String jar = JarFinder.getJar(WebCrawlApp.class, new Manifest());
     Location deployedJar = lf.create(jar);
     try {
-      AppFabricTestHelper.getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
+      getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
     } finally {
       deployedJar.delete(true);
     }
@@ -68,8 +68,7 @@ public class LocalManagerTest {
       JarFinder.getJar(ToyApp.class, AppFabricClient.getManifestWithMainClass(ToyApp.class))
     );
 
-    ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(DefaultId.ACCOUNT,
-                                                                                 null, deployedJar).get();
+    ApplicationWithPrograms input = getLocalManager().deploy(DefaultId.ACCOUNT, null, deployedJar).get();
 
     Assert.assertEquals(input.getPrograms().iterator().next().getType(), ProgramType.FLOW);
     Assert.assertEquals(input.getPrograms().iterator().next().getName(), "ToyFlow");

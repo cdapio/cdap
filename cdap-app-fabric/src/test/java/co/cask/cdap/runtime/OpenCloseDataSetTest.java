@@ -30,9 +30,9 @@ import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.services.AppFabricTestHelper;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.internal.DefaultId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -43,6 +43,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.inject.Injector;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -67,7 +68,7 @@ import java.util.concurrent.TimeUnit;
  * tests that flowlets, procedures and batch jobs close their data sets.
  */
 @Category(XSlowTests.class)
-public class OpenCloseDataSetTest {
+public class OpenCloseDataSetTest extends AppFabricTestHelper {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -86,11 +87,12 @@ public class OpenCloseDataSetTest {
 
   @Test(timeout = 120000)
   public void testDataSetsAreClosed() throws Exception {
+    Injector injector = getInjector();
     final String tableName = "cdap.user.foo";
     TrackingTable.resetTracker();
-    ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(DummyAppWithTrackingTable.class,
-                                                                                   TEMP_FOLDER_SUPPLIER);
-    ProgramRunnerFactory runnerFactory = AppFabricTestHelper.getInjector().getInstance(ProgramRunnerFactory.class);
+    ApplicationWithPrograms app = deployApplicationWithManager(DummyAppWithTrackingTable.class,
+                                                               TEMP_FOLDER_SUPPLIER);
+    ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
     List<ProgramController> controllers = Lists.newArrayList();
 
     // start the flow and procedure
@@ -103,11 +105,10 @@ public class OpenCloseDataSetTest {
     }
 
     // write some data to queue
-    TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
-      getInstance(TransactionSystemClient.class);
+    TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
 
     QueueName queueName = QueueName.fromStream("xx");
-    QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
+    QueueClientFactory queueClientFactory = injector.getInstance(QueueClientFactory.class);
     QueueProducer producer = queueClientFactory.createProducer(queueName);
 
     // start tx to write in queue in tx
@@ -137,8 +138,7 @@ public class OpenCloseDataSetTest {
 
     // now send a request to the procedure
     Gson gson = new Gson();
-    DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
-      getInstance(DiscoveryServiceClient.class);
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     Discoverable discoverable = discoveryServiceClient.discover(
       String.format("procedure.%s.%s.%s", DefaultId.ACCOUNT.getId(), "dummy", "DummyProcedure")).iterator().next();
 

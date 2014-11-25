@@ -23,9 +23,11 @@ import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.test.internal.AppFabricTestHelper;
+import co.cask.cdap.test.internal.AppFabricClient;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import com.google.common.collect.Lists;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -124,7 +126,8 @@ public abstract class ClientTestBase extends StandaloneTestBase {
     Assert.assertEquals(programStatus, programClient.getStatus(appId, programType, programId));
   }
 
-  protected File createAppJarFile(Class<?> cls) {
-    return new File(AppFabricTestHelper.createAppJar(cls).toURI());
+  protected File createAppJarFile(Class<?> cls) throws IOException {
+    LocationFactory locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
+    return AppFabricClient.createDeploymentJar(locationFactory, cls);
   }
 }
