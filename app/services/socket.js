@@ -110,7 +110,7 @@ angular.module(PKG.name+'.services')
 
     this.prefix = '/_sock';
 
-    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log) {
+    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG) {
 
       var self = this,
           socket = null,
@@ -188,7 +188,12 @@ angular.module(PKG.name+'.services')
             var p = r._cdap.split(' '),
                 path = p.pop();
             msg.resource.method = p.length ? p[0] : 'GET';
-            msg.resource.url = 'http://localhost:10000/v2' + path;
+            msg.resource.url = 'http://'
+              + MY_CONFIG.routerServerUrl
+              + ':'
+              + MY_CONFIG.routerServerPort
+              + '/v2'
+              + path;
             delete msg.resource._cdap;
           }
         }
