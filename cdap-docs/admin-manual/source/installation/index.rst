@@ -13,11 +13,20 @@ Installation
 .. toctree::
    :maxdepth: 1
    
+    Quick Start <quick-start>
     Installation and Configuration <installation>
     Security <security>
     Monitoring <monitoring>
     Appendix: cdap-site.xml <cdap-site>
     Appendix: cdap-security.xml <cdap-security>
+
+
+.. |quickstart| replace:: **Quick Start:**
+.. _quickstart: quick-start.html
+
+- |quickstart|_ A quick start guide that covers the **most-common case of installing and 
+  configuring CDAP.** Many people may find this sufficient; if your case isn't covered, the
+  :ref:`install` guide has additional details.
 
 
 .. |installation| replace:: **Installation and Configuration:**

@@ -2,26 +2,27 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
+.. _install:
+
 ============================================
 Installation and Configuration
 ============================================
 
-.. highlight:: console
-
-.. _install:
+.. Note: this file is included in quick-start.rst; check any edits in this file with it!
 
 Introduction
 ------------
 
 This manual is to help you install and configure Cask Data Application Platform (CDAP). It provides the
-`system <#system-requirements>`__,
+`system <#system-requirements>`__, 
 `network <#network-requirements>`__, and
 `software requirements <#software-prerequisites>`__,
 `packaging options <#packaging>`__, and
 instructions for
 `installation <#installation>`__ and
 `verification <#verification>`__ of
-the CDAP components so they work with your existing Hadoop cluster.
+the CDAP components so they work with your existing Hadoop cluster. 
+There are specific instructions for :ref:`upgrading existing CDAP installations <install-upgrade>`.
 
 These are the CDAP components:
 
@@ -54,23 +55,10 @@ We have specific
 that need to be met and completed before installation of the CDAP components.
 
 
-Conventions
-...........
-In this document:
-
-- *Client* refers to an external application that is calling CDAP.
-- *Application* refers to a user Application that has been deployed into CDAP.
-- Text that are variables that you are to replace is indicated by a series of angle brackets
-  (``< >``). For example::
-
-    WordCount-<cdap-version>.jar
-
-  indicates that the text ``<cdap-version>`` is a variable and that you are to replace it
-  with the correct value.
-
-
 System Requirements
 -------------------
+
+.. _install-hardware-requirements:
 
 Hardware Requirements
 .....................
@@ -82,7 +70,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 +=======================================+====================+===============================================+
 | **CDAP Webapp**                       | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
-| **CDAP Gateway**                      | RAM                | 2 GB minimum, 4 GB recommended                |
+| **CDAP Router**                       | RAM                | 2 GB minimum, 4 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 | **CDAP Master**                       | RAM                | 2 GB minimum, 4 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
@@ -98,6 +86,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 | **CDAP Authentication Server**        | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 
+
 Network Requirements
 ....................
 CDAP components communicate over your network with *HBase*, *HDFS*, and *YARN*.
@@ -111,9 +100,11 @@ You'll need this software installed:
 
 - Java runtime (on CDAP and Hadoop nodes)
 - Node.js runtime (on CDAP nodes)
-- Hadoop, HBase (and possibly Hive) environment to run against
+- Hadoop and HBase (and optionally Hive) environment to run against
 - CDAP nodes require Hadoop and HBase client installation and configuration. 
   **Note:** No Hadoop services need to be running.
+
+.. highlight:: console
 
 .. _install-java-runtime:
 
@@ -132,6 +123,8 @@ CDAP is tested with the Oracle JDKs; it may work with other JDKs such as
 Once you have installed the JDK, you'll need to set the JAVA_HOME environment variable.
 
 
+.. _install-node.js:
+
 Node.js Runtime
 +++++++++++++++
 You can download the latest version of Node.js from `nodejs.org <http://nodejs.org>`__:
@@ -144,7 +137,8 @@ You can download the latest version of Node.js from `nodejs.org <http://nodejs.o
 #. Ensure that ``nodejs`` is in the ``$PATH``. One method is to use a symlink from the installation:
    ``ln -s /opt/node-[version]/bin/node /usr/bin/node``
 
- 
+.. _install-hadoop-hbase:
+
 Hadoop/HBase Environment
 ++++++++++++++++++++++++
 
@@ -173,11 +167,10 @@ For a distributed enterprise, you must install these Hadoop components:
 **Note:** Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and
 possibly *Hive*) cluster configurations by adding your configuration to their class paths.
 
-
 .. _deployment-architectures:
 
 Deployment Architectures
-------------------------
+........................
 
 .. rubric:: CDAP Minimal Deployment
 
@@ -191,7 +184,7 @@ Deployment Architectures
 
 .. rubric:: CDAP High Availability and Highly Scalable Deployment
 
-**Note:** Each component in CDAP is horziontally scalable. This diagram presents the high
+**Note:** Each component in CDAP is horizontally scalable. This diagram presents the high
 availability and highly scalable deployment. The number of nodes for each component can be
 changed based on the requirements.
 
@@ -199,20 +192,203 @@ changed based on the requirements.
    :width: 8in
    :align: center
 
-
 Preparing the Cluster
-------------------------
+---------------------
+.. _install-preparing-the-cluster:
+
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
   hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
 
 In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
-``yarn``. If you set up your cluster as above, no further changes are required. To make
-alterations to your setup, you'll need to customize the configuration file, once you have
-installed all the components. Customization of the initial configuration is 
-:ref:`described below <initial-configuration>`.
+``yarn``. If you set up your cluster as above, no further changes are required.
 
+.. _install-preparing-the-cluster-defaults:
+
+If your cluster is not setup with these defaults, you'll need to 
+:ref:`edit your CDAP configuration <install-configuration>` once you have downloaded and installed
+the packages, and prior to starting services.
+
+.. _install-packaging:
+
+Packaging
+---------
+CDAP components are available as either Yum ``.rpm`` or APT ``.deb`` packages. There is
+one package for each CDAP component, and each component may have multiple services.
+Additionally, there is a base CDAP package with three utility packages (for HBase
+compatibility) installed which creates the base configuration and the ``cdap`` user. We
+provide packages for *Ubuntu 12* and *CentOS 6*.
+
+Available packaging types:
+
+- RPM: YUM repo
+- Debian: APT repo
+- Tar: For specialized installations only
+
+**Note:** If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an
+`official cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
+
+Preparing Package Managers
+--------------------------
+
+.. _install-rpm-using-yum:
+
+RPM using Yum
+.............
+Download the Cask Yum repo definition file::
+
+  sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/downloads/centos/6/x86_64/cask.repo
+
+This will create the file ``/etc/yum.repos.d/cask.repo`` with::
+
+  [cask]
+  name=Cask Packages
+  baseurl=http://repository.cask.co/centos/6/x86_64/releases
+  enabled=1
+  gpgcheck=1
+
+Add the Cask Public GPG Key to your repository::
+
+  sudo rpm --import http://repository.cask.co/centos/6/x86_64/releases/pubkey.gpg
+
+Debian using APT
+................
+Download the Cask Apt repo definition file::
+
+  sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/downloads/ubuntu/precise/amd64/cask.list
+
+This will create the file ``/etc/apt/sources.list.d/cask.list`` with::
+
+  deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/releases precise releases
+
+Add the Cask Public GPG Key to your repository::
+
+  curl -s http://repository.cask.co/ubuntu/precise/amd64/releases/pubkey.gpg | sudo apt-key add -
+
+Installation
+------------
+Install the CDAP packages by using one of these methods:
+
+Using Chef:
+
+  If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official
+  cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
+
+Using Yum::
+
+  sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
+
+Using APT::
+
+  sudo apt-get update
+  sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
+
+Do this on each of the boxes that are being used for the CDAP components; our
+recommended installation is a minimum of two boxes.
+
+This will download and install the latest version of CDAP with all of its dependencies. 
+
+.. _install-configuration:
+
+Configuration
+-------------
+
+CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
+
+When you install the CDAP base package, a default configuration is placed in
+``/etc/cdap/conf.dist``. The ``cdap-site.xml`` file is a placeholder
+where you can define your specific configuration for all CDAP components.
+The ``cdap-site.xml.example`` file shows the properties that usually require customization
+for all installations.
+
+.. _install-alternatives:
+
+Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
+easily switch between multiple configurations. The ``alternatives`` system is used for ease of
+management and allows you to to choose between different directories to fulfill the
+same purpose.
+
+Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your choice
+(such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
+Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
+to your custom directory.
+
+Configure the ``cdap-site.xml`` after you have installed the CDAP packages.
+
+.. _install-configuration-options:
+
+To configure your particular installation, follow one of these two approaches:
+
+1. Modify ``cdap-site.xml``, using ``cdap-site.example`` as a model to follow.
+
+   To make alterations to your configuration, create (or edit if existing) an `.xml` file
+   ``conf/cdap-site.xml`` (see the :ref:`appendix-cdap-site.xml`) and set appropriate
+   properties.
+
+#. Add these properties to ``cdap-site.xml``; they are the minimal required configuration:
+
+  .. literalinclude:: ../../../../cdap-distributions/src/etc/cdap/conf.dist/cdap-site.xml.example
+     :language: xml
+     :lines: 18-
+
+Depending on your installation, you may want to set these properties:
+
+.. highlight:: xml
+
+- If you want to use **an HDFS directory with a name** other than ``/cdap``:
+
+  1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
+  #. Create an ``hdfs.namespace`` property for the HDFS directory in ``conf/cdap-site.xml``::
+
+       <property>
+         <name>hdfs.namespace</name>
+         <value>/myhadoop/myspace</value>
+         <description>Default HDFS namespace</description>
+       </property>
+
+  #. Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
+
+- If you want to use **a different HDFS user** than ``yarn``:
+
+  1. Check that there is—and create if necessary—a corresponding user on all machines
+     in the cluster on which YARN is running (typically, all of the machines).
+  #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
+
+       <property>
+         <name>hdfs.user</name>
+         <value>my_username</value>
+         <description>User for accessing HDFS</description>
+       </property>
+
+  #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
+
+- Set the ``router.server.address`` property in ``conf/cdap-site.xml`` to the **hostname of the CDAP Router**.
+  The CDAP Console uses this property to connect to the Router::
+
+      <property>
+        <name>router.server.address</name>
+        <value>{router-host-name}</value>
+      </property>
+
+.. _install-configuring-explore-service:
+
+- To use the **ad-hoc querying capabilities of CDAP,** enable the CDAP Explore Service in
+  ``conf/cdap-site.xml`` (by default, it is disabled)::
+
+    <property>
+      <name>cdap.explore.enabled</name>
+      <value>true</value>
+      <description>Enable Explore functionality</description>
+    </property>
+
+  **Note:** This feature cannot be used unless the cluster has a correct version of Hive installed.
+  See :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`. This feature is currently 
+  not supported on secure Hadoop clusters.
+
+.. _install-secure-hadoop:
+
+.. highlight:: console
 
 Secure Hadoop
 .............
@@ -230,7 +406,7 @@ In order to configure CDAP Master for Kerberos authentication:
 - Generate a keytab file for the CDAP Master Kerberos principal and place the file in
   ``/etc/security/keytabs/cdap.keytab`` on all the CDAP Master hosts.  The file should
   be readable only by the user running the CDAP Master process.
-- Edit ``/etc/default/cdap-master``::
+- Edit ``/etc/default/cdap-master``, substituting the Kerberos principal for ``<cdap-principal>``::
 
    CDAP_KEYTAB="/etc/security/keytabs/cdap.keytab"
    CDAP_PRINCIPAL="<cdap-principal>@EXAMPLE.REALM.COM"
@@ -238,324 +414,75 @@ In order to configure CDAP Master for Kerberos authentication:
 - When CDAP Master is started via the init script, it will now start using ``k5start``, which will
   first login using the configured keytab file and principal.
 
+.. _install-ulimit:
+
 ULIMIT Configuration
 ....................
-When you install the CDAP packages, the ``ulimit`` settings for the
-CDAP user are specified in the ``/etc/security/limits.d/cdap.conf`` file.
-On Ubuntu, they won't take effect unless you make changes to the ``/etc/pam.d/common-session file``.
-For more information, refer to the ``ulimit`` discussion in the
-`Apache HBase Reference Guide <https://hbase.apache.org/book.html#os>`__.
+When you install the CDAP packages, the ``ulimit`` settings for the CDAP user are
+specified in the ``/etc/security/limits.d/cdap.conf`` file. On Ubuntu, they won't take
+effect unless you make changes to the ``/etc/pam.d/common-session file``. You can check
+this setting with the command ``ulimit -n`` when logged in as the CDAP user.
+For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference
+Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
-Packaging
----------
-CDAP components are available as either Yum ``.rpm`` or APT ``.deb`` packages.
-There is one package for each CDAP component, and each component may have multiple
-services. Additionally, there is a base CDAP package with two utility packages
-installed which creates the base configuration and the ``cdap`` user.
-We provide packages for *Ubuntu 12* and *CentOS 6*.
+Configuring Security
+....................
+For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
+and in particular, see the instructions for 
+:ref:`configuring the properties of cdap-site.xml <enabling-security>`.
 
-Available packaging types:
-
-- RPM: YUM repo
-- Debian: APT repo
-- Tar: For specialized installations only
-
-**Note:** If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an
-`official cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
-
-RPM using Yum
-.............
-Download the Cask Yum repo definition file::
-
-  sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/downloads/centos/6/x86_64/cask.repo
-
-This will create the file ``/etc/yum.repos.d/cask.repo`` with::
-
-  [cask]
-  name=Cask Packages
-  baseurl=http://repository.cask.co/centos/6/x86_64/releases
-  enabled=1
-  gpgcheck=1
-
-
-Add the Cask Public GPG Key to your repository::
-
-  sudo rpm --import http://repository.cask.co/centos/6/x86_64/releases/pubkey.gpg
-
-Debian using APT
-................
-Download the Cask Apt repo definition file::
-
-  sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/downloads/ubuntu/precise/amd64/cask.list
-
-This will create the file ``/etc/apt/sources.list.d/cask.list`` with::
-
-  deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/releases precise releases
-
-
-Add the Cask Public GPG Key to your repository::
-
-  curl -s http://repository.cask.co/ubuntu/precise/amd64/releases/pubkey.gpg | sudo apt-key add -
-
-
-.. _installation:
-
-Installation
-------------
-Install the CDAP packages by using one of these methods:
-
-Using Chef:
-
-  If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official cookbook
-  is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
-
-Using Yum::
-
-  sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
-
-Using APT::
-
-  sudo apt-get update
-  sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-web-app
-
-Do this on each of the boxes that are being used for the CDAP components; our
-recommended installation is a minimum of two boxes.
-
-This will download and install the latest version of CDAP with all of its dependencies. 
-
-Configuration
--------------
-CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
-
-When you install the CDAP base package, a default configuration is placed in
-``/etc/cdap/conf.dist``. The ``cdap-site.xml`` file is a placeholder
-where you can define your specific configuration for all CDAP components.
-
-Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
-easily switch between multiple configurations. The ``alternatives`` system is used for ease of
-management and allows you to to choose between different directories to fulfill the
-same purpose.
-
-Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your choice
-(such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
-Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
-to your custom directory.
-
-For example::
-
-  sudo update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 50
- 
-  sudo update-alternatives --set cdap-conf /etc/cdap/conf.mycdap
-
-
-.. _initial-configuration:
-
-Initial Configuration
-.....................
-
-When you first install CDAP, an empty ``cdap-site.xml`` and a ``cdap-site.xml.example``
-file are installed. The example file contains settings that are often required to be
-customized. For example, you'll probably need to set the Zookeeper address property,
-``zookeeper.quorum``.
-
-For instructions on enabling CDAP Security, see :doc:`CDAP Security; <security>` and in
-particular, see the instructions for :ref:`configuring the properties <enabling-security>`
-of ``cdap-site.xml``.
-
-To make alterations to your setup, edit the `.xml` file ``conf/cdap-site.xml``
-(see the :ref:`appendix-cdap-site.xml`) and set appropriate properties.
-
-.. highlight:: xml
-
-- If you want to use **an HDFS directory with a name other than** ``/cdap``:
-
-  1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
-  #. Create an ``hdfs.namespace`` property for the HDFS directory in ``conf/cdap-site.xml``::
-
-       <property>
-         <name>hdfs.namespace</name>
-         <value>/myhadoop/myspace</value>
-         <description>Default HDFS namespace</description>
-       </property>
-
-
-  #. Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
-
-- If you want to use **a different HDFS user than** ``yarn``:
-
-  1. Check that there is—and create if necessary—a corresponding user on all machines
-     in the cluster on which YARN is running (typically, all of the machines).
-  #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
-
-       <property>
-         <name>hdfs.user</name>
-         <value>my_username</value>
-         <description>User for accessing HDFS</description>
-       </property>
-
-  #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
-
-- **Set the** ``router.server.address`` **property** in ``conf/cdap-site.xml`` to the hostname of the CDAP Router.
-  The CDAP Console uses this property to connect to the Router::
-
-      <property>
-        <name>router.server.address</name>
-        <value>{router-host-name}</value>
-      </property>
-
-- **To use the ad-hoc querying capabilities of CDAP,** enable the CDAP Explore Service in
-  ``conf/cdap-site.xml`` (by default, it is disabled)::
-
-    <property>
-      <name>cdap.explore.enabled</name>
-      <value>true</value>
-      <description>Enable Explore functionality</description>
-    </property>
-
-  **Note:** This feature cannot be used unless the cluster has a correct version of Hive installed.
-  See *Hadoop/HBase Environment* above. This feature is currently not supported on secure Hadoop clusters.
+.. _install-starting-services:
 
 .. highlight:: console
 
-Governing Host and Port Configuration
-.....................................
-The governing properties for the listening bind address and port for each of the
-:ref:`CDAP Webapp <deployment-architectures>`, :ref:`CDAP Router <deployment-architectures>`,
-and :ref:`CDAP Auth Service <deployment-architectures>` are listed below. The listed
-values are the CDAP defaults.  Where noted, in certain cases the 
-`CDAP Chef cookbook <https://supermarket.getchef.com/cookbooks/cdap>`__
-defaults the address property to ``node['fqdn']``.
-
-For load-balancing, we currently recommend TCP health-checks for the listening ports. 
-HTTP health-check endpoints are planned.
-
-.. highlight:: xml
-
-- **CDAP Web-App (the CDAP Console)** governing ``conf/cdap-site.xml`` configuration::
-
-    <property>
-      <name>dashboard.bind.address</name>
-      <value>0.0.0.0</value>
-      <description>CDAP Console bind address</description>
-    </property>
-
-    <property>
-      <name>dashboard.bind.port</name>
-      <value>9999</value>
-       <description>CDAP console bind port</description>
-    </property>
-
-    <property>
-      <name>dashboard.ssl.bind.port</name>
-      <value>9443</value>
-      <description>CDAP Console bind port for HTTPS</description>
-    </property>
-
-
-- **CDAP Router** governing ``conf/cdap-site.xml`` configuration::
-
-    <property>
-      <name>router.bind.address</name>
-      <value>0.0.0.0</value>
-      <description>CDAP Router bind address</description>
-    </property>
-
-    <property>
-      <name>router.bind.port</name>
-      <value>10000</value>
-      <description>CDAP Router bind port</description>
-    </property>
-
-    <property>
-      <name>router.ssl.bind.port</name>
-      <value>10443</value>
-      <description>Secure CDAP Router bind port</description>
-    </property>
-
-
-  **Note:** the CDAP chef cookbook defaults ``router.bind.address`` to ``node['fqdn']``
-
-- **CDAP Auth Server** governing ``conf/cdap-site.xml`` configuration::
-
-    <property>
-      <name>security.auth.server.address</name>
-      <value>127.0.0.1</value>
-      <description>CDAP Auth Server bind address for auth server</description>
-    </property>
-
-    <property>
-      <name>security.auth.server.bind.port</name>
-      <value>10009</value>
-      <description>CDAP Auth Server bind port</description>
-    </property>
-
-    <property>
-      <name>security.auth.server.ssl.bind.port</name>
-      <value>10010</value>
-      <description>Secure CDAP Auth Server bind port</description>
-    </property>
-
-
-  **Note:** the CDAP chef cookbook defaults ``security.auth.server.address`` to ``node['fqdn']``
-
-.. highlight:: console
-
-
-Starting CDAP
--------------
-When all the packages and dependencies have been installed, and the configuration parameters set,
-you can start the services on each of the CDAP boxes by running this command::
+Starting Services
+-----------------
+When all the packages and dependencies have been installed, and the configuration
+parameters set, you can start the services on each of the CDAP boxes by running the
+command::
 
   for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i restart ; done
 
 When all the services have completed starting, the CDAP Console should then be
-accessible through a browser at port 9999. The URL will be ``http://<console-ip>:9999`` where
-``<console-ip>`` is the IP address of one of the machines where you installed the packages
-and started the services.
+accessible through a browser at port ``9999``. 
 
-Upgrading an Existing Version
------------------------------
-When upgrading an existing CDAP installation from a previous version, you will need
-to make sure the CDAP table definitions in HBase are up-to-date.
+The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
+one of the machines where you installed the packages and started the services.
 
-These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
-and then restart CDAP.
+.. _install-highly-available:
 
-1. Stop all CDAP processes::
+Making CDAP Highly-available
+---------------------------------
+Repeat these steps on additional boxes.  The configurations needed to support high-availability are:
 
-     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
+- ``kafka.seed.brokers``: ``127.0.0.1:9092,...`` 
+  
+  - Kafka brokers list (comma separated)
+  
+- ``kafka.default.replication.factor``: 2
 
-#. Update the CDAP packages by running either of these methods:
+  - Used to replicate Kafka messages across multiple machines to prevent data loss in 
+    the event of a hardware failure.
+  - The recommended setting is to run at least two Kafka servers.
+  - Set this to the number of Kafka servers.
 
-   - Using Yum (on one line)::
 
-       sudo yum install cdap cdap-gateway
-                              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-hbase-compat-0.98 cdap-kafka cdap-master
-                              cdap-security cdap-web-app
+.. _install-health-check:
 
-   - Using APT (on one line)::
+Getting a Health Check
+----------------------
 
-       sudo apt-get install cdap cdap-gateway
-                              cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
-                              cdap-hbase-compat-0.98 cdap-kafka cdap-master
-                              cdap-security cdap-web-app
+.. include:: ../operations/index.rst 
+   :start-after: .. _operations-health-check:
 
-#. Run the upgrade tool (on one line)::
 
-     /opt/cdap/cdap-master/bin/svc-master run
-       com.cdap.data.tools.Main upgrade
-
-#. Restart the CDAP processes::
-
-     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
-
+.. _install-verification:
 
 Verification
 ------------
 To verify that the CDAP software is successfully installed and you are able to use your
 Hadoop cluster, run an example application.
-We provide in our SDK pre-built ``.JAR`` files for convenience:
+We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 #. Download and install the latest `CDAP Software Development Kit (SDK)
    <http://cask.co/downloads/#cdap>`__.
@@ -573,3 +500,45 @@ We provide in our SDK pre-built ``.JAR`` files for convenience:
 #. You should be able to start the application, inject sentences, and retrieve results.
 #. When finished, you can stop and remove the application as described in the section on
    :ref:`cdap-building-running`.
+
+
+.. _install-upgrade:
+
+.. highlight:: console
+
+Upgrading an Existing Version
+---------------------------------
+When upgrading an existing CDAP installation from a previous version, you will need
+to make sure the CDAP table definitions in HBase are up-to-date.
+
+These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
+and then restart CDAP.
+
+1. Stop all CDAP processes::
+
+     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
+
+#. Update the CDAP packages by running either of these methods:
+
+   - Using Yum (on one line)::
+
+       sudo yum install cdap cdap-gateway
+                             cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
+                             cdap-hbase-compat-0.98 cdap-kafka cdap-master
+                             cdap-security cdap-web-app
+
+   - Using APT (on one line)::
+
+       sudo apt-get install cdap cdap-gateway
+                            cdap-hbase-compat-0.94 cdap-hbase-compat-0.96
+                            cdap-hbase-compat-0.98 cdap-kafka cdap-master
+                            cdap-security cdap-web-app
+
+#. Run the upgrade tool::
+
+     /opt/cdap/cdap-master/bin/svc-master run com.cdap.data.tools.Main upgrade
+
+#. Restart the CDAP processes::
+
+     for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
+

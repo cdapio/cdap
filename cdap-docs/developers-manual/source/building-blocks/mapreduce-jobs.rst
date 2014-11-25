@@ -149,11 +149,12 @@ output, as described in :ref:`datasets-map-reduce-jobs`.
 
 .. rubric::  Examples of Using Map Reduce Jobs
 
-Flows and Flowlets are included in just about every CDAP :ref:`application <apps-and-packs>`,
-:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
-
 - For an example of **a MapReduce Job,** see the :ref:`Purchase
   <examples-purchase>` example.
 
 - For a longer example, the how-to guide :ref:`cdap-mapreduce-guide` also
   demonstrates the use of MapReduce.
+
+- The :ref:`Tutorial <tutorials>` 
+  `WISE: Web Analytics <http://docs.cask.co/tutorial/current/en/tutorial2.html>`__ 
+  uses a MapReduce Job.

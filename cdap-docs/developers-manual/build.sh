@@ -34,8 +34,11 @@ function version_tag_rewrite() {
   local rewrite_target=$2
   local sub_string=$3
   local new_sub_string=$4  
-  echo "Re-writing $rewrite_source to $rewrite_target"
-  echo "   $sub_string -> $new_sub_string "
+  echo "Re-writing"
+  echo "    $rewrite_source"
+  echo "  to"
+  echo "    $rewrite_target"
+  echo "  $sub_string -> $new_sub_string "
   
   sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
 }

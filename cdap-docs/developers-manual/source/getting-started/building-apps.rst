@@ -89,7 +89,6 @@ Once an application is deployed:
     * - On Windows:
       - ``> bin\app-manager.bat stop``
 
-
 Removing an Application
 ----------------------------------
 

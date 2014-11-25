@@ -62,3 +62,35 @@ Operations
 Most of the administrative operations are also available more conveniently through the
 Command-Line Interface. See :ref:`reference:cli` in the 
 :ref:`CDAP Reference Manual<reference:reference-index>` for details.
+
+
+.. rubric:: Getting a Health Check
+
+.. _operations-health-check:
+
+.. highlight:: console
+
+Administrators can check the health of various services in the system.
+(In these examples, substitute for ``<host>`` the host name or IP address of the CDAP server.)
+
+- To retrieve the **health check of the CDAP Console**, make a GET request to the URI::
+
+    http://<host>:9999/status
+
+- To retrieve the **health check of the CDAP Router**, make a GET request to the URI::
+
+    http://<host>:10000/status
+
+- To retrieve the **health check of the CDAP Authentication Server**, make a GET request to
+  the URI::
+  
+    http://<host>:10009/status
+
+On success, the calls return a valid HTTP response with a 200 code.
+
+- To retrieve the **health check of all the services running in YARN**, make a GET request
+  to the URI::
+  
+    http://<host>:10000/v2/system/services
+
+  On success, the call returns a JSON string with component names and their corresponding statuses.
