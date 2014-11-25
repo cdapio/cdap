@@ -39,6 +39,8 @@ public class DatasetModuleMeta {
   private final List<String> usesModules;
   private final List<String> usedByModules;
 
+  private final boolean systemModule;
+
   /**
    * Creates instance of {@link DatasetModuleMeta}
    * @param name name of the dataset module
@@ -47,13 +49,14 @@ public class DatasetModuleMeta {
    *                    always present in classpath. This helps to minimize redundant copying of jars.
    * @param types list of types announced by this module in the order they are announced
    * @param usesModules list of modules that this module depends on, ordered in a way they must be
-   *                    loaded and initialized
+   * @param systemModule true if this dataset module is a system module
    */
-  public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation,
-                           List<String> types, List<String> usesModules) {
+  public DatasetModuleMeta(String name, String className, @Nullable URI jarLocation, List<String> types,
+                           List<String> usesModules, boolean systemModule) {
     this.name = name;
     this.className = className;
     this.jarLocation = jarLocation;
+    this.systemModule = systemModule;
     this.types = Collections.unmodifiableList(types);
     this.usesModules = Collections.unmodifiableList(usesModules);
     this.usedByModules = Lists.newArrayList();
@@ -119,12 +122,20 @@ public class DatasetModuleMeta {
     this.usedByModules.remove(name);
   }
 
+  /**
+   * @return true if this dataset module is a system module
+   */
+  public boolean isSystemModule() {
+    return systemModule;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("name", name)
       .add("className", className)
       .add("jarLocation", jarLocation)
+      .add("systemModule", systemModule)
       .add("usesModules", Joiner.on(",").skipNulls().join(usesModules))
       .add("usedByModules", Joiner.on(",").skipNulls().join(usedByModules))
       .toString();

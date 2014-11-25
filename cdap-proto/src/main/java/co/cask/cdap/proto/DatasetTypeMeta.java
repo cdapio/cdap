@@ -27,16 +27,18 @@ import java.util.List;
 public class DatasetTypeMeta {
   private final String name;
   private final List<DatasetModuleMeta> modules;
+  private final boolean systemType;
 
   /**
    * Creates instance of {@link DatasetTypeMeta}
    * @param name name of the dataset type
    * @param modules list of modules required to load this type in the same order as they must be loaded and initialized
-   *                with the last one being the module that announces this type
+   * @param systemType true if this dataset type is a system type
    */
-  public DatasetTypeMeta(String name, List<DatasetModuleMeta> modules) {
+  public DatasetTypeMeta(String name, List<DatasetModuleMeta> modules, boolean systemType) {
     this.name = name;
     this.modules = modules;
+    this.systemType = systemType;
   }
 
   /**
@@ -54,10 +56,18 @@ public class DatasetTypeMeta {
     return modules;
   }
 
+  /**
+   * @return true if this dataset type is built-in
+   */
+  public boolean isSystemType() {
+    return systemType;
+  }
+
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("name", name)
+      .add("systemType", systemType)
       .add("modules", Joiner.on(",").skipNulls().join(modules))
       .toString();
   }

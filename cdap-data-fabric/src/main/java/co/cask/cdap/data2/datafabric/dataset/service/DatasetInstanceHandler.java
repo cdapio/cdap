@@ -22,10 +22,13 @@ import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.exception.HandlerException;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.dataset2.DatasetNamespace;
 import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
@@ -33,7 +36,6 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -46,16 +48,12 @@ import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -82,6 +80,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetExploreFacade datasetExploreFacade;
 
   private final CConfiguration conf;
+  private final DefaultDatasetNamespace systemNamespace;
 
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
@@ -92,6 +91,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     this.instanceManager = instanceManager;
     this.datasetExploreFacade = datasetExploreFacade;
     this.conf = conf;
+    this.systemNamespace = new DefaultDatasetNamespace(conf, Namespace.SYSTEM);
   }
 
   @GET
@@ -103,24 +103,28 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/data/unrecoverable/datasets/")
   public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
-    if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
-                         Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+    if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET)) {
       responder.sendStatus(HttpResponseStatus.FORBIDDEN);
       return;
     }
 
+
     boolean succeeded = true;
     for (DatasetSpecification spec : instanceManager.getAll()) {
-      try {
-        // It is okay if dataset not exists: someone may be deleting it at same time
-        dropDataset(spec);
-      } catch (Exception e) {
-        String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
-                                   spec.getName(), e.getMessage());
-        LOG.warn(msg, e);
-        succeeded = false;
-        // we continue deleting if something wring happens.
-        // todo: Will later be improved by doing all in async: see CDAP-7
+      if (systemNamespace.contains(spec.getName())) {
+        opExecutorClient.truncate(spec.getName());
+      } else {
+        try {
+          // It is okay if dataset not exists: someone may be deleting it at same time
+          dropDataset(spec);
+        } catch (Exception e) {
+          String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
+                                     spec.getName(), e.getMessage());
+          LOG.warn(msg, e);
+          succeeded = false;
+          // we continue deleting if something wrong happens.
+          // todo: Will later be improved by doing all in async: see CDAP-7
+        }
       }
     }
 
@@ -356,12 +360,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 //      throw e;
     }
 
-    if (!instanceManager.delete(name)) {
-      return false;
-    }
+    boolean result = instanceManager.delete(name);
+    DatasetTypeMeta typeInfo = implManager.getTypeInfo(spec.getType());
 
     opExecutorClient.drop(spec, implManager.getTypeInfo(spec.getType()));
-    return true;
+    return result;
   }
 
   /**

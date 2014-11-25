@@ -64,7 +64,6 @@ public final class Constants {
    */
   public static final class Dangerous {
     public static final String UNRECOVERABLE_RESET = "enable.unrecoverable.reset";
-    public static final boolean DEFAULT_UNRECOVERABLE_RESET = false;
   }
 
   /**
