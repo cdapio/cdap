@@ -22,7 +22,7 @@ instructions for
 `installation <#installation>`__ and
 `verification <#verification>`__ of
 the CDAP components so they work with your existing Hadoop cluster. 
-We have specific instructions for :ref:`upgrading existing CDAP installations <install-upgrade>`.
+There are specific instructions for :ref:`upgrading existing CDAP installations <install-upgrade>`.
 
 These are the CDAP components:
 
@@ -100,7 +100,7 @@ You'll need this software installed:
 
 - Java runtime (on CDAP and Hadoop nodes)
 - Node.js runtime (on CDAP nodes)
-- Hadoop and HBase (and possibly Hive) environment to run against
+- Hadoop and HBase (and optionally Hive) environment to run against
 - CDAP nodes require Hadoop and HBase client installation and configuration. 
   **Note:** No Hadoop services need to be running.
 
@@ -214,11 +214,11 @@ the packages, and prior to starting services.
 
 Packaging
 ---------
-CDAP components are available as either Yum ``.rpm`` or APT ``.deb`` packages.
-There is one package for each CDAP component, and each component may have multiple
-services. Additionally, there is a base CDAP package with three utility packages
-installed which creates the base configuration and the ``cdap`` user.
-We provide packages for *Ubuntu 12* and *CentOS 6*.
+CDAP components are available as either Yum ``.rpm`` or APT ``.deb`` packages. There is
+one package for each CDAP component, and each component may have multiple services.
+Additionally, there is a base CDAP package with three utility packages (for HBase
+compatibility) installed which creates the base configuration and the ``cdap`` user. We
+provide packages for *Ubuntu 12* and *CentOS 6*.
 
 Available packaging types:
 
