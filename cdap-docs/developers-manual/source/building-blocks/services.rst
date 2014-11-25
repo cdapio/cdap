@@ -4,9 +4,9 @@
 
 .. _user-services:
 
-============================================
+========
 Services
-============================================
+========
 
 Services can be run in a Cask Data Application Platform (CDAP) Application to serve data to external clients.
 Similar to Flows, Services run in containers and the number of running service instances can be dynamically scaled.
@@ -48,6 +48,9 @@ Application's ``configure`` method::
     }
   }
 
+Similarly, you can also add Services using the ``addLocalService`` method. These Services will only be accessible
+by other programs within the same Application - other Applications and external clients will not be able to use them.
+
 Service Handlers
 ----------------
 
@@ -74,6 +77,30 @@ Each request to a method is committed as a single transaction.
     }
   }
 
+Path and Query Parameters
+=========================
+
+Handler endpoints can have Path and Query parameters. Path parameters are used to assist with path-mapping of requests,
+while Query parameters are used to easily parse the query string of a request.
+
+For example, the ``WordCount`` application has a ``Service`` that exposes an endpoint to retrieve the count of a word
+and its word associations. In the ``@Path`` annotation, ``{word}`` is a path parameter that is mapped
+to a Java String using ``@PathParam("word") String word``. Similarly, the endpoint also allows
+the query parameter ``limit`` with a default value of 10.
+
+::
+
+  @Path("count/{word}")
+  @GET
+  public void getCount(HttpServiceRequest request, HttpServiceResponder responder,
+                       @PathParam("word") String word,
+                       @QueryParam("limit") @DefaultValue("10") Integer limit) {
+
+    // ...
+  }
+
+An example of calling this endpoint with the HTTP RESTful API is shown in the :res:`http-restful-api-service`.
+
 Service Discovery
 -----------------
 
@@ -83,7 +110,7 @@ accessed—by other programs.
 Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
 *hostname* required for registering the Service are automatically obtained.
 
-The Service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
+The Service can then be discovered in Flows, Procedures, MapReduce Jobs, Spark Programs, and other Services using
 appropriate program contexts. You may also access Services in a different Application
 by specifying the Application name in the ``getServiceURL`` call.
 
