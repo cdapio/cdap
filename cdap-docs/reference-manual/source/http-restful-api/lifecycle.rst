@@ -457,15 +457,15 @@ Example
    * - Description
      - Retrieve the number of instances of the Service *CatalogLookup* in the application *PurchaseHistory*.
 
-.. _rest-program-runs:
+.. _rest-element-runs:
 
 Run Records and Schedule
 ------------------------
 
 To see all the runs of a selected element (Flows, Procedures, MapReduce jobs, Spark, Workflows, and
 Services), issue an HTTP GET to the element’s URL with the ``runs`` parameter.
-This will return a JSON list of all runs for the program, each with a start time,
-end time and program status::
+This will return a JSON list of all runs for the element, each with a start time,
+end time and element status::
 
   GET <base-url>/apps/<app-id>/<element-type>/<element-id>/runs
 
@@ -482,7 +482,7 @@ end time and program status::
    * - ``<element-id>``
      - Name of the element
 
-You can filter the runs either by the status of program, start and end time , and can also limit the returned records.
+You can filter the runs either by the status of element, the start and end times, and can limit the number of returned records.
 
 .. list-table::
    :widths: 20 80
@@ -497,7 +497,7 @@ You can filter the runs either by the status of program, start and end time , an
    * - ``<end>``
      - end timestamp
    * - ``<limit>``
-     - limit of returned records
+     - maximum number of returned records
 
 
 Example
@@ -509,7 +509,7 @@ Example
    * - HTTP Method
      - ``GET <base-url>/apps/HelloWorld/flows/WhoFlow/runs``
    * - Description
-     - Retrieve the Run records of the Flow *WhoFlow* of the Application *HelloWorld*
+     - Retrieve the run records of the Flow *WhoFlow* of the Application *HelloWorld*
    * - Returns
 
      - ``{"runid":"...","start":1382567598,"end":-1,"status":"RUNNING"},``
@@ -542,7 +542,7 @@ Example
    * - HTTP Method
      - ``GET <base-url>/apps/PurchaseHistory/services/CatalogLookup/runs?status=completed&limit=1``
    * - Description
-     - Retrieve the most recent successfully completed run of the Service *CatalogLookup* of the Application *PurchaseHistory*
+     - Retrieve the most recent successful completed run of the Service *CatalogLookup* of the Application *PurchaseHistory*
    * - Returns
      - ``[{"runid":"cad83d45-ecfb-4bf8-8cdb-4928a5601b0e","start":1415051892,"end":1415057103,"status":"STOPPED"}]``
    * - 

@@ -36,8 +36,8 @@ The general form of a metrics request is::
      - Either ``system`` (system metrics) or ``user`` (user-defined metrics)
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
-   * - ``<Run-Id>``
-        - Run-id of the program; see `Querying by RunId`_
+   * - ``<run-Id>``
+        - Run-ID of the element; see `Querying by Run-ID`_
    * - ``<metric>``
      - Metric being queried; see `Available Metrics`_
    * - ``<time-range>``
@@ -60,7 +60,7 @@ Examples
      - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
        ``WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true``
    * - Description
-     - Querying a *User-Defined* metric, *names.bytes* of a Flow by it's run-id
+     - Querying a *User-Defined* metric, *names.bytes* of a Flow by it's run-ID
    * - 
      - 
    * - HTTP Method
@@ -227,16 +227,16 @@ Flowlet, Procedure, Mapper, or Reducer level:
    * - All Datasets across all Applications
      - ``/``
 
-Querying by Run-Id
+Querying by Run-ID
 ------------------
 
-Each Program (Flow, MapReduce, Spark, Services, Procedure) has an associated run-id to uniquely identify a program-run.
-We can query metrics for a program by its run-id to see the metrics for that particular run.
-Please look at :ref:`Program Runs API <rest-program-runs>` to know how to get active and historical program runs.
+Each execution of an element (Flow, MapReduce, Spark, Services, Procedure) has an associated run-id that uniquely identifies that element's run.
+We can query metrics for an element by its run-ID to see the metrics for a particular run.
+Please see the :ref:`Run Records and Schedule <rest-element-runs>` on retrieving active and historical element runs.
 
-The run-id is specified after the program-name in the path to query by run-id ::
+The run-id is specified after the element-id in the path when querying by run-id ::
 
-  /apps/<app-id>/program-type/<program-id>/runs/<run-id>/
+  /apps/<app-id>/<element-type>/<element-id>/runs/<run-id>/
 
 Examples ::
 
