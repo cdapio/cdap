@@ -37,6 +37,10 @@ public enum Namespace {
     return name;
   }
 
+  public String getPrefix() {
+    return prefix;
+  }
+
   public String namespace(String datasetName) {
     return prefix + datasetName;
   }

@@ -36,6 +36,7 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -54,6 +55,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -115,7 +117,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       } else {
         try {
           // It is okay if dataset not exists: someone may be deleting it at same time
-          dropDataset(spec);
+          boolean successful = dropDataset(spec);
+          
         } catch (Exception e) {
           String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
                                      spec.getName(), e.getMessage());
