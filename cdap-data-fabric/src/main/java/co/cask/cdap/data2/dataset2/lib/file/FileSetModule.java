@@ -21,7 +21,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 
 /**
- * {@link co.cask.cdap.api.dataset.module.DatasetModule} for {@link co.cask.cdap.api.dataset.lib.ACLTable}.
+ * {@link co.cask.cdap.api.dataset.module.DatasetModule} for {@link co.cask.cdap.api.dataset.lib.FileSet}.
  */
 public class FileSetModule implements DatasetModule {
   @Override
