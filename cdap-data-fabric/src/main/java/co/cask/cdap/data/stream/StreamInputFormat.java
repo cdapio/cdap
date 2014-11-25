@@ -275,7 +275,7 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
     Class<? extends StreamEventDecoder> decoderClass = getDecoderClass(conf);
     Preconditions.checkNotNull(decoderClass, "Failed to load stream event decoder %s", conf.get(DECODER_TYPE));
     try {
-      return decoderClass.newInstance();
+      return (StreamEventDecoder<K, V>) decoderClass.newInstance();
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
