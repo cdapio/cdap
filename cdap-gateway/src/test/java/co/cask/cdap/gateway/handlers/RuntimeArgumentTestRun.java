@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests the runtime args - setting it through runtimearg API and Program start API
  */
-public class RuntimeArgumentTest extends GatewayTestBase {
+public class RuntimeArgumentTestRun extends GatewayTestBase {
 
   @Test
   public void testFlowRuntimeArgs() throws Exception {

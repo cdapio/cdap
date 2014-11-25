@@ -27,7 +27,7 @@ import org.junit.Test;
 /**
  * Test ping handler.
  */
-public class PingHandlerTest extends GatewayTestBase {
+public class PingHandlerTestRun extends GatewayTestBase {
   @Test
   public void testPing() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.doGet("/ping");

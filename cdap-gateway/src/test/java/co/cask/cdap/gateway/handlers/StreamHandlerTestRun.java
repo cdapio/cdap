@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * Test stream handler. This is not part of GatewayFastTestsSuite because it needs to start the gateway multiple times.
  */
-public class StreamHandlerTest extends GatewayTestBase {
+public class StreamHandlerTestRun extends GatewayTestBase {
   private static final String API_KEY = GatewayTestBase.getAuthHeader().getValue();
   private static final String HOSTNAME = "127.0.0.1";
 

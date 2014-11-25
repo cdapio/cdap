@@ -65,7 +65,7 @@ import static org.jboss.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 /**
  * Tests Procedure API Handling.
  */
-public class ProcedureHandlerTest extends GatewayTestBase {
+public class ProcedureHandlerTestRun extends GatewayTestBase {
   private static final Gson GSON = new Gson();
   private static final String hostname = "127.0.0.1";
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();

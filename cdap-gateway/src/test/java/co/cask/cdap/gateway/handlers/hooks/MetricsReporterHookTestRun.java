@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test MetricReporterHook.
  */
-public class MetricsReporterHookTest extends GatewayTestBase {
+public class MetricsReporterHookTestRun extends GatewayTestBase {
   private static MockMetricsCollectionService mockMetricsCollectionService;
 
   @BeforeClass
