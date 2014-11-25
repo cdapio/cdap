@@ -44,5 +44,11 @@
         <include>**/*.scala</include>
       </includes>
     </fileSet>
+    <fileSet encoding="UTF-8" filtered="true" packaged="true">
+      <directory>src/test/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+    </fileSet>
   </fileSets>
 </archetype-descriptor>
