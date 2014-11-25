@@ -70,8 +70,7 @@ public class PreferencesHandler extends AbstractHttpHandler {
                       @PathParam("app-name") final String appId,
                       @PathParam("program-type") final String programType,
                       @PathParam("program-name") final String programName) throws Exception {
-    final ProgramRecord record = new ProgramRecord(ProgramType.valueOf(programType.toUpperCase()), appId,
-                                                   programName, null, null);
+    final ProgramRecord record = new ProgramRecord(ProgramType.valueOf(programType.toUpperCase()), appId, programName);
     final Map<String, String> notes = Maps.newHashMap();
     try {
       txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -92,8 +91,7 @@ public class PreferencesHandler extends AbstractHttpHandler {
                       @PathParam("app-name") final String appId,
                       @PathParam("program-type") final String programType,
                       @PathParam("program-name") final String programName) throws Exception {
-    final ProgramRecord record = new ProgramRecord(ProgramType.valueOf(programType.toUpperCase()), appId, programName,
-                                                   null, null);
+    final ProgramRecord record = new ProgramRecord(ProgramType.valueOf(programType.toUpperCase()), appId, programName);
     final Map<String, String> notes = GSON.fromJson(new InputStreamReader(
       new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8), REQUEST_TYPE);
     try {

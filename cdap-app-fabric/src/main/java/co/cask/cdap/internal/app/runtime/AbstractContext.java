@@ -112,7 +112,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
       LOG.error("Unable to find ProgramPreference Table", e);
       Throwables.propagate(e);
     }
-    record = new ProgramRecord(program.getType(), program.getApplicationId(), program.getName(), null, null);
+    record = new ProgramRecord(program.getType(), program.getApplicationId(), program.getName());
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
     // todo: initialized datasets should be managed by DatasetContext (ie. DatasetInstantiator): refactor further
     this.datasets = Datasets.createDatasets(dsInstantiator, datasets, arguments);

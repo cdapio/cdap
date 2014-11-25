@@ -90,6 +90,15 @@ public class PreferenceTableDataset extends AbstractDataset implements Preferenc
     }
   }
 
+  @Override
+  public void deleteNotes(ProgramRecord program) {
+    try {
+      table.delete(generateRowKey(program));
+    } catch (Exception e) {
+      LOG.debug("Delete Notes failed for {}", program);
+    }
+  }
+
   private byte[] generateRowKey(ProgramRecord program) {
     //Use default namespace until namespace is implemented.
     return Bytes.toBytes(String.format("%s.%s.%s.%s", "default", program.getApp(), program.getType().getPrettyName(),

@@ -43,16 +43,22 @@ public interface PreferenceTable extends Dataset {
   public void setNote(ProgramRecord program, String key, String value);
 
   /**
-   * Returns the contents of Preferences for the given {@link ProgramRecord}
+   * Returns the contents from StateStore for the given {@link ProgramRecord}
    * @param program Program
    * @return Map of contents
    */
   public Map<String, String> getNotes(ProgramRecord program);
 
   /**
-   * Stores the contents of Preferences for the given {@link ProgramRecord}
+   * Stores the contents in StateStore for the given {@link ProgramRecord}
    * @param program Program
    * @param notes Map of contents
    */
   public void setNotes(ProgramRecord program, Map<String, String> notes);
+
+  /**
+   * Delete the contents of the StateStore for the given {@link ProgramRecord}
+   * @param program Program
+   */
+  public void deleteNotes(ProgramRecord program);
 }

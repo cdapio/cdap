@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
- *
+ * Preferences HTTP Service.
  */
 public class PreferencesHttpService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(PreferencesHttpService.class);

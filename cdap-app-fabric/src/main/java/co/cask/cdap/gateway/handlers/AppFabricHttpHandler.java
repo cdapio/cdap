@@ -27,6 +27,7 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
+import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.deploy.Manager;
@@ -51,6 +52,7 @@ import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.PreferenceTableDataset;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -85,6 +87,9 @@ import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -223,6 +228,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final DatasetFramework dsFramework;
 
   /**
+   * System Dataset Service
+   */
+  private final DatasetFramework sysdsFramework;
+
+  /**
    * App fabric output directory.
    */
   private final String appFabricDir;
@@ -248,6 +258,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private final StreamAdmin streamAdmin;
 
   private final StreamConsumerFactory streamConsumerFactory;
+
+  private final TransactionExecutorFactory executorFactory;
 
   /**
    * Number of seconds for timing out a service endpoint discovery.
@@ -317,7 +329,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               StreamConsumerFactory streamConsumerFactory,
                               WorkflowClient workflowClient, Scheduler service, QueueAdmin queueAdmin,
                               DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DatasetFramework dsFramework) {
+                              DatasetFramework dsFramework, TransactionExecutorFactory executorFactory) {
 
     super(authenticator);
     this.locationFactory = locationFactory;
@@ -335,9 +347,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
-    this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework,
-                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
+    this.dsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration,
+                                                                                               Namespace.USER));
+    this.sysdsFramework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration,
+                                                                                                  Namespace.SYSTEM));
+    this.executorFactory = executorFactory;
   }
 
   /**
@@ -2235,9 +2249,46 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     return AppFabricServiceStatus.OK;
   }
 
+  private void deleteStateStore(final ApplicationSpecification spec) throws Exception {
+    final PreferenceTableDataset prefDataset = sysdsFramework.getDataset(Constants.Preferences.PROPERTY_TABLE,
+                                                                         null, null);
+    final String appName = spec.getName();
+    Preconditions.checkNotNull(prefDataset, "Could not find StateStore Table");
+    List<TransactionAware> txAware = Lists.newArrayList();
+    txAware.add(prefDataset);
+    final TransactionExecutor executor = executorFactory.createExecutor(txAware);
+
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() {
+        for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+          prefDataset.deleteNotes(new ProgramRecord(ProgramType.FLOW, appName, flowSpecification.getName()));
+        }
+
+        for (MapReduceSpecification mapReduceSpecification : spec.getMapReduce().values()) {
+          prefDataset.deleteNotes(new ProgramRecord(ProgramType.MAPREDUCE, appName, mapReduceSpecification.getName()));
+        }
+
+        for (SparkSpecification sparkSpecification : spec.getSpark().values()) {
+          prefDataset.deleteNotes(new ProgramRecord(ProgramType.SPARK, appName, sparkSpecification.getName()));
+        }
+
+        for (ProcedureSpecification procedureSpecification : spec.getProcedures().values()) {
+          prefDataset.deleteNotes(new ProgramRecord(ProgramType.PROCEDURE, appName, procedureSpecification.getName()));
+        }
+
+        for (ServiceSpecification serviceSpecification : spec.getServices().values()) {
+          prefDataset.deleteNotes(new ProgramRecord(ProgramType.SERVICE, appName, serviceSpecification.getName()));
+        }
+      }
+    });
+
+  }
+
   private AppFabricServiceStatus removeApplication(Id.Program identifier) throws Exception {
     Id.Account accountId = Id.Account.from(identifier.getAccountId());
     final Id.Application appId = Id.Application.from(accountId, identifier.getApplicationId());
+
 
     //Check if all are stopped.
     boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
@@ -2251,7 +2302,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
     }
 
-    ApplicationSpecification spec = store.getApplication(appId);
+    final ApplicationSpecification spec = store.getApplication(appId);
     if (spec == null) {
       return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
     }
@@ -2289,6 +2340,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
     }
     deleteProgramLocations(appId);
+    deleteStateStore(spec);
 
     Location appArchive = store.getApplicationArchiveLocation(appId);
     Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
@@ -2617,14 +2669,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                                                      status.getResult().getBytes(),
                                                                      ImmutableMultimap.of(
                                                                        HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8"));
+                                                                       "application/json; charset=utf-8")
+                                             );
 
                                            } else {
                                              responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                                                                  status.getResult());
                                            }
                                          }
-                                       });
+                                       }
+      );
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

@@ -182,6 +182,26 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public void setNote(String key, String value) {
+
+    }
+
+    @Override
+    public String getNote(String key) {
+      return null;
+    }
+
+    @Override
+    public Map<String, String> getNotes() {
+      return null;
+    }
+
+    @Override
+    public void setNotes(Map<String, String> notes) {
+
+    }
+
+    @Override
     public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
       return getDataSet(name, null);
     }
