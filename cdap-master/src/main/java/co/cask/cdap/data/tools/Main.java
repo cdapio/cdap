@@ -32,6 +32,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseOrderedTableAdmin;
@@ -202,6 +203,7 @@ public class Main {
                                      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
     datasetFramework.addModule("orderedTable", new HBaseOrderedTableModule());
     datasetFramework.addModule("core", new CoreDatasetsModule());
+    datasetFramework.addModule("fileSet", new FileSetModule());
 
     return datasetFramework;
   }
