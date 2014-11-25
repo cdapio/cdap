@@ -16,6 +16,9 @@
 
 package co.cask.cdap.gateway.router.handlers;
 
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.security.ACL;
+import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.exception.HandlerException;
 import co.cask.cdap.gateway.router.ProxyRule;
@@ -23,7 +26,10 @@ import co.cask.cdap.gateway.router.RouterServiceLookup;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.io.Closeables;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.PayloadDiscoverable;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
@@ -59,6 +65,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(HttpRequestHandler.class);
+  private static final Gson GSON = new Gson();
 
   private final ClientBootstrap clientBootstrap;
   private final RouterServiceLookup serviceLookup;
@@ -185,12 +192,32 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                                   httpRequest.getUri()));
     }
     Discoverable discoverable = strategy.pick();
-    if (discoverable == null) {
+    if (discoverable == null || !isVisible(discoverable)) {
       throw  new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
                                   String.format("No discoverable found for request : %s",
                                                 httpRequest.getUri()));
     }
     return new WrappedDiscoverable(discoverable);
+  }
+
+  private boolean isVisible(Discoverable discoverable) {
+    if (discoverable instanceof PayloadDiscoverable) {
+      PayloadDiscoverable payloadDiscoverable = (PayloadDiscoverable) discoverable;
+      String encodedACLs = Bytes.toString(payloadDiscoverable.getPayload());
+      if (encodedACLs != null && !encodedACLs.isEmpty()) {
+        List<ACL> acls = GSON.fromJson(encodedACLs, new TypeToken<List<ACL>>() { }.getType());
+        if (acls.isEmpty()) {
+          return true;
+        } else {
+          for (ACL acl : acls) {
+            if (acl.getPrincipal() == null && acl.getPermissions().contains(PermissionType.EXECUTE)) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+    return true;
   }
 
   /**

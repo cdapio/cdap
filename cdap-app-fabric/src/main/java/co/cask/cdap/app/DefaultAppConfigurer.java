@@ -29,6 +29,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.Procedure;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
+import co.cask.cdap.api.security.ACL;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
@@ -44,8 +45,10 @@ import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.internal.spark.DefaultSparkSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -172,9 +175,15 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     mapReduces.putAll(spec.getMapReduce());
   }
 
+  @Override
   public void addService(Service service) {
+    addService(service, ImmutableList.<ACL>of());
+  }
+
+  @Override
+  public void addService(Service service, List<ACL> acls) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
-    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service);
+    DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, acls);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();

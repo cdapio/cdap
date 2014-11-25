@@ -17,20 +17,27 @@
 package co.cask.cdap.app.services;
 
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.security.ACL;
+import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.PayloadDiscoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +51,7 @@ import javax.annotation.Nullable;
 public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceDiscoverer.class);
+  private static final Gson GSON = new Gson();
 
   protected String accountId;
   protected String applicationId;
@@ -101,7 +109,7 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
   }
 
   private URL createURL(@Nullable Discoverable discoverable, String applicationId, String serviceId) {
-    if (discoverable == null) {
+    if (discoverable == null || !isVisible(discoverable, applicationId)) {
       return null;
     }
     String hostName = discoverable.getSocketAddress().getHostName();
@@ -114,6 +122,27 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
       LOG.error("Got exception while creating serviceURL", e);
       return null;
     }
+  }
+
+  // Local services are discoverable from programs only within the same application.
+  private boolean isVisible(Discoverable discoverable, String applicationId) {
+    if (discoverable instanceof PayloadDiscoverable) {
+      PayloadDiscoverable payloadDiscoverable = (PayloadDiscoverable) discoverable;
+      String encodedACLS = Bytes.toString(payloadDiscoverable.getPayload());
+      List<ACL> acls = GSON.fromJson(encodedACLS, new TypeToken<List<ACL>>() { }.getType());
+      // If no ACLs are set, or its in the same application, then it is visible
+      if (acls == null || acls.isEmpty() || this.applicationId.equals(applicationId)) {
+        return true;
+      } else {
+        // If they're in different applications, and the ACL is set to execute only within the same app, its not visible
+        for (ACL acl : acls) {
+          if (acl.getPrincipal() == null && acl.getPermissions().contains(PermissionType.EXECUTE)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   /**

@@ -38,6 +38,8 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Throwables;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -47,8 +49,9 @@ import javax.ws.rs.PathParam;
  * AppWithServices with a DummyService for unit testing.
  */
 public class AppWithServices extends AbstractApplication {
-  public static final String SERVICE_NAME = "ServerService";
-  public static final String DATASET_WORKER_SERVICE_NAME = "DatasetUpdateService";
+  public static final String APP_NAME = "AppWithServices";
+  public static final String SERVER_SERVICE_NAME = "ServerService";
+  public static final String DATASET_UPDATE_SERVICE_NAME = "DatasetUpdateService";
   public static final String DATASET_TEST_KEY = "testKey";
   public static final String DATASET_TEST_VALUE = "testValue";
   public static final String DATASET_TEST_KEY_STOP = "testKeyStop";
@@ -62,12 +65,12 @@ public class AppWithServices extends AbstractApplication {
 
     @Override
     public void configure() {
-      setName("AppWithServices");
+      setName(APP_NAME);
       addStream(new Stream("text"));
       addProcedure(new NoOpProcedure());
-      addService(new BasicService(SERVICE_NAME, new ServerService()));
-      addService(new DatasetUpdateService());
+      addService(new BasicService(SERVER_SERVICE_NAME, new ServerService()));
       addService(new TransactionalHandlerService());
+      addLocalService(new DatasetUpdateService());
       createDataset(DATASET_NAME, KeyValueTable.class);
       createDataset(TRANSACTIONS_DATASET_NAME, KeyValueTable.class);
    }
@@ -146,13 +149,28 @@ public class AppWithServices extends AbstractApplication {
         responder.sendStatus(200);
       }
     }
+
+    /**
+     * Used to discover a Service from the specified application.
+     */
+    @Path("/discover/{app}/{service}")
+    @GET
+    public void discoverService(HttpServiceRequest request, HttpServiceResponder responder,
+                                @PathParam("app") String appName, @PathParam("service") String serviceName) {
+      URL url = getContext().getServiceURL(appName, serviceName);
+      if (url == null) {
+        responder.sendStatus(HttpURLConnection.HTTP_NO_CONTENT);
+      } else {
+        responder.sendStatus(HttpURLConnection.HTTP_OK);
+      }
+    }
   }
 
   private static final class DatasetUpdateService extends AbstractService {
 
     @Override
     protected void configure() {
-      setName(DATASET_WORKER_SERVICE_NAME);
+      setName(DATASET_UPDATE_SERVICE_NAME);
       addHandler(new NoOpHandler());
       addWorker("updater", new DatasetUpdateWorker(DATASET_NAME));
     }

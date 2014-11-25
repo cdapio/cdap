@@ -334,6 +334,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
             public Cancellable announce(String serviceName, int port) {
               return context.announce(serviceName, port);
             }
+
+            @Override
+            public Cancellable announce(String serviceName, int port, byte[] payload) {
+              return context.announce(serviceName, port, payload);
+            }
           });
 
         }

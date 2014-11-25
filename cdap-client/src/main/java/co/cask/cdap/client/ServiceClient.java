@@ -85,8 +85,11 @@ public class ServiceClient {
 
     ServiceSpecification specification = get(appId, serviceId);
     ImmutableList.Builder<ServiceHttpEndpoint> builder = new ImmutableList.Builder<ServiceHttpEndpoint>();
-    for (HttpServiceHandlerSpecification handlerSpecification : specification.getHandlers().values()) {
-      builder.addAll(handlerSpecification.getEndpoints());
+    // If no ACLs are set, it is visible to external clients
+    if (specification.getAcls().isEmpty()) {
+      for (HttpServiceHandlerSpecification handlerSpecification : specification.getHandlers().values()) {
+        builder.addAll(handlerSpecification.getEndpoints());
+      }
     }
     return builder.build();
   }

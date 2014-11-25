@@ -24,11 +24,14 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.procedure.Procedure;
+import co.cask.cdap.api.security.ACL;
+import co.cask.cdap.api.security.PermissionType;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.Workflow;
+import com.google.common.collect.ImmutableList;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -208,6 +211,27 @@ public abstract class AbstractApplication implements Application {
    * @param handlers more handlers for the Service
    */
   protected void addService(String name, HttpServiceHandler handler, HttpServiceHandler...handlers) {
-    configurer.addService(new BasicService(name, handler, handlers));
+    addService(new BasicService(name, handler, handlers));
+  }
+
+  /**
+   * Adds a {@link Service} that is only visible to programs within the same {@link Application}.
+   * @param service Service for the Application.
+   */
+  protected void addLocalService(Service service) {
+    ACL acl = new ACL(null, ImmutableList.of(PermissionType.EXECUTE));
+    configurer.addService(service, ImmutableList.of(acl));
+  }
+
+  /**
+   * Adds a local {@link Service} that consists of the given {@link HttpServiceHandler}.
+   * This service will only be visible from within the same application.
+   *
+   * @param name Name of the Service
+   * @param handler handler for the Service
+   * @param handlers more handlers for the Service
+   */
+  protected void addLocalService(String name, HttpServiceHandler handler, HttpServiceHandler...handlers) {
+    addLocalService(new BasicService(name, handler, handlers));
   }
 }
