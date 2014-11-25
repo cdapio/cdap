@@ -210,12 +210,15 @@ public class GatewayFastTestsSuite {
 
   @BeforeClass
   public static void beforeClass() throws IOException {
-    GatewayTestBase.setupTests();
+    GatewayTestBase.beforeClass();
+    GatewayTestBase.runBefore = false;
+    GatewayTestBase.runAfter = false;
 
   }
 
   @AfterClass
   public static void afterClass() {
-    GatewayTestBase.cleanup();
+    GatewayTestBase.runAfter = true;
+    GatewayTestBase.afterClass();
   }
 }
