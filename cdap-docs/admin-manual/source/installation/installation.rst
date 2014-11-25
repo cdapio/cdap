@@ -105,6 +105,7 @@ You'll need this software installed:
   **Note:** No Hadoop services need to be running.
 
 .. highlight:: console
+
 .. _install-java-runtime:
 
 Java Runtime
@@ -333,6 +334,8 @@ To configure your particular installation, follow one of these two approaches:
 
 Depending on your installation, you may want to set these properties:
 
+.. highlight:: xml
+
 - If you want to use **an HDFS directory with a name** other than ``/cdap``:
 
   1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
@@ -385,6 +388,8 @@ Depending on your installation, you may want to set these properties:
 
 .. _install-secure-hadoop:
 
+.. highlight:: console
+
 Secure Hadoop
 .............
 When running CDAP on top of Secure Hadoop and HBase (using Kerberos
@@ -427,6 +432,8 @@ and in particular, see the instructions for
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.
 
 .. _install-starting-services:
+
+.. highlight:: console
 
 Starting Services
 -----------------
@@ -496,6 +503,8 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 
 .. _install-upgrade:
+
+.. highlight:: console
 
 Upgrading an Existing Version
 ---------------------------------

@@ -24,4 +24,6 @@
  *   class which implements basic initialization logic that is preferable to use in most cases.
  * </p>
  */
+ 
+@Deprecated
 package co.cask.cdap.api.procedure;

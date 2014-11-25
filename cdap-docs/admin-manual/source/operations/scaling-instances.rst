@@ -43,6 +43,9 @@ with the arguments as a JSON string in the body::
 
 Scaling Procedures
 ------------------
+
+.. include:: ../../../_common/_include/include-v260-deprecate-procedures.rst
+
 In a similar way to `Scaling Flowlets`_, you can query or change the number of instances of a Procedure
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 

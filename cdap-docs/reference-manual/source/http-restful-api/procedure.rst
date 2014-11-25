@@ -9,6 +9,8 @@
 Procedure HTTP RESTful API
 ===========================================================
 
+.. include:: ../../../_common/_include/include-v260-deprecate-procedures.rst
+
 .. highlight:: console
 
 This interface supports sending calls to the methods of an Application’s Procedures.

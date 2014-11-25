@@ -32,7 +32,10 @@ import java.util.Set;
  * A {@link Procedure} runtime attributes are always defined using this class.
  * Instance of this class should be created through the {@link Builder} class
  * by invoking the {@link Builder#with()} method.
+ *
+ * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.ServiceSpecification}
  */
+@Deprecated
 public interface ProcedureSpecification extends ProgramSpecification, PropertyProvider {
 
   /**

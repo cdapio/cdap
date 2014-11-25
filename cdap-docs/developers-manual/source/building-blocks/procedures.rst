@@ -8,6 +8,8 @@
 Procedures
 ============================================
 
+.. include:: ../../../_common/_include/include-v260-deprecate-procedures.rst
+
 To query CDAP and its Datasets and retrieve results, you can use Procedures.
 
 Procedures allow you to make synchronous calls into CDAP from an external system
