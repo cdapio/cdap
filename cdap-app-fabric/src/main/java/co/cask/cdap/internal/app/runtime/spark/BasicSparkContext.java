@@ -35,7 +35,6 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
-import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -43,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -63,10 +61,8 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
 
   // TODO: InstanceId is not supported in Spark jobs, see CDAP-39.
   public static final String INSTANCE_ID = "0";
-  private final Arguments runtimeArguments;
   private final SparkSpecification sparkSpec;
   private final long logicalStartTime;
-  private final String accountId;
   private final String workflowBatch;
   private final MetricsCollectionService metricsCollectionService;
   private final StreamAdmin streamAdmin;
@@ -78,10 +74,8 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
                            MetricsCollectionService metricsCollectionService,
                            DatasetFramework dsFramework, CConfiguration conf,
                            DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin) {
-    super(program, runId, datasets, getMetricContext(program), metricsCollectionService, dsFramework, conf,
-          discoveryServiceClient);
-    this.accountId = program.getAccountId();
-    this.runtimeArguments = runtimeArguments;
+    super(program, runId, runtimeArguments, datasets, getMetricContext(program), metricsCollectionService,
+          dsFramework, conf, discoveryServiceClient);
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
     this.metricsCollectionService = metricsCollectionService;
@@ -165,8 +159,8 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
    */
   @Override
   public String[] getRuntimeArguments(String argsKey) {
-    if (runtimeArguments.hasOption(argsKey)) {
-      return SPACES.split(runtimeArguments.getOption(argsKey).trim());
+    if (getRuntimeArguments().containsKey(argsKey)) {
+      return SPACES.split(getRuntimeArguments().get(argsKey).trim());
     } else {
       LOG.warn("Argument with key {} not found in Runtime Arguments", argsKey);
       return NO_ARGS;
@@ -183,15 +177,6 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
    */
   public StreamAdmin getStreamAdmin() {
     return streamAdmin;
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
-    for (Map.Entry<String, String> runtimeArgument : runtimeArguments) {
-      arguments.put(runtimeArgument);
-    }
-    return arguments.build();
   }
 
   //TODO: Change this once we have metrics is supported
@@ -218,10 +203,4 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     }
   }
 
-  /**
-   * @return {@link Arguments} for this job
-   */
-  public Arguments getRuntimeArgs() {
-    return runtimeArguments;
-  }
 }

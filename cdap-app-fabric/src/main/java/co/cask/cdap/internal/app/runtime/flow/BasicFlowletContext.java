@@ -28,11 +28,9 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,7 +38,6 @@ import java.util.Set;
  */
 final class BasicFlowletContext extends AbstractContext implements FlowletContext {
 
-  private final String accountId;
   private final String flowId;
   private final String flowletId;
   private final long groupId;
@@ -49,7 +46,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
 
   private volatile int instanceCount;
   private final FlowletMetrics flowletMetrics;
-  private final Arguments runtimeArguments;
 
   BasicFlowletContext(Program program, String flowletId,
                       int instanceId, RunId runId,
@@ -59,7 +55,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       DiscoveryServiceClient discoveryServiceClient,
                       DatasetFramework dsFramework,
                       CConfiguration conf) {
-    super(program, runId, datasets,
+    super(program, runId, runtimeArguments, datasets,
           getMetricContext(program, flowletId, instanceId),
           metricsCollectionService,
           dsFramework, conf, discoveryServiceClient);
@@ -69,7 +65,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.groupId = FlowUtils.generateConsumerGroupId(program, flowletId);
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
-    this.runtimeArguments = runtimeArguments;
     this.flowletSpec = flowletSpec;
     this.flowletMetrics = new FlowletMetrics(metricsCollectionService, getApplicationId(), flowId, flowletId,
                                              runId.getId());
@@ -94,18 +89,6 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
   @Override
   public FlowletSpecification getSpecification() {
     return flowletSpec;
-  }
-
-  /**
-   * @return A map of runtime key and value arguments supplied by the user.
-   */
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    for (Map.Entry<String, String> entry : runtimeArguments) {
-      builder.put(entry);
-    }
-    return builder.build();
   }
 
   public void setInstanceCount(int count) {

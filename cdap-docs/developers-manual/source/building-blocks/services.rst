@@ -4,19 +4,17 @@
 
 .. _user-services:
 
-============================================
+========
 Services
-============================================
+========
 
 Services can be run in a Cask Data Application Platform (CDAP) Application to serve data to external clients.
 Similar to Flows, Services run in containers and the number of running service instances can be dynamically scaled.
 Developers can implement Custom Services to interface with a legacy system and perform additional processing beyond
 the CDAP processing paradigms. Examples could include running an IP-to-Geo lookup and serving user-profiles.
 
-The lifecycle of a Custom Service can be controlled via the CDAP Console or by using the
-:ref:`CDAP Java Client API <client-api>` or :ref:`CDAP RESTful HTTP API <restful-api>`.
-
-Services are implemented by extending ``AbstractService``, which consists of ``HttpServiceHandler``\s to serve requests.
+The lifecycle of a Custom Service can be controlled via the CDAP Console, by using the
+:ref:`CDAP Java Client API <client-api>`, or with the :ref:`CDAP RESTful HTTP API <restful-api>`.
 
 You can add Services to your application by calling the ``addService`` method in the
 Application's ``configure`` method::
@@ -35,7 +33,8 @@ Application's ``configure`` method::
     }
   }
 
-::
+Services are implemented by extending ``AbstractService``, which consists of
+``HttpServiceHandler``\s to serve requests::
 
   public class IPGeoLookupService extends AbstractService {
 
@@ -48,16 +47,22 @@ Application's ``configure`` method::
     }
   }
 
+Similarly, you can also add Services using the ``addLocalService`` method. These Services
+will only be accessible by other programs within the same Application—other Applications
+and external clients will not be able to use them.
+
 Service Handlers
 ----------------
 
 ``ServiceHandler``\s are used to handle and serve HTTP requests.
 
-You add handlers to your Service by calling the ``addHandler`` method in the Service's ``configure`` method.
+You add handlers to your Service by calling the ``addHandler`` method in the Service's
+``configure`` method, as shown above.
 
-To use a Dataset within a handler, specify the Dataset by calling the ``useDataset`` method in the Service's
-``configure`` method and include the ``@UseDataSet`` annotation in the handler to obtain an instance of the Dataset.
-Each request to a method is committed as a single transaction.
+To use a Dataset within a handler, specify the Dataset by calling the ``useDataset``
+method in the Service's ``configure`` method and include the ``@UseDataSet`` annotation in
+the handler to obtain an instance of the Dataset. Each request to a method is committed as
+a single transaction.
 
 ::
 
@@ -74,6 +79,34 @@ Each request to a method is committed as a single transaction.
     }
   }
 
+Path and Query Parameters
+=========================
+
+Handler endpoints can have Path and Query parameters. Path parameters are used to assist with path-mapping of requests,
+while Query parameters are used to easily parse the query string of a request.
+
+For example, the ``WordCount`` application has a ``Service`` that exposes an endpoint to retrieve the count of a word
+and its word associations. In the ``@Path`` annotation, ``{word}`` is a path parameter that is mapped
+to a Java String using ``@PathParam("word") String word``. Similarly, the endpoint also allows
+the query parameter ``limit`` with a default value of 10.
+
+::
+
+  @Path("count/{word}")
+  @GET
+  public void getCount(HttpServiceRequest request, HttpServiceResponder responder,
+                       @PathParam("word") String word,
+                       @QueryParam("limit") @DefaultValue("10") Integer limit) {
+
+    // ...
+  }
+
+An example of calling this endpoint with the HTTP RESTful API is shown in the :ref:`http-restful-api-service`.
+
+**Note:** Any reserved or unsafe characters in the path parameters should be encoded using 
+:ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`.
+
+
 Service Discovery
 -----------------
 
@@ -83,7 +116,7 @@ accessed—by other programs.
 Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
 *hostname* required for registering the Service are automatically obtained.
 
-The Service can then be discovered in Flows, Procedures, MapReduce jobs, and other Services using
+The Service can then be discovered in Flows, Procedures, MapReduce Jobs, Spark Programs, and other Services using
 appropriate program contexts. You may also access Services in a different Application
 by specifying the Application name in the ``getServiceURL`` call.
 

@@ -28,6 +28,7 @@ import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.AbstractServiceWorker;
+import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -57,14 +58,16 @@ public class AppUsingGetServiceURL extends AbstractApplication {
   public static final String DATASET_NAME = "SharedDataSet";
   public static final String DATASET_WHICH_KEY = "WhichKey";
   public static final String DATASET_KEY = "Key";
+  public static final String WORKER_INSTANCES_DATASET = "WorkerInstancesDataset";
 
   @Override
   public void configure() {
-      setName(APP_NAME);
-      addProcedure(new ForwardingProcedure());
-      addService(new CentralService());
-      addService(new ServiceWithWorker());
-      createDataset(DATASET_NAME, KeyValueTable.class);
+    setName(APP_NAME);
+    addProcedure(new ForwardingProcedure());
+    addService(new CentralService());
+    addService(new ServiceWithWorker());
+    createDataset(DATASET_NAME, KeyValueTable.class);
+    createDataset(WORKER_INSTANCES_DATASET, KeyValueTable.class);
   }
 
 
@@ -129,6 +132,21 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       @Override
       protected void configure() {
         useDatasets(DATASET_NAME);
+        useDatasets(WORKER_INSTANCES_DATASET);
+        setInstances(5);
+      }
+
+      public void initialize(ServiceWorkerContext context) throws Exception {
+        super.initialize(context);
+
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DataSetContext context) throws Exception {
+            KeyValueTable table = context.getDataSet(WORKER_INSTANCES_DATASET);
+            String key = String.format("%d.%d", getContext().getInstanceId(), System.nanoTime());
+            table.write(key, Bytes.toBytes(getContext().getInstanceCount()));
+          }
+        });
       }
 
       private void writeToDataSet(final String key, final String val) {
@@ -148,8 +166,8 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           return;
         }
 
-        URL url = null;
-        String response = null;
+        URL url;
+        String response;
         try {
           url = new URL(baseURL, "ping");
         } catch (MalformedURLException e) {
@@ -169,12 +187,10 @@ public class AppUsingGetServiceURL extends AbstractApplication {
           }
         } catch (IOException e) {
           LOG.error("Got exception {}", e);
-          return;
         }
       }
     }
   }
-
 
   /**
    * The central service which other programs will ping via their context's getServiceURL method.

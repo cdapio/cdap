@@ -51,9 +51,6 @@ define([], function () {
                 case 'dataset':
                     $('#nav-store').addClass('active');
                     break;
-                case 'procedure':
-                    $('#nav-queries').addClass('active');
-                    break;
             }
             this.entityTypes.add(type);
 

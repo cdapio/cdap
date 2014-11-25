@@ -38,6 +38,8 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Throwables;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -145,6 +147,18 @@ public class AppWithServices extends AbstractApplication {
         responder.sendStatus(500);
       } else {
         responder.sendStatus(200);
+      }
+    }
+
+    @Path("/discover/{app}/{service}")
+    @GET
+    public void discoverService(HttpServiceRequest request, HttpServiceResponder responder,
+                                @PathParam("app") String appId, @PathParam("service") String serviceId) {
+      URL url = getContext().getServiceURL(appId, serviceId);
+      if (url == null) {
+        responder.sendStatus(HttpURLConnection.HTTP_NO_CONTENT);
+      } else {
+        responder.sendJson(url);
       }
     }
   }

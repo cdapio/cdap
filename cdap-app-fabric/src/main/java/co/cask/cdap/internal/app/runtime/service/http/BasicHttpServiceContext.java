@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
 import co.cask.cdap.app.program.Program;
@@ -55,7 +54,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  MetricsCollectionService metricsCollectionService, DatasetFramework dsFramework,
                                  CConfiguration conf, DiscoveryServiceClient discoveryServiceClient,
                                  TransactionSystemClient txClient) {
-    super(program, runId, spec.getDatasets(), getMetricsContext(program, instanceId),
+    super(program, runId, runtimeArgs, spec.getDatasets(), getMetricsContext(program, instanceId),
           metricsCollectionService, dsFramework, conf, discoveryServiceClient);
     this.spec = spec;
     this.runtimeArgs = runtimeArgs.asMap();
@@ -70,14 +69,6 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public HttpServiceHandlerSpecification getSpecification() {
     return spec;
-  }
-
-  /**
-   * @return the runtime arguments for the {@link HttpServiceContext}
-   */
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return runtimeArgs;
   }
 
   @Override

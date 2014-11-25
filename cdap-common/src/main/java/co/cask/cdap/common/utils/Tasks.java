@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.client.util;
+package co.cask.cdap.common.utils;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -22,11 +22,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Utilities for controlling program flow.
+ * General task utils.
  */
-public class ProgramFlowUtil {
+public final class Tasks {
 
-  private ProgramFlowUtil() { }
+  private Tasks() { }
 
   /**
    * Calls callable, waiting sleepDelay between each call,
@@ -64,3 +64,4 @@ public class ProgramFlowUtil {
 
   }
 }
+

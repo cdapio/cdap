@@ -147,7 +147,7 @@ elif [ "x$action" == "xrun" ]; then
   program_action $app "SparkKMeansProgram" "spark" "start" $host
 else
   program_action $app "PointsFlow" "flow" $action $host
-  program_action $app "CentersProcedure" "procedure" $action $host
+  program_action $app "CentersService" "service" $action $host
 #  dont start and stop mapreduce if start/stop is specified
   if [ "x$action" == "xstatus" ]; then
     program_action $app "SparkKMeansProgram" "spark" $action $host
