@@ -28,7 +28,6 @@ import java.util.Map;
 public final class RuntimeArguments {
 
   private RuntimeArguments() {
-
   }
 
   /**
@@ -70,4 +69,55 @@ public final class RuntimeArguments {
     }
     return toPosixArray(userArgMapBuilder.build());
   }
+
+  /**
+   * Extract all arguments for a given scope.
+   * @param scope The type of the scope
+   * @param name The name of the scope, e.g. "myTable"
+   * @param arguments the runtime arguments of the enclosing scope
+   * @return a map that contains only the keys that start with &lt;scope>.&lt;name>., with that prefix removed.
+   */
+  public static Map<String, String> extractScope(Scope scope, String name, Map<String, String> arguments) {
+    String prefix = scope + "." + name + ".";
+    return extractPrefix(prefix, arguments);
+  }
+
+  /**
+   * Extract all arguments that start with a prefix, and removes that prefix.
+   * @param prefix The prefix to filter and remove
+   * @param arguments the runtime arguments to extract from
+   * @return a map that contains only the keys that start with the prefix, with the prefix removed.
+   */
+  public static Map<String, String> extractPrefix(String prefix, Map<String, String> arguments) {
+    if (arguments == null || arguments.isEmpty()) {
+      return arguments;
+    }
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> entry : arguments.entrySet()) {
+      if (entry.getKey().startsWith(prefix)) {
+        result.put(entry.getKey().substring(prefix.length()), entry.getValue());
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Add a scope prefix to all arguments.
+   * @param scope The type of the scope
+   * @param name The name of the scope, e.g. "myTable"
+   * @param arguments the runtime arguments to be scoped
+   * @return a map that contains all keys, prefixed with with &lt;scope>.&lt;name>.
+   */
+  public static Map<String, String> addScope(Scope scope, String name, Map<String, String> arguments) {
+    if (arguments == null || arguments.isEmpty()) {
+      return arguments;
+    }
+    final String prefix = scope + "." + name + ".";
+    Map<String, String> result = Maps.newHashMap();
+    for (Map.Entry<String, String> entry : arguments.entrySet()) {
+        result.put(prefix + entry.getKey(), entry.getValue());
+    }
+    return result;
+  }
+
 }

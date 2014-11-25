@@ -26,20 +26,20 @@ import com.google.inject.Inject;
 import java.util.List;
 
 /**
- * Contains commands for getting program history.
+ * Contains commands for getting program runs.
  */
-public class GetProgramHistoryCommandSet extends CommandSet<Command> {
+public class GetProgramRunsCommandSet extends CommandSet<Command> {
 
   @Inject
-  public GetProgramHistoryCommandSet(ProgramClient programClient) {
+  public GetProgramRunsCommandSet(ProgramClient programClient) {
     super(generateCommands(programClient));
   }
 
   private static Iterable<Command> generateCommands(ProgramClient programClient) {
     List<Command> commands = Lists.newArrayList();
     for (ElementType elementType : ElementType.values()) {
-      if (elementType.hasHistory()) {
-        commands.add(new GetProgramHistoryCommand(elementType, programClient));
+      if (elementType.hasRuns()) {
+        commands.add(new GetProgramRunsCommand(elementType, programClient));
       }
     }
     return commands;

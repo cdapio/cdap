@@ -28,14 +28,18 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Retrieve Counts service handler.
  */
 public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
+
+  private static final int WORD_COUNT_LIMIT = 10;
 
   @UseDataSet("wordStats")
   private Table wordStatsTable;
@@ -87,22 +91,27 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
   }
 
   /**
-   * Returns the count for a specific word and its word associations, up to the specified limit.
-   */
-  @Path("count/{word}/{limit}")
-  @GET
-  public void getCount(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("word") String word, @PathParam("limit") int limit) {
-    responder.sendJson(getCount(word, limit));
-  }
-
-  /**
-   * Returns the count for a specific word and its word associations, up to a pre-set limit of ten.
+   * Returns the count for a specific word and its word associations, up to the specified limit or
+   * a pre-set limit of ten if not specified.
    */
   @Path("count/{word}")
   @GET
-  public void getCount(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("word") String word) {
-    responder.sendJson(getCount(word, 10));
+  public void getCount(HttpServiceRequest request, HttpServiceResponder responder,
+                       @PathParam("word") String word, @DefaultValue("10") @QueryParam("limit") Integer limit) {
+    // Read the word count
+    byte[] countBytes = wordCountsTable.read(Bytes.toBytes(word));
+    long wordCount = countBytes == null ? 0L : Bytes.toLong(countBytes);
+
+    // Read the top associated words
+    Map<String, Long> wordsAssocs = associationTable.readWordAssocs(word, limit);
+
+    // Build a map with results
+    Map<String, Object> results = new HashMap<String, Object>();
+    results.put("word", word);
+    results.put("count", wordCount);
+    results.put("assocs", wordsAssocs);
+
+    responder.sendJson(results);
   }
 
   /**
@@ -122,22 +131,5 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
     results.put("count", count);
 
     responder.sendJson(results);
-  }
-
-  private Map<String, Object> getCount(String word, int limit) {
-    // Read the word count
-    byte[] countBytes = wordCountsTable.read(Bytes.toBytes(word));
-    long wordCount = countBytes == null ? 0L : Bytes.toLong(countBytes);
-
-    // Read the top associated words
-    Map<String, Long> wordsAssocs = associationTable.readWordAssocs(word, limit);
-
-    // Build a map with results
-    Map<String, Object> results = new HashMap<String, Object>();
-    results.put("word", word);
-    results.put("count", wordCount);
-    results.put("assocs", wordsAssocs);
-
-    return results;
   }
 }

@@ -30,6 +30,14 @@ describe('Node js tests', function() {
     });
   });
 
+  describe('GET /status', function() {
+    it('should respond with status 200', function(done) {
+      request(app)
+        .get('/status')
+        .expect(200, done);
+    });
+  });
+
   describe('GET /destinations', function() {
     it('should get destinations', function(done) {
       request(app)

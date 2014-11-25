@@ -26,8 +26,9 @@ import co.cask.cdap.internal.asm.Signatures;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
@@ -291,7 +292,7 @@ final class HttpHandlerGenerator {
 
     private final TypeToken<?> delegateType;
     private final List<AnnotationNode> annotations;
-    private final Map<Integer, AnnotationNode> paramAnnotations;
+    private final ListMultimap<Integer, AnnotationNode> paramAnnotations;
     private final String desc;
     private final String signature;
     private final int access;
@@ -323,7 +324,7 @@ final class HttpHandlerGenerator {
       this.name = name;
       this.exceptions = exceptions;
       this.annotations = Lists.newArrayList();
-      this.paramAnnotations = Maps.newLinkedHashMap();
+      this.paramAnnotations = LinkedListMultimap.create();
       this.classType = classType;
       this.classWriter = classWriter;
     }
@@ -341,6 +342,8 @@ final class HttpHandlerGenerator {
 
     @Override
     public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
+      // Memorize all visible annotations for each parameter.
+      // It needs to store in a Multimap because there can be multiple annotations per parameter.
       if (visible) {
         AnnotationNode annotationNode = new AnnotationNode(Opcodes.ASM4, desc);
         paramAnnotations.put(parameter, annotationNode);
@@ -391,7 +394,7 @@ final class HttpHandlerGenerator {
         annotation.accept(mg.visitAnnotation(annotation.desc, true));
       }
       // Replay all parameter annotations
-      for (Map.Entry<Integer, AnnotationNode> entry : paramAnnotations.entrySet()) {
+      for (Map.Entry<Integer, AnnotationNode> entry : paramAnnotations.entries()) {
         AnnotationNode annotation = entry.getValue();
         annotation.accept(mg.visitParameterAnnotation(entry.getKey(), annotation.desc, true));
       }

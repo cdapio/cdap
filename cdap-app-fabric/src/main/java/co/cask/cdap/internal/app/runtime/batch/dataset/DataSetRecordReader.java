@@ -44,7 +44,7 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
     this.context = context;
     this.dataSetName = dataSetName;
     this.dataSetMetrics = context.getMetricsCollectionService().getCollector(
-      MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, "0");
+      MetricsScope.SYSTEM, Constants.Metrics.DATASET_CONTEXT, context.getRunId().getId());
   }
 
   @Override
