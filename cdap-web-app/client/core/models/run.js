@@ -5,7 +5,6 @@
 define([], function () {
 
 	var Model = Em.Object.extend({
-
 		elementId: function () {
 			return 'run-' + this.get('rid');
 		}.property(),
@@ -38,6 +37,8 @@ define([], function () {
 		detail: function () {
 			var state = this.get('status');
 			return {
+				'RUNNING': 'Running',
+				'COMPLETED': 'Completed',
 				'STOPPED': 'Completed',
 				'ERROR': 'Failed'
 			}[state];

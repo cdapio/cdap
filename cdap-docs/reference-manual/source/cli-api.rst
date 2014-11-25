@@ -82,6 +82,7 @@ These are the available commands:
    ``exit``,Exits the shell
    **Calling and Executing**
    ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``,"Calls a Procedure, passing in the parameters as a JSON String map"
+   ``call service <app-id>.<service-id> <http-method> <endpoint> [headers <%s>] [body <%s>]``,"Calls an endpoint of a Service, passing in the headers and body"
    ``execute <query>``,Executes a Dataset query
    **Creating**
    ``create dataset instance <type-name> <new-dataset-name>``,Creates a Dataset
@@ -117,6 +118,7 @@ These are the available commands:
    ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
    ``get status service <app-id>.<program-id>``,Gets the status of a Service
    ``get status workflow <app-id>.<program-id>``,Gets the status of a Workflow
+   ``get endpoints service <app-id>.<service-id>``,Get the endpoints exposed by a Service
    **Listing Elements**
    ``list apps``,Lists all applications
    ``list dataset instances``,Lists all Datasets

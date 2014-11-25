@@ -27,11 +27,11 @@ import org.junit.runners.Suite;
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  ExploreExtensiveSchemaTableTest.class,
-  ExploreMetadataTest.class,
-  HiveExploreServiceTest.class,
-  WritableDatasetTest.class,
-  HiveExploreServiceStopTest.class
+  ExploreExtensiveSchemaTableTestRun.class,
+  ExploreMetadataTestRun.class,
+  HiveExploreServiceTestRun.class,
+  WritableDatasetTestRun.class,
+  HiveExploreServiceStopTestRun.class
 })
 public class ExploreServiceTestsSuite {
 

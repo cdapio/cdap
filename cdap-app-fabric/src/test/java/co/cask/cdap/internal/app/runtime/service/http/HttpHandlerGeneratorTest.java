@@ -183,13 +183,14 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-      return null;
+      return getDataSet(name, null);
     }
 
     @Override
     public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
       throws DataSetInstantiationException {
-      return null;
+      throw new DataSetInstantiationException("Dataset '" + name + "' cannot be instantiated. " +
+                                                "Operation not supported in " + getClass().getName());
     }
 
     @Override
@@ -221,6 +222,16 @@ public class HttpHandlerGeneratorTest {
           return;
         }
       };
+    }
+
+    @Override
+    public URL getServiceURL(String applicationId, String serviceId) {
+      return null;
+    }
+
+    @Override
+    public URL getServiceURL(String serviceId) {
+      return null;
     }
   }
 }

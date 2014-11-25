@@ -125,7 +125,7 @@ public class MapReduceMetricsWriter {
           reportSystemStats(counters.getGroup(group), context.getSystemReducerMetrics(scope));
         } else if (programPart.equals("dataset")) {
           reportSystemStats(counters.getGroup(group), context.getMetricsCollectionService().getCollector(
-                  scope, Constants.Metrics.DATASET_CONTEXT, "0"));
+            scope, Constants.Metrics.DATASET_CONTEXT, context.getRunId().getId()));
         }
       }
     }

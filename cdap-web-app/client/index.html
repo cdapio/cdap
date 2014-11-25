@@ -112,7 +112,7 @@
           <span class="left-nav-icon"></span>
 
           Store</a></li>
-        <li><a class="nav-link nav-queries" id="nav-queries" href="#/procedures">
+        <li><a class="nav-link nav-queries" id="nav-queries" href="#/dataexplore/query">
           <span class="left-nav-icon"></span>
 
           Query</a></li>
@@ -944,20 +944,6 @@
         {{partial "datasets-list"}}
       </div>
 
-      <div class="panel" id ="query-panel">
-        <div class="panel-head">
-          {{#if elements.Procedure.length}}
-            <div class="btn-group pull-right start-stop-btns" style="margin-top:2px;text-align:center;">
-              <button {{action startAll "Procedure" on="click"}} class="btn start"><img src="/assets/img/v2/play_icon.png" /></button>
-              <img style="display: none;margin-top: 3px;" src="/assets/img/start-all-load-white.gif" />
-              <button {{action stopAll "Procedure" on="click"}} class="btn stop"><img src="/assets/img/v2/stop_active_icon.png" /></button>
-            </div>
-          {{/if}}
-          <div class="panel-title">Query</div>
-        </div>
-        {{partial "procedures-list"}}
-      </div>
-
       <div class="panel" id="userservice-panel">
         <div class="panel-head">
           {{#if elements.Userservice.length}}
@@ -1297,15 +1283,31 @@
     </div>
     <div id="panels">
       <div class="panel">
-        <div>
-          <div class="panel-title center-align beta-info-font">
-            {{#if showLogsMessage}}
-              <div>
-                <span> To see more details about the job, please see the <span class="logs-link" {{action "logsLinkHandler" on="click"}}> logs </span> </span>
+        <div class="sparks-metrics clearfix chart">
+            <div class="spark-metrics-item">
+              <div class="spark-icon spark-metrics-block">
+                <div class="info-window">
+                  <div class="metrics-phase">BLOCKS</div>
+                  <div class="mapper-icon"></div>
+                  <div class="metric-row">{{model.metricsData.blockRemainingMemory}}MB Remaining</div>
+                  <div class="metric-row">{{model.metricsData.blockMaxMemory}}MB Max Available</div>
+                  <div class="metric-row">{{model.metricsData.blockUsedMemory}}MB Used</div>
+                  <div class="metric-row">{{model.metricsData.blockDiskSpaceUsed}}MB Used on disk</div>
+                </div>
               </div>
-            {{/if}}
-            <div>Beta Feature: Additional components will be added in a future release. </div>
-          </div>
+            </div>
+            <div class="spark-metrics-item">
+              <div class="spark-icon spark-metrics-scheduler">
+                <div class="info-window">
+                  <div class="metrics-phase">SCHEDULER</div>
+                  <div class="reducer-icon"></div>
+                  <div class="metric-row">{{model.metricsData.schedulerActiveJobs}} Active Jobs</div>
+                  <div class="metric-row">{{model.metricsData.schedulerAllJobs}} Total Jobs</div>
+                  <div class="metric-row">{{model.metricsData.schedulerFailedStages}} Failed Stages</div>
+                  <div class="metric-row">{{model.metricsData.schedulerWaitingStages}} Waiting stages</div>
+                </div>
+              </div>
+            </div>
         </div>
       </div>
     </div>
@@ -2208,36 +2210,6 @@
         <div>No DataSets.</div>
           <span>Please create one in code or on the commandline.</span>
         </div>
-    </div>
-    {{/if}}
-  </script>
-
-  <script type="text/x-handlebars" data-template-name="_procedures-list">
-    {{#if elements.Procedure.length}}
-      <table class="table">
-      <thead>
-        <th style="padding-left: 14px;">Procedures</th>
-        <th style="width: 262px;">Request Rate</th>
-        <th style="width: 262px;">Error Rate</th>
-      </thead>
-      <tbody>
-        {{#each elements.Procedure}}
-          <tr>
-            <td class="app-list-name">
-            <a {{bindAttr href="href"}}>{{name}}</a><br /><span class="app-list-status app-status">{{currentState}}</span>
-            </td>
-            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/system/apps/{parent}/procedures/{id}/query.requests"}}</td>
-            <td style="max-width:262px;">{{view C.Embed.Chart entityIdBinding=id entityType="Procedure" metrics="/system/apps/{parent}/procedures/{id}/query.failures"}}</td>
-          </tr>
-        {{/each}}
-      </tbody>
-      </table>
-    {{else}}
-    <div class="object-list-empty">
-    <div class="object-list-empty-content">
-    <div>No Procedures.</div>
-    <span>Add Procedures by uploading an Application JAR.</span>
-    </div>
     </div>
     {{/if}}
   </script>

@@ -145,14 +145,6 @@ public class BaseHiveExploreServiceTest {
     transactionManager.stopAndWait();
   }
 
-  protected static TransactionManager getTransactionManager() {
-    return transactionManager;
-  }
-
-  protected static ExploreService getExploreService() {
-    return exploreService;
-  }
-
   protected static ExploreClient getExploreClient() {
     return exploreClient;
   }

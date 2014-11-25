@@ -32,7 +32,10 @@ import java.util.Set;
  * A {@link Procedure} runtime attributes are always defined using this class.
  * Instance of this class should be created through the {@link Builder} class
  * by invoking the {@link Builder#with()} method.
+ *
+ * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.ServiceSpecification}
  */
+@Deprecated
 public interface ProcedureSpecification extends ProgramSpecification, PropertyProvider {
 
   /**
@@ -53,7 +56,10 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
 
   /**
    * Builder for building {@link ProcedureSpecification}.
+   *
+   * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   static final class Builder {
     private String name;
     private String description;
@@ -67,13 +73,16 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
 
     /**
      * Class for setting name.
+     * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
      */
+    @Deprecated
     public final class NameSetter {
 
       /**
        * Sets the name of the {@link Procedure}.
        * @param name of the procedure.
        * @return instance of this {@link Builder}
+       * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
        */
       public DescriptionSetter setName(String name) {
         Preconditions.checkArgument(name != null, "Name cannot be null.");
@@ -85,14 +94,18 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
     /**
      * Description setter for builder that guides you through process of building
      * the specification.
+     * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
      */
+    @Deprecated
     public final class DescriptionSetter {
 
       /**
        * Sets the description for this {@link Procedure}.
        * @param description of the {@link Procedure}
        * @return An instance of {@link AfterDescription}
+       * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
        */
+      @Deprecated
       public AfterDescription setDescription(String description) {
         Preconditions.checkArgument(description != null, "Description cannot be null.");
         Builder.this.description = description;
@@ -102,7 +115,9 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
 
     /**
      * Part of builder for defining next steps after providing description.
+     * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
      */
+    @Deprecated
     public final class AfterDescription {
 
       /**
@@ -111,7 +126,9 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
        * @param dataSet DataSet name.
        * @param moreDataSets More DataSet names.
        * @return An instance of {@link AfterDescription}.
+       * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
        */
+      @Deprecated
       public AfterDescription useDataSet(String dataSet, String...moreDataSets) {
         dataSets.add(dataSet).add(moreDataSets);
         return this;
@@ -123,12 +140,19 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
        *
        * @param args The map of arguments.
        * @return An instance of {@link AfterDescription}.
+       * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
        */
+      @Deprecated
       public AfterDescription withArguments(Map<String, String> args) {
         arguments = ImmutableMap.copyOf(args);
         return this;
       }
 
+      /**
+       * 
+       * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
+       */
+      @Deprecated
       public AfterDescription withResources(Resources resources) {
         Preconditions.checkArgument(resources != null, "Resources cannot be null.");
         Builder.this.resources = resources;
@@ -137,7 +161,9 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
 
       /**
        * @return build a {@link ProcedureSpecification}
+       * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
        */
+      @Deprecated
       public ProcedureSpecification build() {
         return new DefaultProcedureSpecification(name, description, dataSets.build(), arguments, resources);
       }

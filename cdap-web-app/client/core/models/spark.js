@@ -4,6 +4,30 @@
 
 define(['core/models/program'], function (Program) {
 
+    var METRICS_PATHS = {
+        'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.BlockManager.memory.remainingMem_MB?aggregate=true': 'blockRemainingMemory',
+        'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.BlockManager.memory.maxMem_MB?aggregate=true': 'blockMaxMemory',
+        'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.BlockManager.memory.memUsed_MB?aggregate=true': 'blockUsedMemory',
+        'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.BlockManager.disk.diskSpaceUsed_MB?aggregate=true': 'blockDiskSpaceUsed',
+        'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.DAGScheduler.job.activeJobs?aggregate=true': 'schedulerActiveJobs',
+        'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.DAGScheduler.job.allJobs?aggregate=true': 'schedulerAllJobs',
+        'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.DAGScheduler.stage.failedStages?aggregate=true': 'schedulerFailedStages',
+        'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.DAGScheduler.stage.runningStages?aggregate=true': 'schedulerRunningStages',
+        'system/apps/{{appId}}/spark/{{programId}}/runs/{{runId}}/{{programId}}.DAGScheduler.stage.waitingStages?aggregate=true': 'schedulerWaitingStages'
+    };
+
+    var METRIC_TYPES = {
+        'blockRemainingMemory': 'number',
+        'blockMaxMemory': 'number',
+        'blockUsedMemory': 'number',
+        'blockDiskSpaceUsed': 'number',
+        'schedulerActiveJobs': 'number',
+        'schedulerAllJobs': 'number',
+        'schedulerFailedStages': 'number',
+        'schedulerRunningStages': 'number',
+        'schedulerWaitingStages': 'number'
+    };
+
     var EXPECTED_FIELDS = [
         'name',
         'description'
@@ -19,18 +43,27 @@ define(['core/models/program'], function (Program) {
         currentState: '',
 
         init: function () {
-
             this._super();
-
             this.set('id', this.get('app') + ':' + this.get('name'));
             this.set('description', this.get('meta') || 'Spark');
             if (this.get('meta')) {
                 this.set('startTime', this.get('meta').startTime);
             }
 
+            this.set("metricsData", Em.Object.create({
+                blockRemainingMemory: 0,
+                blockMaxMemory: 0,
+                blockUsedMemory: 0,
+                blockDiskSpaceUsed: 0,
+                schedulerActiveJobs: 0,
+                schedulerAllJobs: 0,
+                schedulerFailedStages: 0,
+                schedulerRunningStages: 0,
+                schedulerWaitingStages: 0
+            }));
         },
 
-        start: function(http) {
+        start: function (http) {
             var model = this;
             model.set('currentState', 'STARTING');
 
@@ -46,7 +79,7 @@ define(['core/models/program'], function (Program) {
                 });
         },
 
-        stop: function(http) {
+        stop: function (http) {
             var model = this;
             model.set('currentState', 'STOPPING');
 
@@ -87,14 +120,70 @@ define(['core/models/program'], function (Program) {
 
         startStopDisabled: function () {
 
-            if(this.currentState === 'STARTING' ||
+            if (this.currentState === 'STARTING' ||
                 this.currentState === 'STOPPING') {
                 return true;
             }
 
             return false;
 
-        }.property('currentState')
+        }.property('currentState'),
+
+        getMetricsRequest: function (http) {
+            var self = this;
+            var appId = this.get('app');
+            var programId = this.get('id');
+            var paths = [];
+            var pathMap = {};
+            http.rest('apps', appId, 'spark', programId, 'runs?limit=1', function (runIdResponse, status) {
+
+                if ((status != 200) || (!runIdResponse.length > 0)) {
+                  return;
+                }
+                var runId = runIdResponse[0]["runid"];
+                var paths = [];
+                var pathMap = {};
+
+                for (var path in METRICS_PATHS) {
+                    var url = S(path).template({'appId': appId, 'programId': programId, 'runId': runId}).s;
+                    paths.push(url);
+                    pathMap[url] = METRICS_PATHS[path];
+                }
+                http.post('metrics', paths, function (response, status) {
+                    if (!response.result) {
+                        return;
+                    }
+                    var result = response.result;
+                    var i = result.length, metric;
+                    while (i--) {
+                        metric = pathMap[result[i]['path']];
+                        if (metric) {
+                            var res = result[i]['result'];
+                            if (res) {
+                                var respData = res['data'];
+                                if (respData instanceof Array) {
+                                    res['data'] = respData.map(function (entry) {
+                                        return entry.value;
+                                    });
+                                    self.setMetricData(metric, respData);
+                                }
+                                else if (METRIC_TYPES[metric] === 'number') {
+                                    self.setMetricData(metric, C.Util.numberArrayToString(respData));
+                                } else {
+                                    self.setMetricData(metric, respData);
+                                }
+                            }
+                        }
+                        metric = null;
+                    }
+                });
+            });
+        },
+
+        setMetricData: function (name, value) {
+            var metricsData = this.get('metricsData');
+            metricsData.set(name, value);
+        }
     });
 
     Model.reopenClass({

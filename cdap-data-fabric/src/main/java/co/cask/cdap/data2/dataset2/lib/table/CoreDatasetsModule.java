@@ -76,5 +76,4 @@ public class CoreDatasetsModule implements DatasetModule {
     registry.add(new TableDefinition(MemoryTable.class.getName(), inMemoryOrderedTable));
     registry.add(new TableDefinition("memoryTable", inMemoryOrderedTable));
   }
-
 }

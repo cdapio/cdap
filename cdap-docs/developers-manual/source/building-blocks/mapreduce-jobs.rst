@@ -13,13 +13,21 @@ written as in a conventional Hadoop system. Additionally, CDAP
 **Datasets** can be accessed from MapReduce jobs as both input and
 output.
 
-To process data using MapReduce, specify ``addMapReduce()`` in your
+To process data using MapReduce, either specify ``addMapReduce()`` in your
 Application specification::
 
   public void configure() {
     ...
     addMapReduce(new WordCountJob());
+    
+or specify ``addWorkflow()`` in your Application and specify your MapReduce Job in the
+Workflow definition::
 
+  public void configure() {
+    ...
+    // Run a MapReduce Job on the acquired data using a Workflow
+    addWorkflow(new PurchaseHistoryWorkflow());
+    
 You must implement the ``MapReduce`` interface, which requires the
 implementation of three methods:
 
@@ -29,20 +37,20 @@ implementation of three methods:
 
 ::
 
-  public class WordCountJob implements MapReduce {
+  public class PurchaseHistoryBuilder extends AbstractMapReduce {
     @Override
-    public MapReduceSpecification configure() {
-      return MapReduceSpecification.Builder.with()
-        .setName("WordCountJob")
-        .setDescription("Calculates word frequency")
-        .useInputDataSet("messages")
-        .useOutputDataSet("wordFrequency")
-        .build();
+    public void configure() {
+      setName("Purchase History Builder MapReduce Job");
+      setDescription("Builds a purchase history for each customer");
+      useDatasets("frequentCustomers");
+      setInputDataset("purchases");
+      setOutputDataset("history");
     }
 
 The configure method is similar to the one found in Flows and
 Applications. It defines the name and description of the MapReduce job.
-You can also specify Datasets to be used as input or output for the job.
+You can also specify Datasets to be used as input or output for the job, and
+resources (memory and virtual cores) used by the Mappers and Reducers.
 
 The ``beforeSubmit()`` method is invoked at runtime, before the
 MapReduce job is executed. Through a passed instance of the
@@ -54,10 +62,10 @@ well as the intermediate data format::
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
-    job.setMapperClass(TokenizerMapper.class);
-    job.setReducerClass(IntSumReducer.class);
+    job.setMapperClass(PurchaseMapper.class);
     job.setMapOutputKeyClass(Text.class);
-    job.setMapOutputValueClass(IntWritable.class);
+    job.setMapOutputValueClass(Text.class);
+    job.setReducerClass(PerUserReducer.class);
   }
 
 The ``onFinish()`` method is invoked after the MapReduce job has
@@ -74,31 +82,44 @@ implementation that does nothing::
 CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
 <http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/package-summary.html>`__::
 
-  public static class TokenizerMapper
-      extends Mapper<byte[], byte[], Text, IntWritable> {
+  public static class PurchaseMapper 
+      extends Mapper<byte[], Purchase, Text, Text> {
 
-    private final static IntWritable one = new IntWritable(1);
-    private Text word = new Text();
-    public void map(byte[] key, byte[] value, Context context)
-        throws IOException, InterruptedException {
-      StringTokenizer itr = new StringTokenizer(Bytes.toString(value));
-      while (itr.hasMoreTokens()) {
-        word.set(itr.nextToken());
-        context.write(word, one);
+    private Metrics mapMetrics;
+
+    @Override
+    public void map(byte[] key, Purchase purchase, Context context)
+      throws IOException, InterruptedException {
+      String user = purchase.getCustomer();
+      if (purchase.getPrice() > 100000) {
+        mapMetrics.count("purchases.large", 1);
       }
+      context.write(new Text(user), new Text(new Gson().toJson(purchase)));
     }
   }
 
-  public static class IntSumReducer
-      extends Reducer<Text, IntWritable, byte[], byte[]> {
+  public static class PerUserReducer 
+      extends Reducer<Text, Text, String, PurchaseHistory> {
+    
+    @UseDataSet("frequentCustomers")
+    private KeyValueTable frequentCustomers;
+    private Metrics reduceMetrics;
 
-    public void reduce(Text key, Iterable<IntWritable> values, Context context)
-        throws IOException, InterruptedException {
-      int sum = 0;
-      for (IntWritable val : values) {
-        sum += val.get();
+    public void reduce(Text customer, Iterable<Text> values, Context context)
+      throws IOException, InterruptedException {
+      PurchaseHistory purchases = new PurchaseHistory(customer.toString());
+      int numPurchases = 0;
+      for (Text val : values) {
+        purchases.add(new Gson().fromJson(val.toString(), Purchase.class));
+        numPurchases++;
       }
-      context.write(key.copyBytes(), Bytes.toBytes(sum));
+      if (numPurchases == 1) {
+        reduceMetrics.count("customers.rare", 1);
+      } else if (numPurchases > 10) {
+        reduceMetrics.count("customers.frequent", 1);
+        frequentCustomers.write(customer.toString(), String.valueOf(numPurchases));
+      }
+      context.write(customer.toString(), purchases);
     }
   }
 
@@ -149,11 +170,12 @@ output, as described in :ref:`datasets-map-reduce-jobs`.
 
 .. rubric::  Examples of Using Map Reduce Jobs
 
-Flows and Flowlets are included in just about every CDAP :ref:`application <apps-and-packs>`,
-:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
-
 - For an example of **a MapReduce Job,** see the :ref:`Purchase
   <examples-purchase>` example.
 
 - For a longer example, the how-to guide :ref:`cdap-mapreduce-guide` also
   demonstrates the use of MapReduce.
+
+- The :ref:`Tutorial <tutorials>` 
+  `WISE: Web Analytics <http://docs.cask.co/tutorial/current/en/tutorial2.html>`__ 
+  uses a MapReduce Job.

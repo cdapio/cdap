@@ -8,10 +8,10 @@ define(['core/lib/date', 'core/models/program'],
   var METRICS_PATHS = {
     '/system/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.completion?count=30': 'mappersCompletion',
     '/system/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.completion?count=30': 'reducersCompletion',
-    '/system/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.entries.in?aggregate=true': 'mappersEntriesIn',
-    '/system/apps/{{appId}}/mapreduce/{{jobId}}/mappers/process.entries.out?aggregate=true': 'mappersEntriesOut',
-    '/system/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.entries.in?aggregate=true': 'reducersEntriesIn',
-    '/system/apps/{{appId}}/mapreduce/{{jobId}}/reducers/process.entries.out?aggregate=true': 'reducersEntriesOut'
+    '/system/apps/{{appId}}/mapreduce/{{jobId}}/runs/{{runId}}/mappers/process.entries.in?aggregate=true': 'mappersEntriesIn',
+    '/system/apps/{{appId}}/mapreduce/{{jobId}}/runs/{{runId}}/mappers/process.entries.out?aggregate=true': 'mappersEntriesOut',
+    '/system/apps/{{appId}}/mapreduce/{{jobId}}/runs/{{runId}}/reducers/process.entries.in?aggregate=true': 'reducersEntriesIn',
+    '/system/apps/{{appId}}/mapreduce/{{jobId}}/runs/{{runId}}/reducers/process.entries.out?aggregate=true': 'reducersEntriesOut'
   };
 
   var METRIC_TYPES = {
@@ -127,64 +127,73 @@ define(['core/lib/date', 'core/models/program'],
       var paths = [];
       var pathMap = {};
       for (var path in METRICS_PATHS) {
-        var url = new S(path).template({'appId': appId, 'jobId': jobId}).s;
+        var url = S(path).template({'appId': appId, 'jobId': jobId}).s;
         paths.push(url);
         pathMap[url] = METRICS_PATHS[path];
       }
 
       var self = this;
 
-      http.post('metrics', paths, function(response, status) {
-
-        if(!response.result) {
+      http.rest('apps', appId, 'mapreduce', jobId, 'runs?limit=1', function (runIdResponse, status) {
+        if ((status != 200) || (!runIdResponse.length > 0)) {
           return;
         }
+        var runId = runIdResponse[0]["runid"];
+        var paths = [];
+        var pathMap = {};
+        for (var path in METRICS_PATHS) {
+          var url = new S(path).template({'appId': appId, 'jobId': jobId, 'runId': runId}).s;
+          paths.push(url);
+          pathMap[url] = METRICS_PATHS[path];
+        }
 
-        var result = response.result;
-        var i = result.length, metric;
+        http.post('metrics', paths, function(response, status) {
+          if(!response.result) {
+            return;
+          }
 
-        while (i--) {
+          var result = response.result;
+          var i = result.length, metric;
 
-          metric = pathMap[result[i]['path']];
+          while (i--) {
 
-          if (metric) {
+            metric = pathMap[result[i]['path']];
 
-            if (result[i]['result']['data'] instanceof Array) {
+            if (metric) {
+              if (result[i]['result']['data'] instanceof Array) {
 
-              result[i]['result']['data'] = result[i]['result']['data'].map(function (entry) {
-                return entry.value;
-              });
+                result[i]['result']['data'] = result[i]['result']['data'].map(function (entry) {
+                  return entry.value;
+                });
 
-              // Hax for current value of completion.
-              if (metric === 'mappersCompletion' ||
-                  metric === 'reducersCompletion') {
+                // Hax for current value of completion.
+                if (metric === 'mappersCompletion' ||
+                    metric === 'reducersCompletion') {
 
-                var data = result[i]['result']['data'];
+                  var data = result[i]['result']['data'];
 
-                self.setMetricData(metric, data[data.length - 1]);
+                  self.setMetricData(metric, data[data.length - 1]);
 
+                } else {
+
+                  self.setMetricData(metric, result[i]['result']['data']);
+
+                }
+
+              }
+              else if (metric in METRIC_TYPES && METRIC_TYPES[metric] === 'number') {
+                self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
               } else {
-
                 self.setMetricData(metric, result[i]['result']['data']);
-
               }
 
             }
-            else if (metric in METRIC_TYPES && METRIC_TYPES[metric] === 'number') {
-
-              self.setMetricData(metric, C.Util.numberArrayToString(result[i]['result']['data']));
-
-            } else {
-
-              self.setMetricData(metric, result[i]['result']['data']);
-
-            }
-
+            metric = null;
           }
-          metric = null;
-        }
 
-      });
+        });
+      }
+    );
 
     },
 

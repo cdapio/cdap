@@ -34,13 +34,11 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,13 +51,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   // TODO: InstanceId is not supported in MR jobs, see CDAP-2
   public static final String INSTANCE_ID = "0";
-  private final String accountId;
   private final MapReduceSpecification spec;
   private final MapReduceLoggingContext loggingContext;
   private final Map<MetricsScope, MetricsCollector> systemMapperMetrics;
   private final Map<MetricsScope, MetricsCollector> systemReducerMetrics;
-  private final Map<MetricsScope, MetricsCollector> systemMetrics;
-  private final Arguments runtimeArguments;
   private final long logicalStartTime;
   private final String workflowBatch;
   private final Metrics mapredMetrics;
@@ -83,11 +78,9 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MetricsCollectionService metricsCollectionService,
                                DatasetFramework dsFramework,
                                CConfiguration conf) {
-    super(program, runId, datasets,
+    super(program, runId, runtimeArguments, datasets,
           getMetricContext(program, type), metricsCollectionService,
           dsFramework, conf, discoveryServiceClient);
-    this.accountId = program.getAccountId();
-    this.runtimeArguments = runtimeArguments;
     this.logicalStartTime = logicalStartTime;
     this.workflowBatch = workflowBatch;
     this.metricsCollectionService = metricsCollectionService;
@@ -95,10 +88,10 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     if (metricsCollectionService != null) {
       this.systemMapperMetrics = Maps.newHashMap();
       this.systemReducerMetrics = Maps.newHashMap();
-      this.systemMetrics = Maps.newHashMap();
+      Map<MetricsScope, MetricsCollector> systemMetrics = Maps.newHashMap();
       for (MetricsScope scope : MetricsScope.values()) {
         // Supporting runId only for user metrics now
-        String metricsRunId = (scope == MetricsScope.USER) ? runId.getId() : INSTANCE_ID;
+        String metricsRunId = runId.getId();
         this.systemMapperMetrics.put(
           scope, metricsCollectionService.getCollector(scope,
                                                        getMetricContext(program, MapReduceMetrics.TaskType.Mapper),
@@ -107,7 +100,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
           scope, metricsCollectionService.getCollector(scope,
                                                        getMetricContext(program, MapReduceMetrics.TaskType.Reducer),
                                                        metricsRunId));
-        this.systemMetrics.put(
+        systemMetrics.put(
           scope, metricsCollectionService.getCollector(scope, getMetricContext(program), metricsRunId));
       }
       // for user metrics.  type can be null if its not in a map or reduce task, but in the yarn container that
@@ -118,7 +111,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     } else {
       this.systemMapperMetrics = null;
       this.systemReducerMetrics = null;
-      this.systemMetrics = null;
       this.mapredMetrics = null;
     }
     this.loggingContext = new MapReduceLoggingContext(getAccountId(), getApplicationId(), getProgramName());
@@ -228,20 +220,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Nullable
   public String getOutputDatasetName() {
     return outputDatasetName;
-  }
-
-  Arguments getRuntimeArgs() {
-    return runtimeArguments;
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    ImmutableMap.Builder<String, String> arguments = ImmutableMap.builder();
-    Iterator<Map.Entry<String, String>> it = runtimeArguments.iterator();
-    while (it.hasNext()) {
-      arguments.put(it.next());
-    }
-    return arguments.build();
   }
 
   public void flushOperations() throws Exception {

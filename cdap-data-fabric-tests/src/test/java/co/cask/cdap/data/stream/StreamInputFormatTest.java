@@ -15,12 +15,16 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -36,6 +40,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -207,6 +212,32 @@ public class StreamInputFormatTest {
     Assert.assertEquals(2, output.get("Testing").intValue());
     Assert.assertEquals(1, output.get("0").intValue());
     Assert.assertEquals(1, output.get("1").intValue());
+  }
+
+  @Test
+  public void testIdentityStreamEventDecoder() {
+    ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
+    headers.put("key1", "value1");
+    headers.put("key2", "value2");
+    ByteBuffer buffer = ByteBuffer.wrap("testdata".getBytes(Charsets.UTF_8));
+    StreamEvent event = new StreamEvent(new StreamEventData(headers.build(), buffer), System.currentTimeMillis());
+    StreamEventDecoder decoder = new IdentityStreamEventDecoder();
+    StreamEventDecoder.DecodeResult result = decoder.decode(event, new StreamEventDecoder.DecodeResult());
+    Assert.assertEquals(new LongWritable(event.getTimestamp()), result.getKey());
+    Assert.assertEquals(event, result.getValue());
+  }
+
+  @Test
+  public void testStreamDecoderInference() {
+    Configuration conf = new Configuration();
+    StreamInputFormat.inferDecoderClass(conf, BytesWritable.class);
+    Assert.assertEquals(BytesStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, Text.class);
+    Assert.assertEquals(TextStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, StreamEvent.class);
+    Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, StreamEventData.class);
+    Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
   }
 
   private void generateEvents(File inputDir, int numEvents, long startTime, long timeIncrement,

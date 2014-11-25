@@ -88,3 +88,17 @@ Once an application is deployed:
       - ``$ ./bin/app-manager.sh --action stop``
     * - On Windows:
       - ``> bin\app-manager.bat stop``
+
+Removing an Application
+----------------------------------
+
+Once an application is stopped—all Processes (Flows, MapReduce Jobs, Workflows,
+etc.), Queries, and Services are stopped—you can click the *Delete* button on the
+Application's detail page in the CDAP Console to delete the Application. After
+confirmation, the application will be deleted.
+
+Note that any Storage (Datasets) created or used by the Application will remain, as they
+are independent of the Application. Datasets can be deleted with the 
+:ref:`HTTP Restful API <restful-api>`, the 
+:ref:`Java Client API <java-client-api>`, or the 
+:ref:`Command-line Interface API <cli>`.

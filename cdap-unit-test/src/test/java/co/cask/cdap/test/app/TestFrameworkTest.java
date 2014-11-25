@@ -17,7 +17,11 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
@@ -41,6 +45,7 @@ import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -316,6 +321,20 @@ public class TestFrameworkTest extends TestBase {
       serviceManager.setRunnableInstances(runnableName, 2);
       runnableInstancesCheck(serviceManager, runnableName, 2, retries);
 
+      // Test that the worker starts with 5 instances
+      DataSetManager<KeyValueTable> datasetManager = applicationManager
+                                                      .getDataSet(AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
+      KeyValueTable instancesTable = datasetManager.get();
+      CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(null, null);
+      List<KeyValue<byte[], byte[]>> workerInstances = Lists.newArrayList(instancesIterator);
+      instancesIterator.close();
+
+      Assert.assertEquals(5, workerInstances.size());
+      // Assert that each instance of the worker knows the total number of instances
+      for (KeyValue<byte[], byte[]> keyValue : workerInstances) {
+        Assert.assertEquals(5, Bytes.toInt(keyValue.getValue()));
+      }
+
       serviceManager.stop();
       serviceStatusCheck(serviceManager, false);
 
@@ -361,16 +380,14 @@ public class TestFrameworkTest extends TestBase {
     response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());
 
-    serviceManager.stop();
-    serviceStatusCheck(serviceManager, false);
-
     LOG.info("Service Stopped");
     // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the system scope test in
     // TestMetricsCollectionService
 
     LOG.info("DatasetUpdateService Started");
-    serviceManager = applicationManager.startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
-    serviceStatusCheck(serviceManager, true);
+    ServiceManager datasetWorkerServiceManager = applicationManager
+      .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
+    serviceStatusCheck(datasetWorkerServiceManager, true);
 
     ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
     ProcedureClient procedureClient = procedureManager.getClient();
@@ -380,8 +397,19 @@ public class TestFrameworkTest extends TestBase {
     String decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
 
+    // Test that a service can discover another service
+    String path = String.format("discover/%s/%s",
+                                AppWithServices.APP_NAME, AppWithServices.DATASET_WORKER_SERVICE_NAME);
+    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), path);
+    request = HttpRequest.get(url).build();
+    response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    datasetWorkerServiceManager.stop();
+    serviceStatusCheck(datasetWorkerServiceManager, false);
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
+    LOG.info("DatasetUpdateService Stopped");
 
     result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
                                                            AppWithServices.DATASET_TEST_KEY_STOP));
@@ -389,7 +417,6 @@ public class TestFrameworkTest extends TestBase {
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
 
     procedureManager.stop();
-    LOG.info("DatasetUpdateService Stopped");
   }
 
   @Test

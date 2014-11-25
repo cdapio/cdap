@@ -20,8 +20,9 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.client.util.ProgramFlowUtil;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
@@ -153,7 +154,7 @@ public class ProgramClient {
     TimeoutException, InterruptedException {
 
     try {
-      ProgramFlowUtil.waitFor(status, new Callable<String>() {
+      Tasks.waitFor(status, new Callable<String>() {
         @Override
         public String call() throws Exception {
           return getStatus(appId, programType, programId);
@@ -334,46 +335,29 @@ public class ProgramClient {
   }
 
   /**
-   * Gets the run history of a service runnable.
-   *
-   * @param appId ID of the application that the service runnable belongs to
-   * @param serviceId ID of the service that the service runnable belongs to
-   * @param runnableId ID of the service runnable
-   * @return the run history of the service runnable
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, service, or runnable could not be found
-   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
-   */
-  public List<RunRecord> getServiceRunnableHistory(String appId, String serviceId, String runnableId)
-    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
-
-    URL url = config.resolveURL(String.format("apps/%s/services/%s/runnables/%s/history",
-                                              appId, serviceId, runnableId));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("application or service or runnable", appId + "/" + serviceId + "/" + runnableId);
-    }
-
-    return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
-  }
-
-  /**
-   * Gets the run history of a program.
+   * Gets the run records of a program.
    *
    * @param appId ID of the application that the program belongs to
    * @param programType type of the program
    * @param programId ID of the program
-   * @return the run history of the program
+   * @param state - filter by status of the program
+   * @return the run records of the program
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or program could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public List<RunRecord> getProgramHistory(String appId, ProgramType programType, String programId)
+  public List<RunRecord> getProgramRuns(String appId, ProgramType programType, String programId, String state,
+                                        long startTime, long endTime, int limit)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
-    URL url = config.resolveURL(String.format("apps/%s/%s/%s/history",
-                                              appId, programType.getCategoryName(), programId));
+    String queryParams = String.format("%s=%s&%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_STATUS, state,
+                                       Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
+                                       Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
+                                       Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
+
+    URL url = config.resolveURL(String.format("apps/%s/%s/%s/runs?%s",
+                                          appId, programType.getCategoryName(), programId, queryParams));
+
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -382,6 +366,38 @@ public class ProgramClient {
 
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
   }
+
+  /**
+   * Gets the run records of a program.
+   *
+   * @param appId ID of the application that the program belongs to
+   * @param programType type of the program
+   * @param programId ID of the program
+   * @return the run records of the program
+   * @throws IOException if a network error occurred
+   * @throws NotFoundException if the application or program could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public List<RunRecord> getAllProgramRuns(String appId, ProgramType programType, String programId,
+                                           long startTime, long endTime, int limit)
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
+
+    String queryParams = String.format("%s=%d&%s=%d&%s=%d", Constants.AppFabric.QUERY_PARAM_START_TIME, startTime,
+                                       Constants.AppFabric.QUERY_PARAM_END_TIME, endTime,
+                                       Constants.AppFabric.QUERY_PARAM_LIMIT, limit);
+
+    URL url = config.resolveURL(String.format("apps/%s/%s/%s/runs?%s",
+                                              appId, programType.getCategoryName(), programId, queryParams));
+
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException("application or " + programType.getCategoryName(), appId + "/" + programId);
+    }
+
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<RunRecord>>() { }).getResponseObject();
+  }
+
 
   /**
    * Gets the logs of a program.

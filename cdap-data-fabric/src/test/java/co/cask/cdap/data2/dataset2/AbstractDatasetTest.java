@@ -18,8 +18,13 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryOrderedTableModule;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -27,24 +32,46 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.inmemory.MinimalTxSystemClient;
 import com.google.common.base.Preconditions;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- *
- */
 public class AbstractDatasetTest {
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static DatasetFramework framework;
 
   @BeforeClass
   public static void init() throws Exception {
-    framework = new InMemoryDatasetFramework(new InMemoryDefinitionRegistryFactory());
+
+    File localDataDir = tmpFolder.newFolder();
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+
+    final Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocationRuntimeModule().getInMemoryModules());
+
+    framework = new InMemoryDatasetFramework(new DatasetDefinitionRegistryFactory() {
+      @Override
+      public DatasetDefinitionRegistry create() {
+        DefaultDatasetDefinitionRegistry registry = new DefaultDatasetDefinitionRegistry();
+        injector.injectMembers(registry);
+        return registry;
+      }
+    });
     framework.addModule("inMemory", new InMemoryOrderedTableModule());
     framework.addModule("core", new CoreDatasetsModule());
+    framework.addModule("fileSet", new FileSetModule());
   }
 
   @AfterClass

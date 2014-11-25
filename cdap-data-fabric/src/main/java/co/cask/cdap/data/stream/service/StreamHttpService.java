@@ -18,6 +18,7 @@ package co.cask.cdap.data.stream.service;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
+import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
@@ -60,7 +61,7 @@ public final class StreamHttpService extends AbstractIdleService {
     this.janitorService = janitorService;
 
     int workerThreads = cConf.getInt(Constants.Stream.WORKER_THREADS, 10);
-    this.httpService = NettyHttpService.builder()
+    this.httpService = new CommonNettyHttpServiceBuilder(cConf)
       .addHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Stream.STREAM_HANDLER)))

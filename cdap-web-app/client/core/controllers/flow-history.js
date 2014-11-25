@@ -31,16 +31,15 @@ define([], function () {
 			}
 			this.set('elements.Stream', Em.ArrayProxy.create({content: objects}));
 
-			this.HTTP.rest('apps', model.app, 'flows', model.name, 'history',
+			this.HTTP.rest('apps', model.app, 'flows', model.name, 'runs',
 					function (response) {
 
 						if (response) {
 							var history = response;
-
 							for (var i = 0; i < history.length; i ++) {
-
-								self.runs.pushObject(C.Run.create(history[i]));
-
+								if (history[i]["status"] != "RUNNING") {
+									self.runs.pushObject(C.Run.create(history[i]));
+								}
 							}
 						}
 

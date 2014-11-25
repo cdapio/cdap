@@ -14,6 +14,13 @@ CDAP Administration Manual
 **Installation:** Covers **putting CDAP into production, with installation, configuration, security setup, and
 monitoring.** Appendices cover the XML files used to configure the CDAP installation and security configurations.
 
+.. |quickstart| replace:: **Quick Start:**
+.. _quickstart: installation/quick-start.html
+
+- |quickstart|_ A quick start guide that covers the **most-common case of installing and 
+  configuring CDAP.** Many people may find this sufficient; if your case isn't covered, the
+  :ref:`install` guide has additional details.
+
 .. |installation| replace:: **Installation and Configuration:**
 .. _installation: installation/installation.html
 
