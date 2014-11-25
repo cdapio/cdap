@@ -9,7 +9,7 @@
 Lifecycle HTTP RESTful API
 ===========================================================
 
-Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the life cycle of 
+Use the CDAP Lifecycle HTTP API to deploy or delete Applications and manage the lifecycle of 
 Flows, Procedures, MapReduce jobs, Workflows, and Custom Services.
 
 .. highlight:: console
