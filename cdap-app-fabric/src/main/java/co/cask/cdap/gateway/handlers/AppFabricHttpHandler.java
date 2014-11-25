@@ -3125,8 +3125,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void resetCDAP(HttpRequest request, HttpResponder responder) {
 
     try {
-      if (!configuration.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
-                                    Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+      if (!configuration.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET)) {
         responder.sendStatus(HttpResponseStatus.FORBIDDEN);
         return;
       }

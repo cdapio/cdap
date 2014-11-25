@@ -34,4 +34,10 @@ public interface DatasetNamespace {
    */
   @Nullable
   String fromNamespaced(String name);
+
+  /**
+   * @param name namespaced name of the dataset
+   * @return true if the dataset belongs to this namespace
+   */
+  boolean contains(String name);
 }
