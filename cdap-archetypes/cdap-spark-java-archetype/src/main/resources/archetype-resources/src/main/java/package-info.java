@@ -17,7 +17,8 @@
 /**
  * Package for SparkPageRank Application.
  *
- * An Application that demonstrates streaming text analysis using a Spark program.
+ * An Application that demonstrates streaming text analysis using a Spark job.
  * It computes the page rank of URLs from an input stream.
  */
+
 package $package;
