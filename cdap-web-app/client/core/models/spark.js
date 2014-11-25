@@ -176,13 +176,8 @@ define(['core/models/program'], function (Program) {
         },
 
         setMetricData: function (name, value) {
-            var metricsData = this.get('metricsData.content');
-            var metric = $.grep(metricsData, function(e){ return e.name == name; })[0];
-            //todo remove it when services will be fixed
-            //never zero
-            if (value == 0)
-                value = Math.floor((Math.random() * 30) + 1);
-            metric.set('value', value);
+            var metricsData = this.get('metricsData');
+            metricsData.set(name, value);
         }
     });
 
