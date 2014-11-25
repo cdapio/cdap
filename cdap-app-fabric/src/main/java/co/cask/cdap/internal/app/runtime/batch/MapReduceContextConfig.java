@@ -25,6 +25,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -39,6 +40,7 @@ import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Helper class for getting and setting specific config settings for a job context.
@@ -69,7 +71,7 @@ public final class MapReduceContextConfig {
     setRunId(context.getRunId().getId());
     setLogicalStartTime(context.getLogicalStartTime());
     setWorkflowBatch(context.getWorkflowBatch());
-    setArguments(context.getRuntimeArgs());
+    setArguments(context.getRuntimeArguments());
     setProgramJarName(programJarName);
     setConf(conf);
     setTx(tx);
@@ -78,12 +80,14 @@ public final class MapReduceContextConfig {
     }
   }
 
-  private void setArguments(Arguments runtimeArgs) {
-    jobContext.getConfiguration().set(HCONF_ATTR_ARGS, new Gson().toJson(runtimeArgs));
+  private void setArguments(Map<String, String> arguments) {
+    jobContext.getConfiguration().set(HCONF_ATTR_ARGS, new Gson().toJson(arguments));
   }
 
   public Arguments getArguments() {
-    return new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_ARGS), BasicArguments.class);
+    Map<String, String> arguments = new Gson().fromJson(jobContext.getConfiguration().get(HCONF_ATTR_ARGS),
+                                                        new TypeToken<Map<String, String>>() { }.getType());
+    return new BasicArguments(arguments);
   }
 
   public URI getProgramLocation() {

@@ -23,5 +23,9 @@
  *   For convenience the package comes with {@link co.cask.cdap.api.procedure.AbstractProcedure}
  *   class which implements basic initialization logic that is preferable to use in most cases.
  * </p>
+ * <p>
+ *   <b>Deprecated as of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}</b>
+ * </p>
  */
+ 
 package co.cask.cdap.api.procedure;

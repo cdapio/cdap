@@ -131,7 +131,6 @@ public class CLIMainTest extends StandaloneTestBase {
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
     testCommandOutputContains(cli, "list spark", sparkId);
     testCommandOutputContains(cli, "start spark " + qualifiedSparkId, "Successfully started Spark");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STARTING", 30);
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING", 180);
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED", 180);
     testCommandOutputContains(cli, "get spark status " + qualifiedSparkId, "STOPPED");

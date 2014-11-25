@@ -25,7 +25,9 @@ package co.cask.cdap.api.procedure;
  * {@link #destroy()} and {@link #configure()}</p>
  *
  * @see Procedure
+ * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.AbstractService}
  */
+@Deprecated
 public abstract class AbstractProcedure implements Procedure {
 
   private final String name;

@@ -29,6 +29,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
@@ -149,6 +150,12 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
       context.setSecurityHandler(authenticationHandler);
 
+      // Status endpoint should be handled without the authentication
+      ContextHandler statusContext = new ContextHandler();
+      statusContext.setContextPath(Constants.EndPoints.STATUS);
+      statusContext.setServer(server);
+      statusContext.setHandler(new StatusRequestHandler());
+
       SelectChannelConnector connector = new SelectChannelConnector();
       connector.setHost(address.getCanonicalHostName());
       connector.setPort(port);
@@ -182,6 +189,7 @@ public class ExternalAuthenticationServer extends AbstractExecutionThreadService
       }
 
       HandlerCollection handlers = new HandlerCollection();
+      handlers.addHandler(statusContext);
       handlers.addHandler(context);
       // AuditLogHandler must be last, since it needs the response that was sent to the client
       handlers.addHandler(auditLogHandler);
