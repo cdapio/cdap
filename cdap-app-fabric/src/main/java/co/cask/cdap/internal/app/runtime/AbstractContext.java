@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
@@ -45,7 +45,7 @@ import java.util.Set;
 /**
  * Base class for program runtime context
  */
-public abstract class AbstractContext extends AbstractServiceDiscoverer implements DataSetContext, RuntimeContext {
+public abstract class AbstractContext extends AbstractServiceDiscoverer implements DatasetContext, RuntimeContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
   private final Program program;

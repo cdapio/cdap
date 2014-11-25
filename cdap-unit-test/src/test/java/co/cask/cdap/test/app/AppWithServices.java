@@ -21,7 +21,7 @@ import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.procedure.AbstractProcedure;
@@ -200,7 +200,7 @@ public class AppWithServices extends AbstractApplication {
       public void stop() {
         getContext().execute(new TxRunnable() {
           @Override
-          public void run(DataSetContext context) throws Exception {
+          public void run(DatasetContext context) throws Exception {
             KeyValueTable table = context.getDataSet(DATASET_NAME);
             table.write(DATASET_TEST_KEY_STOP, DATASET_TEST_VALUE_STOP);
           }
@@ -215,7 +215,7 @@ public class AppWithServices extends AbstractApplication {
           while (!workerStopped) {
             getContext().execute(new TxRunnable() {
               @Override
-              public void run(DataSetContext context) throws Exception {
+              public void run(DatasetContext context) throws Exception {
                 KeyValueTable table = context.getDataSet(DATASET_NAME);
                 table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
               }

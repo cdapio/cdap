@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * A method that instantiates a Dataset at runtime.
  */
-public interface DataSetContext {
+public interface DatasetContext {
 
   /**
    * Get an instance of the specified Dataset.

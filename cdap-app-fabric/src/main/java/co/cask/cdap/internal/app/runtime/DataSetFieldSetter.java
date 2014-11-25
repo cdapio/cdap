@@ -16,7 +16,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.annotation.UseDataSet;
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import com.google.common.reflect.TypeToken;
@@ -28,9 +28,9 @@ import java.lang.reflect.Field;
  */
 public final class DataSetFieldSetter extends FieldVisitor {
 
-  private final DataSetContext dataSetContext;
+  private final DatasetContext dataSetContext;
 
-  public DataSetFieldSetter(DataSetContext dataSetContext) {
+  public DataSetFieldSetter(DatasetContext dataSetContext) {
     this.dataSetContext = dataSetContext;
   }
 

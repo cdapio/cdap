@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -135,7 +135,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     }
   }
 
-  private class ServiceWorkerDatasetContext implements DataSetContext {
+  private class ServiceWorkerDatasetContext implements DatasetContext {
     private final TransactionContext context;
 
     private ServiceWorkerDatasetContext(TransactionContext context) {

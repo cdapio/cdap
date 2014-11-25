@@ -16,7 +16,7 @@
 
 package co.cask.cdap.data.dataset;
 
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
  * to pass in data fabric runtime; no exposure of developers to the raw
  * data fabric; and developers only interact with Datasets.
  */
-public class DataSetInstantiator implements DataSetContext {
+public class DataSetInstantiator implements DatasetContext {
 
   private final DatasetFramework datasetFramework;
   // the class loader to use for data set classes

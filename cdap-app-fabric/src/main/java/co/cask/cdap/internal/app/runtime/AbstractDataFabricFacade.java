@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
@@ -61,7 +61,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public DataSetContext getDataSetContext() {
+  public DatasetContext getDataSetContext() {
     return dataSetContext;
   }
 

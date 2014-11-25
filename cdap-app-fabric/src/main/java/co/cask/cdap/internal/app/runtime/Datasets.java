@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.Dataset;
 import com.google.common.collect.ImmutableMap;
 
@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public final class Datasets {
 
-  public static Map<String, Dataset> createDatasets(DataSetContext context,
+  public static Map<String, Dataset> createDatasets(DatasetContext context,
                                                     Iterable<String> datasetNames,
                                                     Map<String, String> arguments) {
 
