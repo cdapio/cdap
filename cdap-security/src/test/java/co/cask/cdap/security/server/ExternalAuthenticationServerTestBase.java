@@ -97,7 +97,7 @@ public abstract class ExternalAuthenticationServerTestBase {
   protected abstract String getProtocol();
   protected abstract HttpClient getHTTPClient() throws Exception;
 
-  protected static void setup() {
+  protected static void setup() throws Exception {
     Assert.assertNotNull("CConfiguration needs to be set by derived classes", configuration);
 
     Module securityModule = Modules.override(new InMemorySecurityModule()).with(
@@ -130,6 +130,11 @@ public abstract class ExternalAuthenticationServerTestBase {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+
+    server.startAndWait();
+    LOG.info("Auth server running on port {}", port);
+    ldapServer.startListening();
+    TimeUnit.SECONDS.sleep(3);
   }
 
   public int getAuthServerPort() {
@@ -183,37 +188,13 @@ public abstract class ExternalAuthenticationServerTestBase {
     ldapServer.addEntries(defaultEntry, userEntry);
   }
 
-  /**
-   * Wait for server to start for specified number of seconds
-   * @throws Exception
-   */
-  private void waitForServerStartup() throws Exception {
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return server.isRunning();
-      }
-    }, WAIT_TIME_FOR_SERVER_STARTUP, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
-  }
-
   @AfterClass
   public static void afterClass() throws Exception {
+    ldapServer.shutDown(true);
+    server.stopAndWait();
     // Clear any security properties for zookeeper.
     System.clearProperty(Constants.External.Zookeeper.ENV_AUTH_PROVIDER_1);
     Configuration.setConfiguration(null);
-  }
-
-  /**
-   * Test that server starts and stops correctly.
-   * @throws Exception
-   */
-  @Test
-  public void testStartStopServer() throws Exception {
-    Service.State state = server.startAndWait();
-    Assert.assertTrue(state == Service.State.RUNNING);
-    waitForServerStartup();
-    state = server.stopAndWait();
-    assertTrue(state == Service.State.TERMINATED);
   }
 
   /**
@@ -222,10 +203,6 @@ public abstract class ExternalAuthenticationServerTestBase {
    */
   @Test
   public void testValidAuthentication() throws Exception {
-    server.startAndWait();
-    LOG.info("Auth server running on port {}", port);
-    ldapServer.startListening();
-    waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
                                server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_TOKEN);
@@ -268,9 +245,6 @@ public abstract class ExternalAuthenticationServerTestBase {
     AccessToken token = tokenCodec.decode(Base64.decodeBase64(encodedToken));
     assertEquals("admin", token.getIdentifier().getUsername());
     LOG.info("AccessToken got from ExternalAuthenticationServer is: " + encodedToken);
-
-    ldapServer.shutDown(true);
-    server.stopAndWait();
   }
 
   /**
@@ -279,9 +253,6 @@ public abstract class ExternalAuthenticationServerTestBase {
    */
   @Test
   public void testInvalidAuthentication() throws Exception {
-    server.startAndWait();
-    ldapServer.startListening();
-    waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
                                server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_TOKEN);
@@ -293,9 +264,6 @@ public abstract class ExternalAuthenticationServerTestBase {
     // Request is Unauthorized
     assertEquals(401, response.getStatusLine().getStatusCode());
     verify(TEST_AUDIT_LOGGER, timeout(10000).atLeastOnce()).trace(contains("401"));
-
-    ldapServer.shutDown(true);
-    server.stopAndWait();
   }
 
   /**
@@ -304,9 +272,6 @@ public abstract class ExternalAuthenticationServerTestBase {
    */
   @Test
   public void testStatusResponse() throws Exception {
-    server.startAndWait();
-    ldapServer.startListening();
-    waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
                                server.getSocketAddress().getPort(), Constants.EndPoints.STATUS);
@@ -317,8 +282,6 @@ public abstract class ExternalAuthenticationServerTestBase {
     // Status request is authorized without any extra headers
     assertEquals(200, response.getStatusLine().getStatusCode());
 
-    ldapServer.shutDown(true);
-    server.stopAndWait();
   }
 
   /**
@@ -327,9 +290,6 @@ public abstract class ExternalAuthenticationServerTestBase {
    */
   @Test
   public void testExtendedToken() throws Exception {
-    server.startAndWait();
-    ldapServer.startListening();
-    waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
                                server.getSocketAddress().getPort(), GrantAccessToken.Paths.GET_EXTENDED_TOKEN);
@@ -358,9 +318,6 @@ public abstract class ExternalAuthenticationServerTestBase {
     AccessToken token = tokenCodec.decode(Base64.decodeBase64(encodedToken));
     assertEquals("admin", token.getIdentifier().getUsername());
     LOG.info("AccessToken got from ExternalAuthenticationServer is: " + encodedToken);
-
-    ldapServer.shutDown(true);
-    server.stopAndWait();
   }
 
   /**
@@ -369,9 +326,6 @@ public abstract class ExternalAuthenticationServerTestBase {
    */
   @Test
   public void testInvalidPath() throws Exception {
-    server.startAndWait();
-    ldapServer.startListening();
-    waitForServerStartup();
     HttpClient client = getHTTPClient();
     String uri = String.format("%s://%s:%d/%s", getProtocol(), server.getSocketAddress().getHostName(),
                                server.getSocketAddress().getPort(), "invalid");
@@ -381,8 +335,6 @@ public abstract class ExternalAuthenticationServerTestBase {
 
     assertEquals(404, response.getStatusLine().getStatusCode());
 
-    ldapServer.shutDown(true);
-    server.stopAndWait();
   }
 
   /**
@@ -391,7 +343,6 @@ public abstract class ExternalAuthenticationServerTestBase {
    */
   @Test
   public void testServiceRegistration() throws Exception {
-    server.startAndWait();
     Iterable<Discoverable> discoverables = discoveryServiceClient.discover(Constants.Service.EXTERNAL_AUTHENTICATION);
 
     Set<SocketAddress> addresses = Sets.newHashSet();
@@ -400,7 +351,5 @@ public abstract class ExternalAuthenticationServerTestBase {
     }
 
     Assert.assertTrue(addresses.contains(server.getSocketAddress()));
-
-    server.stopAndWait();
   }
 }
