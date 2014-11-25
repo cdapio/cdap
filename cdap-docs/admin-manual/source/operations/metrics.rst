@@ -20,13 +20,20 @@ To add user-defined metrics to your application, read this section in conjunctio
 details on available system metrics in the :ref:`Metrics HTTP API. <http-restful-api-metrics>`
 
 You embed user-defined metrics in the methods defining the elements of your application.
+With this Metrics instance , you can can emit metrics identified by ``metricName`` and an associated value for the ``metricName``.
+The Metrics system currently supports two kinds of metrics:
+  - count(metricName, delta)
+    Increments/Decrements the ``metricsName`` value by delta
+  - gauge(metricName, value)
+    Sets the ``metricName`` to the given value
+
 They will then emit their metrics and you can retrieve them (along with system metrics)
 via the *Metrics Explorer* in the :ref:`CDAP Console <cdap-console>` or
 via the CDAP’s :ref:`restful-api`. The names given to the metrics (such as
 ``names.longnames`` and ``names.bytes`` as in the example below) should be composed only
 of alphanumeric characters.
 
-To add metrics to a Flowlet *NameSaver*::
+To add count metrics to a Flowlet *NameSaver*::
 
   public static class NameSaver extends AbstractFlowlet {
     static final byte[] NAME = { 'n', 'a', 'm', 'e' };
@@ -47,6 +54,57 @@ To add metrics to a Flowlet *NameSaver*::
       flowletMetrics.count("names.bytes", name.length);
     }
   }
+
+To add gauge metric type to the Flowlet *PurchaseStreamReader*::
+
+  public class PurchaseStreamReader extends AbstractFlowlet {
+      private OutputEmitter<Purchase> out;
+      private Metrics cacheSize;
+      private Cache<String, Integer> spendingCustomers = CacheBuilder.newBuilder().build();
+
+      @ProcessInput
+      public void process(StreamEvent event) {
+        String body = Bytes.toString(event.getBody());
+        // <name> bought <n> <items> for $<price>
+        String[] tokens =  body.split(" ");
+        if (tokens.length != 6) {
+          return;
+        }
+        String customer = tokens[0];
+        if (!"bought".equals(tokens[1])) {
+          return;
+        }
+        int quantity = Integer.parseInt(tokens[2]);
+        String item = tokens[3];
+        if (quantity != 1 && item.length() > 1 && item.endsWith("s")) {
+          item = item.substring(0, item.length() - 1);
+        }
+        if (!"for".equals(tokens[4])) {
+          return;
+        }
+        String price = tokens[5];
+        if (!price.startsWith("$")) {
+          return;
+        }
+        int amount = Integer.parseInt(tokens[5].substring(1));
+
+        if (amount > 1000) {
+          Integer items = spendingCustomers.getIfPresent(customer);
+          items = (items == null) ? quantity : items + quantity;
+          spendingCustomers.put(customer, items);
+        }
+
+        Purchase purchase = new Purchase(customer, item, quantity, amount, System.currentTimeMillis());
+        out.emit(purchase);
+      }
+
+      @Tick(delay = 5L, unit = TimeUnit.SECONDS)
+      public void generate() throws Exception {
+        // emit cache size every 5 seconds as metric and flush out the cache
+        cacheSize.gauge("top.spending.customers", spendingCustomers.size());
+        spendingCustomers.invalidateAll();
+      }
+    }
 
 An example of user-defined metrics is in ``PurchaseStore`` in the :ref:`Purchase example. <examples-purchase>`
 

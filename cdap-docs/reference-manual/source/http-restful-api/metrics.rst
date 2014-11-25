@@ -24,7 +24,7 @@ Metrics Requests
 ----------------
 The general form of a metrics request is::
 
-  GET <base-url>/metrics/<scope>/<context>/<metric>?<time-range>
+  GET <base-url>/metrics/<scope>/<context>/<run-id>/<metric>?<time-range>
 
 .. list-table::
    :widths: 20 80
@@ -36,6 +36,8 @@ The general form of a metrics request is::
      - Either ``system`` (system metrics) or ``user`` (user-defined metrics)
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
+   * - ``<Run-Id>``
+        - Run-id of the program; see `Querying by RunId`_
    * - ``<metric>``
      - Metric being queried; see `Available Metrics`_
    * - ``<time-range>``
@@ -56,9 +58,9 @@ Examples
      - 
    * - HTTP Method
      - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
-       ``WhoFlow/flowlets/saver/names.bytes?aggregate=true``
+       ``WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true``
    * - Description
-     - Using a *User-Defined* metric, *names.bytes*
+     - Querying a *User-Defined* metric, *names.bytes* of a Flow by it's run-id
    * - 
      - 
    * - HTTP Method
@@ -224,6 +226,22 @@ Flowlet, Procedure, Mapper, or Reducer level:
      - ``/datasets/<dataset-id>``
    * - All Datasets across all Applications
      - ``/``
+
+Querying by Run-Id
+------------------
+
+Each Program (Flow, MapReduce, Spark, Services, Procedure) has an associated run-id to uniquely identify a program-run.
+We can query metrics for a program by its run-id to see the metrics for that particular run.
+Please look at :ref:`Program Runs API <rest-program-runs>` to know how to get active and historical program runs.
+
+The run-id is specified after the program-name in the path to query by run-id ::
+
+  /apps/<app-id>/program-type/<program-id>/runs/<run-id>/
+
+Examples ::
+
+    GET /apps/<app-id>/flows/<flow-id>/runs/<run-id>/flowlets/<flowlet-id>/
+    GET /apps/<app-id>/mapreduce/<mapreduce-id>/runs/<run-id>/
 
 Available Metrics
 -----------------
