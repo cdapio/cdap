@@ -48,6 +48,7 @@ public class WordCount extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(Tokenizer.class);
     job.setReducerClass(Counter.class);
+    job.setNumReduceTasks(1);
     job.setMapOutputKeyClass(Text.class);
     job.setMapOutputValueClass(IntWritable.class);
   }
