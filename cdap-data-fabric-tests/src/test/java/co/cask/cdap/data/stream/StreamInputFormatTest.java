@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -218,12 +219,25 @@ public class StreamInputFormatTest {
     ImmutableMap.Builder<String, String> headers = ImmutableMap.builder();
     headers.put("key1", "value1");
     headers.put("key2", "value2");
-    ByteBuffer buffer = ByteBuffer.wrap("testdata".getBytes());
+    ByteBuffer buffer = ByteBuffer.wrap("testdata".getBytes(Charsets.UTF_8));
     StreamEvent event = new StreamEvent(new StreamEventData(headers.build(), buffer), System.currentTimeMillis());
     StreamEventDecoder decoder = new IdentityStreamEventDecoder();
     StreamEventDecoder.DecodeResult result = decoder.decode(event, new StreamEventDecoder.DecodeResult());
     Assert.assertEquals(new LongWritable(event.getTimestamp()), result.getKey());
     Assert.assertEquals(event, result.getValue());
+  }
+
+  @Test
+  public void testStreamDecoderInference() {
+    Configuration conf = new Configuration();
+    StreamInputFormat.inferDecoderClass(conf, BytesWritable.class);
+    Assert.assertEquals(BytesStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, Text.class);
+    Assert.assertEquals(TextStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, StreamEvent.class);
+    Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
+    StreamInputFormat.inferDecoderClass(conf, StreamEventData.class);
+    Assert.assertEquals(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(conf));
   }
 
   private void generateEvents(File inputDir, int numEvents, long startTime, long timeIncrement,
