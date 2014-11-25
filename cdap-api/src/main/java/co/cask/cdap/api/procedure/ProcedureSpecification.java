@@ -56,7 +56,10 @@ public interface ProcedureSpecification extends ProgramSpecification, PropertyPr
 
   /**
    * Builder for building {@link ProcedureSpecification}.
+   *
+   * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   static final class Builder {
     private String name;
     private String description;

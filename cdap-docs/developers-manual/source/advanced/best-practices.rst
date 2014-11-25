@@ -65,3 +65,36 @@ field.
 
 Field types that are supported using the ``@Property`` annotation are primitives,
 boxed types (e.g. ``Integer``), ``String`` and ``enum``.
+
+
+Scanning Over Tables with ``byte[]`` Keys
+=========================================
+In the CDAP Java API, 
+`Bytes.stopKeyForPrefix() <../../reference-manual/javadocs/co/cask/cdap/api/common/Bytes.html#stopKeyForPrefix(byte[])>`__
+is a very handy tool when performing scans over tables with ``byte[]`` keys.
+
+The method returns a given prefix, incremented by one, in a form that is suitable for
+prefix matching. Here is an example, showing ``stopKeyForPrefix`` being used to generate,
+from a provided index key, an incremented stop key::
+
+  // Returns first that matches
+  @Nullable
+  public <T> T get(Key id, Class<T> classOfT) {
+    try {
+      Scanner scan = table.scan(id.getKey(), Bytes.stopKeyForPrefix(id.getKey()));
+      Row row = scan.next();
+      if (row == null || row.isEmpty()) {
+        return null;
+      }
+
+      byte[] value = row.get(COLUMN);
+      if (value == null) {
+        return null;
+      }
+
+      return deserialize(value, classOfT);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
