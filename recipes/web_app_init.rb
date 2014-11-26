@@ -23,7 +23,16 @@ include_recipe 'cdap::web_app'
 
 ### Generate a certificate if SSL is enabled
 execute 'generate-webapp-ssl-cert' do
-  ssl_enabled = node['cdap']['cdap_site']['ssl.enabled'] || false
+  ssl_enabled =
+    if node['cdap']['version'].to_f < 2.5 && node['cdap'].key?('cdap_site') &&
+       node['cdap']['cdap_site'].key?('security.server.ssl.enabled')
+      node['cdap']['cdap_site']['security.server.ssl.enabled']
+    elsif node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled')
+      node['cdap']['cdap_site']['ssl.enabled']
+    else
+      false
+    end
+
   common_name = node['cdap']['security']['ssl_common_name']
   keypath = node['cdap']['cdap_site']['dashboard.ssl.key']
   certpath = node['cdap']['cdap_site']['dashboard.ssl.cert']
