@@ -28,7 +28,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
-import co.cask.cdap.data.preferences.PreferencesHttpService;
+import co.cask.cdap.data.preferences.ConfigService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.gateway.auth.AuthModule;
@@ -49,30 +49,30 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 /**
- *
+ * Configuration Service Twill Runnable.
  */
-public class PreferencesTwillRunnable extends AbstractMasterTwillRunnable {
-  private static final Logger LOG = LoggerFactory.getLogger(PreferencesTwillRunnable.class);
+public class ConfigServiceTwillRunnable extends AbstractMasterTwillRunnable {
+  private static final Logger LOG = LoggerFactory.getLogger(ConfigServiceTwillRunnable.class);
 
-  private PreferencesHttpService preferencesHttpService;
+  private ConfigService configService;
   private ZKClientService zkClient;
   private KafkaClientService kafkaClient;
   private MetricsCollectionService metricsCollectionService;
 
-  public PreferencesTwillRunnable(String name, String cConfName, String hConfName) {
+  public ConfigServiceTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
   }
 
   @Override
   protected void doInit(TwillContext context) {
     try {
-      getConfiguration().set(Constants.Preferences.ADDRESS, context.getHost().getCanonicalHostName());
+      getConfiguration().set(Constants.ConfigService.ADDRESS, context.getHost().getCanonicalHostName());
 
       Injector injector = createGuiceInjector(getCConfiguration(), getConfiguration());
       injector.getInstance(LogAppenderInitializer.class).initialize();
       LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                          Constants.Logging.COMPONENT_NAME,
-                                                                         Constants.Service.PREFERENCES));
+                                                                         Constants.Service.CONFIG_SERVICE));
       LOG.info("Initializing runnable {}", name);
       LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
@@ -80,7 +80,7 @@ public class PreferencesTwillRunnable extends AbstractMasterTwillRunnable {
       kafkaClient = injector.getInstance(KafkaClientService.class);
       metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
-      preferencesHttpService = injector.getInstance(PreferencesHttpService.class);
+      configService = injector.getInstance(ConfigService.class);
 
       LOG.info("Runnable initialized {}", name);
     } catch (Throwable t) {
@@ -94,7 +94,7 @@ public class PreferencesTwillRunnable extends AbstractMasterTwillRunnable {
     services.add(zkClient);
     services.add(kafkaClient);
     services.add(metricsCollectionService);
-    services.add(preferencesHttpService);
+    services.add(configService);
   }
 
   public static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {

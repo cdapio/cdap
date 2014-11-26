@@ -36,16 +36,14 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
 /**
- * Test Application with services for the new application API.
+ * Test Application using StateStore.
  */
 public class AppUsingStore extends AbstractApplication {
-  /**
-   * Override this method to configure the application.
-   */
+
   @Override
   public void configure() {
-    setName("AppWithServices");
-    setDescription("Application with Services");
+    setName("AppUsingStore");
+    setDescription("Application using StateStore");
     addService(new BasicService("NoOpService", new PingHandler()));
     addFlow(new StoreCheckFlow());
   }

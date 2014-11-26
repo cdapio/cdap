@@ -35,8 +35,8 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.table.PreferenceTable;
-import co.cask.cdap.data2.dataset2.lib.table.PreferenceTableDataset;
+import co.cask.cdap.data2.dataset2.lib.table.PreferencesTable;
+import co.cask.cdap.data2.dataset2.lib.table.PreferencesTableDataset;
 import co.cask.cdap.proto.ProgramRecord;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -66,7 +66,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   private final DataSetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final ProgramRecord record;
-  private PreferenceTableDataset table;
+  private PreferencesTableDataset table;
 
   public AbstractContext(Program program, RunId runId,
                          Arguments arguments,
@@ -98,12 +98,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
                                                                                                      Namespace.SYSTEM));
     this.table = null;
     try {
-      this.table = DatasetsUtil.getOrCreateDataset(sysds, Constants.Preferences.PROPERTY_TABLE,
-                                                   PreferenceTable.class.getName(), DatasetProperties.EMPTY,
+      this.table = DatasetsUtil.getOrCreateDataset(sysds, Constants.ConfigService.PREFERENCE_TABLE,
+                                                   PreferencesTable.class.getName(), DatasetProperties.EMPTY,
                                                    null, null);
       this.dsInstantiator.addTransactionAware(table);
     } catch (Exception e) {
-      LOG.error("Unable to find ProgramPreference Table", e);
+      LOG.error("Unable to find Preference Table", e);
       Throwables.propagate(e);
     }
     record = new ProgramRecord(program.getType(), program.getApplicationId(), program.getName());

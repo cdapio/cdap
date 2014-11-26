@@ -21,9 +21,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.logging.run.LogSaverTwillRunnable;
+import co.cask.cdap.metrics.runtime.ConfigServiceTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
-import co.cask.cdap.metrics.runtime.PreferencesTwillRunnable;
 import com.google.common.base.Preconditions;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
@@ -135,9 +135,9 @@ public class MasterTwillApplication implements TwillApplication {
   }
 
   private TwillSpecification.Builder.RunnableSetter addConfigService(TwillSpecification.Builder.MoreRunnable builder) {
-    int numCores = cConf.getInt(Constants.Preferences.NUM_CORES, 1);
-    int memoryMb = cConf.getInt(Constants.Preferences.MEMORY_MB, 512);
-    int instances = instanceCountMap.get(Constants.Service.PREFERENCES);
+    int numCores = cConf.getInt(Constants.ConfigService.NUM_CORES, 1);
+    int memoryMb = cConf.getInt(Constants.ConfigService.MEMORY_MB, 512);
+    int instances = instanceCountMap.get(Constants.Service.CONFIG_SERVICE);
 
     ResourceSpecification spec = ResourceSpecification.Builder
       .with()
@@ -146,7 +146,7 @@ public class MasterTwillApplication implements TwillApplication {
       .setInstances(instances)
       .build();
 
-    return builder.add(new PreferencesTwillRunnable(Constants.Service.PREFERENCES, "cConf.xml", "hConf.xml"), spec)
+    return builder.add(new ConfigServiceTwillRunnable(Constants.Service.CONFIG_SERVICE, "cConf.xml", "hConf.xml"), spec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())

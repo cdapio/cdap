@@ -183,7 +183,7 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public void setNote(String key, String value) {
-
+      //no-op
     }
 
     @Override
@@ -198,7 +198,7 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public void setNotes(Map<String, String> notes) {
-
+      //no-op
     }
 
     @Override

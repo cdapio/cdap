@@ -17,7 +17,7 @@
 package co.cask.cdap.data.preferences;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.lib.table.PreferenceTableDataset;
+import co.cask.cdap.data2.dataset2.lib.table.PreferencesTableDataset;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.AbstractHttpHandler;
@@ -47,24 +47,24 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Preferences Handler.
+ * Config Service Handler.
  */
 @Path(Constants.Gateway.GATEWAY_VERSION + "/preferences")
 public class PreferencesHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(PreferencesHandler.class);
   private static final Type REQUEST_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Gson GSON = new Gson();
-  private final PreferenceTableDataset table;
+  private final PreferencesTableDataset table;
   private final TransactionExecutor txExecutor;
 
-  public PreferencesHandler(PreferenceTableDataset table, TransactionExecutorFactory executorFactory) {
+  public PreferencesHandler(PreferencesTableDataset table, TransactionExecutorFactory executorFactory) {
     this.table = table;
     List<TransactionAware> txAwareList = Lists.newArrayList();
     txAwareList.add(this.table);
     this.txExecutor = executorFactory.createExecutor(txAwareList);
   }
 
-  @Path("/programpreference/apps/{app-name}/{program-type}/{program-name}")
+  @Path("/statestore/apps/{app-name}/{program-type}/{program-name}")
   @GET
   public void getPref(HttpRequest request, HttpResponder responder,
                       @PathParam("app-name") final String appId,
@@ -85,7 +85,7 @@ public class PreferencesHandler extends AbstractHttpHandler {
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(notes));
   }
 
-  @Path("/programpreference/apps/{app-name}/{program-type}/{program-name}")
+  @Path("/statestore/apps/{app-name}/{program-type}/{program-name}")
   @PUT
   public void putPref(HttpRequest request, HttpResponder responder,
                       @PathParam("app-name") final String appId,

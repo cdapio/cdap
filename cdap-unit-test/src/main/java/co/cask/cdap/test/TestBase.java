@@ -38,7 +38,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data.preferences.PreferencesHttpService;
+import co.cask.cdap.data.preferences.ConfigService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -140,7 +140,7 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
-  private static PreferencesHttpService configService;
+  private static ConfigService configService;
 
   /**
    * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
@@ -289,7 +289,7 @@ public class TestBase {
     exploreExecutorService.startAndWait();
     exploreClient = injector.getInstance(ExploreClient.class);
     txSystemClient = injector.getInstance(TransactionSystemClient.class);
-    configService = injector.getInstance(PreferencesHttpService.class);
+    configService = injector.getInstance(ConfigService.class);
     configService.startAndWait();
   }
 

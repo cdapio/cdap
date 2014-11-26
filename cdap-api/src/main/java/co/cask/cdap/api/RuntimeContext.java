@@ -27,11 +27,29 @@ public interface RuntimeContext {
    */
   Map<String, String> getRuntimeArguments();
 
+  /**
+   * Store a key, value pair in StateStore of the Program.
+   * @param key Key
+   * @param value Value
+   */
   void setNote(String key, String value);
 
+  /**
+   * Retrieve the value for a key from StateStore of the Program.
+   * @param key Key
+   * @return Value
+   */
   String getNote(String key);
 
+  /**
+   * Retrieve the contents from StateStore of the Program.
+   * @return Map of Key and Value
+   */
   Map<String, String> getNotes();
 
+  /**
+   * Set the contents in the StateStore of the Program.
+   * @param notes Map of Key and Value
+   */
   void setNotes(Map<String, String> notes);
 }

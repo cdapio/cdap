@@ -31,16 +31,16 @@ public class ConfigServiceManager extends AbstractDistributedMasterServiceManage
   @Inject
   public ConfigServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
                               DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.PREFERENCES, twillRunnerService, discoveryServiceClient);
+    super(cConf, Constants.Service.CONFIG_SERVICE, twillRunnerService, discoveryServiceClient);
   }
 
   @Override
   public String getDescription() {
-    return Constants.Preferences.SERVICE_DESCRIPTION;
+    return Constants.ConfigService.SERVICE_DESCRIPTION;
   }
 
   @Override
   public int getMaxInstances() {
-    return cConf.getInt(Constants.Preferences.MAX_INSTANCES);
+    return cConf.getInt(Constants.ConfigService.MAX_INSTANCES);
   }
 }

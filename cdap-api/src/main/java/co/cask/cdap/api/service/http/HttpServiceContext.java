@@ -25,6 +25,7 @@ import co.cask.cdap.api.data.DataSetContext;
  * {@link HttpServiceHandlerSpecification} and the runtime arguments passed by the user.
  */
 public interface HttpServiceContext extends RuntimeContext, DataSetContext, ServiceDiscoverer {
+
   /**
    * @return the specification bound to this HttpServiceContext
    */

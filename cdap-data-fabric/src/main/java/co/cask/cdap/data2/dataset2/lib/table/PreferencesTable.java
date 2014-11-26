@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Preference Table Interface that stores ProgramPreference.
  */
-public interface PreferenceTable extends Dataset {
+public interface PreferencesTable extends Dataset {
 
   /**
    * Returns the value stored for a key in a given {@link ProgramRecord}

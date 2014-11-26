@@ -26,6 +26,6 @@ public class InMemoryConfigServiceManager extends AbstractInMemoryMasterServiceM
 
   @Override
   public String getDescription() {
-    return Constants.Preferences.SERVICE_DESCRIPTION;
+    return Constants.ConfigService.SERVICE_DESCRIPTION;
   }
 }

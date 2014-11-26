@@ -714,12 +714,12 @@
      -->
 
     <property>
-      <name>prefs.max.instances</name>
+      <name>config.max.instances</name>
       <value>${master.service.max.instances}</value>
     </property>
 
     <property>
-      <name>prefs.num.instances</name>
+      <name>config.num.instances</name>
       <value>1</value>
       <description>Number of instances for Configuration Service Apache Twill Runnable</description>
     </property>

@@ -41,7 +41,7 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
-    public static final String PREFERENCES = "preferences";
+    public static final String CONFIG_SERVICE = "config.service";
   }
 
   /**
@@ -276,20 +276,20 @@ public final class Constants {
   }
 
   /**
-   * Preferences.
+   * ConfigService.
    */
-  public static final class Preferences {
-    public static final String HTTP_HANDLER = "prefhandler";
-    public static final String ADDRESS = "prefs.bind.address";
-    public static final String BACKLOG_CONNECTIONS = "prefs.backlog.cnxs";
-    public static final String EXEC_THREADS = "prefs.exec.threads";
-    public static final String BOSS_THREADS = "prefs.boss.threads";
-    public static final String WORKER_THREADS = "prefs.worker.threads";
-    public static final String PROPERTY_TABLE = "propTable";
-    public static final String NUM_CORES = "prefs.num.cores";
-    public static final String MEMORY_MB = "prefs.num.memory";
-    public static final String MAX_INSTANCES = "prefs.max.instances";
-    public static final String NUM_INSTANCES = "prefs.num.instances";
+  public static final class ConfigService {
+    public static final String HTTP_HANDLER = "confighandler";
+    public static final String ADDRESS = "config.bind.address";
+    public static final String BACKLOG_CONNECTIONS = "config.backlog.cnxs";
+    public static final String EXEC_THREADS = "config.exec.threads";
+    public static final String BOSS_THREADS = "config.boss.threads";
+    public static final String WORKER_THREADS = "config.worker.threads";
+    public static final String PREFERENCE_TABLE = "prefTable";
+    public static final String NUM_CORES = "config.num.cores";
+    public static final String MEMORY_MB = "config.num.memory";
+    public static final String MAX_INSTANCES = "config.max.instances";
+    public static final String NUM_INSTANCES = "config.num.instances";
     public static final String SERVICE_DESCRIPTION = "Configuration Service";
   }
 

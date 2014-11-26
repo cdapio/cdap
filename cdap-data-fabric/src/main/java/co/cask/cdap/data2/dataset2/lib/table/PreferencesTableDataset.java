@@ -31,11 +31,12 @@ import java.util.Map;
 /**
  * Dataset that manages a table of Program Preferences.
  */
-public class PreferenceTableDataset extends AbstractDataset implements PreferenceTable {
-  private static final Logger LOG = LoggerFactory.getLogger(PreferenceTableDataset.class);
+public class PreferencesTableDataset extends AbstractDataset implements PreferencesTable {
+  private static final Logger LOG = LoggerFactory.getLogger(PreferencesTableDataset.class);
+  private static final String STATE_STORE_ROWPREFIX = "statestore";
   private final OrderedTable table;
 
-  public PreferenceTableDataset(DatasetSpecification spec, @EmbeddedDataset("prefs") OrderedTable table) {
+  public PreferencesTableDataset(DatasetSpecification spec, @EmbeddedDataset("prefs") OrderedTable table) {
     super(spec.getName(), table);
     this.table = table;
   }
@@ -43,7 +44,7 @@ public class PreferenceTableDataset extends AbstractDataset implements Preferenc
   @Override
   public String getNote(ProgramRecord program, String key) {
     try {
-      return Bytes.toString(table.get(generateRowKey(program), Bytes.toBytes(key)));
+      return Bytes.toString(table.get(generateStateStoreRowKey(program), Bytes.toBytes(key)));
     } catch (Exception e) {
       LOG.debug("Get Note failed for {} : Key {}", program, key);
     }
@@ -53,7 +54,7 @@ public class PreferenceTableDataset extends AbstractDataset implements Preferenc
   @Override
   public void setNote(ProgramRecord program, String key, String value) {
     try {
-      table.put(generateRowKey(program), Bytes.toBytes(key), Bytes.toBytes(value));
+      table.put(generateStateStoreRowKey(program), Bytes.toBytes(key), Bytes.toBytes(value));
     } catch (Exception e) {
       LOG.debug("Set Note failed for {} : Key {} : Value {}", program, key, value);
     }
@@ -63,7 +64,7 @@ public class PreferenceTableDataset extends AbstractDataset implements Preferenc
   public Map<String, String> getNotes(ProgramRecord program) {
     Map<String, String> notes = Maps.newHashMap();
     try {
-      for (Map.Entry<byte[], byte[]> entry : table.get(generateRowKey(program)).entrySet()) {
+      for (Map.Entry<byte[], byte[]> entry : table.get(generateStateStoreRowKey(program)).entrySet()) {
         notes.put(Bytes.toString(entry.getKey()), Bytes.toString(entry.getValue()));
       }
       return notes;
@@ -84,7 +85,7 @@ public class PreferenceTableDataset extends AbstractDataset implements Preferenc
         values[i] = Bytes.toBytes(columnValue.getValue());
         i++;
       }
-      table.put(generateRowKey(program), columns, values);
+      table.put(generateStateStoreRowKey(program), columns, values);
     } catch (Exception e) {
       LOG.debug("Set Notes failed for {}", program);
     }
@@ -93,15 +94,15 @@ public class PreferenceTableDataset extends AbstractDataset implements Preferenc
   @Override
   public void deleteNotes(ProgramRecord program) {
     try {
-      table.delete(generateRowKey(program));
+      table.delete(generateStateStoreRowKey(program));
     } catch (Exception e) {
       LOG.debug("Delete Notes failed for {}", program);
     }
   }
 
-  private byte[] generateRowKey(ProgramRecord program) {
+  private byte[] generateStateStoreRowKey(ProgramRecord program) {
     //Use default namespace until namespace is implemented.
-    return Bytes.toBytes(String.format("%s.%s.%s.%s", "default", program.getApp(), program.getType().getPrettyName(),
-                                       program.getId()));
+    return Bytes.toBytes(String.format("%s.%s.%s.%s.%s", STATE_STORE_ROWPREFIX, "default", program.getApp(),
+                                       program.getType().getPrettyName(), program.getId()));
   }
 }

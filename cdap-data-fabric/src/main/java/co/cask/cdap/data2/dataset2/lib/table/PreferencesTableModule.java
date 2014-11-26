@@ -23,13 +23,13 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.OrderedTable;
 
 /**
- * {@link DatasetModule} for {@link PreferenceTable}
+ * {@link DatasetModule} for {@link PreferencesTable}
  */
-public class PreferenceTableModule implements DatasetModule {
+public class PreferencesTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<OrderedTable, DatasetAdmin> tableDefinition = registry.get(OrderedTable.class.getName());
-    registry.add(new PreferenceTableDefinition("prefTable", tableDefinition));
-    registry.add(new PreferenceTableDefinition(PreferenceTable.class.getName(), tableDefinition));
+    registry.add(new PreferencesTableDefinition("prefTable", tableDefinition));
+    registry.add(new PreferencesTableDefinition(PreferencesTable.class.getName(), tableDefinition));
   }
 }

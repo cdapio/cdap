@@ -27,13 +27,13 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * {@link DatasetDefinition} for {@link PreferenceTable}.
+ * {@link DatasetDefinition} for {@link PreferencesTable}.
  */
-public class PreferenceTableDefinition extends AbstractDatasetDefinition<PreferenceTable, DatasetAdmin> {
+public class PreferencesTableDefinition extends AbstractDatasetDefinition<PreferencesTable, DatasetAdmin> {
 
   private final DatasetDefinition<? extends OrderedTable, ?> tableDefinition;
 
-  public PreferenceTableDefinition(String name, DatasetDefinition<? extends OrderedTable, ?> tableDefinition) {
+  public PreferencesTableDefinition(String name, DatasetDefinition<? extends OrderedTable, ?> tableDefinition) {
     super(name);
     this.tableDefinition = tableDefinition;
   }
@@ -52,10 +52,10 @@ public class PreferenceTableDefinition extends AbstractDatasetDefinition<Prefere
   }
 
   @Override
-  public PreferenceTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+  public PreferencesTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("data");
     OrderedTable table = tableDefinition.getDataset(tableSpec, arguments, classLoader);
-    return new PreferenceTableDataset(spec, table);
+    return new PreferencesTableDataset(spec, table);
   }
 }

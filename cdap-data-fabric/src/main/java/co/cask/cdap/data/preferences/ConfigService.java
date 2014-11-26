@@ -28,8 +28,8 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.table.PreferenceTable;
-import co.cask.cdap.data2.dataset2.lib.table.PreferenceTableDataset;
+import co.cask.cdap.data2.dataset2.lib.table.PreferencesTable;
+import co.cask.cdap.data2.dataset2.lib.table.PreferencesTableDataset;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
@@ -47,10 +47,10 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
- * Preferences HTTP Service.
+ * Configuration HTTP Service.
  */
-public class PreferencesHttpService extends AbstractIdleService {
-  private static final Logger LOG = LoggerFactory.getLogger(PreferencesHttpService.class);
+public class ConfigService extends AbstractIdleService {
+  private static final Logger LOG = LoggerFactory.getLogger(ConfigService.class);
   private final DiscoveryService discoveryService;
   private final NettyHttpService.Builder builder;
   private final DatasetFramework framework;
@@ -59,18 +59,18 @@ public class PreferencesHttpService extends AbstractIdleService {
   private Cancellable cancellable;
 
   @Inject
-  public PreferencesHttpService(CConfiguration cConf, DiscoveryService discoveryService,
-                                DatasetFramework dsFramework, TransactionExecutorFactory executorFactory,
-                                @Nullable MetricsCollectionService metricsCollectionService) {
-    String address = cConf.get(Constants.Preferences.ADDRESS);
-    int backlogcnxs = cConf.getInt(Constants.Preferences.BACKLOG_CONNECTIONS, 20000);
-    int execthreads = cConf.getInt(Constants.Preferences.EXEC_THREADS, 20);
-    int bossthreads = cConf.getInt(Constants.Preferences.BOSS_THREADS, 1);
-    int workerthreads = cConf.getInt(Constants.Preferences.WORKER_THREADS, 10);
+  public ConfigService(CConfiguration cConf, DiscoveryService discoveryService,
+                       DatasetFramework dsFramework, TransactionExecutorFactory executorFactory,
+                       @Nullable MetricsCollectionService metricsCollectionService) {
+    String address = cConf.get(Constants.ConfigService.ADDRESS);
+    int backlogcnxs = cConf.getInt(Constants.ConfigService.BACKLOG_CONNECTIONS, 20000);
+    int execthreads = cConf.getInt(Constants.ConfigService.EXEC_THREADS, 20);
+    int bossthreads = cConf.getInt(Constants.ConfigService.BOSS_THREADS, 1);
+    int workerthreads = cConf.getInt(Constants.ConfigService.WORKER_THREADS, 10);
     builder = NettyHttpService.builder();
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                                                                     Constants.Preferences.HTTP_HANDLER)));
+                                                                     Constants.ConfigService.HTTP_HANDLER)));
     builder.setHost(address);
     builder.setConnectionBacklog(backlogcnxs);
     builder.setExecThreadPoolSize(execthreads);
@@ -92,9 +92,9 @@ public class PreferencesHttpService extends AbstractIdleService {
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.PREFERENCES));
-    PreferenceTableDataset table = DatasetsUtil.getOrCreateDataset(framework, Constants.Preferences.PROPERTY_TABLE,
-                                                                   PreferenceTable.class.getName(),
+                                                                       Constants.Service.CONFIG_SERVICE));
+    PreferencesTableDataset table = DatasetsUtil.getOrCreateDataset(framework, Constants.ConfigService.PREFERENCE_TABLE,
+                                                                   PreferencesTable.class.getName(),
                                                                    DatasetProperties.EMPTY, null, null);
     builder.addHttpHandlers(ImmutableList.<HttpHandler>of(new PreferencesHandler(table, executorFactory),
                                                           new PingHandler()));
@@ -105,7 +105,7 @@ public class PreferencesHttpService extends AbstractIdleService {
     cancellable = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return Constants.Service.PREFERENCES;
+        return Constants.Service.CONFIG_SERVICE;
       }
 
       @Override

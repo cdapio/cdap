@@ -27,21 +27,21 @@ import org.junit.Test;
 import java.util.Map;
 
 /**
- * PreferenceTable Dataset Tests.
+ * PreferencesTable Dataset Tests.
  */
-public class PreferenceTableDatasetTest extends AbstractDatasetTest {
+public class PreferencesTableDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testBasics() throws Exception {
-    addModule("prefTableModule", new PreferenceTableModule());
+    addModule("prefTableModule", new PreferencesTableModule());
     Map<String, String> content = Maps.newHashMap();
     content.put("k1", "v1");
     content.put("k2", "v2");
     content.put("key1", "v1");
     content.put("key2", "v2");
 
-    createInstance(PreferenceTable.class.getName(), "myPrefTable", DatasetProperties.EMPTY);
-    PreferenceTable myPrefTable = getInstance("myPrefTable");
+    createInstance(PreferencesTable.class.getName(), "myPrefTable", DatasetProperties.EMPTY);
+    PreferencesTable myPrefTable = getInstance("myPrefTable");
 
     ProgramRecord record = new ProgramRecord(ProgramType.FLOW, "MyApp", "MyFlow");
     Assert.assertEquals(null, myPrefTable.getNote(record, "key1"));

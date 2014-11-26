@@ -725,9 +725,11 @@ public class TestFrameworkTest extends TestBase {
 
   @Test
   public void testStateStore() throws Exception {
+    final int count = 10;
     ApplicationManager appManager = deployApplication(AppUsingStore.class);
     try {
       FlowManager manager = appManager.startFlow("StoreCheckFlow");
+      //Testing done within the Flow. So sleep for sometime.
       TimeUnit.SECONDS.sleep(5);
       manager.stop();
       ServiceManager serviceManager = appManager.startService("NoOpService");
@@ -735,18 +737,18 @@ public class TestFrameworkTest extends TestBase {
 
       // Call the count endpoint
       URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "count");
-      HttpRequest request = HttpRequest.post(url).build();
+      HttpRequest request;
+      HttpResponse response;
 
-      HttpResponse response = HttpRequests.execute(request);
-      Assert.assertEquals(200, response.getResponseCode());
-      response = HttpRequests.execute(request);
-      Assert.assertEquals(200, response.getResponseCode());
-      response = HttpRequests.execute(request);
-      Assert.assertEquals(200, response.getResponseCode());
+      for (int i = 0; i < count; i++) {
+        request = HttpRequest.post(url).build();
+        response = HttpRequests.execute(request);
+        Assert.assertEquals(200, response.getResponseCode());
+      }
 
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
-      Assert.assertEquals("3", response.getResponseBodyAsString(Charsets.UTF_8));
+      Assert.assertEquals(Integer.toString(count), response.getResponseBodyAsString(Charsets.UTF_8));
     } finally {
       appManager.stopAll();
     }

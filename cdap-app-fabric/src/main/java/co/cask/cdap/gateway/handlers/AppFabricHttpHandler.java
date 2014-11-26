@@ -52,7 +52,7 @@ import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.table.PreferenceTableDataset;
+import co.cask.cdap.data2.dataset2.lib.table.PreferencesTableDataset;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -2250,7 +2250,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private void deleteStateStore(final ApplicationSpecification spec) throws Exception {
-    final PreferenceTableDataset prefDataset = sysdsFramework.getDataset(Constants.Preferences.PROPERTY_TABLE,
+    final PreferencesTableDataset prefDataset = sysdsFramework.getDataset(Constants.ConfigService.PREFERENCE_TABLE,
                                                                          null, null);
     final String appName = spec.getName();
     Preconditions.checkNotNull(prefDataset, "Could not find StateStore Table");
@@ -2288,7 +2288,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private AppFabricServiceStatus removeApplication(Id.Program identifier) throws Exception {
     Id.Account accountId = Id.Account.from(identifier.getAccountId());
     final Id.Application appId = Id.Application.from(accountId, identifier.getApplicationId());
-
 
     //Check if all are stopped.
     boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
@@ -2669,16 +2668,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                                                      status.getResult().getBytes(),
                                                                      ImmutableMultimap.of(
                                                                        HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8")
-                                             );
-
+                                                                       "application/json; charset=utf-8"));
                                            } else {
                                              responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                                                                  status.getResult());
                                            }
                                          }
-                                       }
-      );
+                                       });
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {

@@ -117,7 +117,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.PREFERENCES)
+                               mapBinder.addBinding(Constants.Service.CONFIG_SERVICE)
                                         .to(InMemoryConfigServiceManager.class);
                              }
                            });
@@ -151,7 +151,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.PREFERENCES)
+                               mapBinder.addBinding(Constants.Service.CONFIG_SERVICE)
                                         .to(InMemoryConfigServiceManager.class);
                              }
                            });
@@ -186,7 +186,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(ExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.PREFERENCES)
+                               mapBinder.addBinding(Constants.Service.CONFIG_SERVICE)
                                         .to(ConfigServiceManager.class);
                              }
                            });
