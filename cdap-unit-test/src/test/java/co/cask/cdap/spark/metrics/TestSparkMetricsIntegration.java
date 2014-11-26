@@ -45,6 +45,7 @@ public class TestSparkMetricsIntegration extends TestBase {
 
       Assert.assertTrue(RuntimeStats.getSparkMetrics(TestSparkMetricsIntegrationApp.APP_NAME,
                                                      TestSparkMetricsIntegrationApp.APP_SPARK_NAME, METRICS_KEY) > 0);
+      //TODO: Add test to check user metrics once the support is added: CDAP-765
     } finally {
       applicationManager.stopAll();
       TimeUnit.SECONDS.sleep(1);

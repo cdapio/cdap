@@ -17,12 +17,14 @@
 package co.cask.cdap.spark.metrics;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 
 import java.util.Arrays;
 import java.util.List;
@@ -56,8 +58,19 @@ public class TestSparkMetricsIntegrationApp extends AbstractApplication {
     @Override
     public void run(SparkContext context) {
       List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
+      final Metrics metrics = context.getMetrics();
       JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
       distData.count();
+      JavaRDD<Integer> newData = distData.map(new Function<Integer, Integer>() {
+        @Override
+        public Integer call(Integer val) throws Exception {
+          int newVal = val * 10;
+          if (newVal > 30) {
+            metrics.count("more.than.30", 1);
+          }
+          return newVal;
+        }
+      });
     }
   }
 }
