@@ -5,9 +5,10 @@
   "scripts": {
     "start": "node ./server.js",
 
-    "cdap": "../cdap/cdap-standalone/target/cdap-sdk-2.6.0-SNAPSHOT/bin/cdap.sh",
+    "backend": "../cdap/cdap-standalone/target/cdap-sdk-2.6.0-SNAPSHOT/bin/cdap.sh",
 
-    "build": "npm install && ./node_modules/bower/bin/bower install && node ./node_modules/gulp/bin/gulp.js build",
+    "prebuild": "npm install && ./node_modules/bower/bin/bower update --config.interactive=false",
+    "build": "node ./node_modules/gulp/bin/gulp.js build",
 
     "test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
     "test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run"
