@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
-import co.cask.cdap.api.data.DataSetContext;
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.Metrics;
@@ -32,7 +32,6 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
@@ -41,7 +40,6 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
@@ -49,8 +47,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -139,7 +135,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     }
   }
 
-  private class ServiceWorkerDatasetContext implements DataSetContext {
+  private class ServiceWorkerDatasetContext implements DatasetContext {
     private final TransactionContext context;
 
     private ServiceWorkerDatasetContext(TransactionContext context) {
@@ -147,34 +143,34 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     }
 
     @Override
-    public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-      return getDataSet(name, DatasetDefinition.NO_ARGUMENTS);
+    public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+      return getDataset(name, DatasetDefinition.NO_ARGUMENTS);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends Closeable> T getDataSet(String name,
-                                              Map<String, String> arguments) throws DataSetInstantiationException {
-      String datasetNotUsedError = String.format("Trying to access dataset %s that is not declared as used " +
-                                                   "by the Worker. Specify required datasets using the useDataset() " +
-                                                   "method in the Worker's configure().", name);
-      Preconditions.checkArgument(datasets.contains(name), datasetNotUsedError);
+    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+      throws DatasetInstantiationException {
+
+      if (!datasets.contains(name)) {
+        throw new DatasetInstantiationException(
+          String.format("Trying to access dataset '%s' that was not declared with " +
+                          "useDataset() in the worker's configure()", name));
+      }
 
       try {
         Dataset dataset = datasetFramework.getDataset(name, arguments, getProgram().getClassLoader());
-        if (dataset == null) {
-          throw new DataSetInstantiationException(String.format("Dataset %s does not exist.", name));
+        if (dataset != null) {
+          if (dataset instanceof TransactionAware) {
+            context.addTransactionAware((TransactionAware) dataset);
+          }
+          return (T) dataset;
         }
-        context.addTransactionAware((TransactionAware) dataset);
-
-        return (T) dataset;
-      } catch (DatasetManagementException e) {
-        LOG.error("Could not get dataset meta info.");
-        throw Throwables.propagate(e);
-      } catch (IOException e) {
-        LOG.error("Could not instantiate dataset.");
-        throw Throwables.propagate(e);
+      } catch (Throwable t) {
+        throw new DatasetInstantiationException(String.format("Could not instantiate dataset '%s'", name), t);
       }
+      // if it gets here, then the dataset was null
+      throw new DatasetInstantiationException(String.format("Dataset '%s' does not exist", name));
     }
   }
 }

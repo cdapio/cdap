@@ -16,7 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -36,7 +37,6 @@ import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
@@ -184,15 +184,15 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-      return getDataSet(name, null);
+    public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+      return getDataset(name, null);
     }
 
     @Override
-    public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
-      throws DataSetInstantiationException {
-      throw new DataSetInstantiationException("Dataset '" + name + "' cannot be instantiated. " +
-                                                "Operation not supported in " + getClass().getName());
+    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+      throws DatasetInstantiationException {
+      throw new DatasetInstantiationException(
+        String.format("Dataset '%s' cannot be instantiated. Operation not supported", name));
     }
 
     @Override
