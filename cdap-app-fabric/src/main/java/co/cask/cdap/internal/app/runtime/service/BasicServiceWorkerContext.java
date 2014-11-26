@@ -160,8 +160,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
 
       if (!datasets.contains(name)) {
         throw new DatasetInstantiationException(
-          String.format("Trying to access dataset %s that is not declared as used by the Worker. Specify " +
-                          "required datasets using the useDataset() method in the Worker's configure().", name));
+          String.format("Trying to access dataset '%s' that was not declared with " +
+                          "useDataset() in the worker's configure()", name));
       }
 
       try {
@@ -176,7 +176,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
         throw new DatasetInstantiationException(String.format("Could not instantiate dataset '%s'", name), t);
       }
       // if it gets here, then the dataset was null
-      throw new DatasetInstantiationException(String.format("Dataset '%s' does not exist.", name));
+      throw new DatasetInstantiationException(String.format("Dataset '%s' does not exist", name));
     }
   }
 }

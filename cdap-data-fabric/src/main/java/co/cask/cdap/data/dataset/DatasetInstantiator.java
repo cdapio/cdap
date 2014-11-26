@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
  * to pass in data fabric runtime; no exposure of developers to the raw
  * data fabric; and developers only interact with Datasets.
  */
-public class DataSetInstantiator implements DatasetContext {
+public class DatasetInstantiator implements DatasetContext {
 
   private final DatasetFramework datasetFramework;
   // the class loader to use for data set classes
@@ -65,7 +65,7 @@ public class DataSetInstantiator implements DatasetContext {
    * @param classLoader the class loader to use for loading data set classes.
    *                    If null, then the default class loader is used
    */
-  public DataSetInstantiator(DatasetFramework datasetFramework,
+  public DatasetInstantiator(DatasetFramework datasetFramework,
                              CConfiguration configuration,
                              ClassLoader classLoader,
                              @Nullable

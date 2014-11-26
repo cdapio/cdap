@@ -29,7 +29,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
@@ -54,7 +54,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   private final MetricsCollector programMetrics;
 
-  private final DataSetInstantiator dsInstantiator;
+  private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   public AbstractContext(Program program, RunId runId,
@@ -81,7 +81,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
       datasetMetrics = null;
     }
 
-    this.dsInstantiator = new DataSetInstantiator(dsFramework, conf, program.getClassLoader(),
+    this.dsInstantiator = new DatasetInstantiator(dsFramework, conf, program.getClassLoader(),
                                                   datasetMetrics, programMetrics);
 
     // todo: this should be instantiated on demand, at run-time dynamically. Esp. bad to do that in ctor...
@@ -102,7 +102,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   }
 
   // todo: this may be refactored further: avoid leaking dataset instantiator from context
-  public DataSetInstantiator getDatasetInstantiator() {
+  public DatasetInstantiator getDatasetInstantiator() {
     return dsInstantiator;
   }
 
@@ -125,7 +125,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
       throw new DatasetInstantiationException(String.format("Can't instantiate dataset '%s'", name), t);
     }
     // if execution gets here, then dataset was null
-    throw new DatasetInstantiationException(String.format("'%s' is not a known Dataset.", name));
+    throw new DatasetInstantiationException(String.format("'%s' is not a known Dataset", name));
   }
 
   @Override

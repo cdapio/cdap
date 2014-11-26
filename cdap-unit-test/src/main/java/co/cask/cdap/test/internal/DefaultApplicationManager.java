@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
@@ -70,7 +70,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final String accountId;
   private final String applicationId;
   private final TransactionSystemClient txSystemClient;
-  private final DataSetInstantiator dataSetInstantiator;
+  private final DatasetInstantiator datasetInstantiator;
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
   private final AppFabricClient appFabricClient;
@@ -102,7 +102,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
       ClassLoader classLoader = ProgramClassLoader.create(tempDir, getClass().getClassLoader());
-      this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
+      this.datasetInstantiator = new DatasetInstantiator(datasetFramework, configuration,
                                                          new DataSetClassLoader(classLoader),
                                                          // todo: collect metrics for datasets outside programs too
                                                          null, null);
@@ -392,11 +392,11 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public <T> DataSetManager<T> getDataSet(String dataSetName) {
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) dataSetInstantiator.getDataset(dataSetName);
+    final T dataSet = (T) datasetInstantiator.getDataset(dataSetName);
 
     try {
       final TransactionContext txContext =
-        new TransactionContext(txSystemClient, dataSetInstantiator.getTransactionAware());
+        new TransactionContext(txSystemClient, datasetInstantiator.getTransactionAware());
       txContext.start();
       return new DataSetManager<T>() {
         @Override
