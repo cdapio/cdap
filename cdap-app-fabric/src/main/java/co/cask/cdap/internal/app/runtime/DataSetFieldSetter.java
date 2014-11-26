@@ -39,7 +39,7 @@ public final class DataSetFieldSetter extends FieldVisitor {
     if (Dataset.class.isAssignableFrom(field.getType())) {
       UseDataSet useDataSet = field.getAnnotation(UseDataSet.class);
       if (useDataSet != null && !useDataSet.value().isEmpty()) {
-        field.set(instance, dataSetContext.getDataSet(useDataSet.value()));
+        field.set(instance, dataSetContext.getDataset(useDataSet.value()));
       }
     }
   }

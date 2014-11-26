@@ -142,14 +142,20 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
       this.context = context;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends Dataset> T getDataSet(String name) throws DatasetInstantiationException {
-      return getDataSet(name, DatasetDefinition.NO_ARGUMENTS);
+      return getDataset(name);
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+      return getDataset(name, DatasetDefinition.NO_ARGUMENTS);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
+    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
       throws DatasetInstantiationException {
 
       if (!datasets.contains(name)) {

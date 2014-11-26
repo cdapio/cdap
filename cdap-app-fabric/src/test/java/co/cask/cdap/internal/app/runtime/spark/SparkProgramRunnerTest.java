@@ -151,7 +151,7 @@ public class SparkProgramRunnerTest {
   }
 
   private void prepareInputData() throws TransactionFailureException, InterruptedException {
-    final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
+    final ObjectStore<String> input = dataSetInstantiator.getDataset("keys");
 
     //Populate some input
     txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
@@ -165,7 +165,7 @@ public class SparkProgramRunnerTest {
   }
 
   private void checkOutputData() throws TransactionFailureException, InterruptedException {
-    final KeyValueTable output = dataSetInstantiator.getDataSet("count");
+    final KeyValueTable output = dataSetInstantiator.getDataset("count");
     //read output and verify result
     txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {

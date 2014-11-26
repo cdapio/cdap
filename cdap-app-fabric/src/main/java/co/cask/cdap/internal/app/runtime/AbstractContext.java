@@ -107,11 +107,17 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     return dsInstantiator;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("deprecation")
   @Override
   public <T extends Dataset> T getDataSet(String name) throws DatasetInstantiationException {
+    return getDataset(name);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
     try {
+      @SuppressWarnings("unchecked")
       T dataset = (T) datasets.get(name);
       Preconditions.checkArgument(dataset != null, "%s is not a known Dataset.", name);
       return dataset;
@@ -121,10 +127,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   }
 
   @Override
-  public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    return getDataSet(name);
+    return getDataset(name);
   }
 
   public String getAccountId() {

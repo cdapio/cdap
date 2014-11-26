@@ -37,7 +37,7 @@ public interface DatasetContext {
    *         cannot be opened (for example, one of the underlying tables in the DataFabric
    *         cannot be accessed).
    */
-  public <T extends Dataset> T getDataSet(String name)
+  public <T extends Dataset> T getDataset(String name)
     throws DatasetInstantiationException;
 
   /**
@@ -53,6 +53,14 @@ public interface DatasetContext {
    *         cannot be accessed).
    */
   @Beta
-  public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException;
+
+  /**
+   * This method has been renamed to {@link #getDataset(String)}. It will be removed in a future release.
+   */
+  @Deprecated
+  public <T extends Dataset> T getDataSet(String name)
+    throws DatasetInstantiationException;
+
 }

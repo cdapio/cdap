@@ -54,7 +54,7 @@ public class DataSetInstantiator implements DatasetContext {
   // the class loader to use for data set classes
   private final ClassLoader classLoader;
   private final Set<TransactionAware> txAware = Sets.newIdentityHashSet();
-  // in this collection we have only datasets initialized with getDataSet() which is OK for now...
+  // in this collection we have only datasets initialized with getDataset() which is OK for now...
   private final Map<TransactionAware, String> txAwareToMetricNames = Maps.newIdentityHashMap();
 
   private final MetricsCollector dsMetricsCollector;
@@ -81,15 +81,22 @@ public class DataSetInstantiator implements DatasetContext {
                                      new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public <T extends Dataset> T getDataSet(String dataSetName)
     throws DatasetInstantiationException {
-    return getDataSet(dataSetName, DatasetDefinition.NO_ARGUMENTS);
+    return getDataset(dataSetName);
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String dataSetName)
+    throws DatasetInstantiationException {
+    return getDataset(dataSetName, DatasetDefinition.NO_ARGUMENTS);
   }
 
   @Override
   @SuppressWarnings("unchecked")
-  public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
 
     T dataset;

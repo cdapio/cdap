@@ -39,9 +39,9 @@ public final class Datasets {
       if (arguments != null && !arguments.isEmpty()) {
         Map<String, String> datasetArguments = RuntimeArguments.
           extractScope(Scope.DATASET, name, arguments);
-        dataset = context.getDataSet(name, datasetArguments);
+        dataset = context.getDataset(name, datasetArguments);
       } else {
-        dataset = context.getDataSet(name);
+        dataset = context.getDataset(name);
       }
       builder.put(name, dataset);
     }

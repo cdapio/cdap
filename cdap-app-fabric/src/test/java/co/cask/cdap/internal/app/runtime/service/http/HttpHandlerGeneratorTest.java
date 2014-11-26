@@ -183,13 +183,19 @@ public class HttpHandlerGeneratorTest {
       return null;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T extends Dataset> T getDataSet(String name) throws DatasetInstantiationException {
-      return getDataSet(name, null);
+      return getDataset(name);
     }
 
     @Override
-    public <T extends Dataset> T getDataSet(String name, Map<String, String> arguments)
+    public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+      return getDataset(name, null);
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
       throws DatasetInstantiationException {
       throw new DatasetInstantiationException(
         String.format("Dataset '%s' cannot be instantiated. Operation not supported", name));

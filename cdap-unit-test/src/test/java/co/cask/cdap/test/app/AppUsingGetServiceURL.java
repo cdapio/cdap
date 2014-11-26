@@ -142,7 +142,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         getContext().execute(new TxRunnable() {
           @Override
           public void run(DatasetContext context) throws Exception {
-            KeyValueTable table = context.getDataSet(WORKER_INSTANCES_DATASET);
+            KeyValueTable table = context.getDataset(WORKER_INSTANCES_DATASET);
             String key = String.format("%d.%d", getContext().getInstanceId(), System.nanoTime());
             table.write(key, Bytes.toBytes(getContext().getInstanceCount()));
           }
@@ -153,7 +153,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         getContext().execute(new TxRunnable() {
           @Override
           public void run(DatasetContext context) throws Exception {
-            KeyValueTable table = context.getDataSet(DATASET_NAME);
+            KeyValueTable table = context.getDataset(DATASET_NAME);
             table.write(key, val);
           }
         });

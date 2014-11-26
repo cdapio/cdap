@@ -201,7 +201,7 @@ public class AppWithServices extends AbstractApplication {
         getContext().execute(new TxRunnable() {
           @Override
           public void run(DatasetContext context) throws Exception {
-            KeyValueTable table = context.getDataSet(DATASET_NAME);
+            KeyValueTable table = context.getDataset(DATASET_NAME);
             table.write(DATASET_TEST_KEY_STOP, DATASET_TEST_VALUE_STOP);
           }
         });
@@ -216,7 +216,7 @@ public class AppWithServices extends AbstractApplication {
             getContext().execute(new TxRunnable() {
               @Override
               public void run(DatasetContext context) throws Exception {
-                KeyValueTable table = context.getDataSet(DATASET_NAME);
+                KeyValueTable table = context.getDataset(DATASET_NAME);
                 table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
               }
             });
