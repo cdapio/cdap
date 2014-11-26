@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class MetricsQueryTest extends MetricsSuiteTestBase {
+public class MetricsQueryTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testQueueLength() throws Exception {

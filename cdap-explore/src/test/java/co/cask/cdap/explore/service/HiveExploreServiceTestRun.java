@@ -63,7 +63,7 @@ import static co.cask.cdap.explore.service.KeyStructValueTableDefinition.KeyValu
  * Tests Hive13ExploreService.
  */
 @Category(SlowTests.class)
-public class HiveExploreServiceTest extends BaseHiveExploreServiceTest {
+public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   @BeforeClass
   public static void start() throws Exception {
     startServices(CConfiguration.create());

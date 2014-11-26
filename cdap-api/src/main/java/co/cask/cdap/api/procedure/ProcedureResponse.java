@@ -24,12 +24,18 @@ import java.nio.ByteBuffer;
 
 /**
  * This class represents the response from a {@link Procedure}.
+ *
+ * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
  */
+@Deprecated
 public final class ProcedureResponse {
 
   /**
    * Interface for writing response data.
+   *
+   * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   public interface Writer extends Closeable {
 
     /**
@@ -74,7 +80,10 @@ public final class ProcedureResponse {
 
   /**
    * Response code to indicate result of the {@link Procedure}.
+   *
+   * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   public enum Code {
     SUCCESS,
     FAILURE,
@@ -86,13 +95,21 @@ public final class ProcedureResponse {
 
   /**
    * Construct a {@link ProcedureResponse} with the given result {@link Code}.
+   *
    * @param code Result code.
+   * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   public ProcedureResponse(Code code) {
     Preconditions.checkNotNull(code, "Response code cannot be null.");
     this.code = code;
   }
-
+  
+  /**
+   *
+   * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
+   */
+  @Deprecated
   public Code getCode() {
     return code;
   }

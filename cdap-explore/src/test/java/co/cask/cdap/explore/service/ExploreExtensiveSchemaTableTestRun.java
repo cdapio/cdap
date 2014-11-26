@@ -37,7 +37,7 @@ import org.junit.experimental.categories.Category;
  * Painfully test a wide combination of types in a schema of a record scannable.
  */
 @Category(SlowTests.class)
-public class ExploreExtensiveSchemaTableTest extends BaseHiveExploreServiceTest {
+public class ExploreExtensiveSchemaTableTestRun extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {

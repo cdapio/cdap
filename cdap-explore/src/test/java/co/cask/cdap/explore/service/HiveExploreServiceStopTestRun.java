@@ -28,7 +28,8 @@ import java.util.Set;
 /**
  * Tests whether txns get closed on stopping explore service.
  */
-public class HiveExploreServiceStopTest extends BaseHiveExploreServiceTest {
+public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
+
   @BeforeClass
   public static void start() throws Exception {
     startServices(CConfiguration.create());

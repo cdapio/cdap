@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class MetricsDiscoveryQueryTest extends MetricsSuiteTestBase {
+public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
 
   @BeforeClass
   public static void setup() throws InterruptedException {

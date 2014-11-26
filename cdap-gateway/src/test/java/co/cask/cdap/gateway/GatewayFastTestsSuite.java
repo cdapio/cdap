@@ -18,11 +18,11 @@ package co.cask.cdap.gateway;
 
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.PingHandlerTest;
-import co.cask.cdap.gateway.handlers.ProcedureHandlerTest;
-import co.cask.cdap.gateway.handlers.RuntimeArgumentTest;
-import co.cask.cdap.gateway.handlers.StreamHandlerTest;
-import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTest;
+import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
+import co.cask.cdap.gateway.handlers.ProcedureHandlerTestRun;
+import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
+import co.cask.cdap.gateway.handlers.StreamHandlerTestRun;
+import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
@@ -60,11 +60,11 @@ import javax.annotation.Nullable;
  */
 @RunWith(value = Suite.class)
 @Suite.SuiteClasses(value = {
-  PingHandlerTest.class,
-  ProcedureHandlerTest.class,
-  MetricsReporterHookTest.class,
-  StreamHandlerTest.class,
-  RuntimeArgumentTest.class
+  PingHandlerTestRun.class,
+  ProcedureHandlerTestRun.class,
+  MetricsReporterHookTestRun.class,
+  StreamHandlerTestRun.class,
+  RuntimeArgumentTestRun.class
 })
 
 public class GatewayFastTestsSuite {

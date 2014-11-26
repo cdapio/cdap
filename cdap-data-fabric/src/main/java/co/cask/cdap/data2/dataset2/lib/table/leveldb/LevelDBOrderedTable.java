@@ -98,7 +98,7 @@ public class LevelDBOrderedTable extends BufferingOrderedTable {
 
   @Override
   protected NavigableMap<byte[], byte[]> getPersisted(byte[] row, @Nullable byte[][] columns) throws Exception {
-    return core.getRow(row, columns, null, null, columns == null ? Integer.MAX_VALUE : columns.length, tx);
+    return core.getRow(row, columns, null, null, -1, tx);
   }
 
   @Override

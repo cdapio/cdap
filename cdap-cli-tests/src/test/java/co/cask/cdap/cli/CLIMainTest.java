@@ -121,8 +121,8 @@ public class CLIMainTest extends StandaloneTestBase {
     //test service commands
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, EchoHandler.NAME);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
-    testCommandOutputContains(cli, "get service " + qualifiedServiceId + " endpoints", "POST");
-    testCommandOutputContains(cli, "get service " + qualifiedServiceId + " endpoints", "/echo");
+    testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "POST");
+    testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "/echo");
     testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"", "testBody");
     testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
 
@@ -131,7 +131,6 @@ public class CLIMainTest extends StandaloneTestBase {
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
     testCommandOutputContains(cli, "list spark", sparkId);
     testCommandOutputContains(cli, "start spark " + qualifiedSparkId, "Successfully started Spark");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STARTING", 30);
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING", 180);
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED", 180);
     testCommandOutputContains(cli, "get spark status " + qualifiedSparkId, "STOPPED");

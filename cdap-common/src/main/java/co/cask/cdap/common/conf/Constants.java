@@ -656,4 +656,14 @@ public final class Constants {
      */
     public static final String SSL_ALLOW_SELFSIGNEDCERT = "dashboard.selfsignedcertificate.enabled";
   }
+
+  /**
+   * Constants for endpoints
+   */
+  public static final class EndPoints {
+    /**
+    * Status endpoint
+    */
+    public static final String STATUS = "/status";
+  }
 }

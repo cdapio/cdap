@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class MetricsDeleteTest extends MetricsSuiteTestBase {
+public class MetricsDeleteTestRun extends MetricsSuiteTestBase {
 
   @Test
   public void testContextDelete() throws Exception {

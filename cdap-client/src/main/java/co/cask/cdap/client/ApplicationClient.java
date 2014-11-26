@@ -19,8 +19,8 @@ package co.cask.cdap.client;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.exception.ApplicationNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
-import co.cask.cdap.client.util.ProgramFlowUtil;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -117,7 +117,7 @@ public class ApplicationClient {
     throws IOException, UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
 
     try {
-      ProgramFlowUtil.waitFor(true, new Callable<Boolean>() {
+      Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
           return exists(appId);
@@ -143,7 +143,7 @@ public class ApplicationClient {
     throws IOException, UnAuthorizedAccessTokenException, TimeoutException, InterruptedException {
 
     try {
-      ProgramFlowUtil.waitFor(false, new Callable<Boolean>() {
+      Tasks.waitFor(false, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
           return exists(appId);

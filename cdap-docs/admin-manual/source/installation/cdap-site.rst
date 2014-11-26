@@ -125,7 +125,7 @@ see the :ref:`configuration-security` section.
      - Number of Netty server boss threads
    * - ``gateway.connection.backlog``
      - ``20000``
-     - Maximum connection backlog of Gateway
+     - Maximum connection backlog of Router
    * - ``gateway.exec.threads``
      - ``20``
      - Number of Netty server executor threads
@@ -140,13 +140,13 @@ see the :ref:`configuration-security` section.
      - Maximum number of stream events cached before flushing
    * - ``gateway.memory.mb``
      - ``2048``
-     - Memory in MB for Gateway process in YARN
+     - Memory in MB for Router process in YARN
    * - ``gateway.num.cores``
      - ``2``
-     - Cores requested per Gateway container in YARN
+     - Cores requested per Router container in YARN
    * - ``gateway.num.instances``
      - ``1``
-     - Number of Gateway instances in YARN
+     - Number of Router instances in YARN
    * - ``gateway.stream.callback.exec.num.threads``
      - ``5``
      - Number of threads in stream events callback executor

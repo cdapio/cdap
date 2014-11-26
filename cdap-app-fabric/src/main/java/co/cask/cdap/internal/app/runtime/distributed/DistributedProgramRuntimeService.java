@@ -379,8 +379,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           containers++;
           memory += report.getAppMasterResources().getMemoryMB();
           vcores += report.getAppMasterResources().getVirtualCores();
+          sendMetrics(metricContext, containers, memory, vcores, controller.getRunId().getId());
         }
-        sendMetrics(metricContext, containers, memory, vcores);
       }
       reportClusterStorage();
       reportClusterMemory();

@@ -38,7 +38,7 @@ import java.net.URL;
  *
  */
 @Category(XSlowTests.class)
-public class WritableDatasetTest extends BaseHiveExploreServiceTest {
+public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   @BeforeClass
   public static void start() throws Exception {
     startServices(CConfiguration.create());

@@ -16,16 +16,11 @@
 
 package co.cask.cdap.examples.sparkpagerank;
 
-import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
-import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
@@ -34,27 +29,25 @@ import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Charsets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.Arrays;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
- * Application that calculates page rank of URLs from an input stream.
+ * An Application that calculates page rank of URLs from an input stream.
  */
 public class SparkPageRankApp extends AbstractApplication {
 
-  static final String SERVICE_NAME = "GoogleTypePR";
+  public static final String RANKS_SERVICE_NAME = "RanksService";
+  public static final String GOOGLE_TYPE_PR_SERVICE_NAME = "GoogleTypePR";
 
   @Override
   public void configure() {
     setName("SparkPageRank");
-    setDescription("Spark page rank app");
+    setDescription("Spark page rank application.");
 
     // Ingest data into the Application via a Stream
     addStream(new Stream("backlinkURLStream"));
@@ -62,11 +55,11 @@ public class SparkPageRankApp extends AbstractApplication {
     // Run a Spark program on the acquired data
     addSpark(new SparkPageRankSpecification());
 
-    // Query the processed data using a Procedure
-    addProcedure(new RanksProcedure());
+    // Retrieve the processed data using a Service
+    addService(RANKS_SERVICE_NAME, new RanksServiceHandler());
 
     // Service which converts calculated pageranks to Google type page ranks
-    addService(SERVICE_NAME, new GoogleTypePRHandler());
+    addService(GOOGLE_TYPE_PR_SERVICE_NAME, new GoogleTypePRHandler());
 
     // Store input and processed data in ObjectStore Datasets
     try {
@@ -83,7 +76,8 @@ public class SparkPageRankApp extends AbstractApplication {
   /**
    * A Spark program that calculates page rank.
    */
-  public static class SparkPageRankSpecification extends AbstractSpark {
+  public static final class SparkPageRankSpecification extends AbstractSpark {
+
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
@@ -95,58 +89,42 @@ public class SparkPageRankApp extends AbstractApplication {
   }
 
   /**
-   * A Procedure that returns rank of the URL.
+   * A {@link Service} that responds with rank of the URL.
    */
-  public static class RanksProcedure extends AbstractProcedure {
+  public static final class RanksServiceHandler extends AbstractHttpServiceHandler {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RanksProcedure.class);
-
-    // Annotation indicates that ranks dataset is used in the Procedure.
     @UseDataSet("ranks")
     private ObjectStore<Integer> ranks;
 
-    @Handle("rank")
-    public void getRank(ProcedureRequest request, ProcedureResponder responder)
-      throws IOException, InterruptedException {
-
-      // Get the url from the query parameters.
-      String urlParam = "";
-      for (String key : request.getArguments().keySet()) {
-        if (key.equalsIgnoreCase("url")) {
-          urlParam = request.getArgument(key);
-        }
-      }
-      if (urlParam.isEmpty()) {
-        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "URL must be given as argument");
-      }
-      byte[] url = urlParam.getBytes(Charsets.UTF_8);
-
-      // Get the rank from the ranks dataset.
-      Integer rank = ranks.read(url);
-      if (rank == null) {
-        responder.error(ProcedureResponse.Code.NOT_FOUND, "No rank found for " + urlParam);
+    @Path("rank")
+    @GET
+    public void getRank(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("url") String url) {
+      if (url == null) {
+        responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
+                             String.format("The url parameter must be specified"), Charsets.UTF_8);
         return;
       }
 
-      LOG.trace("Key: {}, Data: {}", Arrays.toString(url), rank);
-
-      // Send response in JSON format.
-      responder.sendJson(String.valueOf(rank));
+      // Get the rank from the ranks dataset
+      Integer rank = ranks.read(url.getBytes(Charsets.UTF_8));
+      if (rank == null) {
+        responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
+                             String.format("No rank found of %s", url), Charsets.UTF_8);
+      } else {
+        responder.sendString(rank.toString());
+      }
     }
   }
 
   /**
-   * A {@link Service} which converts the page rank to a Google Type page rank (from 0 to 10)
+   * A {@link Service} which converts the page rank to a Google Type page rank (from 0 to 10).
    */
-  public class GoogleTypePRHandler extends AbstractHttpServiceHandler {
+  public static final class GoogleTypePRHandler extends AbstractHttpServiceHandler {
+
     @Path("transform/{pr}")
     @GET
     public void transform(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("pr") String pr) {
-      if (pr.isEmpty()) {
-        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "pagerank is empty");
-      } else {
-        responder.sendString(String.valueOf((int) (Math.round(Double.parseDouble(pr) * 10))));
-      }
+      responder.sendString(String.valueOf((int) (Math.round(Double.parseDouble(pr) * 10))));
     }
   }
 }

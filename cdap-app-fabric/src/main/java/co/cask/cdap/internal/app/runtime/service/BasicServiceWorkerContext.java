@@ -62,33 +62,31 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
 
   private final ServiceWorkerSpecification specification;
   private final Set<String> datasets;
-  private final Map<String, String> runtimeArgs;
   private final TransactionSystemClient transactionSystemClient;
   private final DatasetFramework datasetFramework;
   private final ServiceRunnableMetrics serviceRunnableMetrics;
+  private final int instanceId;
+  private final int instanceCount;
+
 
   public BasicServiceWorkerContext(ServiceWorkerSpecification spec, Program program, RunId runId, int instanceId,
-                                   Arguments runtimeArgs, CConfiguration cConf,
+                                   int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
                                    MetricsCollectionService metricsCollectionService,
                                    DatasetFramework datasetFramework,
                                    TransactionSystemClient transactionSystemClient,
                                    DiscoveryServiceClient discoveryServiceClient) {
-    super(program, runId, spec.getDatasets(), getMetricContext(program, spec.getName(), instanceId),
+    super(program, runId, runtimeArgs, spec.getDatasets(), getMetricContext(program, spec.getName(), instanceId),
           metricsCollectionService, datasetFramework, cConf, discoveryServiceClient);
     this.specification = spec;
     this.datasets = ImmutableSet.copyOf(spec.getDatasets());
-    this.runtimeArgs = runtimeArgs.asMap();
+    this.instanceId = instanceId;
+    this.instanceCount = instanceCount;
     this.transactionSystemClient = transactionSystemClient;
     this.datasetFramework = new NamespacedDatasetFramework(datasetFramework,
                                                            new DefaultDatasetNamespace(cConf, Namespace.USER));
     this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService,
                                                              getMetricContext(program, spec.getName(), instanceId),
                                                              runId.getId());
-  }
-
-  @Override
-  public Map<String, String> getRuntimeArguments() {
-    return runtimeArgs;
   }
 
   @Override
@@ -120,6 +118,16 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     }
   }
 
+  @Override
+  public int getInstanceCount() {
+    return instanceCount;
+  }
+
+  @Override
+  public int getInstanceId() {
+    return instanceId;
+  }
+
   private void abortTransaction(Exception e, String message, TransactionContext context) {
     try {
       LOG.error(message);
@@ -148,8 +156,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     public <T extends Closeable> T getDataSet(String name,
                                               Map<String, String> arguments) throws DataSetInstantiationException {
       String datasetNotUsedError = String.format("Trying to access dataset %s that is not declared as used " +
-                                                   "by the Worker. Specificy datasets used using useDataset() " +
-                                                   "method in the Workers's configure.", name);
+                                                   "by the Worker. Specify required datasets using the useDataset() " +
+                                                   "method in the Worker's configure().", name);
       Preconditions.checkArgument(datasets.contains(name), datasetNotUsedError);
 
       try {
@@ -161,7 +169,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
 
         return (T) dataset;
       } catch (DatasetManagementException e) {
-        LOG.error("Could not get dataset metainfo.");
+        LOG.error("Could not get dataset meta info.");
         throw Throwables.propagate(e);
       } catch (IOException e) {
         LOG.error("Could not instantiate dataset.");

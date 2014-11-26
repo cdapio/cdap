@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import org.apache.http.HttpResponse;
@@ -26,7 +27,7 @@ import org.junit.Test;
 /**
  * Test ping handler.
  */
-public class PingHandlerTest extends GatewayTestBase {
+public class PingHandlerTestRun extends GatewayTestBase {
   @Test
   public void testPing() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.doGet("/ping");
@@ -38,6 +39,6 @@ public class PingHandlerTest extends GatewayTestBase {
   public void testStatus() throws Exception {
     HttpResponse response = GatewayFastTestsSuite.doGet("/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("OK.\n", EntityUtils.toString(response.getEntity()));
+    Assert.assertEquals(Constants.Monitor.STATUS_OK, EntityUtils.toString(response.getEntity()));
   }
 }

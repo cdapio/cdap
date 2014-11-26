@@ -68,8 +68,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 .. |security| replace:: **Security:**
 .. _security: security/index.html
 
-- |security|_ CDAP supports securing clusters using perimeter security. Configuration
-  and client authentication are covered in this section.
+- |security|_ CDAP supports securing clusters using **perimeter security. Configuration
+  and client authentication** are covered in this section.
 
 
 .. |testing| replace:: **Testing and Debugging:**

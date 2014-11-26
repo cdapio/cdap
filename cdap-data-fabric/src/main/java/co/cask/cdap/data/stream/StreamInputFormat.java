@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -232,9 +233,11 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
       setDecoderClassName(conf, TextStreamEventDecoder.class.getName());
     } else if (BytesWritable.class.equals(vClass)) {
       setDecoderClassName(conf, BytesStreamEventDecoder.class.getName());
+    } else if (vClass instanceof Class && ((Class) vClass).isAssignableFrom(StreamEvent.class)) {
+      setDecoderClassName(conf, IdentityStreamEventDecoder.class.getName());
     } else {
-      throw new IllegalArgumentException("The value class must be of type BytesWritable or Text if no decoder type " +
-                                           "is provided");
+      throw new IllegalArgumentException("The value class must be of type BytesWritable, Text, StreamEvent or " +
+                                           "StreamEventData if no decoder type is provided");
     }
   }
 

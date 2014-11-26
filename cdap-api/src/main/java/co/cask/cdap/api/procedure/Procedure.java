@@ -20,7 +20,10 @@ import co.cask.cdap.api.ProgramLifecycle;
 
 /**
  * This interface defines a Procedure.
+ *
+ * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
  */
+@Deprecated
 public interface Procedure extends ProgramLifecycle<ProcedureContext> {
 
   /**

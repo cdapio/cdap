@@ -366,7 +366,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
         }
       }
     }
-    Preconditions.checkArgument(!result.isEmpty(), "No process or tick method found for " + flowletType);
+    Preconditions.checkArgument(!result.isEmpty(),
+                                "No inputs found for flowlet '%s' of flow '%s' of application '%s' (%s)",
+                                flowletContext.getFlowletId(), flowletContext.getFlowId(),
+                                flowletContext.getApplicationId(), flowletType);
     return result;
   }
 
