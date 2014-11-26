@@ -129,6 +129,10 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     flows.put(spec.getName(), spec);
   }
 
+  /*
+  * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
+  */
+  @Deprecated
   @Override
   public void addProcedure(Procedure procedure) {
     Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
@@ -136,6 +140,10 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     procedures.put(spec.getName(), spec);
   }
 
+  /*
+  * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
+  */
+  @Deprecated
   @Override
   public void addProcedure(Procedure procedure, int instance) {
     Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");

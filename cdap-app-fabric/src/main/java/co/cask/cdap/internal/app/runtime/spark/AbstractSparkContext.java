@@ -61,6 +61,7 @@ abstract class AbstractSparkContext implements SparkContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkContext.class);
   private static final Pattern SPACES = Pattern.compile("\\s+");
   private static final String[] NO_ARGS = {};
+  private static final String SPARK_METRICS_CONF_KEY = "spark.metrics.conf";
 
   private final Configuration hConf;
   private final long logicalStartTime;
@@ -86,6 +87,7 @@ abstract class AbstractSparkContext implements SparkContext {
   private SparkConf initializeSparkConf() {
     SparkConf sparkConf = new SparkConf();
     sparkConf.setAppName(basicSparkContext.getProgramName());
+    sparkConf.set(SPARK_METRICS_CONF_KEY, basicSparkContext.getMetricsPropertyFile().getAbsolutePath());
     return sparkConf;
   }
 
@@ -204,8 +206,8 @@ abstract class AbstractSparkContext implements SparkContext {
 
     String decoderType = stream.getDecoderType();
     if (decoderType == null) {
-        // If the user don't specify the decoder, detect the type
-        StreamInputFormat.inferDecoderClass(hConf, vClass);
+      // If the user don't specify the decoder, detect the type
+      StreamInputFormat.inferDecoderClass(hConf, vClass);
     } else {
       StreamInputFormat.setDecoderClassName(hConf, decoderType);
     }

@@ -69,6 +69,13 @@ public final class RuntimeStats {
     return getMetrics(prefix, inputName, processedName, exceptionName);
   }
 
+  public static long getSparkMetrics(String applicationId, String procedureId, String key) {
+    String inputName = String.format("%s.%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SPARK),
+                                     procedureId, key);
+    AtomicLong input = counters.get(inputName);
+    return input == null ? 0 : input.get();
+  }
+
   private static RuntimeMetrics getMetrics(final String prefix,
                                            final String inputName,
                                            final String processedName,

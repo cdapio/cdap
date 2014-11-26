@@ -39,7 +39,9 @@ import javax.inject.Inject;
 
 /**
  * Provides ways to interact with CDAP Procedures.
+ * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
  */
+@Deprecated
 public class ProcedureClient {
 
   private static final Gson GSON = new Gson();
