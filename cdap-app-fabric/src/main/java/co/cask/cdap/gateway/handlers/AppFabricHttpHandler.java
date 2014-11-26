@@ -2251,9 +2251,13 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
   private void deleteStateStore(final ApplicationSpecification spec) throws Exception {
     final PreferencesTableDataset prefDataset = sysdsFramework.getDataset(Constants.ConfigService.PREFERENCE_TABLE,
-                                                                         null, null);
+                                                                          null, null);
+    if (prefDataset == null) {
+      LOG.warn("Unable to find PreferencesTable. Can't delete StateStore");
+      return;
+    }
+
     final String appName = spec.getName();
-    Preconditions.checkNotNull(prefDataset, "Could not find StateStore Table");
     List<TransactionAware> txAware = Lists.newArrayList();
     txAware.add(prefDataset);
     final TransactionExecutor executor = executorFactory.createExecutor(txAware);
