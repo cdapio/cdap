@@ -24,11 +24,14 @@ define(['core/models/program'], function (Program) {
     var Model = Program.extend({
         type: 'Spark',
         plural: 'Spark',
+        currentState: '',
+        schedulerFailedLineSize: 'width: 33.3%',
+        schedulerRunningLineSize: 'width: 33.3%',
+        schedulerWaitingLineSize: 'width: 33.3%',
+
         href: function () {
             return '#/spark/' + this.get('id');
         }.property('id'),
-
-        currentState: '',
 
         init: function () {
             this._super();
@@ -47,10 +50,7 @@ define(['core/models/program'], function (Program) {
                 schedulerAllJobs: 0,
                 schedulerFailedStages: 0,
                 schedulerRunningStages: 0,
-                schedulerWaitingStages: 0,
-                schedulerFailedLineSize: 'width: 33.3%',
-                schedulerRunningLineSize: 'width: 33.3%',
-                schedulerWaitingLineSize: 'width: 33.3%'
+                schedulerWaitingStages: 0
             }));
         },
 
@@ -106,8 +106,7 @@ define(['core/models/program'], function (Program) {
         },
 
         startStopDisabled: function () {
-            if (this.currentState === 'STARTING' ||
-                this.currentState === 'STOPPING') {
+            if (this.currentState === 'STARTING' || this.currentState === 'STOPPING') {
                 return true;
             }
             return false;
@@ -168,6 +167,7 @@ define(['core/models/program'], function (Program) {
         },
 
         rescaleLineSizes: function () {
+            var model = this;
             var metricsData = this.get('metricsData');
             var failedStages = metricsData.schedulerFailedStages;
             var runningStages = metricsData.schedulerRunningStages;
@@ -186,9 +186,9 @@ define(['core/models/program'], function (Program) {
                 failedRatio = getRatio(failedStages);
                 waitingRatio = getRatio(waitingStages);
             }
-            metricsData.set('schedulerRunningLineSize', compilePtrn(runningRatio));
-            metricsData.set('schedulerFailedLineSize', compilePtrn(failedRatio));
-            metricsData.set('schedulerWaitingLineSize', compilePtrn(waitingRatio));
+            model.set('schedulerRunningLineSize', compilePtrn(runningRatio));
+            model.set('schedulerFailedLineSize', compilePtrn(failedRatio));
+            model.set('schedulerWaitingLineSize', compilePtrn(waitingRatio));
 
             /*
              In stages status line blocks we use minimum width 3% so '0' value can be displayed correct.
@@ -239,7 +239,7 @@ define(['core/models/program'], function (Program) {
                 for (var i = 0; i < arguments.length; i++) {
                     if (arguments[i] === 0) {
                         //append extra width to status line that we can draw 3% min width of status block
-                        totalStages += (totalStages / (100 - 3 * multiplier++)) * minPercent;
+                        totalStages += (totalStages / (100 - minPercent * multiplier++)) * minPercent;
                     }
                 }
             }
