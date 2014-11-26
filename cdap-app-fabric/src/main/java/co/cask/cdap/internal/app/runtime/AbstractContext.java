@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.data.DataSetContext;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
@@ -30,8 +31,10 @@ import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.table.PreferenceTable;
 import co.cask.cdap.data2.dataset2.lib.table.PreferenceTableDataset;
 import co.cask.cdap.proto.ProgramRecord;
 import com.google.common.base.Preconditions;
@@ -42,7 +45,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -105,8 +107,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
                                                                                                      Namespace.SYSTEM));
     this.table = null;
     try {
-      this.table = sysds.getDataset(Constants.Preferences.PROPERTY_TABLE, new HashMap<String, String>(),
-                                    program.getClassLoader());
+      this.table = DatasetsUtil.getOrCreateDataset(sysds, Constants.Preferences.PROPERTY_TABLE,
+                                                   PreferenceTable.class.getName(), DatasetProperties.EMPTY,
+                                                   null, null);
       this.dsInstantiator.addTransactionAware(table);
     } catch (Exception e) {
       LOG.error("Unable to find ProgramPreference Table", e);
