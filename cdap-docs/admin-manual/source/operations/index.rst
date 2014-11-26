@@ -54,7 +54,7 @@ Operations
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: troubleshooting.html
 
-- |troubleshooting|_ Selected examples of potential problems and possible resolutions.
+- |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
 
 
 .. rubric:: Command-Line Interface
