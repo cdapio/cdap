@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.preferences;
+package co.cask.cdap.data.configuration;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
