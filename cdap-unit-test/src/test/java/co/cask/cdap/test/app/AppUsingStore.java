@@ -70,7 +70,7 @@ public class AppUsingStore extends AbstractApplication {
 
     @Tick(delay =  1L, unit = TimeUnit.SECONDS)
     void process() {
-      getContext().setNote("key" + i, "value" + i);
+      getContext().saveState("key" + i, "value" + i);
       emitter.emit("key" + i);
       i++;
     }
@@ -81,21 +81,20 @@ public class AppUsingStore extends AbstractApplication {
 
     @ProcessInput
     void process(String key) {
-      Assert.assertEquals("value" + i, getContext().getNote(key));
+      Assert.assertEquals("value" + i, getContext().getState(key));
       i++;
     }
   }
-
 
   public static final class PingHandler extends AbstractHttpServiceHandler {
 
     @Path("count")
     @POST
     public void incrCount(HttpServiceRequest request, HttpServiceResponder responder) {
-      if (getContext().getNote("call") == null) {
-        getContext().setNote("call", Integer.toString(1));
+      if (getContext().getState("call") == null) {
+        getContext().saveState("call", Integer.toString(1));
       } else {
-        getContext().setNote("call", Integer.toString(Integer.valueOf(getContext().getNote("call")) + 1));
+        getContext().saveState("call", Integer.toString(Integer.valueOf(getContext().getState("call")) + 1));
       }
       responder.sendStatus(200);
     }
@@ -103,7 +102,7 @@ public class AppUsingStore extends AbstractApplication {
     @Path("count")
     @GET
     public void getCount(HttpServiceRequest request, HttpServiceResponder responder) {
-      responder.sendString(200, getContext().getNote("call"), Charsets.UTF_8);
+      responder.sendString(200, getContext().getState("call"), Charsets.UTF_8);
     }
   }
 }

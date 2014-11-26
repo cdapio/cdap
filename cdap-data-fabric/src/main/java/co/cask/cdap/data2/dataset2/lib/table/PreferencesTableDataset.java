@@ -42,7 +42,7 @@ public class PreferencesTableDataset extends AbstractDataset implements Preferen
   }
 
   @Override
-  public String getNote(ProgramRecord program, String key) {
+  public String getState(ProgramRecord program, String key) {
     try {
       return Bytes.toString(table.get(generateStateStoreRowKey(program), Bytes.toBytes(key)));
     } catch (Exception e) {
@@ -52,7 +52,7 @@ public class PreferencesTableDataset extends AbstractDataset implements Preferen
   }
 
   @Override
-  public void setNote(ProgramRecord program, String key, String value) {
+  public void saveState(ProgramRecord program, String key, String value) {
     try {
       table.put(generateStateStoreRowKey(program), Bytes.toBytes(key), Bytes.toBytes(value));
     } catch (Exception e) {
@@ -61,7 +61,7 @@ public class PreferencesTableDataset extends AbstractDataset implements Preferen
   }
 
   @Override
-  public Map<String, String> getNotes(ProgramRecord program) {
+  public Map<String, String> getState(ProgramRecord program) {
     Map<String, String> notes = Maps.newHashMap();
     try {
       for (Map.Entry<byte[], byte[]> entry : table.get(generateStateStoreRowKey(program)).entrySet()) {
@@ -75,12 +75,12 @@ public class PreferencesTableDataset extends AbstractDataset implements Preferen
   }
 
   @Override
-  public void setNotes(ProgramRecord program, Map<String, String> notes) {
-    byte[][] columns = new byte[notes.size()][];
-    byte[][] values = new byte[notes.size()][];
+  public void saveState(ProgramRecord program, Map<String, String> state) {
+    byte[][] columns = new byte[state.size()][];
+    byte[][] values = new byte[state.size()][];
     int i = 0;
     try {
-      for (Map.Entry<String, String> columnValue : notes.entrySet()) {
+      for (Map.Entry<String, String> columnValue : state.entrySet()) {
         columns[i] = Bytes.toBytes(columnValue.getKey());
         values[i] = Bytes.toBytes(columnValue.getValue());
         i++;
@@ -92,7 +92,7 @@ public class PreferencesTableDataset extends AbstractDataset implements Preferen
   }
 
   @Override
-  public void deleteNotes(ProgramRecord program) {
+  public void deleteState(ProgramRecord program) {
     try {
       table.delete(generateStateStoreRowKey(program));
     } catch (Exception e) {

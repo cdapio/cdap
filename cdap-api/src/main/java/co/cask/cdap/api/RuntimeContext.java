@@ -22,6 +22,7 @@ import java.util.Map;
  * This interface represents a context for a processor or elements of a processor.
  */
 public interface RuntimeContext {
+
   /**
    * @return A map of argument key and value.
    */
@@ -32,24 +33,24 @@ public interface RuntimeContext {
    * @param key Key
    * @param value Value
    */
-  void setNote(String key, String value);
+  void saveState(String key, String value);
 
   /**
    * Retrieve the value for a key from StateStore of the Program.
    * @param key Key
    * @return Value
    */
-  String getNote(String key);
+  String getState(String key);
 
   /**
    * Retrieve the contents from StateStore of the Program.
    * @return Map of Key and Value
    */
-  Map<String, String> getNotes();
+  Map<String, String> getState();
 
   /**
    * Set the contents in the StateStore of the Program.
-   * @param notes Map of Key and Value
+   * @param state Map of Key and Value
    */
-  void setNotes(Map<String, String> notes);
+  void saveState(Map<String, String> state);
 }

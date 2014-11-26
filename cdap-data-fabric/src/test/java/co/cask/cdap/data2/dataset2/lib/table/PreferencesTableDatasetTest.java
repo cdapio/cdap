@@ -44,12 +44,12 @@ public class PreferencesTableDatasetTest extends AbstractDatasetTest {
     PreferencesTable myPrefTable = getInstance("myPrefTable");
 
     ProgramRecord record = new ProgramRecord(ProgramType.FLOW, "MyApp", "MyFlow");
-    Assert.assertEquals(null, myPrefTable.getNote(record, "key1"));
-    myPrefTable.setNote(record, "key1", "val1");
-    Assert.assertEquals("val1", myPrefTable.getNote(record, "key1"));
-    Assert.assertEquals(null, myPrefTable.getNote(record, "key2"));
-    myPrefTable.setNotes(record, content);
-    Map<String, String> notes = myPrefTable.getNotes(record);
+    Assert.assertEquals(null, myPrefTable.getState(record, "key1"));
+    myPrefTable.saveState(record, "key1", "val1");
+    Assert.assertEquals("val1", myPrefTable.getState(record, "key1"));
+    Assert.assertEquals(null, myPrefTable.getState(record, "key2"));
+    myPrefTable.saveState(record, content);
+    Map<String, String> notes = myPrefTable.getState(record);
     Assert.assertEquals(4, notes.size());
     Assert.assertEquals("v1", notes.get("k1"));
     Assert.assertEquals("v1", notes.get("key1"));

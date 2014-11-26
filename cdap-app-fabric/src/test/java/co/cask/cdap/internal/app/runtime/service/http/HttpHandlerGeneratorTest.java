@@ -182,22 +182,22 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public void setNote(String key, String value) {
+    public void saveState(String key, String value) {
       //no-op
     }
 
     @Override
-    public String getNote(String key) {
+    public String getState(String key) {
       return null;
     }
 
     @Override
-    public Map<String, String> getNotes() {
+    public Map<String, String> getState() {
       return null;
     }
 
     @Override
-    public void setNotes(Map<String, String> notes) {
+    public void saveState(Map<String, String> state) {
       //no-op
     }
 

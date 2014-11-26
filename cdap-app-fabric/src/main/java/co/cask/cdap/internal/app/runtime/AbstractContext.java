@@ -199,22 +199,22 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   }
 
   @Override
-  public String getNote(String key) {
-    return table.getNote(record, key);
+  public String getState(String key) {
+    return table.getState(record, key);
   }
 
   @Override
-  public Map<String, String> getNotes() {
-    return table.getNotes(record);
+  public Map<String, String> getState() {
+    return table.getState(record);
   }
 
   @Override
-  public void setNote(String key, String value) {
-    table.setNote(record, key, value);
+  public void saveState(String key, String value) {
+    table.saveState(record, key, value);
   }
 
   @Override
-  public void setNotes(Map<String, String> notes) {
-    table.setNotes(record, notes);
+  public void saveState(Map<String, String> state) {
+    table.saveState(record, state);
   }
 }

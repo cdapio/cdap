@@ -2262,23 +2262,23 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       @Override
       public void apply() {
         for (FlowSpecification flowSpecification : spec.getFlows().values()) {
-          prefDataset.deleteNotes(new ProgramRecord(ProgramType.FLOW, appName, flowSpecification.getName()));
+          prefDataset.deleteState(new ProgramRecord(ProgramType.FLOW, appName, flowSpecification.getName()));
         }
 
         for (MapReduceSpecification mapReduceSpecification : spec.getMapReduce().values()) {
-          prefDataset.deleteNotes(new ProgramRecord(ProgramType.MAPREDUCE, appName, mapReduceSpecification.getName()));
+          prefDataset.deleteState(new ProgramRecord(ProgramType.MAPREDUCE, appName, mapReduceSpecification.getName()));
         }
 
         for (SparkSpecification sparkSpecification : spec.getSpark().values()) {
-          prefDataset.deleteNotes(new ProgramRecord(ProgramType.SPARK, appName, sparkSpecification.getName()));
+          prefDataset.deleteState(new ProgramRecord(ProgramType.SPARK, appName, sparkSpecification.getName()));
         }
 
         for (ProcedureSpecification procedureSpecification : spec.getProcedures().values()) {
-          prefDataset.deleteNotes(new ProgramRecord(ProgramType.PROCEDURE, appName, procedureSpecification.getName()));
+          prefDataset.deleteState(new ProgramRecord(ProgramType.PROCEDURE, appName, procedureSpecification.getName()));
         }
 
         for (ServiceSpecification serviceSpecification : spec.getServices().values()) {
-          prefDataset.deleteNotes(new ProgramRecord(ProgramType.SERVICE, appName, serviceSpecification.getName()));
+          prefDataset.deleteState(new ProgramRecord(ProgramType.SERVICE, appName, serviceSpecification.getName()));
         }
       }
     });
