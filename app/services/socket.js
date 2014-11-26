@@ -15,9 +15,23 @@ angular.module(PKG.name+'.services')
     });
 
    */
-  .factory('MyDataSource', function ($state, $log, mySocket, MYSOCKET_EVENT) {
+  .factory('MyDataSource', function ($state, $log, caskWindowManager, mySocket, MYSOCKET_EVENT) {
 
     var instances = {}; // keyed by scopeid
+
+    function _pollStart (resource) {
+      mySocket.send({
+        action: 'poll-start',
+        resource: resource
+      });
+    }
+
+    function _pollStop (resource) {
+      mySocket.send({
+        action: 'poll-stop',
+        resource: resource
+      });
+    }
 
     function DataSource (scope) {
       var id = scope.$id,
@@ -40,7 +54,7 @@ angular.module(PKG.name+'.services')
         });
       });
 
-      scope.$on(MYSOCKET_EVENT.reconnected, function (event, data) {
+      scope.$on(MYSOCKET_EVENT.reconnected, function () {
         $log.log('[DataSource] reconnected, reloading...');
 
         // https://github.com/angular-ui/ui-router/issues/582
@@ -53,8 +67,22 @@ angular.module(PKG.name+'.services')
         delete instances[id];
       });
 
+      scope.$on(caskWindowManager.event.blur, function () {
+        angular.forEach(self.bindings, function (b) {
+          _pollStop(b.resource);
+        });
+      });
+
+      scope.$on(caskWindowManager.event.focus, function () {
+        angular.forEach(self.bindings, function (b) {
+          _pollStart(b.resource);
+        });
+      });
+
       this.scope = scope;
     }
+
+
 
 
     DataSource.prototype.poll = function (resource, cb) {
@@ -65,16 +93,10 @@ angular.module(PKG.name+'.services')
       });
 
       this.scope.$on('$destroy', function () {
-        mySocket.send({
-          action: 'poll-stop',
-          resource: resource
-        });
+        _pollStop(resource);
       });
 
-      mySocket.send({
-        action: 'poll-start',
-        resource: resource
-      });
+      _pollStart(resource);
     };
 
 
