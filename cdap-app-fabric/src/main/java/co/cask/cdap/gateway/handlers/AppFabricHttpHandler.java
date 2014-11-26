@@ -17,7 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -887,7 +887,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }, Threads.SAME_THREAD_EXECUTOR);
 
       return AppFabricServiceStatus.OK;
-    } catch (DataSetInstantiationException e) {
+    } catch (DatasetInstantiationException e) {
       return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);

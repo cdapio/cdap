@@ -129,7 +129,7 @@ abstract class AbstractSparkContext implements SparkContext {
    */
   Configuration setInputDataset(String datasetName) {
     Configuration hConf = new Configuration(getHConf());
-    Dataset dataset = basicSparkContext.getDataSet(datasetName);
+    Dataset dataset = basicSparkContext.getDataset(datasetName);
     List<Split> inputSplits;
     if (dataset instanceof BatchReadable) {
       BatchReadable curDataset = (BatchReadable) dataset;

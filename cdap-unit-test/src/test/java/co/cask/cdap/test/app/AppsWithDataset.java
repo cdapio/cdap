@@ -128,7 +128,7 @@ public class AppsWithDataset {
     @Override
     public void initialize(ProcedureContext context) {
       super.initialize(context);
-      table = context.getDataSet("myTable");
+      table = context.getDataset("myTable");
     }
 
     @Handle("set")
