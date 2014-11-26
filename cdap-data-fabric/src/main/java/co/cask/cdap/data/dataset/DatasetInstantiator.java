@@ -81,13 +81,6 @@ public class DatasetInstantiator implements DatasetContext {
                                      new DefaultDatasetNamespace(configuration, Namespace.USER));
   }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  public <T extends Dataset> T getDataSet(String dataSetName)
-    throws DatasetInstantiationException {
-    return getDataset(dataSetName);
-  }
-
   @Override
   public <T extends Dataset> T getDataset(String dataSetName)
     throws DatasetInstantiationException {

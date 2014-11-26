@@ -56,11 +56,4 @@ public interface DatasetContext {
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException;
 
-  /**
-   * This method has been renamed to {@link #getDataset(String)}. It will be removed in a future release.
-   */
-  @Deprecated
-  public <T extends Dataset> T getDataSet(String name)
-    throws DatasetInstantiationException;
-
 }

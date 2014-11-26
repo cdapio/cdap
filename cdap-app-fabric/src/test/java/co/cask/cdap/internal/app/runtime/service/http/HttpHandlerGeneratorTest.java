@@ -183,12 +183,6 @@ public class HttpHandlerGeneratorTest {
       return null;
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T extends Dataset> T getDataSet(String name) throws DatasetInstantiationException {
-      return getDataset(name);
-    }
-
     @Override
     public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
       return getDataset(name, null);

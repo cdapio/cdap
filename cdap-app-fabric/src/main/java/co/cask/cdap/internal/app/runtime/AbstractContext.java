@@ -106,12 +106,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     return dsInstantiator;
   }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  public <T extends Dataset> T getDataSet(String name) throws DatasetInstantiationException {
-    return getDataset(name);
-  }
-
   @Override
   public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
