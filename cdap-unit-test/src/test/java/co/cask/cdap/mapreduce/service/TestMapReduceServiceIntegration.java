@@ -15,23 +15,23 @@ public class TestMapReduceServiceIntegration extends TestBase {
 
   @Test
   public void test() throws Exception {
-    ApplicationManager applicationManager = deployApplication(TetsMapReduceServiceIntegrationApp.class);
+    ApplicationManager applicationManager = deployApplication(TestMapReduceServiceIntegrationApp.class);
     try {
-      ServiceManager serviceManager = applicationManager.startService(TetsMapReduceServiceIntegrationApp.SERVICE_NAME);
+      ServiceManager serviceManager = applicationManager.startService(TestMapReduceServiceIntegrationApp.SERVICE_NAME);
       serviceStatusCheck(serviceManager, true);
 
-      DataSetManager<MyKeyValueTableDefinition.KeyValueTable> dictionary = applicationManager.getDataSet(TetsMapReduceServiceIntegrationApp.INPUT_DATASET);
-      dictionary.get().write("key1", "Two words");
-      dictionary.get().write("key2", "Plus three words");
-      dictionary.flush();
+      DataSetManager<MyKeyValueTableDefinition.KeyValueTable> inDataSet = applicationManager.getDataSet(TestMapReduceServiceIntegrationApp.INPUT_DATASET);
+      inDataSet.get().write("key1", "Two words");
+      inDataSet.get().write("key2", "Plus three words");
+      inDataSet.flush();
 
-      MapReduceManager mrManager = applicationManager.startMapReduce(TetsMapReduceServiceIntegrationApp.MR_NAME);
+      MapReduceManager mrManager = applicationManager.startMapReduce(TestMapReduceServiceIntegrationApp.MR_NAME);
       mrManager.waitForFinish(180, TimeUnit.SECONDS);
 
-      DataSetManager<MyKeyValueTableDefinition.KeyValueTable> datasetManager = applicationManager.getDataSet(TetsMapReduceServiceIntegrationApp.OUTPUT_DATASET);
-      MyKeyValueTableDefinition.KeyValueTable results = datasetManager.get();
+      DataSetManager<MyKeyValueTableDefinition.KeyValueTable> outDataSet = applicationManager.getDataSet(TestMapReduceServiceIntegrationApp.OUTPUT_DATASET);
+      MyKeyValueTableDefinition.KeyValueTable results = outDataSet.get();
 
-      String total = results.get(TetsMapReduceServiceIntegrationApp.TOTAL_WORDS_COUNT);
+      String total = results.get(TestMapReduceServiceIntegrationApp.TOTAL_WORDS_COUNT);
       Assert.assertEquals(5, Integer.parseInt(total));
     } finally {
       applicationManager.stopAll();

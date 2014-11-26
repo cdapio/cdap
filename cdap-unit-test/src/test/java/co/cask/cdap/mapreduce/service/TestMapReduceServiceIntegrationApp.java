@@ -11,6 +11,7 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.test.app.MyKeyValueTableDefinition;
 import com.google.common.io.ByteStreams;
 import org.apache.commons.io.Charsets;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -26,7 +27,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
-public class TetsMapReduceServiceIntegrationApp extends AbstractApplication {
+public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
 
   public static final String COUNT_METHOD_NAME = "count";
   public static final String INPUT_DATASET = "words";
@@ -36,7 +37,6 @@ public class TetsMapReduceServiceIntegrationApp extends AbstractApplication {
   public static final String SERVICE_URL = "WordsCountServiceURL";
   public static final String SQUARE_METHOD_NAME = "square";
   public static final String TOTAL_WORDS_COUNT = "total_words_count";
-
 
   @Override
   public void configure() {
@@ -135,8 +135,8 @@ public class TetsMapReduceServiceIntegrationApp extends AbstractApplication {
     @Path(COUNT_METHOD_NAME)
     @GET
     public void count(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("words") String words) {
-      if (words.isEmpty()) {
-        responder.sendError(HttpURLConnection.HTTP_NO_CONTENT, "No words provided");
+      if (StringUtils.isEmpty(words)) {
+        responder.sendStatus(HttpURLConnection.HTTP_BAD_REQUEST);
       } else {
         responder.sendString(HttpURLConnection.HTTP_OK, Integer.toString(words.split(" ").length), Charsets.UTF_8);
       }
@@ -146,7 +146,7 @@ public class TetsMapReduceServiceIntegrationApp extends AbstractApplication {
     @GET
     public void square(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("num") Long num) {
       if (num == null) {
-        responder.sendError(HttpURLConnection.HTTP_NO_CONTENT, "No number provided");
+        responder.sendStatus(HttpURLConnection.HTTP_BAD_REQUEST);
       } else {
         responder.sendString(HttpURLConnection.HTTP_OK, Long.toString(num * num), Charsets.UTF_8);
       }
