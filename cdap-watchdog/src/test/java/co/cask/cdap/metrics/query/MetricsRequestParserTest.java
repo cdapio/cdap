@@ -289,18 +289,32 @@ public class MetricsRequestParserTest {
   public void testUserServices() throws MetricsPathException  {
     MetricsRequest request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/services/serve1/reads?summary=true"));
-    Assert.assertEquals("app1.s.serve1", request.getContextPrefix());
+    Assert.assertEquals("app1.u.serve1", request.getContextPrefix());
     Assert.assertEquals("reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/services/serve1/runnables/run1/reads?summary=true"));
-    Assert.assertEquals("app1.s.serve1.run1", request.getContextPrefix());
+    Assert.assertEquals("app1.u.serve1.run1", request.getContextPrefix());
     Assert.assertEquals("reads", request.getMetricPrefix());
 
     request = MetricsRequestParser.parse(
       URI.create("/system/apps/app1/services/serve1/runs/runid123/runnables/run1/reads?summary=true"));
-    Assert.assertEquals("app1.s.serve1.run1", request.getContextPrefix());
+    Assert.assertEquals("app1.u.serve1.run1", request.getContextPrefix());
     Assert.assertEquals("reads", request.getMetricPrefix());
+    Assert.assertEquals("runid123", request.getRunId());
+  }
+
+  @Test
+  public void testSpark() throws MetricsPathException  {
+    MetricsRequest request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/spark/fakespark/sparkmetric?aggregate=true"));
+    Assert.assertEquals("app1.s.fakespark", request.getContextPrefix());
+    Assert.assertEquals("sparkmetric", request.getMetricPrefix());
+
+    request = MetricsRequestParser.parse(
+      URI.create("/system/apps/app1/spark/fakespark/runs/runid123/sparkmetric?aggregate=true"));
+    Assert.assertEquals("app1.s.fakespark", request.getContextPrefix());
+    Assert.assertEquals("sparkmetric", request.getMetricPrefix());
     Assert.assertEquals("runid123", request.getRunId());
   }
 
