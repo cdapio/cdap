@@ -31,7 +31,6 @@ import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.dataset.DataSetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -119,11 +118,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     try {
       @SuppressWarnings("unchecked")
       T dataset = (T) datasets.get(name);
-      Preconditions.checkArgument(dataset != null, "%s is not a known Dataset.", name);
-      return dataset;
+      if (dataset != null) {
+        return dataset;
+      }
     } catch (Throwable t) {
       throw new DatasetInstantiationException(String.format("Can't instantiate dataset '%s'", name), t);
     }
+    // if execution gets here, then dataset was null
+    throw new DatasetInstantiationException(String.format("'%s' is not a known Dataset.", name));
   }
 
   @Override
