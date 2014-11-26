@@ -139,7 +139,7 @@ public class AppWithServices extends AbstractApplication {
       @Override
       public void destroy() {
         super.destroy();
-        table.write("destroy", "true");
+        table.write(DESTROY_KEY, VALUE);
       }
     }
   }
