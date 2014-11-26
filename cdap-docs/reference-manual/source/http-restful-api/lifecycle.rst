@@ -512,7 +512,7 @@ Example
      - Retrieve the run records of the Flow *WhoFlow* of the Application *HelloWorld*
    * - Returns
 
-     - ``{"runid":"...","start":1382567598,"end":-1,"status":"RUNNING"},``
+     - ``{"runid":"...","start":1382567598,"status":"RUNNING"},``
        ``{"runid":"...","start":1382567447,"end":1382567492,"status":"STOPPED"},``
        ``{"runid":"...","start":1382567383,"end":1382567397,"status":"STOPPED"}``
 

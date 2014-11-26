@@ -96,13 +96,13 @@ values only for the times where the metric was actually emitted (shown here "pre
   {"time":1382637111,"value":6816},
   {"time":1382637112,"value":6765}]}
 
-Each run of a flow is identified by run-ID, if you want to get the aggregate of events processed by a run of a flow, you can
-issue an HTTP GET method::
+Each run of a flow is identified by a run-ID. To retrieve the aggregate of events processed by the
+run of a flow, you can issue an HTTP GET method::
 
   GET <base-url>/metrics/system/apps/CountRandom/flows/CountRandomFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/
           splitter/process.events.processed?aggregate=true
 
-If the run-ID is not specified, we would aggregate the events processed of all the runs for this flow.
+If the run-ID is not specified, we aggregate the events processed for all the runs of this flow.
 
 If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
 API at the Flow context::
@@ -164,7 +164,9 @@ aggregate of a metric over time. The following request will return the total num
 
   GET <base-url>/metrics/system/apps/CountRandom/process.events.processed?aggregate=true
 
-If the metric is of gauge type, the aggregate would return the latest value set for the metric. The following request will get the completion percentage for map-stage of the mapreduce program ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
+If the metric is a gauge type, the aggregate will return the latest value set for the metric.
+
+This request will retrieve the completion percentage for the map-stage of the MapReduce Job ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
 
   GET <base-ur>/metrics/system/apps/PurchaseHistory/mapreduce/PurchaseHistoryWorkflow_PurchaseHistoryBuilder/mappers/process.completion?aggregate=true
 
