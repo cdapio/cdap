@@ -36,7 +36,7 @@ The general form of a metrics request is::
      - Either ``system`` (system metrics) or ``user`` (user-defined metrics)
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
-   * - ``<run-Id>``
+   * - ``<run-id>``
         - Run-ID of the element; see `Querying by Run-ID`_
    * - ``<metric>``
      - Metric being queried; see `Available Metrics`_
@@ -60,7 +60,7 @@ Examples
      - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
        ``WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true``
    * - Description
-     - Querying a *User-Defined* metric, *names.bytes* of a Flow by it's run-ID
+     - Querying the *User-Defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
    * - 
      - 
    * - HTTP Method
@@ -95,6 +95,14 @@ values only for the times where the metric was actually emitted (shown here "pre
   {"time":1382637110,"value":6856},
   {"time":1382637111,"value":6816},
   {"time":1382637112,"value":6765}]}
+
+Each run of a flow is identified by run-ID, if you want to get the aggregate of events processed by a run of a flow, you can
+issue an HTTP GET method::
+
+  GET <base-url>/metrics/system/apps/CountRandom/flows/CountRandomFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/
+          splitter/process.events.processed?aggregate=true
+
+If the run-ID is not specified, we would aggregate the events processed of all the runs for this flow.
 
 If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
 API at the Flow context::
@@ -155,6 +163,10 @@ Instead of getting the values for each second of a time range, you can also retr
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
   GET <base-url>/metrics/system/apps/CountRandom/process.events.processed?aggregate=true
+
+If the metric is of gauge type, the aggregate would return the latest value set for the metric. The following request will get the completion percentage for map-stage of the mapreduce program ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
+
+  GET <base-ur>/metrics/system/apps/PurchaseHistory/mapreduce/PurchaseHistoryWorkflow_PurchaseHistoryBuilder/mappers/process.completion?aggregate=true
 
 Available Contexts
 ------------------
@@ -230,11 +242,11 @@ Flowlet, Procedure, Mapper, or Reducer level:
 Querying by Run-ID
 ------------------
 
-Each execution of an element (Flow, MapReduce, Spark, Services, Procedure) has an associated run-id that uniquely identifies that element's run.
+Each execution of an element (Flow, MapReduce, Spark, Services, Procedure) has an associated run-ID that uniquely identifies that element's run.
 We can query metrics for an element by its run-ID to see the metrics for a particular run.
 Please see the :ref:`Run Records and Schedule <rest-element-runs>` on retrieving active and historical element runs.
 
-The run-id is specified after the element-id in the path when querying by run-id ::
+When querying by run-ID, it is specified after the ``element-id`` in the path::
 
   /apps/<app-id>/<element-type>/<element-id>/runs/<run-id>/
 

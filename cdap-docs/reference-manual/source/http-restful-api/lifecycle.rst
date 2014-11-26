@@ -459,8 +459,8 @@ Example
 
 .. _rest-element-runs:
 
-Run Records and Schedule
-------------------------
+Run Records and Schedules
+-------------------------
 
 To see all the runs of a selected element (Flows, Procedures, MapReduce jobs, Spark, Workflows, and
 Services), issue an HTTP GET to the element’s URL with the ``runs`` parameter.
