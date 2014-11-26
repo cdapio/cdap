@@ -16,24 +16,15 @@
 
 package co.cask.cdap.data.preferences;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.hooks.MetricsReporterHook;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.table.PreferencesTable;
-import co.cask.cdap.data2.dataset2.lib.table.PreferencesTableDataset;
 import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
-import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.twill.common.Cancellable;
@@ -53,14 +44,11 @@ public class ConfigService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ConfigService.class);
   private final DiscoveryService discoveryService;
   private final NettyHttpService.Builder builder;
-  private final DatasetFramework framework;
-  private final TransactionExecutorFactory executorFactory;
   private NettyHttpService httpService;
   private Cancellable cancellable;
 
   @Inject
   public ConfigService(CConfiguration cConf, DiscoveryService discoveryService,
-                       DatasetFramework dsFramework, TransactionExecutorFactory executorFactory,
                        @Nullable MetricsCollectionService metricsCollectionService) {
     String address = cConf.get(Constants.ConfigService.ADDRESS);
     int backlogcnxs = cConf.getInt(Constants.ConfigService.BACKLOG_CONNECTIONS, 20000);
@@ -78,8 +66,6 @@ public class ConfigService extends AbstractIdleService {
     builder.setWorkerThreadPoolSize(workerthreads);
 
     this.discoveryService = discoveryService;
-    this.executorFactory = executorFactory;
-    this.framework = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
     LOG.info("Configuring ConfigService " +
                ", address: " + address +
                ", backlog connections: " + backlogcnxs +
@@ -93,11 +79,7 @@ public class ConfigService extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.CONFIG_SERVICE));
-    PreferencesTableDataset table = DatasetsUtil.getOrCreateDataset(framework, Constants.ConfigService.PREFERENCE_TABLE,
-                                                                   PreferencesTable.class.getName(),
-                                                                   DatasetProperties.EMPTY, null, null);
-    builder.addHttpHandlers(ImmutableList.<HttpHandler>of(new PreferencesHandler(table, executorFactory),
-                                                          new PingHandler()));
+    builder.addHttpHandlers(ImmutableList.<HttpHandler>of(new PingHandler()));
     httpService = builder.build();
     LOG.info("Starting Config Service...");
     httpService.startAndWait();
