@@ -14,11 +14,19 @@
  * the License.
  */
 
-/**
- * Package for SparkPageRank Application.
- *
- * An Application that demonstrates streaming text analysis using a Spark program.
- * It computes the page rank of URLs from an input stream.
- */
+package co.cask.cdap.api.data;
 
-package $package;
+/**
+ * This exception is thrown if - for whatever reason - a data set cannot be
+ * instantiated at runtime.
+ */
+public class DatasetInstantiationException extends RuntimeException {
+
+  public DatasetInstantiationException(String msg, Throwable e) {
+    super(msg, e);
+  }
+
+  public DatasetInstantiationException(String msg) {
+    super(msg);
+  }
+}

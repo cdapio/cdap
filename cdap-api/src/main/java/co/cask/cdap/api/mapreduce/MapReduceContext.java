@@ -18,7 +18,7 @@ package co.cask.cdap.api.mapreduce;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Split;
 
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext extends RuntimeContext, DataSetContext, ServiceDiscoverer {
+public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer {
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.
    */

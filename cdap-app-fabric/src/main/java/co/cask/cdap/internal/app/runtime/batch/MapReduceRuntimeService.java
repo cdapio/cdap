@@ -409,7 +409,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     LOG.debug("Using Dataset {} as input for MapReduce Job", inputDatasetName);
 
     // We checked on validation phase that it implements BatchReadable or InputFormatProvider
-    Dataset dataset = context.getDataSet(inputDatasetName);
+    Dataset dataset = context.getDataset(inputDatasetName);
     if (dataset instanceof BatchReadable) {
       BatchReadable inputDataset = (BatchReadable) dataset;
       List<Split> inputSplits = context.getInputDataSelection();
@@ -454,7 +454,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     LOG.debug("Using Dataset {} as output for MapReduce Job", outputDatasetName);
 
     // We checked on validation phase that it implements BatchWritable or OutputFormatProvider
-    Dataset dataset = context.getDataSet(outputDatasetName);
+    Dataset dataset = context.getDataset(outputDatasetName);
     if (dataset instanceof BatchWritable) {
       DataSetOutputFormat.setOutput(job, outputDatasetName);
       return;

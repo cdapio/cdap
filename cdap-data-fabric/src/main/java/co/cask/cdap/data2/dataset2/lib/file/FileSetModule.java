@@ -14,19 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.api.data;
+package co.cask.cdap.data2.dataset2.lib.file;
+
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.dataset.module.DatasetModule;
 
 /**
- * This exception is thrown if - for whatever reason - a data set cannot be
- * instantiated at runtime.
+ * {@link co.cask.cdap.api.dataset.module.DatasetModule} for {@link co.cask.cdap.api.dataset.lib.FileSet}.
  */
-public class DataSetInstantiationException extends RuntimeException {
-
-  public DataSetInstantiationException(String msg, Throwable e) {
-    super(msg, e);
-  }
-
-  public DataSetInstantiationException(String msg) {
-    super(msg);
+public class FileSetModule implements DatasetModule {
+  @Override
+  public void register(DatasetDefinitionRegistry registry) {
+    // file dataset
+    registry.add(new FileSetDefinition(FileSet.class.getName()));
+    registry.add(new FileSetDefinition("fileSet"));
   }
 }
