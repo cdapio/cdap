@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
@@ -263,5 +264,10 @@ abstract class AbstractSparkContext implements SparkContext {
   @Override
   public ServiceDiscoverer getServiceDiscoverer() {
     return basicSparkContext.getSerializableServiceDiscoverer();
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return basicSparkContext.getMetrics();
   }
 }

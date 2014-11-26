@@ -249,7 +249,9 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or procedure could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   public int getProcedureInstances(String appId, String procedureId) throws IOException, NotFoundException,
     UnAuthorizedAccessTokenException {
 
@@ -272,7 +274,9 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws NotFoundException if the application or procedure could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   public void setProcedureInstances(String appId, String procedureId, int instances)
     throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
 
