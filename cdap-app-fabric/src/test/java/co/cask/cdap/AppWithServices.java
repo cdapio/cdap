@@ -23,10 +23,8 @@ import co.cask.cdap.api.procedure.ProcedureRequest;
 import co.cask.cdap.api.procedure.ProcedureResponder;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
-import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.base.Charsets;
 
 import java.io.IOException;
 import javax.ws.rs.GET;
@@ -50,31 +48,10 @@ public class AppWithServices extends AbstractApplication {
 
   public static final class PingHandler extends AbstractHttpServiceHandler {
 
-    private HttpServiceContext context;
-
-    @Override
-    public void initialize(HttpServiceContext context) {
-      this.context = context;
-      context.setNote("call", Integer.toString(0));
-    }
-
     @Path("ping")
     @GET
     public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
       responder.sendStatus(200);
-    }
-
-    @Path("count")
-    @POST
-    public void incrCount(HttpServiceRequest request, HttpServiceResponder responder) {
-      context.setNote("call", Integer.toString(Integer.valueOf(context.getNote("call")) + 1));
-      responder.sendStatus(200);
-    }
-
-    @Path("count")
-    @GET
-    public void getCount(HttpServiceRequest request, HttpServiceResponder responder) {
-      responder.sendString(200, context.getNote("call"), Charsets.UTF_8);
     }
   }
 
