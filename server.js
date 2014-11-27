@@ -6,13 +6,11 @@ var app = require('./server/express.js'),
     sockjs = require('sockjs'),
     colors = require('colors/safe'),
     http = require('http'),
-
     PORT = 8080,
-    httpServer = http.createServer(app);
-
+    httpServer = http.createServer(app.app);
 
 // http
-httpServer.listen(PORT, '0.0.0.0', function () {
+httpServer.listen(PORT, app.config['router.bind.address'], function () {
   console.info(colors.yellow('http')+' listening on port %s', PORT);
 });
 

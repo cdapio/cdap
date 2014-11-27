@@ -49,6 +49,9 @@
     "object-hash": "^0.3.0",
     "request": "^2.47.0",
     "serve-favicon": "^2.1.5",
-    "sockjs": "^0.3.10"
+    "sockjs": "^0.3.10",
+    "q": "~1.1.2",
+    "xml2js": "~0.4.4",
+    "body-parser": "~1.9.3"
   }
 }

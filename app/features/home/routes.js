@@ -1,5 +1,5 @@
 angular.module(PKG.name+'.feature.home')
-  .config(function ($stateProvider, $urlRouterProvider) {
+  .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
 
     /**
@@ -17,6 +17,9 @@ angular.module(PKG.name+'.feature.home')
     $stateProvider
 
       .state('home', {
+        data: {
+          authorizedRoles: MYAUTH_ROLE.admin  
+        },
         url: '/',
         templateUrl: '/assets/features/home/home.html',
         controller: 'HomeCtrl'

@@ -1,5 +1,5 @@
 angular.module(PKG.name+'.feature.foo')
-  .config(function ($stateProvider) {
+  .config(function ($stateProvider, MYAUTH_ROLE) {
 
 
     /**
@@ -8,14 +8,20 @@ angular.module(PKG.name+'.feature.foo')
     $stateProvider
 
       .state('foo', {
+        data: {
+          authorizedRoles: MYAUTH_ROLE.admin  
+        },
         url: '/foo',
         templateUrl: '/assets/features/foo/foo.html'
       })
 
-        .state('bar', {
-          parent: 'foo',
-          url: '/bar'
-        })
+      .state('bar', {
+        data: {
+          authorizedRoles: MYAUTH_ROLE.admin  
+        },
+        parent: 'foo',
+        url: '/bar'
+      })
 
       ;
 

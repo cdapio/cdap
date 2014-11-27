@@ -15,7 +15,7 @@ angular.module(PKG.name+'.services')
     });
 
    */
-  .factory('MyDataSource', function ($state, $log, mySocket, MYSOCKET_EVENT) {
+  .factory('MyDataSource', function ($state, $log, $rootScope, mySocket, MYSOCKET_EVENT, MYAUTH_EVENT) {
 
     var instances = {}; // keyed by scopeid
 
@@ -53,12 +53,17 @@ angular.module(PKG.name+'.services')
         delete instances[id];
       });
 
+      // Reopens after closing.
+      $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {
+        mySocket.close();
+      });
+
       this.scope = scope;
     }
 
 
     DataSource.prototype.poll = function (resource, cb) {
-
+      resource = attachHeaders(resource);
       this.bindings.push({
         resource: resource,
         callback: cb
@@ -79,6 +84,7 @@ angular.module(PKG.name+'.services')
 
 
     DataSource.prototype.fetch = function (resource, cb) {
+      resource = attachHeaders(resource);
       var once = false;
 
       this.bindings.push({
@@ -97,6 +103,12 @@ angular.module(PKG.name+'.services')
       });
     };
 
+    function attachHeaders (resource) {
+      resource.headers = {
+        Authorization: 'Bearer ' +  $rootScope.currentUser.token 
+      };
+      return resource;
+    };
 
     return DataSource;
   })
@@ -110,7 +122,7 @@ angular.module(PKG.name+'.services')
 
     this.prefix = '/_sock';
 
-    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log) {
+    this.$get = function (MYSOCKET_EVENT, MYAUTH_EVENT, myAuth, $rootScope, SockJS, $log) {
 
       var self = this,
           socket = null,
@@ -125,7 +137,7 @@ angular.module(PKG.name+'.services')
         socket.onmessage = function (event) {
           try {
             var data = JSON.parse(event.data);
-            $log.log('[mySocket] ←', data.statusCode);
+            $log.log('[mySocket] ←', data);
             $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
           }
           catch(e) {

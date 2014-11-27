@@ -22,6 +22,13 @@
     themes
   </li>
 
+  <li role="presentation" ng-show="currentUser">
+    <a role="menuitem" tabindex="-1" href="" ng-click="logout()">
+      <span class="fa fa-sign-out"></span>
+      Logout
+    </a>
+  </li>
+
   <li role="presentation" ng-repeat="it in theme.list()" ng-class="{disabled:it==theme.current}">
     <a role="menuitem" href="" ng-click="theme.set(it)">
       <span class="fa" ng-class="it==theme.current ? 'fa-dot-circle-o' : 'fa-circle-o'"></span>

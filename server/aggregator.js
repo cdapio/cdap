@@ -81,7 +81,6 @@ function doPoll () {
       pollAgain = _.after(rscs.length, _.bind(this.planPolling, this));
 
   this.log('poll', rscs.length);
-
   _.forEach(rscs, function(one){
     var resource = one.value, k = one.hash;
     request(resource, function(error, response, body){
@@ -141,7 +140,6 @@ function onSocketData (message) {
     this.log('data', message.action);
 
     var r = message.resource;
-
     // @TODO whitelist resources
 
     switch(message.action) {
