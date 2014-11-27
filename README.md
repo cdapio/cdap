@@ -1,6 +1,7 @@
 CDAP Angular UI
 ===============
 
+_It does not work yet._
 
 Global dependencies:
 
@@ -8,7 +9,6 @@ Global dependencies:
 
 Local dependencies:
 
-* `cd ../ngui`
 * `npm install && bower install`
 
 then, each in their own tab:
