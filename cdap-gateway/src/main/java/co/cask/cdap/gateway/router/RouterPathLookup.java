@@ -107,6 +107,9 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
         //Discoverable Service Name -> "service.%s.%s.%s", accountId, appId, serviceId
         String serviceName = String.format("service.%s.%s.%s", accId, uriParts[2], uriParts[4]);
         return serviceName;
+      } else if (uriParts.length >= 2 && uriParts[1].equals("namespaces")) {
+        // TODO: Make constant
+        return "namespaces";
       } else {
         return Constants.Service.APP_FABRIC_HTTP;
       }
