@@ -53,11 +53,6 @@ angular.module(PKG.name+'.services')
         delete instances[id];
       });
 
-      // Reopens after closing.
-      $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {
-        mySocket.close();
-      });
-
       this.scope = scope;
     }
 
