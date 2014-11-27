@@ -22,6 +22,7 @@ if (mode === 'enterprise') {
     .then(function(c) {
       config = c;
     })
+    
 } else {
   config = require('../cdap-config.json');
 }

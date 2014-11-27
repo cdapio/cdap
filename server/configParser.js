@@ -26,8 +26,7 @@ function extractConfig(mode, configParam, isSecure) {
     configReader = spawn(__dirname + "/../bin/config-tool", ["--" + configParam]);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('data', configRead.bind(this));
-    partialConfigRead = lodash.partial(onConfigReadEnd, deferred, isSecure);
-    configReader.stdout.on('end', partialConfigRead.bind(this));
+    configReader.stdout.on('end', onConfigReadEnd.bind(this, deferred, isSecure));
   }
   return deferred.promise;
 }
