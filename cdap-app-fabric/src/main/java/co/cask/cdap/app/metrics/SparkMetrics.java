@@ -17,20 +17,37 @@
 package co.cask.cdap.app.metrics;
 
 import co.cask.cdap.api.spark.Spark;
-import co.cask.cdap.common.metrics.MetricsCollectionService;
-import co.cask.cdap.common.metrics.MetricsScope;
-import co.cask.cdap.internal.app.program.TypeId;
-import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.common.metrics.MetricsCollector;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Metrics collector for {@link Spark} Programs
  */
-public final class SparkMetrics extends AbstractProgramMetrics {
+public final class SparkMetrics extends AbstractProgramMetrics implements Externalizable {
+  private static final long serialVersionUID = -5913108632034346101L;
 
-  public SparkMetrics(MetricsCollectionService collectionService, String applicationId,
-                      String mapReduceId, String runId) {
-    super(collectionService.getCollector(
-      MetricsScope.USER,
-      String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SPARK), mapReduceId), runId));
+  private static MetricsCollector metricsCollector;
+
+  public SparkMetrics() {
+    super(metricsCollector);
+  }
+
+  public SparkMetrics(MetricsCollector collector) {
+    super(collector);
+    metricsCollector = collector;
+  }
+
+  @Override
+  public void writeExternal(ObjectOutput objectOutput) throws IOException {
+    //No-op
+  }
+
+  @Override
+  public void readExternal(ObjectInput objectInput) throws IOException, ClassNotFoundException {
+    //No-op
   }
 }
