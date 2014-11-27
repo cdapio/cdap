@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -33,6 +34,7 @@ import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
@@ -130,8 +132,11 @@ public class ServiceHttpServer extends AbstractIdleService {
    */
   @Override
   public void startUp() {
-    LOG.debug("Starting HTTP server for Service {}", program.getId());
     Id.Program programId = program.getId();
+    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(programId.getAccountId(),
+                                                                           programId.getApplicationId(),
+                                                                           programId.getId(), ""));
+    LOG.debug("Starting HTTP server for Service {}", programId);
     service.startAndWait();
 
     // announce the twill runnable
