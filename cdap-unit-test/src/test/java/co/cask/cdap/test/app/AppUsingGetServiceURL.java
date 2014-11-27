@@ -136,6 +136,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         setInstances(5);
       }
 
+      @Override
       public void initialize(ServiceWorkerContext context) throws Exception {
         super.initialize(context);
 

@@ -480,6 +480,10 @@ public class TestFrameworkTest extends TestBase {
     executorService.shutdown();
     serviceManager.stop();
     serviceStatusCheck(serviceManager, false);
+
+    DataSetManager<KeyValueTable> dsManager = applicationManager.getDataSet(AppWithServices.TRANSACTIONS_DATASET_NAME);
+    String value = Bytes.toString(dsManager.get().read(AppWithServices.DESTROY_KEY));
+    Assert.assertEquals(AppWithServices.VALUE, value);
   }
 
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
