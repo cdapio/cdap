@@ -3,3 +3,5 @@ npm-debug.log
 node_modules/
 bower_components/
 dist/
+cdap-config.json
+cdap-security-config.json
