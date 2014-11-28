@@ -4423,69 +4423,49 @@ div.tooltip-inner {
 
 .spark-metrics-stages .running {
     background:  #16AB16;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    width: 10%;
+    width: 33.3%;
 }
 
 .spark-metrics-stages .failed {
     background:  #D14830;
+    width: 33.3%;
 }
 
 .spark-metrics-stages .waiting {
     background:  #3CA9D8;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
+    width: 33.3%;
 }
 
-.spark-metrics-stages .bubble-running, .spark-metrics-stages .bubble-failed, .spark-metrics-stages .bubble-waiting {
-    border-color: #787D87 transparent;
-    border-style: solid;
-    width: 15px;
-    position: relative;
-    margin: 0;
-    display: inline-block;
+.spark-metrics-stages .tooltip.top {
+    margin-top: -12px;
 }
 
-.spark-metrics-stages .bubble-running:after, .spark-metrics-stages .bubble-failed:after,
-.spark-metrics-stages .bubble-waiting:after {
+.spark-metrics-stages .tooltip.in {
+    opacity: 1;
+}
+
+.spark-metrics-stages .tooltip.bottom {
+    margin-top: 12px;
+}
+
+.spark-metrics-stages .tooltip > .tooltip-inner {
     background:  #787D87;
-    position: relative;
-    border-radius: 3px;
-    display: inline-block;
+    color: #fff;
     font-size: 14px;
-    padding: 8px 10px;
+    border-radius: 3px;
+    height: 30px;
 }
 
-.spark-metrics-stages .bubble-running:after {
-    content: "Running";
-    left: -39px;
-    top: -43px;
-}
-
-.spark-metrics-stages .bubble-failed:after {
-    content: "Failed";
-    top: 43px;
-    left: -31px;
-}
-
-.spark-metrics-stages .bubble-waiting:after {
-    content: "Waiting";
-    left: -38px;
-    top: -43px;
-}
-
-.spark-metrics-stages .bubble-running {
-    border-width: 13px 7px 0;
-    top: -43px;
-}
-
-.spark-metrics-stages .bubble-failed {
+.spark-metrics-stages .tooltip.bottom .tooltip-arrow {
+    top: -8px;
+    margin-left: -7px;
+    border-bottom-color: #787D87;
     border-width: 0 7px 13px;
-    top: -13px;
 }
 
-.spark-metrics-stages .bubble-waiting {
+.spark-metrics-stages .tooltip.top .tooltip-arrow {
+    bottom: -8px;
+    margin-left: -7px;
+    border-top-color: #787D87;
     border-width: 13px 7px 0;
-    top: -43px;
 }

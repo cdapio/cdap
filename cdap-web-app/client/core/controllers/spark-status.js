@@ -9,7 +9,7 @@ define([], function () {
         __STATUS_UPDATE_TIMEOUT: 1000,
         showLogsMessage: false,
         __updateStatusTimeout: null,
-        __updateStatus: function(appName, jobName) {
+        __updateStatus: function (appName, jobName) {
             var model = this.get('model');
 
             this.HTTP.rest('apps', appName, 'spark', jobName, 'status', function (response) {
@@ -28,7 +28,7 @@ define([], function () {
             var model = this.get('model');
             var self = this;
 
-            var runStatusUpdate = function() {
+            var runStatusUpdate = function () {
                 self.__updateStatusTimeout = setTimeout(function () {
                     self.__updateStatus(model.app, model.name);
                     self.__updateMetrics();
@@ -66,14 +66,14 @@ define([], function () {
 
         },
 
-        onCurrentStatusChanged: function() {
-          if (this.get("model").get("currentState") === "RUNNING") {
-            this.set("showLogsMessage", true);
-          }
+        onCurrentStatusChanged: function () {
+            if (this.get("model").get("currentState") === "RUNNING") {
+                this.set("showLogsMessage", true);
+            }
         }.observes("model.currentState"),
 
-        logsLinkHandler: function() {
-          this.transitionToRoute("Spark.Log");
+        logsLinkHandler: function () {
+            this.transitionToRoute("Spark.Log");
         }
     });
 

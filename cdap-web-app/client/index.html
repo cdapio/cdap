@@ -1293,26 +1293,7 @@
           </div>
           <div class="spark-metrics-stages">
             <div class="title-stage">STAGES</div>
-            <div id="stage-line" class="stage-status-line">
-              <div {{bindAttr style="model.schedulerRunningLineSize"}} class="running">
-                <div>{{model.metricsData.schedulerRunningStages}}</div>
-                <div>
-                  <div class="bubble-running"></div>
-                </div>
-              </div>
-              <div {{bindAttr style="model.schedulerFailedLineSize"}} class="failed">
-                <div>{{model.metricsData.schedulerFailedStages}}</div>
-                <div>
-                  <div class="bubble-failed"></div>
-                </div>
-              </div>
-              <div {{bindAttr style="model.schedulerWaitingLineSize"}} class="waiting">
-                <div>{{model.metricsData.schedulerWaitingStages}}</div>
-                <div>
-                  <div class="bubble-waiting"></div>
-                </div>
-              </div>
-            </div>
+            {{view C.Embed.StackedProgress}}
           </div>
         </div>
       </div>
