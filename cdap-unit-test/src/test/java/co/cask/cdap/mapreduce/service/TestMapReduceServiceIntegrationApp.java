@@ -27,6 +27,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
+/**
+ * A dummy app with MapReduce program with service discovery for testing purpose
+ */
 public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
 
   public static final String COUNT_METHOD_NAME = "count";
@@ -36,7 +39,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
   public static final String SERVICE_NAME = "WordsCount";
   public static final String SERVICE_URL = "WordsCountServiceURL";
   public static final String SQUARE_METHOD_NAME = "square";
-  public static final String TOTAL_WORDS_COUNT = "total_words_count";
+  public static final String SQUARED_TOTAL_WORDS_COUNT = "squared_total_words_count";
 
   @Override
   public void configure() {
@@ -113,8 +116,8 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
           total += longWritable.get();
         }
         URL url = new URL(serviceUrl.toString() + SQUARE_METHOD_NAME + "?num=" + total);
-        doRequest(url);
-        context.write("total_words_count", String.valueOf(total));
+        String squaredTotal = doRequest(url);
+        context.write(SQUARED_TOTAL_WORDS_COUNT, squaredTotal);
       }
     }
 

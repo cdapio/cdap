@@ -31,8 +31,8 @@ public class TestMapReduceServiceIntegration extends TestBase {
       DataSetManager<MyKeyValueTableDefinition.KeyValueTable> outDataSet = applicationManager.getDataSet(TestMapReduceServiceIntegrationApp.OUTPUT_DATASET);
       MyKeyValueTableDefinition.KeyValueTable results = outDataSet.get();
 
-      String total = results.get(TestMapReduceServiceIntegrationApp.TOTAL_WORDS_COUNT);
-      Assert.assertEquals(5, Integer.parseInt(total));
+      String total = results.get(TestMapReduceServiceIntegrationApp.SQUARED_TOTAL_WORDS_COUNT);
+      Assert.assertEquals(25, Integer.parseInt(total));
     } finally {
       applicationManager.stopAll();
       TimeUnit.SECONDS.sleep(1);
