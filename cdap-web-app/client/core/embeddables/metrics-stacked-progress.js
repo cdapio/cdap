@@ -5,11 +5,7 @@
 define([], function () {
 
     var Embeddable = Em.View.extend({
-        template: Ember.Handlebars.compile('<div class="progress stage-status-line">' +
-        '<div data-toggle="tooltip" data-placement="top" title="Running" class="progress-bar running"></div>' +
-        '<div data-toggle="tooltip" data-placement="bottom" title="Failed" class="progress-bar failed"></div>' +
-        '<div data-toggle="tooltip" data-placement="top" title="Waiting" class="progress-bar waiting"></div></div>'),
-
+        templateName: 'SparkMetricsProgressBar',
         didInsertElement: function() {
             this._super();
             var progress = ($(this.get('element')).find('.progress'));
