@@ -2,17 +2,25 @@
  * Spins up servers
  */
 var app = require('./server/express.js'),
+    configParser = require('../configParser.js'),
     Aggregator = require('./server/aggregator.js')
     sockjs = require('sockjs'),
     colors = require('colors/safe'),
     http = require('http'),
     PORT = 8080,
+    mode = process.env.CDAP_MODE || null,
     httpServer = http.createServer(app.app);
 
-// http
-httpServer.listen(PORT, app.config['router.bind.address'], function () {
-  console.info(colors.yellow('http')+' listening on port %s', PORT);
-});
+
+configParser.extractConfig(mode, 'cdap', false /* isSecure*/)
+  .then(function(config) {
+    // http
+    httpServer.listen(PORT, config['router.bind.address'], function () {
+      console.info(colors.yellow('http')+' listening on port %s', PORT);
+    });
+
+  });
+
 
 
 // sockjs

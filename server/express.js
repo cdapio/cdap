@@ -17,15 +17,10 @@ var pkg = require('../package.json'),
       __dirname + '/../dist'
     );
 
-if (mode === 'enterprise') {
-  configParser.extractConfig('enterprise', 'cdap', false /* isSecure*/)
-    .then(function(c) {
-      config = c;
-    })
-    
-} else {
-  config = require('../cdap-config.json');
-}
+configParser.extractConfig(mode, 'cdap', false /* isSecure*/)
+  .then(function(c) {
+    config = c;
+  })
 
 morgan.token('ms', function(req, res){
   if (!res._header || !req._startAt) { return ''; }
@@ -90,5 +85,3 @@ app.all('*', [
 ]);
 
 module.exports.app = app;
-
-module.exports.config = config;

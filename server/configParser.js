@@ -4,7 +4,6 @@ module.exports = {
 
 var promise = require('q'),
     fs = require('fs'),
-    lodash = require('lodash'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
     configString = "";
@@ -27,6 +26,11 @@ function extractConfig(mode, configParam, isSecure) {
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('data', configRead.bind(this));
     configReader.stdout.on('end', onConfigReadEnd.bind(this, deferred, isSecure));
+  } else {
+    setTimeout(function() {
+      config = require('../cdap-config.json');
+      deferred.resolve
+    }, 0);
   }
   return deferred.promise;
 }
