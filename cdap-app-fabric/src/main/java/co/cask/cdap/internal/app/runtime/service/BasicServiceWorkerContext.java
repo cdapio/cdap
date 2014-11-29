@@ -126,11 +126,11 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
 
   private void abortTransaction(Exception e, String message, TransactionContext context) {
     try {
-      LOG.error(message);
+      LOG.error(message, e);
       context.abort();
       throw Throwables.propagate(e);
     } catch (TransactionFailureException e1) {
-      LOG.error("Failed to abort transaction.");
+      LOG.error("Failed to abort transaction.", e1);
       throw Throwables.propagate(e1);
     }
   }
@@ -142,14 +142,38 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
       this.context = context;
     }
 
+    /**
+     * Get an instance of the specified Dataset. This method is thread-safe and may be used concurrently.
+     * The returned dataset is also added to the transaction of the current {@link #execute(TxRunnable)} call.
+     *
+     * @param name The name of the Dataset
+     * @param <T> The type of the Dataset
+     * @return A new instance of the specified Dataset, never null.
+     * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
+     *         cannot be loaded; the default constructor throws an exception; or the Dataset
+     *         cannot be opened (for example, one of the underlying tables in the DataFabric
+     *         cannot be accessed).
+     */
     @Override
     public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
       return getDataset(name, DatasetDefinition.NO_ARGUMENTS);
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Get an instance of the specified Dataset. This method is thread-safe and may be used concurrently.
+     * The returned dataset is also added to the transaction of the current {@link #execute(TxRunnable)} call.
+     *
+     * @param name The name of the Dataset
+     * @param arguments the arguments for this dataset instance
+     * @param <T> The type of the Dataset
+     * @return A new instance of the specified Dataset, never null.
+     * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
+     *         cannot be loaded; the default constructor throws an exception; or the Dataset
+     *         cannot be opened (for example, one of the underlying tables in the DataFabric
+     *         cannot be accessed).
+     */
     @Override
-    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+    public synchronized <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
       throws DatasetInstantiationException {
 
       if (!datasets.contains(name)) {
@@ -164,7 +188,9 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
           if (dataset instanceof TransactionAware) {
             context.addTransactionAware((TransactionAware) dataset);
           }
-          return (T) dataset;
+          @SuppressWarnings("unchecked")
+          T resultDataset = (T) dataset;
+          return resultDataset;
         }
       } catch (Throwable t) {
         throw new DatasetInstantiationException(String.format("Could not instantiate dataset '%s'", name), t);
