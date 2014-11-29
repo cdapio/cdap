@@ -245,6 +245,21 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     testSingleMetric(serviceRequest, 10);
   }
 
+  @Test
+  public void testingUserServiceGaugeMetricsTags() throws Exception {
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.u.CounterService", "0");
+    collector.gauge("gtmetric", 10, "tag1");
+    collector.gauge("gtmetric", 20, "tag2");
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String serviceRequest =
+      "/user/apps/WordCount/services/CounterService/gtmetric?aggregate=true";
+    testSingleMetric(serviceRequest, 20);
+  }
+
 
   @Test
   public void testingInvalidUserServiceMetrics() throws Exception {
