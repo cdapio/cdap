@@ -81,6 +81,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.StreamRecord;
 import co.cask.http.BodyConsumer;
 import co.cask.http.ChunkResponder;
@@ -107,7 +108,10 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
@@ -141,6 +145,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -763,7 +768,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       try {
         ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
           ProgramRunStatus.valueOf(status.toUpperCase());
-        responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, runStatus, start, end, limit));
+        Gson gson = new GsonBuilder().registerTypeAdapter(RunRecord.class, new RunRecordAdapter()).create();
+        responder.sendJson(HttpResponseStatus.OK, store.getRuns(programId, runStatus, start, end, limit),
+                           new TypeToken<List<RunRecord>>() { }.getType(), gson);
       } catch (IllegalArgumentException e) {
         responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                              "Supported options for status of runs are running/completed/failed");
@@ -777,6 +784,24 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  /**
+   *  Adapter class for {@link co.cask.cdap.proto.RunRecord}
+   */
+  private static final class RunRecordAdapter implements JsonSerializer<RunRecord> {
+    @Override
+    public JsonElement serialize(RunRecord src, Type typeOfSrc, JsonSerializationContext context) {
+      JsonObject json = new JsonObject();
+      json.addProperty("runid", src.getPid());
+      json.addProperty("start", src.getStartTs());
+      if (src.getStatus() != ProgramRunStatus.RUNNING) {
+        json.addProperty("end", src.getStopTs());
+      }
+      json.addProperty("status", src.getStatus().toString());
+      return json;
     }
   }
 
