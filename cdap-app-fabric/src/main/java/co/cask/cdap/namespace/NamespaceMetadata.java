@@ -16,25 +16,26 @@
 
 package co.cask.cdap.namespace;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * Represents metadata for namespaces
  */
 public class NamespaceMetadata {
-  private static final Logger LOG = LoggerFactory.getLogger(NamespaceMetadata.class);
-
-  private String id;
   private String name;
+  private String displayName;
   private String description;
 
-  public String getId() {
-    return id;
+  public NamespaceMetadata(String name, String displayName, String description) {
+    this.name = name;
+    this.displayName = displayName;
+    this.description = description;
   }
 
   public String getName() {
     return name;
+  }
+
+  public String getDisplayName() {
+    return displayName;
   }
 
   public String getDescription() {
@@ -44,8 +45,8 @@ public class NamespaceMetadata {
   @Override
   public String toString() {
     return "NamespaceMetadata{" +
-      "id='" + id + '\'' +
-      ", name='" + name + '\'' +
+      "name='" + name + '\'' +
+      ", displayName='" + displayName + '\'' +
       ", description='" + description + '\'' +
       '}';
   }

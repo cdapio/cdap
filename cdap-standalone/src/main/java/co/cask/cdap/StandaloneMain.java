@@ -96,7 +96,7 @@ public class StandaloneMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
-  private final NamespaceHttpService namespaceHttpService;
+  // private final NamespaceHttpService namespaceHttpService;
 
   private StandaloneMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
     this.configuration = configuration;
@@ -129,7 +129,7 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
 
-    namespaceHttpService = injector.getInstance(NamespaceHttpService.class);
+    // namespaceHttpService = injector.getInstance(NamespaceHttpService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -179,7 +179,7 @@ public class StandaloneMain {
       exploreExecutorService.startAndWait();
     }
 
-    namespaceHttpService.startAndWait();
+    // namespaceHttpService.startAndWait();
 
     String hostname = InetAddress.getLocalHost().getHostName();
     String protocol = sslEnabled ? "https" : "http";
@@ -222,7 +222,7 @@ public class StandaloneMain {
       }
       logAppenderInitializer.close();
 
-      namespaceHttpService.stopAndWait();
+      // namespaceHttpService.stopAndWait();
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
@@ -376,8 +376,8 @@ public class StandaloneMain {
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModule(),
-      new ExploreClientModule(),
-      new NamespaceRuntimeModule()//.getStandaloneModules()
+      new ExploreClientModule()
+      // new NamespaceRuntimeModule() //.getStandaloneModules()
     );
   }
 }

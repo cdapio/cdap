@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.guice;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.internal.app.services.NamespaceHttpService;
@@ -31,9 +32,9 @@ import com.google.inject.name.Names;
  * Namespace Runtime Module
  */
 public class NamespaceRuntimeModule extends PrivateModule {
-//public class NamespaceRuntimeModule extends RuntimeModule {
+/*public class NamespaceRuntimeModule extends RuntimeModule {
 
- /* @Override
+  @Override
   public Module getInMemoryModules() {
     return new InMemoryNamespaceModule();
   }
@@ -52,7 +53,9 @@ public class NamespaceRuntimeModule extends PrivateModule {
 
     @Override
     protected void configure() {
-      bind(HttpHandler.class).annotatedWith(Names.named("namespace")).to(NamespaceHttpHandler.class);
+      bind(HttpHandler.class).annotatedWith(Names.named(Constants.Service.NAMESPACES)).to(NamespaceHttpHandler.class);
+      bind(NamespaceHttpService.class); //.in(Scopes.SINGLETON);
+      //expose(NamespaceHttpService.class);
     }
   }
 
@@ -60,17 +63,19 @@ public class NamespaceRuntimeModule extends PrivateModule {
 
     @Override
     protected void configure() {
-      bind(HttpHandler.class).annotatedWith(Names.named("namespace")).to(NamespaceHttpHandler.class);
+      bind(HttpHandler.class).annotatedWith(Names.named(Constants.Service.NAMESPACES)).to(NamespaceHttpHandler.class);
+      bind(NamespaceHttpService.class); //.in(Scopes.SINGLETON);
+      // expose(NamespaceHttpService.class);
     }
   }*/
 
   @Override
   protected void configure() {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
-                                                                      Names.named("namespaces"));
+                                                                      Names.named(Constants.Service.NAMESPACES));
     handlerBinder.addBinding().to(NamespaceHttpHandler.class);
 
-    bind(NamespaceHttpService.class).in(Scopes.SINGLETON);
+    bind(NamespaceHttpService.class); // .in(Scopes.SINGLETON);
     expose(NamespaceHttpService.class);
   }
 }

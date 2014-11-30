@@ -29,6 +29,7 @@ import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.jboss.netty.buffer.HeapChannelBufferFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,17 +48,21 @@ public class NamespaceHttpService extends AbstractIdleService {
   private Cancellable cancellable;
 
   @Inject
-  public NamespaceHttpService(CConfiguration cConf, DiscoveryService discoveryService, @Named("namespaces")
-                              Set<HttpHandler> handlers) {
+  public NamespaceHttpService(CConfiguration cConf, DiscoveryService discoveryService,
+                              @Named(Constants.Service.NAMESPACES) Set<HttpHandler> handlers) {
     this.discoveryService = discoveryService;
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf)
+    /*this.httpService = new CommonNettyHttpServiceBuilder(cConf)
       .addHttpHandlers(handlers)
-      //.setHost(Constants.Namespace.ADDRESS)
-      //.setWorkerThreadPoolSize(cConf.getInt(Constants.Namespace.WORKER_THREADS, 10))
-      //.setExecThreadPoolSize(0)
-      //.setConnectionBacklog(2000)
-      //.setChannelConfig("child.bufferFactory",
-      //                 HeapChannelBufferFactory.getInstance()) // ChannelBufferFactory that always creates new Buffer
+      .setHost("127.0.0.1")
+      .setWorkerThreadPoolSize(10)
+      .setExecThreadPoolSize(1)
+      .setConnectionBacklog(2000)
+      .setChannelConfig("child.bufferFactory",
+                       HeapChannelBufferFactory.getInstance()) // ChannelBufferFactory that always creates new Buffer
+      .build();*/
+    this.httpService = NettyHttpService.builder()
+      .addHttpHandlers(handlers)
+      .setHost("127.0.0.1")
       .build();
   }
 
@@ -68,14 +73,13 @@ public class NamespaceHttpService extends AbstractIdleService {
     //TODO: Constantify
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.Logging.SYSTEM_NAME,
                                                                        Constants.Logging.COMPONENT_NAME,
-                                                                       "namespaces"));
+                                                                       Constants.Service.NAMESPACES));
     httpService.startAndWait();
 
     cancellable = discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        // TODO: Constantify
-        return "namespaces";
+        return Constants.Service.NAMESPACES;
       }
 
       @Override
