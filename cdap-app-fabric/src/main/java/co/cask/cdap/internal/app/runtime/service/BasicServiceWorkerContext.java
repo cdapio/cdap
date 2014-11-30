@@ -43,14 +43,22 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
  * Default implementation of {@link ServiceWorkerContext}.
@@ -65,8 +73,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private final ServiceRunnableMetrics serviceRunnableMetrics;
   private final int instanceId;
   private final int instanceCount;
+  private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
   private final Program program;
-
 
   public BasicServiceWorkerContext(ServiceWorkerSpecification spec, Program program, RunId runId, int instanceId,
                                    int instanceCount, Arguments runtimeArgs, CConfiguration cConf,
@@ -87,6 +95,31 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     this.serviceRunnableMetrics = new ServiceRunnableMetrics(metricsCollectionService,
                                                              getMetricContext(program, spec.getName(), instanceId),
                                                              runId.getId());
+    // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
+    // instance, thus avoiding the overhead of creating a new instance for every request.
+    this.datasetsCache = CacheBuilder.newBuilder()
+      .removalListener(new RemovalListener<Long, Map<String, Dataset>>() {
+        @Override
+        @ParametersAreNonnullByDefault
+        public void onRemoval(RemovalNotification<Long, Map<String, Dataset>> notification) {
+          if (notification.getValue() != null) {
+            for (Map.Entry<String, Dataset> entry : notification.getValue().entrySet()) {
+              try {
+                entry.getValue().close();
+              } catch (IOException e) {
+                LOG.error(String.format("Error closing dataset: %s.", entry.getKey()), e);
+              }
+            }
+          }
+        }
+      })
+      .build(new CacheLoader<Long, Map<String, Dataset>>() {
+        @Override
+        @ParametersAreNonnullByDefault
+        public Map<String, Dataset> load(Long key) throws Exception {
+          return Maps.newHashMap();
+        }
+      });
   }
 
   @Override
@@ -114,7 +147,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new ServiceWorkerDatasetContext(context));
+      runnable.run(new ServiceWorkerDatasetContext(context, datasetsCache));
       context.finish();
     } catch (TransactionFailureException e) {
       abortTransaction(e, "Failed to commit. Aborting transaction.", context);
@@ -133,6 +166,24 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     return instanceId;
   }
 
+  @Override
+  public void close() {
+    super.close();
+    // Close all existing datasets that haven't been invalidated by the cache already.
+    for (Map.Entry<Long, Map<String, Dataset>> threadId : datasetsCache.asMap().entrySet()) {
+      Map<String, Dataset> datasetMap = threadId.getValue();
+      if (datasetMap != null) {
+        for (Map.Entry<String, Dataset> entry : datasetMap.entrySet()) {
+          try {
+            entry.getValue().close();
+          } catch (IOException e) {
+            LOG.error(String.format("Error closing dataset: %s.", entry.getKey()), e);
+          }
+        }
+      }
+    }
+  }
+
   private void abortTransaction(Exception e, String message, TransactionContext context) {
     try {
       LOG.error(message, e);
@@ -146,9 +197,12 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
 
   private class ServiceWorkerDatasetContext implements DatasetContext {
     private final TransactionContext context;
+    private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
 
-    private ServiceWorkerDatasetContext(TransactionContext context) {
+    private ServiceWorkerDatasetContext(TransactionContext context,
+                                        LoadingCache<Long, Map<String, Dataset>> datasetsCache) {
       this.context = context;
+      this.datasetsCache = datasetsCache;
     }
 
     /**
@@ -192,11 +246,20 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
       }
 
       try {
-        Dataset dataset = datasetFramework.getDataset(name, arguments, getProgram().getClassLoader());
+        Map<String, Dataset> threadLocalMap = datasetsCache.get(Thread.currentThread().getId());
+        Dataset dataset = threadLocalMap.get(name);
+        if (dataset == null) {
+          dataset = datasetFramework.getDataset(name, arguments, getProgram().getClassLoader());
+          if (dataset != null) {
+            threadLocalMap.put(name, dataset);
+          }
+        }
+
         if (dataset != null) {
           if (dataset instanceof TransactionAware) {
             context.addTransactionAware((TransactionAware) dataset);
           }
+
           @SuppressWarnings("unchecked")
           T resultDataset = (T) dataset;
           return resultDataset;
