@@ -6,7 +6,7 @@ var promise = require('q'),
     fs = require('fs'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
-    configString = "";
+    configString = '';
 
 /*
  *  Extracts the config based on mode.
@@ -21,16 +21,14 @@ function extractConfig(mode, configParam, isSecure) {
       partialConfigRead,
       configReader;
   isSecure = isSecure || false;
-  if (mode === "enterprise") {
-    configReader = spawn(__dirname + "/../bin/config-tool", ["--" + configParam]);
+  if (mode === 'enterprise') {
+    configReader = spawn(__dirname + '/../bin/config-tool', ['--' + configParam]);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('data', configRead.bind(this));
     configReader.stdout.on('end', onConfigReadEnd.bind(this, deferred, isSecure));
   } else {
-    setTimeout(function() {
-      config = require('../cdap-config.json');
-      deferred.resolve
-    }, 0);
+    config = require('../cdap-config.json');
+    deferred.resolve(config);
   }
   return deferred.promise;
 }
@@ -44,6 +42,7 @@ function onConfigReadEnd(deferred, isSecure, data) {
 //        }.bind(this));
 //  } else {
    deferred.resolve(JSON.parse(configString));
+   configString = '';
   //}
 }
 

@@ -52,8 +52,8 @@ app.get('/config.js', function (req, res) {
     'Content-Type': 'text/javascript',
     'Cache-Control': 'no-store, must-revalidate'
   });
-  res.send('angular.module("'+pkg.name+'.config", [])' +
-            '.constant("MY_CONFIG",'+data+');');
+  res.send('angular.module(''+pkg.name+'.config', [])' +
+            '.constant('MY_CONFIG','+data+');');
 });
 
 // serve static assets
@@ -84,4 +84,4 @@ app.all('*', [
   }
 ]);
 
-module.exports.app = app;
+module.exports = app;
