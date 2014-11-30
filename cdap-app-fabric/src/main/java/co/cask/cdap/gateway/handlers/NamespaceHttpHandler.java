@@ -16,13 +16,13 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.namespace.InMemoryNamespaceMetaStore;
+import co.cask.cdap.namespace.NamespaceMetaStore;
 import co.cask.cdap.namespace.NamespaceMetadata;
-import co.cask.cdap.namespace.NamespaceMetadataStore;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -53,14 +53,12 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Gson GSON = new Gson();
 
-  private Store store;
-  private NamespaceMetadataStore.InMemoryNamespaceMetadataStore tempStore;
+  private NamespaceMetaStore namespaceMetaStore;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, StoreFactory storeFactory) {
+  public NamespaceHttpHandler(Authenticator authenticator, NamespaceMetaStore namespaceMetaStore) {
     super(authenticator);
-    // store = storeFactory.create();
-    tempStore = NamespaceMetadataStore.InMemoryNamespaceMetadataStore.getInstance();
+    this.namespaceMetaStore = namespaceMetaStore;
   }
 
   @GET
@@ -68,7 +66,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) {
     LOG.debug("Lising all namespaces");
     try {
-      List<NamespaceMetadata> namespaces = tempStore.getAllNamespaces();
+      List<NamespaceMetadata> namespaces = namespaceMetaStore.list();
       if (null == namespaces) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
@@ -88,12 +86,12 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace}")
   public void getNamespace(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
     LOG.debug("Lising namespace {}", namespace);
-    NamespaceMetadata ns = tempStore.get(namespace);
+    NamespaceMetadata ns = namespaceMetaStore.get(namespace);
     if (null == ns) {
       LOG.error("Namespace {} not found", namespace);
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
-    String result = GSON.toJson(tempStore.get(namespace));
+    String result = GSON.toJson(ns);
     responder.sendByteArray(HttpResponseStatus.OK, result.getBytes(Charsets.UTF_8),
                             ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
   }
@@ -103,15 +101,18 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
     LOG.debug("Creating namespace {}", namespace);
     try {
+      if (namespaceMetaStore.exists(namespace)) {
+        responder.sendStatus(HttpResponseStatus.CONFLICT);
+      }
       NamespaceMetadata metadata = parseBody(request, NamespaceMetadata.class);
-      tempStore.writeNamespace(namespace, metadata.getDisplayName(), metadata.getDescription());
+      namespaceMetaStore.create(namespace, metadata.getDisplayName(), metadata.getDescription());
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Invalid namespace input: {}", request.getContent().toString(Charsets.UTF_8), e);
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-    } catch (NamespaceMetadataStore.InMemoryNamespaceMetadataStore.NamespaceAlreadyExistsException e) {
+    } catch (Exception e) {
       LOG.error(e.getLocalizedMessage(), e);
-      responder.sendStatus(HttpResponseStatus.CONFLICT);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -119,12 +120,16 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace}")
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
     LOG.debug("Deleting namespace {}", namespace);
+
     try {
-      tempStore.deleteNamespace(namespace);
+      if (!namespaceMetaStore.exists(namespace)) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      }
+      namespaceMetaStore.delete(namespace);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (NamespaceMetadataStore.InMemoryNamespaceMetadataStore.NamespaceNotFoundException e) {
+    } catch (Exception e) {
       LOG.error("Namespace {} not found", namespace);
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     }
   }
 }

@@ -18,13 +18,14 @@ package co.cask.cdap.namespace;
 
 /**
  * Represents metadata for namespaces
+ * TODO: Should this be renamed to NamespaceSpecification and moved to cdap-api?
  */
 public class NamespaceMetadata {
   private String name;
   private String displayName;
   private String description;
 
-  public NamespaceMetadata(String name, String displayName, String description) {
+  private NamespaceMetadata(final String name, final String displayName, final String description) {
     this.name = name;
     this.displayName = displayName;
     this.description = description;
@@ -42,6 +43,33 @@ public class NamespaceMetadata {
     return description;
   }
 
+  /**
+   * Builder used to build {@link co.cask.cdap.namespace.NamespaceMetadata}
+   */
+  public static final class Builder {
+    private String name;
+    private String displayName;
+    private String description;
+
+    public Builder setName(final String name) {
+      this.name = name;
+      return this;
+    }
+
+    public Builder setDisplayName(final String displayName) {
+      this.displayName = displayName;
+      return this;
+    }
+
+    public Builder setDescription(final String description) {
+      this.description = description;
+      return this;
+    }
+
+    public NamespaceMetadata build() {
+      return new NamespaceMetadata(name, displayName, description);
+    }
+  }
   @Override
   public String toString() {
     return "NamespaceMetadata{" +
