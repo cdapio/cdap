@@ -24,6 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.DataFabricFacade;
@@ -34,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
@@ -135,6 +137,13 @@ public class ServiceHttpServer extends AbstractIdleService {
    */
   @Override
   public void startUp() {
+    // All handlers of a Service run in the same Twill runnable and each Netty thread gets its own
+    // instance of a handler (and handlerContext). Creating the logging context here ensures that the logs
+    // during startup/shutdown and in each thread created are published.
+    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(program.getAccountId(),
+                                                                           program.getApplicationId(),
+                                                                           program.getId().getId(),
+                                                                           program.getId().getId()));
     LOG.debug("Starting HTTP server for Service {}", program.getId());
     Id.Program programId = program.getId();
     service.startAndWait();
