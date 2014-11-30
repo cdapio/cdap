@@ -16,6 +16,9 @@
 
 package co.cask.cdap.namespace;
 
+import java.util.Iterator;
+import java.util.List;
+
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
@@ -32,15 +35,16 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
-import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link co.cask.cdap.namespace.NamespaceMetaStore} that accesses MDS directly
@@ -117,7 +121,19 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
 
   @Override
   public List<NamespaceMetadata> list() {
-    return null;
+    return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, List<NamespaceMetadata>>() {
+      @Override
+      public List<NamespaceMetadata> apply(NamespaceMds input) throws Exception {
+        return Lists.transform(input.namespaces.list(getKey(null), NamespaceMetadata.class), new Function<NamespaceMetadata, NamespaceMetadata>() {
+
+          @Nullable
+          @Override
+          public NamespaceMetadata apply(NamespaceMetadata namespaceMetadata) {
+            return namespaceMetadata;
+          }
+        });
+      }
+    });
   }
 
   @Override
@@ -130,8 +146,12 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
     });
   }
 
-  private MetadataStoreDataset.Key getKey(String name) {
-    return new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE, name).build();
+  private MetadataStoreDataset.Key getKey(@Nullable String name) {
+    MetadataStoreDataset.Key.Builder builder = new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE);
+    if (null != name) {
+      builder.add(name);
+    }
+    return builder.build();
   }
 
   private NamespaceMetadata createNamespaceSpec(String name, String displayName, String description) {
