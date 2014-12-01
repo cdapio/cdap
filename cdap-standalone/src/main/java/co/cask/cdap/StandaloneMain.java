@@ -17,7 +17,6 @@
 package co.cask.cdap;
 
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
-import co.cask.cdap.app.guice.NamespaceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -43,7 +42,6 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.internal.app.services.NamespaceHttpService;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -96,8 +94,6 @@ public class StandaloneMain {
   private ExploreExecutorService exploreExecutorService;
   private final ExploreClient exploreClient;
 
-  // private final NamespaceHttpService namespaceHttpService;
-
   private StandaloneMain(List<Module> modules, CConfiguration configuration, String webAppPath) {
     this.configuration = configuration;
 
@@ -128,8 +124,6 @@ public class StandaloneMain {
     }
 
     exploreClient = injector.getInstance(ExploreClient.class);
-
-    // namespaceHttpService = injector.getInstance(NamespaceHttpService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -179,8 +173,6 @@ public class StandaloneMain {
       exploreExecutorService.startAndWait();
     }
 
-    // namespaceHttpService.startAndWait();
-
     String hostname = InetAddress.getLocalHost().getHostName();
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -221,8 +213,6 @@ public class StandaloneMain {
         externalAuthenticationServer.stopAndWait();
       }
       logAppenderInitializer.close();
-
-      // namespaceHttpService.stopAndWait();
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
@@ -377,7 +367,6 @@ public class StandaloneMain {
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModule(),
       new ExploreClientModule()
-      // new NamespaceRuntimeModule() //.getStandaloneModules()
     );
   }
 }

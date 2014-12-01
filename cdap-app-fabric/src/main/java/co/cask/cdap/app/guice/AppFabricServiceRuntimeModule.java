@@ -55,7 +55,6 @@ import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.namespace.MDSNamespaceMetaStore;
 import co.cask.cdap.namespace.NamespaceMetaStore;
-import co.cask.cdap.namespace.NamespaceServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
@@ -119,8 +118,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.NAMESPACES)
-                                        .to(NamespaceServiceManager.class);
                              }
                            });
   }
@@ -153,8 +150,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.NAMESPACES)
-                                 .to(NamespaceServiceManager.class);
                              }
                            });
   }
@@ -188,8 +183,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(ExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.NAMESPACES)
-                                 .to(NamespaceServiceManager.class);
                              }
                            });
   }
