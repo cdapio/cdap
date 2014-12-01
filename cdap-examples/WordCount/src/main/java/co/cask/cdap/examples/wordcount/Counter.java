@@ -30,16 +30,16 @@ public class Counter extends AbstractFlowlet {
   @UseDataSet("wordCounts")
   private KeyValueTable wordCountsTable;
   private OutputEmitter<String> wordOutput;
-  private Metrics longestWord;
-  int longestWorldLength = 0;
+  private Metrics metrics;
+  int longestWordLength = 0;
 
   @ProcessInput("wordOut")
   public void process(String word) {
     // Count number of times we have seen this word
     this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
-    if (word.length() > longestWorldLength) {
-      longestWorldLength = word.length();
-      longestWord.gauge("longest.word.length", longestWorldLength);
+    if (word.length() > longestWordLength) {
+      longestWordLength = word.length();
+      metrics.gauge("longest.word.length", longestWordLength);
     }
     // Forward the word to the unique counter Flowlet to do the unique count
     wordOutput.emit(word);
