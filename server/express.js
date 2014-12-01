@@ -44,8 +44,10 @@ app.get('/config.js', function (req, res) {
     // the following will be available in angular via the "MY_CONFIG" injectable
 
     authorization: req.headers.authorization,
-    routerServerUrl: config['router.server.address'],
-    routerServerPort: config['router.server.port']
+    cdap: {
+      routerServerUrl: config['router.server.address'],
+      routerServerPort: config['router.server.port']
+    }
   });
 
   res.header({
