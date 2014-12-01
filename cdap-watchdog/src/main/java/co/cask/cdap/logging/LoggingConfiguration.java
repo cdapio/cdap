@@ -57,8 +57,9 @@ public final class LoggingConfiguration {
   public static final String DEFAULT_NUM_PARTITIONS = "10";
   public static final int DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS = 24 * 60;
 
-  public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 4 * 1000;
+  public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 1 * 1000;
   public static final long DEFAULT_LOG_SAVER_EVENT_PROCESSING_DELAY_MS = 8 * 1000;
+  public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_PROCESSING_DELAY = 8;
   public static final long DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = 60 * 60 * 1000;
   public static final long DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS = 60 * 1000;
   public static final long DEFAULT_LOG_RETENTION_DURATION_DAYS = 30;

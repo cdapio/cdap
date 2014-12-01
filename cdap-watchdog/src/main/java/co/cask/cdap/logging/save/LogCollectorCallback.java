@@ -31,6 +31,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Kafka callback to fetch log messages and store them in time buckets per logging context.
@@ -59,8 +62,32 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
         ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
         LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
 
+        // Compute the bucket number for the current event
+        Long key = event.getTimeStamp() / eventBucketIntervalMs;
+        SortedSet<Long> rowSet;
+        while (true) {
+          synchronized (messageTable) {
+            rowSet = new TreeSet<Long>(messageTable.rowKeySet());
+          }
+
+          if (rowSet.isEmpty()) {
+            // Table is empty so go ahead and add the current event in the table
+            break;
+          }
+
+          // Get the oldest bucket in the table
+          long oldestBucketKey = rowSet.first();
+
+          // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
+          // sleep for the time duration till event falls in the window
+          if (key > (oldestBucketKey + 8)) {
+            TimeUnit.SECONDS.sleep((key - (oldestBucketKey + 8)) * (eventBucketIntervalMs / 1000));
+          } else {
+            break;
+          }
+        }
+
         synchronized (messageTable) {
-          long key = event.getTimeStamp() / eventBucketIntervalMs;
           List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
           if (msgList == null) {
             msgList = Lists.newArrayList();

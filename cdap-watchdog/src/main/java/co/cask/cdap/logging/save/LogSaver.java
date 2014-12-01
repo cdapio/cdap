@@ -32,6 +32,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
+import com.google.common.collect.TreeBasedTable;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -90,7 +91,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     this.checkpointManager = new CheckpointManager(tableUtil, txClient, topic);
     FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txClient, locationFactory);
-    this.messageTable = HashBasedTable.create();
+    this.messageTable = TreeBasedTable.create();
 
     this.kafkaClient = kafkaClient;
 

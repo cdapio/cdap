@@ -27,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Persists bucketized logs stored by {@link LogCollectorCallback}.
@@ -55,13 +57,35 @@ public class LogWriter implements Runnable {
       // Read new messages only if previous write was successful.
       if (writeListMap.isEmpty()) {
         messages = 0;
-        long processKey = (System.currentTimeMillis() - eventProcessingDelayMs) / eventBucketIntervalMs;
+
+        SortedSet<Long> rowSet;
+        synchronized (messageTable) {
+          rowSet = new TreeSet<Long>(messageTable.rowKeySet());
+        }
+
+        // Nothing to write
+        if (rowSet.isEmpty()) {
+          return;
+        }
+
+        // Get the oldest bucket in the table
+        Long oldestBucketKey = rowSet.first();
+
+        // Compute the current bucket based on current time
+        Long currentBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
+
+        // If there are lesser than 8 buckets in the table then return
+        if (currentBucketKey < (oldestBucketKey + 8)) {
+          // wait till at least 8 buckets get filled in the table
+          return;
+        }
+
         synchronized (messageTable) {
           for (Iterator<Table.Cell<Long, String, List<KafkaLogEvent>>> it = messageTable.cellSet().iterator();
                it.hasNext(); ) {
             Table.Cell<Long, String, List<KafkaLogEvent>> cell = it.next();
-            // Process only messages older than eventProcessingDelayMs
-            if (cell.getRowKey() >= processKey) {
+            // Process messages in the oldest bucket only
+            if (cell.getRowKey() > oldestBucketKey) {
               continue;
             }
 
