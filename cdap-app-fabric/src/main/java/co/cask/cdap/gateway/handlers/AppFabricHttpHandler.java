@@ -3142,16 +3142,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }, ProgramType.values());
 
       if (appRunning) {
-        throw new Exception("App Still Running");
+        throw new Exception("Cannot perform this operation when programs are running");
       }
 
       LOG.info("Deleting all data for account '" + account + "'.");
 
-      // NOTE: deleting new datasets stuff first because old datasets system deletes all blindly by prefix
-      //       which may damage metadata
-      for (DatasetSpecification spec : dsFramework.getInstances()) {
-        dsFramework.deleteInstance(spec.getName());
-      }
+      dsFramework.deleteAllInstances();
       dsFramework.deleteAllModules();
 
       deleteMetrics(account, null);
@@ -3170,6 +3166,49 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.warn(e.getMessage(), e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), e.getMessage()));
+    }
+  }
+
+  /**
+   * DO NOT DOCUMENT THIS API.
+   */
+  @DELETE
+  @Path("/unrecoverable/data/datasets")
+  public void deleteDatasets(HttpRequest request, HttpResponder responder) {
+
+    try {
+      if (!configuration.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+                                    Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+        responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+        return;
+      }
+      String account = getAuthenticatedAccountId(request);
+      final Id.Account accountId = Id.Account.from(account);
+
+      // Check if any program is still running
+      boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+        @Override
+        public boolean apply(Id.Program programId) {
+          return programId.getAccountId().equals(accountId.getId());
+        }
+      }, ProgramType.values());
+
+      if (appRunning) {
+        throw new Exception("Cannot perform this operation when programs are running");
+      }
+
+      LOG.info("Deleting all datasets for account '" + account + "'.");
+
+      dsFramework.deleteAllInstances();
+
+      LOG.info("All datasets for account '" + account + "' deleted.");
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.warn(e.getMessage(), e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format(UserMessages.getMessage(UserErrors.DATASETS_DELETE_FAIL), e.getMessage()));
     }
   }
 
