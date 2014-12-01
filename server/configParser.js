@@ -7,7 +7,7 @@ var promise = require('q'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
     configString = '',
-    configJson = null;
+    jsonConfig = null;
 
 /*
  *  Extracts the config based on mode.
