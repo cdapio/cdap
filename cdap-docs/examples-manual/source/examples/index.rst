@@ -17,6 +17,7 @@ Examples
    
    Hello World <hello-world>
    Word Count <word-count>
+   File Sets <fileset>
    Count Random <count-random>
    Purchase <purchase>
    Spark K-Means <spark-k-means>
@@ -39,6 +40,9 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Word Count<word-count>`
     - A simple application that counts words, and tracks word associations and unique words seen on the Stream.
       It demonstrates the power of using datasets and how they can be employed to simplify storing complex data.
+  * - :doc:`File Sets<fileset>`
+    - A variation of the WordCount example that operates on files. It demonstrates the usage of the FileSet
+      dataset, including a service to upload and download files, and a MapReduce that operates over these files.
   * - :doc:`Count Random<count-random>`
     - An application that demonstrates the ``@Tick`` feature of Flows. It uses a tick method to generate random
       numbers which are then counted by downstream Flowlets.
