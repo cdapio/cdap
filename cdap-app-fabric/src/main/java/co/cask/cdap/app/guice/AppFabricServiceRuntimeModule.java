@@ -53,7 +53,6 @@ import co.cask.cdap.logging.run.InMemoryStreamServiceManager;
 import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
-import co.cask.cdap.namespace.InMemoryNamespaceMetaStore;
 import co.cask.cdap.namespace.MDSNamespaceMetaStore;
 import co.cask.cdap.namespace.NamespaceMetaStore;
 import co.cask.cdap.namespace.NamespaceServiceManager;
@@ -101,7 +100,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
-                               bind(NamespaceMetaStore.class).to(InMemoryNamespaceMetaStore.class).in(Scopes.SINGLETON);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
@@ -136,7 +134,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
-                               bind(NamespaceMetaStore.class).to(MDSNamespaceMetaStore.class).in(Scopes.SINGLETON);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
@@ -172,7 +169,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              protected void configure() {
                                bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
-                               bind(NamespaceMetaStore.class).to(MDSNamespaceMetaStore.class).in(Scopes.SINGLETON);
 
                                MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
                                  binder(), String.class, MasterServiceManager.class);
@@ -215,6 +211,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(StoreFactory.class).to(DefaultStoreFactory.class);
+      bind(NamespaceMetaStore.class).to(MDSNamespaceMetaStore.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));

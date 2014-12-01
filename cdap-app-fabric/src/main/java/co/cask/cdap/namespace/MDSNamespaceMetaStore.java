@@ -16,9 +16,6 @@
 
 package co.cask.cdap.namespace;
 
-import java.util.Iterator;
-import java.util.List;
-
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
@@ -44,6 +41,8 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -79,7 +78,7 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
                                                              DatasetDefinition.NO_ARGUMENTS, null);
             return new NamespaceMds(new MetadataStoreDataset(mdsTable));
           } catch (Exception e) {
-            LOG.error("Failed to access app.meta table", e);
+            LOG.error("Failed to access namespace.meta table", e);
             throw Throwables.propagate(e);
           }
         }
@@ -124,7 +123,8 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, List<NamespaceMetadata>>() {
       @Override
       public List<NamespaceMetadata> apply(NamespaceMds input) throws Exception {
-        return Lists.transform(input.namespaces.list(getKey(null), NamespaceMetadata.class), new Function<NamespaceMetadata, NamespaceMetadata>() {
+        return Lists.transform(input.namespaces.list(getKey(null), NamespaceMetadata.class), new
+          Function<NamespaceMetadata, NamespaceMetadata>() {
 
           @Nullable
           @Override
@@ -155,7 +155,8 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
   }
 
   private NamespaceMetadata createNamespaceSpec(String name, String displayName, String description) {
-    return new NamespaceMetadata.Builder().setName(name).setDisplayName(displayName).setDescription(description).build();
+    return new NamespaceMetadata.Builder().setName(name).setDisplayName(displayName).setDescription(description)
+      .build();
   }
 
   private class NamespaceMds implements Iterable<MetadataStoreDataset> {

@@ -16,11 +16,9 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.namespace.InMemoryNamespaceMetaStore;
 import co.cask.cdap.namespace.NamespaceMetaStore;
 import co.cask.cdap.namespace.NamespaceMetadata;
 import co.cask.http.HttpHandler;
@@ -47,7 +45,7 @@ import javax.ws.rs.PathParam;
 /**
  * {@link HttpHandler} for handling REST call to namespace endpoints.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION)
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
 

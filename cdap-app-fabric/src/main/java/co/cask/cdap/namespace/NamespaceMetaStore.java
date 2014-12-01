@@ -20,7 +20,8 @@ import java.util.List;
 
 /**
  * API to store/retrieve namespace metadata
- * TODO: Need to finalize exception handling in this interface
+ * TODO: Need to finalize exception handling in this interface. Should this throw any exceptions at all? Since the
+ * implementations either use "unchecked" APIs or use Throwables.propagate()?
  */
 public interface NamespaceMetaStore {
 
@@ -30,7 +31,6 @@ public interface NamespaceMetaStore {
    * @param displayName display name of the new namespace. We may allow users to update this field later.
    * @param description description of the new namespace
    * @throws java.lang.Exception if problems occur while creating the new namespace
-   * TODO: Should it throw a NamespaceAlreadyExistsException?
    */
   void create(String name, String displayName, String description) throws Exception;
 
@@ -45,7 +45,6 @@ public interface NamespaceMetaStore {
    * Deletes a namespace from the namespace metadata store
    * @param name name of the namespace to delete
    * @throws java.lang.Exception if problems occur while deleting the namespace
-   * TODO: Should it throw a NamespaceNotFoundException?
    */
   void delete(String name) throws Exception;
 
