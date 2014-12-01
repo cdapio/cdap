@@ -24,7 +24,7 @@ As these entries are created, they are taken up by the *SparkKMeansProgram*, whi
 goes through the entries, calculates centers and tabulates results in another ObjectStore Dataset, *centers*.
 
 Once the application completes, you can query the *centers* Dataset by using the ``centers/{index}`` endpoint
-of the *CentersService*. It will responds string with the center's coordinates based on the ``index`` parameter.
+of the *CentersService*. It will respond with the center's coordinates based on the ``index`` parameter (e.g. "9.1,9.1,9.1").
 
 Let's look at some of these elements, and then run the Application and see the results.
 
@@ -57,7 +57,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the flow and service as described.
+  Make sure you start the Flow and Service as described.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications

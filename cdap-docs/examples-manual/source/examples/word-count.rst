@@ -68,7 +68,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the flow and service as described.
+  Make sure you start the Flow and Service as described.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -120,7 +120,7 @@ format (example reformatted to fit)::
     "word": "CDAP"
   }
 
-You can also request other endpoints available in this service, which described above.
+You can also request other endpoints available in this Service, which described above.
 
 Stopping the Application
 -------------------------------

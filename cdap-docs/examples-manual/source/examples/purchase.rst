@@ -40,7 +40,7 @@ and write to another.
 
 **Note:** Because the PurchaseHistoryWorkFlow is only scheduled to run at 4:00 A.M.,
 you should not start it manually until after entering the first customers' purchases, or the
-PurchaseHistoryService will responds with HTTP_NO_CONTENT status code.
+PurchaseHistoryService will responds with *204 No Response* status code.
 
 Let's look at some of these elements, and then run the Application and see the results.
 
@@ -86,7 +86,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the flow and service as described.
+  Make sure you start the Flow and Service as described.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications

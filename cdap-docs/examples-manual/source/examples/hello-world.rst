@@ -55,14 +55,14 @@ by the length of the name. We will see below how to retrieve these metrics using
 The ``Greeting`` Service
 ------------------------------
 
-This service has a single endpoint called ``greet`` that does not accept arguments. When invoked, it
+This Service has a single endpoint called ``greet`` that does not accept arguments. When invoked, it
 reads the name stored by the ``NameSaver`` from the key-value table. It return a simple greeting with that name:
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 100-115
 
-Note that the service, like the flowlet, also emits metrics: every time the name *Jane Doe* is received,
+Note that the Service, like the Flowlet, also emits metrics: every time the name *Jane Doe* is received,
 the counter ``greetings.count.jane_doe`` is incremented by one.
 We will see below how to retrieve this metric sing the
 :ref:`http-restful-api-metrics`.
@@ -74,7 +74,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the flow and service as described.
+  Make sure you start the Flow and Service as described.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
