@@ -24,8 +24,8 @@ to the *backlinkURLStream*. This data is processed by the
 As these entries are created, they are taken up by the *SparkPageRankProgram*, which
 goes through the entries, calculates page rank and tabulates results in another ObjectStore Dataset, *ranks*.
 
-Once the application completes, you can query the *ranks* Dataset by using the ``rank`` method of the *RanksProcedure*.
-It will send back a JSON-formatted result with page rank based on the ``url`` parameter.
+Once the application completes, you can query the *ranks* Dataset by using the ``rank`` endpoint of the *RanksService*.
+It will send back a string result with page rank based on the ``url`` query parameter.
 
 Let's look at some of these elements, and then run the Application and see the results.
 
@@ -45,10 +45,10 @@ of the Application are tied together by the class ``SparkPageRankApp``:
 The raw URL pair data is stored in an ObjectStore Dataset, *backlinkURLs*.
 The calculated page rank data is stored in a second ObjectStore Dataset, *ranks*.
 
-``RanksProcedure``: Procedure
+``RanksService``: Service
 ------------------------------------------------------------
 
-This procedure has a ``rank`` method to obtain the page rank of a given URL.
+This service has a ``rank`` endpoint to obtain the page rank of a given URL.
 
 
 Building and Starting
@@ -58,7 +58,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the flow and procedure as described.
+  Make sure you start the flow and service as described.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -85,6 +85,10 @@ On Windows::
 Running the Spark Program
 ------------------------------
 
+Before start the Spark program you should start the ``GoogleTypePR`` service, as example using curl::
+
+  curl -v -X POST 'http://localhost:10000/v2/apps/SparkPageRank/services/GoogleTypePR/start'
+
 There are three ways to start the Spark program:
 
 1. Click on the ``SparkPageRankProgram`` in the Application page of the CDAP Console to get to the
@@ -110,36 +114,20 @@ There are three ways to start the Spark program:
 Querying the Results
 ------------------------------
 
-If the Procedure has not already been started, you start it either through the 
+If the Service has not already been started, you start it either through the
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-  curl -v -d 'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/start'
-  
-There are two ways to query the *ranks* ObjectStore through the ``RanksProcedure`` procedure:
+  curl -v -X POST 'http://localhost:10000/v2/apps/SparkPageRank/services/RanksService/start'
 
-1. Send a query via an HTTP request using the ``curl`` command. For example::
+To query the *ranks* ObjectStore through the ``RanksService``,
+send a query via an HTTP request using the ``curl`` command. For example::
 
-     curl -w '\n' -v -d '{"url": "http://example.com/page1"}' \
-       'http://localhost:10000/v2/apps/SparkPageRank/procedures/RanksProcedure/methods/rank'
+    curl -w '\n' -v \
+      'http://localhost:10000/v2/apps/SparkPageRank/services/RanksService/methods/rank?url=http://example.com/page1'
 
-   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
+  On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
     libexec\curl...
-
-2. Type the Procedure method name, ``RanksProcedure``, in the Query page of the CDAP Console.
-
-   1. Click the *Query* button in the left side-bar of the CDAP Console.
-   #. Click on the *RanksProcedure* Procedure.
-   #. Type ``rank`` in the *Method* text box.
-   #. Type the parameters required for this method, a JSON string with the name *url* and
-      value of a URI, ``"http://example.com/page1"``::
-
-        { "url" : "http://example.com/page1" }
-
-   #. Click the *Execute* button.
-   #. The rank for that URL will be displayed in the Console in JSON format::
-
-        "0.9988696312751688"
 
 Stopping the Application
 -------------------------------
