@@ -14,10 +14,10 @@ angular
         PKG.name+'.config',
         'ngAnimate',
         'ngSanitize',
-        'ngResize',
         // 'ngResource',
         'ngStorage',
         'ui.router',
+        'cask-angular-window-manager',
         'cask-angular-theme'
       ]).name,
 

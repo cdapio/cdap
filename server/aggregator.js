@@ -3,20 +3,7 @@
 var _ = require('lodash'),
     request = require('request'),
     colors = require('colors/safe'),
-    hash = require('object-hash'),
-    HashTable = hash.HashTable;
-
-// https://github.com/puleos/object-hash/pull/12
-HashTable.prototype.remove = function (obj) {
-  var key = hash(obj),
-      count = this.getCount(key);
-  if(count===1) {
-    delete this._table[key];
-  } else {
-    this._table[key].count = count-1;
-  }
-};
-
+    HashTable = require('./hashtable.js');
 
 
 var POLL_INTERVAL = 1000;

@@ -16,7 +16,7 @@ ngEpoch.factory('Epoch', function ($window) {
   return $window.Epoch;
 });
 
-ngEpoch.controller('epochController', function ($scope, $compile, myResizeManager, Epoch) {
+ngEpoch.controller('epochController', function ($scope, $compile, caskWindowManager, Epoch) {
 
   $scope.initEpoch = function (elem, type, attr, forcedOpts) {
     if($scope.me) {
@@ -83,7 +83,7 @@ ngEpoch.controller('epochController', function ($scope, $compile, myResizeManage
     $compile(el)($scope);
   }
 
-  $scope.$on(myResizeManager.eventName, render);
+  $scope.$on(caskWindowManager.event.resize, render);
 
 });
 
