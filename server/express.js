@@ -17,11 +17,6 @@ var pkg = require('../package.json'),
       __dirname + '/../dist'
     );
 
-configParser.extractConfig(mode, 'cdap', false /* isSecure*/)
-  .then(function(c) {
-    config = c;
-  })
-
 morgan.token('ms', function(req, res){
   if (!res._header || !req._startAt) { return ''; }
   var diff = process.hrtime(req._startAt);
@@ -40,22 +35,26 @@ catch(e) { console.error('Favicon missing! Did you run `gulp build`?'); }
 
 // serve the config file
 app.get('/config.js', function (req, res) {
-  var data = JSON.stringify({
-    // the following will be available in angular via the "MY_CONFIG" injectable
 
-    authorization: req.headers.authorization,
-    cdap: {
-      routerServerUrl: config['router.server.address'],
-      routerServerPort: config['router.server.port']
-    }
-  });
+  configParser.extractConfig(mode, 'cdap', false /* isSecure*/)
+    .then(function(config) {
+      var data = JSON.stringify({
+        // the following will be available in angular via the "MY_CONFIG" injectable
 
-  res.header({
-    'Content-Type': 'text/javascript',
-    'Cache-Control': 'no-store, must-revalidate'
+        authorization: req.headers.authorization,
+        cdap: {
+          routerServerUrl: config['router.server.address'],
+          routerServerPort: config['router.server.port']
+        }
+      });
+
+      res.header({
+        'Content-Type': 'text/javascript',
+        'Cache-Control': 'no-store, must-revalidate'
+      });
+      res.send('angular.module("'+pkg.name+'.config", [])' +
+                '.constant("MY_CONFIG",'+data+');');
   });
-  res.send('angular.module("'+pkg.name+'.config", [])' +
-            '.constant("MY_CONFIG",'+data+');');
 });
 
 // serve static assets

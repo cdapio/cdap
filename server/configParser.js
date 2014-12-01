@@ -6,7 +6,8 @@ var promise = require('q'),
     fs = require('fs'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
-    configString = '';
+    configString = '',
+    configJson = null;
 
 /*
  *  Extracts the config based on mode.
@@ -20,8 +21,12 @@ function extractConfig(mode, configParam, isSecure) {
       decoder = new StringDecoder('utf8'),
       partialConfigRead,
       configReader;
+
   isSecure = isSecure || false;
   if (mode === 'enterprise') {
+    if (!jsonConfig) {
+      return deferred.resolve(jsonConfig);
+    }
     configReader = spawn(__dirname + '/../bin/config-tool', ['--' + configParam]);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('data', configRead.bind(this));
@@ -41,7 +46,8 @@ function onConfigReadEnd(deferred, isSecure, data) {
 //          deferred.resolve();
 //        }.bind(this));
 //  } else {
-   deferred.resolve(JSON.parse(configString));
+   jsonConfig = JSON.parse(configString);
+   deferred.resolve(jsonConfig);
    configString = '';
   //}
 }
