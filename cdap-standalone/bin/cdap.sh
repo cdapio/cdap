@@ -99,7 +99,7 @@ location of your Java installation."
 fi
 
 # java version check
-JAVA_VERSION=`java -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
+JAVA_VERSION=`$JAVACMD -version 2>&1 | grep "java version" | awk '{print $3}' | awk -F '.' '{print $2}'`
 if [ $JAVA_VERSION -ne 6 ] && [ $JAVA_VERSION -ne 7 ]; then
   die "ERROR: Java version not supported
 Please install Java 6 or 7 - other versions of Java are not yet supported."
