@@ -37,7 +37,6 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
@@ -225,7 +224,7 @@ public class AppWithServices extends AbstractApplication {
           @Override
           public void run(DatasetContext context) throws Exception {
             KeyValueTable table = context.getDataset(DATASET_NAME);
-            datasetHashCode = Objects.hashCode(table);
+            datasetHashCode = System.identityHashCode(table);
           }
         });
       }
@@ -252,7 +251,7 @@ public class AppWithServices extends AbstractApplication {
               public void run(DatasetContext context) throws Exception {
                 KeyValueTable table = context.getDataset(DATASET_NAME);
                 // Write only if the dataset instance is the same as the one gotten in initialize.
-                if (datasetHashCode == Objects.hashCode(table)) {
+                if (datasetHashCode == System.identityHashCode(table)) {
                   table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
                 }
               }

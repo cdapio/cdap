@@ -109,7 +109,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
               try {
                 entry.getValue().close();
               } catch (IOException e) {
-                LOG.error(String.format("Error closing dataset: %s.", entry.getKey()), e);
+                LOG.error("Error closing dataset: {}", entry.getKey(), e);
               }
             }
           }
@@ -172,18 +172,8 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   public void close() {
     super.close();
     // Close all existing datasets that haven't been invalidated by the cache already.
-    for (Map.Entry<Long, Map<String, Dataset>> threadId : datasetsCache.asMap().entrySet()) {
-      Map<String, Dataset> datasetMap = threadId.getValue();
-      if (datasetMap != null) {
-        for (Map.Entry<String, Dataset> entry : datasetMap.entrySet()) {
-          try {
-            entry.getValue().close();
-          } catch (IOException e) {
-            LOG.error(String.format("Error closing dataset: %s.", entry.getKey()), e);
-          }
-        }
-      }
-    }
+    datasetsCache.invalidateAll();
+    datasetsCache.cleanUp();
   }
 
   private void abortTransaction(Exception e, String message, TransactionContext context) {
