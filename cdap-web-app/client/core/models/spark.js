@@ -155,7 +155,7 @@ define(['core/models/program'], function (Program) {
                         }
                         metric = null;
                     }
-                    self.set('metricsUpdated', true);
+                    self.set('metricsUpdated', !self.get('metricsUpdated'));
                 });
             });
         },

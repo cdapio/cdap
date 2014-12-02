@@ -30,26 +30,20 @@ define([], function () {
             var self = this;
 
             var runStatusUpdate = function () {
-                self.__updateStatusTimeout = setTimeout(function () {
-                    self.__updateStatus(model.app, model.name);
-                    runStatusUpdate();
-                }, self.__STATUS_UPDATE_TIMEOUT);
+                self.__updateStatus(model.app, model.name);
             };
 
-            var runMetricsUpdate = function () {
-                self.__updateMetricsTimeout = setTimeout(function () {
-                    self.__updateMetrics();
-                    runMetricsUpdate();
-                }, self.__METRICS_UPDATE_TIMEOUT);
+            var runMetricUpdate = function () {
+                self.__updateMetrics();
             };
 
-            runStatusUpdate();
-            runMetricsUpdate();
+            this.__updateStatusInterval = setInterval(runStatusUpdate, this.__STATUS_UPDATE_TIMEOUT);
+            this.__updateMetricsInterval = setInterval(runMetricUpdate, this.__METRICS_UPDATE_TIMEOUT);
         },
 
         unload: function () {
-            clearTimeout(this.__updateStatusTimeout);
-            clearTimeout(this.__updateMetricsTimeout);
+            clearInterval(this.__updateStatusInterval);
+            clearInterval(this.__updateMetricsInterval);
         },
 
         /**
