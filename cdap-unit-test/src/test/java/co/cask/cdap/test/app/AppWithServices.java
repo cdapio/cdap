@@ -31,6 +31,7 @@ import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.AbstractServiceWorker;
 import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
@@ -197,6 +198,7 @@ public class AppWithServices extends AbstractApplication {
 
     private static final class DatasetUpdateWorker extends AbstractServiceWorker {
 
+      private static int datasetHashCode;
       private volatile boolean workerStopped = false;
 
       @Property
@@ -213,6 +215,18 @@ public class AppWithServices extends AbstractApplication {
       @Override
       protected void configure() {
         useDatasets(dataset);
+      }
+
+      @Override
+      public void initialize(ServiceWorkerContext context) throws Exception {
+        super.initialize(context);
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            KeyValueTable table = context.getDataset(DATASET_NAME);
+            datasetHashCode = System.identityHashCode(table);
+          }
+        });
       }
 
       @Override
@@ -236,7 +250,10 @@ public class AppWithServices extends AbstractApplication {
               @Override
               public void run(DatasetContext context) throws Exception {
                 KeyValueTable table = context.getDataset(DATASET_NAME);
-                table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
+                // Write only if the dataset instance is the same as the one gotten in initialize.
+                if (datasetHashCode == System.identityHashCode(table)) {
+                  table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
+                }
               }
             });
             TimeUnit.MILLISECONDS.sleep(sleepMs);
