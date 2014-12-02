@@ -746,15 +746,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private String getQueryParameter(Map<String, List<String>> parameters, String parameterName) {
-    if (parameters == null || parameters.isEmpty()) {
-      return null;
-    } else {
-      List<String> matchedParams = parameters.get(parameterName);
-      return matchedParams == null || matchedParams.isEmpty() ? null : matchedParams.get(0);
-    }
-  }
-
   private void getRuns(HttpRequest request, HttpResponder responder, String appId,
                        String runnableId, String status, long start, long end, int limit) {
     try {
