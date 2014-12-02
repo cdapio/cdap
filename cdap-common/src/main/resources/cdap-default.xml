@@ -891,6 +891,10 @@
         <value>false</value>
     </property>
     <property>
+        <name>explore.unit.test</name>
+        <value>false</value>
+    </property>
+    <property>
         <name>explore.local.data.dir</name>
         <value>${local.data.dir}/explore</value>
     </property>
