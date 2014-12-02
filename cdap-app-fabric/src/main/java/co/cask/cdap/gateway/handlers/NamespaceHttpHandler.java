@@ -24,11 +24,9 @@ import co.cask.cdap.namespace.NamespaceMetadata;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -39,7 +37,7 @@ import java.io.IOException;
 import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -95,7 +93,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @PUT
+  @POST
   @Path("/namespaces")
   public void create(HttpRequest request, HttpResponder responder) {
     try {
