@@ -36,14 +36,14 @@ General
 Applications
 ............
 -  CDAP-335: API for configuring Services and MapReduce Jobs has been changed to use the configurer style
-  (`CDAP-335 <https://issues.cask.co/browse/CDAP-335>`__).
+   (`CDAP-335 <https://issues.cask.co/browse/CDAP-335>`__).
 -  CDAP-91: Jar deployment now uses chunked request and writes to local file
-  (`CDAP-91 <https://issues.cask.co/browse/CDAP-91>`__).
+   (`CDAP-91 <https://issues.cask.co/browse/CDAP-91>`__).
 
 MapReduce
 .........
 -  CDAP-331: MapReduce jobs can now read binary stream data
-  (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
+   (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
 
 Datasets
 ........
