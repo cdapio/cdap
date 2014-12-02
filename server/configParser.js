@@ -7,7 +7,7 @@ var promise = require('q'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
     configString = '',
-    jsonConfig = null;
+    configJson = null;
 
 /*
  *  Extracts the config based on mode.
@@ -19,37 +19,28 @@ var promise = require('q'),
 function extractConfig(mode, configParam, isSecure) {
   var deferred = promise.defer(),
       decoder = new StringDecoder('utf8'),
-      partialConfigRead,
       configReader;
 
   isSecure = isSecure || false;
   if (mode === 'enterprise') {
-    if (!jsonConfig) {
-      return deferred.resolve(jsonConfig);
+    if (configJson) {
+      return deferred.resolve(configJson);
     }
     configReader = spawn(__dirname + '/../bin/config-tool', ['--' + configParam]);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('data', configRead.bind(this));
     configReader.stdout.on('end', onConfigReadEnd.bind(this, deferred, isSecure));
   } else {
-    config = require('../cdap-config.json');
-    deferred.resolve(config);
+    configJson = require('../cdap-config.json');
+    deferred.resolve(configJson);
   }
   return deferred.promise;
 }
 
 function onConfigReadEnd(deferred, isSecure, data) {
-//  if (this.config["ssl.enabled"] === "true") {
-//    configString = "";
-//    this.extractConfig("enterprise", "security", true)
-//        .then(function onSecureConfigComplete() {
-//          deferred.resolve();
-//        }.bind(this));
-//  } else {
-   jsonConfig = JSON.parse(configString);
-   deferred.resolve(jsonConfig);
+   configJson = JSON.parse(configString);
+   deferred.resolve(configJson);
    configString = '';
-  //}
 }
 
 function configRead() {
