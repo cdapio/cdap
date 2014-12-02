@@ -846,7 +846,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
 
-      ProgramController controller = runtimeInfo.getController();
+      final ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
 
       controller.addListener(new AbstractListener() {
@@ -858,7 +858,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             stopped();
           }
           if (state == ProgramController.State.ERROR) {
-            error(new Exception("Error Starting the Program"));
+            error(controller.getFailureCause());
           }
         }
         @Override
