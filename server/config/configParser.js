@@ -7,6 +7,7 @@ var promise = require('q'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
     configString = '',
+    decoder = new StringDecoder('utf8')
     configJson = null;
 
 /*
@@ -18,7 +19,6 @@ var promise = require('q'),
 
 function extractConfig(mode, configParam, isSecure) {
   var deferred = promise.defer(),
-      decoder = new StringDecoder('utf8'),
       configReader;
 
   isSecure = isSecure || false;
@@ -31,7 +31,15 @@ function extractConfig(mode, configParam, isSecure) {
     configReader.stdout.on('data', configRead.bind(this));
     configReader.stdout.on('end', onConfigReadEnd.bind(this, deferred, isSecure));
   } else {
-    configJson = require('../cdap-config.json');
+    try {
+      configJson = require('../../cdap-config.json');
+    } catch(e) {
+      // Indicates the backend is not running in local environment and that we want only the
+      // UI to be running. This is here for convenience.
+      console.log('Error!: ', e.code, ' - ', e.message);
+      configJson = require('./development/default-config.json');
+    }
+
     deferred.resolve(configJson);
   }
   return deferred.promise;
@@ -44,12 +52,9 @@ function onConfigReadEnd(deferred, isSecure, data) {
 }
 
 function configRead() {
-  var decoder = new StringDecoder('utf-8');
   var textChunk = decoder.write(arguments[0]);
   if (textChunk) {
     configString += textChunk;
-  } else {
-    this.logger.error('Extracting the config file failed!');
   }
 }
 
@@ -57,8 +62,7 @@ function configReadFail() {
   var decoder = new StringDecoder('utf-8');
   var textChunk = decoder.write(arguments[0]);
   if (textChunk) {
-    this.logger.info(textChunk);
-  } else {
     this.logger.error('Extracting the config file failed!');
+    this.logger.info(textChunk);
   }
 }
