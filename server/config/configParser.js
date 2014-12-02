@@ -24,9 +24,10 @@ function extractConfig(mode, configParam, isSecure) {
   isSecure = isSecure || false;
   if (mode === 'enterprise') {
     if (configJson) {
-      return deferred.resolve(configJson);
+      deferred.resolve(configJson);
+      return deferred.promise;
     }
-    configReader = spawn(__dirname + '/../bin/config-tool', ['--' + configParam]);
+    configReader = spawn(__dirname + '/../../bin/config-tool', ['--' + configParam]);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('data', configRead.bind(this));
     configReader.stdout.on('end', onConfigReadEnd.bind(this, deferred, isSecure));
@@ -62,7 +63,7 @@ function configReadFail() {
   var decoder = new StringDecoder('utf-8');
   var textChunk = decoder.write(arguments[0]);
   if (textChunk) {
-    this.logger.error('Extracting the config file failed!');
-    this.logger.info(textChunk);
+    console.log('Extracting the config file failed!');
+    console.log(textChunk);
   }
 }
