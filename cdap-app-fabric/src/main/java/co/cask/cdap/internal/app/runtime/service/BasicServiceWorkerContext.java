@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
@@ -98,6 +99,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     // A cache of datasets by threadId. Repeated requests for a dataset from the same thread returns the same
     // instance, thus avoiding the overhead of creating a new instance for every request.
     this.datasetsCache = CacheBuilder.newBuilder()
+      .expireAfterAccess(2, TimeUnit.MINUTES)
       .removalListener(new RemovalListener<Long, Map<String, Dataset>>() {
         @Override
         @ParametersAreNonnullByDefault
