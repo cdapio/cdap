@@ -72,10 +72,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendByteArray(HttpResponseStatus.OK, result.getBytes(Charsets.UTF_8),
                                 ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
       }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
+    } catch (Exception e) {
+      LOG.error("Internal error - {} ", e.getLocalizedMessage(), e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -84,14 +82,20 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace}")
   public void getNamespace(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
     LOG.debug("Lising namespace {}", namespace);
-    NamespaceMetadata ns = namespaceMetaStore.get(namespace);
-    if (null == ns) {
-      LOG.error("Namespace {} not found", namespace);
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    try {
+      NamespaceMetadata ns = namespaceMetaStore.get(namespace);
+      if (null == ns) {
+        LOG.error("Namespace {} not found", namespace);
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
+      }
+      String result = GSON.toJson(ns);
+      responder.sendByteArray(HttpResponseStatus.OK, result.getBytes(Charsets.UTF_8),
+                              ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+    } catch (Exception e) {
+      LOG.error("Internal error - {}", e.getLocalizedMessage(), e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-    String result = GSON.toJson(ns);
-    responder.sendByteArray(HttpResponseStatus.OK, result.getBytes(Charsets.UTF_8),
-                            ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
   }
 
   @PUT
@@ -100,7 +104,9 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     LOG.debug("Creating namespace {}", namespace);
     try {
       if (namespaceMetaStore.exists(namespace)) {
+        LOG.error("Namespace {} already exists", namespace);
         responder.sendStatus(HttpResponseStatus.CONFLICT);
+        return;
       }
       NamespaceMetadata metadata = parseBody(request, NamespaceMetadata.class);
       namespaceMetaStore.create(namespace, metadata.getDisplayName(), metadata.getDescription());
@@ -109,7 +115,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Invalid namespace input: {}", request.getContent().toString(Charsets.UTF_8), e);
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
     } catch (Exception e) {
-      LOG.error(e.getLocalizedMessage(), e);
+      LOG.error("Internal error - {}", e.getLocalizedMessage(), e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -121,13 +127,15 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       if (!namespaceMetaStore.exists(namespace)) {
+        LOG.error("Namespace {} not found", namespace);
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+        return;
       }
       namespaceMetaStore.delete(namespace);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
-      LOG.error("Namespace {} not found", namespace);
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      LOG.error("Internal error - {} ", e.getLocalizedMessage(), e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

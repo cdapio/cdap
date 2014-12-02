@@ -98,7 +98,7 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
   }
 
   @Override
-  public NamespaceMetadata get(final String name) {
+  public NamespaceMetadata get(final String name) throws Exception {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, NamespaceMetadata>() {
       @Override
       public NamespaceMetadata apply(NamespaceMds input) throws Exception {
@@ -119,7 +119,7 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
   }
 
   @Override
-  public List<NamespaceMetadata> list() {
+  public List<NamespaceMetadata> list() throws Exception {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, List<NamespaceMetadata>>() {
       @Override
       public List<NamespaceMetadata> apply(NamespaceMds input) throws Exception {
@@ -137,7 +137,7 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
   }
 
   @Override
-  public boolean exists(final String name) {
+  public boolean exists(final String name) throws Exception {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, Boolean>() {
       @Override
       public Boolean apply(NamespaceMds input) throws Exception {

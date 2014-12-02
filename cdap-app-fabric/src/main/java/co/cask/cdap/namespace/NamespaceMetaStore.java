@@ -19,9 +19,7 @@ package co.cask.cdap.namespace;
 import java.util.List;
 
 /**
- * API to store/retrieve namespace metadata
- * TODO: Need to finalize exception handling in this interface. Should this throw any exceptions at all? Since the
- * implementations either use "unchecked" APIs or use Throwables.propagate()?
+ * API to store/retrieve/delete namespace metadata
  */
 public interface NamespaceMetaStore {
 
@@ -38,12 +36,14 @@ public interface NamespaceMetaStore {
    * Retrieves a namespace from the namespace metadata store
    * @param name name of the requested namespace
    * @return {@link co.cask.cdap.namespace.NamespaceMetadata} of the requested namespace
+   * @throws java.lang.Exception if problems occur while retrieving the namespace
    */
-  NamespaceMetadata get(String name);
+  NamespaceMetadata get(String name) throws Exception;
 
   /**
    * Deletes a namespace from the namespace metadata store
    * @param name name of the namespace to delete
+   * @throws java.lang.Exception if problems occur while deleting the namespace
    * @throws java.lang.Exception if problems occur while deleting the namespace
    */
   void delete(String name) throws Exception;
@@ -51,13 +51,15 @@ public interface NamespaceMetaStore {
   /**
    * Lists all registered namespaces
    * @return a list of all registered namespaces
+   * java.lang.Exception if problems occur while listing namespaces
    */
-  List<NamespaceMetadata> list();
+  List<NamespaceMetadata> list() throws Exception;
 
   /**
    * Check if namespace already exists
    * @param name name of the requested namespace to check for existence
    * @return true if the namespace already exists, false otherwise
+   * java.lang.Exception if problems occur while checking namespace status
    */
-  boolean exists(String name);
+  boolean exists(String name) throws Exception;
 }
