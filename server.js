@@ -2,7 +2,7 @@
  * Spins up servers
  */
 var app = require('./server/express.js'),
-    configParser = require('./server/configParser.js'),
+    configParser = require('./server/config/configParser.js'),
     Aggregator = require('./server/aggregator.js')
     sockjs = require('sockjs'),
     colors = require('colors/safe'),

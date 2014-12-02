@@ -11,7 +11,7 @@ var pkg = require('../package.json'),
     serveFavicon = require('serve-favicon'),
     colors = require('colors/safe'),
     mode = process.env.CDAP_MODE || null,
-    configParser = require('./configParser.js'),
+    configParser = require('./config/configParser.js'),
     config = {},
     DIST_PATH = require('path').normalize(
       __dirname + '/../dist'
