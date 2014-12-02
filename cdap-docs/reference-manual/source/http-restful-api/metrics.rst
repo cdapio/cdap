@@ -139,7 +139,7 @@ The time range of a metric query can be specified in various ways:
    * - Time Range
      - Description
    * - ``start=now-30s&end=now``
-     - The last 30 seconds. The begin time is given in seconds relative to the current time.
+     - The last 30 seconds. The start time is given in seconds relative to the current time.
        You can apply simple math, using ``now`` for the current time, 
        ``s`` for seconds, ``m`` for minutes, ``h`` for hours and ``d`` for days. 
        For example: ``now-5d-12h`` is 5 days and 12 hours ago.
