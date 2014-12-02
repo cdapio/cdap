@@ -27,6 +27,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -51,7 +52,6 @@ import javax.annotation.Nullable;
 public class MDSNamespaceMetaStore implements NamespaceMetaStore {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceMetaStore.class);
 
-  private static final String NAMESPACE_META_TABLE = "namespace.meta";
   private static final String TYPE_NAMESPACE = "namespace";
 
   private Transactional<NamespaceMds, MetadataStoreDataset> txnl;
@@ -73,7 +73,7 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
         @Override
         public NamespaceMds get() {
           try {
-            Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, NAMESPACE_META_TABLE, "table",
+            Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, DefaultStore.APP_META_TABLE, "table",
                                                              DatasetProperties.EMPTY,
                                                              DatasetDefinition.NO_ARGUMENTS, null);
             return new NamespaceMds(new MetadataStoreDataset(mdsTable));
