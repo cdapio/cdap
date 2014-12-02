@@ -41,9 +41,6 @@ import java.util.List;
 /**
  * Generates data for the table in cdap-docs/reference-manual/source/cli-api.rst.
  *
- * To build: mvn package -pl cdap-cli -am -DskipTests
- *
- * To run: java -cp <path-to-cdap-cli.jar> co.cask.cdap.cli.docs.GenerateCLIDocsTable
  */
 public class GenerateCLIDocsTable {
 
