@@ -209,8 +209,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       if (result.size() >= size) {
         // For each one, we have 4 fields.
         for (Map<String, String> m : result) {
-          int expextedFieldSize = m.get("status").equals("RUNNING") ? 3 : 4;
-          Assert.assertEquals(expextedFieldSize, m.size());
+          int expectedFieldSize = m.get("status").equals("RUNNING") ? 3 : 4;
+          Assert.assertEquals(expectedFieldSize, m.size());
         }
         break;
       }
