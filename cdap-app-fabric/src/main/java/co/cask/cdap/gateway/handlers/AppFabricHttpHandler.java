@@ -3142,7 +3142,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }, ProgramType.values());
 
       if (appRunning) {
-        throw new Exception("Cannot perform this operation when programs are running");
+        throw new Exception("Cannot reset while programs are running");
       }
 
       LOG.info("Deleting all data for account '" + account + "'.");
@@ -3194,7 +3194,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }, ProgramType.values());
 
       if (appRunning) {
-        throw new Exception("Cannot perform this operation when programs are running");
+        throw new Exception("Cannot delete all datasets while programs are running");
       }
 
       LOG.info("Deleting all datasets for account '" + account + "'.");
