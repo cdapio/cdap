@@ -40,6 +40,7 @@ import java.util.List;
 
 /**
  * Generates data for the table in cdap-docs/reference-manual/source/cli-api.rst.
+ *
  */
 public class GenerateCLIDocsTable {
 
@@ -60,7 +61,8 @@ public class GenerateCLIDocsTable {
           }
         });
         for (Command command : commandList) {
-          output.printf("   ``%s``,%s\n", command.getPattern(), command.getDescription());
+          String description = command.getDescription().replace("\"", "\"\"");
+          output.printf("   ``%s``,\"%s\"\n", command.getPattern(), description);
         }
       }
 
