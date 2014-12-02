@@ -37,7 +37,7 @@ import java.io.IOException;
 import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -91,7 +91,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @POST
+  @PUT
   @Path("/namespaces")
   public void create(HttpRequest request, HttpResponder responder) {
     try {

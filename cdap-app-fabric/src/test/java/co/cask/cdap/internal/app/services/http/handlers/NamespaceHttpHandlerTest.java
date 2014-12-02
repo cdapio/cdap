@@ -54,7 +54,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   }
 
   private int createNamespace(String metadata) throws Exception {
-    HttpResponse response = doPost(String.format("%s/namespaces", Constants.Gateway.API_VERSION), metadata);
+    HttpResponse response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION), metadata);
     return response.getStatusLine().getStatusCode();
   }
 
