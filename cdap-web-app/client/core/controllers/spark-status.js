@@ -7,6 +7,7 @@ define([], function () {
     var Controller = Em.Controller.extend({
 
         __STATUS_UPDATE_TIMEOUT: 1000,
+        __METRICS_UPDATE_TIMEOUT: 1000,
         showLogsMessage: false,
         __updateStatusTimeout: null,
         __updateStatus: function (appName, jobName) {
@@ -31,16 +32,24 @@ define([], function () {
             var runStatusUpdate = function () {
                 self.__updateStatusTimeout = setTimeout(function () {
                     self.__updateStatus(model.app, model.name);
-                    self.__updateMetrics();
                     runStatusUpdate();
                 }, self.__STATUS_UPDATE_TIMEOUT);
             };
 
+            var runMetricsUpdate = function () {
+                self.__updateMetricsTimeout = setTimeout(function () {
+                    self.__updateMetrics();
+                    runMetricsUpdate();
+                }, self.__METRICS_UPDATE_TIMEOUT);
+            };
+
             runStatusUpdate();
+            runMetricsUpdate();
         },
 
         unload: function () {
             clearTimeout(this.__updateStatusTimeout);
+            clearTimeout(this.__updateMetricsTimeout);
         },
 
         /**
@@ -70,11 +79,7 @@ define([], function () {
             if (this.get("model").get("currentState") === "RUNNING") {
                 this.set("showLogsMessage", true);
             }
-        }.observes("model.currentState"),
-
-        logsLinkHandler: function () {
-            this.transitionToRoute("Spark.Log");
-        }
+        }.observes("model.currentState")
     });
 
     Controller.reopenClass({

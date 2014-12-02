@@ -2261,9 +2261,12 @@
 
   <script type="text/x-handlebars" data-template-name="SparkMetricsProgressBar">
     <div class="progress stage-status-line">
-      <div data-toggle="tooltip" data-placement="top" title="Running" class="progress-bar running"></div>
-      <div data-toggle="tooltip" data-placement="bottom" title="Failed" class="progress-bar failed"></div>
-      <div data-toggle="tooltip" data-placement="top" title="Waiting" class="progress-bar waiting"></div>
+      <div data-toggle="tooltip" data-placement="top" title="Running" class="progress-bar running"
+       {{bindAttr style=view.runningWidth}}>{{model.metricsData.schedulerRunningStages}}</div>
+      <div data-toggle="tooltip" data-placement="bottom" title="Failed" class="progress-bar failed"
+       {{bindAttr style=view.failedWidth}}>{{model.metricsData.schedulerFailedStages}}</div>
+      <div data-toggle="tooltip" data-placement="top" title="Waiting" class="progress-bar waiting"
+       {{bindAttr style=view.waitingWidth}}>{{model.metricsData.schedulerWaitingStages}}</div>
     </div>
   </script>
 
