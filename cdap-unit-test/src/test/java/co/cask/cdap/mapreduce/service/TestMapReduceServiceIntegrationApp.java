@@ -52,7 +52,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
   }
 
   /**
-   * Map Reduce to count total of counts.
+   * Map Reduce to count squared amount of all words in input dataset.
    */
   public static class CountTotal extends AbstractMapReduce {
     @Override
@@ -74,7 +74,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
     }
 
     /**
-     * Mapper for map reduce job.
+     * Mapper to count amount of words in sentence using service.
      */
     public static class MyMapper extends Mapper<String, String, BytesWritable, LongWritable> {
 
@@ -95,7 +95,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
     }
 
     /**
-     * Reducer for map reduce job.
+     * Reducer to count squared amount of words using service.
      */
     public static class MyReducer extends Reducer<BytesWritable, LongWritable, String, String> {
 
