@@ -85,9 +85,9 @@ public class GetStreamEventsCommand extends AbstractCommand {
   public String getDescription() {
     return "Gets events from a " + ElementType.STREAM.getPrettyName() + ". " +
       "The time format for <start-time> and <end-time> can be a timestamp in milliseconds or " +
-      "a relative time in the form of [+\\-][0-9]+[hms]. " +
-      "For <start-time>, it is relative to current time; " +
-      "for <end-time>, it is relative to start time. " +
+      "a relative time in the form of [+|-][0-9][d|h|m|s]. " +
+      "<start-time> is relative to current time; " +
+      "<end-time>, it is relative to start time. " +
       "Special constants \"min\" and \"max\" can also be used to represent \"0\" and \"max timestamp\" respectively.";
   }
 

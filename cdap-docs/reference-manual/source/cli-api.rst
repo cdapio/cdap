@@ -123,7 +123,7 @@ These are the available commands:
    ``get spark logs <app-id.spark-id> [<start-time>] [<end-time>]``,"Gets the logs of a Spark job"
    ``get spark runs <app-id.spark-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a Spark job"
    ``get spark status <app-id.spark-id>``,"Gets the status of a Spark job"
-   ``get stream <stream-id> [<start-time>] [<end-time>] [<limit>]``,"Gets events from a Stream. The time format for <start-time> and <end-time> can be a timestamp in milliseconds or a relative time in the form of [+\-][0-9]+[hms]. For <start-time>, it is relative to current time; for <end-time>, it is relative to start time. Special constants ""min"" and ""max"" can also be used to represent ""0"" and ""max timestamp"" respectively."
+   ``get stream <stream-id> [<start-time>] [<end-time>] [<limit>]``,"Gets events from a Stream. The time format for <start-time> and <end-time> can be a timestamp in milliseconds or a relative time in the form of [+|-][0-9][d|h|m|s]. <start-time> is relative to current time; <end-time>, it is relative to start time. Special constants ""min"" and ""max"" can also be used to represent ""0"" and ""max timestamp"" respectively."
    ``get workflow runs <app-id.workflow-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a Workflow"
    ``get workflow status <app-id.workflow-id>``,"Gets the status of a Workflow"
    **Listing Elements**
