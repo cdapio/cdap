@@ -58,7 +58,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
@@ -113,7 +112,6 @@ import javax.annotation.Nullable;
  */
 public abstract class BaseHiveExploreService extends AbstractIdleService implements ExploreService {
   private static final Logger LOG = LoggerFactory.getLogger(BaseHiveExploreService.class);
-  private static final String[] DATABASES = new String[] { "default" };
   private static final Gson GSON = new Gson();
   private static final int PREVIEW_COUNT = 5;
   private static final long METASTORE_CLIENT_CLEANUP_PERIOD = 60;
@@ -229,20 +227,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Starting {}...", BaseHiveExploreService.class.getSimpleName());
     cliService.init(getHiveConf());
     cliService.start();
-
-    // In a unit-test context, if two test classes both extending TestBase have record scannable datasets,
-    // the initialization of the metastore for the second test class will not have the default
-    // databases created - for some reason. Hence we manually recreate them at Explore start-up.
-    if (cConf.getBoolean(Constants.Explore.UNIT_TEST)) {
-      for (String db : DATABASES) {
-        try {
-          getMetaStoreClient().getDatabase(db);
-        } catch (NoSuchObjectException e) {
-          getMetaStoreClient().createDatabase(new Database(db, null, null, null));
-          LOG.info("Database {} recreated.", db);
-        }
-      }
-    }
 
     metastoreClientsExecutorService.scheduleWithFixedDelay(
       new Runnable() {

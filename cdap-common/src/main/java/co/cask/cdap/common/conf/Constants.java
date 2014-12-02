@@ -493,7 +493,6 @@ public final class Constants {
     public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
     public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
 
-    public static final String UNIT_TEST = "explore.unit.test";
     public static final String START_ON_DEMAND = "explore.start.on.demand";
 
     public static final String DATASET_NAME = "explore.dataset.name";
