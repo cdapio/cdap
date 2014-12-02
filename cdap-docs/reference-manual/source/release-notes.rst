@@ -30,26 +30,26 @@ New Features
 
 General
 .......
-- CDAP-663: Health checks are now available for CDAP system services
+- Health checks are now available for CDAP system services
   (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
 
 Applications
 ............
--  CDAP-335: API for configuring Services and MapReduce Jobs has been changed to use the configurer style
+-  API for configuring Services and MapReduce Jobs has been changed to use the configurer style
    (`CDAP-335 <https://issues.cask.co/browse/CDAP-335>`__).
--  CDAP-91: Jar deployment now uses chunked request and writes to local file
+-  Jar deployment now uses chunked request and writes to local file
    (`CDAP-91 <https://issues.cask.co/browse/CDAP-91>`__).
 
 MapReduce
 .........
--  CDAP-331: MapReduce jobs can now read binary stream data
+-  MapReduce jobs can now read binary stream data
    (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
 
 Datasets
 ........
-- CDAP-1: Added FileSet, a new dataset for working with files
+- Added FileSet, a new dataset for working with files
   (`CDAP-1 <https://issues.cask.co/browse/CDAP-1>`__).
-- CDAP-383: Readless increments are now used when enabled
+- Readless increments are now used when enabled
   (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
 
 Spark
