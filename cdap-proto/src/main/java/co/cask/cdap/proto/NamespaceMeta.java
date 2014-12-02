@@ -14,18 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.namespace;
+package co.cask.cdap.proto;
 
 /**
  * Represents metadata for namespaces
- * TODO: Should this be renamed to NamespaceSpecification and moved to cdap-api?
  */
-public class NamespaceMetadata {
+public class NamespaceMeta {
   private final String name;
   private final String displayName;
   private final String description;
 
-  private NamespaceMetadata(String name, String displayName, String description) {
+  private NamespaceMeta(String name, String displayName, String description) {
     this.name = name;
     this.displayName = displayName;
     this.description = description;
@@ -44,7 +43,7 @@ public class NamespaceMetadata {
   }
 
   /**
-   * Builder used to build {@link NamespaceMetadata}
+   * Builder used to build {@link NamespaceMeta}
    */
   public static final class Builder {
     private String name;
@@ -66,8 +65,8 @@ public class NamespaceMetadata {
       return this;
     }
 
-    public NamespaceMetadata build() {
-      return new NamespaceMetadata(name, displayName, description);
+    public NamespaceMeta build() {
+      return new NamespaceMeta(name, displayName, description);
     }
   }
 

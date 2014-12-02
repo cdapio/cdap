@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.namespace.NamespaceMetadata;
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -35,21 +35,21 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String NAME = "test";
   private static final String DISPLAY_NAME = "displayTest";
   private static final String DESCRIPTION = "test description";
-  private static final NamespaceMetadata METADATA_VALID = new NamespaceMetadata.Builder().setName(NAME)
+  private static final NamespaceMeta METADATA_VALID = new NamespaceMeta.Builder().setName(NAME)
     .setDisplayName(DISPLAY_NAME).setDescription(DESCRIPTION).build();
-  private static final NamespaceMetadata METADATA_MISSING_NAME = new NamespaceMetadata.Builder()
+  private static final NamespaceMeta METADATA_MISSING_NAME = new NamespaceMeta.Builder()
     .setDisplayName(DISPLAY_NAME).setDescription(DESCRIPTION).build();
-  private static final NamespaceMetadata METADATA_EMPTY_NAME = new NamespaceMetadata.Builder().setName("")
+  private static final NamespaceMeta METADATA_EMPTY_NAME = new NamespaceMeta.Builder().setName("")
     .setDisplayName(DISPLAY_NAME).setDescription(DESCRIPTION).build();
-  private static final NamespaceMetadata METADATA_MISSING_DISPLAY_NAME = new NamespaceMetadata.Builder().setName(NAME)
+  private static final NamespaceMeta METADATA_MISSING_DISPLAY_NAME = new NamespaceMeta.Builder().setName(NAME)
     .setDescription(DESCRIPTION).build();
-  private static final NamespaceMetadata METADATA_EMPTY_DISPLAY_NAME = new NamespaceMetadata.Builder().setName(NAME)
+  private static final NamespaceMeta METADATA_EMPTY_DISPLAY_NAME = new NamespaceMeta.Builder().setName(NAME)
     .setDisplayName("").setDescription(DESCRIPTION).build();
-  private static final NamespaceMetadata METADATA_MISSING_DESCRIPTION = new NamespaceMetadata.Builder().setName(NAME)
+  private static final NamespaceMeta METADATA_MISSING_DESCRIPTION = new NamespaceMeta.Builder().setName(NAME)
     .setDisplayName(DISPLAY_NAME).build();
   private static final String METADATA_INVALID_JSON = "invalid";
 
-  private int createNamespace(NamespaceMetadata metadata) throws Exception {
+  private int createNamespace(NamespaceMeta metadata) throws Exception {
     return createNamespace(GSON.toJson(metadata));
   }
 

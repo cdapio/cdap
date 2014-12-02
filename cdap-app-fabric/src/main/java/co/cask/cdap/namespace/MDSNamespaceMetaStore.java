@@ -28,6 +28,8 @@ import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -87,49 +89,49 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
   }
 
   @Override
-  public void create(final String name, final String displayName, final String description) throws Exception {
+  public void create(final NamespaceMeta metadata) throws Exception {
     txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, Void>() {
       @Override
       public Void apply(NamespaceMds input) throws Exception {
-        input.namespaces.write(getKey(name), createNamespaceSpec(name, displayName, description));
+        input.namespaces.write(getKey(metadata.getName()), metadata);
         return null;
       }
     });
   }
 
   @Override
-  public NamespaceMetadata get(final String name) throws Exception {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, NamespaceMetadata>() {
+  public NamespaceMeta get(final Id.Namespace id) throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, NamespaceMeta>() {
       @Override
-      public NamespaceMetadata apply(NamespaceMds input) throws Exception {
-        return input.namespaces.get(getKey(name), NamespaceMetadata.class);
+      public NamespaceMeta apply(NamespaceMds input) throws Exception {
+        return input.namespaces.get(getKey(id.getId()), NamespaceMeta.class);
       }
     });
   }
 
   @Override
-  public void delete(final String name) throws Exception {
+  public void delete(final Id.Namespace id) throws Exception {
     txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, Void>() {
       @Override
       public Void apply(NamespaceMds input) throws Exception {
-        input.namespaces.deleteAll(getKey(name));
+        input.namespaces.deleteAll(getKey(id.getId()));
         return null;
       }
     });
   }
 
   @Override
-  public List<NamespaceMetadata> list() throws Exception {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, List<NamespaceMetadata>>() {
+  public List<NamespaceMeta> list() throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, List<NamespaceMeta>>() {
       @Override
-      public List<NamespaceMetadata> apply(NamespaceMds input) throws Exception {
-        return Lists.transform(input.namespaces.list(getKey(null), NamespaceMetadata.class), new
-          Function<NamespaceMetadata, NamespaceMetadata>() {
+      public List<NamespaceMeta> apply(NamespaceMds input) throws Exception {
+        return Lists.transform(input.namespaces.list(getKey(null), NamespaceMeta.class), new
+          Function<NamespaceMeta, NamespaceMeta>() {
 
           @Nullable
           @Override
-          public NamespaceMetadata apply(NamespaceMetadata namespaceMetadata) {
-            return namespaceMetadata;
+          public NamespaceMeta apply(NamespaceMeta namespaceMeta) {
+            return namespaceMeta;
           }
         });
       }
@@ -137,11 +139,11 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
   }
 
   @Override
-  public boolean exists(final String name) throws Exception {
+  public boolean exists(final Id.Namespace id) throws Exception {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NamespaceMds, Boolean>() {
       @Override
       public Boolean apply(NamespaceMds input) throws Exception {
-        return input.namespaces.get(getKey(name), NamespaceMetadata.class) != null;
+        return input.namespaces.get(getKey(id.getId()), NamespaceMeta.class) != null;
       }
     });
   }
@@ -152,11 +154,6 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
       builder.add(name);
     }
     return builder.build();
-  }
-
-  private NamespaceMetadata createNamespaceSpec(String name, String displayName, String description) {
-    return new NamespaceMetadata.Builder().setName(name).setDisplayName(displayName).setDescription(description)
-      .build();
   }
 
   private class NamespaceMds implements Iterable<MetadataStoreDataset> {

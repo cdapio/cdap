@@ -16,6 +16,9 @@
 
 package co.cask.cdap.namespace;
 
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
+
 import java.util.List;
 
 /**
@@ -25,41 +28,39 @@ public interface NamespaceMetaStore {
 
   /**
    * Creates a new namespace
-   * @param name name of the new namespace. This field is immutable. TODO: Should we call it id?
-   * @param displayName display name of the new namespace. We may allow users to update this field later.
-   * @param description description of the new namespace
+   * @param metadata {@link NamespaceMeta} representing the namespace metadata
    * @throws java.lang.Exception if problems occur while creating the new namespace
    */
-  void create(String name, String displayName, String description) throws Exception;
+  void create(NamespaceMeta metadata) throws Exception;
 
   /**
    * Retrieves a namespace from the namespace metadata store
-   * @param name name of the requested namespace
-   * @return {@link co.cask.cdap.namespace.NamespaceMetadata} of the requested namespace
+   * @param id {@link Id.Namespace} of the requested namespace
+   * @return {@link co.cask.cdap.proto.NamespaceMeta} of the requested namespace
    * @throws java.lang.Exception if problems occur while retrieving the namespace
    */
-  NamespaceMetadata get(String name) throws Exception;
+  NamespaceMeta get(Id.Namespace id) throws Exception;
 
   /**
    * Deletes a namespace from the namespace metadata store
-   * @param name name of the namespace to delete
+   * @param id {@link Id.Namespace} of the namespace to delete
    * @throws java.lang.Exception if problems occur while deleting the namespace
    * @throws java.lang.Exception if problems occur while deleting the namespace
    */
-  void delete(String name) throws Exception;
+  void delete(Id.Namespace id) throws Exception;
 
   /**
    * Lists all registered namespaces
    * @return a list of all registered namespaces
    * java.lang.Exception if problems occur while listing namespaces
    */
-  List<NamespaceMetadata> list() throws Exception;
+  List<NamespaceMeta> list() throws Exception;
 
   /**
    * Check if namespace already exists
-   * @param name name of the requested namespace to check for existence
+   * @param id {@link Id.Namespace} of the requested namespace to check for existence
    * @return true if the namespace already exists, false otherwise
    * java.lang.Exception if problems occur while checking namespace status
    */
-  boolean exists(String name) throws Exception;
+  boolean exists(Id.Namespace id) throws Exception;
 }
