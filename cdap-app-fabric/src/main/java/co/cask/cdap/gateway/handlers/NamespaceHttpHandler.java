@@ -24,8 +24,10 @@ import co.cask.cdap.namespace.NamespaceMetadata;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -62,7 +64,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/namespaces")
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) {
-    LOG.debug("Lising all namespaces");
+    LOG.debug("Listing all namespaces");
     try {
       List<NamespaceMetadata> namespaces = namespaceMetaStore.list();
       if (null == namespaces) {
@@ -81,7 +83,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/namespaces/{namespace}")
   public void getNamespace(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
-    LOG.debug("Lising namespace {}", namespace);
+    LOG.debug("Listing namespace {}", namespace);
     try {
       NamespaceMetadata ns = namespaceMetaStore.get(namespace);
       if (null == ns) {
@@ -99,21 +101,41 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @PUT
-  @Path("/namespaces/{namespace}")
-  public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
-    LOG.debug("Creating namespace {}", namespace);
+  @Path("/namespaces")
+  public void create(HttpRequest request, HttpResponder responder) {
     try {
-      if (namespaceMetaStore.exists(namespace)) {
-        LOG.error("Namespace {} already exists", namespace);
+      NamespaceMetadata metadata = parseBody(request, NamespaceMetadata.class);
+      String name = metadata.getName();
+      // name cannot be null or empty.
+      if (null == name || name.isEmpty()) {
+        LOG.error("Namespace name cannot be null or empty.");
+        responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+        return;
+      }
+      if (namespaceMetaStore.exists(name)) {
+        LOG.error("Namespace {} already exists", name);
         responder.sendStatus(HttpResponseStatus.CONFLICT);
         return;
       }
-      NamespaceMetadata metadata = parseBody(request, NamespaceMetadata.class);
-      namespaceMetaStore.create(namespace, metadata.getDisplayName(), metadata.getDescription());
+      LOG.debug("Creating namespace {}", name);
+      // displayName and description could be null
+      String displayName = metadata.getDisplayName();
+      if (null == displayName || displayName.isEmpty()) {
+        displayName = name;
+      }
+      String description = metadata.getDescription();
+      if (null == description) {
+        description = "";
+      }
+      namespaceMetaStore.create(name, displayName, description);
       responder.sendStatus(HttpResponseStatus.OK);
-    } catch (IOException e) {
-      LOG.error("Invalid namespace input: {}", request.getContent().toString(Charsets.UTF_8), e);
+    } catch (JsonSyntaxException e) {
+      LOG.error("Invalid namespace metadata: {}. Must be a valid json string.", request.getContent()
+        .toString(Charsets.UTF_8), e);
       responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+    } catch (IOException e) {
+      LOG.error("Error reading namespace metadata: {}", request.getContent().toString(Charsets.UTF_8), e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     } catch (Exception e) {
       LOG.error("Internal error - {}", e.getLocalizedMessage(), e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -124,7 +146,6 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces/{namespace}")
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
     LOG.debug("Deleting namespace {}", namespace);
-
     try {
       if (!namespaceMetaStore.exists(namespace)) {
         LOG.error("Namespace {} not found", namespace);
