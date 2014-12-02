@@ -84,14 +84,14 @@ public class MapReduceMetricsWriter {
     // mapred counters are running counters whereas our metrics timeseries and aggregates make more
     // sense as incremental numbers.  So we want to subtract the current counter value from the previous before
     // emitting to the metrics system.
-    int mapInputRecords = calcDiffAndSetMapStat(METRIC_INPUT_RECORDS, getTaskCounter(TaskCounter.MAP_INPUT_RECORDS));
-    int mapOutputRecords = calcDiffAndSetMapStat(METRIC_OUTPUT_RECORDS, getTaskCounter(TaskCounter.MAP_OUTPUT_RECORDS));
-    int mapOutputBytes = calcDiffAndSetMapStat(METRIC_BYTES, getTaskCounter(TaskCounter.MAP_OUTPUT_BYTES));
+    long mapInputRecords = getTaskCounter(TaskCounter.MAP_INPUT_RECORDS);
+    long mapOutputRecords = getTaskCounter(TaskCounter.MAP_OUTPUT_RECORDS);
+    long mapOutputBytes = getTaskCounter(TaskCounter.MAP_OUTPUT_BYTES);
 
     context.getSystemMapperMetrics().gauge(METRIC_COMPLETION, (long) (mapProgress * 100));
-    context.getSystemMapperMetrics().increment(METRIC_INPUT_RECORDS, mapInputRecords);
-    context.getSystemMapperMetrics().increment(METRIC_OUTPUT_RECORDS, mapOutputRecords);
-    context.getSystemMapperMetrics().increment(METRIC_BYTES, mapOutputBytes);
+    context.getSystemMapperMetrics().gauge(METRIC_INPUT_RECORDS, mapInputRecords);
+    context.getSystemMapperMetrics().gauge(METRIC_OUTPUT_RECORDS, mapOutputRecords);
+    context.getSystemMapperMetrics().gauge(METRIC_BYTES, mapOutputBytes);
     context.getSystemMapperMetrics().gauge(METRIC_USED_CONTAINERS, runningMappers);
     context.getSystemMapperMetrics().gauge(METRIC_USED_MEMORY, runningMappers * memoryPerMapper);
 
@@ -101,14 +101,12 @@ public class MapReduceMetricsWriter {
 
     // reduce stats
     float reduceProgress = jobConf.getStatus().getReduceProgress();
-    int reduceInputRecords =
-      calcDiffAndSetReduceStat(METRIC_INPUT_RECORDS, getTaskCounter(TaskCounter.REDUCE_INPUT_RECORDS));
-    int reduceOutputRecords =
-      calcDiffAndSetReduceStat(METRIC_OUTPUT_RECORDS, getTaskCounter(TaskCounter.REDUCE_OUTPUT_RECORDS));
+    long reduceInputRecords = getTaskCounter(TaskCounter.REDUCE_INPUT_RECORDS);
+    long reduceOutputRecords = getTaskCounter(TaskCounter.REDUCE_OUTPUT_RECORDS);
 
     context.getSystemReducerMetrics().gauge(METRIC_COMPLETION, (long) (reduceProgress * 100));
-    context.getSystemReducerMetrics().increment(METRIC_INPUT_RECORDS, reduceInputRecords);
-    context.getSystemReducerMetrics().increment(METRIC_OUTPUT_RECORDS, reduceOutputRecords);
+    context.getSystemReducerMetrics().gauge(METRIC_INPUT_RECORDS, reduceInputRecords);
+    context.getSystemReducerMetrics().gauge(METRIC_OUTPUT_RECORDS, reduceOutputRecords);
     context.getSystemReducerMetrics().gauge(METRIC_USED_CONTAINERS, runningReducers);
     context.getSystemReducerMetrics().gauge(METRIC_USED_MEMORY, runningReducers * memoryPerReducer);
 
@@ -149,14 +147,6 @@ public class MapReduceMetricsWriter {
         }
       }
     }
-  }
-
-  private int calcDiffAndSetMapStat(String key, long value) {
-    return calcDiffAndSetTableValue(previousMapStats, MetricsScope.SYSTEM, key, value);
-  }
-
-  private int calcDiffAndSetReduceStat(String key, long value) {
-    return calcDiffAndSetTableValue(previousReduceStats, MetricsScope.SYSTEM, key, value);
   }
 
   // convenience function to set the table value to the given value and return the difference between the given value
