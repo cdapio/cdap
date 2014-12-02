@@ -68,8 +68,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final Table<Long, String, List<KafkaLogEvent>> messageTable;
 
   private final long eventBucketIntervalMs;
-  private final long eventProcessingDelayMs;
   private final int logCleanupIntervalMins;
+  private final long maxNumberOfBucketsInTable;
 
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final ListeningScheduledExecutorService scheduledExecutor;
@@ -129,10 +129,13 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     Preconditions.checkArgument(this.eventBucketIntervalMs > 0,
                                 "Event bucket interval is invalid: %s", this.eventBucketIntervalMs);
 
-    this.eventProcessingDelayMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS,
-                                                  LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_PROCESSING_DELAY_MS);
-    Preconditions.checkArgument(this.eventProcessingDelayMs > 0,
-                                "Event processing delay interval is invalid: %s", this.eventProcessingDelayMs);
+    this.maxNumberOfBucketsInTable = cConfig.getLong
+      (LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS,
+       LoggingConfiguration.DEFAULT_LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS);
+    Preconditions.checkArgument(this.maxNumberOfBucketsInTable > 0,
+                                "Maximum number of event buckets in memory is invalid: %s",
+                                this.maxNumberOfBucketsInTable);
+
 
     long topicCreationSleepMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS,
                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
@@ -195,7 +198,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     subscribe(partitions);
 
     LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
-                                        eventProcessingDelayMs, eventBucketIntervalMs);
+                                        eventBucketIntervalMs, maxNumberOfBucketsInTable);
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
 
     if (partitions.contains(0)) {
@@ -243,7 +246,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     }
 
     kafkaCancel = preparer.consume(
-      new LogCollectorCallback(messageTable, serializer, eventBucketIntervalMs));
+      new LogCollectorCallback(messageTable, serializer, eventBucketIntervalMs, maxNumberOfBucketsInTable));
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
   }

@@ -44,12 +44,14 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
   private final Table<Long, String, List<KafkaLogEvent>> messageTable;
   private final LoggingEventSerializer serializer;
   private final long eventBucketIntervalMs;
+  private final long maxNumberOfBucketsInTable;
 
   public LogCollectorCallback(Table<Long, String, List<KafkaLogEvent>> messageTable, LoggingEventSerializer serializer,
-                              long eventBucketIntervalMs) {
+                              long eventBucketIntervalMs, long maxNumberOfBucketsInTable) {
     this.messageTable = messageTable;
     this.serializer = serializer;
     this.eventBucketIntervalMs = eventBucketIntervalMs;
+    this.maxNumberOfBucketsInTable = maxNumberOfBucketsInTable;
   }
 
   @Override
@@ -80,8 +82,9 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
 
           // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
           // sleep for the time duration till event falls in the window
-          if (key > (oldestBucketKey + 8)) {
-            TimeUnit.SECONDS.sleep((key - (oldestBucketKey + 8)) * (eventBucketIntervalMs / 1000));
+          if (key > (oldestBucketKey + maxNumberOfBucketsInTable)) {
+            TimeUnit.SECONDS.sleep((key - (oldestBucketKey + maxNumberOfBucketsInTable))
+                                     * (eventBucketIntervalMs / 1000));
           } else {
             break;
           }

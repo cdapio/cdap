@@ -345,7 +345,12 @@ public class LogSaverTest extends KafkaTestBase {
         for (int j = 0; j < 6; ++j) {
           for (int i = 0; i < 10; ++i) {
             logger.warn("Test log message " + (10 * j + i) + " {} {}", "arg1", "arg2", e2);
-            TimeUnit.MILLISECONDS.sleep(1);
+            if (j == 0 && (i <= 3)) {
+              // For some events introduce the sleep of more than 8 seconds for windowing to take effect
+              TimeUnit.SECONDS.sleep(10);
+            } else {
+              TimeUnit.MILLISECONDS.sleep(1);
+            }
           }
           TimeUnit.MILLISECONDS.sleep(1200);
         }

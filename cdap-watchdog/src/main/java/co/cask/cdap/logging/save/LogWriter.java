@@ -37,18 +37,18 @@ public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final Table<Long, String, List<KafkaLogEvent>> messageTable;
-  private final long eventProcessingDelayMs;
   private final long eventBucketIntervalMs;
+  private final long maxNumberOfBucketsInTable;
 
   private final ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
   private int messages = 0;
 
   public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter, Table<Long, String, List<KafkaLogEvent>> messageTable,
-                   long eventProcessingDelayMs, long eventBucketIntervalMs) {
+                   long eventBucketIntervalMs, long maxNumberOfBucketsInTable) {
     this.logFileWriter = logFileWriter;
     this.messageTable = messageTable;
-    this.eventProcessingDelayMs = eventProcessingDelayMs;
     this.eventBucketIntervalMs = eventBucketIntervalMs;
+    this.maxNumberOfBucketsInTable = maxNumberOfBucketsInTable;
   }
 
   @Override
@@ -69,14 +69,13 @@ public class LogWriter implements Runnable {
         }
 
         // Get the oldest bucket in the table
-        Long oldestBucketKey = rowSet.first();
+        long oldestBucketKey = rowSet.first();
+        // Compute the bucket based on the current time
+        long currentBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
 
-        // Compute the current bucket based on current time
-        Long currentBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
-
-        // If there are lesser than 8 buckets in the table then return
-        if (currentBucketKey < (oldestBucketKey + 8)) {
-          // wait till at least 8 buckets get filled in the table
+        if (currentBucketKey < (oldestBucketKey + maxNumberOfBucketsInTable)) {
+          // If the number of buckets in memory are lesser than maxNumberOfBucketsInTable
+          // return
           return;
         }
 
