@@ -25,15 +25,15 @@ package co.cask.cdap.test;
  * Typical usage for read:
  * {@code
       ApplicationManager appManager = deployApplication(AppWithTable.class);
-      DataSetManager<Table> myTableManager = appManager.getDataSet("my_table");
-      myTableManager = appManager.getDataSet("my_table");
+      DataSetManager<Table> myTableManager = appManager.getDataset("my_table");
+      myTableManager = appManager.getDataset("my_table");
       String value = myTableManager.get().get(new Get("key1", "column1")).getString("column1");
  * }
  *
  * Typical usage for write:
  * {@code
       ApplicationManager appManager = deployApplication(AppWithTable.class);
-      DataSetManager<Table> myTableManager = appManager.getDataSet("my_table");
+      DataSetManager<Table> myTableManager = appManager.getDataset("my_table");
       myTableManager.get().put(new Put("key1", "column1", "value1"));
       myTableManager.flush();
  * }

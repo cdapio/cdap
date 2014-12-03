@@ -44,7 +44,7 @@ You can implement a record-scannable Dataset that uses ``Entry`` as the record t
     }
 
 Note that Java's ``Class`` implements ``Type`` and you can simply return ``Entry.class`` as the record type.
-CDAP will use reflection to infer a SQL-style schema from the record type.
+CDAP will use reflection to infer a SQL-style schema using the fields of the record type.
 
 In the case of the above class ``Entry``, the schema will be::
 

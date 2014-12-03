@@ -15,7 +15,7 @@ Overview
 ========
 
 This example demonstrates use of many of the CDAP elements—Streams, Flows, Flowlets,
-Datasets, Queries, Procedures, MapReduce Jobs, Workflows, and Custom Services—all in a single Application.
+Datasets, Queries, MapReduce Jobs, Workflows, and Services—all in a single Application.
 
 The application uses a scheduled MapReduce Job and Workflow to read from one ObjectStore Dataset
 and write to another.
@@ -34,14 +34,13 @@ and write to another.
   - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce job to store 
     customers' purchase history in the *history* Dataset.
-  - Execute the ``PurchaseProcedure`` procedure to query the *history* Dataset to discover the
-    purchase history of each user.
+  - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
   - Execute a SQL query over the *history* Dataset. You can do this using a series of ``curl``
     calls, or more conveniently using the ``cdap-cli``.
 
 **Note:** Because the PurchaseHistoryWorkFlow is only scheduled to run at 4:00 A.M.,
 you should not start it manually until after entering the first customers' purchases, or the
-PurchaseProcedure will return a "not found" error.
+PurchaseHistoryService will responds with *204 No Response* status code.
 
 Let's look at some of these elements, and then run the Application and see the results.
 
@@ -74,10 +73,10 @@ history. It writes to the *history* Dataset, a custom Dataset that embeds an ``O
 implements the ``RecordScannable`` interface to allow SQL queries over the Dataset.
 
 
-``PurchaseProcedure``: Procedure
+``PurchaseHistoryService``: Service
 ------------------------------------------------
 
-This procedure has a ``history`` method to obtain the purchase history of a given customer.
+This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer.
 
 
 Building and Starting
@@ -87,7 +86,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the flow and procedure as described.
+  Make sure you start the Flow and Service as described.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -122,43 +121,26 @@ the Application page of the CDAP Console and then click the *start* button. You 
 the status of the Workflow and observe when it finishes.
 
 Alternatively, you can send a ``curl`` request to CDAP::
-  
+
   curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
 
 Querying the Results
 ------------------------------
 
-If the Procedure has not already been started, you start it either through the 
+If the Service has not already been started, you start it either through the
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-  curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseProcedure/start'
-  
-There are two ways to query the *history* ObjectStore through the ``PurchaseProcedure`` procedure:
+  curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/services/PurchaseHistoryService/start'
 
-1. Send a query via an HTTP request using the ``curl`` command. For example::
+To query the *history* ObjectStore through the ``PurchaseHistoryService``,
+send a query via an HTTP request using the ``curl`` command. For example::
 
-    curl -w '\n' -v -d '{"customer": "Alice"}' \
-      'http://localhost:10000/v2/apps/PurchaseHistory/procedures/PurchaseProcedure/methods/history'
+    curl -w '\n' -v \
+      'http://localhost:10000/v2/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
 
-   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
+  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the example::
 
     libexec\curl...
-
-2. Click on the ``PurchaseProcedure`` in the Application's detail page of the Console to get to the 
-   Procedure dialogue. Type in the method name ``history``, and enter the customer name in the parameters
-   field, such as::
-
-    { "customer" : "Alice" }
-
-   Then click the *Execute* button. The purchase history for that customer will be displayed in the
-   Console in JSON format (example reformatted to fit)::
-
-    {"customer":"Alice","purchases":
-      [{"customer":"Alice",
-        "product":"coconut","quantity":2,"price":5,"purchaseTime":1414993175135,"catalogId":""},
-       {"customer":"Alice",
-        "product":"grapefruit","quantity":12,"price":10,"purchaseTime":1414993175134,"catalogId":""}]}
-
 
 Exploring the Results Using SQL
 -------------------------------

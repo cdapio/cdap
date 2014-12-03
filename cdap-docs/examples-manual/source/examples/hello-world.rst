@@ -14,11 +14,11 @@ The simplest Cask Data Application Platform (CDAP) Example.
 Overview
 ===========
 
-This application uses one Stream, one Dataset, one Flow and one Procedure to implement the classic "Hello World".
+This application uses one Stream, one Dataset, one Flow and one Service to implement the classic "Hello World".
 
 - A stream to send names to;
 - A flow with a single flowlet that reads the stream and stores in a dataset each name in a KeyValueTable; and
-- A procedure that reads the name from the KeyValueTable and prints 'Hello [Name]!'.
+- A Service, that reads the name from the KeyValueTable and responds with "Hello [Name]!"
 
 
 The ``HelloWorld`` Application
@@ -52,19 +52,19 @@ the counter ``names.longnames`` is incremented by one, and the metric ``names.by
 by the length of the name. We will see below how to retrieve these metrics using the 
 :ref:`http-restful-api-metrics`.
 
-The ``Greeting`` Procedure
+The ``Greeting`` Service
 ------------------------------
 
-This procedure has a single handler method called ``greet`` that does not accept arguments. When invoked, it
+This Service has a single endpoint called ``greet`` that does not accept arguments. When invoked, it
 reads the name stored by the ``NameSaver`` from the key-value table. It return a simple greeting with that name:
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 100-115
 
-Note that the procedure, like the flowlet, also emits metrics: every time the name *Jane
-Doe* is received, the counter ``greetings.count.jane_doe`` is incremented by one. We will
-see below how to retrieve this metric sing the 
+Note that the Service, like the Flowlet, also emits metrics: every time the name *Jane Doe* is received,
+the counter ``greetings.count.jane_doe`` is incremented by one.
+We will see below how to retrieve this metric sing the
 :ref:`http-restful-api-metrics`.
 
 Building and Starting
@@ -74,7 +74,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the flow and procedure as described.
+  Make sure you start the Flow and Service as described.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -99,17 +99,19 @@ window, you will see that the counters for both the stream and the *saver* flowl
 increase to 1. You can repeat this step to enter more names, but remember that only the
 last name is stored in the key-value table.
 
-Using the Procedure
+Using the Service
 ------------------------------
 
-Go back to the Application's detail page, and under Query, click on the *Greeting*
-procedure. Click on the *Start* button in the right-side, below the green arrow. The
-procedure's label will change to *Running* when it is ready to receive events.
+Go back to the Application's detail page, and under Service, click on the *Greeting*
+service. Click on the *Start* button in the right-side, below the green arrow. The
+service's label will change to *Running* when it is ready to receive events.
 
-Now you can make a request to the procedure: Enter "greet" for the method and click the
-Execute button. At the bottom of the page you will see the procedure's response. If the
-last name you entered was *Tom*, this will be "Hello, Tom!".
-  
+Now you can make a request to the service using curl::
+
+  $ curl -w '\n' http://localhost:10000/v2/apps/HelloWorld/services/Greeting/methods/greet
+
+If the last name you entered was *Tom*, service will responds "Hello Tom!".
+
 Retrieving Metrics
 ------------------------------
 
@@ -130,7 +132,7 @@ you can use::
 To see the value of the ``greetings.count.jane_doe`` metric (the number of times the name *Jane Doe* has been seen),
 you can use::
 
-  $ curl -w '\n' http://localhost:10000/v2/metrics/user/apps/HelloWorld/procedures/Greeting/greetings.count.jane_doe?aggregate=true
+  $ curl -w '\n' http://localhost:10000/v2/metrics/user/apps/HelloWorld/services/Greeting/greetings.count.jane_doe?aggregate=true
   {"data":0}
   
 Stopping the Application

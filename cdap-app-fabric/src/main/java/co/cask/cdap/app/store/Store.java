@@ -187,7 +187,9 @@ public interface Store {
    * @param id     program id
    * @param count  new number of instances.
    * @throws OperationException
+   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   void setProcedureInstances(Id.Program id, int count) throws OperationException;
 
   /**
@@ -196,7 +198,9 @@ public interface Store {
    * @param id  program id
    * @return    number of instances
    * @throws OperationException
+   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   int getProcedureInstances(Id.Program id) throws OperationException;
 
   /**
