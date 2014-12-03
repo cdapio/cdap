@@ -49,7 +49,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Implementation of {@link co.cask.cdap.namespace.NamespaceMetaStore} that accesses MDS directly
+ * Implementation of {@link NamespaceMetaStore} that accesses MDS directly.
  */
 public class MDSNamespaceMetaStore implements NamespaceMetaStore {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceMetaStore.class);
@@ -80,7 +80,7 @@ public class MDSNamespaceMetaStore implements NamespaceMetaStore {
                                                              DatasetDefinition.NO_ARGUMENTS, null);
             return new NamespaceMds(new MetadataStoreDataset(mdsTable));
           } catch (Exception e) {
-            LOG.error("Failed to access namespace.meta table", e);
+            LOG.error("Failed to access {} table", DefaultStore.APP_META_TABLE, e);
             throw Throwables.propagate(e);
           }
         }

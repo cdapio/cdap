@@ -17,17 +17,17 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceMeta;
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.annotation.Nullable;
-
 /**
- * Tests for {@link co.cask.cdap.gateway.handlers.NamespaceHttpHandler}
+ * Tests for {@link NamespaceHttpHandler}
  */
 public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
@@ -58,12 +58,14 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     return response.getStatusLine().getStatusCode();
   }
 
-  private int listNamespace(@Nullable String name) throws Exception {
-    StringBuilder api = new StringBuilder(String.format("%s/namespaces", Constants.Gateway.API_VERSION));
-    if (null != name) {
-      api.append("/").append(name);
-    }
-    HttpResponse response = doGet(api.toString());
+  private int listAllNamespaces() throws Exception {
+    HttpResponse response = doGet(String.format("%s/namespaces", Constants.Gateway.API_VERSION));
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private int getNamespace(String name) throws Exception {
+    Preconditions.checkArgument(name != null, "namespace name cannot be null");
+    HttpResponse response = doGet(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION, name));
     return response.getStatusLine().getStatusCode();
   }
 
@@ -74,13 +76,13 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testGetAllNamespaces() throws Exception {
-    Assert.assertEquals(200, listNamespace(null));
+    Assert.assertEquals(200, listAllNamespaces());
   }
 
   @Test
   public void testCreateNamespace() throws Exception {
     Assert.assertEquals(200, createNamespace(METADATA_VALID));
-    Assert.assertEquals(200, listNamespace(NAME));
+    Assert.assertEquals(200, getNamespace(NAME));
     // test duplicate creation
     Assert.assertEquals(409, createNamespace(METADATA_VALID));
     // cleanup
@@ -93,7 +95,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, deleteNamespace("doesnotexist"));
     // setup - create namespace
     Assert.assertEquals(200, createNamespace(METADATA_VALID));
-    Assert.assertEquals(200, listNamespace(NAME));
+    Assert.assertEquals(200, getNamespace(NAME));
     // test delete
     Assert.assertEquals(200, deleteNamespace(NAME));
   }
@@ -102,7 +104,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   public void testCreateValidations() throws Exception {
     // invalid json should error
     Assert.assertEquals(400, createNamespace(METADATA_INVALID_JSON));
-    Assert.assertEquals(404, listNamespace(NAME));
+    Assert.assertEquals(404, getNamespace(NAME));
 
     // name must be non-null, non-empty
     Assert.assertEquals(400, createNamespace(METADATA_MISSING_NAME));

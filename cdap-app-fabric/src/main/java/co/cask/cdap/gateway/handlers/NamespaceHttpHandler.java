@@ -24,7 +24,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -42,7 +41,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * {@link HttpHandler} for handling REST call to namespace endpoints.
+ * The {@link HttpHandler} for handling REST calls to namespace endpoints.
  */
 @Path(Constants.Gateway.API_VERSION)
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
@@ -62,7 +61,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     LOG.debug("Listing all namespaces");
     try {
       List<NamespaceMeta> namespaces = namespaceMetaStore.list();
-      if (null == namespaces) {
+      if (namespaces == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
         responder.sendJson(HttpResponseStatus.OK, namespaces);
@@ -79,8 +78,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     LOG.debug("Listing namespace {}", namespace);
     try {
       NamespaceMeta ns = namespaceMetaStore.get(Id.Namespace.from(namespace));
-      if (null == ns) {
-        LOG.error("Namespace {} not found", namespace);
+      if (ns == null) {
+        LOG.warn("Namespace {} not found", namespace);
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespace));
         return;
       }
@@ -98,35 +97,35 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       NamespaceMeta metadata = parseBody(request, NamespaceMeta.class);
       String name = metadata.getName();
       // name cannot be null or empty.
-      if (null == name || name.isEmpty()) {
-        LOG.error("Namespace name cannot be null or empty.");
+      if (name == null || name.isEmpty()) {
+        LOG.warn("Namespace name cannot be null or empty.");
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Namespace name cannot be null or empty.");
         return;
       }
       if (namespaceMetaStore.exists(Id.Namespace.from(name))) {
-        LOG.error("Namespace {} already exists", name);
+        LOG.warn("Namespace {} already exists", name);
         responder.sendString(HttpResponseStatus.CONFLICT, String.format("Namespace %s already exists", name));
         return;
       }
       LOG.debug("Creating namespace {}", name);
       // displayName and description could be null
       String displayName = metadata.getDisplayName();
-      if (null == displayName || displayName.isEmpty()) {
+      if (displayName == null || displayName.isEmpty()) {
         displayName = name;
       }
       String description = metadata.getDescription();
-      if (null == description) {
+      if (description == null) {
         description = "";
       }
       namespaceMetaStore.create(new NamespaceMeta.Builder().setName(name).setDisplayName(displayName)
                                   .setDescription(description).build());
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
-      LOG.error("Invalid namespace metadata. Must be a valid json.", e);
+      LOG.warn("Invalid namespace metadata. Must be a valid json.", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid namespace metadata. Must be a valid" +
                                                                            " json."));
     } catch (IOException e) {
-      LOG.error("Error reading namespace metadata: {}", request.getContent().toString(Charsets.UTF_8), e);
+      LOG.error("Failed to read namespace metadata.", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     } catch (Exception e) {
       LOG.error("Internal error while creating namespace", e);
@@ -141,7 +140,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Namespace namespaceId = Id.Namespace.from(namespace);
       if (!namespaceMetaStore.exists(namespaceId)) {
-        LOG.error("Namespace {} not found", namespace);
+        LOG.warn("Namespace {} not found", namespace);
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespace));
         return;
       }

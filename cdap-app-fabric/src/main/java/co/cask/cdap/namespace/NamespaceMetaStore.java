@@ -27,40 +27,44 @@ import java.util.List;
 public interface NamespaceMetaStore {
 
   /**
-   * Creates a new namespace
+   * Creates a new namespace.
+   *
    * @param metadata {@link NamespaceMeta} representing the namespace metadata
-   * @throws java.lang.Exception if problems occur while creating the new namespace
+   * @throws Exception if problems occur while creating the new namespace
    */
   void create(NamespaceMeta metadata) throws Exception;
 
   /**
-   * Retrieves a namespace from the namespace metadata store
+   * Retrieves a namespace from the namespace metadata store.
+   *
    * @param id {@link Id.Namespace} of the requested namespace
-   * @return {@link co.cask.cdap.proto.NamespaceMeta} of the requested namespace
-   * @throws java.lang.Exception if problems occur while retrieving the namespace
+   * @return {@link NamespaceMeta} of the requested namespace
+   * @throws Exception if problems occur while retrieving the namespace
    */
   NamespaceMeta get(Id.Namespace id) throws Exception;
 
   /**
-   * Deletes a namespace from the namespace metadata store
+   * Deletes a namespace from the namespace metadata store.
+   *
    * @param id {@link Id.Namespace} of the namespace to delete
-   * @throws java.lang.Exception if problems occur while deleting the namespace
-   * @throws java.lang.Exception if problems occur while deleting the namespace
+   * @throws Exception if problems occur while deleting the namespace
    */
   void delete(Id.Namespace id) throws Exception;
 
   /**
-   * Lists all registered namespaces
+   * Lists all registered namespaces.
+   *
    * @return a list of all registered namespaces
-   * java.lang.Exception if problems occur while listing namespaces
+   * @throws Exception if problems occur while listing namespaces
    */
   List<NamespaceMeta> list() throws Exception;
 
   /**
-   * Check if namespace already exists
+   * Check if namespace already exists.
+   *
    * @param id {@link Id.Namespace} of the requested namespace to check for existence
    * @return true if the namespace already exists, false otherwise
-   * java.lang.Exception if problems occur while checking namespace status
+   * @throws Exception if problems occur while checking namespace status
    */
   boolean exists(Id.Namespace id) throws Exception;
 }
