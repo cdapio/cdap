@@ -55,6 +55,7 @@ import co.cask.cdap.cli.command.StartProgramCommandSet;
 import co.cask.cdap.cli.command.StopProgramCommandSet;
 import co.cask.cdap.cli.command.TruncateDatasetInstanceCommand;
 import co.cask.cdap.cli.command.TruncateStreamCommand;
+import co.cask.cdap.cli.command.VersionCommand;
 import co.cask.common.cli.Command;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -73,6 +74,7 @@ public class DefaultCommands implements Supplier<List<Command>> {
   @Inject
   public DefaultCommands(Injector injector) {
     this.commands = ImmutableList.<Command>builder()
+      .add(injector.getInstance(VersionCommand.class))
       .add(injector.getInstance(ExitCommand.class))
       .add(injector.getInstance(CallProcedureCommand.class))
       .add(injector.getInstance(ConnectCommand.class))
