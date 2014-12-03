@@ -35,6 +35,10 @@ MapReduce Jobs.
 
 Support for FileSet datasets is experimental in CDAP 2.6.0.
 
+See the MapReduce Javadocs for more information about Hadoop
+`InputFormat <http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/InputFormat.html>`__ and
+`OutputFormat <http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html>`__.
+
 Creating a FileSet
 ==================
 
@@ -54,7 +58,8 @@ To create and use a FileSet in an application, you create it as part of the appl
     }
 
 This creates a new FileSet named *lines* that uses ``TextInputFormat`` and ``TextOutputFormat.``
-For the output format, we specify an additional property to make it use a colon as the separator.
+For the output format, we specify an additional property to make it use a colon as the separator
+between the key and the value in each line of output.
 If you do not specify a base path, the dataset framework will generate a path
 based on the dataset name. If you do not specify an input format, you will not be able
 to use this as the input for a MapReduce Job; similarly, for the output format.
@@ -74,7 +79,7 @@ Using a FileSet as input or output of a MapReduce Job is the same as for any oth
     }
     ...
 
-The MapReduce Job only needs specified the names of the input and output datasets.
+The MapReduce program only needs to specify the names of the input and output datasets.
 Whether they are FileSets or another type of Dataset is handled by the CDAP runtime system.
 
 However, you do need to tell CDAP the relative paths of the input and output files. Currently,
