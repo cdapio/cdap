@@ -86,6 +86,34 @@ Running CDAP Applications
 Running the Example
 ===================
 
+Running the Flow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``WhoFlow`` in the Application page of the CDAP Console to get to the
+  Flow dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow HelloWorld.WhoFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow HelloWorld.WhoFlow``
+
+Running the Service
+============================================
+
+Once an application is deployed:
+
+- Click on the ``Greeting`` in the Application page of the CDAP Console to get to the
+  Service dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service HelloWorld.Greeting``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service HelloWorld.Greeting``
+
 Injecting a Name
 ------------------------------
 
@@ -135,6 +163,34 @@ you can use::
   $ curl -w '\n' http://localhost:10000/v2/metrics/user/apps/HelloWorld/services/Greeting/greetings.count.jane_doe?aggregate=true
   {"data":0}
   
+Stopping the Flow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``WhoFlow`` in the Application page of the CDAP Console to get to the
+  Flow dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow HelloWorld.WhoFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow HelloWorld.WhoFlow``
+
+Stopping the Service
+============================================
+
+Once an application is deployed:
+
+- Click on the ``Greeting`` in the Application page of the CDAP Console to get to the
+  Service dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service HelloWorld.Greeting``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service HelloWorld.Greeting``
+
 Stopping the Application
 -------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. <#stopping-an-application>`__

@@ -68,7 +68,34 @@ Running the Example
 Once you start the flow, the *source* flowlet will continuously generate data. You can see this by observing the counters
 for each flowlet in the flow visualization. Even though you are not injecting any data into the flow, the counters increase steadily.
 
+Running the Flow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``CountRandom`` in the Application page of the CDAP Console to get to the
+  Flow dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow CountRandom.CountRandom``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow CountRandom.CountRandom``
+
+Stopping the Flow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``CountRandom`` in the Application page of the CDAP Console to get to the
+  Flow dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow CountRandom.CountRandom``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow CountRandom.CountRandom``
+
 Stopping the Application
 -------------------------------
 Once done, you can stop the application as described above in `Stopping an Application. <#stopping-an-application>`__
-

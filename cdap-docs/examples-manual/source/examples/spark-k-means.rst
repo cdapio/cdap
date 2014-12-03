@@ -71,6 +71,48 @@ Running the Example
 
 .. highlight:: console
 
+Running the Flow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``PointsFlow`` in the Application page of the CDAP Console to get to the
+  Flow dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow SparkKMeans.PointsFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow SparkKMeans.PointsFlow``
+
+Running the Spark program
+============================================
+
+Once an application is deployed:
+
+- Click on the ``SparkKMeansProgram`` in the Application page of the CDAP Console to get to the
+  Spark dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start spark SparkKMeans.SparkKMeansProgram``
+
+Running the Service
+============================================
+
+Once an application is deployed:
+
+- Click on the ``CentersService`` in the Application page of the CDAP Console to get to the
+  Service dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service SparkKMeans.CentersService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service SparkKMeans.CentersService``
+
 Injecting Points Data
 ------------------------------
 
@@ -82,32 +124,6 @@ Run this script to inject points data to the Stream named *pointsStream* in the
 On Windows::
 
   > bin\inject-data.bat
-
-Running the Spark program
-------------------------------
-There are three ways to start the Spark program:
-
-1. Click on the ``SparkKMeansProgram`` in the Application page of the CDAP Console to get to the
-   Spark dialogue, then click the *Start* button.
-
-2. Send a query via an HTTP request using the ``curl`` command::
-
-    curl -w '\n' -v -d '{args="3"}' \
-      'http://localhost:10000/v2/apps/SparkKMeans/spark/SparkKMeansProgram/start'
-
-   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
-
-    libexec\curl...
-
-3. Use the Command-line Interface, from the Standalone CDAP SDK directory::
-
-  On Linux::
-
-    $ ./bin/cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram
-
-  On Windows::
-
-    > bin\cdap-cli.bat start spark SparkKMeans.SparkKMeansProgram
 
 Querying the Results
 ------------------------------
@@ -125,6 +141,48 @@ send a query via an HTTP request using the ``curl`` command. For example::
   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
     libexec\curl...
+
+Stopping the Flow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``PointsFlow`` in the Application page of the CDAP Console to get to the
+  Flow dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow SparkKMeans.PointsFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow SparkKMeans.PointsFlow``
+
+Stopping the Spark program
+============================================
+
+Once an application is deployed:
+
+- Click on the ``SparkKMeansProgram`` in the Application page of the CDAP Console to get to the
+  Spark dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop spark SparkKMeans.SparkKMeansProgram``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop spark SparkKMeans.SparkKMeansProgram``
+
+Stopping the Service
+============================================
+
+Once an application is deployed:
+
+- Click on the ``CentersService`` in the Application page of the CDAP Console to get to the
+  Service dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service SparkKMeans.CentersService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service SparkKMeans.CentersService``
 
 Stopping the Application
 -------------------------------

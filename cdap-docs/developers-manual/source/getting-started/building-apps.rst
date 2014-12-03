@@ -67,9 +67,9 @@ Once an application is deployed:
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start <app-name> <app-id>.<program-id>``
+      - ``$ ./bin/cdap-cli.sh start <program> <app-id.program-id>``
     * - On Windows:
-      - ``> bin\cdap-cli.bat start <app-name> <app-id>.<program-id>``
+      - ``> bin\cdap-cli.bat start <program> <app-id.program-id>``
 
 Stopping an Application
 ----------------------------------
@@ -85,9 +85,9 @@ Once an application is deployed:
     :stub-columns: 1
 
     * - On Linux:
-          - ``$ ./bin/cdap-cli.sh stop <app-name> <app-id>.<program-id>``
-        * - On Windows:
-          - ``> bin\cdap-cli.bat stop <app-name> <app-id>.<program-id>``
+      - ``$ ./bin/cdap-cli.sh stop <program> <app-id.program-id>``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop <program> <app-id.program-id>``
 
 Removing an Application
 ----------------------------------

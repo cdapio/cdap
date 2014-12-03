@@ -100,6 +100,62 @@ Running the Example
 
 .. highlight:: console
 
+Running the Flow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``PurchaseFlow`` in the Application page of the CDAP Console to get to the
+  Flow dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow PurchaseHistory.PurchaseFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow PurchaseHistory.PurchaseFlow``
+
+Running the Workflow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``PurchaseHistoryWorkflow`` in the Application page of the CDAP Console to get to the
+  Workflow dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start workflow PurchaseHistory.PurchaseHistoryWorkflow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start workflow PurchaseHistory.PurchaseHistoryWorkflow``
+
+Running the PurchaseHistoryService
+============================================
+
+Once an application is deployed:
+
+- Click on the ``PurchaseHistoryService`` in the Application page of the CDAP Console to get to the
+  Service dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service PurchaseHistory.PurchaseHistoryService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service PurchaseHistory.PurchaseHistoryService``
+
+Running the CatalogLookup
+============================================
+
+Once an application is deployed:
+
+- Click on the ``CatalogLookup`` in the Application page of the CDAP Console to get to the
+  Service dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service PurchaseHistory.CatalogLookup``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service PurchaseHistory.CatalogLookup``
+
 Injecting Sentences
 ------------------------------
 
@@ -112,17 +168,6 @@ On Windows::
 
   > bin\inject-data.bat
 
-
-Starting the Workflow
-------------------------------
-
-The easiest way to start the ``PurchaseHistoryWorkflow`` is to click on the Workflow in
-the Application page of the CDAP Console and then click the *start* button. You can see
-the status of the Workflow and observe when it finishes.
-
-Alternatively, you can send a ``curl`` request to CDAP::
-
-  curl -v -X POST 'http://localhost:10000/v2/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/start'
 
 Querying the Results
 ------------------------------
@@ -232,6 +277,62 @@ You repeat this step until the ``curl`` call returns an empty list. That means y
 retrieved all of the results and you can now close the query::
 
   curl -v -X DELETE http://localhost:10000/v2/data/explore/queries/363f8ceb-29fe-493d-810f-858ed0440782
+
+Stopping the Flow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``PurchaseFlow`` in the Application page of the CDAP Console to get to the
+  Flow dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow PurchaseHistory.PurchaseFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow PurchaseHistory.PurchaseFlow``
+
+Stopping the Workflow
+============================================
+
+Once an application is deployed:
+
+- Click on the ``PurchaseHistoryWorkflow`` in the Application page of the CDAP Console to get to the
+  Workflow dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop workflow PurchaseHistory.PurchaseHistoryWorkflow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop workflow PurchaseHistory.PurchaseHistoryWorkflow``
+
+Stopping the PurchaseHistoryService
+============================================
+
+Once an application is deployed:
+
+- Click on the ``PurchaseHistoryService`` in the Application page of the CDAP Console to get to the
+  Service dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service PurchaseHistory.PurchaseHistoryService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service PurchaseHistory.PurchaseHistoryService``
+
+Stopping the CatalogLookup
+============================================
+
+Once an application is deployed:
+
+- Click on the ``CatalogLookup`` in the Application page of the CDAP Console to get to the
+  Service dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service PurchaseHistory.CatalogLookup``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service PurchaseHistory.CatalogLookup``
 
 Stopping the Application
 -------------------------------
