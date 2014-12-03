@@ -69,7 +69,7 @@ public class PurchaseAppTest extends TestBase {
     }
 
     // Start UserProfileService
-    ServiceManager userProfileServiceManager = appManager.startService(UserProfileService.SERVICE_NAME);
+    ServiceManager userProfileServiceManager = appManager.startService(UserProfileServiceHandler.SERVICE_NAME);
 
     // Wait for service startup
     serviceStatusCheck(userProfileServiceManager, true);
@@ -89,7 +89,8 @@ public class PurchaseAppTest extends TestBase {
     }
 
     // Test service to retrieve customer's profile information
-    URL getUserProfileURL = new URL(userProfileServiceManager.getServiceURL(), UserProfileServiceHandler.USER_ENDPOINT + "/joe");
+    URL getUserProfileURL = new URL(userProfileServiceManager.getServiceURL(),
+                                    UserProfileServiceHandler.USER_ENDPOINT + "/joe");
     HttpURLConnection getUserProfileConnection = (HttpURLConnection) getUserProfileURL.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, getUserProfileConnection.getResponseCode());
     String customerJson;

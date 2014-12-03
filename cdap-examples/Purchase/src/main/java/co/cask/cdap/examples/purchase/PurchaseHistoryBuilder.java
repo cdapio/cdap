@@ -92,7 +92,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
     @Override
     public void initialize(MapReduceContext context) throws Exception {
-      userProfileServiceURL = context.getServiceURL(UserProfileService.SERVICE_NAME);
+      userProfileServiceURL = context.getServiceURL(UserProfileServiceHandler.SERVICE_NAME);
     }
 
     public void reduce(Text customer, Iterable<Text> values, Context context)
