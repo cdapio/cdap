@@ -15,12 +15,11 @@ angular
         PKG.name+'.config',
         'ngAnimate',
         'ngSanitize',
-        'ngResize',
         // 'ngResource',
         'ngStorage',
         'ui.router',
-        'cask-angular-theme',
-        'cask-angular-focus'
+        'cask-angular-window-manager',
+        'cask-angular-theme'
       ]).name,
 
       angular.module(PKG.name+'.filters', [
