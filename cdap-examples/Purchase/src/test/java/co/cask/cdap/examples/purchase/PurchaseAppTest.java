@@ -75,7 +75,7 @@ public class PurchaseAppTest extends TestBase {
     serviceStatusCheck(userProfileServiceManager, true);
 
     // Add customer's profile information
-    URL setUserProfileURL = new URL(userProfileServiceManager.getServiceURL(), "user");
+    URL setUserProfileURL = new URL(userProfileServiceManager.getServiceURL(), UserProfileServiceHandler.USER_ENDPOINT);
     HttpURLConnection setUserProfileConnection = (HttpURLConnection) setUserProfileURL.openConnection();
     String userProfileJson = "{'id' : 'joe', 'firstName': 'joe', 'lastName':'bernard', 'categories': ['fruits']}";
 
@@ -89,7 +89,7 @@ public class PurchaseAppTest extends TestBase {
     }
 
     // Test service to retrieve customer's profile information
-    URL getUserProfileURL = new URL(userProfileServiceManager.getServiceURL(), "user/joe");
+    URL getUserProfileURL = new URL(userProfileServiceManager.getServiceURL(), UserProfileServiceHandler.USER_ENDPOINT + "/joe");
     HttpURLConnection getUserProfileConnection = (HttpURLConnection) getUserProfileURL.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, getUserProfileConnection.getResponseCode());
     String customerJson;

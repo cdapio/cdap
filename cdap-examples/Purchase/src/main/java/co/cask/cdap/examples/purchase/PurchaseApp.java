@@ -52,7 +52,8 @@ public class PurchaseApp extends AbstractApplication {
     // Retrieve the processed data using a Service
     addService(new PurchaseHistoryService());
 
-    addService(new UserProfileService());
+    // Store and retrieve user profile data using service
+    addService(UserProfileServiceHandler.SERVICE_NAME, new UserProfileServiceHandler());
 
     // Provide a Service to Application components
     addService(new CatalogLookupService());
