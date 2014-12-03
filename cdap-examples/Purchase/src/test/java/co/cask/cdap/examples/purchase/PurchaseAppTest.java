@@ -132,7 +132,6 @@ public class PurchaseAppTest extends TestBase {
     Assert.assertEquals(profileFromPurchaseHistory.getFirstName(), "joe");
     Assert.assertEquals(profileFromPurchaseHistory.getLastName(), "bernard");
 
-
     appManager.stopAll();
   }
 
