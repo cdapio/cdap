@@ -39,7 +39,17 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
 
 - Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console
   running at `http://localhost:9999/ <http://localhost:9999/>`__; or
-- Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar.
+- Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh deploy app <path-to-jar-file>``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat deploy app <path-to-jar-file>``
 
 Starting an Application
 ----------------------------------
@@ -49,7 +59,17 @@ Once an application is deployed:
 - You can go to the Application's detail page in the CDAP Console by clicking on the
   Application's name in the *Overview* page. (It can be reached by clicking on the
   *Application* button in the left sidebar of the window.) Now you can *Start* or *Stop* any
-  of the Processes or Queries associated with the application.
+  of the Processes or Queries associated with the application; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start <app-name> <app-id>.<program-id>``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start <app-name> <app-id>.<program-id>``
 
 Stopping an Application
 ----------------------------------
@@ -57,7 +77,17 @@ Stopping an Application
 Once an application is deployed:
 
 - On the Application's detail page in the CDAP Console, you can click the *Stop* button on 
-  the Process and Query lists, if the application has either of them.
+  the Process and Query lists, if the application has either of them; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+          - ``$ ./bin/cdap-cli.sh stop <app-name> <app-id>.<program-id>``
+        * - On Windows:
+          - ``> bin\cdap-cli.bat stop <app-name> <app-id>.<program-id>``
 
 Removing an Application
 ----------------------------------

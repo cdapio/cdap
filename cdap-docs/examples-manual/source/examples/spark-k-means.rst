@@ -85,7 +85,7 @@ On Windows::
 
 Running the Spark program
 ------------------------------
-There are two ways to start the Spark program:
+There are three ways to start the Spark program:
 
 1. Click on the ``SparkKMeansProgram`` in the Application page of the CDAP Console to get to the
    Spark dialogue, then click the *Start* button.
@@ -98,6 +98,16 @@ There are two ways to start the Spark program:
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
     libexec\curl...
+
+3. Use the Command-line Interface, from the Standalone CDAP SDK directory::
+
+  On Linux::
+
+    $ ./bin/cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram
+
+  On Windows::
+
+    > bin\cdap-cli.bat start spark SparkKMeans.SparkKMeansProgram
 
 Querying the Results
 ------------------------------
