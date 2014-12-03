@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -45,6 +46,9 @@ public class SetProgramInstancesCommand implements Command {
 
     switch (elementType) {
       case FLOWLET:
+        if (programIdParts.length < 3) {
+          throw new CommandInputError(this);
+        }
         String flowId = programIdParts[1];
         String flowletId = programIdParts[2];
         programClient.setFlowletInstances(appId, flowId, flowletId, numInstances);
@@ -52,12 +56,18 @@ public class SetProgramInstancesCommand implements Command {
                       flowId, flowletId, appId, numInstances);
         break;
       case PROCEDURE:
+        if (programIdParts.length < 2) {
+          throw new CommandInputError(this);
+        }
         String procedureId = programIdParts[1];
         programClient.setProcedureInstances(appId, procedureId, numInstances);
         output.printf("Successfully set procedure '%s' of app '%s' to %d instances\n",
                       procedureId, appId, numInstances);
         break;
       case RUNNABLE:
+        if (programIdParts.length < 3) {
+          throw new CommandInputError(this);
+        }
         String serviceId = programIdParts[1];
         String runnableId = programIdParts[2];
         programClient.setServiceRunnableInstances(appId, serviceId, runnableId, numInstances);
