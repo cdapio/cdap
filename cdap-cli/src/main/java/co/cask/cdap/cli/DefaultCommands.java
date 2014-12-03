@@ -36,6 +36,7 @@ import co.cask.cdap.cli.command.GetProgramInstancesCommandSet;
 import co.cask.cdap.cli.command.GetProgramLiveInfoCommandSet;
 import co.cask.cdap.cli.command.GetProgramLogsCommandSet;
 import co.cask.cdap.cli.command.GetProgramRunsCommandSet;
+import co.cask.cdap.cli.command.GetProgramRuntimeArgsCommandSet;
 import co.cask.cdap.cli.command.GetProgramStatusCommandSet;
 import co.cask.cdap.cli.command.GetServiceEndpointsCommand;
 import co.cask.cdap.cli.command.GetStreamEventsCommand;
@@ -48,6 +49,7 @@ import co.cask.cdap.cli.command.ListProgramsCommandSet;
 import co.cask.cdap.cli.command.ListStreamsCommand;
 import co.cask.cdap.cli.command.SendStreamEventCommand;
 import co.cask.cdap.cli.command.SetProgramInstancesCommandSet;
+import co.cask.cdap.cli.command.SetProgramRuntimeArgsCommandSet;
 import co.cask.cdap.cli.command.SetStreamTTLCommand;
 import co.cask.cdap.cli.command.StartProgramCommandSet;
 import co.cask.cdap.cli.command.StopProgramCommandSet;
@@ -93,6 +95,8 @@ public class DefaultCommands implements Supplier<List<Command>> {
       .addAll(injector.getInstance(GetProgramLiveInfoCommandSet.class).getCommands())
       .addAll(injector.getInstance(GetProgramLogsCommandSet.class).getCommands())
       .addAll(injector.getInstance(GetProgramStatusCommandSet.class).getCommands())
+      .addAll(injector.getInstance(GetProgramRuntimeArgsCommandSet.class).getCommands())
+      .addAll(injector.getInstance(SetProgramRuntimeArgsCommandSet.class).getCommands())
       .add(injector.getInstance(GetStreamEventsCommand.class))
       .add(injector.getInstance(ListAllProgramsCommand.class))
       .add(injector.getInstance(ListAppsCommand.class))
