@@ -39,10 +39,13 @@ public class FileSetExample extends AbstractApplication {
     createDataset("lines", FileSet.class, FileSetProperties.builder()
       .setBasePath("example/data/lines")
       .setInputFormat(TextInputFormat.class)
-      .setOutputFormat(TextOutputFormat.class).build());
+      .setOutputFormat(TextOutputFormat.class)
+      .build());
     createDataset("counts", FileSet.class, FileSetProperties.builder()
       .setInputFormat(TextInputFormat.class)
-      .setOutputFormat(TextOutputFormat.class).build());
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+      .build());
     addService(new FileSetService());
     addMapReduce(new WordCount());
   }

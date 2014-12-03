@@ -22,7 +22,7 @@ REM Application Manager for managing application lifecycle for Purchase applicat
 SET APP_JAR_PREFIX=FileSetExample
 
 SET APP_NAME=FileSetExample
-SET SERVICE_NAME=PurchaseFlow
+SET SERVICE_NAME=FileSetService
 SET MAP_REDUCE_NAME=WordCount
 
 REM Set the base directory

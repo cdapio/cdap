@@ -91,7 +91,7 @@ We distinguish three categories of Datasets: *core*, *system*, and *custom* Data
   CDAP classes hidden from developers.
 
   **Note**: The latest version of CDAP added support for a new core Dataset that represents
-  sets of files. See below for details.
+  sets of files. See *FileSets* below for details.
 
 - A |system|_ Dataset is bundled with the CDAP and is built around
   one or more underlying core or system Datasets to implement a specific data pattern.
@@ -138,8 +138,11 @@ Tables. These Tables are similar to tables in a relational database with a few k
   and written independently of other columns, and columns are ordered
   in byte-lexicographic order. They are also known as *Ordered Columnar Tables*.
 
-**FileSet** is a core Dataset type that was added as an experimental feature in CDAP 2.6.0.
-  
+|fileset|_ is a core Dataset type that was added as an experimental feature in CDAP 2.6.0.
+
+.. |fileset| replace:: **FileSet**
+.. _fileset: fileset.html
+
 .. rubric::  Examples of Using Datasets
 
 Datasets are included in just about every CDAP :ref:`application <apps-and-packs>`,

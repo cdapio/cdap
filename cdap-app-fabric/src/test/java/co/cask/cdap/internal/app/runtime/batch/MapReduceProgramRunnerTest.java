@@ -201,7 +201,7 @@ public class MapReduceProgramRunnerTest {
       CharStreams.newReaderSupplier(
         Locations.newInputSupplier(resultLocation), Charsets.UTF_8));
     Assert.assertNotNull(line);
-    String[] fields = line.split("\t");
+    String[] fields = line.split(":");
     Assert.assertEquals(2, fields.length);
     Assert.assertEquals(AppWithMapReduceUsingFileSet.FileMapper.ONLY_KEY, fields[0]);
     Assert.assertEquals(sum, Long.parseLong(fields[1]));

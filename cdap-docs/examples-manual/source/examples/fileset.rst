@@ -1,5 +1,5 @@
 .. meta::
-:author: Cask Data, Inc.
+    :author: Cask Data, Inc.
     :description: Cask Data Application Platform WordCount Application
     :copyright: Copyright © 2014 Cask Data, Inc.
 
@@ -16,9 +16,9 @@ Overview
 
 This application demonstrates the use of the FileSet dataset:
 
-  - The ``lines`` FileSet is used as input for the ``WordCount`` MapReduce.
-  - The ``counts`` FileSet is used as output for the ``WordCount`` MapReduce.
-  - The ``FileSetService`` allows uploading and downloading files in these two file sets.
+  - The ``lines`` FileSet is used as input for the ``WordCount`` MapReduce Job.
+  - The ``counts`` FileSet is used as output for the ``WordCount`` MapReduce Job.
+  - The ``FileSetService`` allows uploading and downloading files within these two file sets.
 
 Let's look at some of these elements, and then run the Application and see the results.
 
@@ -33,8 +33,9 @@ of the Application are tied together by the class ``FileSetExample``:
     :lines: 33-
 
 The ``configure()`` method creates the two FileSet datasets used in this example. For the first
-FileSet ``lines``, we specify an explicit base path, whereas for the other FileSet ``counts`` we let
-CDAP generate a path.
+FileSet—``lines``—we specify an explicit base path; for the second FileSet—``counts``—we let
+CDAP generate a path. Also, we configure the output format to use ":" as the separator for the
+``counts`` FileSet.
 
 We will use the ``FileSetService`` to upload a file into the ``lines`` file set, then count the words in
 that file using MapReduce, and finally download the word counts from the ``counts`` file set.
@@ -42,34 +43,31 @@ that file using MapReduce, and finally download the word counts from the ``count
 FileSetService
 --------------
 
-This service has two handler methods, one to upload and one to download a file. It declares the datasets
-that it needs to access using the ``@UseDataSet`` annotation::
-
-    @UseDataSet("lines")
-    private FileSet lines;
-
-    @UseDataSet("counts")
-    private FileSet counts;
-
-Both methods of this Service have two arguments: the name of the file set and the relative path
-within that file set. For example, the ``read`` method returns the contents of the requested file
-for a GET request:
+This service has two handler methods: one to upload and another to download a file.
+It declares the datasets that it needs to access using ``@UseDataSet`` annotations::
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 64-86
+    :lines: 33-
+
+
+Both methods of this Service have two arguments: the name of the FileSet and the relative path within that FileSet.
+For example, the ``read`` method returns the contents of the requested file for a GET request:
+
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+    :language: java
+    :lines: 58-62
 
 It uses the ``getLocation()`` of the file set to obtain the Location representing the requested file,
 and then opens an input stream for that Location. Location is a file system abstraction from
-`Apache™ Twill® <http://twill.incubator.apache.org>`__,
-and you can read more about its interface in the Apache™ Twill®
+`Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the Apache Twill
 `Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
 MapReduce over Files
 ====================
 
 ``WordCount`` is a simple word counting implementation in MapReduce. It reads its input from the
-``lines`` file set and writes its output to the ``counts`` file set.
+``lines`` file set and writes its output to the ``counts`` FileSet:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
     :language: java
@@ -101,23 +99,23 @@ First we will upload a text file that we will use as input for the WordCount.
 This is done by making a REST call to the ``FileSetService``.
 A sample text file is included in the ``resources`` directory::
 
-  curl -v http://localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/lines?path=some.txt \
+  curl -v localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/lines?path=some.txt \
     -XPUT --data-binary @resources/lines.txt
 
-Now we start the MapReduce and configure it to use this file as its input, and to write its output to
+Now we start the MapReduce Job and configure it to use this file as its input, and to write its output to
 ``counts.out``::
 
-  curl -v 127.0.0.1:10000/v2/apps/FileSetExample/mapreduce/WordCount/start \
+  curl -v localhost:10000/v2/apps/FileSetExample/mapreduce/WordCount/start \
     -d '{ "dataset.lines.input.paths": "some.txt", \
           "dataset.counts.output.path": "counts.out" }'
 
-Wait for the MapReduce to finish, and you can download the results of the MapReduce::
+Wait for the MapReduce Job to finish, and you can download the results of the computation::
 
-  curl -v http://localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/counts?path=counts.out/part-r-00000
+  curl -v localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/counts?path=counts.out/part-r-00000
 
-Note that we have to download a part file that is under the output path that was specified for the MapReduce.
-This is because in MapReduce, every reducer writes a separate part file into the output directory. In this
-case, we have fixed the number of reducers to one, and there is only one part file to download.
+Note that we have to download a part file that is under the output path that was specified for the MapReduce Job.
+This is because in MapReduce, every reducer writes a separate part file into the output directory.
+In this case, as we have fixed the number of reducers to one, there is only a single part file to download.
 
 Stopping the Application
 -------------------------------
