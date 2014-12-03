@@ -78,53 +78,47 @@ These are the available commands:
 
    **General**
    ``help``,Prints this helper text
-   ``exit``,Exits the CLI
-   **Calling and Connecting**
-   ``call procedure <app-id.procedure-id> <app-id.method-id> [<parameter-map>]``,Calls a Procedure
-   ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>]``,"Calls a Service endpoint. The header is formatted as ""{'key':'value'\, ...}"" and the body is a String."
-   ``connect <cdap-instance-uri>``,Connects to a CDAP instance. <credential(s)> parameter(s) could be used if authentication is enabled in the gateway server.
+   ``version``,Prints the version
+   ``exit``,Exits the shell
+   **Calling and Executing**
+   ``call procedure <app-id>.<procedure-id> <method-id> <parameters-map>``,"Calls a Procedure, passing in the parameters as a JSON String map"
+   ``call service <app-id>.<service-id> <http-method> <endpoint> [headers <%s>] [body <%s>]``,"Calls an endpoint of a Service, passing in the headers and body"
+   ``execute <query>``,Executes a Dataset query
    **Creating**
-   ``create dataset instance <dataset-type> <new-dataset-name>``,Creates a Dataset
+   ``create dataset instance <type-name> <new-dataset-name>``,Creates a Dataset
    ``create stream <new-stream-id>``,Creates a Stream
    **Deleting**
-   ``delete app <app-id>``,Deletes an application
+   ``delete app <app-id>``,Deletes an Application
    ``delete dataset instance <dataset-name>``,Deletes a Dataset
-   ``delete dataset module <dataset-module>``,Deletes a Dataset module
+   ``delete dataset module <module-name>``,Deletes a Dataset module
    **Deploying**
    ``deploy app <app-jar-file>``,Deploys an application
-   ``deploy dataset module <new-dataset-module> <module-jar-file> <module-jar-classname>``,Deploys a Dataset module
+   ``deploy dataset module <module-jar-file> <module-name> <module-jar-classname>``,Deploys a Dataset module
    **Describing**
    ``describe app <app-id>``,Shows detailed information about an application
-   ``describe dataset module <dataset-module>``,Shows information about a Dataset module
-   ``describe dataset type <dataset-type>``,Shows information about a Dataset type
-   ``describe stream <stream-id>``,Shows detailed information about a Stream
-   **Executing Queries**
-   ``execute <query>``,Executes a Dataset query
+   ``describe dataset module <module-name>``,Shows information about a Dataset module
+   ``describe dataset type <type-name>``,Shows information about a Dataset type
    **Retrieving Information**
-   ``get endpoints service <app-id.service-id>``,List the endpoints that a Service exposes
-   ``get flow live <app-id.flow-id>``,Gets the live info of a Flow
-   ``get flow logs <app-id.flow-id> [<start-time>] [<end-time>]``,Gets the logs of a Flow
-   ``get flow runs <app-id.flow-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,Gets the run history of a Flow
-   ``get flow status <app-id.flow-id>``,Gets the status of a Flow
-   ``get flowlet instances <app-id.flow-id.flowlet-id>``,Gets the instances of a Flowlet
-   ``get mapreduce logs <app-id.mapreduce-id> [<start-time>] [<end-time>]``,Gets the logs of a MapReduce job
-   ``get mapreduce runs <app-id.mapreduce-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,Gets the run history of a MapReduce job
-   ``get mapreduce status <app-id.mapreduce-id>``,Gets the status of a MapReduce job
-   ``get procedure instances <app-id.procedure-id>``,Gets the instances of a Procedure
-   ``get procedure live <app-id.procedure-id>``,Gets the live info of a Procedure
-   ``get procedure logs <app-id.procedure-id> [<start-time>] [<end-time>]``,Gets the logs of a Procedure
-   ``get procedure runs <app-id.procedure-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,Gets the run history of a Procedure
-   ``get procedure status <app-id.procedure-id>``,Gets the status of a Procedure
-   ``get runnable instances <app-id.runnable-id>``,Gets the instances of a Runnable
-   ``get runnable logs <app-id.runnable-id> [<start-time>] [<end-time>]``,Gets the logs of a Runnable
-   ``get runnable runs <app-id.runnable-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,Gets the run history of a Runnable
-   ``get service status <app-id.service-id>``,Gets the status of a Service
-   ``get spark logs <app-id.spark-id> [<start-time>] [<end-time>]``,Gets the logs of a Spark job
-   ``get spark runs <app-id.spark-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,Gets the run history of a Spark job
-   ``get spark status <app-id.spark-id>``,Gets the status of a Spark job
-   ``get stream <stream-id> [<start-time>] [<end-time>] [<limit>]``,"Gets events from a Stream. The time format for <start-time> and <end-time> can be a timestamp in milliseconds or a relative time in the form of [+\-][0-9]+[hms]. For <start-time>, it is relative to current time; for <end-time>, it is relative to start time. Special constants ""min"" and ""max"" can also be used to represent ""0"" and ""max timestamp"" respectively."
-   ``get workflow runs <app-id.workflow-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,Gets the run history of a Workflow
-   ``get workflow status <app-id.workflow-id>``,Gets the status of a Workflow
+   ``get history flow <app-id>.<program-id>``,Gets the run history of a Flow
+   ``get history mapreduce <app-id>.<program-id>``,Gets the run history of a MapReduce job
+   ``get history procedure <app-id>.<program-id>``,Gets the run history of a Procedure
+   ``get history runnable <app-id>.<program-id>``,Gets the run history of a Service Handler/Worker
+   ``get history workflow <app-id>.<program-id>``,Gets the run history of a Workflow
+   ``get instances flowlet <app-id>.<program-id>``,Gets the instances of a Flowlet
+   ``get instances procedure <app-id>.<program-id>``,Gets the instances of a Procedure
+   ``get instances runnable <app-id>.<program-id>``,Gets the instances of a Service Handler/Worker
+   ``get live flow <app-id>.<program-id>``,Gets the live info of a Flow
+   ``get live procedure <app-id>.<program-id>``,Gets the live info of a Procedure
+   ``get logs flow <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Flow
+   ``get logs mapreduce <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a MapReduce job
+   ``get logs procedure <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Procedure
+   ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Service Handler/Worker
+   ``get status flow <app-id>.<program-id>``,Gets the status of a Flow
+   ``get status mapreduce <app-id>.<program-id>``,Gets the status of a MapReduce job
+   ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
+   ``get status service <app-id>.<program-id>``,Gets the status of a Service
+   ``get status workflow <app-id>.<program-id>``,Gets the status of a Workflow
+   ``get endpoints service <app-id>.<service-id>``,Get the endpoints exposed by a Service
    **Listing Elements**
    ``list apps``,Lists all applications
    ``list dataset instances``,Lists all Datasets
