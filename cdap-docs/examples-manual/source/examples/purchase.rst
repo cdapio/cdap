@@ -25,12 +25,18 @@ and write to another.
     included in the example's ``/bin`` directory, or using the CDAP Console.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
     Purchase object and stores the object in the *purchases* Dataset.
+  - User profile information for the user can be added using ``curl`` call which gets stored
+    in the *userProfiles* Dataset.
   - The ``CatalogLookupService`` fetches the catalog id for a given product. The CatalogLookupService
     is called from the PurchaseStore Flowlet. The host and port of the CatalogLookupService is discovered
     using the Service discovery framework.
+  - The ``UserProfileService`` is responsible for storing and retrieving the user information
+    for a given user id from the *userProfiles* Dataset. The host and port of the UserProfileService is
+    discovered using Service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
-    job reads the *purchases* Dataset, creates a purchase history, and stores the purchase
-    history in the *history* Dataset every morning at 4:00 A.M.
+    job reads the *purchases* Dataset. It fetches the user profile information, if its available, from
+    the ``UserProfileService`` and creates a purchase history. It then stores the purchase history in the
+    *history* Dataset every morning at 4:00 A.M.
   - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce job to store 
     customers' purchase history in the *history* Dataset.
@@ -77,6 +83,19 @@ implements the ``RecordScannable`` interface to allow SQL queries over the Datas
 ------------------------------------------------
 
 This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer.
+
+
+``UserProfileService``: Service
+------------------------------------------------
+
+This service has two endpoints.
+``user`` endpoint is to add the user's profile information to the system::
+
+  curl -v http://localhost:10000/v2/apps/PurchaseHistory/services/UserProfileService/methods/user/ -d "{'id' : 'alice', 'firstName': 'Alice', 'lastName':'Bernard', 'categories': ['fruits']}"
+
+``user/{id}`` endpoint is to obtain the profile information of a given user::
+
+  curl -v http://localhost:10000/v2/apps/PurchaseHistory/services/UserProfileService/methods/user/alice
 
 
 Building and Starting
@@ -162,6 +181,12 @@ reformatted to fit)::
   +========================================================================================+
   | cdap_user_history.customer: STRING | cdap_user_history.purchases:                      |
   |                                    |   array<struct<customer:string,                   |
+  |                                    |                userProfile:<struct<               |
+  |                                    |                          id:string,               |
+  |                                    |                          firstname:string,        |
+  |                                    |                          lastname:string,         |
+  |                                    |                          categories:array<string> |
+  |                                    |                          >> optional,
   |                                    |                product:string,                    |
   |                                    |                quantity:int,                      |
   |                                    |                price:int,                         |
@@ -169,12 +194,28 @@ reformatted to fit)::
   |                                    |                catalogid:string>>                 |
   +========================================================================================+
   | Alice                              | [{"customer":"Alice",                             |
+  |                                    |                "userProfile":{                    |
+  |                                    |                    "id":"alice",                  |
+  |                                    |                    "firstname":"Alice",           |
+  |                                    |                    "lastname":"Bernard",          |
+  |                                    |                    "categories":[                 |
+  |                                    |                          "fruits"                 |
+  |                                    |                          ]                        |
+  |                                    |                },                                 |
   |                                    |                "product":"coconut",               |
   |                                    |                "quantity":2,                      |
   |                                    |                "price":5,                         |
   |                                    |                "purchasetime":1415237567039,      |
   |                                    |                "catalogid":"Catalog-coconut"},    |
   |                                    |  {"customer":"Alice",                             |
+  |                                    |                "userProfile":{                    |
+  |                                    |                    "id":"alice",                  |
+  |                                    |                    "firstname":"Alice",           |
+  |                                    |                    "lastname":"Bernard",          |
+  |                                    |                    "categories":[                 |
+  |                                    |                          "fruits"                 |
+  |                                    |                          ]                        |
+  |                                    |                },                                 |
   |                                    |                "product":"grapefruit",            |
   |                                    |                "quantity":12,                     |
   |                                    |                "price":10,                        |
