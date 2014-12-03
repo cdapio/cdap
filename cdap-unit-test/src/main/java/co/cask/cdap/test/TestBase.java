@@ -183,8 +183,6 @@ public class TestBase {
       appFabricClient.reset();
     } catch (Exception e) {
       throw Throwables.propagate(e);
-    } finally {
-      RuntimeStats.resetAll();
     }
   }
 
