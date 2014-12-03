@@ -43,6 +43,7 @@ public class DummyBaseTest extends TestBase {
       }
     } finally {
       connection.close();
+      clear();
     }
   }
 }

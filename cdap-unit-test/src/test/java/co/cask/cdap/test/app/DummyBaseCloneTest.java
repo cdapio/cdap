@@ -43,6 +43,7 @@ public class DummyBaseCloneTest extends TestBase {
       }
     } finally {
       connection.close();
+      clear();
     }
   }
 }
