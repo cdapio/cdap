@@ -28,16 +28,16 @@ import java.io.PrintStream;
 import java.util.Map;
 
 /**
- * Starts a program.
+ * Sets the runtime arguments of a program.
  */
-public class StartProgramCommand implements Command {
+public class SetProgramRuntimeArgsCommand implements Command {
 
   private static final Gson GSON = new Gson();
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  public StartProgramCommand(ElementType elementType, ProgramClient programClient) {
+  public SetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
     this.programClient = programClient;
   }
@@ -47,31 +47,22 @@ public class StartProgramCommand implements Command {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
     String programId = programIdParts[1];
-
-    String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "");
-    if (runtimeArgsString == null || runtimeArgsString.isEmpty()) {
-      // run with stored runtime args
-      programClient.start(appId, elementType.getProgramType(), programId);
-      runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(appId, elementType.getProgramType(), programId));
-    } else {
-      // run with user-provided runtime args
-      Map<String, String> runtimeArgs = Splitter.on(" ").withKeyValueSeparator("=").split(runtimeArgsString);
-      programClient.start(appId, elementType.getProgramType(), programId, runtimeArgs);
-    }
-
-    output.printf("Successfully started %s '%s' of application '%s' with runtime arguments '%s'\n",
+    String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString());
+    Map<String, String> runtimeArgs = Splitter.on(" ").withKeyValueSeparator("=").split(runtimeArgsString);
+    programClient.setRuntimeArgs(appId, elementType.getProgramType(), programId, runtimeArgs);
+    output.printf("Successfully set runtime args of %s '%s' of application '%s' to '%s'\n",
                   elementType.getPrettyName(), programId, appId, runtimeArgsString);
   }
 
   @Override
   public String getPattern() {
-    return String.format("start %s <%s> [<%s>]", elementType.getName(), elementType.getArgumentName(),
-                         ArgumentName.RUNTIME_ARGS);
+    return String.format("set %s runtimeargs <%s> <%s>", elementType.getName(),
+                         elementType.getArgumentName(), ArgumentName.RUNTIME_ARGS);
   }
 
   @Override
   public String getDescription() {
-    return "Starts a " + elementType.getPrettyName() + "." +
+    return "Sets the runtime arguments of a " + elementType.getPrettyName() + "." +
       " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\"";
   }
 }

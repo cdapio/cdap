@@ -35,10 +35,6 @@ public final class RuntimeStats {
 
   private static ConcurrentMap<String, AtomicLong> counters = Maps.newConcurrentMap();
 
-  public static void resetAll() {
-    counters.clear();
-  }
-
   public static void count(String name, long count) {
     AtomicLong oldValue = counters.putIfAbsent(name, new AtomicLong(count));
     if (oldValue != null) {
