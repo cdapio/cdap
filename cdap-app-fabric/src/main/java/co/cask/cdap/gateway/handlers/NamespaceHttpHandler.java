@@ -58,7 +58,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/namespaces")
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) {
-    LOG.debug("Listing all namespaces");
+    LOG.trace("Listing all namespaces");
     try {
       List<NamespaceMeta> namespaces = namespaceMetaStore.list();
       if (namespaces == null) {
@@ -75,11 +75,11 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/namespaces/{namespace}")
   public void getNamespace(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
-    LOG.debug("Listing namespace {}", namespace);
+    LOG.trace("Listing namespace {}", namespace);
     try {
       NamespaceMeta ns = namespaceMetaStore.get(Id.Namespace.from(namespace));
       if (ns == null) {
-        LOG.warn("Namespace {} not found", namespace);
+        LOG.trace("Namespace {} not found", namespace);
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespace));
         return;
       }
@@ -98,16 +98,16 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       String name = metadata.getName();
       // name cannot be null or empty.
       if (name == null || name.isEmpty()) {
-        LOG.warn("Namespace name cannot be null or empty.");
+        LOG.trace("Namespace name cannot be null or empty.");
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Namespace name cannot be null or empty.");
         return;
       }
       if (namespaceMetaStore.exists(Id.Namespace.from(name))) {
-        LOG.warn("Namespace {} already exists", name);
+        LOG.trace("Namespace {} already exists", name);
         responder.sendString(HttpResponseStatus.CONFLICT, String.format("Namespace %s already exists", name));
         return;
       }
-      LOG.debug("Creating namespace {}", name);
+      LOG.trace("Creating namespace {}", name);
       // displayName and description could be null
       String displayName = metadata.getDisplayName();
       if (displayName == null || displayName.isEmpty()) {
@@ -121,7 +121,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
                                   .setDescription(description).build());
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
-      LOG.warn("Invalid namespace metadata. Must be a valid json.", e);
+      LOG.trace("Invalid namespace metadata. Must be a valid json.", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid namespace metadata. Must be a valid" +
                                                                            " json."));
     } catch (IOException e) {
@@ -136,11 +136,11 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/namespaces/{namespace}")
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
-    LOG.debug("Deleting namespace {}", namespace);
+    LOG.trace("Deleting namespace {}", namespace);
     try {
       Id.Namespace namespaceId = Id.Namespace.from(namespace);
       if (!namespaceMetaStore.exists(namespaceId)) {
-        LOG.warn("Namespace {} not found", namespace);
+        LOG.trace("Namespace {} not found", namespace);
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespace));
         return;
       }

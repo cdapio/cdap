@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto;
 
+import com.google.common.base.Objects;
+
 /**
  * Represents metadata for namespaces
  */
@@ -72,10 +74,10 @@ public class NamespaceMeta {
 
   @Override
   public String toString() {
-    return "NamespaceMetadata{" +
-      "name='" + name + '\'' +
-      ", displayName='" + displayName + '\'' +
-      ", description='" + description + '\'' +
-      '}';
+    return Objects.toStringHelper(this)
+      .add("name", name)
+      .add("displayName", displayName)
+      .add("description", description)
+      .toString();
   }
 }
