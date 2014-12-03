@@ -21,7 +21,7 @@ import com.google.common.base.Objects;
 /**
  * Represents metadata for namespaces
  */
-public class NamespaceMeta {
+public final class NamespaceMeta {
   private final String name;
   private final String displayName;
   private final String description;
