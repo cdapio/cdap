@@ -44,11 +44,11 @@ FileSetService
 --------------
 
 This service has two handler methods: one to upload and another to download a file.
-It declares the datasets that it needs to access using ``@UseDataSet`` annotations::
+It declares the datasets that it needs to access using ``@UseDataSet`` annotations:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 33-
+    :lines: 58-62
 
 
 Both methods of this Service have two arguments: the name of the FileSet and the relative path within that FileSet.
@@ -56,7 +56,7 @@ For example, the ``read`` method returns the contents of the requested file for 
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 58-62
+    :lines: 64-86
 
 It uses the ``getLocation()`` of the file set to obtain the Location representing the requested file,
 and then opens an input stream for that Location. Location is a file system abstraction from
