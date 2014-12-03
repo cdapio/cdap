@@ -9,7 +9,7 @@ The FileSet Dataset
 .. highlight:: java
 
 While realtime programs such as Flows normally require datasets with random access, batch-oriented
-programming paradigms like MapReduce are more suitable for data that can be read and written sequentially.
+programming paradigms such as MapReduce are more suitable for data that can be read and written sequentially.
 The most prominent form of such data is an HDFS file, and MapReduce is highly optimized for such files.
 CDAP's abstraction for files is the FileSet Dataset.
 
@@ -23,7 +23,8 @@ A FileSet represents a set of files on the file system that share certain proper
   these classes are injected into the Hadoop configuration by the CDAP runtime
   system.
 - Additional properties for the input and output format. For example, the
-  AvroInputFormat requires the property ``avro.input.schema`` to specify the schema.
+  TextOutputFormat allows configuring the field separator character using the property
+  ``mapreduce.output.textoutputformat.separator``.
   These properties are also set into the Hadoop configuration by the CDAP runtime system.
 
 These properties are configured at the time the FileSet is created. They apply to all
@@ -32,7 +33,7 @@ address either the entire Dataset or, by specifying its relative path as a runti
 an individual file in the Dataset. Specifying an individual file is only supported for
 MapReduce Jobs.
 
-Support for FileSet is experimental in CDAP 2.6.0.
+Support for FileSet datasets is experimental in CDAP 2.6.0.
 
 Creating a FileSet
 ==================
@@ -93,8 +94,8 @@ Using a FileSet Programmatically
 ================================
 
 You can interact with the files of a FileSet directly, through the ``Location`` abstraction
-of the file system. For example, a Service can use a FileSet by declaring it with a @UseDataSet
-annotation, and then obtaining a Location for a relative path within the FileSet::
+of the file system. For example, a Service can use a FileSet by declaring it with a ``@UseDataSet``
+annotation, and then obtaining a ``Location`` for a relative path within the FileSet::
 
     @UseDataSet("lines")
     private FileSet lines;
@@ -116,5 +117,5 @@ annotation, and then obtaining a Location for a relative path within the FileSet
 
 See the Apache™ Twill®
 `API documentation <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__
-for additional information about the Location abstraction.
+for additional information about the ``Location`` abstraction.
 

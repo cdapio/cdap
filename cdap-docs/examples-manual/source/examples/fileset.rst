@@ -58,8 +58,8 @@ For example, the ``read`` method returns the contents of the requested file for 
     :language: java
     :lines: 64-86
 
-It uses the ``getLocation()`` of the file set to obtain the Location representing the requested file,
-and then opens an input stream for that Location. Location is a file system abstraction from
+It uses the ``getLocation()`` of the file set to obtain the location representing the requested file,
+and then opens an input stream for that location. ``Location`` is a file system abstraction from
 `Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the Apache Twill
 `Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
