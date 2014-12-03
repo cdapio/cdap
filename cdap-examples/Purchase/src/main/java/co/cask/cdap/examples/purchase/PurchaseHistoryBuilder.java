@@ -99,12 +99,10 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
       throws IOException, InterruptedException {
 
       URL getUserProfileURL = new URL(userProfileServiceURL, String.format("user/%s", customer.toString()));
-      UserProfile userProfile;
+      UserProfile userProfile = null;
       try {
         HttpURLConnection urlConnection = (HttpURLConnection) getUserProfileURL.openConnection();
-        if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_NO_CONTENT) {
-          userProfile = null;
-        } else {
+        if (urlConnection.getResponseCode() != HttpURLConnection.HTTP_NO_CONTENT) {
           userProfile = new Gson().fromJson(new String(ByteStreams.toByteArray(urlConnection.getInputStream())
             , Charsets.UTF_8), UserProfile.class);
         }
