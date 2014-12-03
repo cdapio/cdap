@@ -21,7 +21,7 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.reflect.TypeToken;
+import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 
 import java.io.PrintStream;
@@ -55,8 +55,7 @@ public class StartProgramCommand implements Command {
       runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(appId, elementType.getProgramType(), programId));
     } else {
       // run with user-provided runtime args
-      Map<String, String> runtimeArgs = GSON.fromJson(arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "{}"),
-                                                      new TypeToken<Map<String, String>>() { }.getType());
+      Map<String, String> runtimeArgs = Splitter.on(" ").withKeyValueSeparator("=").split(runtimeArgsString);
       programClient.start(appId, elementType.getProgramType(), programId, runtimeArgs);
     }
 
@@ -72,6 +71,7 @@ public class StartProgramCommand implements Command {
 
   @Override
   public String getDescription() {
-    return "Starts a " + elementType.getPrettyName();
+    return "Starts a " + elementType.getPrettyName() + "." +
+      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\"";
   }
 }
