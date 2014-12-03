@@ -107,8 +107,10 @@ public class NamespacedDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteAllInstances() throws DatasetManagementException, IOException {
-    // todo: delete only those in namespace
-    delegate.deleteAllInstances();
+    // delete all instances ONLY in this namespace
+    for (DatasetSpecification spec : getInstances()) {
+      deleteInstance(spec.getName());
+    }
   }
 
   @Override
