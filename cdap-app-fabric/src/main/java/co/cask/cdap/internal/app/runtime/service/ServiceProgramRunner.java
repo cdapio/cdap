@@ -147,7 +147,7 @@ public class ServiceProgramRunner implements ProgramRunner {
       ProgramOptions componentOptions = createComponentOptions(name, instanceId, instances, runId, userArguments);
       ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.SERVICE_COMPONENT)
         .run(program, componentOptions);
-      components.put(program.getName(), instanceId, controller);
+      components.put(name, instanceId, controller);
     }
   }
 
@@ -254,6 +254,12 @@ public class ServiceProgramRunner implements ProgramRunner {
         ProgramController controller = programRunnerFactory.create(ProgramRunnerFactory.Type.SERVICE_COMPONENT)
                                                            .run(program, options);
         components.put(runnableName, instanceId, controller);
+      }
+
+      liveRunnables = components.row(runnableName);
+      // Update total instance count for all running runnables
+      for (Map.Entry<Integer, ProgramController> entry : liveRunnables.entrySet()) {
+        entry.getValue().command(runnableName, newCount);
       }
     }
   }

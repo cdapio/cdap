@@ -49,7 +49,6 @@ import org.apache.twill.internal.RunIds;
  * A {@link ProgramRunner} that runs a component inside a Service (either a HTTP Server or a Worker).
  */
 public class ServiceComponentProgramRunner implements ProgramRunner {
-
   private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
@@ -99,6 +98,7 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
 
     // By convention, the Http service always has the same name as the service itself.
     Service component;
+    ProgramControllerServiceAdapter controller;
     if (componentName.equals(program.getName())) {
       // HTTP service
       String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
@@ -107,19 +107,21 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
       component = new ServiceHttpServer(host, program, spec, runId, serviceAnnouncer,
                                         createHttpServiceContextFactory(program, runId, instanceId,
                                         options.getUserArguments()), metricsCollectionService, dataFabricFacadeFactory);
+      controller = new ProgramControllerServiceAdapter(component, componentName, runId);
     } else {
       ServiceWorkerSpecification workerSpec = spec.getWorkers().get(componentName);
       Preconditions.checkArgument(workerSpec != null, "Missing service worker specification for {}", program.getId());
 
       BasicServiceWorkerContext context = new BasicServiceWorkerContext(workerSpec, program, runId, instanceId,
-                                                                        workerSpec.getInstances(),
+                                                                        instanceCount,
                                                                         options.getArguments(), cConf,
                                                                         metricsCollectionService, datasetFramework,
                                                                         txClient, discoveryServiceClient);
-      component = new ServiceWorkerDriver(program, workerSpec, context);
+      ServiceWorkerDriver workerDriver = new ServiceWorkerDriver(program, workerSpec, context);
+      controller = new WorkerControllerServiceAdapter(workerDriver, componentName, runId);
+      component = workerDriver;
     }
 
-    ProgramControllerServiceAdapter controller = new ProgramControllerServiceAdapter(component, componentName, runId);
     component.start();
     return controller;
   }

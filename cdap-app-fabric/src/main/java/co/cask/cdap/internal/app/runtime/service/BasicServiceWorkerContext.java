@@ -73,7 +73,7 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   private final DatasetFramework datasetFramework;
   private final ServiceRunnableMetrics serviceRunnableMetrics;
   private final int instanceId;
-  private final int instanceCount;
+  private volatile int instanceCount;
   private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
   private final Program program;
 
@@ -161,6 +161,10 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
   @Override
   public int getInstanceCount() {
     return instanceCount;
+  }
+
+  public void setInstanceCount(int instanceCount) {
+    this.instanceCount = instanceCount;
   }
 
   @Override
