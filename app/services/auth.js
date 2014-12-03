@@ -159,6 +159,7 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
    * @return {Boolean}
    */
   User.prototype.hasRole = function(authorizedRoles) {
+    // All roles authorized.
     return true;
   };
 

@@ -139,7 +139,7 @@ angular.module(PKG.name+'.services')
 
     this.prefix = '/_sock';
 
-    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG) {\
+    this.$get = function (MYSOCKET_EVENT, myAuth, $rootScope, SockJS, $log, MY_CONFIG) {
 
       var self = this,
           socket = null,
