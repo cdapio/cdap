@@ -101,6 +101,7 @@ These are the available commands:
    **Retrieving Information**
    ``get history flow <app-id>.<program-id>``,Gets the run history of a Flow
    ``get history mapreduce <app-id>.<program-id>``,Gets the run history of a MapReduce job
+   ``get history spark <app-id>.<program-id>``,Gets the run history of a Spark program
    ``get history procedure <app-id>.<program-id>``,Gets the run history of a Procedure
    ``get history runnable <app-id>.<program-id>``,Gets the run history of a Service Handler/Worker
    ``get history workflow <app-id>.<program-id>``,Gets the run history of a Workflow
@@ -111,10 +112,12 @@ These are the available commands:
    ``get live procedure <app-id>.<program-id>``,Gets the live info of a Procedure
    ``get logs flow <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Flow
    ``get logs mapreduce <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a MapReduce job
+   ``get logs spark <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Spark program
    ``get logs procedure <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Procedure
    ``get logs runnable <app-id>.<program-id> [<start-time> <end-time>]``,Gets the logs of a Service Handler/Worker
    ``get status flow <app-id>.<program-id>``,Gets the status of a Flow
    ``get status mapreduce <app-id>.<program-id>``,Gets the status of a MapReduce job
+   ``get status spark <app-id>.<program-id>``,Gets the status of a Spark program
    ``get status procedure <app-id>.<program-id>``,Gets the status of a Procedure
    ``get status service <app-id>.<program-id>``,Gets the status of a Service
    ``get status workflow <app-id>.<program-id>``,Gets the status of a Workflow
@@ -126,6 +129,7 @@ These are the available commands:
    ``list dataset types``,Lists Dataset types
    ``list flows``,Lists Flows
    ``list mapreduce``,Lists MapReduce jobs
+   ``list spark``,Lists Spark programs
    ``list procedures``,Lists Procedures
    ``list programs``,Lists all programs
    ``list streams``,Lists Streams
@@ -140,12 +144,14 @@ These are the available commands:
    **Starting**
    ``start flow <program-id>``,Starts a Flow
    ``start mapreduce <program-id>``,Starts a MapReduce job
+   ``start spark <program-id>``,Starts a Spark program
    ``start procedure <program-id>``,Starts a Procedure
    ``start service <program-id>``,Starts a Service
    ``start workflow <program-id>``,Starts a Workflow
    **Stopping**
    ``stop flow <program-id>``,Stops a Flow
    ``stop mapreduce <program-id>``,Stops a MapReduce job
+   ``stop spark <program-id>``,Stops a Spark program
    ``stop procedure <program-id>``,Stops a Procedure
    ``stop service <program-id>``,Stops a Service
    ``stop workflow <program-id>``,Stops a Workflow
