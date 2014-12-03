@@ -49,6 +49,7 @@ import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -669,6 +670,58 @@ public class DefaultStore implements Store {
           Throwables.propagate(e);
         }
         return (programSpecification != null);
+      }
+    });
+  }
+
+  @Override
+  public void createNamespace(final NamespaceMeta metadata) throws Exception {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds input) throws Exception {
+        input.apps.createNamespace(metadata);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public NamespaceMeta getNamespace(final Id.Namespace id) throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
+      @Override
+      public NamespaceMeta apply(AppMds input) throws Exception {
+        return input.apps.getNamespace(id);
+      }
+    });
+  }
+
+  @Override
+  public void deleteNamespace(final Id.Namespace id) throws Exception {
+    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+      @Override
+      public Void apply(AppMds input) throws Exception {
+        input.apps.deleteNamespace(id);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public List<NamespaceMeta> listNamespaces() throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<NamespaceMeta>>() {
+      @Override
+      public List<NamespaceMeta> apply(AppMds input) throws Exception {
+        return input.apps.listNamespaces();
+      }
+    });
+  }
+
+  @Override
+  public boolean namespaceExists(final Id.Namespace id) throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Boolean>() {
+      @Override
+      public Boolean apply(AppMds input) throws Exception {
+        return input.apps.namespaceExists(id);
       }
     });
   }

@@ -53,8 +53,6 @@ import co.cask.cdap.logging.run.InMemoryStreamServiceManager;
 import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
-import co.cask.cdap.namespace.MDSNamespaceMetaStore;
-import co.cask.cdap.namespace.NamespaceMetaStore;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
@@ -204,7 +202,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(StoreFactory.class).to(DefaultStoreFactory.class);
-      bind(NamespaceMetaStore.class).to(MDSNamespaceMetaStore.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                         Names.named("appfabric.http.handler"));

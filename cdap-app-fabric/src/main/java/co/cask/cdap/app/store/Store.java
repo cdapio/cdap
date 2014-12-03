@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -294,4 +295,46 @@ public interface Store {
    * @return true if the program exists, false otherwise.
    */
   boolean programExists(Id.Program id, ProgramType type) throws OperationException;
+
+  /**
+   * Creates a new namespace.
+   *
+   * @param metadata {@link co.cask.cdap.proto.NamespaceMeta} representing the namespace metadata
+   * @throws Exception if problems occur while creating the new namespace
+   */
+  void createNamespace(NamespaceMeta metadata) throws Exception;
+
+  /**
+   * Retrieves a namespace from the namespace metadata store.
+   *
+   * @param id {@link Id.Namespace} of the requested namespace
+   * @return {@link NamespaceMeta} of the requested namespace
+   * @throws Exception if problems occur while retrieving the namespace
+   */
+  NamespaceMeta getNamespace(Id.Namespace id) throws Exception;
+
+  /**
+   * Deletes a namespace from the namespace metadata store.
+   *
+   * @param id {@link Id.Namespace} of the namespace to delete
+   * @throws Exception if problems occur while deleting the namespace
+   */
+  void deleteNamespace(Id.Namespace id) throws Exception;
+
+  /**
+   * Lists all registered namespaces.
+   *
+   * @return a list of all registered namespaces
+   * @throws Exception if problems occur while listing namespaces
+   */
+  List<NamespaceMeta> listNamespaces() throws Exception;
+
+  /**
+   * Check if namespace already exists.
+   *
+   * @param id {@link Id.Namespace} of the requested namespace to check for existence
+   * @return true if the namespace already exists, false otherwise
+   * @throws Exception if problems occur while checking namespace status
+   */
+  boolean namespaceExists(Id.Namespace id) throws Exception;
 }

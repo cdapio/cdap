@@ -16,10 +16,11 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.app.store.Store;
+import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.namespace.NamespaceMetaStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.http.HttpHandler;
@@ -47,12 +48,12 @@ import javax.ws.rs.PathParam;
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
 
-  private final NamespaceMetaStore namespaceMetaStore;
+  private final Store store;
 
   @Inject
-  public NamespaceHttpHandler(Authenticator authenticator, NamespaceMetaStore namespaceMetaStore) {
+  public NamespaceHttpHandler(Authenticator authenticator, StoreFactory storeFactory) {
     super(authenticator);
-    this.namespaceMetaStore = namespaceMetaStore;
+    this.store = storeFactory.create();
   }
 
   @GET
@@ -60,7 +61,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllNamespaces(HttpRequest request, HttpResponder responder) {
     LOG.trace("Listing all namespaces");
     try {
-      List<NamespaceMeta> namespaces = namespaceMetaStore.list();
+      List<NamespaceMeta> namespaces = store.listNamespaces();
       if (namespaces == null) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       } else {
@@ -77,7 +78,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void getNamespace(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
     LOG.trace("Listing namespace {}", namespace);
     try {
-      NamespaceMeta ns = namespaceMetaStore.get(Id.Namespace.from(namespace));
+      NamespaceMeta ns = store.getNamespace(Id.Namespace.from(namespace));
       if (ns == null) {
         LOG.trace("Namespace {} not found", namespace);
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespace));
@@ -102,7 +103,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
         responder.sendString(HttpResponseStatus.BAD_REQUEST, "Namespace name cannot be null or empty.");
         return;
       }
-      if (namespaceMetaStore.exists(Id.Namespace.from(name))) {
+      if (store.namespaceExists(Id.Namespace.from(name))) {
         LOG.trace("Namespace {} already exists", name);
         responder.sendString(HttpResponseStatus.CONFLICT, String.format("Namespace %s already exists", name));
         return;
@@ -117,8 +118,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       if (description == null) {
         description = "";
       }
-      namespaceMetaStore.create(new NamespaceMeta.Builder().setName(name).setDisplayName(displayName)
-                                  .setDescription(description).build());
+      store.createNamespace(new NamespaceMeta.Builder().setName(name).setDisplayName(displayName)
+                              .setDescription(description).build());
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
       LOG.trace("Invalid namespace metadata. Must be a valid json.", e);
@@ -139,12 +140,12 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     LOG.trace("Deleting namespace {}", namespace);
     try {
       Id.Namespace namespaceId = Id.Namespace.from(namespace);
-      if (!namespaceMetaStore.exists(namespaceId)) {
+      if (!store.namespaceExists(namespaceId)) {
         LOG.trace("Namespace {} not found", namespace);
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespace));
         return;
       }
-      namespaceMetaStore.delete(namespaceId);
+      store.deleteNamespace(namespaceId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (Exception e) {
       LOG.error("Internal error while deleting namespace ", e);

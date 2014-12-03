@@ -24,6 +24,8 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Predicate;
@@ -58,6 +60,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
+  private static final String TYPE_NAMESPACE = "namespace";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -246,6 +249,34 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public void deleteProgramHistory(String accountId) {
     deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId).build());
     deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId).build());
+  }
+
+  public void createNamespace(NamespaceMeta metadata) throws Exception {
+    write(getNamespaceKey(metadata.getName()), metadata);
+  }
+
+  public NamespaceMeta getNamespace(Id.Namespace id) throws Exception {
+    return get(getNamespaceKey(id.getId()), NamespaceMeta.class);
+  }
+
+  public void deleteNamespace(Id.Namespace id) throws Exception {
+    deleteAll(getNamespaceKey(id.getId()));
+  }
+
+  public List<NamespaceMeta> listNamespaces() throws Exception {
+    return list(getNamespaceKey(null), NamespaceMeta.class);
+  }
+
+  public boolean namespaceExists(Id.Namespace id) throws Exception {
+    return getNamespace(id) != null;
+  }
+
+  private Key getNamespaceKey(@Nullable String name) {
+    Key.Builder builder = new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE);
+    if (null != name) {
+      builder.add(name);
+    }
+    return builder.build();
   }
 
 }
