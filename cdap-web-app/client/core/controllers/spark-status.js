@@ -7,7 +7,6 @@ define([], function () {
     var Controller = Em.Controller.extend({
 
         __STATUS_UPDATE_TIMEOUT: 1000,
-        __METRICS_UPDATE_TIMEOUT: 1000,
         showLogsMessage: false,
         __updateStatusTimeout: null,
         __updateStatus: function (appName, jobName) {
@@ -29,21 +28,17 @@ define([], function () {
             var model = this.get('model');
             var self = this;
 
-            var runStatusUpdate = function () {
+            var runPageUpdate = function () {
                 self.__updateStatus(model.app, model.name);
-            };
-
-            var runMetricUpdate = function () {
                 self.__updateMetrics();
             };
 
-            this.__updateStatusInterval = setInterval(runStatusUpdate, this.__STATUS_UPDATE_TIMEOUT);
-            this.__updateMetricsInterval = setInterval(runMetricUpdate, this.__METRICS_UPDATE_TIMEOUT);
+            this.__pageUpdateInterval = setInterval(runPageUpdate, this.__STATUS_UPDATE_TIMEOUT);
+            runPageUpdate();
         },
 
         unload: function () {
-            clearInterval(this.__updateStatusInterval);
-            clearInterval(this.__updateMetricsInterval);
+            clearInterval(this.__pageUpdateInterval);
         },
 
         /**
