@@ -18,7 +18,7 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
@@ -70,7 +70,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
     columnDescriptor.setMaxVersions(Integer.MAX_VALUE);
     tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
 
-    String ttlProp = spec.getProperties().get(OrderedTable.PROPERTY_TTL);
+    String ttlProp = spec.getProperties().get(Table.PROPERTY_TTL);
     if (ttlProp != null) {
       int ttl = Integer.parseInt(ttlProp);
       if (ttl > 0) {
@@ -84,7 +84,7 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
 
     // if the dataset is configured for readless increments, the set the table property to support upgrades
     if (supportsReadlessIncrements(spec)) {
-      tableDescriptor.setValue(OrderedTable.PROPERTY_READLESS_INCREMENT, "true");
+      tableDescriptor.setValue(Table.PROPERTY_READLESS_INCREMENT, "true");
     }
 
     CoprocessorJar coprocessorJar = createCoprocessorJar();
@@ -116,27 +116,27 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
       tableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
       needUpgrade = true;
     }
-    if (spec.getProperty(OrderedTable.PROPERTY_TTL) == null &&
+    if (spec.getProperty(Table.PROPERTY_TTL) == null &&
         columnDescriptor.getValue(TxConstants.PROPERTY_TTL) != null) {
       columnDescriptor.remove(TxConstants.PROPERTY_TTL.getBytes());
       needUpgrade = true;
-    } else if (spec.getProperty(OrderedTable.PROPERTY_TTL) != null &&
-               !spec.getProperty(OrderedTable.PROPERTY_TTL).equals
+    } else if (spec.getProperty(Table.PROPERTY_TTL) != null &&
+               !spec.getProperty(Table.PROPERTY_TTL).equals
                   (columnDescriptor.getValue(TxConstants.PROPERTY_TTL))) {
       columnDescriptor.setValue(TxConstants.PROPERTY_TTL, spec.getProperty(TxConstants.PROPERTY_TTL));
       needUpgrade = true;
     }
 
     // check if the readless increment setting has changed
-    if (spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT) == null &&
-        tableDescriptor.getValue(OrderedTable.PROPERTY_READLESS_INCREMENT) != null) {
-      tableDescriptor.remove(OrderedTable.PROPERTY_READLESS_INCREMENT);
+    if (spec.getProperty(Table.PROPERTY_READLESS_INCREMENT) == null &&
+        tableDescriptor.getValue(Table.PROPERTY_READLESS_INCREMENT) != null) {
+      tableDescriptor.remove(Table.PROPERTY_READLESS_INCREMENT);
       needUpgrade = true;
-    } else if (spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT) != null &&
-        !spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT).equals(
-            tableDescriptor.getValue(OrderedTable.PROPERTY_READLESS_INCREMENT))) {
-      tableDescriptor.setValue(OrderedTable.PROPERTY_READLESS_INCREMENT,
-          spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT));
+    } else if (spec.getProperty(Table.PROPERTY_READLESS_INCREMENT) != null &&
+        !spec.getProperty(Table.PROPERTY_READLESS_INCREMENT).equals(
+            tableDescriptor.getValue(Table.PROPERTY_READLESS_INCREMENT))) {
+      tableDescriptor.setValue(Table.PROPERTY_READLESS_INCREMENT,
+          spec.getProperty(Table.PROPERTY_READLESS_INCREMENT));
       needUpgrade = true;
     }
 
@@ -177,6 +177,6 @@ public class HBaseOrderedTableAdmin extends AbstractHBaseDataSetAdmin {
    * Defaults to false.
    */
   public static boolean supportsReadlessIncrements(DatasetSpecification spec) {
-    return "true".equalsIgnoreCase(spec.getProperty(OrderedTable.PROPERTY_READLESS_INCREMENT));
+    return "true".equalsIgnoreCase(spec.getProperty(Table.PROPERTY_READLESS_INCREMENT));
   }
 }

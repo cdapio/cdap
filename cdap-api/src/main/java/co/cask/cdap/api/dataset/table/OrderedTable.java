@@ -27,18 +27,6 @@ import java.util.Map;
  */
 // todo: we may want to remove Exception from method signatures to make it nicer for devs as soon as we expose this API
 public interface OrderedTable extends Dataset {
-  /**
-   * Property set to configure time-to-live on data within this dataset. The value given is in milliseconds.
-   * Once a cell's data has surpassed the given value in age,
-   * the cell's data will no longer be visible and may be garbage collected.
-   */
-  public static final String PROPERTY_TTL = "dataset.table.ttl";
-
-  /**
-   * Property set to configure read-less increment support for a dataset.  When not set, calling the
-   * {@link Table#increment(byte[], byte[], long)} method will result in a normal read-modify-write operation.
-   */
-  public static final String PROPERTY_READLESS_INCREMENT = "dataset.table.readless.increment";
 
   /**
    * Reads the values of the specified columns in the specified row.

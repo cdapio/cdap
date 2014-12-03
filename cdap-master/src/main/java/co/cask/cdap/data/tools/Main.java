@@ -18,7 +18,7 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -242,7 +242,7 @@ public class Main {
         System.out.println(String.format("Upgrading hbase table: %s, desc: %s", tableName, desc.toString()));
 
         final boolean supportsIncrement =
-          "true".equalsIgnoreCase(desc.getValue(OrderedTable.PROPERTY_READLESS_INCREMENT));
+          "true".equalsIgnoreCase(desc.getValue(Table.PROPERTY_READLESS_INCREMENT));
         DatasetAdmin admin = new AbstractHBaseDataSetAdmin(tableName, hConf, hBaseTableUtil) {
           @Override
           protected CoprocessorJar createCoprocessorJar() throws IOException {

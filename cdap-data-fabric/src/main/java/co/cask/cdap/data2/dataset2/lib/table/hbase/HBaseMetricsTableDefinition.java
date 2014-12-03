@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
@@ -86,7 +86,7 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     // cleaned up. See IncrementHandler.CompactionBound.
     columnDescriptor.setValue("dataset.table.readless.increment.transactional", "false");
 
-    long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
+    long ttlMillis = spec.getLongProperty(Table.PROPERTY_TTL, -1);
     if (ttlMillis > 0) {
       // the IncrementHandler coprocessor reads this value and performs TTL
       columnDescriptor.setValue(TxConstants.PROPERTY_TTL, Long.toString(ttlMillis));

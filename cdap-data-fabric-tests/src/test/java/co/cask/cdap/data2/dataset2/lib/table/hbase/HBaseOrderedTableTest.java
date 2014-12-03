@@ -20,7 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.Tables;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
@@ -109,7 +109,7 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
     // for the purpose of this test it is fine not to configure ttl when creating table: we want to see if it
     // applies on reading
     int ttl = 1000;
-    DatasetProperties props = DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, String.valueOf(ttl)).build();
+    DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
     getTableAdmin("ttl", props).create();
     HBaseOrderedTable table = new HBaseOrderedTable("ttl", ConflictDetection.ROW, testHBase.getConfiguration(), false);
 
@@ -138,7 +138,7 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
 
     // test a table with no TTL
     DatasetProperties props2 = DatasetProperties.builder()
-      .add(OrderedTable.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
+      .add(Table.PROPERTY_TTL, String.valueOf(Tables.NO_TTL)).build();
     getTableAdmin("nottl", props2).create();
     HBaseOrderedTable table2 = new HBaseOrderedTable("nottl", ConflictDetection.ROW, testHBase.getConfiguration(),
                                                      false);
@@ -190,7 +190,7 @@ public class HBaseOrderedTableTest extends BufferingOrderedTableTest<BufferingOr
     disabledAdmin.create();
 
     DatasetProperties props =
-      DatasetProperties.builder().add(OrderedTable.PROPERTY_READLESS_INCREMENT, "true").build();
+      DatasetProperties.builder().add(Table.PROPERTY_READLESS_INCREMENT, "true").build();
     HBaseOrderedTableAdmin enabledAdmin = getTableAdmin(enabledTableName, props);
     enabledAdmin.create();
 

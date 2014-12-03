@@ -19,9 +19,9 @@ package co.cask.cdap.data2.datafabric.dataset.service.mds;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -33,7 +33,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Provides handy methods to manage objects in {@link OrderedTable}.
+ * Provides handy methods to manage objects in {@link Table}.
  */
 // todo: review usage of OrderedTable after adding handy methods to it (operating on objects Get, Put, etc.)
 public abstract class AbstractObjectsStore extends AbstractDataset {
@@ -44,9 +44,9 @@ public abstract class AbstractObjectsStore extends AbstractDataset {
    */
   private static final byte[] COLUMN = Bytes.toBytes("c");
 
-  private final OrderedTable table;
+  private final Table table;
 
-  public AbstractObjectsStore(DatasetSpecification spec, OrderedTable table) {
+  public AbstractObjectsStore(DatasetSpecification spec, Table table) {
     super(spec.getName(), table);
     this.table = table;
   }
