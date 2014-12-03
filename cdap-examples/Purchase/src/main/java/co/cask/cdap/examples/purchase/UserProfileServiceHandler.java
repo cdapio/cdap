@@ -45,7 +45,7 @@ public final class UserProfileServiceHandler extends AbstractHttpServiceHandler 
   @UseDataSet("userProfiles")
   private KeyValueTable userProfiles;
 
-  @Path("user/{id}")
+  @Path(USER_ENDPOINT + "/{id}")
   @GET
   public void getUserProfile(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("id") String id) {
     byte[] encodedUserProfile = userProfiles.read(id);
@@ -58,7 +58,7 @@ public final class UserProfileServiceHandler extends AbstractHttpServiceHandler 
     }
   }
 
-  @Path("user")
+  @Path(USER_ENDPOINT)
   @POST
   public void setUserProfile(HttpServiceRequest request, HttpServiceResponder responder) {
     try {
