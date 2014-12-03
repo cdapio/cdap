@@ -32,9 +32,17 @@ public class DummyBaseTest extends TestBase {
   public void test() throws Exception {
     deployApplication(DummyApp.class);
     Connection connection = getQueryClient();
-    ResultSet resultSet = connection.prepareStatement("show tables").executeQuery();
-    Assert.assertTrue(resultSet.next());
-    Assert.assertEquals("cdap_user_whom", resultSet.getString(1));
-    Assert.assertFalse(resultSet.next());
+    try {
+      ResultSet resultSet = connection.prepareStatement("show tables").executeQuery();
+      try {
+        Assert.assertTrue(resultSet.next());
+        Assert.assertEquals("cdap_user_whom", resultSet.getString(1));
+        Assert.assertFalse(resultSet.next());
+      } finally {
+        resultSet.close();
+      }
+    } finally {
+      connection.close();
+    }
   }
 }
