@@ -107,7 +107,6 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
             , Charsets.UTF_8), UserProfile.class);
         }
       } catch (Exception e) {
-        userProfile = null;
       }
 
       PurchaseHistory purchases = new PurchaseHistory(customer.toString(), userProfile);
