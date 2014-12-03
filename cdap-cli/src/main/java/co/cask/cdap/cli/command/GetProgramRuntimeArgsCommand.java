@@ -16,28 +16,26 @@
 
 package co.cask.cdap.cli.command;
 
-import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import java.io.PrintStream;
 import java.util.Map;
 
 /**
- * Starts a program.
+ * Gets the runtime arguments of a program.
  */
-public class StartProgramCommand implements Command {
+public class GetProgramRuntimeArgsCommand implements Command {
 
   private static final Gson GSON = new Gson();
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  public StartProgramCommand(ElementType elementType, ProgramClient programClient) {
+  public GetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
     this.programClient = programClient;
   }
@@ -47,31 +45,17 @@ public class StartProgramCommand implements Command {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
     String appId = programIdParts[0];
     String programId = programIdParts[1];
-
-    String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "");
-    if (runtimeArgsString == null || runtimeArgsString.isEmpty()) {
-      // run with stored runtime args
-      programClient.start(appId, elementType.getProgramType(), programId);
-      runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(appId, elementType.getProgramType(), programId));
-    } else {
-      // run with user-provided runtime args
-      Map<String, String> runtimeArgs = GSON.fromJson(arguments.get(ArgumentName.RUNTIME_ARGS.toString(), "{}"),
-                                                      new TypeToken<Map<String, String>>() { }.getType());
-      programClient.start(appId, elementType.getProgramType(), programId, runtimeArgs);
-    }
-
-    output.printf("Successfully started %s '%s' of application '%s' with runtime arguments '%s'\n",
-                  elementType.getPrettyName(), programId, appId, runtimeArgsString);
+    Map<String, String> runtimeArgs = programClient.getRuntimeArgs(appId, elementType.getProgramType(), programId);
+    output.printf(GSON.toJson(runtimeArgs));
   }
 
   @Override
   public String getPattern() {
-    return String.format("start %s <%s> [<%s>]", elementType.getName(), elementType.getArgumentName(),
-                         ArgumentName.RUNTIME_ARGS);
+    return String.format("get %s runtimeargs <%s>", elementType.getName(), elementType.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return "Starts a " + elementType.getPrettyName();
+    return "Gets the runtime arguments of a " + elementType.getPrettyName();
   }
 }

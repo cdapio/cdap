@@ -16,10 +16,10 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.cli.app.EchoHandler;
 import co.cask.cdap.cli.app.FakeApp;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
+import co.cask.cdap.cli.app.PrefixedEchoHandler;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
@@ -31,6 +31,8 @@ import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -41,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -51,6 +54,7 @@ import javax.annotation.Nullable;
 public class CLIMainTest extends StandaloneTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(CLIMainTest.class);
+  private static final Gson GSON = new Gson();
 
   private static final String PREFIX = "123ff1_";
 
@@ -130,15 +134,37 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
 
-    //test service commands
-    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, EchoHandler.NAME);
+    // test service commands
+    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, EchoHandler.NAME, "RUNNING");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "RUNNING");
     testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "POST");
     testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "/echo");
-    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"", "testBody");
+    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"", ":testBody");
     testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, EchoHandler.NAME, "STOPPED");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+
+    // test runtime args commands
+    Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
+    String runtimeArgsJson = GSON.toJson(runtimeArgs);
+    testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsJson + "'",
+                              "Successfully started Service");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "RUNNING");
+    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
+                              "bacon:testBody");
+    testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+
+    Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
+    String runtimeArgsJson2 = GSON.toJson(runtimeArgs2);
+    testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgsJson2 + "'",
+                              "Successfully set runtime args");
+    testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
+    testCommandOutputContains(cli, "get service runtimeargs " + qualifiedServiceId, runtimeArgsJson2);
+    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
+                              "chickenz:testBody");
+    testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
 
     // test spark commands
     String sparkId = FakeApp.SPARK.get(0);

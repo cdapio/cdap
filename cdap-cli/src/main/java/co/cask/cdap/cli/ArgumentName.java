@@ -32,6 +32,7 @@ public enum ArgumentName {
   MAPREDUCE("app-id.mapreduce-id"),
   SPARK("app-id.spark-id"),
 
+  RUNTIME_ARGS("runtime-args"),
   HOSTNAME("hostname"),
   DATASET_TYPE("dataset-type"),
   DATASET_MODULE("dataset-module"),

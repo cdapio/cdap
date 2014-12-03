@@ -16,9 +16,13 @@
 
 package co.cask.cdap.cli.app;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.base.Charsets;
+import com.google.common.base.Optional;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -26,12 +30,21 @@ import javax.ws.rs.Path;
 /**
  * Echo handler.
  */
-public final class EchoHandler extends AbstractHttpServiceHandler {
+public final class PrefixedEchoHandler extends AbstractHttpServiceHandler {
   public static final String NAME = "echoHandler";
+
+  private String sdf = "";
+
+  @Override
+  public void initialize(HttpServiceContext context) throws Exception {
+    super.initialize(context);
+    this.sdf = Optional.fromNullable(context.getRuntimeArguments().get("sdf")).or("");
+  }
 
   @POST
   @Path("/echo")
   public void echo(HttpServiceRequest request, HttpServiceResponder responder) {
-    responder.send(200, request.getContent(), "text/plain", null);
+    String content = Bytes.toString(request.getContent());
+    responder.sendString(200, sdf + ":" + content, Charsets.UTF_8);
   }
 }
