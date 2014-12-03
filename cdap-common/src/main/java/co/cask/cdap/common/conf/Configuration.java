@@ -40,7 +40,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -184,13 +183,19 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    * warning message which can be logged whenever the deprecated key is used.
    */
   private static class DeprecatedKeyInfo {
+
     private String[] newKeys;
     private String customMessage;
     private boolean accessed;
+
     DeprecatedKeyInfo(String[] newKeys, String customMessage) {
       this.newKeys = newKeys;
       this.customMessage = customMessage;
       accessed = false;
+    }
+
+    DeprecatedKeyInfo(String newKey) {
+      this(new String[] { newKey }, null);
     }
 
     /**
@@ -199,7 +204,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
      * @param key the associated deprecated key.
      * @return message that is to be logged when a deprecated key is used.
      */
-    private final String getWarningMessage(String key) {
+    private String getWarningMessage(String key) {
       String warningMessage;
       if (customMessage == null) {
         StringBuilder message = new StringBuilder(key);
@@ -224,14 +229,20 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    * Stores the deprecated keys, the new keys which replace the deprecated keys
    * and custom message(if any provided).
    */
-  private static Map<String, DeprecatedKeyInfo> deprecatedKeyMap =
-    new HashMap<String, DeprecatedKeyInfo>();
+  private static Map<String, DeprecatedKeyInfo> deprecatedKeyMap = new HashMap<String, DeprecatedKeyInfo>() {
+    {
+      put(Constants.Security.AUTH_SERVER_ADDRESS, new DeprecatedKeyInfo(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
+    }
+  };
 
   /**
    * Stores a mapping from superseding keys to the keys which they deprecate.
    */
-  private static Map<String, String> reverseDeprecatedKeyMap =
-    new HashMap<String, String>();
+  private static Map<String, String[]> reverseDeprecatedKeyMap = new HashMap<String, String[]>() {
+    {
+      put(Constants.Security.AUTH_SERVER_BIND_ADDRESS, new String[] { Constants.Security.AUTH_SERVER_ADDRESS });
+    }
+  };
 
   /**
    * checks whether the given <code>key</code> is deprecated.
@@ -245,32 +256,21 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   }
 
   /**
-   * Returns the alternate name for a key if the property name is deprecated
-   * or if deprecates a property name.
+   * Returns the alternate names for a key if the property name is deprecated
+   * or if deprecates a property names.
    *
    * @param name property name.
-   * @return alternate name.
+   * @return alternate names or {@code null} if no alternate names.
    */
   private String[] getAlternateNames(String name) {
-    String oldName, altNames[] = null;
     DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(name);
     if (keyInfo == null) {
-      altNames = (reverseDeprecatedKeyMap.get(name) != null) ?
-                   new String [] {reverseDeprecatedKeyMap.get(name)} : null;
-      if (altNames != null && altNames.length > 0) {
-        //To help look for other new configs for this deprecated config
-        keyInfo = deprecatedKeyMap.get(altNames[0]);
-      }
+      // Return all deprecated properties
+      return reverseDeprecatedKeyMap.get(name);
+    } else {
+      // Return all new properties of deprecated property
+      return keyInfo.newKeys;
     }
-    if (keyInfo != null && keyInfo.newKeys.length > 0) {
-      List<String> list = new ArrayList<String>();
-      if (altNames != null) {
-        list.addAll(Arrays.asList(altNames));
-      }
-      list.addAll(Arrays.asList(keyInfo.newKeys));
-      altNames = list.toArray(new String[list.size()]);
-    }
-    return altNames;
   }
 
   /**
@@ -300,11 +300,14 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       names.add(name);
     }
     for (String n : names) {
-      String deprecatedKey = reverseDeprecatedKeyMap.get(n);
-      if (deprecatedKey != null && !getOverlay().containsKey(n) &&
-            getOverlay().containsKey(deprecatedKey)) {
-        getProps().setProperty(n, getOverlay().getProperty(deprecatedKey));
-        getOverlay().setProperty(n, getOverlay().getProperty(deprecatedKey));
+      String[] deprecatedKeys = reverseDeprecatedKeyMap.get(n);
+      if (deprecatedKeys != null) {
+        for (String deprecatedKey : deprecatedKeys) {
+          if (!getOverlay().containsKey(n) && getOverlay().containsKey(deprecatedKey)) {
+            getProps().setProperty(n, getOverlay().getProperty(deprecatedKey));
+            getOverlay().setProperty(n, getOverlay().getProperty(deprecatedKey));
+          }
+        }
       }
     }
     return names.toArray(new String[names.size()]);
@@ -538,7 +541,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     getProps().setProperty(name, value);
     updatingResource.put(name, UNKNOWN_RESOURCE);
     String[] altNames = getAlternateNames(name);
-    if (altNames != null && altNames.length > 0) {
+    if (altNames != null) {
       for (String altName : altNames) {
         getOverlay().setProperty(altName, value);
         getProps().setProperty(altName, value);
@@ -561,7 +564,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     String[] altNames = getAlternateNames(name);
     getOverlay().remove(name);
     getProps().remove(name);
-    if (altNames != null && altNames.length > 0) {
+    if (altNames != null) {
       for (String altName : altNames) {
         getOverlay().remove(altName);
         getProps().remove(altName);
@@ -1555,10 +1558,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     getOverlay().clear();
   }
 
-  private void loadResources(Properties properties,
-                             ArrayList resources,
-                             boolean quiet) {
-
+  private void loadResources(Properties properties, ArrayList resources, boolean quiet) {
     for (Object resource : resources) {
       loadResource(properties, resource, quiet);
     }
@@ -1664,7 +1664,8 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           if (deprecatedKeyMap.containsKey(attr)) {
             DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(attr);
             keyInfo.accessed = false;
-            for (String key:keyInfo.newKeys) {
+            warnOnceIfDeprecated(attr);
+            for (String key : keyInfo.newKeys) {
               // update new keys with deprecated key's value
               loadProperty(properties, name, key, value, finalParameter);
             }
@@ -1673,7 +1674,6 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
           }
         }
       }
-
     } catch (IOException e) {
       LOG.fatal("error parsing conf file: " + e);
       throw new RuntimeException(e);

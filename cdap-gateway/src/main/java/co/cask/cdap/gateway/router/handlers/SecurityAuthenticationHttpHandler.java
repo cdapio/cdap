@@ -176,7 +176,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
       port = configuration.getInt(Constants.Security.AuthenticationServer.SSL_PORT);
     } else {
       protocol = "http";
-      port = configuration.getInt(Constants.Security.AUTH_SERVER_PORT);
+      port = configuration.getInt(Constants.Security.AUTH_SERVER_BIND_PORT);
     }
 
     do {

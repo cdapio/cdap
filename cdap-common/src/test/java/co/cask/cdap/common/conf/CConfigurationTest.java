@@ -146,5 +146,5 @@ public class CConfigurationTest {
     }
   }
 
-  private enum TestEnum { FIRST };
+  private enum TestEnum { FIRST }
 }
