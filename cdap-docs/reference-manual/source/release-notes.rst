@@ -87,7 +87,7 @@ Metrics
 .......
 - Gauge metrics are now supported
   (`CDAP-484 <https://issues.cask.co/browse/CDAP-484>`__).
-- Metrics are now emitted and can be queried per Program run ID
+- Metrics can be queried per Program run ID
   (`CDAP-620 <https://issues.cask.co/browse/CDAP-620>`__).
 
 Documentation
