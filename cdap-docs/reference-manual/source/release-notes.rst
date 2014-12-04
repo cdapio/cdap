@@ -98,8 +98,8 @@ CDAP Bug Fixes
 
 - Fixed a problem with readless increments not being used when they were enabled in a Dataset
   (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
-- Fixed a problem with applications whose Spark or Scala user classes that were not extended
-  from either ``JavaSparkProgram`` or ``ScalaSparkProgram`` failing with a class loading error
+- Fixed a problem with applications, whose Spark or Scala user classes were not extended
+  from either ``JavaSparkProgram`` or ``ScalaSparkProgram``, failing with a class loading error
   (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__).
 
 .. _known-issues-260:
