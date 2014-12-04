@@ -136,7 +136,8 @@ public final class TimeSeriesTable {
 
     try {
       timeSeriesTable.put(convertedGaugesTable);
-      for(NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> incrementEntry : convertedIncrementsTable.entrySet()) {
+      for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> incrementEntry :
+           convertedIncrementsTable.entrySet()) {
         timeSeriesTable.increment(incrementEntry.getKey(), incrementEntry.getValue());
       }
     } catch (Exception e) {

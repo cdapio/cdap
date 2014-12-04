@@ -135,10 +135,10 @@ public abstract class TimeSeriesTableTestBase {
       .setMetric("input")
       .build(time, time + 7200);
 
-    assertAggregate(query, timeSeriesTable.scan(query),120,2, new Function<Long, Integer>() {
+    assertAggregate(query, timeSeriesTable.scan(query), 120, 2, new Function<Long, Integer>() {
       @Override
       public Integer apply(Long ts) {
-        return (int) ((float) ( 2 * (ts - time) + 59)/2 * 60);
+        return (int) (1770 + (ts - time) * 60);
       }
     });
   }
@@ -162,7 +162,7 @@ public abstract class TimeSeriesTableTestBase {
       .setMetric("input")
       .build(time, time + 86400);
 
-    assertAggregate(query, timeSeriesTable.scan(query),1440,24, new Function<Long, Integer>() {
+    assertAggregate(query, timeSeriesTable.scan(query), 1440, 24, new Function<Long, Integer>() {
       @Override
       public Integer apply(Long ts) {
         return (int) ((ts - time) * 2);
@@ -171,7 +171,7 @@ public abstract class TimeSeriesTableTestBase {
 
     insertMetricsEachMinute(timeSeriesTable, context, "runId", metric, ImmutableList.of("test"), time, 0, 1440,
                             MetricType.GAUGE);
-    assertAggregate(query, timeSeriesTable.scan(query),1440,24, new Function<Long, Integer>() {
+    assertAggregate(query, timeSeriesTable.scan(query), 1440, 24, new Function<Long, Integer>() {
       @Override
       public Integer apply(Long ts) {
         return (int) ((ts - time));
@@ -200,11 +200,12 @@ public abstract class TimeSeriesTableTestBase {
 
   private void insertMetricsEachMinute(TimeSeriesTable timeSeriesTable,
                                        String context, String runId, String metric, Iterable<String> tags,
-                                       long startTime, int offset, int count, MetricType type) throws OperationException {
+                                       long startTime, int offset, int count, MetricType type)
+    throws OperationException {
 
     List<TagMetric> tagMetrics = Lists.newLinkedList();
     List<MetricsRecord> records = Lists.newArrayListWithCapacity(count);
-    for (int i = offset; i < offset + count; i ++) {
+    for (int i = offset; i < offset + count; i++) {
       for (String tag : tags) {
         tagMetrics.add(new TagMetric(tag, i * 2));
       }
