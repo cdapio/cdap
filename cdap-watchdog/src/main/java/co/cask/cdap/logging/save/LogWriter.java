@@ -21,14 +21,15 @@ import co.cask.cdap.logging.write.LogFileWriter;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.RowSortedTable;
-import com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 
 /**
  * Persists bucketized logs stored by {@link LogCollectorCallback}.
@@ -61,16 +62,17 @@ public class LogWriter implements Runnable {
 
         long currentBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
         synchronized (messageTable) {
-          if (!messageTable.rowKeySet().isEmpty()) {
+          SortedSet<Long> rowKeySet = messageTable.rowKeySet();
+          if (!rowKeySet.isEmpty()) {
             // Get the oldest bucket in the table
-            long oldestBucketKey = messageTable.rowKeySet().first();
+            long oldestBucketKey = rowKeySet.first();
             if (currentBucketKey > (oldestBucketKey + maxNumberOfBucketsInTable)) {
               Map<String, List<KafkaLogEvent>> row = messageTable.row(oldestBucketKey);
 
-              for (Iterator<String> it = row.keySet().iterator(); it.hasNext(); ) {
-                String key = it.next();
-                writeListMap.putAll(key, row.get(key));
-                messages += row.get(key).size();
+              for (Iterator<Map.Entry<String, List<KafkaLogEvent>>> it = row.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<String, List<KafkaLogEvent>> mapEntry = it.next();
+                writeListMap.putAll(mapEntry.getKey(), mapEntry.getValue());
+                messages += mapEntry.getValue().size();
                 it.remove();
               }
             }
@@ -79,9 +81,10 @@ public class LogWriter implements Runnable {
 
         LOG.debug("Got {} log messages to save", messages);
 
-        for (Iterator<String> it = writeListMap.keySet().iterator(); it.hasNext(); ) {
-          String key = it.next();
-          List<KafkaLogEvent> list = writeListMap.get(key);
+        for (Iterator<Map.Entry<String, Collection<KafkaLogEvent>>> it = writeListMap.asMap().entrySet().iterator();
+             it.hasNext(); ) {
+          Map.Entry<String, Collection<KafkaLogEvent>> mapEntry = it.next();
+          List<KafkaLogEvent> list = (List<KafkaLogEvent>) mapEntry.getValue();
           Collections.sort(list);
           logFileWriter.append(list);
           // Remove successfully written message

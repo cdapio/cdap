@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,24 +65,25 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
         LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
 
         // Compute the bucket number for the current event
-        Long key = event.getTimeStamp() / eventBucketIntervalMs;
+        long key = event.getTimeStamp() / eventBucketIntervalMs;
 
         while (true) {
           // Get the oldest bucket in the table
           long oldestBucketKey = 0;
           synchronized (messageTable) {
-            if (messageTable.rowKeySet().isEmpty()) {
+            SortedSet<Long> rowKeySet = messageTable.rowKeySet();
+            if (rowKeySet.isEmpty()) {
               // Table is empty so go ahead and add the current event in the table
               break;
             }
-            oldestBucketKey = messageTable.rowKeySet().first();
+            oldestBucketKey = rowKeySet.first();
           }
 
           // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
           // sleep for the time duration till event falls in the window
           if (key > (oldestBucketKey + maxNumberOfBucketsInTable)) {
-            TimeUnit.SECONDS.sleep((key - (oldestBucketKey + maxNumberOfBucketsInTable))
-                                     * (eventBucketIntervalMs / 1000));
+            TimeUnit.MILLISECONDS.sleep((key - (oldestBucketKey + maxNumberOfBucketsInTable))
+                                     * eventBucketIntervalMs);
           } else {
             break;
           }
