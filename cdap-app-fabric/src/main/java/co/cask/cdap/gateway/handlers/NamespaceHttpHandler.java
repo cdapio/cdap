@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 
 import java.io.IOException;
-import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
