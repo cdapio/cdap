@@ -137,7 +137,7 @@ public final class TimeSeriesTable {
     try {
       timeSeriesTable.put(convertedGaugesTable);
       for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> incrementEntry :
-           convertedIncrementsTable.entrySet()) {
+          convertedIncrementsTable.entrySet()) {
         timeSeriesTable.increment(incrementEntry.getKey(), incrementEntry.getValue());
       }
     } catch (Exception e) {
@@ -309,28 +309,27 @@ public final class TimeSeriesTable {
     }
   }
 
-
   private void addValue(byte[] rowKey, byte[] column,
                         NavigableMap<byte[], NavigableMap<byte[], byte[]>> gaugesTable,
                         NavigableMap<byte[], NavigableMap<byte[], byte[]>> incrementsTable,
                         long value, MetricType type) {
-      byte[] oldValue = get(incrementsTable, rowKey, column);
-      long newValue = value;
-      if (oldValue != null) {
-        if (Bytes.SIZEOF_LONG == oldValue.length) {
-          newValue = Bytes.toLong(oldValue) + value;
-        } else if (Bytes.SIZEOF_INT == oldValue.length) {
-          // In 2.4 and older versions we stored it as int
-          newValue = Bytes.toInt(oldValue) + value;
-        } else {
-          // should NEVER happen, unless the table is screwed up manually
-          throw new IllegalStateException(
-            String.format("Could not parse metric @row %s @column %s value %s as int or long",
-                          Bytes.toStringBinary(rowKey), Bytes.toStringBinary(column), Bytes.toStringBinary(oldValue)));
-        }
-
+    byte[] oldValue = get(incrementsTable, rowKey, column);
+    long newValue = value;
+    if (oldValue != null) {
+      if (Bytes.SIZEOF_LONG == oldValue.length) {
+        newValue = Bytes.toLong(oldValue) + value;
+      } else if (Bytes.SIZEOF_INT == oldValue.length) {
+        // In 2.4 and older versions we stored it as int
+        newValue = Bytes.toInt(oldValue) + value;
+      } else {
+        // should NEVER happen, unless the table is screwed up manually
+        throw new IllegalStateException(
+          String.format("Could not parse metric @row %s @column %s value %s as int or long",
+                        Bytes.toStringBinary(rowKey), Bytes.toStringBinary(column), Bytes.toStringBinary(oldValue)));
       }
-      put((type == MetricType.COUNTER) ? incrementsTable : gaugesTable, rowKey, column, Bytes.toBytes(newValue));
+
+    }
+    put((type == MetricType.COUNTER) ? incrementsTable : gaugesTable, rowKey, column, Bytes.toBytes(newValue));
   }
 
   private static byte[] get(NavigableMap<byte[], NavigableMap<byte[], byte[]>> table, byte[] row, byte[] column) {

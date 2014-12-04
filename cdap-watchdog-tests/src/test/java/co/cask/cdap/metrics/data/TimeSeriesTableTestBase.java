@@ -26,7 +26,6 @@ import com.google.common.collect.Maps;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -617,7 +616,6 @@ public abstract class TimeSeriesTableTestBase {
       } else {
         Assert.assertTrue(result.getTag().startsWith(query.getTagPrefix()));
       }
-
       timeValues.add(result);
     }
 

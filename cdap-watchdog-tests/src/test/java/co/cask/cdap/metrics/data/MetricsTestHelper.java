@@ -54,7 +54,6 @@ public class MetricsTestHelper {
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME, "300");
     cConf.set(MetricsConstants.ConfigKeys.TIME_SERIES_TABLE_ROLL_TIME + ".60", "60");
 
-
     Injector injector = Guice.createInjector(new ConfigModule(cConf),
                                              new LocationRuntimeModule().getStandaloneModules(),
                                              new DataFabricLevelDBModule(),
