@@ -15,6 +15,7 @@
     "ngstorage": "0.3.0",
     "cask-angular-capitalize": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-capitalize.zip?raw=true",
     "cask-angular-theme": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-theme.zip?raw=true",
+    "cask-angular-focus": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-focus.zip?raw=true",
     "cask-angular-window-manager": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-window-manager.zip?raw=true",
     "sockjs-client": "~0.3.4",
     "d3": "~3.4.13",
