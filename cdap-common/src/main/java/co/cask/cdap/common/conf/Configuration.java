@@ -245,14 +245,17 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   };
 
   /**
-   * checks whether the given <code>key</code> is deprecated.
+   * Method to get deprecated properties.
    *
-   * @param key the parameter which is to be checked for deprecation
-   * @return <code>true</code> if the key is deprecated and
-   *         <code>false</code> otherwise.
+   * @return {@code Map} of deprecated properties with new properties in array,
+   *         or empty {@code Map} if no deprecated properties
    */
-  public static boolean isDeprecated(String key) {
-    return deprecatedKeyMap.containsKey(key);
+  protected Map<String, String[]> getDeprecatedProps() {
+    Map<String, String[]> result = new HashMap<String, String[]>();
+    for (String key : deprecatedKeyMap.keySet()) {
+      result.put(key, deprecatedKeyMap.get(key).newKeys);
+    }
+    return result;
   }
 
   /**
@@ -287,7 +290,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
    */
   private String[] handleDeprecation(String name) {
     ArrayList<String> names = new ArrayList<String>();
-    if (isDeprecated(name)) {
+    if (deprecatedKeyMap.containsKey(name)) {
       DeprecatedKeyInfo keyInfo = deprecatedKeyMap.get(name);
       warnOnceIfDeprecated(name);
       for (String newKey : keyInfo.newKeys) {
