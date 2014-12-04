@@ -71,10 +71,11 @@ for each flowlet in the flow visualization. Even though you are not injecting an
 Running the Flow
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``CountRandom`` in the Application page of the CDAP Console to get to the
-  Flow dialogue, then click the *Start* button; or
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``CountRandom`` in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -85,10 +86,11 @@ Once an application is deployed:
 Stopping the Flow
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``CountRandom`` in the Application page of the CDAP Console to get to the
-  Flow dialogue, then click the *Stop* button; or
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``CountRandom`` in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:

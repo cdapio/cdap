@@ -119,10 +119,11 @@ Running the Example
 Running the Flow
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``WebAnalyticsFlow`` in the Application page of the CDAP Console to get to the
-  Flow dialogue, then click the *Start* button; or
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``WebAnalyticsFlow`` in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -182,10 +183,11 @@ table line to expand the display and see the query results:
 Stopping the Flow
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``WebAnalyticsFlow`` in the Application page of the CDAP Console to get to the
-  Flow dialogue, then click the *Stop* button; or
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``WebAnalyticsFlow`` in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:

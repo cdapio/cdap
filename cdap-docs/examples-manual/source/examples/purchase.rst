@@ -103,10 +103,11 @@ Running the Example
 Running the Flow
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``PurchaseFlow`` in the Application page of the CDAP Console to get to the
-  Flow dialogue, then click the *Start* button; or
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``PurchaseFlow`` in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -117,10 +118,11 @@ Once an application is deployed:
 Running the Workflow
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``PurchaseHistoryWorkflow`` in the Application page of the CDAP Console to get to the
-  Workflow dialogue, then click the *Start* button; or
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``PurchaseHistoryWorkflow`` in the *Process* page to get to the
+  Workflow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -131,10 +133,11 @@ Once an application is deployed:
 Running the PurchaseHistoryService
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``PurchaseHistoryService`` in the Application page of the CDAP Console to get to the
-  Service dialogue, then click the *Start* button; or
+- Click on ``PurchaseHistory`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``PurchaseHistoryService`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -145,10 +148,11 @@ Once an application is deployed:
 Running the CatalogLookup
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``CatalogLookup`` in the Application page of the CDAP Console to get to the
-  Service dialogue, then click the *Start* button; or
+- Click on ``PurchaseHistory`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``CatalogLookup`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -281,10 +285,11 @@ retrieved all of the results and you can now close the query::
 Stopping the Flow
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``PurchaseFlow`` in the Application page of the CDAP Console to get to the
-  Flow dialogue, then click the *Stop* button; or
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``PurchaseFlow`` in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -295,10 +300,11 @@ Once an application is deployed:
 Stopping the Workflow
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``PurchaseHistoryWorkflow`` in the Application page of the CDAP Console to get to the
-  Workflow dialogue, then click the *Stop* button; or
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``PurchaseHistoryWorkflow`` in the *Process* page to get to the
+  Workflow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -309,10 +315,11 @@ Once an application is deployed:
 Stopping the PurchaseHistoryService
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``PurchaseHistoryService`` in the Application page of the CDAP Console to get to the
-  Service dialogue, then click the *Stop* button; or
+- Click on ``PurchaseHistory`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``PurchaseHistoryService`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -323,10 +330,11 @@ Once an application is deployed:
 Stopping the CatalogLookup
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``CatalogLookup`` in the Application page of the CDAP Console to get to the
-  Service dialogue, then click the *Stop* button; or
+- Click on ``PurchaseHistory`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``CatalogLookup`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:

@@ -73,7 +73,7 @@ Running the Example
 Running the Spark program
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
 - Click on the ``SparkPageRankProgram`` in the Application page of the CDAP Console to get to the
   Spark dialogue, then click the *Start* button; or
@@ -87,10 +87,11 @@ Once an application is deployed:
 Running the RanksService
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``RanksService`` in the Application page of the CDAP Console to get to the
-  Service dialogue, then click the *Start* button; or
+- Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RanksService`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -101,10 +102,11 @@ Once an application is deployed:
 Running the GoogleTypePR
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``GoogleTypePR`` in the Application page of the CDAP Console to get to the
-  Service dialogue, then click the *Start* button; or
+- Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``GoogleTypePR`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -145,7 +147,7 @@ send a query via an HTTP request using the ``curl`` command. For example::
 Stopping the Spark program
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
 - Click on the ``SparkPageRankProgram`` in the Application page of the CDAP Console to get to the
   Spark dialogue, then click the *Stop* button; or
@@ -159,10 +161,11 @@ Once an application is deployed:
 Stopping the RanksService
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``RanksService`` in the Application page of the CDAP Console to get to the
-  Service dialogue, then click the *Stop* button; or
+- Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RanksService`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:
@@ -173,10 +176,11 @@ Once an application is deployed:
 Stopping the GoogleTypePR
 ============================================
 
-Once an application is deployed:
+Once the application is deployed:
 
-- Click on the ``GoogleTypePR`` in the Application page of the CDAP Console to get to the
-  Service dialogue, then click the *Stop* button; or
+- Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``GoogleTypePR`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command-line Interface:
 
     * - On Linux:

@@ -71,6 +71,20 @@ Once an application is deployed:
     * - On Windows:
       - ``> bin\cdap-cli.bat start <program> <app-id.program-id>``
 
+  .. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+  * - Parameter
+    - Description
+  * - ``<app-id>``
+    - Name of the Application being called
+  * - ``<program>``
+    - One of ``flow``, ``procedure``, ``mapreduce``, ``workflow`` or ``service``
+  * - ``<program-id>``
+    - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
+      being called
+
 Stopping an Application
 ----------------------------------
 
