@@ -52,7 +52,8 @@ public class ProgramControllerTest {
     int serviceCount = 1000;
     Random random = new Random();
     for (int i = 0; i < serviceCount; i++) {
-      // Creates a controller for a guava service with very short random start delay between 0-10 ms.
+      // Creates a controller for a guava service do nothing in start/stop.
+      // The short time in start creates a chance to have out-of-order init() and alive() call if there is a race.
       Service service = new TestService(0, 0);
       ProgramController controller = new ProgramControllerServiceAdapter(service, "Test", RunIds.generate());
       ListenableFuture<Service.State> startCompletion = service.start();
