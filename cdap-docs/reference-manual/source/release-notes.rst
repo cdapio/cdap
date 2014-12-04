@@ -93,8 +93,8 @@ Documentation
 - A :ref:`Quick Start Guide has been added to the :ref:\CDAP Administration Manual `
   (`CDAP-695 <https://issues.cask.co/browse/CDAP-695>`__).
 
-Major CDAP Bug Fixes
---------------------
+CDAP Bug Fixes
+--------------
 
 - Fixed a problem with readless increments not being used when they were enabled in a Dataset
   (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
