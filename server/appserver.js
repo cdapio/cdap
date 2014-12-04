@@ -196,7 +196,7 @@ AppServer.prototype.start = function start () {
         res.status(nres.statusCode).send(nbody);
       } else {
         var nbody = JSON.parse(nbody);
-        res.send({token: nbody.access_token});
+        res.send({username: req.body.username, token: nbody.access_token});
       }
     });
   });

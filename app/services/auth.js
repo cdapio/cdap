@@ -50,6 +50,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
   var persist = angular.bind(this, function (u) {
     this.currentUser = u;
     $rootScope.currentUser = u;
+    $localStorage.currentUser = u ? u.getStorageInfo() : null;
   });
 
   /**
@@ -73,7 +74,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
       function(data) {
         var user = new MyAuthUser(data);
         persist(user);
-        $localStorage.remember = false;
+        $localStorage.remember = credentials.remember && user.getStorageInfo();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
       function() {
@@ -111,7 +112,9 @@ module.factory('myAuthPromise', function myAuthPromiseFactory (MYAUTH_ROLE, $tim
       data: credentials
     })
     .success(function (data, status, headers, config) {
-      deferred.resolve(data);
+      deferred.resolve(angular.extend(data, {
+        username: credentials.username
+      }));
     })
     .error(function (data, status, headers, config) {
       deferred.reject(data);
@@ -161,6 +164,16 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
   User.prototype.hasRole = function(authorizedRoles) {
     // All roles authorized.
     return true;
+  };
+
+  /**
+   * Omits secure info (i.e. token) and gets object for storage.
+   * @return {Object} storage info.
+   */
+  User.prototype.getStorageInfo = function () {
+    return {
+      username: this.username
+    };
   };
 
   return User;

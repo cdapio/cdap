@@ -1,5 +1,5 @@
 /**
- * HomeCtrl
+ * Login Ctrl
  */
 
 angular.module(PKG.name+'.feature.login').controller('LoginCtrl',
