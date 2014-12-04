@@ -46,12 +46,16 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication {
       setDescription("Application with MapReduce job using file as dataset");
       createDataset(inputDataset, "fileSet", FileSetProperties.builder()
         .setInputFormat(TextInputFormat.class)
-        .setOutputFormat(TextOutputFormat.class).build());
+        .setOutputFormat(TextOutputFormat.class)
+        .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+        .build());
       if (!outputDataset.equals(inputDataset)) {
         createDataset(outputDataset, "fileSet", FileSetProperties.builder()
           .setBasePath("/foo/my-file-output")
           .setInputFormat(TextInputFormat.class)
-          .setOutputFormat(TextOutputFormat.class).build());
+          .setOutputFormat(TextOutputFormat.class)
+          .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+          .build());
       }
       addMapReduce(new ComputeSum());
     } catch (Throwable t) {
