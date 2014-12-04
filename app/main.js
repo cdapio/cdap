@@ -19,7 +19,8 @@ angular
         'ngStorage',
         'ui.router',
         'cask-angular-window-manager',
-        'cask-angular-theme'
+        'cask-angular-theme',
+        'cask-angular-focus'
       ]).name,
 
       angular.module(PKG.name+'.filters', [

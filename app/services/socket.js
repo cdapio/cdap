@@ -15,7 +15,7 @@ angular.module(PKG.name+'.services')
     });
 
    */
-  .factory('MyDataSource', function ($state, $log, caskWindowManager, mySocket, MYSOCKET_EVENT) {
+  .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket, MYSOCKET_EVENT) {
 
     var instances = {}; // keyed by scopeid
 
