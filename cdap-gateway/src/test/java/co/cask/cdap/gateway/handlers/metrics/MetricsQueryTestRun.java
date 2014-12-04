@@ -137,7 +137,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   @Test
   public void testingUserServiceMetrics() throws Exception {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
-                                                                "WordCount.s.CounterService.CountRunnable", "0");
+                                                                "WordCount.u.CounterService.CountRunnable", "0");
     collector.increment("reads", 1);
 
     // Wait for collection to happen
@@ -159,11 +159,11 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     String runId3 = "id125";
 
     MetricsCollector collector1 = collectionService.getCollector(MetricsScope.USER,
-                                                                "WordCount.s.CounterService.CountRunnable", runId1);
+                                                                "WordCount.u.CounterService.CountRunnable", runId1);
     collector1.increment("rid_metric", 1);
 
     MetricsCollector collector2 = collectionService.getCollector(MetricsScope.USER,
-                                                                "WordCount.s.CounterService.CountRunnable", runId2);
+                                                                "WordCount.u.CounterService.CountRunnable", runId2);
     collector2.increment("rid_metric", 2);
 
     MetricsCollector collector3 = collectionService.getCollector(MetricsScope.USER,
@@ -212,7 +212,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     String runId2 = "id124";
 
     MetricsCollector collector2 = collectionService.getCollector(MetricsScope.USER,
-                                                                 "WordCount.s.CounterService.CountRunnableInvalid",
+                                                                 "WordCount.u.CounterService.CountRunnableInvalid",
                                                                  runId2);
     collector2.increment("rid_metric_invalid", 2);
 
@@ -227,7 +227,7 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
   @Test
   public void testingUserServiceGaugeMetrics() throws Exception {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
-                                                                "WordCount.s.CounterService.CountRunnable", "0");
+                                                                "WordCount.u.CounterService.CountRunnable", "0");
     collector.increment("gmetric", 1);
     collector.gauge("gmetric", 10);
     collector.increment("gmetric", 1);
@@ -245,11 +245,26 @@ public class MetricsQueryTestRun extends MetricsSuiteTestBase {
     testSingleMetric(serviceRequest, 10);
   }
 
+  @Test
+  public void testingUserServiceGaugeMetricsTags() throws Exception {
+    MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
+                                                                "WordCount.u.CounterService", "0");
+    collector.gauge("gtmetric", 10, "tag1");
+    collector.gauge("gtmetric", 20, "tag2");
+
+    // Wait for collection to happen
+    TimeUnit.SECONDS.sleep(2);
+
+    String serviceRequest =
+      "/user/apps/WordCount/services/CounterService/gtmetric?aggregate=true";
+    testSingleMetric(serviceRequest, 20);
+  }
+
 
   @Test
   public void testingInvalidUserServiceMetrics() throws Exception {
     MetricsCollector collector = collectionService.getCollector(MetricsScope.USER,
-                                                                "WordCount.s.InvalidService.CountRunnable", "0");
+                                                                "WordCount.u.InvalidService.CountRunnable", "0");
     collector.increment("reads", 1);
 
     // Wait for collection to happen

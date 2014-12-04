@@ -4469,3 +4469,19 @@ div.tooltip-inner {
     border-top-color: #787D87;
     border-width: 13px 7px 0;
 }
+
+/* Disabling a link tag*/
+li.disabled {
+  list-style: none;
+}
+
+li.disabled > a:hover {
+  text-decoration: none;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+li.disabled > a {
+  color: #777;
+}
+

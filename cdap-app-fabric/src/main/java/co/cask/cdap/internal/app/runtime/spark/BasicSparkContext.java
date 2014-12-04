@@ -22,12 +22,15 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
+import co.cask.cdap.app.metrics.SparkMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.services.SerializableServiceDiscoverer;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
+import co.cask.cdap.common.metrics.MetricsCollector;
+import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.program.TypeId;
@@ -35,13 +38,16 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionAware;
+import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -61,6 +67,9 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
 
   // TODO: InstanceId is not supported in Spark jobs, see CDAP-39.
   public static final String INSTANCE_ID = "0";
+  private File metricsPropertyFile;
+
+  private final Map<MetricsScope, MetricsCollector> metricsCollectors;
   private final SparkSpecification sparkSpec;
   private final long logicalStartTime;
   private final String workflowBatch;
@@ -68,6 +77,15 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
   private final StreamAdmin streamAdmin;
   private final SparkLoggingContext loggingContext;
   private final SerializableServiceDiscoverer serializableServiceDiscoverer;
+  private final SparkMetrics sparkMetrics;
+
+  public void setMetricsPropertyFile(File file) {
+    metricsPropertyFile = file;
+  }
+
+  public File getMetricsPropertyFile() {
+    return metricsPropertyFile;
+  }
 
   public BasicSparkContext(Program program, RunId runId, Arguments runtimeArguments, Set<String> datasets,
                            SparkSpecification sparkSpec, long logicalStartTime, String workflowBatch,
@@ -82,9 +100,14 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     this.streamAdmin = streamAdmin;
     SerializableServiceDiscoverer.setDiscoveryServiceClient(getDiscoveryServiceClient());
     this.serializableServiceDiscoverer = new SerializableServiceDiscoverer(getProgram());
-
-    //TODO: Metrics needs to be initialized here properly when implemented.
-
+    this.metricsCollectors = Maps.newHashMap();
+    for (MetricsScope scope : MetricsScope.values()) {
+      // Supporting runId only for user metrics now
+      String metricsRunId = runId.getId();
+      this.metricsCollectors.put(
+        scope, metricsCollectionService.getCollector(scope, getMetricContext(program), metricsRunId));
+    }
+    this.sparkMetrics = new SparkMetrics(metricsCollectors.get(MetricsScope.USER));
     this.loggingContext = new SparkLoggingContext(getAccountId(), getApplicationId(), getProgramName());
     this.sparkSpec = sparkSpec;
   }
@@ -179,10 +202,9 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     return streamAdmin;
   }
 
-  //TODO: Change this once we have metrics is supported
   @Override
   public Metrics getMetrics() {
-    throw new UnsupportedOperationException("Metrics are not not supported in Spark yet");
+    return sparkMetrics;
   }
 
   /**
@@ -203,4 +225,11 @@ public class BasicSparkContext extends AbstractContext implements SparkContext {
     }
   }
 
+  /**
+   * @param scope {@link MetricsScope} of the {@link MetricsCollector}
+   * @return the {@link MetricsCollector} for the given {@link MetricsScope}
+   */
+  public MetricsCollector getMetricsCollector(MetricsScope scope) {
+    return metricsCollectors.get(scope);
+  }
 }

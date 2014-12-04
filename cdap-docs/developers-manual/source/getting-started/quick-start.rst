@@ -43,9 +43,9 @@ You can either download the application zip archive that we have built for you, 
 you can pull the source code from GitHub. If you download the zip file, then the application
 is already built and packaged::
 
-  $ curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/0.2.0/cdap-wise-0.2.1.zip
-  $ unzip cdap-wise-0.2.1.zip
-  $ cd cdap-wise-0.2.1
+  $ curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/0.2.2/cdap-wise-0.2.2.zip
+  $ unzip cdap-wise-0.2.2.zip
+  $ cd cdap-wise-0.2.2
 
 If you clone the source code from GitHub, you will need to build and package the
 application with these commands::
@@ -55,7 +55,7 @@ application with these commands::
   $ mvn package -DskipTests
 
 In both cases, the packaged application is in the ``target/`` directory and the file name is
-``cdap-wise-0.2.1.jar``.
+``cdap-wise-0.2.2.jar``.
 
 **Learn More:** *A detailed description of the application and its implementation is
 available in the* :ref:`Web Analytics Application documentation. <examples-web-analytics>`
@@ -66,12 +66,12 @@ Deploying the Application
 You can deploy the application into your running instance of CDAP either by using the 
 :ref:`CDAP command-line tool <reference:cli>`::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh deploy app target/cdap-wise-0.2.1.jar
+  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh deploy app target/cdap-wise-0.2.2.jar
 
 or using ``curl`` to directly make an HTTP request::
 
   $ curl -H "X-Archive-Name: cdap-wise-0.2.1.jar" localhost:10000/v2/apps \
-    --data-binary @target/cdap-wise-0.2.1.jar
+    --data-binary @target/cdap-wise-0.2.2.jar
 
 **Learn More:** *You can also deploy apps* :ref:`using the CDAP Console. <cdap-console>`
 
