@@ -213,15 +213,6 @@ class DatasetServiceClient {
     }
   }
 
-  public void deleteInstances() throws DatasetManagementException {
-    HttpResponse response = doDelete("unrecoverable/datasets");
-
-    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
-      throw new DatasetManagementException(String.format("Failed to delete instances, details: %s",
-                                                         getDetails(response)));
-    }
-  }
-
   private HttpResponse doGet(String resource) throws DatasetManagementException {
     return doRequest(HttpMethod.GET, resource);
   }
