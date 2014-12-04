@@ -47,12 +47,10 @@ var AppServer = function AppServer (config) {
   
   this.setUpEnvironment()
   .then(function () {
-    console.log('here success');
     self.start();
     deferred.resolve(self.httpServer);
   })
   .catch(function () {
-    console.log('here fail');
     console.info('Could not start server.');
     deferred.reject();
   });
@@ -168,7 +166,8 @@ AppServer.prototype.start = function start () {
       cdap: {
         routerServerUrl: self.config['router.server.address'],
         routerServerPort: self.config['router.server.port']
-      }
+      },
+      securityEnabled: self.securityEnabled
     });
 
     res.header({

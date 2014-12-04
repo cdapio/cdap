@@ -15,7 +15,8 @@ angular.module(PKG.name+'.services')
     });
 
    */
-  .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket, MYSOCKET_EVENT) {
+  .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
+    MYSOCKET_EVENT, MY_CONFIG) {
 
     var instances = {}; // keyed by scopeid
 
@@ -121,9 +122,11 @@ angular.module(PKG.name+'.services')
     };
 
     function attachHeaders (resource) {
-      resource.headers = {
-        Authorization: 'Bearer ' +  $rootScope.currentUser.token 
-      };
+      if(MY_CONFIG.securityEnabled) {
+        resource.headers = {
+          Authorization: 'Bearer ' +  $rootScope.currentUser.token 
+        };
+      }
       return resource;
     };
 
