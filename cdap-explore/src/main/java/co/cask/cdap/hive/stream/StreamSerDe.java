@@ -53,7 +53,7 @@ public class StreamSerDe extends AbstractSerDe {
   @Override
   public void initialize(Configuration conf, Properties properties) throws SerDeException {
     // The column names are saved as the given inspector to #serialize doesn't preserves them
-    // - maybe because it's an external table
+    // - maybe because it's an external tTable
     // The columns property comes from the Hive metastore, which has it from the create table statement
     // It is then important that this schema be accurate and in the right order - the same order as
     // object inspectors will reflect them.

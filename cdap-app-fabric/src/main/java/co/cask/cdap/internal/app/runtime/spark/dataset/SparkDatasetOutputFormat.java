@@ -49,7 +49,7 @@ public final class SparkDatasetOutputFormat<KEY, VALUE> extends OutputFormat<KEY
     SparkContextProvider contextProvider = new SparkContextProvider(context.getConfiguration());
     BasicSparkContext sparkContext = contextProvider.get();
     //TODO: Metrics collection needs to be started here once implemented
-    BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) sparkContext.getDataSet(getOutputDataSet(conf));
+    BatchWritable<KEY, VALUE> dataset = (BatchWritable<KEY, VALUE>) sparkContext.getDataset(getOutputDataSet(conf));
 
     // the record writer now owns the context and will close it
     return new DatasetRecordWriter<KEY, VALUE>(dataset, sparkContext);

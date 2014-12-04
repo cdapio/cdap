@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
@@ -35,14 +36,16 @@ import java.nio.charset.Charset;
 final class DefaultHttpServiceResponder implements HttpServiceResponder {
 
   private final HttpResponder responder;
+  private final MetricsCollector metricsCollector;
 
   /**
    * Instantiates the class from a {@link HttpResponder}
    *
    * @param responder the responder which will be bound to
    */
-  DefaultHttpServiceResponder(HttpResponder responder) {
+  DefaultHttpServiceResponder(HttpResponder responder, MetricsCollector metricsCollector) {
     this.responder = responder;
+    this.metricsCollector = metricsCollector;
   }
 
   /**
@@ -53,6 +56,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   @Override
   public void sendJson(Object object) {
     responder.sendJson(HttpResponseStatus.OK, object);
+    emitMetrics(HttpResponseStatus.OK.getCode());
   }
 
   /**
@@ -64,6 +68,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   @Override
   public void sendJson(int status, Object object) {
     responder.sendJson(HttpResponseStatus.valueOf(status), object);
+    emitMetrics(status);
   }
 
    /**
@@ -77,6 +82,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   @Override
   public void sendJson(int status, Object object, Type type, Gson gson) {
     responder.sendJson(HttpResponseStatus.valueOf(status), object, type, gson);
+    emitMetrics(status);
   }
 
   /**
@@ -87,6 +93,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   @Override
   public void sendString(String data) {
     responder.sendString(HttpResponseStatus.OK, data);
+    emitMetrics(HttpResponseStatus.OK.getCode());
   }
 
   /**
@@ -100,6 +107,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   public void sendString(int status, String data, Charset charset) {
     responder.sendContent(HttpResponseStatus.valueOf(status), ChannelBuffers.wrappedBuffer(charset.encode(data)),
                           "text/plain; charset=" + charset.name(), ImmutableMultimap.<String, String>of());
+    emitMetrics(status);
   }
 
   /**
@@ -110,6 +118,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   @Override
   public void sendStatus(int status) {
     responder.sendStatus(HttpResponseStatus.valueOf(status));
+    emitMetrics(status);
   }
 
   /**
@@ -121,6 +130,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   @Override
   public void sendStatus(int status, Multimap<String, String> headers) {
     responder.sendStatus(HttpResponseStatus.valueOf(status), headers);
+    emitMetrics(status);
   }
 
   /**
@@ -132,6 +142,7 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   @Override
   public void sendError(int status, String errorMessage) {
     responder.sendError(HttpResponseStatus.valueOf(status), errorMessage);
+    emitMetrics(status);
   }
 
   /**
@@ -146,5 +157,30 @@ final class DefaultHttpServiceResponder implements HttpServiceResponder {
   public void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers) {
     responder.sendContent(HttpResponseStatus.valueOf(status),
                           ChannelBuffers.wrappedBuffer(content), contentType, headers);
+    emitMetrics(status);
+  }
+
+  private void emitMetrics(int status) {
+    StringBuilder builder = new StringBuilder(50);
+    builder.append("response.");
+    if (status < 100) {
+      builder.append("unknown");
+    } else if (status < 200) {
+      builder.append("information");
+    } else if (status < 300) {
+      builder.append("successful");
+    } else if (status < 400) {
+      builder.append("redirect");
+    } else if (status < 500) {
+      builder.append("client.error");
+    } else if (status < 600) {
+      builder.append("server.error");
+    } else {
+      builder.append("unknown");
+    }
+    builder.append(".count");
+
+    metricsCollector.increment(builder.toString(), 1);
+    metricsCollector.increment("requests.count", 1);
   }
 }

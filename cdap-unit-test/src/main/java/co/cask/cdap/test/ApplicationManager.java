@@ -72,7 +72,9 @@ public interface ApplicationManager {
    * Starts a procedure.
    * @param procedureName Name of the procedure to start.
    * @return A {@link ProcedureManager} for controlling the started procedure.
+   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   ProcedureManager startProcedure(String procedureName);
 
   /**
@@ -80,7 +82,9 @@ public interface ApplicationManager {
    * @param procedureName Name of the procedure to start.
    * @param arguments Arguments to be passed while starting a procedure.
    * @return A {@link ProcedureManager} for controlling the started procedure.
+   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   ProcedureManager startProcedure(String procedureName, Map<String, String> arguments);
 
   /**

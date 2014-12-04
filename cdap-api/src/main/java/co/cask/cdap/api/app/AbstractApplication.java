@@ -160,14 +160,18 @@ public abstract class AbstractApplication implements Application {
 
   /**
    * @see ApplicationConfigurer#addProcedure(Procedure)
+   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   protected void addProcedure(Procedure procedure) {
     configurer.addProcedure(procedure);
   }
 
   /**
    * @see ApplicationConfigurer#addProcedure(Procedure, int)
+   * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   protected void addProcedure(Procedure procedure, int instances) {
     configurer.addProcedure(procedure, instances);
   }

@@ -95,33 +95,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
   }
 
-  @DELETE
-  @Path("/data/unrecoverable/datasets/")
-  public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
-    if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
-                         Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-      return;
-    }
-
-    boolean succeeded = true;
-    for (DatasetSpecification spec : instanceManager.getAll()) {
-      try {
-        // It is okay if dataset not exists: someone may be deleting it at same time
-        dropDataset(spec);
-      } catch (Exception e) {
-        String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
-                                   spec.getName(), e.getMessage());
-        LOG.warn(msg, e);
-        succeeded = false;
-        // we continue deleting if something wring happens.
-        // todo: Will later be improved by doing all in async: see CDAP-7
-      }
-    }
-
-    responder.sendStatus(succeeded ? HttpResponseStatus.OK : HttpResponseStatus.INTERNAL_SERVER_ERROR);
-  }
-
   @GET
   @Path("/data/datasets/{name}")
   public void getInfo(HttpRequest request, final HttpResponder responder,

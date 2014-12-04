@@ -225,10 +225,6 @@ public abstract class DatasetServiceTestBase {
                                        new TypeToken<List<DatasetModuleMeta>>() { }.getType());
   }
 
-  protected int deleteInstances() throws IOException {
-    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/unrecoverable/datasets")).build()).getResponseCode();
-  }
-
   protected int deleteModule(String moduleName) throws Exception {
     return HttpRequests.execute(HttpRequest.delete(getUrl("/data/modules/" + moduleName)).build()).getResponseCode();
   }

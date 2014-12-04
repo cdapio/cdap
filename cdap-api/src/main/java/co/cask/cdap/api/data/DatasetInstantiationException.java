@@ -20,13 +20,13 @@ package co.cask.cdap.api.data;
  * This exception is thrown if - for whatever reason - a data set cannot be
  * instantiated at runtime.
  */
-public class DataSetInstantiationException extends RuntimeException {
+public class DatasetInstantiationException extends RuntimeException {
 
-  public DataSetInstantiationException(String msg, Throwable e) {
+  public DatasetInstantiationException(String msg, Throwable e) {
     super(msg, e);
   }
 
-  public DataSetInstantiationException(String msg) {
+  public DatasetInstantiationException(String msg) {
     super(msg);
   }
 }
