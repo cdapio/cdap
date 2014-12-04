@@ -112,9 +112,20 @@
           <span class="left-nav-icon"></span>
 
           Store</a></li>
-        <li><a class="nav-link nav-queries" id="nav-queries" href="#/dataexplore/query">
-          <span class="left-nav-icon"></span>
+          {{#if C.Env.explore_enabled}}
+            <li>
+              <a class="nav-link nav-queries"
+                 id="nav-queries"
+                 href="#/dataexplore/query"
+              >
 
+          {{else}}
+            <li class="disabled">
+              <a class="nav-link nav-queries"
+                 id="nav-queries"
+              >
+          {{/if}}
+            <span class="left-nav-icon"></span>
           Query</a></li>
       </ul>
     </div>
@@ -2054,7 +2065,16 @@
     <div id="title">
       {{view C.Embed.TimeSelector}}
       <div class="pull-right">
-        <a class="btn-custom" id="explore-button" href="/#/dataexplore/query">Explore</a>
+      {{#if C.Env.explore_enabled}}
+         <a class="btn-custom" id="explore-button" href="/#/dataexplore/query">Explore</a>
+      {{else}}
+        <li class="disabled">
+          <a class="btn-custom"
+             id="explore-button"
+          >Explore</a>
+        </li>
+      {{/if}}
+
       </div>
       <h1><span>Data</span> {{controller.title}}</h1>
     </div>

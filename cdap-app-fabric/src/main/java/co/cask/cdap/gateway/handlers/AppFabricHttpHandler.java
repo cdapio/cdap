@@ -186,16 +186,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
 
-  private static final Map<String, ProgramType> RUNNABLE_TYPE_MAP = new ImmutableMap.Builder<String, ProgramType>()
-    .put("mapreduce", ProgramType.MAPREDUCE)
-    .put("spark", ProgramType.SPARK)
-    .put("flows", ProgramType.FLOW)
-    .put("procedures", ProgramType.PROCEDURE)
-    .put("workflows", ProgramType.WORKFLOW)
-    .put("webapp", ProgramType.WEBAPP)
-    .put("services", ProgramType.SERVICE)
-    .build();
-
   /**
    * Configuration object passed from higher up.
    */
@@ -430,7 +420,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       final Id.Program id = Id.Program.from(accountId, appId, runnableId);
-      final ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+      final ProgramType type = ProgramType.valueOfCategoryName(runnableType);
       StatusMap statusMap = getStatus(id, type);
       // If status is null, then there was an error
       if (statusMap.getStatus() == null) {
@@ -671,7 +661,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               @QueryParam("start") String startTs,
                               @QueryParam("end") String endTs,
                               @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
-    ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+    ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -690,7 +680,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-id") final String appId,
                                      @PathParam("runnable-type") final String runnableType,
                                      @PathParam("runnable-id") final String runnableId) {
-    ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+    ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -722,7 +712,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("app-id") final String appId,
                                       @PathParam("runnable-type") final String runnableType,
                                       @PathParam("runnable-id") final String runnableId) {
-    ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+    ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -774,7 +764,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder,
                                              final String appId, final String runnableType,
                                              final String runnableId, final String action) {
-    ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+    ProgramType type = ProgramType.valueOfCategoryName(runnableType);
 
     if (type == null || (type == ProgramType.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -846,7 +836,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
 
-      ProgramController controller = runtimeInfo.getController();
+      final ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
 
       controller.addListener(new AbstractListener() {
@@ -858,7 +848,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             stopped();
           }
           if (state == ProgramController.State.ERROR) {
-            error(new Exception("Error Starting the Program"));
+            error(controller.getFailureCause());
           }
         }
         @Override
