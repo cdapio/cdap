@@ -123,6 +123,12 @@ public interface ProgramController {
   State getState();
 
   /**
+   * @return The failure cause of the program if the current state is {@link State#ERROR}, otherwise
+   *         {@code null} will be returned.
+   */
+  Throwable getFailureCause();
+
+  /**
    * Adds a listener to watch for state changes. Adding the same listener again don't have any effect
    * and simply will get the same {@link Cancellable} back.
    * @param listener
@@ -144,7 +150,9 @@ public interface ProgramController {
    */
   interface Listener {
     /**
-     * Called when the listener is added. This method will triggered once only.
+     * Called when the listener is added. This method will triggered once only and triggered before any other
+     * method in this interface is called.
+     *
      * @param currentState The state of the program by the time when the listener is added.
      */
     void init(State currentState);

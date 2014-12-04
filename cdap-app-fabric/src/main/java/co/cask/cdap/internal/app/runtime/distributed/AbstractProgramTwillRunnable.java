@@ -90,6 +90,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 
 /**
  * A {@link TwillRunnable} for running a program through a {@link ProgramRunner}.
@@ -237,6 +238,17 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
     final SettableFuture<ProgramController.State> state = SettableFuture.create();
     controller.addListener(new AbstractListener() {
+
+      @Override
+      public void init(ProgramController.State currentState) {
+        if (currentState == ProgramController.State.STOPPED) {
+          stopped();
+        }
+        if (currentState == ProgramController.State.ERROR) {
+          error(controller.getFailureCause());
+        }
+      }
+
       @Override
       public void stopped() {
         state.set(ProgramController.State.STOPPED);
@@ -253,9 +265,11 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     try {
       state.get();
       LOG.info("Program stopped.");
-    } catch (Throwable t) {
-      LOG.error("Program terminated due to error.", t);
-      throw Throwables.propagate(t);
+    } catch (InterruptedException e) {
+      LOG.warn("Program interrupted.", e);
+    } catch (ExecutionException e) {
+      LOG.error("Program execution failed.", e);
+      throw Throwables.propagate(Throwables.getRootCause(e));
     }
   }
 
