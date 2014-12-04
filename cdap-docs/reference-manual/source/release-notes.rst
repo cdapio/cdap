@@ -111,7 +111,12 @@ Known Issues
 - When running secure Hadoop clusters, logs and metrics from both Workflows and MapReduce 
   programs are not available
   (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__ and 
-  `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__)
+  `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__).
+- When upgrading a cluster from an earlier version of CDAP, warning messages may appear in
+  the master log indicating that messages could not be decoded
+  (*Failed to decode message to MetricsRecord*). This is because of a change in the format of
+  emitted metrics, and can result in a small amount of messages not being decoded correctly. 
+  (`CDAP-745 <https://issues.cask.co/browse/CDAP-745>`__).
 - See also the *Known Issues* of `version 2.5.2. <#known-issues-252>`_
 
 Release 2.5.2
