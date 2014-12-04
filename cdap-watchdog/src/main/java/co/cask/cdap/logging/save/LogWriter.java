@@ -44,7 +44,8 @@ public class LogWriter implements Runnable {
   private final ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
   private int messages = 0;
 
-  public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter, RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable,
+  public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter,
+                   RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable,
                    long eventBucketIntervalMs, long maxNumberOfBucketsInTable) {
     this.logFileWriter = logFileWriter;
     this.messageTable = messageTable;

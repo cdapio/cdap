@@ -47,8 +47,9 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
   private final long eventBucketIntervalMs;
   private final long maxNumberOfBucketsInTable;
 
-  public LogCollectorCallback(RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable, LoggingEventSerializer serializer,
-                              long eventBucketIntervalMs, long maxNumberOfBucketsInTable) {
+  public LogCollectorCallback(RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable,
+                              LoggingEventSerializer serializer, long eventBucketIntervalMs,
+                              long maxNumberOfBucketsInTable) {
     this.messageTable = messageTable;
     this.serializer = serializer;
     this.eventBucketIntervalMs = eventBucketIntervalMs;

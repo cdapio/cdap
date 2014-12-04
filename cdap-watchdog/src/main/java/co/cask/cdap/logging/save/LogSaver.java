@@ -246,7 +246,8 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     }
 
     kafkaCancel = preparer.consume(
-      new LogCollectorCallback((RowSortedTable) messageTable, serializer, eventBucketIntervalMs, maxNumberOfBucketsInTable));
+      new LogCollectorCallback((RowSortedTable) messageTable, serializer,
+                               eventBucketIntervalMs, maxNumberOfBucketsInTable));
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
   }
