@@ -113,9 +113,23 @@ Running CDAP Applications
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 9
 
-
 Running the Example
 ===================
+
+Running the Flow
+============================================
+
+Once the application is deployed:
+
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``WebAnalyticsFlow`` in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow WebAnalytics.WebAnalyticsFlow``
 
 Injecting Log Events
 ---------------------------------------
@@ -166,6 +180,21 @@ table line to expand the display and see the query results:
 .. image:: ../_images/wa_explore_result.png
    :width: 8in
 
+Stopping the Flow
+============================================
+
+Once the application is deployed:
+
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``WebAnalyticsFlow`` in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow WebAnalytics.WebAnalyticsFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow WebAnalytics.WebAnalyticsFlow``
+
 Stopping the Application
 -------------------------------
 Once done, you can stop the application as described below:
@@ -173,4 +202,3 @@ Once done, you can stop the application as described below:
 .. include:: /../../developers-manual/source/getting-started/building-apps.rst
    :start-line: 78
    :end-line:   90
-

@@ -80,6 +80,36 @@ Running CDAP Applications
 Running the Example
 ===================
 
+Running the Flow
+============================================
+
+Once the application is deployed:
+
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``WordCounter`` in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow WordCount.WordCounter``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow WordCount.WordCounter``
+
+Running the Service
+============================================
+
+Once the application is deployed:
+
+- Click on ``WordCount`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service WordCount.RetrieveCounts``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service WordCount.RetrieveCounts``
+
 Injecting Sentences
 ------------------------------
 
@@ -121,6 +151,36 @@ format (example reformatted to fit)::
   }
 
 You can also request other endpoints available in this Service, which described above.
+
+Stopping the Flow
+============================================
+
+Once the application is deployed:
+
+- Click on the *Process* button in the left-sidebar of the CDAP Console,
+  then click ``WordCounter`` in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow WordCount.WordCounter``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow WordCount.WordCounter``
+
+Stopping the Service
+============================================
+
+Once the application is deployed:
+
+- Click on ``WordCount`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service WordCount.RetrieveCounts``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service WordCount.RetrieveCounts``
 
 Stopping the Application
 -------------------------------

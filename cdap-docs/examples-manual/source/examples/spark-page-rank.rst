@@ -70,6 +70,50 @@ Running CDAP Applications
 Running the Example
 ===================
 
+Running the Spark program
+============================================
+
+Once the application is deployed:
+
+- Click on the ``SparkPageRankProgram`` in the Application page of the CDAP Console to get to the
+  Spark dialogue, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start spark SparkPageRank.SparkPageRankProgram``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start spark SparkPageRank.SparkPageRankProgram``
+
+Running the RanksService
+============================================
+
+Once the application is deployed:
+
+- Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RanksService`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service SparkPageRank.RanksService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service SparkPageRank.RanksService``
+
+Running the GoogleTypePR
+============================================
+
+Once the application is deployed:
+
+- Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``GoogleTypePR`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service SparkPageRank.GoogleTypePR``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service SparkPageRank.GoogleTypePR``
+
 Injecting URL Pairs
 ------------------------------
 
@@ -81,35 +125,6 @@ to the Stream named *backlinkURLStream* in the ``SparkPageRank`` application::
 On Windows::
 
   > bin\inject-data.bat
-
-Running the Spark Program
-------------------------------
-
-Before start the Spark program you should start the ``GoogleTypePR`` service, as example using curl::
-
-  curl -v -X POST 'http://localhost:10000/v2/apps/SparkPageRank/services/GoogleTypePR/start'
-
-There are three ways to start the Spark program:
-
-1. Click on the ``SparkPageRankProgram`` in the Application page of the CDAP Console to get to the
-   Spark dialogue, then click the *Start* button.
-
-2. Send a query via an HTTP request using the ``curl`` command::
-
-     curl -v -d '{args="3"}' \
-       'http://localhost:10000/v2/apps/SparkPageRank/spark/SparkPageRankProgram/start'
-
-   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
-
-     libexec\curl...
-
-3. Use the command::
-
-    $ ./bin/app-manager.sh --action run
-
-  On Windows::
-
-    > bin\app-manager.bat run
 
 Querying the Results
 ------------------------------
@@ -128,6 +143,50 @@ send a query via an HTTP request using the ``curl`` command. For example::
   On Windows, the copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
     libexec\curl...
+
+Stopping the Spark program
+============================================
+
+Once the application is deployed:
+
+- Click on the ``SparkPageRankProgram`` in the Application page of the CDAP Console to get to the
+  Spark dialogue, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop spark SparkPageRank.SparkPageRankProgram``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop spark SparkPageRank.SparkPageRankProgram``
+
+Stopping the RanksService
+============================================
+
+Once the application is deployed:
+
+- Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RanksService`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service SparkPageRank.RanksService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service SparkPageRank.RanksService``
+
+Stopping the GoogleTypePR
+============================================
+
+Once the application is deployed:
+
+- Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``GoogleTypePR`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command-line Interface:
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service SparkPageRank.GoogleTypePR``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service SparkPageRank.GoogleTypePR``
 
 Stopping the Application
 -------------------------------
