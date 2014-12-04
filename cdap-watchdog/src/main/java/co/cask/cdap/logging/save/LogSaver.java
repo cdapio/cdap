@@ -65,7 +65,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final KafkaClientService kafkaClient;
 
   private final CheckpointManager checkpointManager;
-  private final Table<Long, String, List<KafkaLogEvent>> messageTable;
+  private final RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable;
 
   private final long eventBucketIntervalMs;
   private final int logCleanupIntervalMins;
@@ -197,7 +197,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     subscribe(partitions);
 
-    LogWriter logWriter = new LogWriter(logFileWriter, (RowSortedTable) messageTable,
+    LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
                                         eventBucketIntervalMs, maxNumberOfBucketsInTable);
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
 
@@ -246,7 +246,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     }
 
     kafkaCancel = preparer.consume(
-      new LogCollectorCallback((RowSortedTable) messageTable, serializer,
+      new LogCollectorCallback(messageTable, serializer,
                                eventBucketIntervalMs, maxNumberOfBucketsInTable));
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
