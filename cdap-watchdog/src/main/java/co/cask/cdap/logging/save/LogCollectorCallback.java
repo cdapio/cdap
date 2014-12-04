@@ -22,6 +22,7 @@ import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import com.google.common.collect.Lists;
+import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.Table;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.kafka.client.FetchedMessage;
@@ -41,12 +42,12 @@ import java.util.concurrent.TimeUnit;
 public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
   private static final Logger LOG = LoggerFactory.getLogger(LogCollectorCallback.class);
 
-  private final Table<Long, String, List<KafkaLogEvent>> messageTable;
+  private final RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable;
   private final LoggingEventSerializer serializer;
   private final long eventBucketIntervalMs;
   private final long maxNumberOfBucketsInTable;
 
-  public LogCollectorCallback(Table<Long, String, List<KafkaLogEvent>> messageTable, LoggingEventSerializer serializer,
+  public LogCollectorCallback(RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable, LoggingEventSerializer serializer,
                               long eventBucketIntervalMs, long maxNumberOfBucketsInTable) {
     this.messageTable = messageTable;
     this.serializer = serializer;
@@ -66,19 +67,17 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
 
         // Compute the bucket number for the current event
         Long key = event.getTimeStamp() / eventBucketIntervalMs;
-        SortedSet<Long> rowSet;
+
         while (true) {
-          synchronized (messageTable) {
-            rowSet = new TreeSet<Long>(messageTable.rowKeySet());
-          }
-
-          if (rowSet.isEmpty()) {
-            // Table is empty so go ahead and add the current event in the table
-            break;
-          }
-
           // Get the oldest bucket in the table
-          long oldestBucketKey = rowSet.first();
+          long oldestBucketKey = 0;
+          synchronized (messageTable) {
+            if (messageTable.rowKeySet().isEmpty()) {
+              // Table is empty so go ahead and add the current event in the table
+              break;
+            }
+            oldestBucketKey = messageTable.rowKeySet().first();
+          }
 
           // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
           // sleep for the time duration till event falls in the window

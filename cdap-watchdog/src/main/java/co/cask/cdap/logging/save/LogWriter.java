@@ -20,6 +20,7 @@ import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import co.cask.cdap.logging.write.LogFileWriter;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,14 +37,14 @@ import java.util.TreeSet;
 public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
-  private final Table<Long, String, List<KafkaLogEvent>> messageTable;
+  private final RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable;
   private final long eventBucketIntervalMs;
   private final long maxNumberOfBucketsInTable;
 
   private final ListMultimap<String, KafkaLogEvent> writeListMap = ArrayListMultimap.create();
   private int messages = 0;
 
-  public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter, Table<Long, String, List<KafkaLogEvent>> messageTable,
+  public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter, RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable,
                    long eventBucketIntervalMs, long maxNumberOfBucketsInTable) {
     this.logFileWriter = logFileWriter;
     this.messageTable = messageTable;
@@ -58,33 +59,23 @@ public class LogWriter implements Runnable {
       if (writeListMap.isEmpty()) {
         messages = 0;
 
-        SortedSet<Long> rowSet;
-        synchronized (messageTable) {
-          rowSet = new TreeSet<Long>(messageTable.rowKeySet());
-        }
-
-        // Nothing to write
-        if (rowSet.isEmpty()) {
-          return;
-        }
-
         // Get the oldest bucket in the table
-        long oldestBucketKey = rowSet.first();
-        // Compute the bucket based on the current time
-        long currentBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
-
-        if (currentBucketKey < (oldestBucketKey + maxNumberOfBucketsInTable)) {
-          // If the number of buckets in memory are lesser than maxNumberOfBucketsInTable
-          // return
-          return;
+        long oldestBucketKey = 0;
+        synchronized (messageTable) {
+          if (!messageTable.rowKeySet().isEmpty()) {
+            oldestBucketKey = messageTable.rowKeySet().first();
+          }
         }
 
         synchronized (messageTable) {
           for (Iterator<Table.Cell<Long, String, List<KafkaLogEvent>>> it = messageTable.cellSet().iterator();
                it.hasNext(); ) {
             Table.Cell<Long, String, List<KafkaLogEvent>> cell = it.next();
+            if (oldestBucketKey == 0) {
+              oldestBucketKey = cell.getRowKey();
+            }
             // Process messages in the oldest bucket only
-            if (cell.getRowKey() > oldestBucketKey) {
+            if (cell.getRowKey() > (oldestBucketKey + maxNumberOfBucketsInTable)) {
               continue;
             }
 

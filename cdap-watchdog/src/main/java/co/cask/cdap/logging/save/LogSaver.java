@@ -29,8 +29,8 @@ import co.cask.cdap.watchdog.election.PartitionChangeHandler;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
+import com.google.common.collect.RowSortedTable;
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -197,7 +197,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     subscribe(partitions);
 
-    LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
+    LogWriter logWriter = new LogWriter(logFileWriter, (RowSortedTable) messageTable,
                                         eventBucketIntervalMs, maxNumberOfBucketsInTable);
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
 
@@ -246,7 +246,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     }
 
     kafkaCancel = preparer.consume(
-      new LogCollectorCallback(messageTable, serializer, eventBucketIntervalMs, maxNumberOfBucketsInTable));
+      new LogCollectorCallback((RowSortedTable) messageTable, serializer, eventBucketIntervalMs, maxNumberOfBucketsInTable));
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
   }
