@@ -112,8 +112,8 @@ public class CallServiceCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Calls a " + ElementType.SERVICE.getPrettyName() + "endpoint." +
-           "The header is formatted as \"{'key' : 'value', ...}\" and the body is a String.";
+    return String.format("Calls a %s endpoint. The header is formatted as \"{'key':'value', ...}\"" +
+                         " and the body is a String.", ElementType.SERVICE.getPrettyName());
   }
 
   /**

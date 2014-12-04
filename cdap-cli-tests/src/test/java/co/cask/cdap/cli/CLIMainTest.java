@@ -52,16 +52,26 @@ public class CLIMainTest extends StandaloneTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(CLIMainTest.class);
 
+  private static final String PREFIX = "123ff1_";
+
+  private static final String PROTOCOL = "http";
+  private static final String HOSTNAME = "localhost";
+  private static final String PORT = "10000";
+
   @Test
   public void testCommands() throws Exception {
-    CLIConfig cliConfig = new CLIConfig("localhost");
+    CLIConfig cliConfig = new CLIConfig(HOSTNAME);
+    cliConfig.getClientConfig().setAllTimeouts(60000);
+
+    ProgramClient programClient = new ProgramClient(cliConfig.getClientConfig());
+
     CLIMain cliMain = new CLIMain(cliConfig);
     CLI cli = cliMain.getCLI();
 
     testCommandOutputContains(cli, "connect fakehost", "could not be reached");
-    testCommandOutputContains(cli, "connect localhost", "Successfully connected");
-    testCommandOutputContains(cli, "connect http://localhost", "Successfully connected");
-    testCommandOutputContains(cli, "connect http://localhost:10000", "Successfully connected");
+    testCommandOutputContains(cli, "connect " + HOSTNAME, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
 
     testCommandOutputNotContains(cli, "list apps", FakeApp.NAME);
 
@@ -80,15 +90,15 @@ public class CLIMainTest extends StandaloneTestBase {
     String flowId = FakeApp.FLOWS.get(0);
     String qualifiedFlowId = FakeApp.NAME + "." + flowId;
     testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started Flow");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "RUNNING");
     testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped Flow");
-    ProgramClient programClient = new ProgramClient(cliConfig.getClientConfig());
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
     testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "COMPLETED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
 
     // test stream commands
-    String streamId = "sdf123";
+    String streamId = PREFIX + "sdf123";
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
@@ -103,7 +113,7 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputContains(cli, "describe stream " + streamId, "123");
 
     // test dataset commands
-    String datasetName = "sdf123lkj";
+    String datasetName = PREFIX + "sdf123lkj";
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
     DatasetTypeMeta datasetType = datasetTypeClient.list().get(0);
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
@@ -114,25 +124,29 @@ public class CLIMainTest extends StandaloneTestBase {
     // test procedure commands
     String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
     testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
     testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
       + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
     testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
 
     //test service commands
     String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, EchoHandler.NAME);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, EchoHandler.NAME, "RUNNING");
     testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "POST");
     testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "/echo");
     testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"", "testBody");
     testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, EchoHandler.NAME, "STOPPED");
 
     // test spark commands
     String sparkId = FakeApp.SPARK.get(0);
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
     testCommandOutputContains(cli, "list spark", sparkId);
     testCommandOutputContains(cli, "start spark " + qualifiedSparkId, "Successfully started Spark");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING", 180);
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED", 180);
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED");
     testCommandOutputContains(cli, "get spark status " + qualifiedSparkId, "STOPPED");
     testCommandOutputContains(cli, "get spark runs " + qualifiedSparkId, "COMPLETED");
     testCommandOutputContains(cli, "get spark logs " + qualifiedSparkId, "HelloFakeSpark");
@@ -184,7 +198,6 @@ public class CLIMainTest extends StandaloneTestBase {
 
     String status;
     int numTries = 0;
-    int maxTries = 10;
     do {
       status = programClient.getStatus(appId, programType, programId);
       numTries++;
@@ -201,7 +214,7 @@ public class CLIMainTest extends StandaloneTestBase {
                                      String programId, String programStatus)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
-    assertProgramStatus(programClient, appId, programType, programId, programStatus, 10);
+    assertProgramStatus(programClient, appId, programType, programId, programStatus, 180);
   }
 
 }

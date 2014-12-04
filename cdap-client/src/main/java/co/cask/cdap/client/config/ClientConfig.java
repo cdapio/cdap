@@ -156,6 +156,11 @@ public class ClientConfig {
                                                   uploadHttpConfig.getReadTimeout(), verifySSLCert);
   }
 
+  public void setAllTimeouts(int timeout) {
+    this.defaultHttpConfig = new HttpRequestConfig(timeout, timeout, verifySSLCert);
+    this.uploadHttpConfig = new HttpRequestConfig(timeout, timeout, verifySSLCert);
+  }
+
   @Nullable
   public AccessToken getAccessToken() {
     return accessToken.get();

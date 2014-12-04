@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
@@ -55,17 +56,20 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
+  private final DataFabricFacadeFactory dataFabricFacadeFactory;
 
   @Inject
   public ServiceComponentProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                                        DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                                       TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer) {
+                                       TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
+                                       DataFabricFacadeFactory dataFabricFacadeFactory) {
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
+    this.dataFabricFacadeFactory = dataFabricFacadeFactory;
   }
 
   @Override
@@ -102,7 +106,7 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
 
       component = new ServiceHttpServer(host, program, spec, runId, serviceAnnouncer,
                                         createHttpServiceContextFactory(program, runId, instanceId,
-                                        options.getUserArguments()), metricsCollectionService);
+                                        options.getUserArguments()), metricsCollectionService, dataFabricFacadeFactory);
     } else {
       ServiceWorkerSpecification workerSpec = spec.getWorkers().get(componentName);
       Preconditions.checkArgument(workerSpec != null, "Missing service worker specification for {}", program.getId());

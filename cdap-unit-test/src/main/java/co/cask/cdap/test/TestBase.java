@@ -119,6 +119,7 @@ import java.util.HashMap;
 
 /**
  * Base class to inherit from, provides testing functionality for {@link Application}.
+ * To clean App Fabric state, you can use the {@link #clear} method.
  */
 public class TestBase {
 
@@ -178,11 +179,17 @@ public class TestBase {
     }
   }
 
+  /**
+   * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.
+   * This method could be called between two unit tests, to make them independent.
+   */
   protected void clear() {
     try {
       appFabricClient.reset();
     } catch (Exception e) {
       throw Throwables.propagate(e);
+    } finally {
+      RuntimeStats.resetAll();
     }
   }
 

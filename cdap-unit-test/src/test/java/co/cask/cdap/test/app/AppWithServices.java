@@ -31,10 +31,13 @@ import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.AbstractServiceWorker;
 import co.cask.cdap.api.service.BasicService;
+import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
 import java.io.IOException;
@@ -59,9 +62,12 @@ public class AppWithServices extends AbstractApplication {
   public static final String PROCEDURE_DATASET_KEY = "key";
 
   private static final String DATASET_NAME = "AppWithServicesDataset";
+  private static final String INIT_KEY = "init";
 
   public static final String TRANSACTIONS_SERVICE_NAME = "TransactionsTestService";
-  private static final String TRANSACTIONS_DATASET_NAME = "TransactionsDatasetName";
+  public static final String TRANSACTIONS_DATASET_NAME = "TransactionsDatasetName";
+  public static final String DESTROY_KEY = "destroy";
+  public static final String VALUE = "true";
 
     @Override
     public void configure() {
@@ -101,11 +107,19 @@ public class AppWithServices extends AbstractApplication {
       @UseDataSet(TRANSACTIONS_DATASET_NAME)
       KeyValueTable table;
 
+      @Override
+      public void initialize(HttpServiceContext context) throws Exception {
+        super.initialize(context);
+        table.write(INIT_KEY, VALUE);
+      }
+
       @Path("/write/{key}/{value}/{sleep}")
       @GET
       public void handler(HttpServiceRequest request, HttpServiceResponder responder,
                           @PathParam("key") String key, @PathParam("value") String value, @PathParam("sleep") int sleep)
         throws InterruptedException {
+        //Check if data written in initialize method is persisted.
+        Preconditions.checkArgument(Bytes.toString(table.read(INIT_KEY)).equals(VALUE));
         table.write(key, value);
         Thread.sleep(sleep);
         responder.sendStatus(200);
@@ -121,6 +135,12 @@ public class AppWithServices extends AbstractApplication {
         } else {
           responder.sendJson(200, value);
         }
+      }
+
+      @Override
+      public void destroy() {
+        super.destroy();
+        table.write(DESTROY_KEY, VALUE);
       }
     }
   }
@@ -178,6 +198,7 @@ public class AppWithServices extends AbstractApplication {
 
     private static final class DatasetUpdateWorker extends AbstractServiceWorker {
 
+      private static int datasetHashCode;
       private volatile boolean workerStopped = false;
 
       @Property
@@ -194,6 +215,18 @@ public class AppWithServices extends AbstractApplication {
       @Override
       protected void configure() {
         useDatasets(dataset);
+      }
+
+      @Override
+      public void initialize(ServiceWorkerContext context) throws Exception {
+        super.initialize(context);
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            KeyValueTable table = context.getDataset(DATASET_NAME);
+            datasetHashCode = System.identityHashCode(table);
+          }
+        });
       }
 
       @Override
@@ -217,7 +250,10 @@ public class AppWithServices extends AbstractApplication {
               @Override
               public void run(DatasetContext context) throws Exception {
                 KeyValueTable table = context.getDataset(DATASET_NAME);
-                table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
+                // Write only if the dataset instance is the same as the one gotten in initialize.
+                if (datasetHashCode == System.identityHashCode(table)) {
+                  table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
+                }
               }
             });
             TimeUnit.MILLISECONDS.sleep(sleepMs);
