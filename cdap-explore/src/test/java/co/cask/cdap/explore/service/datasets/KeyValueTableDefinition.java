@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.service;
+package co.cask.cdap.explore.service.datasets;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
