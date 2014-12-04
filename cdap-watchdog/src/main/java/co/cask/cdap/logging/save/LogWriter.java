@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Persists bucketized logs stored by {@link LogCollectorCallback}.
@@ -58,42 +59,34 @@ public class LogWriter implements Runnable {
       if (writeListMap.isEmpty()) {
         messages = 0;
 
-        // Get the oldest bucket in the table
-        long oldestBucketKey = 0;
+        long currentBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
         synchronized (messageTable) {
           if (!messageTable.rowKeySet().isEmpty()) {
-            oldestBucketKey = messageTable.rowKeySet().first();
+            // Get the oldest bucket in the table
+            long oldestBucketKey = messageTable.rowKeySet().first();
+            if (currentBucketKey > (oldestBucketKey + maxNumberOfBucketsInTable)) {
+              Map<String, List<KafkaLogEvent>> row = messageTable.row(oldestBucketKey);
+
+              for (Iterator<String> it = row.keySet().iterator(); it.hasNext(); ) {
+                String key = it.next();
+                writeListMap.putAll(key, row.get(key));
+                messages += row.get(key).size();
+                it.remove();
+              }
+            }
           }
         }
 
-        synchronized (messageTable) {
-          for (Iterator<Table.Cell<Long, String, List<KafkaLogEvent>>> it = messageTable.cellSet().iterator();
-               it.hasNext(); ) {
-            Table.Cell<Long, String, List<KafkaLogEvent>> cell = it.next();
-            if (oldestBucketKey == 0) {
-              oldestBucketKey = cell.getRowKey();
-            }
-            // Process messages in the oldest bucket only
-            if (cell.getRowKey() > (oldestBucketKey + maxNumberOfBucketsInTable)) {
-              continue;
-            }
+        LOG.debug("Got {} log messages to save", messages);
 
-            writeListMap.putAll(cell.getColumnKey(), cell.getValue());
-            messages += cell.getValue().size();
-            it.remove();
-          }
+        for (Iterator<String> it = writeListMap.keySet().iterator(); it.hasNext(); ) {
+          String key = it.next();
+          List<KafkaLogEvent> list = writeListMap.get(key);
+          Collections.sort(list);
+          logFileWriter.append(list);
+          // Remove successfully written message
+          it.remove();
         }
-      }
-
-      LOG.debug("Got {} log messages to save", messages);
-
-      for (Iterator<String> it = writeListMap.keySet().iterator(); it.hasNext(); ) {
-        String key = it.next();
-        List<KafkaLogEvent> list = writeListMap.get(key);
-        Collections.sort(list);
-        logFileWriter.append(list);
-        // Remove successfully written message
-        it.remove();
       }
     } catch (Throwable e) {
       LOG.error("Caught exception during save, will try again.", e);
