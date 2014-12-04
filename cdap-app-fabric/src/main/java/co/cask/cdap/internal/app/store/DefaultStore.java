@@ -57,6 +57,7 @@ import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -675,10 +676,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void createNamespace(final NamespaceMeta metadata) throws Exception {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+  public NamespaceMeta createNamespace(final NamespaceMeta metadata) throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
-      public Void apply(AppMds input) throws Exception {
+      public NamespaceMeta apply(AppMds input) throws Exception {
+        Id.Namespace namespaceId = Id.Namespace.from(metadata.getName());
+        if (input.apps.namespaceExists(namespaceId)) {
+          return input.apps.getNamespace(namespaceId);
+        }
         input.apps.createNamespace(metadata);
         return null;
       }
@@ -696,12 +701,16 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void deleteNamespace(final Id.Namespace id) throws Exception {
-    txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
+  public NamespaceMeta deleteNamespace(final Id.Namespace id) throws Exception {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
-      public Void apply(AppMds input) throws Exception {
+      public NamespaceMeta apply(AppMds input) throws Exception {
+        if (!input.apps.namespaceExists(id)) {
+          return null;
+        }
+        NamespaceMeta namespaceMeta = input.apps.getNamespace(id);
         input.apps.deleteNamespace(id);
-        return null;
+        return namespaceMeta;
       }
     });
   }

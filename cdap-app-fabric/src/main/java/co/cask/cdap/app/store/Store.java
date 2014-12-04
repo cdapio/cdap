@@ -299,9 +299,12 @@ public interface Store {
   /**
    * Creates a new namespace.
    *
-   * @param metadata {@link co.cask.cdap.proto.NamespaceMeta} representing the namespace metadata
+   * @param metadata {@link NamespaceMeta} representing the namespace metadata
+   * @return existing {@link NamespaceMeta} if there was a conflict during creation, null if there was no conflict and
+   * namespace was created successfully
+   * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#put}
    */
-  void createNamespace(NamespaceMeta metadata) throws Exception;
+  NamespaceMeta createNamespace(NamespaceMeta metadata) throws Exception;
 
   /**
    * Retrieves a namespace from the namespace metadata store.
@@ -315,8 +318,11 @@ public interface Store {
    * Deletes a namespace from the namespace metadata store.
    *
    * @param id {@link Id.Namespace} of the namespace to delete
+   * @return {@link NamespaceMeta} of the namespace if it was found and deleted, null if there was a delete conflict
+   * and the namespace could no longer be found for deletion
+   * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#remove}
    */
-  void deleteNamespace(Id.Namespace id) throws Exception;
+  NamespaceMeta deleteNamespace(Id.Namespace id) throws Exception;
 
   /**
    * Lists all registered namespaces.
