@@ -31,83 +31,87 @@ New Features
 General
 .......
 - Health checks are now available for CDAP system services
-  (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
+  (`CDAP-663 <https://issues.cask.co/browse/CDAP-663>`__).
 
 Applications
 ............
--  API for configuring Services and MapReduce Jobs has been changed to use the configurer style
-   (`CDAP-335 <https://issues.cask.co/browse/CDAP-335>`__).
--  Jar deployment now uses chunked request and writes to local file
+-  Jar deployment now uses a chunked request and writes to a local temp file
    (`CDAP-91 <https://issues.cask.co/browse/CDAP-91>`__).
+-  API for specifying Services and MapReduce Jobs has been changed to use a "configurer" style
+   (`CDAP-335 <https://issues.cask.co/browse/CDAP-335>`__).
 
 MapReduce
 .........
 -  MapReduce jobs can now read binary stream data
-   (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
+   (`CDAP-331 <https://issues.cask.co/browse/CDAP-331>`__).
 
 Datasets
 ........
-- Added FileSet, a new dataset for working with files
+- Added FileSet, a new core dataset type for working with sets of files
   (`CDAP-1 <https://issues.cask.co/browse/CDAP-1>`__).
-- Readless increments are now used when enabled
-  (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
 
 Spark
 .....
-- Added Spark support to CDAP CLI
-  (`CDAP-425 <https://issues.cask.co/browse/CDAP-425>`__).
-- Spark programs can now read from Streams
-  (`CDAP-403 <https://issues.cask.co/browse/CDAP-403>`__).
-- Services can be called from Spark driver as well as any of the workers
-  (`CDAP-348 <https://issues.cask.co/browse/CDAP-348>`__).
-- Improved speed of Spark unit tests
-  (`CDAP-600 <https://issues.cask.co/browse/CDAP-600>`__).
 - Spark programs now emit system and custom user metrics
   (`CDAP-346 <https://issues.cask.co/browse/CDAP-346>`__).
-- Spark UI now displays system metrics
+- Services can be called from Spark programs and its worker nodes
+  (`CDAP-348 <https://issues.cask.co/browse/CDAP-348>`__).
+- Spark programs can now read from Streams
+  (`CDAP-403 <https://issues.cask.co/browse/CDAP-403>`__).
+- Added Spark support to the CDAP CLI (Command-line Interface)
+  (`CDAP-425 <https://issues.cask.co/browse/CDAP-425>`__).
+- Improved speed of Spark unit tests
+  (`CDAP-600 <https://issues.cask.co/browse/CDAP-600>`__).
+- Spark Programs now display system metrics in the CDAP Console
   (`CDAP-652 <https://issues.cask.co/browse/CDAP-652>`__).
 
 Procedures
 ..........
-- Procedures are now deprecated in favor of Services
+- Procedures have been deprecated in favor of Services
   (`CDAP-413 <https://issues.cask.co/browse/CDAP-413>`__).
 
 Services
 ........
-- Updated HTTP endpoint for getting ServiceSpec to also list the Service endpoints
+- Added an HTTP endpoint that returns the endpoints a particular Service exposes
   (`CDAP-412 <https://issues.cask.co/browse/CDAP-412>`__).
-- Added HTTP endpoint for listing all Services
+- Added an HTTP endpoint that lists all Services
   (`CDAP-469 <https://issues.cask.co/browse/CDAP-469>`__).
-- @QueryParam and @DefaultValue annotations are now supported in custom Service handlers
-  (`CDAP-664 <https://issues.cask.co/browse/CDAP-664>`__).
-- Default metrics are now available for Services
+- Default metrics for Services have been added to the CDAP Console
   (`CDAP-512 <https://issues.cask.co/browse/CDAP-512>`__).
+- The annotations ``@QueryParam`` and ``@DefaultValue`` are now supported in custom Service handlers
+  (`CDAP-664 <https://issues.cask.co/browse/CDAP-664>`__).
 
 Metrics
 .......
-- Gauge metrics are now supported
+- System and User Metrics now support gauge metrics
   (`CDAP-484 <https://issues.cask.co/browse/CDAP-484>`__).
-- Metrics can be queried per Program run ID
+- Metrics can be queried using a Program’s run-ID
   (`CDAP-620 <https://issues.cask.co/browse/CDAP-620>`__).
 
 Documentation
 .............
-- Added the Administrator's Quick Start guide
+- A :ref:`Quick Start Guide has been added to the :ref:\CDAP Administration Manual `
   (`CDAP-695 <https://issues.cask.co/browse/CDAP-695>`__).
 
 Major CDAP Bug Fixes
 --------------------
 
-- Applications that include Spark or Scala classes in user classes not extended
-  from either ``JavaSparkProgram`` or ``ScalaSparkProgram`` (depending upon the language)
-  no longer fail with a class loading error (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__).
+- Fixed a problem with readless increments not being used when they were enabled in a Dataset
+  (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
+- Fixed a problem with applications whose Spark or Scala user classes that were not extended
+  from either ``JavaSparkProgram`` or ``ScalaSparkProgram`` failing with a class loading error
+  (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__).
 
 .. _known-issues-260:
 
 Known Issues
 ------------
 
-- TODO
+- When running secure Hadoop clusters, logs and metrics from both Workflows and MapReduce 
+  programs are not available
+  (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__ and 
+  `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__)
+- See also the *Known Issues* of `version 2.5.2. <#known-issues-252>`_
 
 Release 2.5.2
 =============
