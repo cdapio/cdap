@@ -18,9 +18,11 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import javax.ws.rs.GET;
@@ -73,6 +75,11 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
       job.getConfiguration().set(SERVICE_URL, serviceURL.toString());
     }
 
+    private static URL getServiceUrl(TaskInputOutputContext context) throws MalformedURLException {
+      Configuration configuration = context.getConfiguration();
+      return new URL(configuration.get(SERVICE_URL));
+    }
+
     /**
      * Mapper to count amount of words in sentence using service.
      */
@@ -82,8 +89,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
 
       @Override
       protected void setup(Context context) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
-        serviceUrl = new URL(configuration.get(SERVICE_URL));
+        serviceUrl = getServiceUrl(context);
       }
 
       @Override
@@ -103,8 +109,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
 
       @Override
       protected void setup(Reducer.Context context) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
-        serviceUrl = new URL(configuration.get(SERVICE_URL));
+        serviceUrl = getServiceUrl(context);
       }
 
       @Override
