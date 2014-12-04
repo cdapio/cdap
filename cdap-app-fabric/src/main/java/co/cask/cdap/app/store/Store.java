@@ -300,7 +300,6 @@ public interface Store {
    * Creates a new namespace.
    *
    * @param metadata {@link co.cask.cdap.proto.NamespaceMeta} representing the namespace metadata
-   * @throws Exception if problems occur while creating the new namespace
    */
   void createNamespace(NamespaceMeta metadata) throws Exception;
 
@@ -309,7 +308,6 @@ public interface Store {
    *
    * @param id {@link Id.Namespace} of the requested namespace
    * @return {@link NamespaceMeta} of the requested namespace
-   * @throws Exception if problems occur while retrieving the namespace
    */
   NamespaceMeta getNamespace(Id.Namespace id) throws Exception;
 
@@ -317,7 +315,6 @@ public interface Store {
    * Deletes a namespace from the namespace metadata store.
    *
    * @param id {@link Id.Namespace} of the namespace to delete
-   * @throws Exception if problems occur while deleting the namespace
    */
   void deleteNamespace(Id.Namespace id) throws Exception;
 
@@ -325,7 +322,6 @@ public interface Store {
    * Lists all registered namespaces.
    *
    * @return a list of all registered namespaces
-   * @throws Exception if problems occur while listing namespaces
    */
   List<NamespaceMeta> listNamespaces() throws Exception;
 
@@ -334,7 +330,6 @@ public interface Store {
    *
    * @param id {@link Id.Namespace} of the requested namespace to check for existence
    * @return true if the namespace already exists, false otherwise
-   * @throws Exception if problems occur while checking namespace status
    */
   boolean namespaceExists(Id.Namespace id) throws Exception;
 }
