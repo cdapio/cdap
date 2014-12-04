@@ -47,7 +47,7 @@ MapReduce
 
 Datasets
 ........
-- Added FileSet, a new core dataset type for working with sets of files
+- Added :ref:`FileSet <datasets-fileset>`, a new core dataset type for working with sets of files
   (`CDAP-1 <https://issues.cask.co/browse/CDAP-1>`__).
 
 Spark
@@ -90,7 +90,8 @@ Metrics
 
 Documentation
 .............
-- A :ref:`Quick Start Guide has been added to the :ref:\CDAP Administration Manual `
+- A :ref:\`Quick Start Guide <installation-quick-start>` has been added to the 
+  :ref:\`CDAP Administration Manual <admin-index>` 
   (`CDAP-695 <https://issues.cask.co/browse/CDAP-695>`__).
 
 CDAP Bug Fixes
