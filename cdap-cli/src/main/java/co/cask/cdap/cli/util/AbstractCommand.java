@@ -100,7 +100,7 @@ public abstract class AbstractCommand implements Command {
           case 'd':
             return base + dir * TimeUnit.DAYS.toMillis(offset);
           default:
-            throw new CommandInputError("Unsupported relative time format: " + type);
+            throw new CommandInputError(this, "Unsupported relative time format: " + type);
         }
       }
       if (arg.equalsIgnoreCase("min")) {
@@ -112,7 +112,7 @@ public abstract class AbstractCommand implements Command {
 
       return Long.parseLong(arg);
     } catch (NumberFormatException e) {
-      throw new CommandInputError("Invalid number value: " + arg + ". Reason: " + e.getMessage());
+      throw new CommandInputError(this, "Invalid number value: " + arg + ". Reason: " + e.getMessage());
     }
   }
 }

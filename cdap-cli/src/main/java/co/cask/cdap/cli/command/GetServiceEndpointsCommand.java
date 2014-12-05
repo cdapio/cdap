@@ -20,6 +20,7 @@ import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.ServiceClient;
@@ -45,6 +46,10 @@ public class GetServiceEndpointsCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String[] appAndServiceId = arguments.get(ArgumentName.SERVICE.toString()).split("\\.");
+    if (appAndServiceId.length < 2) {
+      throw new CommandInputError(this);
+    }
+
     String appId = appAndServiceId[0];
     String serviceId = appAndServiceId[1];
     List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(appId, serviceId);

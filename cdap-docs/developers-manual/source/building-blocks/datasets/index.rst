@@ -12,6 +12,7 @@ Datasets
    :maxdepth: 1
    
     Table API <table>
+    File Sets <fileset>
     System and Custom Datasets <system-custom>
     Datasets and MapReduce <datasets-mapreduce>
 
@@ -89,6 +90,9 @@ We distinguish three categories of Datasets: *core*, *system*, and *custom* Data
 - The |core|_ Dataset of the CDAP is a Table. Its implementation may use internal
   CDAP classes hidden from developers.
 
+  **Note**: The latest version of CDAP added support for a new core Dataset that represents
+  sets of files. See *FileSets* below for details.
+
 - A |system|_ Dataset is bundled with the CDAP and is built around
   one or more underlying core or system Datasets to implement a specific data pattern.
 
@@ -133,8 +137,12 @@ Tables. These Tables are similar to tables in a relational database with a few k
 - Tables are organized in a way that the columns of a row can be read
   and written independently of other columns, and columns are ordered
   in byte-lexicographic order. They are also known as *Ordered Columnar Tables*.
-  
-  
+
+|fileset|_ is a core Dataset type that was added as an experimental feature in CDAP 2.6.0.
+
+.. |fileset| replace:: **FileSet**
+.. _fileset: fileset.html
+
 .. rubric::  Examples of Using Datasets
 
 Datasets are included in just about every CDAP :ref:`application <apps-and-packs>`,
@@ -147,11 +155,13 @@ Datasets are included in just about every CDAP :ref:`application <apps-and-packs
   and :ref:`Web Analytics <examples-web-analytics>` examples.
 
 - For an example of **a dataset and a Map Reduce Job,** see the :ref:`Purchase
-  <examples-purchase>` example. 
+  <examples-purchase>` example.
 
 - For an example of a **Table dataset,** see the :ref:`Word Count <examples-word-count>` example.
 
-- For examples of **key-value Table datasets,** see the 
+- For an example of a **FileSet dataset,** see the :ref:`FileSet <examples-fileset>` example.
+
+- For examples of **key-value Table datasets,** see the
   :ref:`Hello World <examples-hello-world>`,
   :ref:`Count Random <examples-count-random>`,
   :ref:`Word Count <examples-word-count>`, and

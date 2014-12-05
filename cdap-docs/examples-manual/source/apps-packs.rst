@@ -65,7 +65,7 @@ useful when building big data applications:
 
 
 .. |etl-pack| replace:: **ETL-pack** *for ETL (extract, transform, and load):*
-.. _etl-pack: https://github.com/caskdata/cdap-packs/blob/develop/etl-pack
+.. _etl-pack: https://github.com/caskdata/cdap-packs/blob/develop/cdap-etl-pack
 
 - |etl-pack|_ The ETL-pack library is designed to ease the development of common ETL
   solutions and provide powerful extension capabilities. Download or clone the library at
