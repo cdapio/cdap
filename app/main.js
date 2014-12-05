@@ -8,6 +8,7 @@ angular
       PKG.name+'.feature.foo',
       PKG.name+'.feature.login',
       PKG.name+'.feature.dashboard',
+      PKG.name+'.feature.applications'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -143,4 +144,3 @@ angular
 
     console.timeEnd(PKG.name);
   });
-
