@@ -300,9 +300,9 @@ public interface Store {
    * Creates a new namespace.
    *
    * @param metadata {@link NamespaceMeta} representing the namespace metadata
-   * @return existing {@link NamespaceMeta} if there was a conflict during creation, null if there was no conflict and
-   * namespace was created successfully
-   * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#put}
+   * @return existing {@link NamespaceMeta} if a namespace with the specified name existed already, null if the
+   * a namespace with the specified name did not exist, and was created successfully
+   * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#putIfAbsent}
    */
   NamespaceMeta createNamespace(NamespaceMeta metadata) throws Exception;
 
@@ -318,8 +318,8 @@ public interface Store {
    * Deletes a namespace from the namespace metadata store.
    *
    * @param id {@link Id.Namespace} of the namespace to delete
-   * @return {@link NamespaceMeta} of the namespace if it was found and deleted, null if there was a delete conflict
-   * and the namespace could no longer be found for deletion
+   * @return {@link NamespaceMeta} of the namespace if it was found and deleted, null if the specified namespace did not
+   * exist
    * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#remove}
    */
   NamespaceMeta deleteNamespace(Id.Namespace id) throws Exception;
@@ -330,12 +330,4 @@ public interface Store {
    * @return a list of all registered namespaces
    */
   List<NamespaceMeta> listNamespaces() throws Exception;
-
-  /**
-   * Check if namespace already exists.
-   *
-   * @param id {@link Id.Namespace} of the requested namespace to check for existence
-   * @return true if the namespace already exists, false otherwise
-   */
-  boolean namespaceExists(Id.Namespace id) throws Exception;
 }

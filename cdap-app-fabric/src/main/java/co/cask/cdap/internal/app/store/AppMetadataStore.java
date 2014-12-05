@@ -267,10 +267,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
-  public boolean namespaceExists(Id.Namespace id) throws Exception {
-    return getNamespace(id) != null;
-  }
-
   private Key getNamespaceKey(@Nullable String name) {
     Key.Builder builder = new MetadataStoreDataset.Key.Builder().add(TYPE_NAMESPACE);
     if (null != name) {

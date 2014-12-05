@@ -86,15 +86,10 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/namespaces")
   public void create(HttpRequest request, HttpResponder responder) {
     NamespaceMeta metadata;
-    String name;
-    String displayName;
-    String description;
-
     try {
       metadata = parseBody(request, NamespaceMeta.class);
     } catch (JsonSyntaxException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, String.format("Invalid namespace metadata. Must be a valid" +
-                                                                           " json."));
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid namespace metadata. Must be a valid json.");
       return;
     } catch (IOException e) {
       LOG.error("Failed to read namespace metadata.", e);
@@ -102,41 +97,27 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    name = metadata.getName();
+    String name = metadata.getName();
     // name cannot be null or empty.
     if (name == null || name.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Namespace name cannot be null or empty.");
       return;
     }
-
-    // check if namespace already exists. Although create already checks for existence, doing this check here so we
-    // don't have to execute any of the logic below if a conflict can be detected here
-    try {
-      if (store.namespaceExists(Id.Namespace.from(name))) {
-        responder.sendString(HttpResponseStatus.CONFLICT, String.format("Namespace %s already exists.", name));
-        return;
-      }
-    } catch (Exception e) {
-      LOG.error("Internal error while checking namespace status.", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      return;
-    }
-
     // displayName and description could be null
-    displayName = metadata.getDisplayName();
+    String displayName = metadata.getDisplayName();
     if (displayName == null || displayName.isEmpty()) {
       displayName = name;
     }
-    description = metadata.getDescription();
+    String description = metadata.getDescription();
     if (description == null) {
       description = "";
     }
 
     try {
-      NamespaceMeta existingNamespace = store.createNamespace(new NamespaceMeta.Builder().setName(name)
+      NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder().setName(name)
                                                                .setDisplayName(displayName).setDescription(description)
                                                                .build());
-      if (existingNamespace == null) {
+      if (existing == null) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
         responder.sendString(HttpResponseStatus.CONFLICT, String.format("Namespace %s already exists.", name));
@@ -153,7 +134,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   public void delete(HttpRequest request, HttpResponder responder, @PathParam("namespace") String namespace) {
     Id.Namespace namespaceId = Id.Namespace.from(namespace);
     try {
-      // Store#deleteNamespace already checks for existence, so no need for a check here again
+      // Store#deleteNamespace already checks for existence
       NamespaceMeta deletedNamespace = store.deleteNamespace(namespaceId);
       if (deletedNamespace == null) {
         responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found.", namespace));

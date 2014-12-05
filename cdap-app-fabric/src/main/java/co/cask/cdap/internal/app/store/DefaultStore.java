@@ -680,8 +680,9 @@ public class DefaultStore implements Store {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
         Id.Namespace namespaceId = Id.Namespace.from(metadata.getName());
-        if (input.apps.namespaceExists(namespaceId)) {
-          return input.apps.getNamespace(namespaceId);
+        NamespaceMeta existing = input.apps.getNamespace(namespaceId);
+        if (existing != null) {
+          return existing;
         }
         input.apps.createNamespace(metadata);
         return null;
@@ -704,12 +705,11 @@ public class DefaultStore implements Store {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
-        if (!input.apps.namespaceExists(id)) {
-          return null;
+        NamespaceMeta existing = input.apps.getNamespace(id);
+        if (existing != null) {
+          input.apps.deleteNamespace(id);
         }
-        NamespaceMeta namespaceMeta = input.apps.getNamespace(id);
-        input.apps.deleteNamespace(id);
-        return namespaceMeta;
+        return existing;
       }
     });
   }
@@ -720,16 +720,6 @@ public class DefaultStore implements Store {
       @Override
       public List<NamespaceMeta> apply(AppMds input) throws Exception {
         return input.apps.listNamespaces();
-      }
-    });
-  }
-
-  @Override
-  public boolean namespaceExists(final Id.Namespace id) throws Exception {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Boolean>() {
-      @Override
-      public Boolean apply(AppMds input) throws Exception {
-        return input.apps.namespaceExists(id);
       }
     });
   }
