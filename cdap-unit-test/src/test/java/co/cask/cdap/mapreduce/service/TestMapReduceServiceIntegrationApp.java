@@ -21,6 +21,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -129,9 +130,14 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
     private static String doRequest(URL url) throws IOException {
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
       String response;
+      InputStream inputStream = null;
       try {
-        response = new String(ByteStreams.toByteArray(connection.getInputStream()), Charsets.UTF_8);
+        inputStream = connection.getInputStream();
+        response = new String(ByteStreams.toByteArray(inputStream), Charsets.UTF_8);
       } finally {
+        if (inputStream != null) {
+          inputStream.close();
+        }
         connection.disconnect();
       }
       return response;
