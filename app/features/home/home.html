@@ -2,27 +2,72 @@
   CDAP websocket prototype
 </h1>
 
-
-
-<div class="row">
-  <div class="col-sm-8">
-
-    <epoch-live-line
-      data-history="lineHistory"
-      data-stream="lineStream"
-
-      chart-height="200"
-    ></epoch-live-line>
-
-  </div>
-  <div class="col-sm-4">
-
-    <epoch-gauge
-      class="gauge-small"
-      data-stream="gaugeValue"
-      chart-height="135"
-    ></epoch-gauge>
-
+<div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h1> Welcome! </h1> <h3> Your cask application platform is designed blah blah blha </h3>
+    </div>
+    <div class="panel-body">
+      <div class="row">
+        <div class="col-lg-4">
+          <div class="well well-lg">
+            Note 1 blah blah blah blah blah blah blah blah
+            blah blah blah blah blah blah blah blah blah blah
+            blah blah blah blah blah blah blah blah blah blah
+            blah blah blah blah blah blah blah blah
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="well well-lg">
+            Note 1 blah blah blah blah blah blah blah blah
+            blah blah blah blah blah blah blah blah blah blah
+            blah blah blah blah blah blah blah blah blah blah
+            blah blah blah blah blah blah blah blah
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="well well-lg">
+            Note 1 blah blah blah blah blah blah blah blah
+            blah blah blah blah blah blah blah blah blah blah
+            blah blah blah blah blah blah blah blah blah blah
+            blah blah blah blah blah blah blah blah
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
+<div class="row" my-panel>
+  <div class="col-lg-6">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Panel title</h3>
+    </div>
+    <div class="panel-body">
+      <div ng-repeat="app in apps">
+        <a ui-sref="applications({namespace: 'ns1'})">
+          <h3 ng-bind="app.name">  </h3>
+          <div ng-bing="app.description"> </div>
+        </a>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="col-lg-6">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Panel title</h3>
+    </div>
+    <div class="panel-body">
+      <div ng-repeat="app in apps">
+        <a ui-sref="applications({namespace: 'ns1'})">
+        <h3 ng-bind="app.name">  </h3>
+        <div ng-bing="app.description"> </div>
+        </a>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
