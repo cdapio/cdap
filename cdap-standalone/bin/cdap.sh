@@ -271,7 +271,11 @@ start() {
     rotate_log $APP_HOME/logs/cdap.log
     rotate_log $APP_HOME/logs/cdap-debug.log
 
-    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
+    if grep docker /proc/1/cgroup 2>&1 >/dev/null; then
+        ROUTER_OPTS="-Drouter.bind.address=`hostname -i` -Drouter.server.address=`hostname -i`"
+    fi
+
+    nohup nice -1 "$JAVACMD" "${JVM_OPTS[@]}" ${ROUTER_OPTS} -classpath "$CLASSPATH" co.cask.cdap.StandaloneMain \
         --web-app-path ${WEB_APP_PATH} \
         >> $APP_HOME/logs/cdap.log 2>&1 < /dev/null &
     echo $! > $pid

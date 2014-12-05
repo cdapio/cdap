@@ -70,7 +70,8 @@ COPY cdap-watchdog-tests /Build/cdap-watchdog-tests
 COPY cdap-web-app /Build/cdap-web-app
 
 # build cdap-standalone zip file, copy it to container and extract it
-RUN cd Build && MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release && \
+RUN cd Build && \
+    MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release && \
     unzip cdap-standalone/target/cdap-sdk-[0-9]*.[0-9]*.[0-9]*.zip -d /Software && \
     cd /Software && \
     rm -rf /Build
@@ -84,15 +85,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server && mkdir -p
 EXPOSE 9999
 EXPOSE 10000
 EXPOSE 22
-
-# CDAP
-## Add dependent files
-COPY cdap-standalone/cdap-site-docker.xml /tmp/cdap-site-docker.xml
-COPY cdap-standalone/cdap-docker.sh /tmp/cdap-docker.sh
-
-## modify CDAP configuration files
-RUN cp /tmp/cdap-site-docker.xml /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/conf/cdap-site.xml
-RUN cp /tmp/cdap-docker.sh /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/bin/cdap.sh
 
 # start CDAP in the background and ssh in the foreground
 CMD /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/bin/cdap.sh start && /usr/sbin/sshd -D
