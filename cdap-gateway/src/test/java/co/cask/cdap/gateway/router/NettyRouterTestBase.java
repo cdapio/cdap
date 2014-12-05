@@ -373,7 +373,7 @@ public abstract class NettyRouterTestBase {
     int times = 1000;
     boolean keepAlive = true;
     for (int i = 0; i < times; i++) {
-      HttpURLConnection urlConn = (HttpURLConnection) urls[i % urls.length].openConnection();
+      HttpURLConnection urlConn = openURL(urls[i % urls.length]);
       try {
         urlConn.setRequestProperty(HttpHeaders.Names.CONNECTION,
                                    keepAlive ? HttpHeaders.Values.KEEP_ALIVE : HttpHeaders.Values.CLOSE);
@@ -385,6 +385,10 @@ public abstract class NettyRouterTestBase {
     }
 
     Assert.assertEquals(times, defaultServer1.getNumRequests() + defaultServer2.getNumRequests());
+  }
+
+  protected HttpURLConnection openURL(URL url) throws Exception {
+    return (HttpURLConnection) url.openConnection();
   }
 
   private void testSync(int numRequests) throws Exception {
