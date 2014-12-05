@@ -96,6 +96,10 @@ public class RESTClient {
       if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
         throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
       }
+      if (!isSuccessful(responseCode) && responseCode != HttpURLConnection.HTTP_UNAVAILABLE
+        && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
+        throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
+      }
       if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
         currentTry++;
         try {
@@ -104,9 +108,6 @@ public class RESTClient {
           break;
         }
         continue;
-      }
-      if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
-        throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
       }
       return response;
     } while (currentTry <= unavailableRetryLimit);
