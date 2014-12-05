@@ -110,9 +110,9 @@ jobs, Workflows, and Custom Services, and query for their status using HTTP POST
      - Description
    * - ``<app-id>``
      - Name of the Application being called
-   * - ``<program-type>``
+   * - ``<element-type>``
      - One of ``flows``, ``procedures``, ``mapreduce``, ``workflows`` or ``services``
-   * - ``<program-id>``
+   * - ``<element-id>``
      - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
        being called
    * - ``<operation>``
