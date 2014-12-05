@@ -34,8 +34,8 @@ and write to another.
     for a given user id from the *userProfiles* Dataset. The host and port of the UserProfileService is
     discovered using Service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
-    job reads the *purchases* Dataset. It fetches the user profile information, if its available, from
-    the ``UserProfileService`` and creates a purchase history. It then stores the purchase history in the
+    job reads the *purchases* Dataset. It fetches the user profile information, if it is available, from
+    the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
     *history* Dataset every morning at 4:00 A.M.
   - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce job to store 
@@ -88,15 +88,15 @@ This service has a ``history/{customer}`` endpoint to obtain the purchase histor
 ``UserProfileService``: Service
 ------------------------------------------------
 
-This service has two endpoints.
-``user`` endpoint is to add the user's profile information to the system::
+This service has two endpoints:
 
-  curl -v http://localhost:10000/v2/apps/PurchaseHistory/services/UserProfileService/methods/user/ -d "{'id' : 'alice', 'firstName': 'Alice', 'lastName':'Bernard', 'categories': ['fruits']}"
+``user`` endpoint to add a user's profile information to the system::
 
-``user/{id}`` endpoint is to obtain the profile information of a given user::
+  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body "{'id':'alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
 
-  curl -v http://localhost:10000/v2/apps/PurchaseHistory/services/UserProfileService/methods/user/alice
+``user/{id}`` endpoint to obtain profile information for a specified user::
 
+  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService GET user/alice
 
 Building and Starting
 =================================

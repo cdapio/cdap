@@ -19,7 +19,7 @@ package co.cask.cdap.examples.purchase;
 import java.util.List;
 
 /**
- *
+ * This class represents the profile information for the user
  */
 public final class UserProfile {
 

@@ -90,6 +90,9 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
     private URL userProfileServiceURL;
 
+    private static final int RARE_PURCHASE_COUNT = 1;
+    private static final int FREQUENT_PURCHASE_COUNT = 10;
+
     @Override
     public void initialize(MapReduceContext context) throws Exception {
       userProfileServiceURL = context.getServiceURL(UserProfileServiceHandler.SERVICE_NAME);
@@ -98,15 +101,21 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     public void reduce(Text customer, Iterable<Text> values, Context context)
       throws IOException, InterruptedException {
 
-      URL getUserProfileURL = new URL(userProfileServiceURL, String.format("user/%s", customer.toString()));
+      URL getUserProfileURL = new URL(userProfileServiceURL,
+                                      UserProfileServiceHandler.USER_ENDPOINT
+                                                      + "/" + customer.toString());
       UserProfile userProfile = null;
+      HttpURLConnection urlConnection = null;
       try {
-        HttpURLConnection urlConnection = (HttpURLConnection) getUserProfileURL.openConnection();
+        urlConnection = (HttpURLConnection) getUserProfileURL.openConnection();
         if (urlConnection.getResponseCode() != HttpURLConnection.HTTP_NO_CONTENT) {
           userProfile = new Gson().fromJson(new String(ByteStreams.toByteArray(urlConnection.getInputStream())
             , Charsets.UTF_8), UserProfile.class);
         }
-      } catch (Exception e) {
+      } finally {
+        if (urlConnection != null) {
+          urlConnection.disconnect();
+        }
       }
 
       PurchaseHistory purchases = new PurchaseHistory(customer.toString(), userProfile);
@@ -115,9 +124,9 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
         purchases.add(new Gson().fromJson(val.toString(), Purchase.class));
         numPurchases++;
       }
-      if (numPurchases == 1) {
+      if (numPurchases == RARE_PURCHASE_COUNT) {
         reduceMetrics.count("customers.rare", 1);
-      } else if (numPurchases > 10) {
+      } else if (numPurchases > FREQUENT_PURCHASE_COUNT) {
         reduceMetrics.count("customers.frequent", 1);
         frequentCustomers.write(customer.toString(), String.valueOf(numPurchases));
       }
