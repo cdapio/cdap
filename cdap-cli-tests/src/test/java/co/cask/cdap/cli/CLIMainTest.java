@@ -251,7 +251,8 @@ public class CLIMainTest extends StandaloneTestBase {
     });
   }
 
-  private static void testCommandOutputNotContains(CLI cli, String command, final String expectedOutput) throws Exception {
+  private static void testCommandOutputNotContains(CLI cli, String command,
+                                                   final String expectedOutput) throws Exception {
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override
