@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.common.http.HttpRequests;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -73,6 +74,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.net.ssl.HttpsURLConnection;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -374,6 +376,10 @@ public abstract class NettyRouterTestBase {
     boolean keepAlive = true;
     for (int i = 0; i < times; i++) {
       HttpURLConnection urlConn = (HttpURLConnection) urls[i % urls.length].openConnection();
+      if (urlConn instanceof HttpsURLConnection) {
+        HttpRequests.disableCertCheck((HttpsURLConnection) urlConn);
+      }
+
       try {
         urlConn.setRequestProperty(HttpHeaders.Names.CONNECTION,
                                    keepAlive ? HttpHeaders.Values.KEEP_ALIVE : HttpHeaders.Values.CLOSE);
