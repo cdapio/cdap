@@ -68,11 +68,8 @@ public class PurchaseAppTest extends TestBase {
       flowManager.stop();
     }
 
-    // Start UserProfileService
-    ServiceManager userProfileServiceManager = appManager.startService(UserProfileServiceHandler.SERVICE_NAME);
+    ServiceManager userProfileServiceManager = getServiceManager(appManager);
 
-    // Wait for service startup
-    serviceStatusCheck(userProfileServiceManager, true);
 
     // Add customer's profile information
     URL setUserProfileURL = new URL(userProfileServiceManager.getServiceURL(), UserProfileServiceHandler.USER_ENDPOINT);
@@ -134,6 +131,15 @@ public class PurchaseAppTest extends TestBase {
     Assert.assertEquals(profileFromPurchaseHistory.getLastName(), "bernard");
 
     appManager.stopAll();
+  }
+
+  private ServiceManager getServiceManager(ApplicationManager appManager) throws InterruptedException {
+    // Start UserProfileService
+    ServiceManager userProfileServiceManager = appManager.startService(UserProfileServiceHandler.SERVICE_NAME);
+
+    // Wait for service startup
+    serviceStatusCheck(userProfileServiceManager, true);
+    return userProfileServiceManager;
   }
 
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {

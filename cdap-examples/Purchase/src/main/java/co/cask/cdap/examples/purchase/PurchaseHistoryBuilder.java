@@ -35,7 +35,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * MapReduce job that reads purchases from the purchases DataSet and creates a purchase history for every user.
+ * MapReduce job that reads purchases from the purchases DataSet and creates a purchase history for every user
  */
 public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
@@ -60,7 +60,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   }
 
   /**
-   * Mapper class.
+   * Mapper class to emit user and corresponding purchase information
    */
   public static class PurchaseMapper extends Mapper<byte[], Purchase, Text, Text> {
 
@@ -78,7 +78,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   }
 
   /**
-   * Reducer class.
+   * Reducer class to aggregate all purchases per user
    */
   public static class PerUserReducer extends Reducer<Text, Text, String, PurchaseHistory>
     implements ProgramLifecycle<MapReduceContext> {
