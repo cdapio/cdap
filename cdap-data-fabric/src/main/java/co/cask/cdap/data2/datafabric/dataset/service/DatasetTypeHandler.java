@@ -54,7 +54,7 @@ import javax.ws.rs.PathParam;
  * Handles dataset type management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class DatasetTypeHandler extends AbstractHttpHandler {
   public static final String HEADER_CLASS_NAME = "X-Class-Name";
 

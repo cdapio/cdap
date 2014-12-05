@@ -63,20 +63,20 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   }
 
   private HttpResponse createNamespace(String metadata) throws Exception {
-    return doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION), metadata);
+    return doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3), metadata);
   }
 
   private HttpResponse listAllNamespaces() throws Exception {
-    return doGet(String.format("%s/namespaces", Constants.Gateway.API_VERSION));
+    return doGet(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3));
   }
 
   private HttpResponse getNamespace(String name) throws Exception {
     Preconditions.checkArgument(name != null, "namespace name cannot be null");
-    return doGet(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION, name));
+    return doGet(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
   }
 
   private HttpResponse deleteNamespace(String name) throws Exception {
-    return doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION, name));
+    return doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
   }
 
   private void assertResponseCode(int expected, HttpResponse response) {

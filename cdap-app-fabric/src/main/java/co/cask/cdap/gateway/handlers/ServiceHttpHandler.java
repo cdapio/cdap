@@ -36,8 +36,6 @@ import co.cask.cdap.proto.ServiceInstances;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -55,7 +53,7 @@ import javax.ws.rs.PathParam;
 /**
  *  {@link HttpHandler} for User Services.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);

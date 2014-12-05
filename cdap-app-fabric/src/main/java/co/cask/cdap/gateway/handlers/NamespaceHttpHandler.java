@@ -43,7 +43,7 @@ import javax.ws.rs.PathParam;
 /**
  * The {@link HttpHandler} for handling REST calls to namespace endpoints.
  */
-@Path(Constants.Gateway.API_VERSION)
+@Path(Constants.Gateway.API_VERSION_3)
 public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(NamespaceHttpHandler.class);
 

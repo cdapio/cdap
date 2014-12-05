@@ -44,7 +44,7 @@ import javax.ws.rs.PathParam;
 /**
  * Exposes the system {@link ACLTable} via REST endpoints.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public final class ACLHandler extends AbstractHttpHandler {
 
   private static final Gson GSON = new Gson();

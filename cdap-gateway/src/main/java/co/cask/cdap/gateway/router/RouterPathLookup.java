@@ -29,7 +29,9 @@ import org.jboss.netty.handler.codec.http.HttpRequest;
 public final class RouterPathLookup extends AuthenticatedHttpHandler {
 
   @Inject
-  public RouterPathLookup(Authenticator authenticator) { super(authenticator); }
+  public RouterPathLookup(Authenticator authenticator) {
+    super(authenticator);
+  }
 
   private enum AllowedMethod {
     GET, PUT, POST, DELETE
@@ -48,71 +50,85 @@ public final class RouterPathLookup extends AuthenticatedHttpHandler {
       String method = httpRequest.getMethod().getName();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
       String[] uriParts = StringUtils.split(requestPath, '/');
+      String accId = getAuthenticatedAccountId(httpRequest);
 
       //Check if the call should go to webapp
       //If service contains "$HOST" and if first split element is NOT the gateway version, then send it to WebApp
       //WebApp serves only static files (HTML, CSS, JS) and so /<appname> calls should go to WebApp
       //But procedure/stream calls issued by the UI should be routed to the appropriate CDAP service
       if (fallbackService.contains("$HOST") && (uriParts.length >= 1)
-                                            && (!(("/" + uriParts[0]).equals(Constants.Gateway.GATEWAY_VERSION)))) {
+                                            && (!(("/" + uriParts[0]).equals(Constants.Gateway.API_VERSION_2)))) {
         return fallbackService;
       }
 
-      if ((uriParts.length >= 2) && uriParts[1].equals("acls")) {
-        return Constants.Service.ACL;
-      } else if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
-        return Constants.Service.METRICS;
-      } else if ((uriParts.length >= 2) && uriParts[1].equals("data")) {
-        if ((uriParts.length >= 3) && uriParts[2].equals("explore")
-          && (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("tables"))) {
-          return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-        } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")
-          && uriParts[5].equals("schema")) {
-          // v2/data/explore/datasets/<dataset>/schema
-          return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-        }
-        return Constants.Service.DATASET_MANAGER;
-      } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
-        return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
-      } else if ((uriParts.length >= 2) && uriParts[1].equals("streams")) {
-        // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler
-        // /v2/streams should go to AppFabricHttp
-        // GET /v2/streams/flows should go to AppFabricHttp, rest should go Stream Handler
-        if (uriParts.length == 2) {
-          return Constants.Service.APP_FABRIC_HTTP;
-        } else if (uriParts.length == 3) {
-          return (requestMethod.equals(AllowedMethod.GET)) ?
-            Constants.Service.APP_FABRIC_HTTP : Constants.Service.STREAMS;
-        } else if ((uriParts.length == 4) && uriParts[3].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
-          return Constants.Service.APP_FABRIC_HTTP;
-        } else {
-          return Constants.Service.STREAMS;
-        }
-      } else if ((uriParts.length >= 6) && uriParts[5].equals("logs")) {
-        //Log Handler Path /v2/apps/<appid>/<programid-type>/<programid>/logs
-        return Constants.Service.METRICS;
-      } else if ((uriParts.length >= 5) && uriParts[4].equals("logs")) {
-        //Log Handler Path /v2/system/services/<service-id>/logs
-        return Constants.Service.METRICS;
-      } else if ((uriParts.length >= 7) && uriParts[3].equals("procedures") && uriParts[5].equals("methods")) {
-        //Procedure Path /v2/apps/<appid>/procedures/<procedureid>/methods/<methodName>
-        String accId = getAuthenticatedAccountId(httpRequest);
-        //Discoverable Service Name -> procedure.%s.%s.%s", accountId, appId, procedureName ;
-        String serviceName = String.format("procedure.%s.%s.%s", accId, uriParts[2], uriParts[4]);
-        return serviceName;
-      } else if ((uriParts.length >= 7) && uriParts[3].equals("services") && uriParts[5].equals("methods")) {
-        //User defined services handle methods on them:
-        //Service Path:  "/v2/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
-        String accId = getAuthenticatedAccountId(httpRequest);
-        //Discoverable Service Name -> "service.%s.%s.%s", accountId, appId, serviceId
-        String serviceName = String.format("service.%s.%s.%s", accId, uriParts[2], uriParts[4]);
-        return serviceName;
-      } else {
-        return Constants.Service.APP_FABRIC_HTTP;
+      //TODO: The following code for now makes it possible to lookup services for /v3 paths.
+      //This will have to be completely refactored once we know how all v3 paths look like (with namespaces)
+      //We will have to take into consideration common patterns between v2 and v3 paths when we do refactor
+      if (uriParts[0].equals(Constants.Gateway.API_VERSION_2_TOKEN)) {
+        return getV2RoutingService(uriParts, requestMethod, accId);
+      } else if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
+        return getV3RoutingService(uriParts, requestMethod, accId);
       }
     } catch (Exception e) {
 
     }
+    return Constants.Service.APP_FABRIC_HTTP;
+  }
+
+  private String getV2RoutingService(String [] uriParts, AllowedMethod requestMethod, String accId) {
+    if ((uriParts.length >= 2) && uriParts[1].equals("acls")) {
+      return Constants.Service.ACL;
+    } else if ((uriParts.length >= 2) && uriParts[1].equals("metrics")) {
+      return Constants.Service.METRICS;
+    } else if ((uriParts.length >= 2) && uriParts[1].equals("data")) {
+      if ((uriParts.length >= 3) && uriParts[2].equals("explore")
+        && (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("tables"))) {
+        return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+      } else if ((uriParts.length == 6) && uriParts[2].equals("explore") && uriParts[3].equals("datasets")
+        && uriParts[5].equals("schema")) {
+        // v2/data/explore/datasets/<dataset>/schema
+        return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+      }
+      return Constants.Service.DATASET_MANAGER;
+    } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
+      return Constants.Service.EXPLORE_HTTP_USER_SERVICE;
+    } else if ((uriParts.length >= 2) && uriParts[1].equals("streams")) {
+      // /v2/streams/<stream-id> GET should go to AppFabricHttp, PUT, POST should go to Stream Handler
+      // /v2/streams should go to AppFabricHttp
+      // GET /v2/streams/flows should go to AppFabricHttp, rest should go Stream Handler
+      if (uriParts.length == 2) {
+        return Constants.Service.APP_FABRIC_HTTP;
+      } else if (uriParts.length == 3) {
+        return (requestMethod.equals(AllowedMethod.GET)) ?
+          Constants.Service.APP_FABRIC_HTTP : Constants.Service.STREAMS;
+      } else if ((uriParts.length == 4) && uriParts[3].equals("flows") && requestMethod.equals(AllowedMethod.GET)) {
+        return Constants.Service.APP_FABRIC_HTTP;
+      } else {
+        return Constants.Service.STREAMS;
+      }
+    } else if ((uriParts.length >= 6) && uriParts[5].equals("logs")) {
+      //Log Handler Path /v2/apps/<appid>/<programid-type>/<programid>/logs
+      return Constants.Service.METRICS;
+    } else if ((uriParts.length >= 5) && uriParts[4].equals("logs")) {
+      //Log Handler Path /v2/system/services/<service-id>/logs
+      return Constants.Service.METRICS;
+    } else if ((uriParts.length >= 7) && uriParts[3].equals("procedures") && uriParts[5].equals("methods")) {
+      //Procedure Path /v2/apps/<appid>/procedures/<procedureid>/methods/<methodName>
+      //Discoverable Service Name -> procedure.%s.%s.%s", accountId, appId, procedureName ;
+      String serviceName = String.format("procedure.%s.%s.%s", accId, uriParts[2], uriParts[4]);
+      return serviceName;
+    } else if ((uriParts.length >= 7) && uriParts[3].equals("services") && uriParts[5].equals("methods")) {
+      //User defined services handle methods on them:
+      //Service Path:  "/v2/apps/{app-id}/services/{service-id}/methods/<user-defined-method-path>"
+      //Discoverable Service Name -> "service.%s.%s.%s", accountId, appId, serviceId
+      String serviceName = String.format("service.%s.%s.%s", accId, uriParts[2], uriParts[4]);
+      return serviceName;
+    } else {
+      return Constants.Service.APP_FABRIC_HTTP;
+    }
+  }
+
+  private String getV3RoutingService(String [] uriParts, AllowedMethod method, String accId) {
     return Constants.Service.APP_FABRIC_HTTP;
   }
 }

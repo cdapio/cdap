@@ -178,7 +178,7 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected URL getUrl(String resource) throws MalformedURLException {
-    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.GATEWAY_VERSION + resource);
+    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.API_VERSION_2 + resource);
   }
 
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {

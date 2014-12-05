@@ -122,7 +122,7 @@ public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implem
     InetSocketAddress addr = endpoint.getSocketAddress();
     return new URL(String.format("http://%s:%s%s/data/%s",
                          addr.getHostName(), addr.getPort(),
-                         Constants.Gateway.GATEWAY_VERSION,
+                         Constants.Gateway.API_VERSION_2,
                          path));
   }
 

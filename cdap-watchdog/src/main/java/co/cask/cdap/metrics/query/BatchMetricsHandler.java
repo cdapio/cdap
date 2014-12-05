@@ -47,7 +47,7 @@ import javax.ws.rs.Path;
 /**
  * Class for handling batch requests for metrics data.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
+@Path(Constants.Gateway.API_VERSION_2 + "/metrics")
 public final class BatchMetricsHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(BatchMetricsHandler.class);
