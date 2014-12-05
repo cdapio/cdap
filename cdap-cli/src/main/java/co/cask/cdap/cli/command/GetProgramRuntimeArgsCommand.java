@@ -17,22 +17,25 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
+import com.google.gson.Gson;
 
 import java.io.PrintStream;
+import java.util.Map;
 
 /**
- * Gets the status of a program.
+ * Gets the runtime arguments of a program.
  */
-public class GetProgramStatusCommand implements Command {
+public class GetProgramRuntimeArgsCommand implements Command {
+
+  private static final Gson GSON = new Gson();
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  protected GetProgramStatusCommand(ElementType elementType, ProgramClient programClient) {
+  public GetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
     this.programClient = programClient;
   }
@@ -40,24 +43,19 @@ public class GetProgramStatusCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    if (programIdParts.length < 2) {
-      throw new CommandInputError(this);
-    }
-
     String appId = programIdParts[0];
     String programId = programIdParts[1];
-
-    String status = programClient.getStatus(appId, elementType.getProgramType(), programId);
-    output.println(status);
+    Map<String, String> runtimeArgs = programClient.getRuntimeArgs(appId, elementType.getProgramType(), programId);
+    output.printf(GSON.toJson(runtimeArgs));
   }
 
   @Override
   public String getPattern() {
-    return String.format("get %s status <%s>", elementType.getName(), elementType.getArgumentName());
+    return String.format("get %s runtimeargs <%s>", elementType.getName(), elementType.getArgumentName());
   }
 
   @Override
   public String getDescription() {
-    return "Gets the status of a " + elementType.getPrettyName();
+    return "Gets the runtime arguments of a " + elementType.getPrettyName();
   }
 }

@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
@@ -53,6 +54,9 @@ public class GetProgramRunsCommand extends AbstractCommand {
 
     List<RunRecord> records;
     if (elementType.getProgramType() != null) {
+      if (programIdParts.length < 2) {
+        throw new CommandInputError(this);
+      }
       String programId = programIdParts[1];
       if (arguments.hasArgument(ArgumentName.RUN_STATUS.toString())) {
         records = programClient.getProgramRuns(appId, elementType.getProgramType(), programId,

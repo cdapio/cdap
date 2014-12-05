@@ -17,6 +17,7 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.client.ProgramClient;
@@ -44,6 +45,9 @@ public class GetProgramLiveInfoCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
+    if (programIdParts.length < 2) {
+      throw new CommandInputError(this);
+    }
     String appId = programIdParts[0];
     String programId = programIdParts[1];
 

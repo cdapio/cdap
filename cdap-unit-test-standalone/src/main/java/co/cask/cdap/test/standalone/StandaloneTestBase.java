@@ -35,7 +35,7 @@ public class StandaloneTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneTestBase.class);
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder tmpFolder = new TemporaryFolder();
 
   private static StandaloneMain standaloneMain;
   /**
@@ -45,7 +45,7 @@ public class StandaloneTestBase {
   private static int testStackIndex = 0;
 
   @BeforeClass
-  public static void setUpClass() throws Throwable {
+  public static void setUpClass() throws Exception {
     testStackIndex++;
     if (standaloneMain == null) {
       try {
@@ -55,7 +55,7 @@ public class StandaloneTestBase {
         // Start without UI
         standaloneMain = StandaloneMain.create(null, cConf, new Configuration());
         standaloneMain.startUp();
-      } catch (Throwable e) {
+      } catch (Exception e) {
         LOG.error("Failed to start standalone", e);
         if (standaloneMain != null) {
           standaloneMain.shutDown();
@@ -66,7 +66,7 @@ public class StandaloneTestBase {
   }
 
   @AfterClass
-  public static void tearDownClass() {
+  public static void tearDownClass() throws Exception {
     testStackIndex--;
     if (standaloneMain != null && testStackIndex == 0) {
       standaloneMain.shutDown();

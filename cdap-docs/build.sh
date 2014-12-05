@@ -79,7 +79,7 @@ function usage() {
   echo "    docs-web       Clean build of HTML docs and Javadocs, zipped for placing on docs.cask.co webserver"
   echo ""
   echo "    zip            Zips results; options: none, $WEB, or $GITHUB"
-  echo "    license-pdfs   Clean build of License Dependency PDFs"
+  echo "    licenses       Clean build of License Dependency PDFs"
   echo ""
   echo "    sdk            Build SDK"
   echo "    version        Print the version information"
@@ -98,7 +98,7 @@ function run_command() {
     docs-github )       build_docs_github; exit 1;;
     docs-web )          build_docs_web; exit 1;;
     zip )               build_zip $2; exit 1;;
-    license-pdfs )      build_license_pdfs; exit 1;;
+    licenses )          build_license_depends; exit 1;;
     sdk )               build_sdk; exit 1;;
     version )           print_version; exit 1;;
     * )                 usage; exit 1;;
@@ -185,6 +185,16 @@ function build_zip() {
 function build_sdk() {
   cd developers-manual
   ./build.sh sdk $ARG_2 $ARG_3
+}
+
+function build_license_depends() {
+  cd reference-manual
+  ./build.sh license-pdfs $ARG_2 $ARG_3
+}
+
+function print_version() {
+  cd developers-manual
+  ./build.sh $ARG_1 $ARG_2 $ARG_3
 }
 
 set_project_path
