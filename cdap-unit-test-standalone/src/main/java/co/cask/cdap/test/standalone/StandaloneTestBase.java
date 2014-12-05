@@ -35,7 +35,7 @@ public class StandaloneTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneTestBase.class);
 
   @ClassRule
-  public static final TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static StandaloneMain standaloneMain;
   /**
@@ -50,7 +50,7 @@ public class StandaloneTestBase {
     if (standaloneMain == null) {
       try {
         CConfiguration cConf = CConfiguration.create();
-        cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+        cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
         // Start without UI
         standaloneMain = StandaloneMain.create(null, cConf, new Configuration());
