@@ -26,7 +26,7 @@ end
 
 svcs = ['cdap-router']
 unless node['cdap']['version'].to_f >= 2.6
-  unless node['cdap']['version'].split('.')[2].to_i < 9000
+  unless node['cdap']['version'].split('.')[2].to_i >= 9000
     svcs += ['cdap-gateway']
   end
 end
