@@ -1,4 +1,3 @@
-################################################################################################
 # Copyright © 2012-2014 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +13,11 @@
 # limitations under the License.
 #
 # Cask is a trademark of Cask Data, Inc. All rights reserved.
-################################################################################################
+###############################################################################################
 # Please visit Docker.com and follow instructions to download Docker SW in your environment.
 # This Dockerfile will build a CDAP image from scratch utilizing ubuntu 12.04 as a base image.
 # The assumption is that you are running this from the root of the cdap directory structure.
-################################################################################################
+#
 FROM ubuntu:12.04
 MAINTAINER Cask Data <ops@cask.co>
 RUN apt-get update && \
