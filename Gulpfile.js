@@ -5,14 +5,6 @@ var gulp = require('gulp'),
     mainBowerFiles = require('main-bower-files'),
     merge = require('merge-stream');
 
-function plumber() {
-  return plug.plumber({ errorHandler: function (err) {
-    plug.util.beep();
-    plug.util.log(plug.util.colors.red(err.toString()));
-  } });
-}
-
-
 /*
   library CSS
  */
@@ -28,7 +20,6 @@ gulp.task('css:lib', ['fonts'], function() {
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
     })))
-    .pipe(plumber())
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('lib.css'))
     .pipe(gulp.dest('./dist/assets/bundle'));
@@ -58,7 +49,6 @@ gulp.task('css:app', function() {
       './app/styles/common.less',
       './app/features/**/*.{less,css}'
     ])
-    .pipe(plumber())
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('app.css'))
     .pipe(plug.autoprefixer(["> 1%"], {cascade:true}))
@@ -130,7 +120,6 @@ gulp.task('js:app', function() {
       './app/**/*.js',
       '!./app/**/*-test.js'
     ])
-    .pipe(plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
