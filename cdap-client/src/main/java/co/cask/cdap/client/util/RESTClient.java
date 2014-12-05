@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.HttpHeaders;
 
 /**
@@ -94,13 +95,20 @@ public class RESTClient {
       int responseCode = response.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
         throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
-      } else if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
-        currentTry++;
-      } else if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
-        throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
-      } else {
-        return response;
       }
+      if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
+        currentTry++;
+        try {
+          TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+          break;
+        }
+        continue;
+      }
+      if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
+        throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
+      }
+      return response;
     } while (currentTry <= unavailableRetryLimit);
     return response;
   }

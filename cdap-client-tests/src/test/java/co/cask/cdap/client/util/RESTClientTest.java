@@ -55,7 +55,7 @@ import static com.google.inject.matcher.Matchers.only;
 public class RESTClientTest {
 
   private static final String ACCESS_TOKEN = "ssdw221e2ffderrfg33322rr";
-  private static final int RETRY_LIMIT = 100;
+  private static final int RETRY_LIMIT = 25;
 
   private TestHttpService httpService;
   private RESTClient restClient;
