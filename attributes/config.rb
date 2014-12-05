@@ -19,7 +19,7 @@
 
 # Default: conf.chef
 default['cdap']['conf_dir'] = 'conf.chef'
-# Default: 2.5.1
+# Default: 2.5.2-1
 default['cdap']['version'] = '2.5.2-1'
 # cdap-site.xml
 default['cdap']['cdap_site']['root.namespace'] = 'cdap'
