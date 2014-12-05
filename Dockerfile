@@ -92,7 +92,7 @@ EXPOSE 22
 # Clean UP (reduce space usage of container as much as possible)
 RUN apt-get purge -y maven unzip && \
     apt-get autoclean && \
-    apt-get autoremove 
+    apt-get -y autoremove 
 
 # start CDAP in the background and ssh in the foreground
 CMD /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/bin/cdap.sh start && /usr/sbin/sshd -D
