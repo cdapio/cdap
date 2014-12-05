@@ -137,7 +137,7 @@ public class RESTClientTest {
     URL url = getBaseURI().resolve("/api/testUnavail").toURL();
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
-    verifyResponse(response, only(503), any(), any());
+    verifyResponse(response, only(200), any(), any());
   }
 
   private void verifyResponse(HttpResponse response, Matcher<Object> expectedResponseCode,
@@ -199,7 +199,7 @@ public class RESTClientTest {
 
   @Path("/api")
   public final class TestHandler extends AbstractHttpHandler {
-    private int unavailEndpoint = 0;
+    private int unavailEnpointCount = 0;
 
     @POST
     @Path("/testPostAuth")
@@ -257,9 +257,12 @@ public class RESTClientTest {
     @Path("/testUnavail")
     public void testUnavail(org.jboss.netty.handler.codec.http.HttpRequest request,
                             HttpResponder responder) throws Exception {
-      unavailEndpoint++;
-      if (unavailEndpoint <= (RETRY_LIMIT + 1)) {
+      unavailEnpointCount++;
+      //Max amount of calls to this endpoint should be 1 (Original request) + RETRY_LIMIT.
+      if (unavailEnpointCount < (RETRY_LIMIT + 1)) {
         responder.sendStatus(HttpResponseStatus.SERVICE_UNAVAILABLE);
+      } else if (unavailEnpointCount == (RETRY_LIMIT + 1)) {
+        responder.sendStatus(HttpResponseStatus.OK);
       } else {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
