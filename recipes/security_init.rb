@@ -21,7 +21,16 @@ include_recipe 'cdap::security'
 
 # Create a new keystore if SSL is enabled
 execute 'create-security-server-ssl-keystore' do
-  ssl_enabled = node['cdap']['cdap_site']['security.server.ssl.enabled'] || false
+  ssl_enabled =
+    if node['cdap']['version'].to_f < 2.5 && node['cdap'].key?('cdap_site') &&
+       node['cdap']['cdap_site'].key?('security.server.ssl.enabled')
+      node['cdap']['cdap_site']['security.server.ssl.enabled']
+    elsif node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled')
+      node['cdap']['cdap_site']['ssl.enabled']
+    else
+      false
+    end
+
   password = node['cdap']['cdap_site']['security.server.ssl.keystore.password']
   path = node['cdap']['cdap_site']['security.server.ssl.keystore.path']
   common_name = node['cdap']['security']['ssl_common_name']
