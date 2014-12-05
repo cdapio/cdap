@@ -37,7 +37,6 @@ public final class LoggingConfiguration {
   public static final String NUM_PARTITIONS = "log.publish.num.partitions";
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
   public static final String LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = "log.saver.event.bucket.interval.ms";
-  public static final String LOG_SAVER_EVENT_PROCESSING_DELAY_MS = "log.saver.event.processing.delay.ms";
   public static final String LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = "log.saver.event.max.inmemory.buckets";
   public static final String LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = "log.saver.inactive.file.interval.ms";
   public static final String LOG_SAVER_CHECKPOINT_INTERVAL_MS = "log.saver.checkpoint.interval.ms";

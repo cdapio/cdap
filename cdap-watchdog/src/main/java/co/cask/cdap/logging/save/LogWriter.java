@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedSet;
 
 /**
@@ -37,7 +38,7 @@ import java.util.SortedSet;
 public class LogWriter implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(LogWriter.class);
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
-  private final RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable;
+  private final RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable;
   private final long eventBucketIntervalMs;
   private final long maxNumberOfBucketsInTable;
 
@@ -45,7 +46,7 @@ public class LogWriter implements Runnable {
   private int messages = 0;
 
   public LogWriter(LogFileWriter<KafkaLogEvent> logFileWriter,
-                   RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable,
+                   RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
                    long eventBucketIntervalMs, long maxNumberOfBucketsInTable) {
     this.logFileWriter = logFileWriter;
     this.messageTable = messageTable;
@@ -66,15 +67,16 @@ public class LogWriter implements Runnable {
           if (!rowKeySet.isEmpty()) {
             // Get the oldest bucket in the table
             long oldestBucketKey = rowKeySet.first();
-            if (currentBucketKey > (oldestBucketKey + maxNumberOfBucketsInTable)) {
-              Map<String, List<KafkaLogEvent>> row = messageTable.row(oldestBucketKey);
 
-              for (Iterator<Map.Entry<String, List<KafkaLogEvent>>> it = row.entrySet().iterator(); it.hasNext(); ) {
-                Map.Entry<String, List<KafkaLogEvent>> mapEntry = it.next();
-                writeListMap.putAll(mapEntry.getKey(), mapEntry.getValue());
-                messages += mapEntry.getValue().size();
-                it.remove();
-              }
+            Map<String, Entry<Long, List<KafkaLogEvent>>> row = messageTable.row(oldestBucketKey);
+            for (Iterator<Map.Entry<String, Entry<Long, List<KafkaLogEvent>>>> it = row.entrySet().iterator();
+                   it.hasNext(); ) {
+              Map.Entry<String, Entry<Long, List<KafkaLogEvent>>> mapEntry = it.next();
+              if (currentBucketKey < (mapEntry.getValue().getKey() + maxNumberOfBucketsInTable))
+                break;
+              writeListMap.putAll(mapEntry.getKey(), mapEntry.getValue().getValue());
+              messages += mapEntry.getValue().getValue().size();
+              it.remove();
             }
           }
         }

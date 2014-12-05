@@ -29,8 +29,10 @@ import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.AbstractMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.concurrent.TimeUnit;
 
@@ -40,12 +42,12 @@ import java.util.concurrent.TimeUnit;
 public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
   private static final Logger LOG = LoggerFactory.getLogger(LogCollectorCallback.class);
 
-  private final RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable;
+  private final RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable;
   private final LoggingEventSerializer serializer;
   private final long eventBucketIntervalMs;
   private final long maxNumberOfBucketsInTable;
 
-  public LogCollectorCallback(RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable,
+  public LogCollectorCallback(RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
                               LoggingEventSerializer serializer, long eventBucketIntervalMs,
                               long maxNumberOfBucketsInTable) {
     this.messageTable = messageTable;
@@ -90,10 +92,15 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
         }
 
         synchronized (messageTable) {
-          List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
-          if (msgList == null) {
+          Entry<Long, List<KafkaLogEvent>> entry = messageTable.get(key, loggingContext.getLogPathFragment());
+          List<KafkaLogEvent> msgList = null;
+          if (entry == null) {
+            long eventArrivalBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
             msgList = Lists.newArrayList();
-            messageTable.put(key, loggingContext.getLogPathFragment(), msgList);
+            messageTable.put(key, loggingContext.getLogPathFragment(),
+                             new AbstractMap.SimpleEntry<Long, List<KafkaLogEvent>>(eventArrivalBucketKey, msgList));
+          } else {
+           msgList = messageTable.get(key, loggingContext.getLogPathFragment()).getValue();
           }
           msgList.add(new KafkaLogEvent(genericRecord, event, loggingContext,
                                         message.getTopicPartition().getPartition(), message.getNextOffset()));

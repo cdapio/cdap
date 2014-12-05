@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
@@ -65,7 +66,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final KafkaClientService kafkaClient;
 
   private final CheckpointManager checkpointManager;
-  private final RowSortedTable<Long, String, List<KafkaLogEvent>> messageTable;
+  private final RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable;
 
   private final long eventBucketIntervalMs;
   private final int logCleanupIntervalMins;
