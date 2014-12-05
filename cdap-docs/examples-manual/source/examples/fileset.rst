@@ -20,7 +20,7 @@ This application demonstrates the use of the FileSet dataset:
   - The ``counts`` FileSet is used as output for the ``WordCount`` MapReduce Job.
   - The ``FileSetService`` allows uploading and downloading files within these two file sets.
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The FileSetExample Application
 ------------------------------

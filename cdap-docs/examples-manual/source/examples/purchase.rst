@@ -9,12 +9,12 @@
 Purchase
 ========
 
-A Cask Data Application Platform (CDAP) Example demonstrating many of the CDAP elements.
+A Cask Data Application Platform (CDAP) Example demonstrating many of the CDAP components.
 
 Overview
 ========
 
-This example demonstrates use of many of the CDAP elements—Streams, Flows, Flowlets,
+This example demonstrates use of many of the CDAP components—Streams, Flows, Flowlets,
 Datasets, Queries, MapReduce Jobs, Workflows, and Services—all in a single Application.
 
 The application uses a scheduled MapReduce Job and Workflow to read from one ObjectStore Dataset
@@ -42,7 +42,7 @@ and write to another.
 you should not start it manually until after entering the first customers' purchases, or the
 PurchaseHistoryService will responds with *204 No Response* status code.
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The Purchase Application
 ------------------------

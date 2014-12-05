@@ -27,7 +27,7 @@ goes through the entries, calculates page rank and tabulates results in another 
 Once the application completes, you can query the *ranks* Dataset by using the ``rank`` endpoint of the *RanksService*.
 It will send back a string result with page rank based on the ``url`` query parameter.
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The SparkPageRank Application
 ------------------------------

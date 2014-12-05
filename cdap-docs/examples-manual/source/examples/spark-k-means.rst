@@ -26,7 +26,7 @@ goes through the entries, calculates centers and tabulates results in another Ob
 Once the application completes, you can query the *centers* Dataset by using the ``centers/{index}`` endpoint
 of the *CentersService*. It will respond with the center's coordinates based on the ``index`` parameter (e.g. "9.1,9.1,9.1").
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The SparkKMeans Application
 ------------------------------------------------------------

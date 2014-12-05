@@ -28,7 +28,7 @@ store the results and statistics in datasets.
     forwards this word to the ``unique`` flowlet.
   - The ``unique`` flowlet receives a word and updates the ``uniqueCount`` table, if it sees this word for the first time.
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The Word Count Application
 --------------------------

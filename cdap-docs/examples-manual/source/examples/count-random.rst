@@ -20,7 +20,7 @@ This application does not have a Stream, instead it uses a Tick annotation in th
 - The ``splitter`` flowlet splits the number into digits, and emits these digits to the next stage.
 - The ``counter`` increments the count of the received number in the KeyValueTable.
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The Count Random Application
 ------------------------------
