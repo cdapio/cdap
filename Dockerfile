@@ -72,7 +72,7 @@ COPY cdap-web-app /Build/cdap-web-app
 # build cdap-standalone zip file, copy it to container and extract it
 RUN cd Build && MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release && \
     unzip cdap-standalone/target/cdap-sdk-[0-9]*.[0-9]*.[0-9]*.zip -d /Software && \
-    cd /Software && rm cdap-sdk-[0-9]*.[0-9]*.[0-9]*.zip && \
+    cd /Software && \
     rm -rf /Build
 
 # SSH
