@@ -675,7 +675,8 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public NamespaceMeta createNamespace(final NamespaceMeta metadata) throws Exception {
+  @Nullable
+  public NamespaceMeta createNamespace(final NamespaceMeta metadata) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
@@ -691,7 +692,8 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public NamespaceMeta getNamespace(final Id.Namespace id) throws Exception {
+  @Nullable
+  public NamespaceMeta getNamespace(final Id.Namespace id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
@@ -701,7 +703,8 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public NamespaceMeta deleteNamespace(final Id.Namespace id) throws Exception {
+  @Nullable
+  public NamespaceMeta deleteNamespace(final Id.Namespace id) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
       @Override
       public NamespaceMeta apply(AppMds input) throws Exception {
@@ -715,7 +718,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public List<NamespaceMeta> listNamespaces() throws Exception {
+  public List<NamespaceMeta> listNamespaces() {
     return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<NamespaceMeta>>() {
       @Override
       public List<NamespaceMeta> apply(AppMds input) throws Exception {

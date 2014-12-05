@@ -304,7 +304,8 @@ public interface Store {
    * a namespace with the specified name did not exist, and was created successfully
    * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#putIfAbsent}
    */
-  NamespaceMeta createNamespace(NamespaceMeta metadata) throws Exception;
+  @Nullable
+  NamespaceMeta createNamespace(NamespaceMeta metadata);
 
   /**
    * Retrieves a namespace from the namespace metadata store.
@@ -312,7 +313,8 @@ public interface Store {
    * @param id {@link Id.Namespace} of the requested namespace
    * @return {@link NamespaceMeta} of the requested namespace
    */
-  NamespaceMeta getNamespace(Id.Namespace id) throws Exception;
+  @Nullable
+  NamespaceMeta getNamespace(Id.Namespace id);
 
   /**
    * Deletes a namespace from the namespace metadata store.
@@ -322,12 +324,13 @@ public interface Store {
    * exist
    * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#remove}
    */
-  NamespaceMeta deleteNamespace(Id.Namespace id) throws Exception;
+  @Nullable
+  NamespaceMeta deleteNamespace(Id.Namespace id);
 
   /**
    * Lists all registered namespaces.
    *
    * @return a list of all registered namespaces
    */
-  List<NamespaceMeta> listNamespaces() throws Exception;
+  List<NamespaceMeta> listNamespaces();
 }

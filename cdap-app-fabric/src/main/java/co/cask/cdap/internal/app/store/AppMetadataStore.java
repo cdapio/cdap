@@ -251,19 +251,19 @@ public class AppMetadataStore extends MetadataStoreDataset {
     deleteAll(new Key.Builder().add(TYPE_RUN_RECORD_COMPLETED, accountId).build());
   }
 
-  public void createNamespace(NamespaceMeta metadata) throws Exception {
+  public void createNamespace(NamespaceMeta metadata) {
     write(getNamespaceKey(metadata.getName()), metadata);
   }
 
-  public NamespaceMeta getNamespace(Id.Namespace id) throws Exception {
+  public NamespaceMeta getNamespace(Id.Namespace id) {
     return get(getNamespaceKey(id.getId()), NamespaceMeta.class);
   }
 
-  public void deleteNamespace(Id.Namespace id) throws Exception {
+  public void deleteNamespace(Id.Namespace id) {
     deleteAll(getNamespaceKey(id.getId()));
   }
 
-  public List<NamespaceMeta> listNamespaces() throws Exception {
+  public List<NamespaceMeta> listNamespaces() {
     return list(getNamespaceKey(null), NamespaceMeta.class);
   }
 
