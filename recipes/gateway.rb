@@ -24,7 +24,14 @@ package 'cdap-gateway' do
   version node['cdap']['version']
 end
 
-%w(cdap-gateway cdap-router).each do |svc|
+svcs = ['cdap-router']
+unless node['cdap']['version'].to_f >= 2.6
+  unless node['cdap']['version'].split('.')[2].to_i >= 9000
+    svcs += ['cdap-gateway']
+  end
+end
+
+svcs.each do |svc|
   service svc do
     status_command "service #{svc} status"
     action :nothing
