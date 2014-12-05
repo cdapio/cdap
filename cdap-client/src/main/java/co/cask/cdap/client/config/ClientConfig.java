@@ -57,19 +57,19 @@ public class ClientConfig {
   private boolean sslEnabled;
   private String hostname;
   private int port;
-  private int unavailableRetry;
+  private int unavailableRetryLimit;
   private String apiVersion;
   private Supplier<AccessToken> accessToken;
   private boolean verifySSLCert;
 
-  private ClientConfig(String hostname, int port, boolean sslEnabled, int unavailableRetry,
+  private ClientConfig(String hostname, int port, boolean sslEnabled, int unavailableRetryLimit,
                        String apiVersion, Supplier<AccessToken> accessToken, boolean verifySSLCert,
                        HttpRequestConfig defaultHttpConfig, HttpRequestConfig uploadHttpConfig) {
     this.hostname = hostname;
     this.apiVersion = apiVersion;
     this.port = port;
     this.sslEnabled = sslEnabled;
-    this.unavailableRetry = unavailableRetry;
+    this.unavailableRetryLimit = unavailableRetryLimit;
     this.accessToken = accessToken;
     this.verifySSLCert = verifySSLCert;
     this.defaultHttpConfig = defaultHttpConfig;
@@ -135,7 +135,7 @@ public class ClientConfig {
   }
 
   public int getUnavailableRetryLimit() {
-    return unavailableRetry;
+    return unavailableRetryLimit;
   }
 
   public void setSSLEnabled(boolean sslEnabled) {
@@ -198,7 +198,7 @@ public class ClientConfig {
 
     private int uploadReadTimeoutMs = DEFAULT_UPLOAD_READ_TIMEOUT;
     private int uploadConnectTimeoutMs = DEFAULT_UPLOAD_CONNECT_TIMEOUT;
-    private int serviceUnavailableRetry = DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT;
+    private int serviceUnavailableRetryLimit = DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT;
 
     private int defaultReadTimeoutMs = DEFAULT_READ_TIMEOUT;
     private int defaultConnectTimeoutMs = DEFAULT_CONNECT_TIMEOUT;
@@ -275,14 +275,14 @@ public class ClientConfig {
       return this;
     }
 
-    public Builder setServiceUnavailableRetry(int retry) {
-      this.serviceUnavailableRetry = retry;
+    public Builder setServiceUnavailableRetryLimit(int retry) {
+      this.serviceUnavailableRetryLimit = retry;
       return this;
     }
 
     public ClientConfig build() {
       return new ClientConfig(hostname, port.or(sslEnabled ? DEFAULT_SSL_PORT : DEFAULT_PORT),
-                              sslEnabled, serviceUnavailableRetry, apiVersion, accessToken, verifySSLCert,
+                              sslEnabled, serviceUnavailableRetryLimit, apiVersion, accessToken, verifySSLCert,
                               new HttpRequestConfig(defaultConnectTimeoutMs, defaultReadTimeoutMs, verifySSLCert),
                               new HttpRequestConfig(uploadConnectTimeoutMs, uploadReadTimeoutMs, verifySSLCert));
     }

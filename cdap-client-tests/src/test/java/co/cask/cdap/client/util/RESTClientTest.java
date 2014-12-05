@@ -258,7 +258,7 @@ public class RESTClientTest {
     public void testUnavail(org.jboss.netty.handler.codec.http.HttpRequest request,
                             HttpResponder responder) throws Exception {
       unavailEnpointCount++;
-      //Max amount of calls to this endpoint should be 1 (Original request) + RETRY_LIMIT.
+      //Max number of calls to this endpoint should be 1 (Original request) + RETRY_LIMIT.
       if (unavailEnpointCount < (RETRY_LIMIT + 1)) {
         responder.sendStatus(HttpResponseStatus.SERVICE_UNAVAILABLE);
       } else if (unavailEnpointCount == (RETRY_LIMIT + 1)) {
