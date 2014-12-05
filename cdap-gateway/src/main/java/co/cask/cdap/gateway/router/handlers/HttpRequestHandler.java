@@ -108,7 +108,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
       // If no event sender, make new connection, otherwise reuse existing one.
       MessageSender sender =  discoveryLookup.get(discoverable);
-      if (sender == null) {
+      if (sender == null || !sender.isConnected()) {
         InetSocketAddress address = discoverable.getSocketAddress();
 
         ChannelFuture future = clientBootstrap.connect(address);
@@ -226,6 +226,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
       this.channelFuture = channelFuture;
       this.messages = Queues.newConcurrentLinkedQueue();
       this.writer = new AtomicBoolean(false);
+    }
+
+    private boolean isConnected() {
+      return channelFuture.getChannel().isConnected();
     }
 
     private void send(Object msg) {
