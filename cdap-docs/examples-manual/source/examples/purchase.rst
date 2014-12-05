@@ -183,8 +183,8 @@ reformatted to fit)::
   |                                    |   array<struct<customer:string,                   |
   |                                    |                userProfile:<struct<               |
   |                                    |                          id:string,               |
-  |                                    |                          firstname:string,        |
-  |                                    |                          lastname:string,         |
+  |                                    |                          firstName:string,        |
+  |                                    |                          lastName:string,         |
   |                                    |                          categories:array<string> |
   |                                    |                          >> optional,
   |                                    |                product:string,                    |
@@ -196,8 +196,8 @@ reformatted to fit)::
   | Alice                              | [{"customer":"Alice",                             |
   |                                    |                "userProfile":{                    |
   |                                    |                    "id":"alice",                  |
-  |                                    |                    "firstname":"Alice",           |
-  |                                    |                    "lastname":"Bernard",          |
+  |                                    |                    "firstName":"Alice",           |
+  |                                    |                    "lastName":"Bernard",          |
   |                                    |                    "categories":[                 |
   |                                    |                          "fruits"                 |
   |                                    |                          ]                        |
@@ -210,8 +210,8 @@ reformatted to fit)::
   |                                    |  {"customer":"Alice",                             |
   |                                    |                "userProfile":{                    |
   |                                    |                    "id":"alice",                  |
-  |                                    |                    "firstname":"Alice",           |
-  |                                    |                    "lastname":"Bernard",          |
+  |                                    |                    "firstName":"Alice",           |
+  |                                    |                    "lastName":"Bernard",          |
   |                                    |                    "categories":[                 |
   |                                    |                          "fruits"                 |
   |                                    |                          ]                        |
