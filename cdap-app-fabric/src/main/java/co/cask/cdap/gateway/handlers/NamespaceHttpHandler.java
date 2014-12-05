@@ -77,7 +77,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
       }
       responder.sendJson(HttpResponseStatus.OK, ns);
     } catch (Exception e) {
-      LOG.error("Internal error while listing namespace", e);
+      LOG.error("Internal error while getting namespace '{}'", namespace, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -89,11 +89,11 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       metadata = parseBody(request, NamespaceMeta.class);
     } catch (JsonSyntaxException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid namespace metadata. Must be a valid json.");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid json object provided in request body.");
       return;
     } catch (IOException e) {
-      LOG.error("Failed to read namespace metadata.", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to read namespace metadata.");
+      LOG.error("Failed to read namespace metadata request body.", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       return;
     }
 
@@ -115,8 +115,8 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
 
     try {
       NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder().setName(name)
-                                                               .setDisplayName(displayName).setDescription(description)
-                                                               .build());
+                                                       .setDisplayName(displayName).setDescription(description)
+                                                       .build());
       if (existing == null) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
