@@ -28,7 +28,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends openjdk-7-jdk && \
     apt-get install -y nodejs && \
     apt-get install -y maven && \
-    apt-get install -y unzip zip vim
+    apt-get install -y unzip vim
 
 # create Software directory
 RUN mkdir /Build /Software
@@ -71,20 +71,28 @@ COPY cdap-web-app /Build/cdap-web-app
 
 # build cdap-standalone zip file, copy it to container and extract it
 RUN cd Build && \
-    MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && mvn package -pl cdap-standalone -am -DskipTests -P dist,release && \
+    MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -P examples -pl cdap-examples -am -amd && \
+    mvn package -pl cdap-standalone -am -DskipTests -P dist,release && \
     unzip cdap-standalone/target/cdap-sdk-[0-9]*.[0-9]*.[0-9]*.zip -d /Software && \
     cd /Software && \
     rm -rf /Build
 
 # SSH
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server && mkdir -p /var/run/sshd && echo 'root:root' | chpasswd && \
-    sed -i "s/session.*required.*pam_loginuid.so/#session    required     pam_loginuid.so/" /etc/pam.d/sshd && \
-    sed -i "s/PermitRootLogin without-password/#PermitRootLogin without-password/" /etc/ssh/sshd_config
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server && \
+    mkdir -p /var/run/sshd && \
+    echo 'root:root' | chpasswd && \
+    sed -i -e '/session.*required.*pam_loginuid.so/ s/^/#/' /etc/pam.d/sshd && \
+    sed -i -e '/PermitRootLogin without-password/ s/^/#/' /etc/ssh/sshd_config
 
 # Expose Ports (9999 & 10000 for CDAP)
 EXPOSE 9999
 EXPOSE 10000
 EXPOSE 22
+
+# Clean UP (reduce space usage of container as much as possible)
+RUN apt-get purge -y maven unzip && \
+    apt-get autoclean && \
+    apt-get autoremove 
 
 # start CDAP in the background and ssh in the foreground
 CMD /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/bin/cdap.sh start && /usr/sbin/sshd -D
