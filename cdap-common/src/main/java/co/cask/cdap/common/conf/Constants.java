@@ -269,6 +269,11 @@ public final class Constants {
   public static final class Gateway {
     public static final String GATEWAY_VERSION_TOKEN = "v2";
     public static final String GATEWAY_VERSION = "/" + GATEWAY_VERSION_TOKEN;
+    /**
+     * v3 API.
+     */
+    public static final String API_VERSION_TOKEN = "v3";
+    public static final String API_VERSION = "/" + API_VERSION_TOKEN;
     public static final String STREAM_HANDLER_NAME = "stream.rest";
     public static final String METRICS_CONTEXT = "gateway." + Gateway.STREAM_HANDLER_NAME;
     public static final String API_KEY = "X-ApiKey";
