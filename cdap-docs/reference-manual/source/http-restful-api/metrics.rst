@@ -37,7 +37,7 @@ The general form of a metrics request is::
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
    * - ``<run-id>``
-        - Run-ID of the element; see `Querying by Run-ID`_
+     - Run-ID of the element; see `Querying by Run-ID`_
    * - ``<metric>``
      - Metric being queried; see `Available Metrics`_
    * - ``<time-range>``
