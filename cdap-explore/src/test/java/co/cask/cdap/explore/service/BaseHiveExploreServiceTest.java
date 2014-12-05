@@ -274,8 +274,6 @@ public class BaseHiveExploreServiceTest {
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
     hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
-    hConf.set("mapreduce.map.log.level", "TRACE");
-    hConf.set("yarn.nodemanager.delete.debug-delay-sec", "86400");
 
     return ImmutableList.of(
       new ConfigModule(cConf, hConf),

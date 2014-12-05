@@ -30,11 +30,13 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  *
@@ -156,5 +158,10 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                                   new ColumnDesc("cdap_stream_jointest2.body", "STRING", 2, null)),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("ABC", "ABC")))
     );
+  }
+
+  @Test(expected = ExecutionException.class)
+  public void testWriteToStreamFails() throws Exception {
+    exploreClient.submit("insert into table " + streamTableName + " select * from " + streamTableName).get();
   }
 }

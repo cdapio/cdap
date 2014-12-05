@@ -123,7 +123,6 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         // throws io exception if there is no stream
         streamAdmin.getConfig(streamName);
       } catch (IOException e) {
-        // 404 to be consistent with dataset api, but should this really be an error? Would 200 with no_op be better?
         LOG.debug("Could not find stream {} to disable explore on.", streamName, e);
         responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
         return;

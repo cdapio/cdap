@@ -59,6 +59,13 @@ public class StreamStorageHandler extends DefaultStorageHandler {
   }
 
   @Override
+  public void configureOutputJobProperties(TableDesc tableDesc,
+                                           Map<String, String> jobProperties) {
+    // throw the exception here instead of in getOutputFormatClass because that method is called on table creation.
+    throw new UnsupportedOperationException("Writing to streams through Hive is not supported");
+  }
+
+  @Override
   public HiveMetaHook getMetaHook() {
     return null;
   }
