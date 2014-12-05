@@ -3,11 +3,6 @@ aopalliance.aopalliance-1.0.jar
 c3p0.c3p0-0.9.1.1.jar
 ch.qos.logback.logback-classic-1.0.9.jar
 ch.qos.logback.logback-core-1.0.9.jar
-co.cask.http.netty-http-0.4.0.jar
-co.cask.tephra.tephra-api-0.3.0.jar
-co.cask.tephra.tephra-core-0.3.0.jar
-co.cask.tephra.tephra-hbase-compat-0.94-0.3.0.jar
-co.cask.tephra.tephra-hbase-compat-0.96-0.3.0.jar
 colt.colt-1.2.0.jar
 com.101tec.zkclient-0.3.jar
 com.clearspring.analytics.stream-2.7.0.jar
@@ -17,7 +12,6 @@ com.codahale.metrics.metrics-json-3.0.0.jar
 com.codahale.metrics.metrics-jvm-3.0.0.jar
 com.esotericsoftware.kryo.kryo-2.21.jar
 com.esotericsoftware.minlog.minlog-1.2.jar
-com.esotericsoftware.reflectasm.reflectasm-1.07-shaded.jar
 com.fasterxml.jackson.core.jackson-annotations-2.3.0.jar
 com.fasterxml.jackson.core.jackson-core-2.3.1.jar
 com.fasterxml.jackson.core.jackson-databind-2.3.1.jar
@@ -27,7 +21,6 @@ com.google.code.gson.gson-2.2.4.jar
 com.google.guava.guava-13.0.1.jar
 com.google.inject.extensions.guice-assistedinject-3.0.jar
 com.google.inject.extensions.guice-multibindings-3.0.jar
-com.google.inject.extensions.guice-servlet-3.0.jar
 com.google.inject.guice-3.0.jar
 com.jamesmurty.utils.java-xmlbuilder-0.4.jar
 com.jcraft.jsch-0.1.42.jar
@@ -49,11 +42,8 @@ commons-logging.commons-logging-1.1.1.jar
 commons-net.commons-net-3.1.jar
 com.ning.async-http-client-1.7.18.jar
 com.ning.compress-lzf-1.0.0.jar
-com.sun.jersey.contribs.jersey-guice-1.9.jar
 com.sun.jersey.jersey-core-1.9.jar
-com.sun.jersey.jersey-json-1.9.jar
 com.sun.jersey.jersey-server-1.9.jar
-com.sun.xml.bind.jaxb-impl-2.2.3-1.jar
 com.thoughtworks.paranamer.paranamer-2.3.jar
 com.twitter.chill_2.10-0.3.6.jar
 com.twitter.chill-java-0.3.6.jar
@@ -90,6 +80,7 @@ net.jpountz.lz4.lz4-1.2.0.jar
 net.sf.jopt-simple.jopt-simple-3.2.jar
 net.sf.jpam.jpam-1.1.jar
 net.sf.py4j.py4j-0.8.2.1.jar
+netty-http-0.6.0.jar
 org.antlr.antlr-runtime-3.4.jar
 org.antlr.ST4-4.0.4.jar
 org.antlr.stringtemplate-3.2.1.jar
@@ -119,12 +110,19 @@ org.apache.kafka.kafka_2.10-0.8.0.jar
 org.apache.mesos.mesos-0.18.1-shaded-protobuf.jar
 org.apache.thrift.libfb303-0.9.0.jar
 org.apache.thrift.libthrift-0.9.0.jar
+org.apache.twill.twill-api-0.4.0-incubating.jar
 org.apache.twill.twill-api-0.4.0-incubating-SNAPSHOT.jar
+org.apache.twill.twill-common-0.4.0-incubating.jar
 org.apache.twill.twill-common-0.4.0-incubating-SNAPSHOT.jar
+org.apache.twill.twill-core-0.4.0-incubating.jar
 org.apache.twill.twill-core-0.4.0-incubating-SNAPSHOT.jar
+org.apache.twill.twill-discovery-api-0.4.0-incubating.jar
 org.apache.twill.twill-discovery-api-0.4.0-incubating-SNAPSHOT.jar
+org.apache.twill.twill-discovery-core-0.4.0-incubating.jar
 org.apache.twill.twill-discovery-core-0.4.0-incubating-SNAPSHOT.jar
+org.apache.twill.twill-yarn-0.4.0-incubating.jar
 org.apache.twill.twill-yarn-0.4.0-incubating-SNAPSHOT.jar
+org.apache.twill.twill-zookeeper-0.4.0-incubating.jar
 org.apache.twill.twill-zookeeper-0.4.0-incubating-SNAPSHOT.jar
 org.apache.velocity.velocity-1.5.jar
 org.apache.xbean.xbean-reflect-3.6.jar
@@ -133,7 +131,6 @@ org.codehaus.jackson.jackson-core-asl-1.8.8.jar
 org.codehaus.jackson.jackson-jaxrs-1.8.8.jar
 org.codehaus.jackson.jackson-mapper-asl-1.8.8.jar
 org.codehaus.jackson.jackson-xc-1.8.8.jar
-org.codehaus.jettison.jettison-1.1.jar
 org.eclipse.jetty.aggregate.jetty-all-7.6.0.v20120127.jar
 org.eclipse.jetty.jetty-continuation-8.1.15.v20140411.jar
 org.eclipse.jetty.jetty-http-8.1.15.v20140411.jar
