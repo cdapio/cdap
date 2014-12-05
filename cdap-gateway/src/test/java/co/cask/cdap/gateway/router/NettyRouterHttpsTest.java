@@ -25,6 +25,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
+import co.cask.common.http.HttpRequests;
 import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
@@ -39,10 +40,12 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
 
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.util.Map;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -60,6 +63,13 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
   @Override
   protected String getProtocol() {
     return "https";
+  }
+
+  @Override
+  protected HttpURLConnection openURL(URL url) throws Exception {
+    HttpsURLConnection urlConn = (HttpsURLConnection) url.openConnection();
+    HttpRequests.disableCertCheck(urlConn);
+    return urlConn;
   }
 
   @Override

@@ -16,23 +16,28 @@
 
 package co.cask.cdap.cli.command;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
-import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
+import com.google.common.base.Splitter;
+import com.google.gson.Gson;
 
 import java.io.PrintStream;
+import java.util.Map;
 
 /**
- * Gets the status of a program.
+ * Sets the runtime arguments of a program.
  */
-public class GetProgramStatusCommand implements Command {
+public class SetProgramRuntimeArgsCommand implements Command {
+
+  private static final Gson GSON = new Gson();
 
   private final ProgramClient programClient;
   private final ElementType elementType;
 
-  protected GetProgramStatusCommand(ElementType elementType, ProgramClient programClient) {
+  public SetProgramRuntimeArgsCommand(ElementType elementType, ProgramClient programClient) {
     this.elementType = elementType;
     this.programClient = programClient;
   }
@@ -40,24 +45,24 @@ public class GetProgramStatusCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String[] programIdParts = arguments.get(elementType.getArgumentName().toString()).split("\\.");
-    if (programIdParts.length < 2) {
-      throw new CommandInputError(this);
-    }
-
     String appId = programIdParts[0];
     String programId = programIdParts[1];
-
-    String status = programClient.getStatus(appId, elementType.getProgramType(), programId);
-    output.println(status);
+    String runtimeArgsString = arguments.get(ArgumentName.RUNTIME_ARGS.toString());
+    Map<String, String> runtimeArgs = Splitter.on(" ").withKeyValueSeparator("=").split(runtimeArgsString);
+    programClient.setRuntimeArgs(appId, elementType.getProgramType(), programId, runtimeArgs);
+    output.printf("Successfully set runtime args of %s '%s' of application '%s' to '%s'\n",
+                  elementType.getPrettyName(), programId, appId, runtimeArgsString);
   }
 
   @Override
   public String getPattern() {
-    return String.format("get %s status <%s>", elementType.getName(), elementType.getArgumentName());
+    return String.format("set %s runtimeargs <%s> <%s>", elementType.getName(),
+                         elementType.getArgumentName(), ArgumentName.RUNTIME_ARGS);
   }
 
   @Override
   public String getDescription() {
-    return "Gets the status of a " + elementType.getPrettyName();
+    return "Sets the runtime arguments of a " + elementType.getPrettyName() + "." +
+      " <" + ArgumentName.RUNTIME_ARGS + "> is specified in the format \"key1=a key2=b\"";
   }
 }
