@@ -118,7 +118,9 @@ public class DistributedDatasetTypeClassLoaderFactory implements DatasetTypeClas
         File tempDir = Files.createTempDir();
         try {
           BundleJarUtil.unpackProgramJar(Files.newInputStreamSupplier(tmpJar), tempDir);
-          tempDir.renameTo(expandDir);
+          if (!tempDir.renameTo(expandDir) && !expandDir.isDirectory()) {
+            throw new IOException("Failed to rename expanded jar directory from " + tempDir + " to " + expandDir);
+          }
         } finally {
           try {
             if (tempDir.exists()) {
