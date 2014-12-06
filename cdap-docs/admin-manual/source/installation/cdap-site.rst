@@ -111,6 +111,9 @@ see the :ref:`configuration-security` section.
    * - ``explore.cleanup.job.schedule.secs``
      - ``60``
      - Time in secs to schedule clean up job to timeout operations
+   * - ``explore.enabled``
+     - ``false``
+     - Determines if the CDAP Explore Service is enabled
    * - ``explore.executor.container.instances``
      - ``1``
      - Number of explore executor instances
@@ -244,9 +247,6 @@ see the :ref:`configuration-security` section.
    * - ``metrics.query.bind.port``
      - ``45005``
      - Metrics query server port
-   * - ``cdap.explore.enabled``
-     - ``false``
-     - Determines if the CDAP Explore Service is enabled
    * - ``cdap.namespace``
      - ``cdap``
      - Namespace for this CDAP instance

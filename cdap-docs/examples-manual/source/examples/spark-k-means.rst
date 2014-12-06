@@ -23,8 +23,8 @@ processed by the ``PointsFlow``, which stores the points coordinates event in it
 As these entries are created, they are taken up by the *SparkKMeansProgram*, which
 goes through the entries, calculates centers and tabulates results in another ObjectStore Dataset, *centers*.
 
-Once the application completes, you can query the *centers* Dataset by using the ``centers`` method of the *CentersProcedure*. It will
-send back a JSON-formatted result with the center's coordinates based on the ``index`` parameter.
+Once the application completes, you can query the *centers* Dataset by using the ``centers/{index}`` endpoint
+of the *CentersService*. It will respond with the center's coordinates based on the ``index`` parameter (e.g. "9.1,9.1,9.1").
 
 Let's look at some of these elements, and then run the Application and see the results.
 
@@ -44,10 +44,10 @@ of the Application are tied together by the class ``SparkKMeansApp``:
 The raw points data is stored in an ObjectStore Dataset, *points*.
 The calculated centers data is stored in a second ObjectStore Dataset, *centers*.
 
-``CentersProcedure``: Procedure
+``CentersService``: Service
 ------------------------------------------------------------
 
-This procedure has a ``centers`` method to obtain the center's coordinates of a given index.
+This service has a ``centers/{index}`` endpoint to obtain the center's coordinates of a given index.
 
 
 Building and Starting
@@ -57,7 +57,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the flow and procedure as described.
+  Make sure you start the Flow and Service as described.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -93,7 +93,7 @@ There are three ways to start the Spark program:
 2. Send a query via an HTTP request using the ``curl`` command::
 
     curl -w '\n' -v -d '{args="3"}' \
-      'http://localhost:10000/v2/apps/SparkKMeansProgram/spark/SparkKMeansProgram/start'
+      'http://localhost:10000/v2/apps/SparkKMeans/spark/SparkKMeansProgram/start'
 
    On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
@@ -110,36 +110,19 @@ There are three ways to start the Spark program:
 Querying the Results
 ------------------------------
 
-If the Procedure has not already been started, you can start it either through the 
+If the Service has not already been started, you can start it either through the
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-  curl -v -d 'http://localhost:10000/v2/apps/SparkKMeans/procedures/CentersProcedure/start'
-  
-There are two ways to query the *centers* ObjectStore using the ``CentersProcedure`` procedure:
+  curl -v -X POST 'http://localhost:10000/v2/apps/SparkKMeans/services/CentersService/start'
 
-1. Send a query via an HTTP request using the ``curl`` command. For example::
+To query the *centers* ObjectStore using the ``CentersService``,
+send a query via an HTTP request using the ``curl`` command. For example::
 
-     curl -w '\n' -v -d '{"index": "1"}' \
-       'http://localhost:10000/v2/apps/SparkKMeans/procedures/CentersProcedure/methods/centers'
+    curl -w '\n' -v 'http://localhost:10000/v2/apps/SparkKMeans/services/CentersService/methods/centers/1'
 
-   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
+  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
 
-     libexec\curl...
-
-2. Type the Procedure method name, ``CentersProcedure``, in the Query page of the CDAP Console.
-
-   #. Click the *Query* button in the left side-bar of the CDAP Console.
-   #. Click on the *CentersProcedure* Procedure.
-   #. Type ``centers`` in the *Method* text box.
-   #. Type the parameters required for this method, a JSON string with the name *index* and
-      value of the index "1"::
-
-        { "index" : "1" }
-
-   #. Click the *Execute* button.
-   #. The center's coordinates will be displayed in the Console in JSON format. For example::
-
-        "9.1,9.1,9.1"
+    libexec\curl...
 
 Stopping the Application
 -------------------------------

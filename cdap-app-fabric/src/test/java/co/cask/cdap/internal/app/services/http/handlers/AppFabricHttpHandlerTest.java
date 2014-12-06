@@ -59,6 +59,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
@@ -209,7 +210,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       if (result.size() >= size) {
         // For each one, we have 4 fields.
         for (Map<String, String> m : result) {
-          Assert.assertEquals(4, m.size());
+          int expectedFieldSize = m.get("status").equals("RUNNING") ? 3 : 4;
+          Assert.assertEquals(expectedFieldSize, m.size());
         }
         break;
       }
@@ -1205,6 +1207,44 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       response = doPost("/v2/unrecoverable/reset");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    } finally {
+      Assert.assertEquals(200, doDelete("/v2/apps").getStatusLine().getStatusCode());
+    }
+    // make sure that after reset (no apps), list apps returns 200, and not 404
+    Assert.assertEquals(200, doGet("/v2/apps").getStatusLine().getStatusCode());
+  }
+
+  /**
+   * Test for resetting app.
+   */
+  @Test
+  public void testUnRecoverableDatasetsDeletion() throws Exception {
+    try {
+      // deploy app and create datasets
+      deploy(WordCountApp.class);
+      getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start");
+      waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
+
+      // check that datasets were created
+      Assert.assertTrue(
+        GSON.fromJson(EntityUtils.toString(doGet("/v2/datasets").getEntity()), JsonArray.class).size() > 0);
+
+      // try delete datasets while program is running: should fail
+      HttpResponse response = doDelete("/v2/unrecoverable/data/datasets");
+      Assert.assertEquals(400, response.getStatusLine().getStatusCode());
+
+      // stop program
+      getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "stop");
+      waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
+
+      // verify delete all datasets succeeded
+      response = doDelete("/v2/unrecoverable/data/datasets");
+      Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+      // check there are no datasets
+      Assert.assertEquals(
+        0, GSON.fromJson(EntityUtils.toString(doGet("/v2/datasets").getEntity()), JsonArray.class).size());
+
     } finally {
       Assert.assertEquals(200, doDelete("/v2/apps").getStatusLine().getStatusCode());
     }

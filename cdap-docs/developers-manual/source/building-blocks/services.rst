@@ -47,9 +47,9 @@ Services are implemented by extending ``AbstractService``, which consists of
     }
   }
 
-Similarly, you can also add Services using the ``addLocalService`` method. These Services
-will only be accessible by other programs within the same Application—other Applications
-and external clients will not be able to use them.
+.. Similarly, you can also add Services using the ``addLocalService`` method. These Services
+.. will only be accessible by other programs within the same Application—other Applications
+.. and external clients will not be able to use them.
 
 Service Handlers
 ----------------
@@ -105,6 +105,36 @@ An example of calling this endpoint with the HTTP RESTful API is shown in the :r
 
 **Note:** Any reserved or unsafe characters in the path parameters should be encoded using 
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`.
+See the next section, :ref:`services-path-parameters`.
+
+
+.. _services-path-parameters:
+
+About Path Parameters
+---------------------
+The value of a path parameter cannot contain any `characters that have a special meaning
+<http://tools.ietf.org/html/rfc3986#section-2.2>`__ in URI syntax. If a request has a path
+parameter that contains such a character, it must be `URL-encoded
+<http://tools.ietf.org/html/rfc3986#section-2.1>`__ using the "``%hh``" notation, a
+percent-symbol followed by two hex characters. 
+
+In general, any character that is not a letter, a digit, or one of ``$-_.+!*'()`` should be encoded.
+
+However, if the special character is a forward-slash (``/``), then it will appear to the
+path matcher as a "``/``", even if it is escaped as "``%2f``". This occurs because the path is
+decoded prior to matching.
+
+There are two ways to work around this:
+
+- Double-escape any forward-slashes (``/``) as "``%252f``". This will prevent the decoding before the path is matched.
+  However, the path parameter's value will contain the "``%2f``" instead of a "``/``", and the
+  application code must decode the parameter itself to obtain the actual value.
+
+- Use a query parameter instead. This is a better solution because the "``/``" is not a reserved
+  character in the query of a URI.
+
+
+
 
 
 Service Discovery
@@ -152,6 +182,23 @@ For example, in Flows::
   }
 
 .. rubric::  Examples of Using Services
+
+- The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using a
+  service to **retrieve a name from a dataset.**
+  
+- The :ref:`Purchase example <examples-purchase>` includes two services, ``CatalogLookupService``
+  and ``PurchaseHistoryService``; the latter **retrieves a specified customer's purchase 
+  history in a JSON format from a dataset.**
+
+- The :ref:`Spark example <examples-spark-k-means>` includes a service that **responds with
+  a calculated center from a dataset based on an index parameter.**
+
+- For another example of **a service reading from a dataset,** see the :ref:`Spark PageRank
+  example <examples-spark-page-rank>`.
+
+- For an example of **using path and query parameters,** see the 
+  :ref:`WordCount example <examples-word-count>`, where the class ``RetrieveCountsHandler``
+  retrieves a variety of statistics from datasets depending on the path supplied. 
 
 - Almost all of the :ref:`how-to guides <guides-index>` demonstrate the use of services.
   (The exception is the :ref:`cdap-bi-guide`.)
