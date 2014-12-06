@@ -44,7 +44,7 @@ public class ClientConfig {
   private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
   private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
 
-  private static final String DEFAULT_VERSION = Constants.Gateway.GATEWAY_VERSION_TOKEN;
+  private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_2_TOKEN;
   private static final int DEFAULT_PORT = CONF.getInt(Constants.Router.ROUTER_PORT);
   private static final int DEFAULT_SSL_PORT = CONF.getInt(Constants.Router.ROUTER_SSL_PORT);
   private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(Constants.Security.SSL_ENABLED);

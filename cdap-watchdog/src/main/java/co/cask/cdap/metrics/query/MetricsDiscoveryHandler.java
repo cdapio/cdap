@@ -51,7 +51,7 @@ import javax.ws.rs.Path;
  * Class for handling requests for aggregate application metrics of the
  * {@link co.cask.cdap.common.metrics.MetricsScope#USER} scope.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics/available")
+@Path(Constants.Gateway.API_VERSION_2 + "/metrics/available")
 public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
@@ -199,7 +199,7 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
     String contextPrefix = null;
     try {
       String path = request.getUri();
-      String base = Constants.Gateway.GATEWAY_VERSION + "/metrics/available/apps";
+      String base = Constants.Gateway.API_VERSION_2 + "/metrics/available/apps";
       if (path.startsWith(base)) {
         Iterator<String> pathParts = Splitter.on('/').split(path.substring(base.length() + 1)).iterator();
         MetricsRequestContext.Builder builder = new MetricsRequestContext.Builder();

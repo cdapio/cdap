@@ -165,7 +165,7 @@ import javax.ws.rs.QueryParam;
 /**
  *  HttpHandler class for app-fabric requests.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
+@Path(Constants.Gateway.API_VERSION_2) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
@@ -2301,7 +2301,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
                                    discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.GATEWAY_VERSION,
+                                   Constants.Gateway.API_VERSION_2,
                                    scope.name().toLowerCase(),
                                    application.getName());
         sendMetricsDelete(url);
@@ -2310,7 +2310,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (applicationId == null) {
       String url = String.format("http://%s:%d%s/metrics", discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.GATEWAY_VERSION);
+                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.API_VERSION_2);
       sendMetricsDelete(url);
     }
   }
@@ -2330,7 +2330,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.GATEWAY_VERSION,
+                               Constants.Gateway.API_VERSION_2,
                                application, flow);
 
     long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);

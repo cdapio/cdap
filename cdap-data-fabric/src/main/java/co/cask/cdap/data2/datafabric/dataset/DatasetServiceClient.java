@@ -297,6 +297,6 @@ class DatasetServiceClient {
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
     return String.format("http://%s:%s%s/data/%s", addr.getHostName(), addr.getPort(),
-                         Constants.Gateway.GATEWAY_VERSION, resource);
+                         Constants.Gateway.API_VERSION_2, resource);
   }
 }
