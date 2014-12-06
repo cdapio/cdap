@@ -20,8 +20,9 @@ function myNavbarDirective ($dropdown, caskTheme) {
       scope.theme = caskTheme;
 
       scope.navbarLinks = [
-        { sref: 'foo',      label: 'Foo',     icon: 'cube'          },
-        { sref: 'bar',      label: 'Bar',     icon: 'cog'           }
+        { sref: 'apps',       label: 'Overview',     icon: 'cube'      },
+        { sref: 'dashboard',  label: 'Operations',   icon: 'dashboard' },
+        { sref: 'admin',      label: 'Admin',        icon: 'cog'       }
       ];
 
     }

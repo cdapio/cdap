@@ -25,7 +25,7 @@
   <li role="presentation" ng-repeat="it in theme.list()" ng-class="{disabled:it==theme.current}">
     <a role="menuitem" href="" ng-click="theme.set(it)">
       <span class="fa" ng-class="it==theme.current ? 'fa-dot-circle-o' : 'fa-circle-o'"></span>
-      {{it | caskCapitalizeFilter}}
+      <span ng-bind="{cdap:'CDAP', default:'Bootstrap'}[it]"></span>
     </a>
   </li>
 

@@ -205,7 +205,6 @@ angular.module(PKG.name+'.services')
           msg.resource.json = true;
 
           // parse the _cdap key, prefix with the CDAP protocol/host
-          // @TODO get prefix from config
           if(r._cdap) {
             var p = r._cdap.split(' '),
                 path = p.pop();

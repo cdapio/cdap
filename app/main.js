@@ -5,6 +5,7 @@ angular
 
     angular.module(PKG.name+'.features', [
       PKG.name+'.feature.home',
+      PKG.name+'.feature.dashboard',
       PKG.name+'.feature.foo'
     ]).name,
 
@@ -74,8 +75,8 @@ angular
 
   .config(function (caskThemeProvider) {
     caskThemeProvider.setThemes([
-      'default',
-      'yellow'
+      'cdap',   // customized theme
+      'default' // bootstrap default theme
     ]);
   })
 
