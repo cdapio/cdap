@@ -1001,4 +1001,34 @@ public class ProgramHelper {
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  public void getWorkflowStatus(HttpRequest request, final HttpResponder responder, String accountId, String appId,
+                                String workflowName) {
+    try {
+      workflowClient.getWorkflowStatus(accountId, appId, workflowName,
+                                       new WorkflowClient.Callback() {
+                                         @Override
+                                         public void handle(WorkflowClient.Status status) {
+                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
+                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
+                                             responder.sendByteArray(HttpResponseStatus.OK,
+                                                                     status.getResult().getBytes(),
+                                                                     ImmutableMultimap.of(
+                                                                       HttpHeaders.Names.CONTENT_TYPE,
+                                                                       "application/json; charset=utf-8"));
+
+                                           } else {
+                                             responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                                                                 status.getResult());
+                                           }
+                                         }
+                                       });
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Caught exception", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

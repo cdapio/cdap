@@ -444,7 +444,6 @@ public class AppHelper {
 
   /*
    * Returns DeploymentStatus
-   * TODO: This should accept namespaceId instead of accountId going forward
    */
   private DeployStatus dstatus(String accountId) {
     if (!sessions.containsKey(accountId)) {
@@ -461,7 +460,6 @@ public class AppHelper {
 
   /*
    * Retrieves a {@link SessionInfo} from the file system.
-   * TODO: This should accept namespaceId instead of accountId going forward
    */
   @Nullable
   private SessionInfo retrieve(String accountId) {
@@ -843,7 +841,6 @@ public class AppHelper {
       };
     }
   }
-
 
   private static ApplicationRecord makeAppRecord(ApplicationSpecification appSpec) {
     return new ApplicationRecord("App", appSpec.getName(), appSpec.getName(), appSpec.getDescription());

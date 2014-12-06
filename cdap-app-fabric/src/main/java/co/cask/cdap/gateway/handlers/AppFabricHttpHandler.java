@@ -144,8 +144,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final Store store;
 
-  private final WorkflowClient workflowClient;
-
   private final DiscoveryServiceClient discoveryServiceClient;
 
   private final QueueAdmin queueAdmin;
@@ -161,11 +159,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
-                              StoreFactory storeFactory,
-                              ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
-                              WorkflowClient workflowClient, QueueAdmin queueAdmin,
-                              DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
-                              DatasetFramework dsFramework, AppHelper appHelper,
+                              StoreFactory storeFactory, ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
+                              QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
+                              TransactionSystemClient txClient, DatasetFramework dsFramework, AppHelper appHelper,
                               ProgramHelper programHelper) {
 
     super(authenticator);
@@ -173,7 +169,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.store = storeFactory.create();
-    this.workflowClient = workflowClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
@@ -1219,33 +1214,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void workflowStatus(HttpRequest request, final HttpResponder responder,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
 
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      workflowClient.getWorkflowStatus(accountId, appId, workflowName,
-                                       new WorkflowClient.Callback() {
-                                         @Override
-                                         public void handle(WorkflowClient.Status status) {
-                                           if (status.getCode() == WorkflowClient.Status.Code.NOT_FOUND) {
-                                             responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-                                           } else if (status.getCode() == WorkflowClient.Status.Code.OK) {
-                                             responder.sendByteArray(HttpResponseStatus.OK,
-                                                                     status.getResult().getBytes(),
-                                                                     ImmutableMultimap.of(
-                                                                       HttpHeaders.Names.CONTENT_TYPE,
-                                                                       "application/json; charset=utf-8"));
-
-                                           } else {
-                                             responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                                                                 status.getResult());
-                                           }
-                                         }
-                                       });
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Caught exception", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    programHelper.getWorkflowStatus(request, responder, getAuthenticatedAccountId(request), appId, workflowName);
   }
 
   /**
