@@ -46,7 +46,7 @@
     </div>
     <div class="panel-body">
       <div ng-repeat="app in apps">
-        <a ui-sref="applications({namespace: 'ns1'})">
+        <a ui-sref="applications.list({namespace: 'ns1'})">
           <h3 ng-bind="app.name">  </h3>
           <div ng-bing="app.description"> </div>
         </a>
@@ -62,7 +62,7 @@
     </div>
     <div class="panel-body">
       <div ng-repeat="app in apps">
-        <a ui-sref="applications({namespace: 'ns1'})">
+        <a ui-sref="applications.list({namespace: 'ns1'})">
         <h3 ng-bind="app.name">  </h3>
         <div ng-bing="app.description"> </div>
         </a>

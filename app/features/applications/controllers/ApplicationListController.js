@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.applications')
-  .controller('ApplicationController', function($scope, MyDataSource) {
+  .controller('ApplicationListController', function($scope, MyDataSource) {
 
     var data = new MyDataSource($scope);
 

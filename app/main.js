@@ -30,6 +30,7 @@ angular
         'cask-angular-capitalize'
       ]).name,
 
+      'cask-angular-sortable',
       'mgcrea.ngStrap.alert',
       'mgcrea.ngStrap.tooltip',
       'mgcrea.ngStrap.popover',

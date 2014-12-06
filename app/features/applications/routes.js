@@ -19,35 +19,41 @@ angular.module(PKG.name+'.feature.applications')
       .state('applications', {
         url: '/ns/:namespace/apps',
         templateUrl: '/assets/features/applications/applications.html',
-        controller: 'ApplicationController'
+        controller: 'ApplicationListController'
+      })
+
+      .state('applications.list', {
+        url: '/',
+        templateUrl: '/assets/features/applications/templates/list.html',
+        controller: 'ApplicationListController'
       })
 
       .state('applications.status', {
-        url: '/ns/:namespace/apps/:app/status',
+        url: '/:app/status',
         templateUrl: '/assets/features/applications/templates/status.html',
-        controller: 'ApplicationController'
+        controller: 'ApplicationStatusController'
       })
 
       .state('applications.data', {
-        url: '/ns/:namespace/apps/:app/data',
+        url: '/:app/data',
         templateUrl: '/assets/features/applications/templates/data.html',
         controller: 'ApplicationController'
       })
 
       .state('applications.history', {
-        url: '/ns/:namespace/apps/:app/history',
+        url: '/:app/history',
         templateUrl: '/assets/features/applications/templates/history.html',
         controller: 'ApplicationController'
       })
 
       .state('applications.metadata', {
-        url: '/ns/:namespace/apps/:app/metadata',
+        url: '/:app/metadata',
         templateUrl: '/assets/features/applications/templates/metadata.html',
         controller: 'ApplicationController'
       })
 
       .state('applications.resources', {
-        url: '/ns/:namespace/apps/:app/resources',
+        url: '/:app/resources',
         templateUrl: '/assets/features/applications/templates/resources.html',
         controller: 'ApplicationController'
       })

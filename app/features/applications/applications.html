@@ -1,29 +1,9 @@
+<a ui-sref="home"> Go Home </a>
 <div class="panel panel-default">
   <div class="panel-heading">
     <div class="panel-title"> Applications </div>
   </div>
   <div class="panel-body" my-applications>
-    <table class="table table-bordered table-responsive">
-      <thead>
-        <tr>
-          <th> Name </th>
-          <th> Version </th>
-          <th> Deployed </th>
-          <th> Description </th>
-          <th> Owner </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr ng-repeat="app in apps">
-          <td ng-bind="app.name">  </td>
-          <td ng-bind="app.version">  </td>
-          <td ng-bind="app.deployed">  </td>
-          <td ng-bind="app.description">  </td>
-          <td ng-bind="app.owner">  </td>
-
-        </tr>
-      <tbody>
-    </table>
-  </div>
+    <div ui-view></div>
   </div>
 </div>
