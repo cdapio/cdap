@@ -130,7 +130,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
 
     public static final class LifecycleWorker extends AbstractServiceWorker {
       private static final Logger LOG = LoggerFactory.getLogger(LifecycleWorker.class);
-      private static volatile boolean isRunning;
+      private volatile boolean isRunning;
 
       @Override
       protected void configure() {
@@ -141,7 +141,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       @Override
       public void initialize(ServiceWorkerContext context) throws Exception {
         super.initialize(context);
-        String key = String.format("init.%d.%d", getContext().getInstanceId(), System.nanoTime());
+        String key = String.format("init.%d", getContext().getInstanceId());
         byte[] value = Bytes.toBytes(getContext().getInstanceCount());
         writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
       }
@@ -151,7 +151,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         isRunning = true;
         while (isRunning) {
           try {
-            TimeUnit.SECONDS.sleep(5);
+            TimeUnit.MILLISECONDS.sleep(50);
           } catch (InterruptedException e) {
             LOG.error("Error sleeping in LifecycleWorker", e);
           }
@@ -162,7 +162,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       public void stop() {
         super.stop();
         isRunning = false;
-        String key = String.format("stop.%d.%d", getContext().getInstanceId(), System.nanoTime());
+        String key = String.format("stop.%d", getContext().getInstanceId());
         byte[] value = Bytes.toBytes(getContext().getInstanceCount());
         writeToDataSet(getContext(), WORKER_INSTANCES_DATASET, key, value);
       }

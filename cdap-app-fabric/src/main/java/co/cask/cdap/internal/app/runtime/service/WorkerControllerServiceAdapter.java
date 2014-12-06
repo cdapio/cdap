@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.service;
 import co.cask.cdap.api.service.ServiceWorker;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.services.ServiceWorkerDriver;
 import org.apache.twill.api.RunId;
 
@@ -26,16 +27,19 @@ import org.apache.twill.api.RunId;
  * A {@link ProgramController} for {@link ServiceWorker}s.
  */
 public class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
-  private final ServiceWorkerDriver service;
+  private final ServiceWorkerDriver workerDriver;
 
-  public WorkerControllerServiceAdapter(ServiceWorkerDriver service, String programName, RunId runId) {
-    super(service, programName, runId);
-    this.service = service;
+  public WorkerControllerServiceAdapter(ServiceWorkerDriver workerDriver, String programName, RunId runId) {
+    super(workerDriver, programName, runId);
+    this.workerDriver = workerDriver;
   }
 
   @Override
   protected void doCommand(String name, Object value) throws Exception {
     super.doCommand(name, value);
-    service.setInstanceCount((Integer) value);
+    if (!ProgramOptionConstants.INSTANCES.equals(name) || !(value instanceof Integer)) {
+      return;
+    }
+    workerDriver.setInstanceCount((Integer) value);
   }
 }

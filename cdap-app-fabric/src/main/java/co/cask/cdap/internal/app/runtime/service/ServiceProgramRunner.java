@@ -259,7 +259,7 @@ public class ServiceProgramRunner implements ProgramRunner {
       liveRunnables = components.row(runnableName);
       // Update total instance count for all running runnables
       for (Map.Entry<Integer, ProgramController> entry : liveRunnables.entrySet()) {
-        entry.getValue().command(runnableName, newCount);
+        entry.getValue().command(ProgramOptionConstants.INSTANCES, newCount);
       }
     }
   }

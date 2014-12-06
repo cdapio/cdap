@@ -98,7 +98,7 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
 
     // By convention, the Http service always has the same name as the service itself.
     Service component;
-    ProgramControllerServiceAdapter controller;
+    ProgramController controller;
     if (componentName.equals(program.getName())) {
       // HTTP service
       String host = options.getArguments().getOption(ProgramOptionConstants.HOST);
