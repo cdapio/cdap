@@ -320,10 +320,33 @@ public class ProgramHelper {
     }
   }
 
+  public void getStatus(HttpRequest request, HttpResponder responder, String accountId, String appId,
+                        String runnableType, String runnableId) {
+    try {
+      final Id.Program id = Id.Program.from(accountId, appId, runnableId);
+      final ProgramType type = ProgramType.valueOfCategoryName(runnableType);
+      StatusMap statusMap = getStatus(id, type);
+      // If status is null, then there was an error
+      if (statusMap.getStatus() == null) {
+        responder.sendString(HttpResponseStatus.valueOf(statusMap.getStatusCode()), statusMap.getError());
+        return;
+      }
+      Map<String, String> status = ImmutableMap.of("status", statusMap.getStatus());
+      responder.sendJson(HttpResponseStatus.OK, status);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
   /**
    * Returns a map where the pairs map from status to program status (e.g. {"status" : "RUNNING"}) or
    * in case of an error in the input (e.g. invalid id, program not found), a map from statusCode to integer and
    * error to error message (e.g. {"statusCode": 404, "error": "Program not found"})
+   * TODO: This is only used outside of this class in the /status endpoint handler method. If that method can move to
+   * this class, both this method and the StatusMap object can become private to this class.
    *
    * @param id The Program Id to get the status of
    * @param type The Type of the Program to get the status of

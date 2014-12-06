@@ -266,24 +266,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("runnable-type") final String runnableType,
                         @PathParam("runnable-id") final String runnableId) {
 
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      final Id.Program id = Id.Program.from(accountId, appId, runnableId);
-      final ProgramType type = ProgramType.valueOfCategoryName(runnableType);
-      ProgramHelper.StatusMap statusMap = programHelper.getStatus(id, type);
-      // If status is null, then there was an error
-      if (statusMap.getStatus() == null) {
-        responder.sendString(HttpResponseStatus.valueOf(statusMap.getStatusCode()), statusMap.getError());
-        return;
-      }
-      Map<String, String> status = ImmutableMap.of("status", statusMap.getStatus());
-      responder.sendJson(HttpResponseStatus.OK, status);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    programHelper.getStatus(request, responder, getAuthenticatedAccountId(request), appId, runnableType, runnableId);
   }
 
   /**
