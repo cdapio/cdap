@@ -16,6 +16,9 @@
 
 package co.cask.cdap.common.conf;
 
+import com.google.gson.reflect.TypeToken;
+
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -652,4 +655,7 @@ public final class Constants {
     */
     public static final String STATUS = "/status";
   }
+
+  public static final String DEFAULT_NAMESPACE = "default";
+  public static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 }
