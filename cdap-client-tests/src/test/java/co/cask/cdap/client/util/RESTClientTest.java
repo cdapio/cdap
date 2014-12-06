@@ -55,6 +55,7 @@ import static com.google.inject.matcher.Matchers.only;
 public class RESTClientTest {
 
   private static final String ACCESS_TOKEN = "ssdw221e2ffderrfg33322rr";
+  private static final int RETRY_LIMIT = 25;
 
   private TestHttpService httpService;
   private RESTClient restClient;
@@ -63,7 +64,7 @@ public class RESTClientTest {
   public void setUp() throws IOException {
     httpService = new TestHttpService();
     httpService.startAndWait();
-    restClient = new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT);
+    restClient = new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT, RETRY_LIMIT);
   }
 
   @After
@@ -131,6 +132,14 @@ public class RESTClientTest {
     restClient.execute(request, new AccessToken("Unknown", 82000L, "Bearer"));
   }
 
+  @Test
+  public void testUnavailableLimit() throws Exception {
+    URL url = getBaseURI().resolve("/api/testUnavail").toURL();
+    HttpRequest request = HttpRequest.get(url).build();
+    HttpResponse response = restClient.execute(request, new AccessToken(ACCESS_TOKEN, 82000L, "Bearer"));
+    verifyResponse(response, only(200), any(), any());
+  }
+
   private void verifyResponse(HttpResponse response, Matcher<Object> expectedResponseCode,
                               Matcher<Object> expectedMessage, Matcher<Object> expectedBody) {
 
@@ -190,6 +199,8 @@ public class RESTClientTest {
 
   @Path("/api")
   public final class TestHandler extends AbstractHttpHandler {
+    private int unavailEnpointCount = 0;
+
     @POST
     @Path("/testPostAuth")
     public void testPostAuth(org.jboss.netty.handler.codec.http.HttpRequest request,
@@ -239,6 +250,21 @@ public class RESTClientTest {
           + request.getHeader(HttpHeaders.AUTHORIZATION).replace("Bearer ", StringUtils.EMPTY));
       } else {
         responder.sendString(HttpResponseStatus.UNAUTHORIZED, "Access token received: Unknown");
+      }
+    }
+
+    @GET
+    @Path("/testUnavail")
+    public void testUnavail(org.jboss.netty.handler.codec.http.HttpRequest request,
+                            HttpResponder responder) throws Exception {
+      unavailEnpointCount++;
+      //Max number of calls to this endpoint should be 1 (Original request) + RETRY_LIMIT.
+      if (unavailEnpointCount < (RETRY_LIMIT + 1)) {
+        responder.sendStatus(HttpResponseStatus.SERVICE_UNAVAILABLE);
+      } else if (unavailEnpointCount == (RETRY_LIMIT + 1)) {
+        responder.sendStatus(HttpResponseStatus.OK);
+      } else {
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
       }
     }
   }

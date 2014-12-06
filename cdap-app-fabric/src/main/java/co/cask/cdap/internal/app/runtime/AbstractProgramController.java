@@ -116,7 +116,7 @@ public abstract class AbstractProgramController implements ProgramController {
     if (!state.compareAndSet(State.STARTING, State.STOPPING)
       && !state.compareAndSet(State.ALIVE, State.STOPPING)
       && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
-      return Futures.immediateFailedFuture(new IllegalStateException("Resumption not allowed").fillInStackTrace());
+      return Futures.immediateFailedFuture(new IllegalStateException("Stopping not allowed").fillInStackTrace());
     }
     final SettableFuture<ProgramController> result = SettableFuture.create();
     executor(State.STOPPING).execute(new Runnable() {
@@ -207,7 +207,7 @@ public abstract class AbstractProgramController implements ProgramController {
    */
   protected final void started() {
     if (!state.compareAndSet(State.STARTING, State.ALIVE)) {
-      LOG.debug("Program already started {} {}", programName, runId);
+      LOG.debug("Cannot transit to ALIVE state from {} state: {} {}", state.get(), programName, runId);
       return;
     }
     LOG.debug("Program started: {} {}", programName, runId);
