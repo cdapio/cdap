@@ -39,7 +39,6 @@ COPY cdap-api /Build/cdap-api
 COPY cdap-app-fabric /Build/cdap-app-fabric
 COPY cdap-archetypes /Build/cdap-archetypes
 COPY cdap-cli /Build/cdap-cli
-COPY cdap-cli-tests /Build/cdap-cli-tests
 COPY cdap-client /Build/cdap-client
 COPY cdap-client-tests /Build/cdap-client-tests
 COPY cdap-common /Build/cdap-common
@@ -55,7 +54,6 @@ COPY cdap-explore-jdbc /Build/cdap-explore-jdbc
 COPY cdap-gateway /Build/cdap-gateway
 COPY cdap-hbase-compat-0.94 /Build/cdap-hbase-compat-0.94
 COPY cdap-hbase-compat-0.96 /Build/cdap-hbase-compat-0.96
-COPY cdap-hbase-compat-0.98 /Build/cdap-hbase-compat-0.98
 COPY cdap-kafka /Build/cdap-kafka
 COPY cdap-master /Build/cdap-master
 COPY cdap-proto /Build/cdap-proto
@@ -63,7 +61,6 @@ COPY cdap-security /Build/cdap-security
 COPY cdap-security-service /Build/cdap-security-service
 COPY cdap-standalone /Build/cdap-standalone
 COPY cdap-unit-test /Build/cdap-unit-test
-COPY cdap-unit-test-standalone /Build/cdap-unit-test-standalone
 COPY cdap-watchdog /Build/cdap-watchdog
 COPY cdap-watchdog-api /Build/cdap-watchdog-api
 COPY cdap-watchdog-tests /Build/cdap-watchdog-tests
