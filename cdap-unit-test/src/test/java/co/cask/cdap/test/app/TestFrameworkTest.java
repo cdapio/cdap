@@ -340,10 +340,10 @@ public class TestFrameworkTest extends TestBase {
       runnableInstancesCheck(serviceManager, runnableName, 0, retries);
 
       // 3 workers should have started with 3 total instances. 2 more should later start with 5 total instances.
-      assertWorkerDatasetWrites(applicationManager, Bytes.toBytes("init.0"),
+      assertWorkerDatasetWrites(applicationManager, Bytes.toBytes("init"),
                                 Bytes.stopKeyForPrefix(Bytes.toBytes("init.2")), 3, 3);
       assertWorkerDatasetWrites(applicationManager, Bytes.toBytes("init.3"),
-                                Bytes.stopKeyForPrefix(Bytes.toBytes("init.4")), 2, 5);
+                                Bytes.stopKeyForPrefix(Bytes.toBytes("init")), 2, 5);
 
       // Test that the worker had 5 instances when stopped, and each knew that there were 5 instances
       startRow = Bytes.toBytes("stop");
@@ -362,7 +362,7 @@ public class TestFrameworkTest extends TestBase {
     CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
     try {
       List<KeyValue<byte[], byte[]>> workerInstances = Lists.newArrayList(instancesIterator);
-      // Assert that the worker starts with {@link expectedCount} instances
+      // Assert that the worker starts with expectedCount instances
       Assert.assertEquals(expectedCount, workerInstances.size());
       // Assert that each instance of the worker knows the total number of instances
       for (KeyValue<byte[], byte[]> keyValue : workerInstances) {
