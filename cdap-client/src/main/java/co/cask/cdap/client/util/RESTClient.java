@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.HttpHeaders;
 
 /**
@@ -40,10 +41,12 @@ public class RESTClient {
 
   private final HttpRequestConfig defaultConfig;
   private final HttpRequestConfig uploadConfig;
+  private final int unavailableRetryLimit;
 
-  public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig) {
+  public RESTClient(HttpRequestConfig defaultConfig, HttpRequestConfig uploadConfig, int retryLimit) {
     this.defaultConfig = defaultConfig;
     this.uploadConfig = uploadConfig;
+    this.unavailableRetryLimit = retryLimit;
   }
 
   /**
@@ -53,7 +56,8 @@ public class RESTClient {
    * @return {@link RESTClient} instance
    */
   public static RESTClient create(ClientConfig clientConfig) {
-    return new RESTClient(clientConfig.getDefaultHttpConfig(), clientConfig.getUploadHttpConfig());
+    return new RESTClient(clientConfig.getDefaultHttpConfig(), clientConfig.getUploadHttpConfig(),
+                          clientConfig.getUnavailableRetryLimit());
   }
 
   /**
@@ -61,8 +65,8 @@ public class RESTClient {
    *
    * @return {@link RESTClient} instance
    */
-  public static RESTClient create() {
-    return new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT);
+  public static RESTClient create(int unavailableRetryLimit) {
+    return new RESTClient(HttpRequestConfig.DEFAULT, HttpRequestConfig.DEFAULT, unavailableRetryLimit);
   }
 
   public HttpResponse execute(HttpRequest request, AccessToken accessToken, int... allowedErrorCodes)
@@ -84,13 +88,29 @@ public class RESTClient {
 
   private HttpResponse execute(HttpRequest request, int... allowedErrorCodes) throws IOException,
     UnAuthorizedAccessTokenException {
-    HttpResponse response = HttpRequests.execute(request, defaultConfig);
-    int responseCode = response.getResponseCode();
-    if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-      throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
-    } else if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
-      throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
-    }
+    int currentTry = 0;
+    HttpResponse response;
+    do {
+      response = HttpRequests.execute(request, defaultConfig);
+      int responseCode = response.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+        throw new UnAuthorizedAccessTokenException("Unauthorized status code received from the server.");
+      }
+      if (!isSuccessful(responseCode) && responseCode != HttpURLConnection.HTTP_UNAVAILABLE
+        && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
+        throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
+      }
+      if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
+        currentTry++;
+        try {
+          TimeUnit.MILLISECONDS.sleep(100);
+        } catch (InterruptedException e) {
+          break;
+        }
+        continue;
+      }
+      return response;
+    } while (currentTry <= unavailableRetryLimit);
     return response;
   }
 
