@@ -48,10 +48,10 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
       numbers which are then counted by downstream Flowlets.
   * - :doc:`Purchase<purchase>`
     - This example demonstrates use of many of the CDAP components—Streams, Flows, Flowlets, Datasets, Queries,
-      MapReduce, Workflows, and Services—in a single Application.
+      MapReduce Programs, Workflows, and Services—in a single Application.
 
       A Flow receives events from a Stream, each event describing a purchase ("John bought 5 apples for $2");
-      the Flow processes the events and stores them in a Dataset. A Mapreduce Job reads the Dataset, compiles
+      the Flow processes the events and stores them in a Dataset. A MapReduce Job reads the Dataset, compiles
       the purchases for each customer into a purchase history and stores the histories in a second Dataset.
       The purchase histories can then be queried either through a Service or an ad-hoc SQL query.
   * - :doc:`Spark K-Means<spark-k-means>`
