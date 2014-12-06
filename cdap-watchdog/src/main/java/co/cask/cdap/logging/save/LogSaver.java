@@ -31,7 +31,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.RowSortedTable;
-import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -46,6 +45,7 @@ import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -76,7 +76,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final ListeningScheduledExecutorService scheduledExecutor;
   private final LogCleanup logCleanup;
 
-  private Cancellable kafkaCancel;
+  private List<Cancellable> kafkaCancelList;
   private ScheduledFuture<?> logWriterFuture;
   private ScheduledFuture<?> cleanupFuture;
 
@@ -161,6 +161,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
         Threads.createDaemonThreadFactory("log-saver-main")));
     this.logCleanup = new LogCleanup(fileMetaDataManager, logBaseDir, retentionDurationMs);
 
+    this.kafkaCancelList = new ArrayList<Cancellable>();
   }
 
   @Override
@@ -182,7 +183,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   protected void shutDown() throws Exception {
     LOG.info("Stopping LogSaver...");
 
-    kafkaCancel.cancel();
+    cancelLogCollectorCallbacks();
     scheduledExecutor.shutdown();
 
     logFileWriter.flush();
@@ -221,21 +222,27 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     }
 
     logFileWriter.flush();
-    if (kafkaCancel != null) {
-      kafkaCancel.cancel();
-      kafkaCancel = null;
-    }
+
+    cancelLogCollectorCallbacks();
 
     messageTable.clear();
+  }
+
+  private void cancelLogCollectorCallbacks() {
+    for (int i = 0; i < kafkaCancelList.size(); i++) {
+      if (kafkaCancelList.get(i) != null) {
+        kafkaCancelList.get(i).cancel();
+      }
+    }
+    kafkaCancelList.clear();
   }
 
   private void subscribe(Set<Integer> partitions) throws Exception {
     LOG.info("Prepare to subscribe.");
 
-    KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
-
     Map<Integer, Long> partitionOffset = Maps.newHashMap();
     for (int part : partitions) {
+      KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
       long offset = checkpointManager.getCheckpoint(part);
       partitionOffset.put(part, offset);
 
@@ -244,11 +251,10 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
       } else {
         preparer.addFromBeginning(topic, part);
       }
+      kafkaCancelList.add(preparer.consume(
+        new LogCollectorCallback(messageTable, serializer,
+                                 eventBucketIntervalMs, maxNumberOfBucketsInTable)));
     }
-
-    kafkaCancel = preparer.consume(
-      new LogCollectorCallback(messageTable, serializer,
-                               eventBucketIntervalMs, maxNumberOfBucketsInTable));
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
   }
