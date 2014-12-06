@@ -155,13 +155,16 @@ Injecting Sentences
 ------------------------------
 
 Run this script (from within ``/examples/Purchase``) to inject sentences 
-to the Stream named *purchaseStream* in the ``PurchaseHistory`` application::
+to the Stream named *purchaseStream* in the ``PurchaseHistory`` application:
 
-  $ ./bin/inject-data.sh
+.. list-table::
+  :widths: 20 80
+  :stub-columns: 1
 
-On Windows::
-
-  > bin\inject-data.bat
+  * - On Linux:
+    - ``$ ./bin/inject-data.sh``
+  * - On Windows:
+    - ``> bin\inject-data.bat``    
 
 
 Starting the Workflow
@@ -208,8 +211,8 @@ To query the *history* ObjectStore through the ``PurchaseHistoryService``, you c
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
-  curl -w '\n' -v \
-    'http://localhost:10000/v2/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
+    curl -w '\n' -v \
+      'http://localhost:10000/v2/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
 
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``

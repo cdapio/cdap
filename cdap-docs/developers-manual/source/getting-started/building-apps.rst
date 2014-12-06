@@ -40,7 +40,7 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
 - Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console
   running at `http://localhost:9999/ <http://localhost:9999/>`__; or
 - Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar; or
-- From the Standalone CDAP SDK directory, use the :ref:`Command-line Interface: <cli>`
+- From the Standalone CDAP SDK directory, use the :ref:`Command-line Interface (CLI): <cli>`
 
   .. list-table::
     :widths: 20 80
@@ -60,7 +60,7 @@ Once an application is deployed:
   Application's name in the *Overview* page. (It can be reached by clicking on the
   *Application* button in the left sidebar of the window.) Now you can *Start* or *Stop* any
   of the Processes or Queries associated with the application; or
-- From the Standalone CDAP SDK directory, use the :ref:`Command-line Interface (CLI)<cli>`.
+- From the Standalone CDAP SDK directory, use the :ref:`Command-line Interface<cli>`.
   In each CDAP example, the CLI commands for that particular example are provided.
 
   .. list-table::

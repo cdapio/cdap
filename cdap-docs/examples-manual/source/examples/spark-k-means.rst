@@ -113,13 +113,16 @@ Injecting Points Data
 ------------------------------
 
 Run this script to inject points data to the Stream named *pointsStream* in the
-``SparkKMeans`` application::
+``SparkKMeans`` application:
 
-  $ ./bin/inject-data.sh
+.. list-table::
+  :widths: 20 80
+  :stub-columns: 1
 
-On Windows::
-
-  > bin\inject-data.bat
+  * - On Linux:
+    - ``$ ./bin/inject-data.sh``
+  * - On Windows:
+    - ``> bin\inject-data.bat``    
 
 Running the Spark program
 ------------------------------
@@ -137,16 +140,16 @@ There are three ways to start the Spark program:
    **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
    SDK in ``libexec\bin\curl.exe``
 
-#. Use the Command-line Interface::
+#. Use the Command-line Interface:
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+   .. list-table::
+     :widths: 20 80
+     :stub-columns: 1
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start spark SparkKMeans.SparkKMeansProgram``    
+     * - On Linux:
+       - ``$ ./bin/cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram``
+     * - On Windows:
+       - ``> bin\cdap-cli.bat start spark SparkKMeans.SparkKMeansProgram``    
 
 Querying the Results
 ------------------------------
@@ -159,7 +162,7 @@ send a query via an HTTP request using the ``curl`` command. For example::
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``
 
-You can also use the Command-line Interface::
+You can also use the Command-line Interface:
 
 .. list-table::
   :widths: 20 80

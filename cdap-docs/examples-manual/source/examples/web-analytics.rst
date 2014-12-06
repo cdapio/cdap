@@ -151,13 +151,16 @@ This sends the log event (formatted in the Common Log Format or CLF) to the CDAP
 ``localhost`` and listening on port ``10000``.
 
 The Application includes sample logs, located in ``test/resources/access.log`` that you can inject by running
-a provided script::
+a provided script:
 
-  $ ./bin/inject-data.sh
+.. list-table::
+  :widths: 20 80
+  :stub-columns: 1
 
-On Windows::
-
-  > bin\inject-data.bat
+  * - On Linux:
+    - ``$ ./bin/inject-data.sh``
+  * - On Windows:
+    - ``> bin\inject-data.bat``    
 
 Query the Unique Visitor Page Views
 ---------------------------------------

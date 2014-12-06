@@ -97,13 +97,16 @@ Injecting URL Pairs
 ------------------------------
 
 Run this script to inject URL pairs
-to the Stream named *backlinkURLStream* in the ``SparkPageRank`` application::
+to the Stream named *backlinkURLStream* in the ``SparkPageRank`` application:
 
-  $ ./bin/inject-data.sh
+.. list-table::
+  :widths: 20 80
+  :stub-columns: 1
 
-On Windows::
-
-  > bin\inject-data.bat
+  * - On Linux:
+    - ``$ ./bin/inject-data.sh``
+  * - On Windows:
+    - ``> bin\inject-data.bat``    
 
 Running the Spark Program
 ------------------------------
@@ -122,16 +125,16 @@ There are three ways to start the Spark program:
    **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
    SDK in ``libexec\bin\curl.exe``
 
-#. Use the Command-line Interface::
+#. Use the Command-line Interface:
 
-  .. list-table::
-    :widths: 20 80
-    :stub-columns: 1
+   .. list-table::
+     :widths: 20 80
+     :stub-columns: 1
 
-    * - On Linux:
-      - ``$ ./bin/cdap-cli.sh start spark SparkPageRank.SparkPageRankProgram``
-    * - On Windows:
-      - ``> bin\cdap-cli.bat start spark SparkPageRank.SparkPageRankProgram``    
+     * - On Linux:
+       - ``$ ./bin/cdap-cli.sh start spark SparkPageRank.SparkPageRankProgram``
+     * - On Windows:
+       - ``> bin\cdap-cli.bat start spark SparkPageRank.SparkPageRankProgram``    
 
 Querying the Results
 ------------------------------
@@ -145,7 +148,7 @@ send a query via an HTTP request using the ``curl`` command. For example::
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``
 
-You can also use the Command-line Interface::
+You can also use the Command-line Interface:
 
 .. list-table::
   :widths: 20 80
