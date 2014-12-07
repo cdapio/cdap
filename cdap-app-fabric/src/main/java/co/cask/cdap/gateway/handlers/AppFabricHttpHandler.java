@@ -299,9 +299,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void webappStatus(final HttpRequest request, final HttpResponder responder,
                            @PathParam("app-id") final String appId) {
     try {
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program id = Id.Program.from(accountId, appId, ProgramType.WEBAPP.getPrettyName().toLowerCase());
-      programHelper.runnableStatus(responder, id, ProgramType.WEBAPP);
+      programHelper.runnableStatus(request, responder, getAuthenticatedAccountId(request), appId,
+                                   ProgramType.WEBAPP.getPrettyName().toLowerCase(), ProgramType.WEBAPP);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable t) {

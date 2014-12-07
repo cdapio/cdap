@@ -306,10 +306,7 @@ public class ProgramHelper {
                              final String programId, ProgramType type, ProgramRuntimeService runtimeService) {
     try {
       responder.sendJson(HttpResponseStatus.OK,
-                         runtimeService.getLiveInfo(Id.Program.from(accountId,
-                                                                    appId,
-                                                                    programId),
-                                                    type));
+                         runtimeService.getLiveInfo(Id.Program.from(accountId, appId, programId), type));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
@@ -318,8 +315,11 @@ public class ProgramHelper {
     }
   }
 
-  public void runnableStatus(HttpResponder responder, Id.Program id, ProgramType type) {
+  public void runnableStatus(HttpRequest request, HttpResponder responder, String accountId, String appId,
+                             String runnableId, ProgramType type) {
+
     try {
+      Id.Program id = Id.Program.from(accountId, appId, runnableId);
       ProgramStatus status = getProgramStatus(id, type);
       if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
