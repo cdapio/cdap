@@ -17,14 +17,7 @@
 package co.cask.cdap.common.lang;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Queue;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -33,44 +26,6 @@ import javax.annotation.Nullable;
 public final class ClassLoaders {
 
   private ClassLoaders() { }
-
-  /**
-   * Returns the ClassLoader of the given type. If the given type is a {@link ParameterizedType}, it returns
-   * a {@link CombineClassLoader} of all types. The context ClassLoader or System ClassLoader would be used as
-   * the parent of the CombineClassLoader.
-   *
-   * @return A new CombineClassLoader. If no ClassLoader is found from the type,
-   *         it returns the current thread context ClassLoader if it's not null, otherwise, return system ClassLoader.
-   */
-  public static ClassLoader getClassLoader(TypeToken<?> type) {
-    Set<ClassLoader> classLoaders = Sets.newIdentityHashSet();
-
-    // Breath first traversal into the Type.
-    Queue<TypeToken<?>> queue = Lists.newLinkedList();
-    queue.add(type);
-    while (!queue.isEmpty()) {
-      type = queue.remove();
-      ClassLoader classLoader = type.getRawType().getClassLoader();
-      if (classLoader != null) {
-        classLoaders.add(classLoader);
-      }
-
-      if (type.getType() instanceof ParameterizedType) {
-        for (Type typeArg : ((ParameterizedType) type.getType()).getActualTypeArguments()) {
-          queue.add(TypeToken.of(typeArg));
-        }
-      }
-    }
-
-    // Determine the parent classloader
-    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-    ClassLoader parent = (contextClassLoader == null) ? ClassLoader.getSystemClassLoader() : contextClassLoader;
-
-    if (classLoaders.isEmpty()) {
-      return parent;
-    }
-    return new CombineClassLoader(parent, classLoaders);
-  }
 
   /**
    * Loads the class with the given class name with the given classloader. If it is {@code null},

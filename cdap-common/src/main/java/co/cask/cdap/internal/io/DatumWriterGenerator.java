@@ -24,6 +24,7 @@ import co.cask.cdap.internal.lang.Fields;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -132,7 +133,7 @@ final class DatumWriterGenerator {
   private final Multimap<TypeToken<?>, String> fieldAccessorRequests = HashMultimap.create();
   private ClassWriter classWriter;
   private Type classType;
-//  private String className;
+  private List<Class<?>> preservedClasses;
 
   /**
    * Generates a {@link DatumWriter} class for encoding data of the given output type with the given schema.
@@ -142,6 +143,7 @@ final class DatumWriterGenerator {
    */
   ClassDefinition generate(TypeToken<?> outputType, Schema schema) {
     classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+    preservedClasses = Lists.newArrayList();
 
     TypeToken<?> interfaceType = getInterfaceType(outputType);
 
@@ -167,7 +169,7 @@ final class DatumWriterGenerator {
     // Constructor
     generateConstructor();
 
-    ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
+    ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className, preservedClasses);
     // DEBUG block. Uncomment for debug
 //    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
@@ -453,6 +455,8 @@ final class DatumWriterGenerator {
   private void encodeEnum(GeneratorAdapter mg, TypeToken<?> outputType,
                           int value, int encoder, int schemaLocal) {
 
+    // Enum type might be defined by the user, hence need to preserve class loading of it
+    preservedClasses.add(outputType.getRawType());
     // encoder.writeInt(this.schema.getEnumIndex(value.name()));
     mg.loadArg(encoder);
     mg.loadArg(schemaLocal);
@@ -728,6 +732,9 @@ final class DatumWriterGenerator {
 
     try {
       Class<?> rawType = outputType.getRawType();
+
+      // Record type might be defined by the user, hence need to preserve class loading of it
+      preservedClasses.add(rawType);
       boolean isInterface = rawType.isInterface();
 
       /*
