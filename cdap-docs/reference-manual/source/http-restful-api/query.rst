@@ -295,7 +295,7 @@ Example
    * - HTTP Request
      - ``DELETE <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
    * - Description
-     - Close the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
+     - Close the query which has the handle ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
 
 List of Queries
 ---------------
@@ -320,7 +320,7 @@ To return a list of queries, use::
 
 Comments
 ........
-The results are returned as a JSON array, with each element containing information about the query::
+The results are returned as a JSON array, with each element containing information about a query::
 
   [
     {
@@ -352,7 +352,7 @@ Example
        ``   "is_active": false``
        ``}]``
    * - Description
-     - Close the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
+     - Retrieves all queries
 
 Download Query Results
 ----------------------
