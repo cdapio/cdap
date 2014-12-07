@@ -223,10 +223,10 @@ HTTP Responses
 Comments
 ........
 The results are returned in a JSON body as a list of columns,
-each given as a structure containing a list of column values.::
+each given as a structure containing a list of column values::
 
   [
-    { "columns": [ <value_1>, <value_2>, ..., ] },
+    { "columns": [ <value-1>, <value-2>, ..., ] },
     ...
   ]
 
