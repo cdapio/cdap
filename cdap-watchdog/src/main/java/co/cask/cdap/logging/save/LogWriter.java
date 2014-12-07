@@ -72,8 +72,9 @@ public class LogWriter implements Runnable {
             for (Iterator<Map.Entry<String, Entry<Long, List<KafkaLogEvent>>>> it = row.entrySet().iterator();
                    it.hasNext(); ) {
               Map.Entry<String, Entry<Long, List<KafkaLogEvent>>> mapEntry = it.next();
-              if (currentBucketKey < (mapEntry.getValue().getKey() + maxNumberOfBucketsInTable))
+              if (currentBucketKey < (mapEntry.getValue().getKey() + maxNumberOfBucketsInTable)) {
                 break;
+              }
               writeListMap.putAll(mapEntry.getKey(), mapEntry.getValue().getValue());
               messages += mapEntry.getValue().getValue().size();
               it.remove();
