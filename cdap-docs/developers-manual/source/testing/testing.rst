@@ -20,7 +20,7 @@ in one of two ways:
 - include all JAR files in the ``lib`` directory of the CDAP SDK installation,
   or
 - include the ``cdap-unit-test`` artifact in your Maven test dependencies
-  (see the ``pom.xml`` file of the *WordCount* example).
+  (see the ``pom.xml`` file of the :ref:`CDAP SDK examples <standalone-index>`).
 
 Note that for building an application, you only need to include the
 CDAP API in your dependencies. For testing, however, you need the
