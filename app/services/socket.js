@@ -209,12 +209,12 @@ angular.module(PKG.name+'.services')
             var p = r._cdap.split(' '),
                 path = p.pop();
             msg.resource.method = p.length ? p[0] : 'GET';
-            msg.resource.url = 'http://'
-              + MY_CONFIG.cdap.routerServerUrl
-              + ':'
-              + MY_CONFIG.cdap.routerServerPort
-              + '/v2'
-              + path;
+            msg.resource.url = 'http://' +
+              MY_CONFIG.cdap.routerServerUrl +
+              ':' +
+              MY_CONFIG.cdap.routerServerPort +
+              '/v2' +
+              path;
             delete msg.resource._cdap;
           }
         }

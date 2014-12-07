@@ -16,7 +16,7 @@ function mySearchbarDirective ($alert) {
           content: 'it does not work yet',
           type: 'danger'
         });
-      })
+      });
 
     }
   };
