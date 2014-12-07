@@ -23,8 +23,6 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
@@ -48,12 +46,9 @@ import co.cask.cdap.gateway.handlers.util.ProgramHelper;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DatasetRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
-import co.cask.cdap.proto.NotRunningProgramLiveInfo;
-import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -71,14 +66,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -88,11 +79,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -524,109 +511,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/instances")
   public void getInstances(HttpRequest request, HttpResponder responder) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<BatchEndpointInstances> args = instancesFromBatchArgs(decodeArrayArguments(request, responder));
-      // if args is null then the response has already been sent
-      if (args == null) {
-        return;
-      }
-      for (BatchEndpointInstances requestedObj : args) {
-        String appId = requestedObj.getAppId();
-        String programTypeStr = requestedObj.getProgramType();
-        String programId = requestedObj.getProgramId();
-        // these values will be overwritten later
-        int requested, provisioned;
-        ApplicationSpecification spec = store.getApplication(Id.Application.from(accountId, appId));
-        if (spec == null) {
-          addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "App: " + appId + " not found");
-          continue;
-        }
-
-        ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
-
-        // cant get instances for things that are not flows, services, or procedures
-        if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType)) {
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                       "Program type: " + programType + " is not a valid program type to get instances");
-          continue;
-        }
-
-        String runnableId;
-        if (programType == ProgramType.PROCEDURE) {
-          // the "runnable" for procedures has the same id as the procedure name
-          runnableId = programId;
-          if (!spec.getProcedures().containsKey(programId)) {
-            addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                         "Procedure: " + programId + " not found");
-            continue;
-          }
-          requested = store.getProcedureInstances(Id.Program.from(accountId, appId, programId));
-
-        } else {
-          // services and flows must have runnable id
-          if (requestedObj.getRunnableId() == null) {
-            addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                         "Must provide a string runnableId for flows/services");
-            continue;
-          }
-
-          runnableId = requestedObj.getRunnableId();
-          if (programType == ProgramType.FLOW) {
-            FlowSpecification flowSpec = spec.getFlows().get(programId);
-            if (flowSpec == null) {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "Flow: " + programId + " not found");
-              continue;
-            }
-
-            FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
-            if (flowletDefinition == null) {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                           "Flowlet: " + runnableId + " not found");
-              continue;
-            }
-            requested = flowletDefinition.getInstances();
-
-         } else {
-            // Services
-            ServiceSpecification serviceSpec = spec.getServices().get(programId);
-            if (serviceSpec == null) {
-              addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                           "Service: " + programId + " not found");
-              continue;
-            }
-
-            if (serviceSpec.getName().equals(runnableId)) {
-              // If runnable name is the same as the service name, returns the service http server instances
-              requested = serviceSpec.getInstances();
-            } else {
-              // Otherwise, get it from the worker
-              ServiceWorkerSpecification workerSpec = serviceSpec.getWorkers().get(runnableId);
-              if (workerSpec == null) {
-                addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                             "Runnable: " + runnableId + " not found");
-                continue;
-              }
-              requested = workerSpec.getInstances();
-            }
-          }
-        }
-        // use the pretty name of program types to be consistent
-        requestedObj.setProgramType(programType.getPrettyName());
-        provisioned = getRunnableCount(accountId, appId, programType, programId, runnableId);
-        requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
-        requestedObj.setRequested(requested);
-        requestedObj.setProvisioned(provisioned);
-      }
-      responder.sendJson(HttpResponseStatus.OK, args);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (JsonSyntaxException e) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    programHelper.getInstances(request, responder, getAuthenticatedAccountId(request));
   }
 
   /**
@@ -657,139 +542,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/status")
   public void getStatuses(HttpRequest request, HttpResponder responder) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      List<BatchEndpointStatus> args = statusFromBatchArgs(decodeArrayArguments(request, responder));
-      // if args is null, then there was an error in decoding args and response was already sent
-      if (args == null) {
-        return;
-      }
-      for (int i = 0; i < args.size(); ++i) {
-        BatchEndpointStatus requestedObj = args.get(i);
-        Id.Program progId = Id.Program.from(accountId, requestedObj.getAppId(), requestedObj.getProgramId());
-        ProgramType programType = ProgramType.valueOfPrettyName(requestedObj.getProgramType());
-        // get th statuses
-        ProgramHelper.StatusMap statusMap = programHelper.getStatus(progId, programType);
-        if (statusMap.getStatus() != null) {
-          requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
-          requestedObj.setStatus(statusMap.getStatus());
-        } else {
-          requestedObj.setStatusCode(statusMap.getStatusCode());
-          requestedObj.setError(statusMap.getError());
-        }
-        // set the program type to the pretty name in case the request originally didn't have pretty name
-        requestedObj.setProgramType(programType.getPrettyName());
-      }
-      responder.sendJson(HttpResponseStatus.OK, args);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Adds the status code and error to the JsonObject. The JsonObject will have 2 new properties:
-   * 'statusCode': code, 'error': error
-   *
-   * @param object The JsonObject to add the code and error to
-   * @param code The status code to add
-   * @param error The error message to add
-   */
-  private void addCodeError(BatchEndpointArgs object, int code, String error) {
-    object.setStatusCode(code);
-    object.setError(error);
-  }
-
-  /**
-   * Returns the number of instances currently running for different runnables for different programs
-   *
-   * @param accountId
-   * @param appId
-   * @param programType
-   * @param programId
-   * @param runnableId
-   * @return
-   */
-  private int getRunnableCount(String accountId, String appId, ProgramType programType,
-                               String programId, String runnableId) {
-    ProgramLiveInfo info = runtimeService.getLiveInfo(Id.Program.from(accountId, appId, programId), programType);
-    int count = 0;
-    if (info instanceof NotRunningProgramLiveInfo) {
-      return count;
-    } else if (info instanceof Containers) {
-      Containers containers = (Containers) info;
-      for (Containers.ContainerInfo container : containers.getContainers()) {
-        if (container.getName().equals(runnableId)) {
-          count++;
-        }
-      }
-      return count;
-    } else {
-      // Not running on YARN default 1
-      return 1;
-    }
-  }
-
-  /**
-   * Deserializes and parses the HttpRequest data into a list of JsonObjects. Checks the HttpRequest data to see that
-   * the input has valid fields corresponding to the /instances and /status endpoints. If the input data is empty or
-   * the data is not of the form of an array of json objects, it sends an appropriate response through the responder
-   * and returns null.
-   *
-   * @param request The HttpRequest to parse
-   * @param responder The HttpResponder used to send responses in case of errors
-   * @return List of JsonObjects from the request data
-   * @throws IOException Thrown in case of Exceptions when reading the http request data
-   */
-  @Nullable
-  private List<BatchEndpointArgs> decodeArrayArguments(HttpRequest request, HttpResponder responder)
-    throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot read request");
-      return null;
-    }
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-    try {
-      List<BatchEndpointArgs> input = GSON.fromJson(reader, new TypeToken<List<BatchEndpointArgs>>() { }.getType());
-      for (int i = 0; i < input.size(); ++i) {
-        BatchEndpointArgs requestedObj;
-        try {
-          requestedObj = input.get(i);
-        } catch (ClassCastException e) {
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, "All elements in array must be valid JSON Objects");
-          return null;
-        }
-        // make sure the following args exist
-        if (requestedObj.getAppId() == null || requestedObj.getProgramId() == null ||
-          requestedObj.getProgramType() == null) {
-          responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                             "Must provide appId, programType, and programId as strings for each object");
-          return null;
-        }
-        // invalid type
-        try {
-          if (ProgramType.valueOfPrettyName(requestedObj.getProgramType()) == null) {
-            responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                               "Invalid program type provided: " + requestedObj.getProgramType());
-            return null;
-          }
-        } catch (IllegalArgumentException e) {
-          responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                             "Invalid program type provided: " + requestedObj.getProgramType());
-          return null;
-        }
-
-      }
-      return input;
-    } catch (JsonSyntaxException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid Json object provided");
-      return null;
-    } finally {
-      reader.close();
-    }
+    programHelper.getStatuses(request, responder, getAuthenticatedAccountId(request));
   }
 
   /**
@@ -1740,134 +1493,5 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format(UserMessages.getMessage(UserErrors.DATASETS_DELETE_FAIL), e.getMessage()));
     }
-  }
-
-  /**
-   * Convenience class for representing the necessary components in the batch endpoint.
-   */
-  private class BatchEndpointArgs {
-    private String appId = null;
-    private String programType = null;
-    private String programId = null;
-    private String runnableId = null;
-    private String error = null;
-    private Integer statusCode = null;
-
-    private BatchEndpointArgs(String appId, String programType, String programId, String runnableId, String error,
-                              Integer statusCode) {
-      this.appId = appId;
-      this.programType = programType;
-      this.programId = programId;
-      this.runnableId = runnableId;
-      this.error = error;
-      this.statusCode = statusCode;
-    }
-
-    public BatchEndpointArgs(BatchEndpointArgs arg) {
-      this(arg.appId, arg.programType, arg.programId, arg.runnableId, arg.error, arg.statusCode);
-    }
-
-    public String getRunnableId() {
-      return runnableId;
-    }
-
-    public void setRunnableId(String runnableId) {
-      this.runnableId = runnableId;
-    }
-
-    public void setError(String error) {
-      this.error = error;
-    }
-
-    public void setStatusCode(Integer statusCode) {
-      this.statusCode = statusCode;
-    }
-
-    public int getStatusCode() {
-      return statusCode;
-    }
-
-    public String getError() {
-      return error;
-    }
-
-    public String getProgramId() {
-      return programId;
-    }
-
-    public String getProgramType() {
-      return programType;
-    }
-
-    public String getAppId() {
-      return appId;
-    }
-
-    public void setProgramType(String programType) {
-      this.programType = programType;
-    }
-  }
-
-  private class BatchEndpointInstances extends BatchEndpointArgs {
-    private Integer requested = null;
-    private Integer provisioned = null;
-
-    public BatchEndpointInstances(BatchEndpointArgs arg) {
-      super(arg);
-    }
-
-    public Integer getProvisioned() {
-      return provisioned;
-    }
-
-    public void setProvisioned(Integer provisioned) {
-      this.provisioned = provisioned;
-    }
-
-    public Integer getRequested() {
-      return requested;
-    }
-
-    public void setRequested(Integer requested) {
-      this.requested = requested;
-    }
-  }
-
-  private class BatchEndpointStatus extends BatchEndpointArgs {
-    private String status = null;
-
-    public BatchEndpointStatus(BatchEndpointArgs arg) {
-      super(arg);
-    }
-
-    public String getStatus() {
-      return status;
-    }
-
-    public void setStatus(String status) {
-      this.status = status;
-    }
-  }
-
-  private List<BatchEndpointInstances> instancesFromBatchArgs(List<BatchEndpointArgs> args) {
-    if (args == null) {
-      return null;
-    }
-    List<BatchEndpointInstances> retVal = new ArrayList<BatchEndpointInstances>(args.size());
-    for (BatchEndpointArgs arg: args) {
-      retVal.add(new BatchEndpointInstances(arg));
-    }
-    return retVal;
-  }
-
-  private List<BatchEndpointStatus> statusFromBatchArgs(List<BatchEndpointArgs> args) {
-    if (args == null) {
-      return null;
-    }
-    List<BatchEndpointStatus> retVal = new ArrayList<BatchEndpointStatus>(args.size());
-    for (BatchEndpointArgs arg: args) {
-      retVal.add(new BatchEndpointStatus(arg));
-    }
-    return retVal;
   }
 }
