@@ -1,3 +1,4 @@
 angular.module(PKG.name+'.feature.dashboard', [
-  PKG.name+'.commons'
+  PKG.name+'.commons',
+  'ui.sortable'
 ]);
