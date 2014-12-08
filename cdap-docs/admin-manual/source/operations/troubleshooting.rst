@@ -82,7 +82,7 @@ Errors when applications create excessive amounts of logs. One symptom of this i
 Console *Services Explorer* shows the ``log.saver`` Service as not OK, in addition to seeing error
 messages in the logs.
 
-By default, the buffer keeps 8 buckets of events in memory. Each event bucket contains logs generated for 1 seconds.
+By default, the buffer keeps 8 buckets of events in memory. Each event bucket contains logs generated for 1 second.
 Log Saver process is limited to 1GB of memory. When it's expected that logs exceeding these settings will be produced
 i.e. 1GB logs generated in 8 seconds, increase the memory allocated to the Log Saver or increase the number of
 Log Saver instances. If the cluster has limited memory or containers available, you can choose instead to decrease the
