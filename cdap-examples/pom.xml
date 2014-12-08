@@ -48,8 +48,6 @@
   </repositories>
 
   <properties>
-    <hadoop.version>2.3.0</hadoop.version>
-    <netty.http.version>0.7.0</netty.http.version>
     <power.pack.version>[2.0.0,)</power.pack.version>
   </properties>
 
