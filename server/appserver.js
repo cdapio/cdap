@@ -34,17 +34,26 @@ var httpIndexLogger  = morgan(colors.inverse('http')+' :method :url :ms :status'
 
 /**
  * CDAP web app server.
- * @param {Object} config Object with key value pairs.
- * @returns {Promise} promise determining when server has started.
+ * @param {Object} config with key value pairs.
  */
 var AppServer = function AppServer (config) {
-  var deferred = promise.defer();
-  var self = this;
   this.config = config;
   
   // Figure out a more graceful way of doing this.
   this.config['version'] = 2;
-  
+};
+
+AppServer.prototype.app = express();
+AppServer.prototype.securityEnabled = false;
+AppServer.prototype.authServerAddresses = [];
+
+/**
+ * Configure server.
+ * @returns {Promise} promise determining when server has been configured.
+ */
+AppServer.prototype.initialize = function initialize () {
+  var self = this;
+  var deferred = promise.defer();
   this.setUpEnvironment()
   .then(function () {
     self.start();
@@ -57,10 +66,6 @@ var AppServer = function AppServer (config) {
 
   return deferred.promise;
 };
-
-AppServer.prototype.app = express();
-AppServer.prototype.securityEnabled = false;
-AppServer.prototype.authServerAddresses = [];
 
 /**
  * Configures SSL, sets up environment and determines if security is active.
@@ -181,7 +186,7 @@ AppServer.prototype.start = function start () {
 
   this.app.post('/login', function (req, res) {
     if (!req.body.hasOwnProperty('username') || !req.body.hasOwnProperty('password')) {
-      res.send(400, "Please specify username/password");
+      res.status(400).send("Please specify username/password");
     }
     var authAddress = self.getAuthServerAddress();
     var options = {
@@ -192,6 +197,7 @@ AppServer.prototype.start = function start () {
       }
     };
     request(options, function (nerr, nres, nbody) {
+      console.log(arguments);
       if (nerr || nres.statusCode !== 200) {
         res.status(nres.statusCode).send(nbody);
       } else {

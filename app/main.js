@@ -6,7 +6,7 @@ angular
     angular.module(PKG.name+'.features', [
       PKG.name+'.feature.home',
       PKG.name+'.feature.foo',
-      PKG.name+'.feature.login'
+      PKG.name+'.feature.login',
       PKG.name+'.feature.dashboard',
     ]).name,
 

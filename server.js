@@ -13,6 +13,7 @@ var AppServer = require('./server/appserver.js'),
 configParser.extractConfig(mode, 'cdap', false /* isSecure*/)
 .then(function(config) { 
   new AppServer(config)
+  .initialize()
   .then(function (httpServer) {
     // http
     httpServer.listen(PORT, config['router.bind.address'], function () {
