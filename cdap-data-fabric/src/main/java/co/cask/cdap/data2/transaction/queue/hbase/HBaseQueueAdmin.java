@@ -277,10 +277,8 @@ public class HBaseQueueAdmin implements QueueAdmin {
   }
 
   @Override
-  public void upgrade(String name, Properties properties) throws Exception {
-    QueueName queueName = QueueName.from(URI.create(name));
-    String hBaseTableName = getActualTableName(queueName);
-    AbstractHBaseDataSetAdmin dsAdmin = new DatasetAdmin(hBaseTableName, hConf, tableUtil);
+  public void upgrade(String tableName, Properties properties) throws Exception {
+    AbstractHBaseDataSetAdmin dsAdmin = new DatasetAdmin(tableName, hConf, tableUtil);
     try {
       dsAdmin.upgrade();
     } finally {
