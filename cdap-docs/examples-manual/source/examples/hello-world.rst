@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :description: Cask Data Application Platform Hello World Application
+    :description: Cask Data Application Platform Hello World Example
     :copyright: Copyright © 2014 Cask Data, Inc.
 
 .. _examples-hello-world:
@@ -26,7 +26,7 @@ The ``HelloWorld`` Application
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
-   :lines: 45-55
+   :lines: 40-58
    
 The application uses a stream called *who* to ingest data through a flow *WhoFlow* to a dataset *whom*.
 
@@ -37,7 +37,7 @@ This is a trivial flow with a single flowlet named *saver* of type ``NameSaver``
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
-   :lines: 60-71
+   :lines: 63-74
    
 The flowlet uses a dataset of type ``KeyValueTable`` to store the names it reads from the stream. Every time a new
 name is received, it is stored in the table under the key ``name``-and it overwrites any name that was previously
@@ -45,7 +45,7 @@ stored:
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
-   :lines: 76-95
+   :lines: 79-100
   
 Note that the flowlet also emits metrics: every time a name longer than 10 characters is received,
 the counter ``names.longnames`` is incremented by one, and the metric ``names.bytes`` is incremented
@@ -60,11 +60,11 @@ reads the name stored by the ``NameSaver`` from the key-value table. It return a
 
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
-   :lines: 100-115
+   :lines: 105-137
 
 Note that the Service, like the Flowlet, also emits metrics: every time the name *Jane Doe* is received,
 the counter ``greetings.count.jane_doe`` is incremented by one.
-We will see below how to retrieve this metric sing the
+We will see below how to retrieve this metric using the
 :ref:`http-restful-api-metrics`.
 
 Building and Starting
@@ -72,9 +72,9 @@ Building and Starting
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application as described below in 
+- Start CDAP, deploy and start the application and its components as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Flow and Service as described.
+  Make sure you start the Flow and Service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -86,16 +86,55 @@ Running CDAP Applications
 Running the Example
 ===================
 
+Starting the Flow
+------------------------------
+
+Once the application is deployed:
+
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click ``WhoFlow`` in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow HelloWorld.WhoFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow HelloWorld.WhoFlow``    
+
+Starting the Service
+------------------------------
+
+Once the application is deployed:
+
+- Click on ``HelloWorld`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``Greeting`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service HelloWorld.Greeting``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service HelloWorld.Greeting``    
+
 Injecting a Name
 ------------------------------
 
 In the Application's detail page, under *Process*, click on *WhoFlow*. This takes you to
-the flow details page. Click on the *Start* button in the right-side, below the green
-arrow. The flow's label will change to *Running* when it is ready to receive events.
+the flow details page. (If you haven't already started the Flow, click on the *Start*
+button in the right-side, below the green arrow.) The Flow's label will read *Running*
+when it is ready to receive events.
 
-Now click on the *who* stream on the left side of the flow visualization, which brings up
+Now click on the *who* Stream on the left side of the flow visualization, which brings up
 a pop-up window. Enter a name and click the *Inject* button. After you close the pop-up
-window, you will see that the counters for both the stream and the *saver* flowlet
+window, you will see that the counters for both the Stream and the *saver* Flowlet
 increase to 1. You can repeat this step to enter more names, but remember that only the
 last name is stored in the key-value table.
 
@@ -103,15 +142,19 @@ Using the Service
 ------------------------------
 
 Go back to the Application's detail page, and under Service, click on the *Greeting*
-service. Click on the *Start* button in the right-side, below the green arrow. The
-service's label will change to *Running* when it is ready to receive events.
+service. (If you haven't already started the Service, click on the *Start* button in the
+right-side, below the green arrow.) The Service's label will read *Running* when it is
+ready to receive events.
 
 Now you can make a request to the service using curl::
 
   $ curl -w '\n' http://localhost:10000/v2/apps/HelloWorld/services/Greeting/methods/greet
 
-If the last name you entered was *Tom*, service will responds "Hello Tom!".
+If the last name you entered was *Tom*, the Service will respond with ``Hello Tom!``
 
+**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
+SDK in ``libexec\bin\curl.exe``
+  
 Retrieving Metrics
 ------------------------------
 
@@ -137,4 +180,37 @@ you can use::
   
 Stopping the Application
 -------------------------------
-Once done, you can stop the application as described above in `Stopping an Application. <#stopping-an-application>`__
+Once done, you can stop the application as described above in `Stopping an Application. 
+<#stopping-an-application>`__ Here is an example-specific description of the steps:
+
+**Stopping the Flow**
+
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click ``WhoFlow`` in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow HelloWorld.WhoFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow HelloWorld.WhoFlow``    
+
+**Stopping the Service**
+
+- Click on ``HelloWorld`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``Greeting`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service HelloWorld.Greeting``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service HelloWorld.Greeting``    

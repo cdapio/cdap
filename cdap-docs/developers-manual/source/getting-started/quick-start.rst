@@ -64,7 +64,7 @@ available in the* :ref:`Web Analytics Application documentation. <examples-web-a
 Deploying the Application
 =========================
 You can deploy the application into your running instance of CDAP either by using the 
-:ref:`CDAP command-line tool <reference:cli>`::
+:ref:`CDAP Command Line Interface <reference:cli>`::
 
   $ <path-to-CDAP-SDK>/bin/cdap-cli.sh deploy app target/cdap-wise-0.2.2.jar
 
@@ -101,7 +101,7 @@ Injecting Data
 ==============
 The *WiseFlow* uses a Stream to receive log events from Web servers. The Stream has a REST
 endpoint used to ingest data with HTTP requests, and you can do that using the
-command-line interface::
+Command Line Interface::
 
   $ <path-to-CDAP-SDK>/bin/cdap-cli.sh send stream logEventStream \
     '255.255.255.185 - - [23/Sep/2014:11:45:38 -0400] \
@@ -130,7 +130,7 @@ same time as the date included in each event—that is the time when the event a
 occurred on the web server.) 
 
 You can retrieve events from a Stream by specifying a time range and a limit on the number
-of events you want to see. For example, using the command-line, this shows up to 5 events
+of events you want to see. For example, using the Command Line Interface, this shows up to 5 events
 in a time range of 3 minutes duration, starting 5 minutes ago::
 
   $ <path-to-CDAP-SDK>/bin/cdap-cli.sh get stream logEventStream -5m +3m 5
@@ -174,7 +174,7 @@ Note that it is important to escape the ampersands in the URL to prevent the she
 interpreting it as a special character. The RESTful API will return the events in a JSON
 format; there are a `variety of tools available
 <https://www.google.com/search?q=json+pretty+print>`__ to pretty-print it on the
-command-line.
+Command Line.
 
 
 Monitoring with the CDAP Console
@@ -222,7 +222,7 @@ Retrieving the Results of Processing
 The Flow counts URL requests by the origin IP address, using a Dataset called
 *pageViewStore*. To make these counts available, the application implements a service called
 *WiseService*. Before we can use this service, we need to make sure that it is running. We
-can start the service using the command-line interface::
+can start the service using the Command Line Interface::
 
   $ <path-to-CDAP-SDK>/bin/cdap-cli.sh start service Wise.WiseService
   Successfully started Service 'WiseService' of application 'Wise'
