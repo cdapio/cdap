@@ -88,4 +88,5 @@ RUN apt-get purge -y maven unzip && \
     apt-get -y autoremove 
 
 # start CDAP in the background and tail in the foreground
-CMD /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/bin/cdap.sh start && /usr/bin/tail -F /var/log/cdap/*.log
+ENTRYPOINT /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/bin/cdap.sh start && \
+    /usr/bin/tail -F /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/logs/*.log
