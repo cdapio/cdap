@@ -16,6 +16,7 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.MetricRequest;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.TimeMathParser;
@@ -41,6 +42,7 @@ final class MetricsRequestParser {
 
   private static final String COUNT = "count";
   private static final String START_TIME = "start";
+  private static final String RESOLUTION = "resolution";
   private static final String END_TIME = "end";
   private static final String RUN_ID = "runs";
   private static final String INTERPOLATE = "interpolate";
@@ -391,25 +393,49 @@ final class MetricsRequestParser {
     int count;
     long startTime;
     long endTime;
+    int resolution = 1;
     long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
+    if (queryParams.containsKey(RESOLUTION)) {
+      try {
+        MetricsRequest.TimeSeriesResolution resolutionInterval = MetricsRequest.TimeSeriesResolution.valueOf(
+          queryParams.get(RESOLUTION).get(0).toUpperCase());
+        builder.setTimeSeriesResolution(resolutionInterval);
+        resolution = resolutionInterval.getResolution();
+      } catch (IllegalArgumentException e) {
+        builder.setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution.SECOND);
+      }
+    } else {
+      builder.setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution.SECOND);
+    }
 
     if (queryParams.containsKey(START_TIME) && queryParams.containsKey(END_TIME)) {
       startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
       endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
-      count = (int) (endTime - startTime) + 1;
+      if (!queryParams.containsKey(RESOLUTION)) {
+        // determine resolution, based on difference.
+        MetricsRequest.TimeSeriesResolution autoResolution = getResolution(endTime - startTime);
+        builder.setTimeSeriesResolution(autoResolution);
+        resolution = autoResolution.getResolution();
+      }
+      if (queryParams.containsKey(COUNT)) {
+        count = Integer.parseInt(queryParams.get(COUNT).get(0));
+      } else {
+        count = (int) (((endTime / resolution * resolution) - (startTime / resolution * resolution)) / resolution + 1);
+      }
     } else if (queryParams.containsKey(COUNT)) {
       count = Integer.parseInt(queryParams.get(COUNT).get(0));
       // both start and end times are inclusive, which is the reason for the +-1.
       if (queryParams.containsKey(START_TIME)) {
         startTime = TimeMathParser.parseTime(now, queryParams.get(START_TIME).get(0));
-        endTime = startTime + count - 1;
+        endTime = startTime + (count * resolution) - resolution;
       } else if (queryParams.containsKey(END_TIME)) {
         endTime = TimeMathParser.parseTime(now, queryParams.get(END_TIME).get(0));
-        startTime = endTime - count + 1;
+        startTime = endTime - (count * resolution) + resolution;
       } else {
         // if only count is specified, assume the current time is desired as the end.
         endTime = now - MetricsConstants.QUERY_SECOND_DELAY;
-        startTime = endTime - count + 1;
+        startTime = endTime - (count * resolution) + resolution;
       }
     } else {
       throw new IllegalArgumentException("must specify 'count', or both 'start' and 'end'");
@@ -422,6 +448,15 @@ final class MetricsRequestParser {
     setInterpolator(queryParams, builder);
   }
 
+  private static MetricsRequest.TimeSeriesResolution getResolution(long difference) {
+    if (difference > 3600) {
+      return  MetricsRequest.TimeSeriesResolution.HOUR;
+    } else if (difference > 60) {
+      return MetricsRequest.TimeSeriesResolution.MINUTE;
+    } else {
+      return MetricsRequest.TimeSeriesResolution.SECOND;
+    }
+  }
   private static void setInterpolator(Map<String, List<String>> queryParams, MetricsRequestBuilder builder) {
     Interpolator interpolator = null;
 

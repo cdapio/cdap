@@ -660,6 +660,30 @@
     </property>
 
     <property>
+        <name>metrics.data.table.retention.resolution.3600.seconds</name>
+        <value>2592000</value>
+        <description>Retention resolution 1 hour table (in seconds)</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.retention.resolution.60.seconds</name>
+        <value>2592000</value>
+        <description>Retention resolution 1 hour table (in seconds)</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.ts.rollTime.60</name>
+        <value>60</value>
+        <description>Roll time for a new row in 1 minute MetricsTable</description>
+    </property>
+
+    <property>
+        <name>metrics.data.table.ts.rollTime.3600</name>
+        <value>24</value>
+        <description>Roll time for a new row in 1hour MetricsTable</description>
+    </property>
+
+    <property>
         <name>metrics.kafka.partition.size</name>
         <value>10</value>
         <description>Number of partitions for metrics topic</description>

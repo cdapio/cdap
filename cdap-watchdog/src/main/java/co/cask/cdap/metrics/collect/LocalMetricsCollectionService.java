@@ -49,6 +49,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
   private final CConfiguration cConf;
   private final Set<MetricsProcessor> processors;
   private final MetricsTableFactory tableFactory;
+  private final List<Integer> timeSeriesResolutions = ImmutableList.of(1, 60, 3600);
   private ScheduledExecutorService scheduler;
 
   @Inject
@@ -111,11 +112,13 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
         long deleteBefore = currentTime - retention;
 
         for (MetricsScope scope : MetricsScope.values()) {
-          TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries(scope.name(), 1);
-          try {
-            timeSeriesTable.deleteBefore(deleteBefore);
-          } catch (OperationException e) {
-            LOG.error("Failed in cleaning up metrics table: {}", e.getMessage(), e);
+          for (int resolution : timeSeriesResolutions) {
+            TimeSeriesTable timeSeriesTable = tableFactory.createTimeSeries(scope.name(), resolution);
+            try {
+              timeSeriesTable.deleteBefore(deleteBefore);
+            } catch (OperationException e) {
+              LOG.error("Failed in cleaning up metrics table: {}", e.getMessage(), e);
+            }
           }
         }
 

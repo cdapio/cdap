@@ -34,6 +34,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -63,6 +64,7 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
   private final Map<MetricsScope, LoadingCache<Integer, TimeSeriesTable>> metricsTableCaches;
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
   private final int tsRetentionSeconds;
+  private final List<Integer> timeSeriesResolutions = ImmutableList.of(1, 60, 3600);
 
   @Inject
   public DeleteMetricsHandler(Authenticator authenticator,
@@ -231,14 +233,17 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
 
   private void deleteTableEntries(MetricsScope scope, String contextPrefix,
                                   String metricPrefix, String tag) throws OperationException {
-    TimeSeriesTable ts1Table = metricsTableCaches.get(scope).getUnchecked(1);
     AggregatesTable aggTable = aggregatesTables.get().get(scope);
 
     if (contextPrefix == null && tag == null && metricPrefix == null) {
-      ts1Table.clear();
+      for (int resolution : timeSeriesResolutions) {
+        metricsTableCaches.get(scope).getUnchecked(resolution).clear();
+      }
       aggTable.clear();
     } else if (tag == null) {
-      ts1Table.delete(contextPrefix, metricPrefix);
+      for (int resolution : timeSeriesResolutions) {
+        metricsTableCaches.get(scope).getUnchecked(resolution).delete(contextPrefix, metricPrefix);
+      }
       aggTable.delete(contextPrefix, metricPrefix);
     } else {
       long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
@@ -249,7 +254,9 @@ public class DeleteMetricsHandler extends BaseMetricsHandler {
         .setRunId("0")
         .setTag(tag)
         .build(now - tsRetentionSeconds, now + 10);
-      ts1Table.delete(scanQuery);
+      for (int resolution : timeSeriesResolutions) {
+        metricsTableCaches.get(scope).getUnchecked(resolution).delete(scanQuery);
+      }
       aggTable.delete(contextPrefix, metricPrefix, "0", tag);
     }
   }

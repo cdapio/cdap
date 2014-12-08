@@ -49,23 +49,27 @@ public class MetricsRequestParserTest {
     request = MetricsRequestParser.parse(URI.create("/system/apps/app1/reads?aggregate=true"));
     Assert.assertEquals(MetricsRequest.Type.AGGREGATE, request.getType());
 
-    request = MetricsRequestParser.parse(URI.create("/system/apps/app1/reads?count=60&start=1&end=61"));
+    request = MetricsRequestParser.parse(URI.create("/system/apps/app1/reads?count=60&start=1&end=61&" +
+                                                      "resolution=second"));
     Assert.assertEquals(1, request.getStartTime());
     Assert.assertEquals(61, request.getEndTime());
+    Assert.assertEquals(MetricsRequest.TimeSeriesResolution.SECOND, request.getTimeSeriesResolution());
     Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
 
     request = MetricsRequestParser.parse(
-      URI.create("/system/apps/app1/reads?count=60&start=1&end=61"));
+      URI.create("/system/apps/app1/reads?count=60&start=1&end=61&resolution=minute"));
     Assert.assertEquals(1, request.getStartTime());
     Assert.assertEquals(61, request.getEndTime());
     Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertEquals(MetricsRequest.TimeSeriesResolution.MINUTE, request.getTimeSeriesResolution());
     Assert.assertNull(request.getInterpolator());
 
     request = MetricsRequestParser.parse(
-      URI.create("/system/apps/app1/reads?start=1&end=61"));
+      URI.create("/system/apps/app1/reads?start=1&end=61&resolution=hour"));
     Assert.assertEquals(1, request.getStartTime());
     Assert.assertEquals(61, request.getEndTime());
     Assert.assertEquals(MetricsRequest.Type.TIME_SERIES, request.getType());
+    Assert.assertEquals(MetricsRequest.TimeSeriesResolution.HOUR, request.getTimeSeriesResolution());
     Assert.assertNull(request.getInterpolator());
 
     request = MetricsRequestParser.parse(

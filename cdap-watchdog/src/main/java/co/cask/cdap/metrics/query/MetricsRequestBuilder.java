@@ -33,6 +33,7 @@ final class MetricsRequestBuilder {
   private long startTime;
   private long endTime;
   private MetricsRequest.Type type;
+  private MetricsRequest.TimeSeriesResolution resolution;
   private int count;
   private MetricsScope scope;
   private Interpolator interpolator;
@@ -76,6 +77,11 @@ final class MetricsRequestBuilder {
     return this;
   }
 
+  MetricsRequestBuilder setTimeSeriesResolution(MetricsRequest.TimeSeriesResolution resolution) {
+    this.resolution = resolution;
+    return this;
+  }
+
   MetricsRequestBuilder setCount(int count) {
     this.count = count;
     return this;
@@ -93,7 +99,7 @@ final class MetricsRequestBuilder {
 
   MetricsRequest build() {
     return new MetricsRequestImpl(requestURI, contextPrefix, runId, metricPrefix,
-                                  tagPrefix, startTime, endTime, type, count, scope, interpolator);
+                                  tagPrefix, startTime, endTime, type, resolution, count, scope, interpolator);
   }
 
   private static class MetricsRequestImpl implements MetricsRequest {
@@ -105,13 +111,14 @@ final class MetricsRequestBuilder {
     private final long startTime;
     private final long endTime;
     private final Type type;
+    private final TimeSeriesResolution resolution;
     private final int count;
     private MetricsScope scope;
     private Interpolator interpolator;
 
     public MetricsRequestImpl(URI requestURI, String contextPrefix, String runId, String metricPrefix, String tagPrefix,
-                              long startTime, long endTime, Type type, int count, MetricsScope scope,
-                              Interpolator interpolator) {
+                              long startTime, long endTime, Type type, TimeSeriesResolution resolution,
+                              int count, MetricsScope scope, Interpolator interpolator) {
       Preconditions.checkNotNull(scope);
       this.contextPrefix = contextPrefix;
       this.requestURI = requestURI;
@@ -124,6 +131,7 @@ final class MetricsRequestBuilder {
       this.count = count;
       this.scope = scope;
       this.interpolator = interpolator;
+      this.resolution = resolution;
     }
 
     @Override
@@ -164,6 +172,11 @@ final class MetricsRequestBuilder {
     @Override
     public Type getType() {
       return type;
+    }
+
+    @Override
+    public TimeSeriesResolution getTimeSeriesResolution() {
+      return resolution;
     }
 
     @Override

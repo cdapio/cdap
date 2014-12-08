@@ -69,7 +69,11 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
         public MetricsEntityCodec load(String namespace) throws Exception {
           String tableName = namespace.toLowerCase() + "." + cConf.get(MetricsConstants.ConfigKeys.ENTITY_TABLE_NAME,
                                                                        MetricsConstants.DEFAULT_ENTITY_TABLE_NAME);
-          MetricsTable table = getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY);
+          // get the TTL of hour time-series table and use that as TTL for entity table.
+          int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + ".3600.seconds", -1);
+          DatasetProperties props = ttl > 0 ?
+            DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
+          MetricsTable table = getOrCreateMetricsTable(tableName, props);
           EntityTable entityTable = new EntityTable(table);
 
           return new MetricsEntityCodec(entityTable,
@@ -90,7 +94,6 @@ public final class DefaultMetricsTableFactory implements MetricsTableFactory {
                           cConf.get(MetricsConstants.ConfigKeys.METRICS_TABLE_PREFIX,
                                     MetricsConstants.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
       int ttl =  cConf.getInt(MetricsConstants.ConfigKeys.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
-
       DatasetProperties props = ttl > 0 ?
         DatasetProperties.builder().add(OrderedTable.PROPERTY_TTL, ttl).build() : DatasetProperties.EMPTY;
       MetricsTable table = getOrCreateMetricsTable(tableName, props);

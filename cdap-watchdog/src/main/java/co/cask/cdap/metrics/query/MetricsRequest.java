@@ -34,6 +34,21 @@ interface MetricsRequest {
     AGGREGATE
   }
 
+  enum TimeSeriesResolution {
+    SECOND(1),
+    MINUTE(60),
+    HOUR(3600);
+
+    private int resolution;
+    private TimeSeriesResolution(int resolution) {
+      this.resolution = resolution;
+    }
+
+    public int getResolution() {
+      return resolution;
+    }
+  }
+
   URI getRequestURI();
 
   String getContextPrefix();
@@ -49,6 +64,8 @@ interface MetricsRequest {
   long getEndTime();
 
   Type getType();
+
+  TimeSeriesResolution getTimeSeriesResolution();
 
   int getCount();
 
