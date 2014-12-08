@@ -50,7 +50,6 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
   var persist = angular.bind(this, function (u) {
     this.currentUser = u;
     $rootScope.currentUser = u;
-    $localStorage.currentUser = u ? u.getStorageInfo() : null;
   });
 
   /**
@@ -69,12 +68,12 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
    * @param  {object} credentials
    * @return {promise} resolved on sucessful login
    */
-  this.login = function (credentials) {
-    return myAuthPromise(credentials).then(
+  this.login = function (cred) {
+    return myAuthPromise(cred).then(
       function(data) {
         var user = new MyAuthUser(data);
         persist(user);
-        $localStorage.remember = credentials.remember && user.getStorageInfo();
+        $localStorage.remember = user.storable(cred);
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
       function() {
@@ -102,7 +101,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
 });
 
 
-module.factory('myAuthPromise', function myAuthPromiseFactory (MYAUTH_ROLE, $timeout, $q, $http) {
+module.factory('myAuthPromise', function myAuthPromiseFactory (MYAUTH_ROLE, $q, $http) {
   return function myAuthPromise (credentials) {
     var deferred = $q.defer();
 
@@ -141,14 +140,6 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
     }
   }
 
-  /**
-   * attempts to make a User from data
-   * @param  {Object} stored data
-   * @return {User|null}
-   */
-  User.revive = function(data) {
-    return angular.isObject(data) ? new User(data) : null;
-  };
 
   /**
    * do i haz one of given roles?
@@ -165,15 +156,17 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
     return authorizedRoles.indexOf(this.role) !== -1;
   };
 
+
   /**
    * Omits secure info (i.e. token) and gets object for storage.
    * @return {Object} storage info.
    */
-  User.prototype.getStorageInfo = function () {
-    return {
+  User.prototype.storable = function (cred) {
+    return cred.remember ? {
       username: this.username
-    };
+    } : null;
   };
+
 
   return User;
 });
