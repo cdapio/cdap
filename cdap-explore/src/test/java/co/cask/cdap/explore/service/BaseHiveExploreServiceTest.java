@@ -235,7 +235,7 @@ public class BaseHiveExploreServiceTest {
   private static HttpURLConnection openStreamConnection(String streamName) throws IOException {
     int port = streamHttpService.getBindAddress().getPort();
     URL url = new URL(String.format("http://127.0.0.1:%d%s/streams/%s",
-                                    port, Constants.Gateway.GATEWAY_VERSION, streamName));
+                                    port, Constants.Gateway.API_VERSION_2, streamName));
     return (HttpURLConnection) url.openConnection();
   }
 
