@@ -22,6 +22,22 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+Release 2.6.0
+=============
+
+CDAP Bug Fixes
+--------------
+
+
+Other Changes
+-------------
+
+
+Known Issues
+------------
+- See also the *Known Issues* of `version 2.5.2. <#known-issues-252>`_
+
+
 Release 2.5.2
 =============
 
@@ -58,6 +74,8 @@ Other Changes
   - Added a glossary;
   - Added navigation aids at the bottom of each page; and
   - Tested and updated the Standalone CDAP examples and their documentation.
+
+.. _known-issues-252:
 
 Known Issues
 ------------

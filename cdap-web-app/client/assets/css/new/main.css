@@ -4379,3 +4379,18 @@ div.tooltip-inner {
 .sparks-metrics .metric-row{
     margin-bottom: 5px;
 }
+
+/* Disabling a link tag*/
+
+li.disabled {
+  list-style: none;
+}
+li.disabled > a:hover {
+  text-decoration: none;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+li.disabled > a {
+  color: #777;
+}

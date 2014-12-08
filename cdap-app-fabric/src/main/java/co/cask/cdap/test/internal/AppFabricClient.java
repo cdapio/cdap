@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.BufferFileInputStream;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
@@ -39,6 +40,7 @@ import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.DefaultHttpRequest;
 import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,38 +77,38 @@ public class AppFabricClient {
     String uri = String.format("/v2/unrecoverable/reset");
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
     httpHandler.resetCDAP(request, responder);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "reset application failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Reset application failed");
   }
 
-  public void startProgram(String appId, String flowId, String type, Map<String, String> args) {
+  public void startProgram(String appId, String flowId, ProgramType type, Map<String, String> args) {
 
     MockResponder responder = new MockResponder();
-    String uri = String.format("/v2/apps/%s/%s/%s/start", appId, type, flowId);
+    String uri = String.format("/v2/apps/%s/%s/%s/start", appId, type.getCategoryName(), flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
     String argString = GSON.toJson(args);
     if (argString != null) {
       request.setContent(ChannelBuffers.wrappedBuffer(argString.getBytes(Charsets.UTF_8)));
     }
-    httpHandler.startProgram(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "start " + type + " failed");
+    httpHandler.startProgram(request, responder, appId, type.getCategoryName(), flowId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Start " + type + " failed");
   }
 
-  public void stopProgram(String appId, String flowId, String type) {
+  public void stopProgram(String appId, String flowId, ProgramType type) {
 
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/%s/%s/stop", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-    httpHandler.stopProgram(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "stop " + type + " failed");
+    httpHandler.stopProgram(request, responder, appId, type.getCategoryName(), flowId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Stop " + type + " failed");
   }
 
-  public String getStatus(String appId, String flowId, String type) {
+  public String getStatus(String appId, String flowId, ProgramType type) {
 
     MockResponder responder = new MockResponder();
     String uri = String.format("/v2/apps/%s/%s/%s/status", appId, type, flowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
-    httpHandler.getStatus(request, responder, appId, type, flowId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get status " + type + " failed");
+    httpHandler.getStatus(request, responder, appId, type.getCategoryName(), flowId);
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get status " + type + " failed");
     Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return json.get("status");
   }
@@ -120,7 +122,7 @@ public class AppFabricClient {
     json.addProperty("instances", instances);
     request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
     serviceHttpHandler.setInstances(request, responder, applicationId, serviceName, runnableName);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set runnable instances failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set runnable instances failed");
   }
 
   public int getRunnableInstances(String applicationId, String serviceName, String runnableName) {
@@ -130,7 +132,7 @@ public class AppFabricClient {
                                applicationId, serviceName, runnableName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     serviceHttpHandler.getInstances(request, responder, applicationId, serviceName, runnableName);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "get runnable instances failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get runnable instances failed");
     Map<String, String> instances = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return Integer.parseInt(instances.get("provisioned"));
   }
@@ -145,7 +147,7 @@ public class AppFabricClient {
     json.addProperty("instances", instances);
     request.setContent(ChannelBuffers.wrappedBuffer(json.toString().getBytes()));
     httpHandler.setFlowletInstances(request, responder, applicationId, flowId, flowletName);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, "set flowlet instances failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
   }
 
   public List<String> getSchedules(String appId, String wflowId) {
@@ -155,7 +157,7 @@ public class AppFabricClient {
     httpHandler.workflowSchedules(request, responder, appId, wflowId);
 
     List<String> schedules = responder.decodeResponseContent(new TypeToken<List<String>>() { });
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow schedules failed");
     return schedules;
   }
 
@@ -164,7 +166,7 @@ public class AppFabricClient {
     String uri = String.format("/v2/apps/%s/workflows/%s/runs?status=completed", appId, wflowId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.runnableHistory(request, responder, appId, "workflows", wflowId, null, null , null, 100);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
     return responder.decodeResponseContent(new TypeToken<List<RunRecord>>() { });
   }
@@ -174,7 +176,7 @@ public class AppFabricClient {
     String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/suspend", appId, wflowId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.workflowScheduleSuspend(request, responder, appId, wflowId, schedId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Suspend workflow schedules failed");
   }
 
   public void resume(String appId, String wflowId, String schedId) {
@@ -182,7 +184,7 @@ public class AppFabricClient {
     String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/resume", appId, wflowId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.workflowScheduleResume(request, responder, appId, wflowId, schedId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Resume workflow schedules failed");
   }
 
   public String scheduleStatus(String appId, String wflowId, String schedId) {
@@ -190,9 +192,16 @@ public class AppFabricClient {
     String uri = String.format("/v2/apps/%s/workflows/%s/schedules/%s/status", appId, wflowId, schedId);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     httpHandler.getScheuleState(request, responder, appId, wflowId, schedId);
-    Preconditions.checkArgument(responder.getStatus().getCode() == 200, " getting workflow schedules failed");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get workflow schedules status failed");
     Map<String, String> json = responder.decodeResponseContent(new TypeToken<Map<String, String>>() { });
     return json.get("status");
+  }
+
+  private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {
+    if (!expected.equals(actual)) {
+      throw new IllegalStateException(String.format("Expected %s, got %s. Error: %s",
+                                                    expected, actual, errorMsg));
+    }
   }
 
   /**
@@ -234,7 +243,7 @@ public class AppFabricClient {
       }
       mockResponder = new MockResponder();
       bodyConsumer.finished(mockResponder);
-      Preconditions.checkState(mockResponder.getStatus().getCode() == 200, "failed to deploy app");
+      verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to deploy app");
     } catch (Exception e) {
       throw Throwables.propagate(e);
     } finally {

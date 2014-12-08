@@ -21,8 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.conf.Configuration;
@@ -107,11 +105,10 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
     runThread = Thread.currentThread();
 
     LOG.info("Starting runnable {}", name);
-    List<ListenableFuture<Service.State>> completions = Lists.newArrayList();
+    SettableFuture<String> completionFuture = SettableFuture.create();
     for (Service service : services) {
-      SettableFuture<Service.State> completion = SettableFuture.create();
-      service.addListener(createServiceListener(completion), Threads.SAME_THREAD_EXECUTOR);
-      completions.add(completion);
+      service.addListener(createServiceListener(service.getClass().getName(), completionFuture),
+          Threads.SAME_THREAD_EXECUTOR);
     }
 
     Services.chainStart(services.get(0), services.subList(1, services.size()).toArray(new Service[0]));
@@ -119,13 +116,13 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
 
     try {
-      Futures.allAsList(completions).get();
+      // exit as soon as any service completes
+      completionFuture.get();
     } catch (InterruptedException e) {
       LOG.debug("Waiting on latch interrupted {}", name);
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
-      LOG.error("Exception in service.", e);
-      throw Throwables.propagate(e);
+      throw Throwables.propagate(e.getCause());
     }
 
     List<Service> reverse = Lists.reverse(services);
@@ -134,16 +131,18 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
     LOG.info("Runnable stopped {}", name);
   }
 
-  private Service.Listener createServiceListener(final SettableFuture<Service.State> completion) {
+  private Service.Listener createServiceListener(final String name, final SettableFuture<String> future) {
     return new ServiceListenerAdapter() {
       @Override
       public void terminated(Service.State from) {
-        completion.set(from);
+        LOG.info("Service " + name + " terminated");
+        future.set(name);
       }
 
       @Override
       public void failed(Service.State from, Throwable failure) {
-        completion.setException(failure);
+        LOG.error("Service " + name + " failed", failure);
+        future.setException(failure);
       }
     };
   }

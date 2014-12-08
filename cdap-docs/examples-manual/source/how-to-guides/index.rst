@@ -69,5 +69,5 @@ instructions for building the “Hello World” of any development task with CDA
 .. |spark-guide| replace:: **Iterative Data Processing with Apache Spark:**
 .. _spark-guide: cdap-spark-guide.html
 
-- |spark-guide|_ Learn how to **run Spark program to process data in CDAP.**
+- |spark-guide|_ Learn how to **run a Spark program to process data in CDAP.**
 

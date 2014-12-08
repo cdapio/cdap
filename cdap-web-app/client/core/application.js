@@ -170,35 +170,12 @@ function(Components, Embeddables, HTTP, Util) {
 			});
 		},
 
-//    /**
-//     * Determines readiness of CDAP by polling all services and checking status.
-//     * @param routeHandler Object Ember route handler.
-//     * @param callback Function to execute.
-//     */
-//    checkCDAPReadiness: function (routeHandler, callback) {
-//      HTTP.create().rest('system/services/status', function (statuses, callStatus) {
-//      	if (callStatus !== 200) {
-//      		routeHandler.transitionTo('Loading');
-//      		return;
-//      	}
-//        if (routeHandler !== undefined && 'routeName' in routeHandler) {
-//          if (C.Util.isLoadingComplete(statuses)) {
-//            routeHandler.transitionTo(routeHandler.routeName);
-//          } else {
-//            routeHandler.transitionTo('Loading');
-//          }
-//        }
-//        if (callback && typeof callback === 'function') {
-//          callback();
-//        }
-//      });
-//    },
-
 		setupEnvironment: function (env) {
 
 			C.Env.set('version', env.product_version);
 			C.Env.set('productId', env.product_id);
 			C.Env.set('productName', env.product_name);
+			C.Env.set('explore_enabled', (env.explore_enabled === "true"));
 			C.Env.set('ip', env.ip);
 			C.Env.set('nux', !!env.nux);
       C.Env.set('security_enabled', env.security_enabled);

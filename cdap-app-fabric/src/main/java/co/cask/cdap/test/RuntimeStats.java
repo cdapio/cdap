@@ -35,6 +35,10 @@ public final class RuntimeStats {
 
   private static ConcurrentMap<String, AtomicLong> counters = Maps.newConcurrentMap();
 
+  public static void resetAll() {
+    counters.clear();
+  }
+
   public static void count(String name, long count) {
     AtomicLong oldValue = counters.putIfAbsent(name, new AtomicLong(count));
     if (oldValue != null) {
@@ -67,6 +71,13 @@ public final class RuntimeStats {
     String exceptionName = String.format("%s.response.server.error.count", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
+  }
+
+  public static long getSparkMetrics(String applicationId, String procedureId, String key) {
+    String inputName = String.format("%s.%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SPARK),
+                                     procedureId, key);
+    AtomicLong input = counters.get(inputName);
+    return input == null ? 0 : input.get();
   }
 
   private static RuntimeMetrics getMetrics(final String prefix,

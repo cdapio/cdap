@@ -83,8 +83,7 @@ public abstract class AbstractSparkContextBuilder {
 
     ApplicationSpecification appSpec = program.getSpecification();
 
-    //TODO: Change this when Spark starts supporting Metrics
-    MetricsCollectionService metricsCollectionService = null;
+    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);

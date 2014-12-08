@@ -76,7 +76,9 @@ public interface ApplicationSpecification {
   /**
    * @return An immutable {@link Map} from {@link Procedure} name to {@link ProcedureSpecification}
    *         for {@link Procedure}s configured for the Application.
+   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   Map<String, ProcedureSpecification> getProcedures();
 
   /**

@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.app.program.Program;
@@ -25,18 +24,23 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.internal.app.runtime.DataFabricFacade;
+import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
+import co.cask.tephra.TransactionExecutor;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -78,6 +82,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final ServiceSpecification spec;
   private final ServiceAnnouncer serviceAnnouncer;
   private final BasicHttpServiceContextFactory contextFactory;
+  private final DataFabricFacadeFactory dataFabricFacadeFactory;
 
   private NettyHttpService service;
   private Cancellable cancelDiscovery;
@@ -85,7 +90,8 @@ public class ServiceHttpServer extends AbstractIdleService {
 
   public ServiceHttpServer(String host, Program program,  ServiceSpecification spec, RunId runId,
                            ServiceAnnouncer serviceAnnouncer, BasicHttpServiceContextFactory contextFactory,
-                           MetricsCollectionService metricsCollectionService) {
+                           MetricsCollectionService metricsCollectionService,
+                           DataFabricFacadeFactory dataFabricFacadeFactory) {
     this.host = host;
     this.program = program;
     this.spec = spec;
@@ -94,6 +100,7 @@ public class ServiceHttpServer extends AbstractIdleService {
 
     this.handlerReferences = Maps.newConcurrentMap();
     this.handlerReferenceQueue = new ReferenceQueue<Supplier<HandlerContextPair>>();
+    this.dataFabricFacadeFactory = dataFabricFacadeFactory;
 
     constructNettyHttpService(runId, metricsCollectionService);
   }
@@ -130,6 +137,13 @@ public class ServiceHttpServer extends AbstractIdleService {
    */
   @Override
   public void startUp() {
+    // All handlers of a Service run in the same Twill runnable and each Netty thread gets its own
+    // instance of a handler (and handlerContext). Creating the logging context here ensures that the logs
+    // during startup/shutdown and in each thread created are published.
+    LoggingContextAccessor.setLoggingContext(new UserServiceLoggingContext(program.getAccountId(),
+                                                                           program.getApplicationId(),
+                                                                           program.getId().getId(),
+                                                                           program.getId().getId()));
     LOG.debug("Starting HTTP server for Service {}", program.getId());
     Id.Program programId = program.getId();
     service.startAndWait();
@@ -192,10 +206,17 @@ public class ServiceHttpServer extends AbstractIdleService {
     };
   }
 
-  private void initHandler(HttpServiceHandler handler, HttpServiceContext serviceContext) {
+  private void initHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
+    DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program,
+                                                                       serviceContext.getDatasetInstantiator());
     try {
-      handler.initialize(serviceContext);
+      dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          handler.initialize(serviceContext);
+        }
+      });
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.initialize of class {}", handler.getClass(), t);
       throw Throwables.propagate(t);
@@ -204,10 +225,17 @@ public class ServiceHttpServer extends AbstractIdleService {
     }
   }
 
-  private void destroyHandler(HttpServiceHandler handler) {
+  private void destroyHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
+    DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program,
+                                                                       serviceContext.getDatasetInstantiator());
     try {
-      handler.destroy();
+      dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+          handler.destroy();
+        }
+      });
     } catch (Throwable t) {
       LOG.error("Exception raised in HttpServiceHandler.destroy of class {}", handler.getClass(), t);
       // Don't propagate
@@ -272,7 +300,7 @@ public class ServiceHttpServer extends AbstractIdleService {
 
     @Override
     public void close() throws IOException {
-      destroyHandler(handler);
+      destroyHandler(handler, context);
       context.close();
     }
   }
