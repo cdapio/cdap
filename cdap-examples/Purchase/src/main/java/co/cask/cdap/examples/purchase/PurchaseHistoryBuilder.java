@@ -114,7 +114,6 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
             , Charsets.UTF_8), UserProfile.class);
         }
       } catch (Exception e) {
-      } finally {
         if (urlConnection != null) {
           urlConnection.disconnect();
         }
