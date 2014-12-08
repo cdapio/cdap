@@ -6,23 +6,20 @@
     <span class="icon-bar"></span>
   </button>
   <a class="navbar-brand" href="/">
-     CDAP
-   </a>
+     <span>CDAP</span>
+  </a>
 </div>
 <div class="collapse navbar-collapse" ng-class="{in:navbarCollapsed}">
 
-  <div ng-click="navbarCollapsed = false">
+  <nav ng-click="navbarCollapsed = false">
 
     <ul class="nav navbar-nav">
       <li ng-repeat="link in navbarLinks" ng-class="{active: $state.includes(link.sref)}">
-        <a ui-sref="{{link.sref}}">
-          <span ng-class="link.icon && 'fa fa-' + link.icon"></span>
-          {{link.label}}
-        </a>
+        <a ui-sref="{{link.sref}}" ng-bind="link.label"></a>
       </li>
     </ul>
 
-  </div>
+  </nav>
 
   <ul class="nav navbar-nav navbar-right">
 

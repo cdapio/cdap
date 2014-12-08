@@ -218,17 +218,16 @@ angular.module(PKG.name+'.services')
           msg.resource.json = true;
 
           // parse the _cdap key, prefix with the CDAP protocol/host
-          // @TODO get prefix from config
           if(r._cdap) {
             var p = r._cdap.split(' '),
                 path = p.pop();
             msg.resource.method = p.length ? p[0] : 'GET';
-            msg.resource.url = 'http://'
-              + MY_CONFIG.cdap.routerServerUrl
-              + ':'
-              + MY_CONFIG.cdap.routerServerPort
-              + '/v2'
-              + path;
+            msg.resource.url = 'http://' +
+              MY_CONFIG.cdap.routerServerUrl +
+              ':' +
+              MY_CONFIG.cdap.routerServerPort +
+              '/v2' +
+              path;
             delete msg.resource._cdap;
           }
         }

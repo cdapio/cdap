@@ -28,7 +28,7 @@ morgan.token('ms', function (req, res){
 });
 
 var PING_FREQUENCY = 1000;
-var MAX_RETRIES = 10;
+var MAX_RETRIES = 30;
 var httpStaticLogger  = morgan(colors.green('http')+' :method :url :ms :status');
 var httpIndexLogger  = morgan(colors.inverse('http')+' :method :url :ms :status');
 

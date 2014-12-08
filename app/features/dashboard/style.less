@@ -1,0 +1,29 @@
+@import "../../styles/variables.less";
+
+body.state-dashboard {
+
+  [as-sortable],
+  .as-sortable-item,
+  .as-sortable-placeholder {
+    min-height: 100px;
+  }
+
+  .as-sortable-placeholder {
+    border: 1px dashed @gray-light;
+    background-color: @gray-lighter;
+
+    // mimic a bootstrap panel
+    margin-bottom: @line-height-computed;
+    border-radius: @panel-border-radius;
+  }
+
+  .as-sortable-drag {
+    opacity: .6;
+  }
+
+  .panel-heading,
+  .panel-footer {
+    user-select: none;
+  }
+
+}

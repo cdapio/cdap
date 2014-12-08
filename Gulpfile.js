@@ -5,14 +5,6 @@ var gulp = require('gulp'),
     mainBowerFiles = require('main-bower-files'),
     merge = require('merge-stream');
 
-function plumber() {
-  return plug.plumber({ errorHandler: function (err) {
-    plug.util.beep();
-    plug.util.log(plug.util.colors.red(err.toString()));
-  } });
-}
-
-
 /*
   library CSS
  */
@@ -24,11 +16,11 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/angular-loading-bar/build/loading-bar.min.css',
       './bower_components/angular-motion/dist/angular-motion.min.css',
       './bower_components/font-awesome/css/font-awesome.min.css',
-      './bower_components/epoch/epoch.min.css'
+      './bower_components/epoch/epoch.min.css',
+      './bower_components/ng-sortable/dist/ng-sortable.min.css'
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
     })))
-    .pipe(plumber())
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('lib.css'))
     .pipe(gulp.dest('./dist/assets/bundle'));
@@ -58,7 +50,6 @@ gulp.task('css:app', function() {
       './app/styles/common.less',
       './app/features/**/*.{less,css}'
     ])
-    .pipe(plumber())
     .pipe(plug.if('*.less', plug.less()))
     .pipe(plug.concat('app.css'))
     .pipe(plug.autoprefixer(["> 1%"], {cascade:true}))
@@ -101,6 +92,8 @@ gulp.task('js:lib', function() {
 
       './bower_components/sockjs-client/dist/sockjs.js',
 
+      './bower_components/ng-sortable/dist/ng-sortable.min.js',
+
       './bower_components/d3/d3.min.js',
       './bower_components/epoch/epoch.min.js'
 
@@ -130,7 +123,6 @@ gulp.task('js:app', function() {
       './app/**/*.js',
       '!./app/**/*-test.js'
     ])
-    .pipe(plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',

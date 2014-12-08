@@ -23,6 +23,16 @@ angular.module(PKG.name+'.feature.foo')
         url: '/bar'
       })
 
+        .state('apps', {
+          parent: 'foo',
+          url: '/apps'
+        })
+
+        .state('admin', {
+          parent: 'foo',
+          url: '/admin'
+        })
+
       ;
 
 
