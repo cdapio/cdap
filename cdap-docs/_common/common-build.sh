@@ -42,7 +42,7 @@ LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
 PROJECT="cdap"
 PROJECT_CAPS="CDAP"
-REFERENCE="reference"
+REFERENCE="reference-manual"
 
 SCRIPT_PATH=`pwd`
 
@@ -165,6 +165,7 @@ function copy_javadocs_sdk() {
 function build_license_pdfs() {
   version
   cd $SCRIPT_PATH
+  PROJECT_VERSION_TRIMMED=${PROJECT_VERSION%%-SNAPSHOT*}
   rm -rf $SCRIPT_PATH/$LICENSES_PDF
   mkdir $SCRIPT_PATH/$LICENSES_PDF
   E_DEP="cdap-enterprise-dependencies"
@@ -175,13 +176,13 @@ function build_license_pdfs() {
   LIC_RST="../$REFERENCE/source/$LICENSES"
   echo ""
   echo "Building $E_DEP"
-  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$E_DEP.pdf -b $PROJECT_VERSION $LIC_RST/$E_DEP.rst
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$E_DEP.pdf -b $PROJECT_VERSION_TRIMMED $LIC_RST/$E_DEP.rst
   echo ""
   echo "Building $L_DEP"
-  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$L_DEP.pdf -b $PROJECT_VERSION $LIC_RST/$L_DEP.rst
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$L_DEP.pdf -b $PROJECT_VERSION_TRIMMED $LIC_RST/$L_DEP.rst
   echo ""
   echo "Building $S_DEP"
-  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$S_DEP.pdf -b $PROJECT_VERSION $LIC_RST/$S_DEP.rst
+  python $DOC_GEN_PY -g pdf -o $LIC_PDF/$S_DEP.pdf -b $PROJECT_VERSION_TRIMMED $LIC_RST/$S_DEP.rst
 }
 
 function copy_license_pdfs() {

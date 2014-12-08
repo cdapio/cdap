@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2014 Cask Data, Inc.
+ * Copyright © 2014 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.cli.exception;
-
-import co.cask.common.cli.Command;
+package co.cask.cdap.data2.datafabric.dataset.type;
 
 /**
- * Thrown when there was an error in the command input.
+ * Just a dummy class for the {@link DatasetTypeClassLoaderTest}.
  */
-public class CommandInputError extends RuntimeException {
-
-  public CommandInputError(Command command) {
-    super("Invalid input. Expected format: " + command.getPattern());
-  }
-
-  public CommandInputError(Command command, String message) {
-    super("Invalid input: " + message + "\nExpected format: " + command.getPattern());
-  }
+public class DummyClass {
 }
