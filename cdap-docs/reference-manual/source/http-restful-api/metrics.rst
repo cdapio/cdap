@@ -37,7 +37,7 @@ The general form of a metrics request is::
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
    * - ``<run-id>``
-        - Run-ID of the element; see `Querying by Run-ID`_
+     - Run-ID of the program; see `Querying by Run-ID`_
    * - ``<metric>``
      - Metric being queried; see `Available Metrics`_
    * - ``<time-range>``
@@ -204,9 +204,9 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/services/<service-id>``
    * - All Services of an Application
      - ``/apps/<app-id>/services``
-   * - All elements of an Application
+   * - All components of an Application
      - ``/apps/<app-id>``
-   * - All elements of all Applications
+   * - All components of all Applications
      - ``/``
 
 Stream metrics are only available at the Stream level and the only available context is:
@@ -244,13 +244,13 @@ Flowlet, Procedure, Mapper, or Reducer level:
 Querying by Run-ID
 ------------------
 
-Each execution of an element (Flow, MapReduce, Spark, Services, Procedure) has an associated run-ID that uniquely identifies that element's run.
-We can query metrics for an element by its run-ID to see the metrics for a particular run.
-Please see the :ref:`Run Records and Schedule <rest-element-runs>` on retrieving active and historical element runs.
+Each execution of an program (Flow, MapReduce, Spark, Services, Procedure) has an associated run-ID that uniquely identifies that program's run.
+We can query metrics for an program by its run-ID to see the metrics for a particular run.
+Please see the :ref:`Run Records and Schedule <rest-program-runs>` on retrieving active and historical program runs.
 
-When querying by run-ID, it is specified after the ``element-id`` in the path::
+When querying by run-ID, it is specified after the ``program-id`` in the path::
 
-  /apps/<app-id>/<element-type>/<element-id>/runs/<run-id>/
+  /apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/
 
 Examples ::
 
