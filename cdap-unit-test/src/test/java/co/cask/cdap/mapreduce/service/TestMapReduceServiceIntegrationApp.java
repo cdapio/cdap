@@ -111,7 +111,8 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
 
       @Override
       protected void map(String key, String value, Context context) throws IOException, InterruptedException {
-        URL url = new URL(serviceUrl.toString() + COUNT_METHOD_NAME + "?words=" + URLEncoder.encode(value, Charsets.UTF_8.name()));
+        URL url = new URL(serviceUrl.toString() + COUNT_METHOD_NAME + "?words=" +
+                            URLEncoder.encode(value, Charsets.UTF_8.name()));
         String wordCount = doRequest(url);
         context.write(new BytesWritable(Bytes.toBytes("total")), new LongWritable(Long.valueOf(wordCount)));
       }

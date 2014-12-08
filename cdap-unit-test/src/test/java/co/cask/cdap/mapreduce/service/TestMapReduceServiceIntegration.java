@@ -36,7 +36,8 @@ public class TestMapReduceServiceIntegration extends TestBase {
       ServiceManager serviceManager = applicationManager.startService(TestMapReduceServiceIntegrationApp.SERVICE_NAME);
       serviceStatusCheck(serviceManager, true);
 
-      DataSetManager<MyKeyValueTableDefinition.KeyValueTable> inDataSet = applicationManager.getDataSet(TestMapReduceServiceIntegrationApp.INPUT_DATASET);
+      DataSetManager<MyKeyValueTableDefinition.KeyValueTable> inDataSet =
+        applicationManager.getDataSet(TestMapReduceServiceIntegrationApp.INPUT_DATASET);
       inDataSet.get().write("key1", "Two words");
       inDataSet.get().write("key2", "Plus three words");
       inDataSet.flush();
@@ -44,7 +45,8 @@ public class TestMapReduceServiceIntegration extends TestBase {
       MapReduceManager mrManager = applicationManager.startMapReduce(TestMapReduceServiceIntegrationApp.MR_NAME);
       mrManager.waitForFinish(180, TimeUnit.SECONDS);
 
-      DataSetManager<MyKeyValueTableDefinition.KeyValueTable> outDataSet = applicationManager.getDataSet(TestMapReduceServiceIntegrationApp.OUTPUT_DATASET);
+      DataSetManager<MyKeyValueTableDefinition.KeyValueTable> outDataSet =
+        applicationManager.getDataSet(TestMapReduceServiceIntegrationApp.OUTPUT_DATASET);
       MyKeyValueTableDefinition.KeyValueTable results = outDataSet.get();
 
       String total = results.get(TestMapReduceServiceIntegrationApp.SQUARED_TOTAL_WORDS_COUNT);
