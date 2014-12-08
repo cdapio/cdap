@@ -197,7 +197,6 @@ AppServer.prototype.start = function start () {
       }
     };
     request(options, function (nerr, nres, nbody) {
-      console.log(arguments);
       if (nerr || nres.statusCode !== 200) {
         res.status(nres.statusCode).send(nbody);
       } else {
