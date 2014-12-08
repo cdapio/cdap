@@ -113,9 +113,9 @@ AppServer.prototype.setUpEnvironment = function setUpEnvironment () {
         if (!err && response) {
           clearInterval(interval);
           if (body) {
-            if (response.statusCode === 401 && JSON.parse(body).auth_uri) {
+            if (response.statusCode === 401) {
               self.securityEnabled = true;
-              self.authServerAddresses = JSON.parse(body).auth_uri;
+              self.authServerAddresses = JSON.parse(body).auth_uri || [];
             } else {
               self.securityEnabled = false;
             }
@@ -137,7 +137,7 @@ AppServer.prototype.setUpEnvironment = function setUpEnvironment () {
  * @return {String} Auth server address.
  */
 AppServer.prototype.getAuthServerAddress = function () {
-  if (this.authServerAddresses.length === 0) {
+  if (!this.authServerAddresses.length) {
     return null;
   }
   return this.authServerAddresses[Math.floor(Math.random() * this.authServerAddresses.length)];
@@ -181,7 +181,7 @@ AppServer.prototype.start = function start () {
 
   this.app.post('/login', function (req, res) {
     if (!req.body.hasOwnProperty('username') || !req.body.hasOwnProperty('password')) {
-      res.status(400).status('Please specify username and password');
+      res.send(400, "Please specify username/password");
     }
     var authAddress = self.getAuthServerAddress();
     var options = {
