@@ -181,8 +181,8 @@ public class ProgramHelper {
     this.workflowClient = workflowClient;
   }
 
-  public final void programList(HttpRequest request, HttpResponder responder, String accountId, ProgramType type,
-                                   @Nullable String applicationId, Store store) {
+  public final void programList(HttpResponder responder, String accountId, ProgramType type,
+                                @Nullable String applicationId, Store store) {
     if (applicationId != null && applicationId.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Application id is empty");
       return;
@@ -284,9 +284,8 @@ public class ProgramHelper {
     return new ProgramRecord(type, appId, spec.getName(), spec.getName(), spec.getDescription());
   }
 
-  public ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId,
-                                                              String flowId, ProgramType typeId,
-                                                              ProgramRuntimeService runtimeService) {
+  public ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String accountId, String appId, String flowId,
+                                                           ProgramType typeId, ProgramRuntimeService runtimeService) {
     ProgramType type = ProgramType.valueOf(typeId.name());
     Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
@@ -302,8 +301,8 @@ public class ProgramHelper {
     return null;
   }
 
-  public void getLiveInfo(HttpRequest request, HttpResponder responder, final String accountId, final String appId,
-                             final String programId, ProgramType type, ProgramRuntimeService runtimeService) {
+  public void getLiveInfo(HttpResponder responder, final String accountId, final String appId,
+                          final String programId, ProgramType type, ProgramRuntimeService runtimeService) {
     try {
       responder.sendJson(HttpResponseStatus.OK,
                          runtimeService.getLiveInfo(Id.Program.from(accountId, appId, programId), type));
@@ -315,8 +314,8 @@ public class ProgramHelper {
     }
   }
 
-  public void runnableStatus(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                             String runnableId, ProgramType type) {
+  public void runnableStatus(HttpResponder responder, String accountId, String appId, String runnableId,
+                             ProgramType type) {
 
     try {
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
@@ -336,8 +335,8 @@ public class ProgramHelper {
     }
   }
 
-  public void getStatus(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                        String runnableType, String runnableId) {
+  public void getStatus(HttpResponder responder, String accountId, String appId, String runnableType,
+                        String runnableId) {
     try {
       final Id.Program id = Id.Program.from(accountId, appId, runnableId);
       final ProgramType type = ProgramType.valueOfCategoryName(runnableType);
@@ -748,8 +747,8 @@ public class ProgramHelper {
     }
   }
 
-  public void runnableSpecification(HttpRequest request, HttpResponder responder, final String accountId,
-                                     final String appId, ProgramType runnableType, final String runnableId) {
+  public void runnableSpecification(HttpResponder responder, final String accountId, final String appId,
+                                    ProgramType runnableType, final String runnableId) {
     try {
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
       String specification = getProgramSpecification(id, runnableType);
@@ -867,9 +866,9 @@ public class ProgramHelper {
     return null;
   }
 
-  public synchronized void startStopProgram(HttpRequest request, HttpResponder responder, final String accountId,
-                                             final String appId, final String runnableType, final String runnableId,
-                                             final String action, final Map<String, String> args) {
+  public synchronized void startStopProgram(HttpResponder responder, final String accountId, final String appId,
+                                            final String runnableType, final String runnableId, final String action,
+                                            final Map<String, String> args) {
     ProgramType type = ProgramType.valueOfCategoryName(runnableType);
 
     if (type == null || (type == ProgramType.WORKFLOW && "stop".equals(action))) {
@@ -877,12 +876,12 @@ public class ProgramHelper {
     } else {
       LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
                 action, appId, runnableType, runnableId);
-      runnableStartStop(request, responder, accountId, appId, runnableId, type, action, args);
+      runnableStartStop(responder, accountId, appId, runnableId, type, action, args);
     }
   }
 
-  public void runnableStartStop(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                                 String runnableId, ProgramType type, String action, Map<String, String> args) {
+  public void runnableStartStop(HttpResponder responder, String accountId, String appId, String runnableId,
+                                ProgramType type, String action, Map<String, String> args) {
     try {
       Id.Program id = Id.Program.from(accountId, appId, runnableId);
       AppFabricServiceStatus status = null;
@@ -1011,8 +1010,8 @@ public class ProgramHelper {
     }
   }
 
-  public void getRuns(HttpRequest request, HttpResponder responder, String accountId, String appId, String runnableId,
-                       String status, long start, long end, int limit) {
+  public void getRuns(HttpResponder responder, String accountId, String appId, String runnableId, String status,
+                      long start, long end, int limit) {
     try {
       Id.Program programId = Id.Program.from(accountId, appId, runnableId);
       try {
@@ -1035,8 +1034,8 @@ public class ProgramHelper {
     }
   }
 
-  public void getRunnableRuntimeArgs(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                             String runnableType, String runnableId) {
+  public void getRunnableRuntimeArgs(HttpResponder responder, String accountId, String appId, String runnableType,
+                                     String runnableId) {
     ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -1059,8 +1058,8 @@ public class ProgramHelper {
     }
   }
 
-  public void saveRunnableRuntimeArgs(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                                      String runnableType, String runnableId, Map<String, String> args) {
+  public void saveRunnableRuntimeArgs(HttpResponder responder, String accountId, String appId, String runnableType,
+                                      String runnableId, Map<String, String> args) {
     ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -1082,8 +1081,7 @@ public class ProgramHelper {
     }
   }
 
-  public void getProcedureInstances(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                                    String procedureId) {
+  public void getProcedureInstances(HttpResponder responder, String accountId, String appId, String procedureId) {
     try {
       Id.Program programId = Id.Program.from(accountId, appId, procedureId);
 
@@ -1102,8 +1100,8 @@ public class ProgramHelper {
     }
   }
 
-  public void setProcedureInstances(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                                    String procedureId, int instances) {
+  public void setProcedureInstances(HttpResponder responder, String accountId, String appId, String procedureId,
+                                    int instances) {
     try {
       Id.Program programId = Id.Program.from(accountId, appId, procedureId);
 
@@ -1182,8 +1180,7 @@ public class ProgramHelper {
     return false;
   }
 
-  public void getScheduledRunTime(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                                  String workflowId) {
+  public void getScheduledRunTime(HttpResponder responder, String accountId, String appId, String workflowId) {
     try {
       Id.Program id = Id.Program.from(accountId, appId, workflowId);
       List<ScheduledRuntime> runtimes = scheduler.nextScheduledRuntime(id, ProgramType.WORKFLOW);
@@ -1204,8 +1201,7 @@ public class ProgramHelper {
     }
   }
 
-  public void getWorkflowSchedules(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                                   String workflowId) {
+  public void getWorkflowSchedules(HttpResponder responder, String accountId, String appId, String workflowId) {
     try {
       Id.Program id = Id.Program.from(accountId, appId, workflowId);
       responder.sendJson(HttpResponseStatus.OK, scheduler.getScheduleIds(id, ProgramType.WORKFLOW));
@@ -1217,8 +1213,7 @@ public class ProgramHelper {
     }
   }
 
-  public void getScheduleState(HttpRequest request, HttpResponder responder, String accountId, String workflowId,
-                               String scheduleId) {
+  public void getScheduleState(HttpResponder responder, String accountId, String workflowId, String scheduleId) {
     try {
       JsonObject json = new JsonObject();
       json.addProperty("status", scheduler.scheduleState(scheduleId).toString());
@@ -1231,8 +1226,8 @@ public class ProgramHelper {
     }
   }
 
-  public void suspendWorkflowSchedule(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                                      String workflowId, String scheduleId) {
+  public void suspendWorkflowSchedule(HttpResponder responder, String accountId, String appId, String workflowId,
+                                      String scheduleId) {
     try {
       Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
       switch (state) {
@@ -1255,8 +1250,8 @@ public class ProgramHelper {
     }
   }
 
-  public void resumeWorkflowSchedule(HttpRequest request, HttpResponder responder, String accountId, String appId,
-                                     String workflowId, String scheduleId) {
+  public void resumeWorkflowSchedule(HttpResponder responder, String accountId, String appId, String workflowId,
+                                     String scheduleId) {
     try {
       Scheduler.ScheduleState state = scheduler.scheduleState(scheduleId);
       switch (state) {
@@ -1279,8 +1274,7 @@ public class ProgramHelper {
     }
   }
 
-  public void getWorkflowStatus(HttpRequest request, final HttpResponder responder, String accountId, String appId,
-                                String workflowName) {
+  public void getWorkflowStatus(final HttpResponder responder, String accountId, String appId, String workflowName) {
     try {
       workflowClient.getWorkflowStatus(accountId, appId, workflowName,
                                        new WorkflowClient.Callback() {

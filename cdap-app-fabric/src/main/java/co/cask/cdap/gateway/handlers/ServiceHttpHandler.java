@@ -78,7 +78,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.SERVICE,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.SERVICE,
                               null, store);
   }
 
@@ -88,7 +88,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/services")
   @GET
   public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.SERVICE,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.SERVICE,
                               appId, store);
   }
 
@@ -203,7 +203,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceLiveInfo(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") String appId,
                               @PathParam("service-id") String serviceId) {
-    programHelper.getLiveInfo(request, responder, getAuthenticatedAccountId(request), appId, serviceId,
+    programHelper.getLiveInfo(responder, getAuthenticatedAccountId(request), appId, serviceId,
                               ProgramType.SERVICE, runtimeService);
   }
 

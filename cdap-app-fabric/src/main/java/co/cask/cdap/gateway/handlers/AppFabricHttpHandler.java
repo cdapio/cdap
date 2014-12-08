@@ -253,7 +253,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("runnable-type") final String runnableType,
                         @PathParam("runnable-id") final String runnableId) {
 
-    programHelper.getStatus(request, responder, getAuthenticatedAccountId(request), appId, runnableType, runnableId);
+    programHelper.getStatus(responder, getAuthenticatedAccountId(request), appId, runnableType, runnableId);
   }
 
   /**
@@ -264,7 +264,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void webappStart(final HttpRequest request, final HttpResponder responder,
                           @PathParam("app-id") final String appId) {
     try {
-      programHelper.runnableStartStop(request, responder, getAuthenticatedAccountId(request), appId,
+      programHelper.runnableStartStop(responder, getAuthenticatedAccountId(request), appId,
                                       ProgramType.WEBAPP.getPrettyName().toLowerCase(), ProgramType.WEBAPP,
                                       "start", decodeArguments(request));
     } catch (IOException e) {
@@ -282,7 +282,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void webappStop(final HttpRequest request, final HttpResponder responder,
                          @PathParam("app-id") final String appId) {
     try {
-      programHelper.runnableStartStop(request, responder, getAuthenticatedAccountId(request), appId,
+      programHelper.runnableStartStop(responder, getAuthenticatedAccountId(request), appId,
                                       ProgramType.WEBAPP.getPrettyName().toLowerCase(), ProgramType.WEBAPP,
                                       "stop", decodeArguments(request));
     } catch (IOException e) {
@@ -299,7 +299,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void webappStatus(final HttpRequest request, final HttpResponder responder,
                            @PathParam("app-id") final String appId) {
     try {
-      programHelper.runnableStatus(request, responder, getAuthenticatedAccountId(request), appId,
+      programHelper.runnableStatus(responder, getAuthenticatedAccountId(request), appId,
                                    ProgramType.WEBAPP.getPrettyName().toLowerCase(), ProgramType.WEBAPP);
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -319,7 +319,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("runnable-type") final String runnableType,
                            @PathParam("runnable-id") final String runnableId) {
     try {
-      programHelper.startStopProgram(request, responder, getAuthenticatedAccountId(request), appId, runnableType,
+      programHelper.startStopProgram(responder, getAuthenticatedAccountId(request), appId, runnableType,
                                             runnableId, "start", decodeArguments(request));
     } catch (IOException e) {
       LOG.error("Got exception : ", e);
@@ -341,7 +341,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
     try {
-      programHelper.startStopProgram(request, responder, getAuthenticatedAccountId(request), appId, runnableType,
+      programHelper.startStopProgram(responder, getAuthenticatedAccountId(request), appId, runnableType,
                                             runnableId, "debug", decodeArguments(request));
     } catch (IOException e) {
       LOG.error("Got exception : ", e);
@@ -359,7 +359,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("runnable-type") final String runnableType,
                           @PathParam("runnable-id") final String runnableId) {
     try {
-      programHelper.startStopProgram(request, responder, getAuthenticatedAccountId(request), appId, runnableType,
+      programHelper.startStopProgram(responder, getAuthenticatedAccountId(request), appId, runnableType,
                                             runnableId, "stop", decodeArguments(request));
     } catch (IOException e) {
       LOG.error("Got exception : ", e);
@@ -388,7 +388,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
     long start = (startTs == null || startTs.isEmpty()) ? Long.MIN_VALUE : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
-    programHelper.getRuns(request, responder, getAuthenticatedAccountId(request), appId, runnableId, status,
+    programHelper.getRuns(responder, getAuthenticatedAccountId(request), appId, runnableId, status,
                           start, end, resultLimit);
   }
 
@@ -401,7 +401,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-id") final String appId,
                                      @PathParam("runnable-type") final String runnableType,
                                      @PathParam("runnable-id") final String runnableId) {
-    programHelper.getRunnableRuntimeArgs(request, responder, getAuthenticatedAccountId(request), appId,
+    programHelper.getRunnableRuntimeArgs(responder, getAuthenticatedAccountId(request), appId,
                                                 runnableType, runnableId);
   }
 
@@ -415,7 +415,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("runnable-type") final String runnableType,
                                       @PathParam("runnable-id") final String runnableId) {
     try {
-      programHelper.saveRunnableRuntimeArgs(request, responder, getAuthenticatedAccountId(request), appId, runnableType,
+      programHelper.saveRunnableRuntimeArgs(responder, getAuthenticatedAccountId(request), appId, runnableType,
                                             runnableId, decodeArguments(request));
     } catch (IOException e) {
       LOG.error("Got exception : ", e);
@@ -431,7 +431,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getProcedureInstances(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("procedure-id") final String procedureId) {
-    programHelper.getProcedureInstances(request, responder, getAuthenticatedAccountId(request), appId,
+    programHelper.getProcedureInstances(responder, getAuthenticatedAccountId(request), appId,
                                                procedureId);
   }
 
@@ -444,7 +444,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("app-id") final String appId,
                                     @PathParam("procedure-id") final String procedureId) {
     try {
-      programHelper.setProcedureInstances(request, responder, getAuthenticatedAccountId(request), appId,
+      programHelper.setProcedureInstances(responder, getAuthenticatedAccountId(request), appId,
                                           procedureId, getInstances(request));
     } catch (IOException e) {
       LOG.error("Got exception : ", e);
@@ -659,7 +659,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("app-id") final String appId,
                                   @PathParam("workflow-id") final String workflowId) {
-    programHelper.getScheduledRunTime(request, responder, getAuthenticatedAccountId(request), appId, workflowId);
+    programHelper.getScheduledRunTime(responder, getAuthenticatedAccountId(request), appId, workflowId);
   }
 
   /**
@@ -670,7 +670,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void workflowSchedules(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId,
                                 @PathParam("workflow-id") final String workflowId) {
-    programHelper.getWorkflowSchedules(request, responder, getAuthenticatedAccountId(request), appId, workflowId);
+    programHelper.getWorkflowSchedules(responder, getAuthenticatedAccountId(request), appId, workflowId);
   }
 
   /**
@@ -682,7 +682,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               @PathParam("app-id") final String appId,
                               @PathParam("workflow-id") final String workflowId,
                               @PathParam("schedule-id") final String scheduleId) {
-    programHelper.getScheduleState(request, responder, getAuthenticatedAccountId(request), workflowId, scheduleId);
+    programHelper.getScheduleState(responder, getAuthenticatedAccountId(request), workflowId, scheduleId);
   }
 
   /**
@@ -694,7 +694,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("app-id") final String appId,
                                       @PathParam("workflow-id") final String workflowId,
                                       @PathParam("schedule-id") final String scheduleId) {
-    programHelper.suspendWorkflowSchedule(request, responder, getAuthenticatedAccountId(request), appId, workflowId,
+    programHelper.suspendWorkflowSchedule(responder, getAuthenticatedAccountId(request), appId, workflowId,
                                           scheduleId);
   }
 
@@ -708,7 +708,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("workflow-id") final String workflowId,
                                      @PathParam("schedule-id") final String scheduleId) {
 
-    programHelper.resumeWorkflowSchedule(request, responder, getAuthenticatedAccountId(request), appId, workflowId,
+    programHelper.resumeWorkflowSchedule(responder, getAuthenticatedAccountId(request), appId, workflowId,
                                          scheduleId);
   }
 
@@ -718,7 +718,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void procedureLiveInfo(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId,
                                 @PathParam("procedure-id") final String procedureId) {
-    programHelper.getLiveInfo(request, responder, getAuthenticatedAccountId(request), appId, procedureId,
+    programHelper.getLiveInfo(responder, getAuthenticatedAccountId(request), appId, procedureId,
                                      ProgramType.PROCEDURE, runtimeService);
   }
 
@@ -728,7 +728,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void flowLiveInfo(HttpRequest request, HttpResponder responder,
                            @PathParam("app-id") final String appId,
                            @PathParam("flow-id") final String flowId) {
-    programHelper.getLiveInfo(request, responder, getAuthenticatedAccountId(request), appId, flowId,
+    programHelper.getLiveInfo(responder, getAuthenticatedAccountId(request), appId, flowId,
                                      ProgramType.FLOW, runtimeService);
   }
 
@@ -740,7 +740,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void flowSpecification(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId,
                                 @PathParam("flow-id")final String flowId) {
-    programHelper.runnableSpecification(request, responder, getAuthenticatedAccountId(request), appId,
+    programHelper.runnableSpecification(responder, getAuthenticatedAccountId(request), appId,
                                                ProgramType.FLOW, flowId);
   }
 
@@ -752,7 +752,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void procedureSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("procedure-id")final String procId) {
-    programHelper.runnableSpecification(request, responder, getAuthenticatedAccountId(request), appId,
+    programHelper.runnableSpecification(responder, getAuthenticatedAccountId(request), appId,
                                                ProgramType.PROCEDURE, procId);
   }
 
@@ -764,7 +764,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("mapreduce-id")final String mapreduceId) {
-    programHelper.runnableSpecification(request, responder, getAuthenticatedAccountId(request), appId,
+    programHelper.runnableSpecification(responder, getAuthenticatedAccountId(request), appId,
                                                ProgramType.MAPREDUCE, mapreduceId);
   }
 
@@ -776,7 +776,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void sparkSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("spark-id")final String sparkId) {
-    programHelper.runnableSpecification(request, responder, getAuthenticatedAccountId(request), appId,
+    programHelper.runnableSpecification(responder, getAuthenticatedAccountId(request), appId,
                                                ProgramType.SPARK, sparkId);
   }
 
@@ -788,7 +788,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void workflowSpecification(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("workflow-id")final String workflowId) {
-    programHelper.runnableSpecification(request, responder, getAuthenticatedAccountId(request), appId,
+    programHelper.runnableSpecification(responder, getAuthenticatedAccountId(request), appId,
                                                ProgramType.WORKFLOW, workflowId);
   }
 
@@ -797,7 +797,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceSpecification(HttpRequest request, HttpResponder responder,
                                    @PathParam("app-id") String appId,
                                    @PathParam("service-id") String serviceId) {
-    programHelper.runnableSpecification(request, responder, getAuthenticatedAccountId(request), appId,
+    programHelper.runnableSpecification(responder, getAuthenticatedAccountId(request), appId,
                                                ProgramType.SERVICE, serviceId);
   }
 
@@ -807,7 +807,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/deploy/status")
   public void getDeployStatus(HttpRequest request, HttpResponder responder) {
-    appHelper.getDeployStatus(request, responder, getAuthenticatedAccountId(request));
+    appHelper.getDeployStatus(responder, getAuthenticatedAccountId(request));
   }
 
 
@@ -827,7 +827,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("app-id") final String appId) {
-    appHelper.deleteApp(request, responder, getAuthenticatedAccountId(request), appId);
+    appHelper.deleteApp(responder, getAuthenticatedAccountId(request), appId);
   }
 
   /**
@@ -836,7 +836,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder) {
-    appHelper.deleteAllApps(request, responder, getAuthenticatedAccountId(request));
+    appHelper.deleteAllApps(responder, getAuthenticatedAccountId(request));
   }
 
   /**
@@ -949,7 +949,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void workflowStatus(HttpRequest request, final HttpResponder responder,
                              @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName) {
 
-    programHelper.getWorkflowStatus(request, responder, getAuthenticatedAccountId(request), appId, workflowName);
+    programHelper.getWorkflowStatus(responder, getAuthenticatedAccountId(request), appId, workflowName);
   }
 
   /**
@@ -958,7 +958,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.FLOW, null,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.FLOW, null,
                                      store);
   }
 
@@ -968,7 +968,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/procedures")
   public void getAllProcedures(HttpRequest request, HttpResponder responder) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.PROCEDURE,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.PROCEDURE,
                                      null, store);
   }
 
@@ -978,7 +978,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.MAPREDUCE,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.MAPREDUCE,
                                      null, store);
   }
 
@@ -988,7 +988,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.SPARK, null,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.SPARK, null,
                                      store);
   }
 
@@ -998,7 +998,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.WORKFLOW, null,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.WORKFLOW, null,
                                      store);
   }
 
@@ -1008,7 +1008,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder) {
-    appHelper.getAppDetails(request, responder, getAuthenticatedAccountId(request), null);
+    appHelper.getAppDetails(responder, getAuthenticatedAccountId(request), null);
   }
 
   /**
@@ -1018,7 +1018,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") final String appId) {
-    appHelper.getAppDetails(request, responder, getAuthenticatedAccountId(request), appId);
+    appHelper.getAppDetails(responder, getAuthenticatedAccountId(request), appId);
   }
 
   /**
@@ -1028,7 +1028,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
                             @PathParam("app-id") final String appId) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.FLOW, appId,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.FLOW, appId,
                                      store);
   }
 
@@ -1039,7 +1039,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.PROCEDURE,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.PROCEDURE,
                                      appId, store);
   }
 
@@ -1050,7 +1050,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.MAPREDUCE,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.MAPREDUCE,
                                      appId, store);
   }
 
@@ -1061,7 +1061,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
                                 @PathParam("app-id") final String appId) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.SPARK,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.SPARK,
                                      appId, store);
   }
 
@@ -1072,7 +1072,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/workflows")
   public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
                                  @PathParam("app-id") final String appId) {
-    programHelper.programList(request, responder, getAuthenticatedAccountId(request), ProgramType.WORKFLOW,
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.WORKFLOW,
                                      appId, store);
   }
 

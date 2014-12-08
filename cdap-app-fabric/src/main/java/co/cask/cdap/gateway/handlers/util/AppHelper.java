@@ -298,7 +298,7 @@ public class AppHelper {
 
   }
 
-  public void getAppDetails(HttpRequest request, HttpResponder responder, String accountId, String appid) {
+  public void getAppDetails(HttpResponder responder, String accountId, String appid) {
     if (appid != null && appid.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is empty");
       return;
@@ -429,7 +429,7 @@ public class AppHelper {
     }
   }
 
-  public void getDeployStatus(HttpRequest request, HttpResponder responder, String accountId) {
+  public void getDeployStatus(HttpResponder responder, String accountId) {
     try {
       DeployStatus status  = dstatus(accountId);
       LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
@@ -489,7 +489,7 @@ public class AppHelper {
     return null;
   }
 
-  public void deleteApp(HttpRequest request, HttpResponder responder, String accountId, String appId) {
+  public void deleteApp(HttpResponder responder, String accountId, String appId) {
     try {
       Id.Program id = Id.Program.from(accountId, appId, "");
       AppFabricServiceStatus appStatus = removeApplication(id);
@@ -503,7 +503,7 @@ public class AppHelper {
     }
   }
 
-  public void deleteAllApps(HttpRequest request, HttpResponder responder, String accountId) {
+  public void deleteAllApps(HttpResponder responder, String accountId) {
     try {
       Id.Account id = Id.Account.from(accountId);
       AppFabricServiceStatus status = removeAll(id);
