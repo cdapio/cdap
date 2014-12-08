@@ -52,7 +52,7 @@ your project's ``pom.xml`` file:
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-authentication-client</artifactId>
-      <version>1.0.1</version>
+      <version>1.1.0-SNAPSHOT</version>
     </dependency>
 
 Example

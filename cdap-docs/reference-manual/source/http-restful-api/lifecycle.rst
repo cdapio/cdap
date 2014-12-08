@@ -99,8 +99,8 @@ Start, Stop, Status, and Runtime Arguments
 After an Application is deployed, you can start and stop its Flows, Procedures, MapReduce 
 jobs, Workflows, and Custom Services, and query for their status using HTTP POST and GET methods::
 
-  POST <base-url>/apps/<app-id>/<element-type>/<element-id>/<operation>
-  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/status
+  POST <base-url>/apps/<app-id>/<program-type>/<program-id>/<operation>
+  GET <base-url>/apps/<app-id>/<program-type>/<program-id>/status
 
 .. list-table::
    :widths: 20 80
@@ -148,12 +148,12 @@ The response will be the same JSON array with additional parameters for each of 
    * - Parameter
      - Description
    * - ``"status"``
-     - Maps to the status of an individual JSON object's queried element
-       if the query is valid and the element was found.
+     - Maps to the status of an individual JSON object's queried program
+       if the query is valid and the program was found.
    * - ``"statusCode"``
      - The status code from retrieving the status of an individual JSON object.
    * - ``"error"``
-     - If an error, a description of why the status was not retrieved (the specified element was not found, etc.)
+     - If an error, a description of why the status was not retrieved (the specified program was not found, etc.)
 
 The ``status`` and ``error`` fields are mutually exclusive meaning if there is an error,
 then there will never be a status and vice versa.
@@ -196,7 +196,7 @@ Examples
      - Attempt to get the status of the Flow *MyFlow* in the Application *MyApp* and of the Procedure *MyProcedure*
        in the Application *MyApp2*
 
-When starting an element, you can optionally specify runtime arguments as a JSON map in the request body::
+When starting an program, you can optionally specify runtime arguments as a JSON map in the request body::
 
   POST <base-url>/apps/HelloWorld/flows/WhoFlow/start
 
@@ -205,7 +205,7 @@ with the arguments as a JSON string in the body::
   {"foo":"bar","this":"that"}
 
 CDAP will use these these runtime arguments only for this single invocation of the
-element. To save the runtime arguments so that CDAP will use them every time you start the element,
+program. To save the runtime arguments so that CDAP will use them every time you start the program,
 issue an HTTP PUT with the parameter ``runtimeargs``::
 
   PUT <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
@@ -214,8 +214,8 @@ with the arguments as a JSON string in the body::
 
   {"foo":"bar","this":"that"}
 
-To retrieve the runtime arguments saved for an Application's element, issue an HTTP GET 
-request to the element's URL using the same parameter ``runtimeargs``::
+To retrieve the runtime arguments saved for an Application's program, issue an HTTP GET 
+request to the program's URL using the same parameter ``runtimeargs``::
 
   GET <base-url>/apps/HelloWorld/flows/WhoFlow/runtimeargs
 
@@ -224,10 +224,10 @@ This will return the saved runtime arguments in JSON format.
 Container Information
 ---------------------
 
-To find out the address of an element's container host and the container’s debug port, you can query
+To find out the address of an program's container host and the container’s debug port, you can query
 CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
 
-  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/live-info
+  GET <base-url>/apps/<app-id>/<program-type>/<program-id>/live-info
 
 .. list-table::
    :widths: 20 80
@@ -237,10 +237,10 @@ CDAP for a Procedure, Flow or Service’s live info via an HTTP GET method::
      - Description
    * - ``<app-id>``
      - Name of the Application being called
-   * - ``<element-type>``
+   * - ``<program-type>``
      - One of ``flows``, ``procedures`` or ``services``
-   * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure* or *Custom Service*)
+   * - ``<program-id>``
+     - Name of the program (*Flow*, *Procedure* or *Custom Service*)
 
 Example::
 
@@ -253,8 +253,8 @@ The response is formatted in JSON; an example of this is shown in
 Scale
 -----
 
-You can retrieve the instance count executing different elements from various applications and
-different element types using an HTTP POST method::
+You can retrieve the instance count executing different components from various applications and
+different program types using an HTTP POST method::
 
   POST <base-url>/instances
 
@@ -271,7 +271,7 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"programType"``
      - One of ``flow``, ``procedure``, or ``service``
    * - ``"programId"``
-     - Name of the element (*Flow*, *Procedure*, or *Custom Service*) being called
+     - Name of the program (*Flow*, *Procedure*, or *Custom Service*) being called
    * - ``"runnableId"``
      - Name of the *Flowlet* or *Service* if querying either a *Flow* or *User Service*. This parameter
        does not apply to *Procedures* because the ``programId`` is the same as the ``runnableId`` for a *Procedure*
@@ -291,7 +291,7 @@ The response will be the same JSON array with additional parameters for each of 
    * - ``"statusCode"``
      - The status code from retrieving the instance count of an individual JSON object.
    * - ``"error"``
-     - If an error, a description of why the status was not retrieved (the specified element was not found,
+     - If an error, a description of why the status was not retrieved (the specified program was not found,
        the requested JSON object was missing a parameter, etc.)
 
 **Note:** The ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
@@ -457,17 +457,17 @@ Example
    * - Description
      - Retrieve the number of instances of the Service *CatalogLookup* in the application *PurchaseHistory*.
 
-.. _rest-element-runs:
+.. _rest-program-runs:
 
 Run Records and Schedules
 -------------------------
 
-To see all the runs of a selected element (Flows, Procedures, MapReduce jobs, Spark, Workflows, and
-Services), issue an HTTP GET to the element’s URL with the ``runs`` parameter.
-This will return a JSON list of all runs for the element, each with a start time,
-end time and element status::
+To see all the runs of a selected program (Flows, Procedures, MapReduce jobs, Spark, Workflows, and
+Services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
+This will return a JSON list of all runs for the program, each with a start time,
+end time and program status::
 
-  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/runs
+  GET <base-url>/apps/<app-id>/<program-type>/<program-id>/runs
 
 .. list-table::
    :widths: 20 80
@@ -477,12 +477,13 @@ end time and element status::
      - Description
    * - ``<app-id>``
      - Name of the Application
-   * - ``<element-type>``
+   * - ``<program-type>``
      - One of ``flows``, ``procedures``, ``mapreduce``, ``spark``, ``workflows`` or ``services``
-   * - ``<element-id>``
-     - Name of the element
+   * - ``<program-id>``
+     - Name of the program
 
-You can filter the runs either by the status of element, the start and end times, and can limit the number of returned records.
+You can filter the runs either by the status of a program or the start and end times, 
+and can limit the number of returned records.
 
 .. list-table::
    :widths: 20 80

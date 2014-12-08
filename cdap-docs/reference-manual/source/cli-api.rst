@@ -5,13 +5,13 @@
 .. _cli:
 
 ============================================
-Command-Line Interface API
+Command Line Interface API
 ============================================
 
 Introduction
 ============
 
-The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
+The Command Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
 similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
 script or a Windows ``.bat`` file.
 

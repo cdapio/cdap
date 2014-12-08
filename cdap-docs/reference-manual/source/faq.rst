@@ -41,7 +41,7 @@ develop and test Big Data applications. Deploy it on the distributed cluster wit
 advantages of using CDAP include:
 
 1. **Integrated Framework:**
-   CDAP provides an integrated platform that makes it easy to create all the elements of Big Data
+   CDAP provides an integrated platform that makes it easy to create all the functions of Big Data
    applications: collecting, processing, storing, and querying data. Data can be collected and stored in
    both structured and unstructured forms, processed in real-time and in batch, and results can be made
    available for retrieval, visualization, and further analysis.

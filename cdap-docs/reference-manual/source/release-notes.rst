@@ -22,6 +22,22 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+Release 2.6.0
+=============
+
+CDAP Bug Fixes
+--------------
+
+
+Other Changes
+-------------
+
+
+Known Issues
+------------
+- See also the *Known Issues* of `version 2.5.2. <#known-issues-252>`_
+
+
 Release 2.5.2
 =============
 
@@ -59,6 +75,8 @@ Other Changes
   - Added navigation aids at the bottom of each page; and
   - Tested and updated the Standalone CDAP examples and their documentation.
 
+.. _known-issues-252:
+
 Known Issues
 ------------
 - Currently, applications that include Spark or Scala classes in user classes not extended
@@ -75,7 +93,7 @@ CDAP Bug Fixes
 --------------
 
 - Improved the documentation of the CDAP Authentication and Stream Clients, both Java and Python APIs.
-- Fixed problems with the CDAP Command-line Interface (CLI):
+- Fixed problems with the CDAP Command Line Interface (CLI):
 
   - Did not work in non-interactive mode;
   - Printed excessive debug log messages;
@@ -91,8 +109,8 @@ Other Changes
 -------------
 
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
-  :ref:`CDAP Command-line Interface, <cli>` ``cdap-cli.sh``.
-- The CDAP Command-line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
+  :ref:`CDAP Command Line Interface, <cli>` ``cdap-cli.sh``.
+- The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The CDAP Java Stream Client now allows empty String events to be sent.
 - The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.
 
@@ -153,7 +171,7 @@ Streams
 
 Clients
 .................
-- Added a Command-line Interface
+- Added a Command Line Interface
 - Added a Java Client Interface
 
 
