@@ -18,8 +18,12 @@ angular.module(PKG.name+'.feature.applications')
 
       .state('apps', {
         url: '/ns/:namespace',
-        templateUrl: '/assets/features/applications/templates/apps.html'
-
+        templateUrl: '/assets/features/applications/templates/apps.html',
+        resolve: {
+          namespace: function() {
+            return "ns1";
+          }
+        }
       })
 
       .state('apps.list', {
