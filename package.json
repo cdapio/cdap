@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node ./server.js",
 
-    "backend": "../cdap/cdap-standalone/target/cdap-sdk-2.6.0-SNAPSHOT/bin/cdap.sh",
+    "backend": "../cdap-standalone/target/cdap-sdk-2.6.0-SNAPSHOT/bin/cdap.sh",
 
     "prebuild": "npm install && ./node_modules/bower/bin/bower update --config.interactive=false",
     "build": "node ./node_modules/gulp/bin/gulp.js build",
