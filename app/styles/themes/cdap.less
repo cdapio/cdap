@@ -1,0 +1,96 @@
+@import "../variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
+body.theme-cdap {
+  visibility: visible;
+
+  header {
+    background-color: @cdap-header;
+
+    [my-navbar] {
+
+      padding-top: 15px;
+      padding-bottom: 15px;
+
+      .navbar-brand {
+        > span {
+          display: inline-block;
+          visibility: hidden;
+          width: 77px;
+        }
+        background: url('@{img-path}/cdap.png') no-repeat 15px center;
+        background-size: 75%;
+      }
+
+      // center the navbar
+      @media (min-width: @screen-sm-min) {
+        nav {
+          position: absolute;
+          // top: 15px;
+          left: 50%;
+          margin-left: -225px;
+
+          > ul.nav {
+            background-color: @cdap-darkness;
+            border-radius: 25px;
+            height: 50px;
+
+            li {
+              width: 150px;
+              overflow: hidden;
+
+              text-align: center;
+              text-transform: uppercase;
+              font-weight: bold;
+
+              > a {
+                border-radius: 25px;
+                padding: 12px;
+                margin: 5px;
+              }
+
+              &.active > a {
+                cursor: default;
+                color: @cdap-darkness;
+                background-color: @cdap-orange;
+              }
+            }
+          }
+        }
+
+        .navbar-right li.dropdown {
+
+          &.open {
+            a.dropdown-toggle {
+              background-color: @cdap-darkness;
+            }
+          }
+
+          ul.dropdown-menu {
+            background-color: @cdap-darkness;
+            a {
+              color: white;
+              &:hover {
+                color: @text-color;
+              }
+            }
+            li.divider {
+              background-color: @cdap-header;
+            }
+          }
+        }
+
+      }
+
+    }
+  }
+
+  main.container {
+    padding-top: 132px;
+  }
+
+  footer {
+    border-top: 1px dashed lighten(@cdap-orange, 33%);
+  }
+
+}

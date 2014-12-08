@@ -21,12 +21,12 @@ function extractConfig(mode, configParam, isSecure) {
   var deferred = promise.defer(),
       configReader;
 
-  isSecure = isSecure || false;
+  if (configJson) {
+    deferred.resolve(configJson);
+    return deferred.promise;
+  }
+
   if (mode === 'enterprise') {
-    if (configJson) {
-      deferred.resolve(configJson);
-      return deferred.promise;
-    }
     configReader = spawn(__dirname + '/../../bin/config-tool', ['--' + configParam]);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('data', configRead.bind(this));
@@ -37,7 +37,7 @@ function extractConfig(mode, configParam, isSecure) {
     } catch(e) {
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
-      console.log('Error!: ', e.code, ' - ', e.message);
+      console.error('CDAP-UI using development configuration');
       configJson = require('./development/default-config.json');
     }
 
