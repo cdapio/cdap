@@ -117,7 +117,6 @@ Known Issues
   (*Failed to decode message to MetricsRecord*). This is because of a change in the format of
   emitted metrics, and can result in a small amount of messages not being decoded correctly. 
   (`CDAP-745 <https://issues.cask.co/browse/CDAP-745>`__).
-- See also the *Known Issues* of `version 2.5.2. <#known-issues-252>`_
 
 Release 2.5.2
 =============
