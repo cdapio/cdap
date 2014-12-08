@@ -17,7 +17,7 @@ module.constant('MYAUTH_EVENT', {
 
 module.constant('MYAUTH_ROLE', {
   all: '*',
-  superadmin: 'superadmin',
+  user: 'user',
   admin: 'admin'
 });
 
@@ -134,16 +134,10 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
   function User(data) {
     this.token = data.token;
     this.username = data.username;
-    this.tenant = data.tenant;
+    this.role = MYAUTH_ROLE.user;
 
-    // wholly insecure while we wait for real auth
-    if (data.username===MYAUTH_ROLE.admin) {
-      if(data.tenant===MYAUTH_ROLE.superadmin) {
-        this.role = MYAUTH_ROLE.superadmin;
-      }
-      else if(data.tenant) {
-        this.role = MYAUTH_ROLE.admin;
-      }
+    if (data.username==='admin') {
+      this.role = MYAUTH_ROLE.admin;
     }
   }
 
@@ -162,8 +156,13 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
    * @return {Boolean}
    */
   User.prototype.hasRole = function(authorizedRoles) {
-    // All roles authorized.
-    return true;
+    if(this.role === MYAUTH_ROLE.admin) {
+      return true;
+    }
+    if (!angular.isArray(authorizedRoles)) {
+      authorizedRoles = [authorizedRoles];
+    }
+    return authorizedRoles.indexOf(this.role) !== -1;
   };
 
   /**
