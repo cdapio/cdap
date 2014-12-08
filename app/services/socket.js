@@ -15,7 +15,8 @@ angular.module(PKG.name+'.services')
     });
 
    */
-  .factory('MyDataSource', function ($state, $log, caskWindowManager, mySocket, MYSOCKET_EVENT) {
+  .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket, myAuth,
+    MYSOCKET_EVENT, MY_CONFIG) {
 
     var instances = {}; // keyed by scopeid
 
@@ -86,7 +87,7 @@ angular.module(PKG.name+'.services')
 
 
     DataSource.prototype.poll = function (resource, cb) {
-
+      resource = attachHeaders(resource);
       this.bindings.push({
         resource: resource,
         callback: cb
@@ -101,6 +102,7 @@ angular.module(PKG.name+'.services')
 
 
     DataSource.prototype.fetch = function (resource, cb) {
+      resource = attachHeaders(resource);
       var once = false;
 
       this.bindings.push({
@@ -119,6 +121,17 @@ angular.module(PKG.name+'.services')
       });
     };
 
+    function attachHeaders (resource) {
+      if(MY_CONFIG.securityEnabled) {
+        if(!resource.hasOwnProperty('headers')) {
+          resource.headers = {};
+        }
+        angular.extend(resource.headers, {
+          'Authorization': 'Bearer ' + myAuth.currentUser.token
+        });
+      }
+      return resource;
+    };
 
     return DataSource;
   })
@@ -147,7 +160,7 @@ angular.module(PKG.name+'.services')
         socket.onmessage = function (event) {
           try {
             var data = JSON.parse(event.data);
-            $log.log('[mySocket] ←', data.statusCode);
+            $log.log('[mySocket] ←', data);
             $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
           }
           catch(e) {

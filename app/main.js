@@ -5,8 +5,9 @@ angular
 
     angular.module(PKG.name+'.features', [
       PKG.name+'.feature.home',
+      PKG.name+'.feature.foo',
+      PKG.name+'.feature.login',
       PKG.name+'.feature.dashboard',
-      PKG.name+'.feature.foo'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -19,7 +20,8 @@ angular
         'ngStorage',
         'ui.router',
         'cask-angular-window-manager',
-        'cask-angular-theme'
+        'cask-angular-theme',
+        'cask-angular-focus'
       ]).name,
 
       angular.module(PKG.name+'.filters', [

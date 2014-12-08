@@ -22,8 +22,6 @@ module.constant('MYAUTH_ROLE', {
 });
 
 
-
-
 module.run(function ($rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
   $rootScope.currentUser = myAuth.currentUser;
 
@@ -44,25 +42,15 @@ module.run(function ($rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
 });
 
 
-
-
-
-
-
 module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAuthPromise, $rootScope, $localStorage) {
-
-  /**
-   * currentUser is initially revived with data in storage (or null)
-   */
-  this.currentUser = MyAuthUser.revive($localStorage.currentUser);
 
   /**
    * private method to sync the user everywhere
    */
   var persist = angular.bind(this, function (u) {
     this.currentUser = u;
-    $localStorage.currentUser = u;
     $rootScope.currentUser = u;
+    $localStorage.currentUser = u ? u.getStorageInfo() : null;
   });
 
   /**
@@ -85,8 +73,8 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
     return myAuthPromise(credentials).then(
       function(data) {
         var user = new MyAuthUser(data);
-        persist( user );
-        $localStorage.remember = credentials.remember && user;
+        persist(user);
+        $localStorage.remember = credentials.remember && user.getStorageInfo();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
       function() {
@@ -114,43 +102,27 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
 });
 
 
-
-
-
-module.factory('myAuthPromise', function myAuthPromiseFactory (MYAUTH_ROLE, $timeout, $q) {
-  return function myAuthPromise (c) {
+module.factory('myAuthPromise', function myAuthPromiseFactory (MYAUTH_ROLE, $timeout, $q, $http) {
+  return function myAuthPromise (credentials) {
     var deferred = $q.defer();
 
-
-
-    /*
-      fake login / replacement pending backend support
-     */
-    $timeout(function(){
-      if (!c.password || !c.tenant || !c.username) {
-        deferred.reject();
-      }
-      else {
-        var a = MYAUTH_ROLE.admin;
-        if (c.username===a && c.password!==a) {
-          deferred.reject();
-        }
-        else {
-          delete c.password;
-          deferred.resolve(c);
-        }
-      }
-    }, 1500);
-
-
+    $http({
+      url: '/login',
+      method: 'POST',
+      data: credentials
+    })
+    .success(function (data, status, headers, config) {
+      deferred.resolve(angular.extend(data, {
+        username: credentials.username
+      }));
+    })
+    .error(function (data, status, headers, config) {
+      deferred.reject(data);
+    });
 
     return deferred.promise;
   };
 });
-
-
-
-
 
 
 module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
@@ -160,6 +132,7 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
    * @param {object} user data
    */
   function User(data) {
+    this.token = data.token;
     this.username = data.username;
     this.tenant = data.tenant;
 
@@ -189,13 +162,18 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
    * @return {Boolean}
    */
   User.prototype.hasRole = function(authorizedRoles) {
-    if(this.role === MYAUTH_ROLE.superadmin) {
-      return true;
-    }
-    if (!angular.isArray(authorizedRoles)) {
-      authorizedRoles = [authorizedRoles];
-    }
-    return authorizedRoles.indexOf(this.role) !== -1;
+    // All roles authorized.
+    return true;
+  };
+
+  /**
+   * Omits secure info (i.e. token) and gets object for storage.
+   * @return {Object} storage info.
+   */
+  User.prototype.getStorageInfo = function () {
+    return {
+      username: this.username
+    };
   };
 
   return User;

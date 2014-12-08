@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.commons').directive('myNavbar',
-function myNavbarDirective ($dropdown, caskTheme) {
+function myNavbarDirective ($dropdown, myAuth, caskTheme) {
   return {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
@@ -16,6 +16,8 @@ function myNavbarDirective ($dropdown, caskTheme) {
         placement: 'bottom-right',
         scope: scope
       });
+
+      scope.logout = myAuth.logout;
 
       scope.theme = caskTheme;
 
