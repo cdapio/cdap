@@ -44,7 +44,7 @@ import javax.ws.rs.PathParam;
 /**
  * Monitor Handler returns the status of different discoverable services
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class MonitorHandler extends AbstractAppFabricHttpHandler {
   private final Map<String, MasterServiceManager> serviceManagementMap;
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;

@@ -67,7 +67,7 @@ import javax.ws.rs.PathParam;
  *
  * TODO: Currently stream "dataset" is implementing old dataset API, hence not supporting multi-tenancy.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION + "/streams")
+@Path(Constants.Gateway.API_VERSION_2 + "/streams")
 public final class StreamHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreamHandler.class);

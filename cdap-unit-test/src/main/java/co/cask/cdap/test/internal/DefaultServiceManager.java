@@ -145,7 +145,7 @@ public class DefaultServiceManager implements ServiceManager {
     String hostName = discoverable.getSocketAddress().getHostName();
     int port = discoverable.getSocketAddress().getPort();
     String path = String.format("http://%s:%d%s/apps/%s/services/%s/methods/", hostName, port,
-                                Constants.Gateway.GATEWAY_VERSION, applicationId, serviceName);
+                                Constants.Gateway.API_VERSION_2, applicationId, serviceName);
     try {
       return new URL(path);
     } catch (MalformedURLException e) {

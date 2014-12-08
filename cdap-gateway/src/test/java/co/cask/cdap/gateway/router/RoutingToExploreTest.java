@@ -131,7 +131,7 @@ public class RoutingToExploreTest {
     Assert.assertEquals("info:some_type", doRequest("/data/explore/jdbc/info/some_type", "GET"));
   }
 
-  @Path(Constants.Gateway.GATEWAY_VERSION)
+  @Path(Constants.Gateway.API_VERSION_2)
   public static final class MockExplorePingHandler extends AbstractHttpHandler {
     @GET
     @Path("/explore/status")
@@ -140,7 +140,7 @@ public class RoutingToExploreTest {
     }
   }
 
-  @Path(Constants.Gateway.GATEWAY_VERSION)
+  @Path(Constants.Gateway.API_VERSION_2)
   public static final class MockQueryExecutorHandler extends AbstractHttpHandler {
 
     @POST
@@ -189,7 +189,7 @@ public class RoutingToExploreTest {
     }
   }
 
-  @Path(Constants.Gateway.GATEWAY_VERSION)
+  @Path(Constants.Gateway.API_VERSION_2)
   public static final class MockExploreMetadataHandler extends AbstractHttpHandler {
     @POST
     @Path("/data/explore/jdbc/tables")
@@ -240,7 +240,7 @@ public class RoutingToExploreTest {
     }
   }
 
-  @Path(Constants.Gateway.GATEWAY_VERSION)
+  @Path(Constants.Gateway.API_VERSION_2)
   public static class MockExploreExecutorHandler extends AbstractHttpHandler {
     @GET
     @Path("/data/explore/datasets/{dataset}/schema")
@@ -251,7 +251,7 @@ public class RoutingToExploreTest {
   }
 
   private String doRequest(String resource, String requestMethod) throws Exception {
-    resource = String.format("http://localhost:%d%s" + resource, port, Constants.Gateway.GATEWAY_VERSION);
+    resource = String.format("http://localhost:%d%s" + resource, port, Constants.Gateway.API_VERSION_2);
     URL url = new URL(resource);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(requestMethod);

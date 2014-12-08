@@ -379,7 +379,7 @@ abstract class ExploreHttpClient implements Explore {
   private String resolve(String resource) {
     InetSocketAddress addr = getExploreServiceAddress();
     String url = String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
-                               Constants.Gateway.GATEWAY_VERSION, resource);
+                               Constants.Gateway.API_VERSION_2, resource);
     LOG.trace("Explore URL = {}", url);
     return url;
   }

@@ -45,7 +45,7 @@ HTTP Responses
      - The query execution was successfully initiated, and the body will contain the query-handle
        used to identify the query in subsequent requests
    * - ``400 Bad Request``
-     - The query is not well-formed or contains an error, such as a nonexistent table name.
+     - The query is not well-formed or contains an error, such as a nonexistent table name
 
 Comments
 ........
@@ -96,7 +96,7 @@ HTTP Responses
    * - ``200 OK``
      - The query exists and the body contains its status
    * - ``404 Not Found``
-     - The query handle does not match any current query.
+     - The query handle does not match any current query
 
 Comments
 ........
@@ -122,7 +122,7 @@ Example
    * - HTTP Response
      - ``{"status":"FINISHED","hasResults":true}``
    * - Description
-     - Retrieve the status of the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
+     - Retrieve the status of the query which has the handle ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
 
 
 Obtaining the Result Schema
@@ -151,7 +151,7 @@ HTTP Responses
    * - ``200 OK``
      - The query was successfully received and the query schema was returned in the body
    * - ``400 Bad Request``
-     - The query is not well-formed or contains an error, or the query status is not ``FINISHED``.
+     - The query is not well-formed or contains an error, or the query status is not ``FINISHED``
    * - ``404 Not Found``
      - The query handle does not match any current query
 
@@ -223,10 +223,10 @@ HTTP Responses
 Comments
 ........
 The results are returned in a JSON body as a list of columns,
-each given as a structure containing a list of column values.::
+each given as a structure containing a list of column values::
 
   [
-    { "columns": [ <value_1>, <value_2>, ..., ] },
+    { "columns": [ <value-1>, <value-2>, ..., ] },
     ...
   ]
 
@@ -295,7 +295,7 @@ Example
    * - HTTP Request
      - ``DELETE <base-url>/data/explore/queries/57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
    * - Description
-     - Close the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
+     - Close the query which has the handle ``57cf1b01-8dba-423a-a8b4-66cd29dd75e2``
 
 List of Queries
 ---------------
@@ -310,17 +310,17 @@ To return a list of queries, use::
    * - Parameter
      - Description
    * - ``<limit>``
-     - Optional number indicating how many results to return in the response. By default, 50 results will be returned
+     - Optional number indicating how many results to return in the response; by default, 50 results are returned
    * - ``<cursor>``
-     - Optional string specifying if the results returned should be in the forward or reverse direction.
-       Should be one of ``next`` or ``prev``
+     - Optional string specifying if the results returned should be in the forward or reverse direction;
+       should be one of ``next`` or ``prev``
    * - ``<offset>``
-     - Optional offset for pagination, returns the results that are greater than offset if the cursor is ``next`` or
+     - Optional offset for pagination; returns the results that are greater than offset if the cursor is ``next`` or
        results that are less than offset if cursor is ``prev``
 
 Comments
 ........
-The results are returned as a JSON array, with each element containing information about the query::
+The results are returned as a JSON array, with each element containing information about a query::
 
   [
     {
@@ -352,7 +352,7 @@ Example
        ``   "is_active": false``
        ``}]``
    * - Description
-     - Close the query which has the handle 57cf1b01-8dba-423a-a8b4-66cd29dd75e2
+     - Retrieves all queries
 
 Download Query Results
 ----------------------
@@ -385,11 +385,11 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The HTTP call was successful.
+     - The HTTP call was successful
    * - ``404 Not Found``
-     - The query handle does not match any current query.
+     - The query handle does not match any current query
    * - ``409 Conflict``
-     - The query results was already downloaded.
+     - The query results were already downloaded
 
 Hive Table Schema
 -----------------
@@ -415,9 +415,9 @@ HTTP Responses
    * - Status Codes
      - Description
    * - ``200 OK``
-     - The HTTP call was successful.
+     - The HTTP call was successful
    * - ``404 Not Found``
-     - The dataset was not found.
+     - The dataset was not found
      
 Comments
 ........

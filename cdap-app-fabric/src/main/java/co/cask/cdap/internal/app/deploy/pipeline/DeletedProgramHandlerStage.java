@@ -143,7 +143,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
         String url = String.format("http://%s:%d%s/metrics/%s/apps/%s/flows/%s",
                                    discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.GATEWAY_VERSION,
+                                   Constants.Gateway.API_VERSION_2,
                                    scope.name().toLowerCase(),
                                    application, flow);
 

@@ -66,7 +66,30 @@ public class ProgramClient {
   }
 
   /**
-   * Starts a program.
+   * Starts a program using specified runtime arguments.
+   *
+   * @param appId ID of the application that the program belongs to
+   * @param programType type of the program
+   * @param programName name of the program
+   * @param runtimeArgs runtime arguments to pass to the program
+   * @throws IOException if a network error occurred
+   * @throws ProgramNotFoundException if the program with the specified name could not be found
+   * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
+   */
+  public void start(String appId, ProgramType programType, String programName, Map<String, String> runtimeArgs)
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
+
+    URL url = config.resolveURL(String.format("apps/%s/%s/%s/start",
+                                              appId, programType.getCategoryName(), programName));
+    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(runtimeArgs)).build();
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ProgramNotFoundException(programType, appId, programName);
+    }
+  }
+
+  /**
+   * Starts a program using the stored runtime arguments.
    *
    * @param appId ID of the application that the program belongs to
    * @param programType type of the program
@@ -80,8 +103,8 @@ public class ProgramClient {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/start",
                                               appId, programType.getCategoryName(), programName));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+    HttpRequest request = HttpRequest.post(url).build();
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
