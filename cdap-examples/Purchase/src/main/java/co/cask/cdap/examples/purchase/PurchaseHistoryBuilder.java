@@ -22,9 +22,9 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
+import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
-import org.apache.commons.io.Charsets;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -101,17 +101,19 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     public void reduce(Text customer, Iterable<Text> values, Context context)
       throws IOException, InterruptedException {
 
-      URL getUserProfileURL = new URL(userProfileServiceURL,
-                                      UserProfileServiceHandler.USER_ENDPOINT
-                                                      + "/" + customer.toString());
       UserProfile userProfile = null;
       HttpURLConnection urlConnection = null;
       try {
+        URL getUserProfileURL = new URL(userProfileServiceURL,
+                                        UserProfileServiceHandler.USER_ENDPOINT
+                                          + "/" + customer.toString());
+
         urlConnection = (HttpURLConnection) getUserProfileURL.openConnection();
         if (urlConnection.getResponseCode() != HttpURLConnection.HTTP_NO_CONTENT) {
           userProfile = new Gson().fromJson(new String(ByteStreams.toByteArray(urlConnection.getInputStream())
             , Charsets.UTF_8), UserProfile.class);
         }
+      } catch (Exception e) {
       } finally {
         if (urlConnection != null) {
           urlConnection.disconnect();
