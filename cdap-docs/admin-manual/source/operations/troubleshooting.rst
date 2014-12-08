@@ -82,17 +82,18 @@ Errors when applications create excessive amounts of logs. One symptom of this i
 Console *Services Explorer* shows the ``log.saver`` Service as not OK, in addition to seeing error
 messages in the logs.
 
-By default, the buffer keeps 8 buckets of events in memory. Each event bucket contains logs generated for 1 second.
-Log Saver process is limited to 1GB of memory. When it's expected that logs exceeding these settings will be produced
-i.e. 1GB logs generated in 8 seconds, increase the memory allocated to the Log Saver or increase the number of
-Log Saver instances. If the cluster has limited memory or containers available, you can choose instead to decrease the
-in memory event buckets. However, decreasing the in memory buckets may lead to out-of-order log events.
+By default, the buffer keeps eight buckets of events in memory. Each event bucket contains logs generated
+for one second. The Log Saver process is limited to 1GB of memory. When it is expected that logs exceeding
+these settings will be produced, for example, greater than 1GB of logs generated in eight seconds, increase
+the memory allocated to the Log Saver or increase the number of Log Saver instances. If the cluster has
+limited memory or containers available, you can choose instead to decrease the number of in-memory event buckets.
+However, decreasing the number of in-memory buckets may lead to out-of-order log events.
 
 In the ``cdap-site.xml``, you can:
 
 - Increase the memory by adjusting ``log.saver.run.memory.megs``;
 - Increase the number of Log Saver instances using ``log.saver.num.instances``; and
-- Adjust the number of in memory log buckets ``log.saver.event.max.inmemory.buckets``.
+- Adjust the number of in-memory log buckets ``log.saver.event.max.inmemory.buckets``.
 
 See the ``log.saver`` parameter section of the :ref:`Appendix cdap-site.xml
 <appendix-cdap-site.xml>` for a list of these configuration parameters and their
