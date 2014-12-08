@@ -17,6 +17,8 @@ separately from the API in its own artifact because it depends on the
 CDAP’s runtime classes. You can include it in your test dependencies
 in one of two ways:
 
+.. highlight:: xml
+
 - include all JAR files in the ``lib`` directory of the CDAP SDK installation,
   or
 - include the ``cdap-unit-test`` artifact in your Maven test dependencies
