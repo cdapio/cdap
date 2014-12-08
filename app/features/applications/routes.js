@@ -16,53 +16,36 @@ angular.module(PKG.name+'.feature.applications')
      */
     $stateProvider
 
-      .state('applications', {
-        url: '/ns/:namespace/apps',
-        templateUrl: '/assets/features/applications/applications.html',
-        controller: 'ApplicationListController'
+      .state('apps', {
+        url: '/ns/:namespace',
+        templateUrl: '/assets/features/applications/templates/apps.html'
+
       })
 
-      .state('applications.list', {
-        url: '/',
+      .state('apps.list', {
+        url: '/apps',
         templateUrl: '/assets/features/applications/templates/list.html',
-        controller: 'ApplicationListController'
+        controller: 'ApplicationListController',
+        ncyBreadcrumb: {
+          label: 'Applications',
+          parent: 'home'
+        }
       })
 
-      .state('applications.status', {
-        url: '/:app/status',
-        templateUrl: '/assets/features/applications/templates/status.html',
-        controller: 'ApplicationStatusController'
+      .state('apps.application', {
+        url: '/apps/:app',
+        templateUrl: '/assets/features/applications/templates/applications.html',
+        controller: 'ApplicationController',
+        ncyBreadcrumb: {
+          parent: 'apps.list',
+          label: '{{$state.params.app}}'
+        }
       })
-
-      .state('applications.data', {
-        url: '/:app/data',
-        templateUrl: '/assets/features/applications/templates/data.html',
-        controller: 'ApplicationController'
-      })
-
-      .state('applications.history', {
-        url: '/:app/history',
-        templateUrl: '/assets/features/applications/templates/history.html',
-        controller: 'ApplicationController'
-      })
-
-      .state('applications.metadata', {
-        url: '/:app/metadata',
-        templateUrl: '/assets/features/applications/templates/metadata.html',
-        controller: 'ApplicationController'
-      })
-
-      .state('applications.resources', {
-        url: '/:app/resources',
-        templateUrl: '/assets/features/applications/templates/resources.html',
-        controller: 'ApplicationController'
-      })
-
-      .state('applications.schedules', {
-        url: '/ns/:namespace/apps/:app/schedules',
-        templateUrl: '/assets/features/applications/templates/schedules.html',
-        controller: 'ApplicationController'
-      })
-
+        .state('apps.application.tab', {
+          url: '/:tab',
+          ncyBreadcrumb: {
+            skip: true
+          }
+        })
 
   });

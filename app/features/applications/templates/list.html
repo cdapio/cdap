@@ -1,3 +1,4 @@
+<div ncy-breadcrumb></div>
 <table class="table table-striped table-responsive" cask-sortable>
   <thead ng-class="{'sort-enabled': apps.length>0}">
     <tr>
@@ -11,7 +12,7 @@
   <tbody>
     <tr ng-repeat="app in apps | orderBy:sortable.predicate:sortable.reverse">
       <td >
-        <a ui-sref="applications.status({ namespace: 'ns1', app: app.id})"
+        <a ui-sref="apps.application({ namespace: 'ns1', app: app.id})"
            ng-bind="app.name"
             >
         </a>
