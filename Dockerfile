@@ -28,7 +28,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends openjdk-7-jdk && \
     apt-get install -y nodejs && \
     apt-get install -y maven && \
-    apt-get install -y unzip vim
+    apt-get install -y unzip
 
 # create Software directory
 RUN mkdir /Build /Software
@@ -39,7 +39,6 @@ COPY cdap-api /Build/cdap-api
 COPY cdap-app-fabric /Build/cdap-app-fabric
 COPY cdap-archetypes /Build/cdap-archetypes
 COPY cdap-cli /Build/cdap-cli
-COPY cdap-cli-tests /Build/cdap-cli-tests
 COPY cdap-client /Build/cdap-client
 COPY cdap-client-tests /Build/cdap-client-tests
 COPY cdap-common /Build/cdap-common
@@ -55,7 +54,6 @@ COPY cdap-explore-jdbc /Build/cdap-explore-jdbc
 COPY cdap-gateway /Build/cdap-gateway
 COPY cdap-hbase-compat-0.94 /Build/cdap-hbase-compat-0.94
 COPY cdap-hbase-compat-0.96 /Build/cdap-hbase-compat-0.96
-COPY cdap-hbase-compat-0.98 /Build/cdap-hbase-compat-0.98
 COPY cdap-kafka /Build/cdap-kafka
 COPY cdap-master /Build/cdap-master
 COPY cdap-proto /Build/cdap-proto
@@ -63,7 +61,6 @@ COPY cdap-security /Build/cdap-security
 COPY cdap-security-service /Build/cdap-security-service
 COPY cdap-standalone /Build/cdap-standalone
 COPY cdap-unit-test /Build/cdap-unit-test
-COPY cdap-unit-test-standalone /Build/cdap-unit-test-standalone
 COPY cdap-watchdog /Build/cdap-watchdog
 COPY cdap-watchdog-api /Build/cdap-watchdog-api
 COPY cdap-watchdog-tests /Build/cdap-watchdog-tests
@@ -75,25 +72,19 @@ RUN cd Build && \
     mvn package -pl cdap-standalone -am -DskipTests -P dist,release && \
     unzip cdap-standalone/target/cdap-sdk-[0-9]*.[0-9]*.[0-9]*.zip -d /Software && \
     cd /Software && \
-    rm -rf /Build
-
-# SSH
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y openssh-server && \
-    mkdir -p /var/run/sshd && \
-    echo 'root:root' | chpasswd && \
-    sed -i -e '/session.*required.*pam_loginuid.so/ s/^/#/' /etc/pam.d/sshd && \
-    sed -i -e '/PermitRootLogin without-password/ s/^/#/' /etc/ssh/sshd_config
+    rm -rf /Build /root/.m2 /var/cache/debconf/*-old /usr/share/{doc,man} \
+    /usr/share/locale/{a,b,c,d,e{l,o,s,t,u},f,g,h,i,j,k,lt,lv,m,n,o,p,r,s,t,u,v,w,x,z}*
 
 # Expose Ports (9999 & 10000 for CDAP)
 EXPOSE 9999
 EXPOSE 10000
-EXPOSE 22
 
 # Clean UP (reduce space usage of container as much as possible)
 RUN apt-get purge -y maven unzip && \
+    apt-get clean && \
     apt-get autoclean && \
     apt-get -y autoremove 
 
-# start CDAP in the background and ssh in the foreground
-CMD /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/bin/cdap.sh start && /usr/sbin/sshd -D
-
+# start CDAP in the background and tail in the foreground
+ENTRYPOINT /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/bin/cdap.sh start && \
+    /usr/bin/tail -F /Software/cdap-sdk-[0-9]*.[0-9]*.[0-9]*/logs/*.log
