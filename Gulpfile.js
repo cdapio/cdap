@@ -16,7 +16,8 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/angular-loading-bar/build/loading-bar.min.css',
       './bower_components/angular-motion/dist/angular-motion.min.css',
       './bower_components/font-awesome/css/font-awesome.min.css',
-      './bower_components/epoch/epoch.min.css'
+      './bower_components/epoch/epoch.min.css',
+      './bower_components/ng-sortable/dist/ng-sortable.min.css'
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
     })))
@@ -90,6 +91,8 @@ gulp.task('js:lib', function() {
       './bower_components/angular-loading-bar/build/loading-bar.js',
 
       './bower_components/sockjs-client/dist/sockjs.js',
+
+      './bower_components/ng-sortable/dist/ng-sortable.min.js',
 
       './bower_components/d3/d3.min.js',
       './bower_components/epoch/epoch.min.js'
