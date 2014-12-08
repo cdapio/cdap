@@ -20,12 +20,20 @@ in one of two ways:
 - include all JAR files in the ``lib`` directory of the CDAP SDK installation,
   or
 - include the ``cdap-unit-test`` artifact in your Maven test dependencies
-  (see the ``pom.xml`` file of the :ref:`CDAP SDK examples <standalone-index>`).
+  (as shown in the ``pom.xml`` file of the :ref:`CDAP SDK examples <standalone-index>`)::
+  
+    . . .
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-unit-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    . . .
 
-Note that for building an application, you only need to include the
-CDAP API in your dependencies. For testing, however, you need the
-CDAP run-time. To build your test case, extend the
-``TestBase`` class.
+Note that for building an application, you only need to include the CDAP API in your
+dependencies. For testing, however, you need the CDAP run-time. To build your test case,
+extend the ``TestBase`` class.
 
 .. highlight:: console
 

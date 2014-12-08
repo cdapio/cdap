@@ -78,7 +78,7 @@ Once the application is deployed:
 - Click on ``SparkPageRank`` in the Overview page of the CDAP Console to get to the
   Application detail page, then click the triangular *Start* button in the right-hand of 
   the Service pane; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80
@@ -113,7 +113,7 @@ Running the Spark Program
 
 There are three ways to start the Spark program:
 
-1. Click on the *Process* button in the left-sidebar of the CDAP Console,
+1. Click on the *Process* button in the left sidebar of the CDAP Console,
    then click *SparkPageRankProgram* in the *Process* page to get to the
    Spark detail page, then click the *Start* button; or
 
@@ -125,7 +125,7 @@ There are three ways to start the Spark program:
    **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
    SDK in ``libexec\bin\curl.exe``
 
-#. Use the Command-line Interface:
+#. Use the Command Line Interface:
 
    .. list-table::
      :widths: 20 80
@@ -148,7 +148,7 @@ send a query via an HTTP request using the ``curl`` command. For example::
 **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
 SDK in ``libexec\bin\curl.exe``
 
-You can also use the Command-line Interface:
+You can also use the Command Line Interface:
 
 .. list-table::
   :widths: 20 80
@@ -166,10 +166,10 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Spark Program**
 
-- Click on the *Process* button in the left-sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP Console,
   then click *SparkKMeansProgram* in the *Process* page to get to the
   Spark detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80
@@ -185,7 +185,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - Click on *SparkPageRank* in the Overview page of the CDAP Console to get to the
   Application detail page, then click the square *Stop* button in the right-hand of 
   the Service pane; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80

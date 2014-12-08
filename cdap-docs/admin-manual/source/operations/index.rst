@@ -57,10 +57,10 @@ Operations
 - |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
 
 
-.. rubric:: Command-Line Interface
+.. rubric:: Command Line Interface
 
 Most of the administrative operations are also available more conveniently through the
-Command-Line Interface. See :ref:`reference:cli` in the 
+Command Line Interface. See :ref:`reference:cli` in the 
 :ref:`CDAP Reference Manual<reference:reference-index>` for details.
 
 

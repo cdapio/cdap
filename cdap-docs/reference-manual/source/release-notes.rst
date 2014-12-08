@@ -93,7 +93,7 @@ CDAP Bug Fixes
 --------------
 
 - Improved the documentation of the CDAP Authentication and Stream Clients, both Java and Python APIs.
-- Fixed problems with the CDAP Command-line Interface (CLI):
+- Fixed problems with the CDAP Command Line Interface (CLI):
 
   - Did not work in non-interactive mode;
   - Printed excessive debug log messages;
@@ -109,8 +109,8 @@ Other Changes
 -------------
 
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
-  :ref:`CDAP Command-line Interface, <cli>` ``cdap-cli.sh``.
-- The CDAP Command-line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
+  :ref:`CDAP Command Line Interface, <cli>` ``cdap-cli.sh``.
+- The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The CDAP Java Stream Client now allows empty String events to be sent.
 - The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.
 
@@ -171,7 +171,7 @@ Streams
 
 Clients
 .................
-- Added a Command-line Interface
+- Added a Command Line Interface
 - Added a Java Client Interface
 
 

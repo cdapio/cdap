@@ -103,7 +103,7 @@ Once the application is deployed:
 - Click on ``FileSetExample`` in the Overview page of the CDAP Console to get to the
   Application detail page, click ``FileSetService`` in the *Service* pane to get to the
   Service detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80
@@ -151,7 +151,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - Click on ``FileSetExample`` in the Overview page of the CDAP Console to get to the
   Application detail page, click ``FileSetService`` in the *Service* pane to get to the
   Service detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80

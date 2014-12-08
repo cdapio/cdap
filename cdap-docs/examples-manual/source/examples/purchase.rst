@@ -36,7 +36,7 @@ and write to another.
     customers' purchase history in the *history* Dataset.
   - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
   - Execute a SQL query over the *history* Dataset. You can do this using a series of ``curl``
-    calls, or more conveniently using the :ref:`Command-line Interface: <cli>`.
+    calls, or more conveniently using the :ref:`Command Line Interface: <cli>`.
 
 **Note:** Because the PurchaseHistoryWorkFlow is only scheduled to run at 4:00 A.M.,
 you should not start it manually until after entering the first customers' purchases, or the
@@ -105,10 +105,10 @@ Starting the Flow
 
 Once the application is deployed:
 
-- Click on the *Process* button in the left-sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP Console,
   then click *PurchaseFlow* in the *Process* page to get to the
   Flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80
@@ -127,7 +127,7 @@ Once the application is deployed:
 - Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
   Application detail page, click *PurchaseHistoryService* in the *Service* pane to get to the
   Service detail page, then click the *Start* button; do the same for the *CatalogLookupService*; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80
@@ -175,7 +175,7 @@ Once the sentences have been injected:
 - Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
   Application detail page, click *PurchaseHistoryWorkflow* in the *Workflow* pane to get to the
   Workflow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80
@@ -198,7 +198,7 @@ Querying the Results
 
 To query the *history* ObjectStore through the ``PurchaseHistoryService``, you can
 
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80
@@ -317,10 +317,10 @@ Once done, you can stop the application as described above in `Stopping an Appli
 
 **Stopping the Flow**
 
-- Click on the *Process* button in the left-sidebar of the CDAP Console,
+- Click on the *Process* button in the left sidebar of the CDAP Console,
   then click *PurchaseFlow* in the *Process* page to get to the
   Flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80
@@ -336,7 +336,7 @@ Once done, you can stop the application as described above in `Stopping an Appli
 - Click on *PurchaseHistory* in the Overview page of the CDAP Console to get to the
   Application detail page, click *PurchaseHistoryService* in the *Service* pane to get to the
   Service detail page, then click the *Stop* button; do the same for *CatalogLookupService*; or
-- From the Standalone CDAP SDK directory, use the Command-line Interface:
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
   .. list-table::
     :widths: 20 80
