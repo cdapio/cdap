@@ -1738,7 +1738,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
 
-    // Copy archive to a temporary location
+    // Store uploaded content to a local temp file
     File tempDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
                             configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     if (!DirUtils.mkdirs(tempDir)) {
@@ -1761,7 +1761,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           // Copy uploaded content to a temporary location
           Location tmpLocation = archive.getTempFile(".tmp");
           try {
-            LOG.debug("Copy from %s to %s", uploadedFile, tmpLocation.toURI());
+            LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
             Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
 
             // Finally, move archive to final location

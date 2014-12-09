@@ -18,29 +18,32 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
+import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -62,16 +65,16 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   private final DatasetTypeManager manager;
   private final LocationFactory locationFactory;
-  private final String archiveDir;
+  private final CConfiguration cConf;
+  private final String archiveDirBase;
 
   @Inject
-  public DatasetTypeHandler(DatasetTypeManager manager,
-                            LocationFactory locationFactory,
-                            CConfiguration conf) {
+  public DatasetTypeHandler(DatasetTypeManager manager, LocationFactory locationFactory, CConfiguration conf) {
     this.manager = manager;
     this.locationFactory = locationFactory;
-    String dataFabricDir = conf.get(Constants.Dataset.Manager.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    this.archiveDir = dataFabricDir + "/archive";
+    this.cConf = conf;
+    String dataFabricDir = conf.get(Constants.Dataset.Manager.OUTPUT_DIR);
+    this.archiveDirBase = dataFabricDir + "/archive";
   }
 
   @Override
@@ -111,10 +114,10 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
   @PUT
   @Path("/data/modules/{name}")
-  public void addModule(HttpRequest request, final HttpResponder responder,
-                       @PathParam("name") String name) throws IOException {
+  public BodyConsumer addModule(final HttpRequest request, final HttpResponder responder,
+                                @PathParam("name") final String name) throws IOException {
 
-    String className = request.getHeader(HEADER_CLASS_NAME);
+    final String className = request.getHeader(HEADER_CLASS_NAME);
     Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
     LOG.info("Adding module {}, class name: {}", name, className);
 
@@ -123,48 +126,67 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
       String message = String.format("Cannot add module %s: module with same name already exists: %s",
                                      name, existing);
       LOG.warn(message);
-      responder.sendError(HttpResponseStatus.CONFLICT, message);
-      return;
+      responder.sendString(HttpResponseStatus.CONFLICT, message,
+                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
+      return null;
     }
 
-    ChannelBuffer content = request.getContent();
-    if (content == null) {
-      LOG.warn("Cannot add module {}: content is null", name);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Content is null");
-      return;
+    // Store uploaded content to a local temp file
+    File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    if (!DirUtils.mkdirs(tempDir)) {
+      throw new IOException("Could not create temporary directory at: " + tempDir);
     }
 
-    Location uploadDir = locationFactory.create(archiveDir).append("account_placeholder");
-    String archiveName = name + ".jar";
-    Location archive = uploadDir.append(archiveName);
-    LOG.info("Storing module {} jar at {}", name, archive.toURI().toString());
+    return new AbstractBodyConsumer(File.createTempFile("dataset-", ".jar", tempDir)) {
+      @Override
+      protected void onFinish(HttpResponder responder, File uploadedFile) throws Exception {
+        Location archiveDir = locationFactory.create(archiveDirBase).append("account_placeholder");
+        String archiveName = name + ".jar";
+        Location archive = archiveDir.append(archiveName);
 
-    if (!uploadDir.exists() && !uploadDir.mkdirs()) {
-      LOG.warn("Unable to create directory '{}'", uploadDir.getName());
-    }
+        // Copy uploaded content to a temporary location
+        Location tmpLocation = archive.getTempFile(".tmp");
+        try {
+          Locations.mkdirsIfNotExists(archiveDir);
 
-    InputStream inputStream = new ChannelBufferInputStream(content);
-    try {
-      // todo: store to temp file first and do some verifications? Or even datasetFramework should persist file?
-      OutputStream outStream = archive.getOutputStream();
-      try {
-        ByteStreams.copy(inputStream, outStream);
-      } finally {
-        outStream.close();
+          LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
+          Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
+
+          // Check if the module exists one more time to minimize the window of possible conflict
+          if (manager.getModule(name) == null) {
+            // Finally, move archive to final location
+            LOG.debug("Storing module {} jar at {}", name, archive.toURI());
+            if (tmpLocation.renameTo(archive) == null) {
+              throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
+                                                  tmpLocation.toURI(), archive.toURI()));
+            }
+          } else {
+            String message = String.format("Cannot add module %s: module with same name already exists", name);
+            responder.sendString(HttpResponseStatus.CONFLICT, message);
+            return;
+          }
+
+        } catch (Exception e) {
+          // In case copy to temporary file failed, or rename failed
+          try {
+            tmpLocation.delete();
+          } catch (IOException ex) {
+            LOG.warn("Failed to cleanup temporary location {}", tmpLocation.toURI());
+          }
+          throw e;
+        }
+
+        try {
+          manager.addModule(name, className, archive);
+          // todo: response with DatasetModuleMeta of just added module (and log this info)
+          LOG.info("Added module {}", name);
+          responder.sendStatus(HttpResponseStatus.OK);
+        } catch (DatasetModuleConflictException e) {
+          responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+        }
       }
-    } finally {
-      inputStream.close();
-    }
-
-    try {
-      manager.addModule(name, className, archive);
-    } catch (DatasetModuleConflictException e) {
-      responder.sendError(HttpResponseStatus.CONFLICT, e.getMessage());
-      return;
-    }
-    // todo: response with DatasetModuleMeta of just added module (and log this info)
-    LOG.info("Added module {}", name);
-    responder.sendStatus(HttpResponseStatus.OK);
+    };
   }
 
   @DELETE
