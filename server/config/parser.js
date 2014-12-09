@@ -1,5 +1,7 @@
+/*global require, module, process */
+
 module.exports = {
-  extractConfig: extractConfig
+  promise: extractConfig
 };
 
 var promise = require('q'),
@@ -7,17 +9,16 @@ var promise = require('q'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
     configString = '',
-    decoder = new StringDecoder('utf8')
-    configJson = null;
+    configJson = null,
+    decoder = new StringDecoder('utf8');
+
 
 /*
  *  Extracts the config based on mode.
- *  @param {string} Current running mode. Enterprise/Developer
- *  @param {string} type of config required. --cConfig for Common Config --sConfig for Security Config
  *  @returns {promise} Returns a promise that gets resolved once the the configs are fetched.
  */
 
-function extractConfig(mode, configParam, isSecure) {
+function extractConfig() {
   var deferred = promise.defer(),
       configReader;
 
@@ -26,8 +27,8 @@ function extractConfig(mode, configParam, isSecure) {
     return deferred.promise;
   }
 
-  if (mode === 'enterprise') {
-    configReader = spawn(__dirname + '/../../bin/config-tool', ['--' + configParam]);
+  if (process.env.CDAP_MODE === 'enterprise') {
+    configReader = spawn(__dirname + '/../../bin/config-tool', ['--cdap']);
     configReader.stderr.on('data', configReadFail.bind(this));
     configReader.stdout.on('data', configRead.bind(this));
     configReader.stdout.on('end', onConfigReadEnd.bind(this, deferred, isSecure));
@@ -67,3 +68,4 @@ function configReadFail() {
     console.log(textChunk);
   }
 }
+
