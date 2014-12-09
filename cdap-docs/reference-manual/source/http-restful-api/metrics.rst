@@ -198,6 +198,8 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/mapreduce/<mapreduce-id>``
    * - All MapReduce of an Application
      - ``/apps/<app-id>/mapreduce``
+   * - One Spark Program
+     - ``/apps/<app-id>/spark/<spark-id>``
    * - One Service Handler/Worker
      - ``/apps/<app-id>/services/<service-id>/runnables/<runnable-id>``
    * - One Service
@@ -304,6 +306,33 @@ These metrics are available in the Mappers and Reducers context:
      - Number of entries read in by the Map or Reduce phase
    * - ``process.entries.out``
      - Number of entries written out by the Map or Reduce phase
+
+These metrics are available in the Spark context:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Spark Metric
+     - Description
+   * - ``<spark-id>.BlockManager.disk.diskSpaceUsed_MB``
+     - Disk space used by the Block Manager
+   * - ``<spark-id>.BlockManager.memory.maxMem_MB``
+     - Maximum memory given to the Block Manager
+   * - ``<spark-id>.BlockManager.memory.memUsed_MB``
+     - Memory used by the Block Manager
+   * - ``<spark-id>.BlockManager.memory.remainingMem_MB``
+     - Memory remaining to the Block Manager
+   * - ``<spark-id>.DAGScheduler.job.activeJobs``
+     - Number of active jobs
+   * - ``<spark-id>.DAGScheduler.job.allJobs``
+     - Total number of jobs
+   * - ``<spark-id>.DAGScheduler.stage.failedStages``
+     - Number of failed stages
+   * - ``<spark-id>.DAGScheduler.stage.runningStages``
+     - Number of running stages
+   * - ``<spark-id>.DAGScheduler.stage.waitingStages``
+     - Number of waiting stages
 
 These metrics are available in the Procedures context:
 
