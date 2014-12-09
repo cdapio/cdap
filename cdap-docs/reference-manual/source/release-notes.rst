@@ -25,6 +25,14 @@ Cask Data Application Platform Release Notes
 Release 2.6.0
 =============
 
+API Changes
+-----------
+-  API for specifying Services and MapReduce Jobs has been changed to use a "configurer" 
+   style; this will require modification of user classes implementing either MapReduce
+   or Service as the interfaces have changed (`CDAP-335
+   <https://issues.cask.co/browse/CDAP-335>`__).
+
+
 New Features
 ------------
 
@@ -37,8 +45,6 @@ Applications
 ............
 -  Jar deployment now uses a chunked request and writes to a local temp file
    (`CDAP-91 <https://issues.cask.co/browse/CDAP-91>`__).
--  API for specifying Services and MapReduce Jobs has been changed to use a "configurer" style
-   (`CDAP-335 <https://issues.cask.co/browse/CDAP-335>`__).
 
 MapReduce
 .........
