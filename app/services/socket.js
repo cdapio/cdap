@@ -15,8 +15,8 @@ angular.module(PKG.name+'.services')
     });
 
    */
-  .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket, myAuth,
-    MYSOCKET_EVENT, MY_CONFIG) {
+  .factory('MyDataSource', function ($state, $log, $rootScope, caskWindowManager, mySocket,
+    MYSOCKET_EVENT) {
 
     var instances = {}; // keyed by scopeid
 
@@ -87,7 +87,6 @@ angular.module(PKG.name+'.services')
 
 
     DataSource.prototype.poll = function (resource, cb) {
-      resource = attachHeaders(resource);
       this.bindings.push({
         resource: resource,
         callback: cb
@@ -102,7 +101,6 @@ angular.module(PKG.name+'.services')
 
 
     DataSource.prototype.fetch = function (resource, cb) {
-      resource = attachHeaders(resource);
       var once = false;
 
       this.bindings.push({
@@ -120,18 +118,6 @@ angular.module(PKG.name+'.services')
         resource: resource
       });
     };
-
-    function attachHeaders (resource) {
-      if(MY_CONFIG.securityEnabled) {
-        if(!resource.hasOwnProperty('headers')) {
-          resource.headers = {};
-        }
-        angular.extend(resource.headers, {
-          'Authorization': 'Bearer ' + myAuth.currentUser.token
-        });
-      }
-      return resource;
-    }
 
     return DataSource;
   })
@@ -229,6 +215,12 @@ angular.module(PKG.name+'.services')
               '/v2' +
               path;
             delete msg.resource._cdap;
+          }
+
+          if(MY_CONFIG.securityEnabled) {
+            msg.resource.headers = angular.extend(r.headers || {}, {
+              authorization: 'Bearer ' + myAuth.currentUser.token
+            });
           }
         }
 

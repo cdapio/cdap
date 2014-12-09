@@ -18,7 +18,7 @@ var PING_INTERVAL = 1000,
 
 
 function Security (config) {
-  this.config = config;
+  this.config = config || {};
   this.config.version = 2;
   this.enabled = false;
   this.authServerAddresses = [];
@@ -88,7 +88,4 @@ Security.prototype.getAuthServerAddress = function () {
   }
   return this.authServerAddresses[Math.floor(Math.random() * this.authServerAddresses.length)];
 };
-
-
-
 
