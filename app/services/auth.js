@@ -73,7 +73,7 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
       function(data) {
         var user = new MyAuthUser(data);
         persist(user);
-        $localStorage.remember = user.storable(cred);
+        $localStorage.remember = cred.remember && user.storable();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
       function() {
@@ -101,23 +101,33 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
 });
 
 
-module.factory('myAuthPromise', function myAuthPromiseFactory (MYAUTH_ROLE, $q, $http) {
+module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $http) {
   return function myAuthPromise (credentials) {
     var deferred = $q.defer();
 
-    $http({
-      url: '/login',
-      method: 'POST',
-      data: credentials
-    })
-    .success(function (data, status, headers, config) {
-      deferred.resolve(angular.extend(data, {
+    if(MY_CONFIG.securityEnabled) {
+
+      $http({
+        url: '/login',
+        method: 'POST',
+        data: credentials
+      })
+      .success(function (data, status, headers, config) {
+        deferred.resolve(angular.extend(data, {
+          username: credentials.username
+        }));
+      })
+      .error(function (data, status, headers, config) {
+        deferred.reject(data);
+      });
+
+    } else {
+
+      deferred.resolve({
         username: credentials.username
-      }));
-    })
-    .error(function (data, status, headers, config) {
-      deferred.reject(data);
-    });
+      });
+
+    }
 
     return deferred.promise;
   };
@@ -158,13 +168,14 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
 
 
   /**
-   * Omits secure info (i.e. token) and gets object for storage.
+   * Omits secure info (i.e. token) and gets object for use
+   * in localstorage.
    * @return {Object} storage info.
    */
   User.prototype.storable = function (cred) {
-    return cred.remember ? {
+    return {
       username: this.username
-    } : null;
+    };
   };
 
 

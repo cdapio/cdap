@@ -57,6 +57,7 @@ function makeApp (security) {
   });
 
 
+  // forward login requests
   app.post('/login', function (req, res) {
     if (!req.body.username || !req.body.password) {
       res.status(400).send('Please specify username/password');
