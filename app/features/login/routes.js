@@ -7,7 +7,7 @@ angular.module(PKG.name+'.feature.login')
     $stateProvider
 
       .state('login', {
-        // url: '/login',
+        url: '/login',
         templateUrl: '/assets/features/login/login.html',
         controller: 'LoginCtrl'
       })
@@ -30,7 +30,6 @@ angular.module(PKG.name+'.feature.login')
 
     $rootScope.$on(MYAUTH_EVENT.notAuthorized, function () {
       $alert({title:'Authentication error!', content:'You are not allowed to access the requested page.', type:'warning'});
-      $state.go('login');
     });
 
     angular.forEach([

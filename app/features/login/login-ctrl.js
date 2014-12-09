@@ -45,7 +45,3 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
 
 });
 
-
-
-
-
