@@ -70,32 +70,31 @@ public class PurchaseAppTest extends TestBase {
 
     ServiceManager userProfileServiceManager = getServiceManager(appManager);
 
-
     // Add customer's profile information
-    URL setUserProfileURL = new URL(userProfileServiceManager.getServiceURL(5, TimeUnit.SECONDS),
+    URL userProfileUrl = new URL(userProfileServiceManager.getServiceURL(5, TimeUnit.SECONDS),
                                     UserProfileServiceHandler.USER_ENDPOINT);
-    HttpURLConnection setUserProfileConnection = (HttpURLConnection) setUserProfileURL.openConnection();
+    HttpURLConnection userProfileConnection = (HttpURLConnection) userProfileUrl.openConnection();
     String userProfileJson = "{'id' : 'joe', 'firstName': 'joe', 'lastName':'bernard', 'categories': ['fruits']}";
 
     try {
-      setUserProfileConnection.setDoOutput(true);
-      setUserProfileConnection.setRequestMethod("POST");
-      setUserProfileConnection.getOutputStream().write(userProfileJson.getBytes(Charsets.UTF_8));
-      Assert.assertEquals(HttpURLConnection.HTTP_OK, setUserProfileConnection.getResponseCode());
+      userProfileConnection.setDoOutput(true);
+      userProfileConnection.setRequestMethod("POST");
+      userProfileConnection.getOutputStream().write(userProfileJson.getBytes(Charsets.UTF_8));
+      Assert.assertEquals(HttpURLConnection.HTTP_OK, userProfileConnection.getResponseCode());
     } finally {
-      setUserProfileConnection.disconnect();
+      userProfileConnection.disconnect();
     }
 
     // Test service to retrieve customer's profile information
-    URL getUserProfileURL = new URL(userProfileServiceManager.getServiceURL(5, TimeUnit.SECONDS),
+    userProfileUrl = new URL(userProfileServiceManager.getServiceURL(5, TimeUnit.SECONDS),
                                     UserProfileServiceHandler.USER_ENDPOINT + "/joe");
-    HttpURLConnection getUserProfileConnection = (HttpURLConnection) getUserProfileURL.openConnection();
-    Assert.assertEquals(HttpURLConnection.HTTP_OK, getUserProfileConnection.getResponseCode());
+    userProfileConnection = (HttpURLConnection) userProfileUrl.openConnection();
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, userProfileConnection.getResponseCode());
     String customerJson;
     try {
-      customerJson = new String(ByteStreams.toByteArray(getUserProfileConnection.getInputStream()), Charsets.UTF_8);
+      customerJson = new String(ByteStreams.toByteArray(userProfileConnection.getInputStream()), Charsets.UTF_8);
     } finally {
-      getUserProfileConnection.disconnect();
+      userProfileConnection.disconnect();
     }
 
     UserProfile profileFromService = GSON.fromJson(customerJson, UserProfile.class);

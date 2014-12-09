@@ -22,16 +22,22 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
+
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -93,6 +99,8 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     private static final int RARE_PURCHASE_COUNT = 1;
     private static final int FREQUENT_PURCHASE_COUNT = 10;
 
+    private static final Logger LOG = LoggerFactory.getLogger(PerUserReducer.class);
+
     @Override
     public void initialize(MapReduceContext context) throws Exception {
       userProfileServiceURL = context.getServiceURL(UserProfileServiceHandler.SERVICE_NAME);
@@ -100,23 +108,20 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
 
     public void reduce(Text customer, Iterable<Text> values, Context context)
       throws IOException, InterruptedException {
-
       UserProfile userProfile = null;
-      HttpURLConnection urlConnection = null;
       try {
-        URL getUserProfileURL = new URL(userProfileServiceURL,
+        URL url = new URL(userProfileServiceURL,
                                         UserProfileServiceHandler.USER_ENDPOINT
                                           + "/" + customer.toString());
 
-        urlConnection = (HttpURLConnection) getUserProfileURL.openConnection();
-        if (urlConnection.getResponseCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-          userProfile = new Gson().fromJson(new String(ByteStreams.toByteArray(urlConnection.getInputStream())
+        HttpRequest request = HttpRequest.get(url).build();
+        HttpResponse response = HttpRequests.execute(request);
+        if (response.getResponseCode() != HttpURLConnection.HTTP_NO_CONTENT) {
+          userProfile = new Gson().fromJson(new String(response.getResponseBody()
             , Charsets.UTF_8), UserProfile.class);
         }
       } catch (Exception e) {
-        if (urlConnection != null) {
-          urlConnection.disconnect();
-        }
+        LOG.warn("Error accessing user profile." + e.getCause());
       }
 
       PurchaseHistory purchases = new PurchaseHistory(customer.toString(), userProfile);
