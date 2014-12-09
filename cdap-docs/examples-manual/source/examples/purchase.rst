@@ -22,17 +22,17 @@ and write to another.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
-    included in the example's ``/bin`` directory, or using the CDAP Console.
+    included in the example's ``/bin`` directory, or by using the CDAP Console.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
     Purchase object and stores the object in the *purchases* Dataset.
-  - User profile information for the user can be added using ``curl`` call which gets stored
-    in the *userProfiles* Dataset.
+  - User profile information for the user can be added by using ``curl`` calls (or another method) which are
+    then stored in the *userProfiles* Dataset.
   - The ``CatalogLookupService`` fetches the catalog id for a given product. The CatalogLookupService
     is called from the PurchaseStore Flowlet. The host and port of the CatalogLookupService is discovered
     using the Service discovery framework.
   - The ``UserProfileService`` is responsible for storing and retrieving the user information
-    for a given user id from the *userProfiles* Dataset. The host and port of the UserProfileService is
-    discovered using Service discovery framework.
+    for a given user id from the *userProfiles* Dataset. The host and port of the ``UserProfileService`` is
+    discovered using the Service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
     job reads the *purchases* Dataset. It fetches the user profile information, if it is available, from
     the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
@@ -92,7 +92,8 @@ This service has two endpoints:
 
 ``user`` endpoint to add a user's profile information to the system::
 
-  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body "{'id':'alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
+  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
+    "{'id':'alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
 
 ``user/{id}`` endpoint to obtain profile information for a specified user::
 
