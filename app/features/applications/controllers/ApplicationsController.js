@@ -27,13 +27,11 @@ angular.module(PKG.name + '.feature.applications')
         .map(function(t) {
           return t.state;
         })
-        .indexOf($state.params.tab)
-      || 0;
+        .indexOf($state.params.tab);
 
       if((tab < 0 || tab>=$scope.tabs.length)) {
         tab = 0;
       }
       $scope.tabs.activeTab = tab;
     });
-    debugger;
 });
