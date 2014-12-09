@@ -788,4 +788,37 @@ public class TestFrameworkTest extends TestBase {
     }
   }
 
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testByteCodeClassLoader() throws Exception {
+    // This test verify bytecode generated classes ClassLoading
+
+    ApplicationManager appManager = deployApplication(ClassLoaderTestApp.class);
+    try {
+      FlowManager flowManager = appManager.startFlow("BasicFlow");
+
+      // Wait for at least 10 records being generated
+      RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics("ClassLoaderTestApp", "BasicFlow", "Sink");
+      flowMetrics.waitForProcessed(10, 1000, TimeUnit.MILLISECONDS);
+      flowManager.stop();
+
+      // Query record
+      ServiceManager serviceManager = appManager.startService("RecordQuery");
+      URL url = new URL(serviceManager.getServiceURL(2000, TimeUnit.MILLISECONDS), "query?type=public");
+      HttpRequest request = HttpRequest.get(url).build();
+      HttpResponse response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
+
+      long count = Long.parseLong(response.getResponseBodyAsString());
+      serviceManager.stop();
+
+      // Verify the record count with dataset
+      KeyValueTable records = appManager.<KeyValueTable>getDataSet("records").get();
+      Assert.assertTrue(count == Bytes.toLong(records.read("PUBLIC")));
+
+    } finally {
+      appManager.stopAll();
+    }
+  }
 }
