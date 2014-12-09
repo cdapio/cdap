@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
-
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -37,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -121,7 +119,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
             , Charsets.UTF_8), UserProfile.class);
         }
       } catch (Exception e) {
-        LOG.warn("Error accessing user profile." + e.getCause());
+        LOG.warn("Error accessing user profile: {}", e.getCause());
       }
 
       PurchaseHistory purchases = new PurchaseHistory(customer.toString(), userProfile);
