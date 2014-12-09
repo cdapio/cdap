@@ -1,16 +1,6 @@
 angular.module(PKG.name+'.feature.applications')
   .config(function ($stateProvider, $urlRouterProvider) {
 
-
-    /**
-     * Redirects and Otherwise
-     */
-    $urlRouterProvider
-      .otherwise(function($injector, $location){
-        $injector.get('$state').go($location.path() ? '404' : 'applications');
-      });
-
-
     /**
      * State Configurations
      */
