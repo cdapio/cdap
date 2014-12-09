@@ -108,8 +108,8 @@ CDAP Bug Fixes
 Known Issues
 ------------
 
-- When running secure Hadoop clusters, logs and metrics from both Workflows and MapReduce 
-  programs are not available
+- When running secure Hadoop clusters, metrics and debug logs from MapReduce programs 
+  are not available
   (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__ and 
   `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__).
 - When upgrading a cluster from an earlier version of CDAP, warning messages may appear in
