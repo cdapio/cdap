@@ -1,5 +1,5 @@
 angular.module(PKG.name + '.feature.applications')
-  .controller('ApplicationController', function ($scope, $state) {
+  .controller('ApplicationController', function ($scope, $state, MyDataSource) {
     $scope.tabs = [
       'Status',
       'Data',
@@ -34,4 +34,21 @@ angular.module(PKG.name + '.feature.applications')
       }
       $scope.tabs.activeTab = tab;
     });
+
+    var data = new MyDataSource($scope);
+    var appId = $state.params.appId;
+    data.fetch({
+      _cdap: "GET /apps/" + appId + "/status"
+    }, function(res) {
+      $scope.programs = res;
+      $scope.programs.runningCount = getProgramCount($scope.programs, "ALIVE");
+      $scope.programs.failedCount = getProgramCount($scope.programs, "FAILED");
+      $scope.programs.deployedCount = getProgramCount($scope.programs, "DEPLOYED");
+    });
+
+    function getProgramCount (programs, s) {
+      return programs.filter(function(prog) {
+        return prog.status === s;
+      }).length;
+    }
 });
