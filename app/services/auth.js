@@ -172,7 +172,7 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
    * in localstorage.
    * @return {Object} storage info.
    */
-  User.prototype.storable = function (cred) {
+  User.prototype.storable = function () {
     return {
       username: this.username
     };
