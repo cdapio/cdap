@@ -58,24 +58,24 @@ function makeApp (security) {
 
 
   app.post('/login', function (req, res) {
-    if (!req.body.hasOwnProperty('username') || !req.body.hasOwnProperty('password')) {
-      res.status(400).send("Please specify username/password");
+    if (!req.body.username || !req.body.password) {
+      res.status(400).send('Please specify username/password');
     }
-    var options = {
-      url: security.getAuthServerAddress(),
-      auth: {
-        user: req.body.username,
-        password: req.body.password
+    request({
+        url: security.getAuthServerAddress(),
+        auth: {
+          user: req.body.username,
+          password: req.body.password
+        }
+      },
+      function (nerr, nres, nbody) {
+        if (nerr || nres.statusCode !== 200) {
+          res.status(nres.statusCode).send(nbody);
+        } else {
+          res.send(nbody);
+        }
       }
-    };
-    request(options, function (nerr, nres, nbody) {
-      if (nerr || nres.statusCode !== 200) {
-        res.status(nres.statusCode).send(nbody);
-      } else {
-        var nbody = JSON.parse(nbody);
-        res.send({token: nbody.access_token});
-      }
-    });
+    );
   });
 
   // serve static assets

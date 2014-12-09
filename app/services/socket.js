@@ -131,7 +131,7 @@ angular.module(PKG.name+'.services')
         });
       }
       return resource;
-    };
+    }
 
     return DataSource;
   })

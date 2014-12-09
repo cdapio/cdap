@@ -131,7 +131,7 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
    * @param {object} user data
    */
   function User(data) {
-    this.token = data.token;
+    this.token = data.access_token;
     this.username = data.username;
     this.role = MYAUTH_ROLE.user;
 
