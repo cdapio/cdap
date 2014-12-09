@@ -72,7 +72,8 @@ public class PurchaseAppTest extends TestBase {
 
 
     // Add customer's profile information
-    URL setUserProfileURL = new URL(userProfileServiceManager.getServiceURL(5, TimeUnit.SECONDS), UserProfileServiceHandler.USER_ENDPOINT);
+    URL setUserProfileURL = new URL(userProfileServiceManager.getServiceURL(5, TimeUnit.SECONDS),
+                                    UserProfileServiceHandler.USER_ENDPOINT);
     HttpURLConnection setUserProfileConnection = (HttpURLConnection) setUserProfileURL.openConnection();
     String userProfileJson = "{'id' : 'joe', 'firstName': 'joe', 'lastName':'bernard', 'categories': ['fruits']}";
 
