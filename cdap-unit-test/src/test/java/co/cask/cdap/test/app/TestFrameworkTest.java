@@ -326,19 +326,12 @@ public class TestFrameworkTest extends TestBase {
       serviceManager.setRunnableInstances(runnableName, 2);
       runnableInstancesCheck(serviceManager, runnableName, 2, retries);
 
-      // Test that the worker starts with 5 instances
-      DataSetManager<KeyValueTable> datasetManager = applicationManager
-                                                      .getDataSet(AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
-      KeyValueTable instancesTable = datasetManager.get();
-      CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(null, null);
-      List<KeyValue<byte[], byte[]>> workerInstances = Lists.newArrayList(instancesIterator);
-      instancesIterator.close();
+      // Test that the worker starts with 3 instances and each knows that there are 3 instances
+      byte[] startRow = Bytes.toBytes("init");
+      assertWorkerDatasetWrites(applicationManager, startRow, Bytes.stopKeyForPrefix(startRow), 3, 3);
 
-      Assert.assertEquals(5, workerInstances.size());
-      // Assert that each instance of the worker knows the total number of instances
-      for (KeyValue<byte[], byte[]> keyValue : workerInstances) {
-        Assert.assertEquals(5, Bytes.toInt(keyValue.getValue()));
-      }
+      serviceManager.setRunnableInstances("LifecycleWorker", 5);
+      runnableInstancesCheck(serviceManager, "LifecycleWorker", 5, retries);
 
       serviceManager.stop();
       serviceStatusCheck(serviceManager, false);
@@ -346,8 +339,37 @@ public class TestFrameworkTest extends TestBase {
       // Should be 0 instances when stopped.
       runnableInstancesCheck(serviceManager, runnableName, 0, retries);
 
+      // 3 workers should have started with 3 total instances. 2 more should later start with 5 total instances.
+      assertWorkerDatasetWrites(applicationManager, Bytes.toBytes("init"),
+                                Bytes.stopKeyForPrefix(Bytes.toBytes("init.2")), 3, 3);
+      assertWorkerDatasetWrites(applicationManager, Bytes.toBytes("init.3"),
+                                Bytes.stopKeyForPrefix(Bytes.toBytes("init")), 2, 5);
+
+      // Test that the worker had 5 instances when stopped, and each knew that there were 5 instances
+      startRow = Bytes.toBytes("stop");
+      assertWorkerDatasetWrites(applicationManager, startRow, Bytes.stopKeyForPrefix(startRow), 5, 5);
+
     } finally {
       applicationManager.stopAll();
+    }
+  }
+
+  private void assertWorkerDatasetWrites(ApplicationManager applicationManager, byte[] startRow, byte[] endRow,
+                                         int expectedCount, int expectedTotalCount) {
+    DataSetManager<KeyValueTable> datasetManager = applicationManager
+      .getDataSet(AppUsingGetServiceURL.WORKER_INSTANCES_DATASET);
+    KeyValueTable instancesTable = datasetManager.get();
+    CloseableIterator<KeyValue<byte[], byte[]>> instancesIterator = instancesTable.scan(startRow, endRow);
+    try {
+      List<KeyValue<byte[], byte[]>> workerInstances = Lists.newArrayList(instancesIterator);
+      // Assert that the worker starts with expectedCount instances
+      Assert.assertEquals(expectedCount, workerInstances.size());
+      // Assert that each instance of the worker knows the total number of instances
+      for (KeyValue<byte[], byte[]> keyValue : workerInstances) {
+        Assert.assertEquals(expectedTotalCount, Bytes.toInt(keyValue.getValue()));
+      }
+    } finally {
+      instancesIterator.close();
     }
   }
 

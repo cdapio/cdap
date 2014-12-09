@@ -92,7 +92,15 @@ public class ServiceWorkerDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
-    serviceWorker.stop();
+    if (serviceWorker == null) {
+      return;
+    }
+    ClassLoader classLoader = ClassLoaders.setContextClassLoader(serviceWorker.getClass().getClassLoader());
+    try {
+      serviceWorker.stop();
+    } finally {
+      ClassLoaders.setContextClassLoader(classLoader);
+    }
   }
 
   @Override
@@ -114,5 +122,9 @@ public class ServiceWorkerDriver extends AbstractExecutionThreadService {
     } finally {
       ClassLoaders.setContextClassLoader(classLoader);
     }
+  }
+
+  public void setInstanceCount(int instanceCount) {
+    context.setInstanceCount(instanceCount);
   }
 }
