@@ -21,7 +21,7 @@ Application specification::
     addMapReduce(new WordCountJob());
     
 or specify ``addWorkflow()`` in your Application and specify your MapReduce Job in the
-Workflow definition::
+:ref:`Workflow <workflows>` definition::
 
   public void configure() {
     ...

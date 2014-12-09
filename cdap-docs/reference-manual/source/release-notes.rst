@@ -108,15 +108,15 @@ CDAP Bug Fixes
 Known Issues
 ------------
 
-- When running secure Hadoop clusters, metrics and debug logs from MapReduce programs 
-  are not available
-  (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__ and 
-  `CDAP-797 <https://issues.cask.co/browse/CDAP-797>`__).
+- When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
+  not available (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__ and `CDAP-797
+  <https://issues.cask.co/browse/CDAP-797>`__).
 - When upgrading a cluster from an earlier version of CDAP, warning messages may appear in
-  the master log indicating that messages could not be decoded
-  (*Failed to decode message to MetricsRecord*). This is because of a change in the format of
-  emitted metrics, and can result in a small amount of messages not being decoded correctly. 
-  (`CDAP-745 <https://issues.cask.co/browse/CDAP-745>`__).
+  the master log indicating that in-transit (emitted, but not yet processed) metrics
+  system messages could not be decoded (*Failed to decode message to MetricsRecord*). This
+  is because of a change in the format of emitted metrics, and can result in a small
+  amount of metrics data points being lost. (`CDAP-745
+  <https://issues.cask.co/browse/CDAP-745>`__).
 
 Release 2.5.2
 =============
