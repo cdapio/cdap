@@ -80,7 +80,7 @@ public class PurchaseAppTest extends TestBase {
     serviceStatusCheck(serviceManager, true);
 
     // Test service to retrieve a customer's purchase history
-    URL url = new URL(serviceManager.getServiceURL(), "history/joe");
+    URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "history/joe");
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, conn.getResponseCode());
     String historyJson;
