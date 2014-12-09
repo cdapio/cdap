@@ -141,11 +141,10 @@ declaration and (2) an injection:
 
      public class MyMapReduceJob implements MapReduce {
        @Override
-       public MapReduceSpecification configure() {
-         return MapReduceSpecification.Builder.with()
-           ...
-           .useDataSet("catalog")
-           ...
+       public void configure(MapReduceConfigurer configurer) {
+         ...
+         useDatasets(Arrays.asList("catalog"))
+         ...
 
 #. Inject the Dataset into the mapper or reducer that uses it::
 

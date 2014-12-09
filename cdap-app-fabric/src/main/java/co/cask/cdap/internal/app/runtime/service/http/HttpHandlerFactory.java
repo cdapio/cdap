@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceHandler;
-import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
@@ -64,9 +63,10 @@ public final class HttpHandlerFactory {
         // Generate the new class if it hasn't before and load it through a ByteCodeClassLoader.
         ClassDefinition classDefinition = new HttpHandlerGenerator().generate(key, pathPrefix);
 
-        ClassLoader typeClassLoader = ClassLoaders.getClassLoader(key);
-        ByteCodeClassLoader classLoader = new ByteCodeClassLoader(typeClassLoader);
-        classLoader.addClass(classDefinition, key.getRawType());
+        // The ClassLoader of the generated HttpHandler has CDAP system ClassLoader as parent.
+        // The ClassDefinition contains list of classes that should not be loaded by the generated class ClassLoader
+        ByteCodeClassLoader classLoader = new ByteCodeClassLoader(HttpHandlerFactory.class.getClassLoader());
+        classLoader.addClass(classDefinition);
         return classLoader.loadClass(classDefinition.getClassName());
       }
     });
