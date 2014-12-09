@@ -2,7 +2,7 @@
 
 module.exports = {
   promise: function () {
-    return configParser.get().then(function(config) {
+    return configParser.promise().then(function (config) {
       return (new Security(config)).doPing();
     });
   }
@@ -14,12 +14,12 @@ var configParser = require('./parser.js'),
     promise = require('q');
 
 var PING_INTERVAL = 1000,
-    PING_MAX_RETRIES = 30;
+    PING_MAX_RETRIES = 30,
+    PING_PATH = '/v2/ping';
 
 
 function Security (config) {
-  this.config = config || {};
-  this.config.version = 2;
+  this.cdapConfig = config || {};
   this.enabled = false;
   this.authServerAddresses = [];
 };
@@ -33,14 +33,14 @@ Security.prototype.doPing = function () {
   var self = this,
       deferred = promise.defer(),
       attempts = 0,
-      url = this.config['router.server.address'];
+      url = this.cdapConfig['router.server.address'];
 
-  if (this.config['ssl.enabled'] === "true") {
-    url = 'https://' + url + ':' + this.config['router.ssl.server.port'];
+  if (this.cdapConfig['ssl.enabled'] === "true") {
+    url = 'https://' + url + ':' + this.cdapConfig['router.ssl.server.port'];
   } else {
-    url = 'http://' + url + ':' + this.config['router.bind.port'];
+    url = 'http://' + url + ':' + this.cdapConfig['router.bind.port'];
   }
-  url += '/v' + this.config.version + '/ping';
+  url += PING_PATH;
 
 
   function pingAttempt () {
@@ -49,7 +49,7 @@ Security.prototype.doPing = function () {
       console.error('Exceeded max attempts calling secure endpoint.');
       deferred.reject();
     } else {
-      console.log('Calling security endpoint: ', url, ' attempt ', attempts);
+      // console.log('Calling security endpoint: ', url, ' attempt ', attempts);
       request({
           method: 'GET',
           url: url,
@@ -73,6 +73,8 @@ Security.prototype.doPing = function () {
       );
     }
   };
+
+  pingAttempt();
 
   return deferred.promise;
 };

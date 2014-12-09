@@ -42,8 +42,8 @@ function makeApp (security) {
 
       authorization: req.headers.authorization,
       cdap: {
-        routerServerUrl: security.config['router.server.address'],
-        routerServerPort: security.config['router.server.port']
+        routerServerUrl: security.cdapConfig['router.server.address'],
+        routerServerPort: security.cdapConfig['router.server.port']
       },
       securityEnabled: security.enabled
     });
