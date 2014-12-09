@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.webapp;
 
+import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Predicate;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
@@ -37,7 +38,7 @@ public class JarExploder {
     final JarFile jar = new JarFile(jarFile);
 
     try {
-      if (!destDir.exists() && !destDir.mkdirs()) {
+      if (!DirUtils.mkdirs(destDir)) {
         throw new IOException(String.format("Cannot create destination dir %s", destDir.getAbsolutePath()));
       }
 
@@ -52,13 +53,13 @@ public class JarExploder {
         File file = new File(destDir, entry.getName());
         if (entry.isDirectory()) {
           // Create dir
-          if (!file.mkdirs()) {
+          if (!DirUtils.mkdirs(file)) {
             throw new IOException(String.format("Cannot create dir %s", file.getAbsolutePath()));
           }
           continue;
         }
         File parentFile = file.getParentFile();
-        if (!parentFile.isDirectory() && !parentFile.mkdirs()) {
+        if (!DirUtils.mkdirs(parentFile)) {
           throw new IOException(String.format("Cannot create dir %s", parentFile));
         }
 

@@ -46,6 +46,7 @@ import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -1738,11 +1739,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     File tempDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
                                      configuration.get(Constants.AppFabric.TEMP_DIR)),
                             accountId).getAbsoluteFile();
-    if (!tempDir.exists() && !tempDir.mkdirs() && !tempDir.exists()) {
-      throw new IOException("Could not create temporary directory at: " + tempDir.getAbsolutePath());
+    if (!DirUtils.mkdirs(tempDir)) {
+      throw new IOException("Could not create temporary directory at: " + tempDir);
     }
     final File tmpArchive = File.createTempFile("app-", ".jar", tempDir);
-    LOG.debug("Moving archive to temporary file on local disk: {}", tmpArchive.getAbsolutePath());
+    LOG.debug("Moving archive to temporary file on local disk: {}", tmpArchive);
     final OutputStream fos = new FileOutputStream(tmpArchive);
 
     if (archiveName == null || archiveName.isEmpty()) {
