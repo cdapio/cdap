@@ -2,19 +2,12 @@ angular.module(PKG.name+'.feature.login')
   .config(function ($stateProvider, $urlRouterProvider) {
 
     /**
-     * Redirects and Otherwise
-     */
-    $urlRouterProvider
-      .when('/signin', '/login');
-
-
-    /**
      * State Configurations
      */
     $stateProvider
 
       .state('login', {
-        url: '/login',
+        // url: '/login',
         templateUrl: '/assets/features/login/login.html',
         controller: 'LoginCtrl'
       })
@@ -27,7 +20,7 @@ angular.module(PKG.name+'.feature.login')
 
     $rootScope.$on(MYAUTH_EVENT.loginSuccess, function () {
       $alert({title:'Welcome!', content:'You\'re logged in!', type:'success'});
-      $state.go(myAuth.currentUser.hasRole(MYAUTH_ROLE.admin) ? 'home' : 'login');
+      $state.go('home');
     });
 
     $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {

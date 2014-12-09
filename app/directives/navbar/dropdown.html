@@ -15,7 +15,6 @@
   </li>
 
 
-
   <li role="presentation" class="divider"></li>
 
   <li role="presentation" class="dropdown-header">
@@ -29,10 +28,19 @@
     </a>
   </li>
 
+  <li role="presentation" class="divider"></li>
+
+  <li role="presentation" ng-hide="currentUser" ui-sref-active="disabled">
+    <a role="menuitem" tabindex="-1" ui-sref="login">
+      <span class="fa fa-sign-in"></span>
+      Log in
+    </a>
+  </li>
+
   <li role="presentation" ng-show="currentUser">
     <a role="menuitem" tabindex="-1" href="" ng-click="logout()">
       <span class="fa fa-sign-out"></span>
-      Logout
+      Log out
     </a>
   </li>
 

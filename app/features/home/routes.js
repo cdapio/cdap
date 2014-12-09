@@ -18,7 +18,7 @@ angular.module(PKG.name+'.feature.home')
 
       .state('home', {
         data: {
-          authorizedRoles: MYAUTH_ROLE.admin  
+          authorizedRoles: MYAUTH_ROLE.all
         },
         url: '/',
         templateUrl: '/assets/features/home/home.html',
