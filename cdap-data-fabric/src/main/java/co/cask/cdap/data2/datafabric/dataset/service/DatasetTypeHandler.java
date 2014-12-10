@@ -29,7 +29,6 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -118,7 +117,12 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
                                 @PathParam("name") final String name) throws IOException {
 
     final String className = request.getHeader(HEADER_CLASS_NAME);
-    Preconditions.checkArgument(className != null, "Required header 'class-name' is absent.");
+    if (className == null) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Required header 'class-name' is absent.",
+                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
+      return null;
+    }
+
     LOG.info("Adding module {}, class name: {}", name, className);
 
     DatasetModuleMeta existing = manager.getModule(name);
@@ -161,10 +165,16 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
               throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
                                                   tmpLocation.toURI(), archive.toURI()));
             }
+
+            manager.addModule(name, className, archive);
+            // todo: response with DatasetModuleMeta of just added module (and log this info)
+            LOG.info("Added module {}", name);
+            responder.sendStatus(HttpResponseStatus.OK);
+
           } else {
-            String message = String.format("Cannot add module %s: module with same name already exists", name);
-            responder.sendString(HttpResponseStatus.CONFLICT, message);
-            return;
+            throw new DatasetModuleConflictException(
+              String.format("Cannot add module %s: module with same name already exists", name)
+            );
           }
 
         } catch (Exception e) {
@@ -174,16 +184,12 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
           } catch (IOException ex) {
             LOG.warn("Failed to cleanup temporary location {}", tmpLocation.toURI());
           }
-          throw e;
-        }
-
-        try {
-          manager.addModule(name, className, archive);
-          // todo: response with DatasetModuleMeta of just added module (and log this info)
-          LOG.info("Added module {}", name);
-          responder.sendStatus(HttpResponseStatus.OK);
-        } catch (DatasetModuleConflictException e) {
-          responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+          if (e instanceof DatasetModuleConflictException) {
+            responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+          } else {
+            LOG.error("Failed to add module {}", name, e);
+            throw e;
+          }
         }
       }
     };
