@@ -21,7 +21,7 @@ Application specification::
     addMapReduce(new WordCountJob());
     
 or specify ``addWorkflow()`` in your Application and specify your MapReduce Job in the
-Workflow definition::
+:ref:`Workflow <workflows>` definition::
 
   public void configure() {
     ...
@@ -141,11 +141,10 @@ declaration and (2) an injection:
 
      public class MyMapReduceJob implements MapReduce {
        @Override
-       public MapReduceSpecification configure() {
-         return MapReduceSpecification.Builder.with()
-           ...
-           .useDataSet("catalog")
-           ...
+       public void configure(MapReduceConfigurer configurer) {
+         ...
+         useDatasets(Arrays.asList("catalog"))
+         ...
 
 #. Inject the Dataset into the mapper or reducer that uses it::
 

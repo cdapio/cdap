@@ -16,10 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
@@ -42,7 +42,7 @@ import java.io.IOException;
  */
 public abstract class AbstractDataFabricFacade implements DataFabricFacade {
 
-  private final DataSetInstantiator dataSetContext;
+  private final DatasetInstantiator dataSetContext;
   private final QueueClientFactory queueClientFactory;
   private final StreamConsumerFactory streamConsumerFactory;
   private final TransactionExecutorFactory txExecutorFactory;
@@ -51,7 +51,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
 
   public AbstractDataFabricFacade(TransactionSystemClient txSystemClient, TransactionExecutorFactory txExecutorFactory,
                                   QueueClientFactory queueClientFactory, StreamConsumerFactory streamConsumerFactory,
-                                  Program program, DataSetInstantiator dataSetContext) {
+                                  Program program, DatasetInstantiator dataSetContext) {
     this.txSystemClient = txSystemClient;
     this.queueClientFactory = queueClientFactory;
     this.streamConsumerFactory = streamConsumerFactory;
@@ -61,7 +61,7 @@ public abstract class AbstractDataFabricFacade implements DataFabricFacade {
   }
 
   @Override
-  public DataSetContext getDataSetContext() {
+  public DatasetContext getDataSetContext() {
     return dataSetContext;
   }
 

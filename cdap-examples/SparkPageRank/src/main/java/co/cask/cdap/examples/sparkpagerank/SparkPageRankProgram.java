@@ -23,6 +23,7 @@
 package co.cask.cdap.examples.sparkpagerank;
 
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import com.google.common.base.Charsets;
@@ -58,6 +59,10 @@ public class SparkPageRankProgram implements JavaSparkProgram {
 
   private static final int ITERATIONS_COUNT = 10;
   private static final Pattern SPACES = Pattern.compile("\\s+");
+  public static final String POPULAR_PAGES = "total.popular.pages";
+  public static final String UNPOPULAR_PAGES = "total.unpopular.pages";
+  public static final int POPULAR_PAGE_THRESHOLD = 10;
+  public static final int UNPOPULAR_PAGE_THRESHOLD = 3;
 
   private static class Sum implements Function2<Double, Double, Double> {
     @Override
@@ -119,6 +124,7 @@ public class SparkPageRankProgram implements JavaSparkProgram {
     LOG.info("Writing ranks data");
 
     final ServiceDiscoverer discoveryServiceContext = sc.getServiceDiscoverer();
+    final Metrics sparkMetrics = sc.getMetrics();
     JavaPairRDD<byte[], Integer> ranksRaw = ranks.mapToPair(new PairFunction<Tuple2<String, Double>, byte[],
       Integer>() {
       @Override
@@ -135,6 +141,11 @@ public class SparkPageRankProgram implements JavaSparkProgram {
                                                                            Charsets.UTF_8));
           try {
             String pr = reader.readLine();
+            if ((Integer.parseInt(pr)) == POPULAR_PAGE_THRESHOLD) {
+              sparkMetrics.count(POPULAR_PAGES, 1);
+            } else if (Integer.parseInt(pr) <= UNPOPULAR_PAGE_THRESHOLD) {
+              sparkMetrics.count(UNPOPULAR_PAGES, 1);
+            }
             return new Tuple2<byte[], Integer>(tuple._1().getBytes(Charsets.UTF_8), Integer.parseInt(pr));
           } finally {
             Closeables.closeQuietly(reader);

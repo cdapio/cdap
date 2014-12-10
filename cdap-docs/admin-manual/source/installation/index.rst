@@ -40,15 +40,15 @@ Installation
 .. |security| replace:: **Security:**
 .. _security: security.html
 
-- |security|_ CDAP supports securing clusters using a perimeter security model. This section
-  described enabling security, configuring authentication, testing security, and includes 
+- |security|_ CDAP supports **securing clusters using a perimeter security model.** This section
+  describes enabling security, configuring authentication, testing security, and includes 
   an example configuration file.
 
 
 .. |monitoring| replace:: **Monitoring:**
 .. _monitoring: monitoring.html
 
-- |monitoring|_ CDAP collects logs and metrics for all of its internal services. 
+- |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
   This section provides links to the relevant APIs for accessing these logs and metrics.
 
 

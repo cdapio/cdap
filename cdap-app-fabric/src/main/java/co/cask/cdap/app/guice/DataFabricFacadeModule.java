@@ -16,7 +16,7 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.runtime.AbstractDataFabricFacade;
@@ -88,7 +88,7 @@ public final class DataFabricFacadeModule extends PrivateModule {
                                        QueueClientFactory queueClientFactory,
                                        StreamConsumerFactory streamConsumerFactory,
                                        @Assisted Program program,
-                                       @Assisted DataSetInstantiator instantiator) {
+                                       @Assisted DatasetInstantiator instantiator) {
       super(txSystemClient, txExecutorFactory, queueClientFactory, streamConsumerFactory, program, instantiator);
     }
   }
@@ -104,7 +104,7 @@ public final class DataFabricFacadeModule extends PrivateModule {
                                     QueueClientFactory queueClientFactory,
                                     StreamConsumerFactory streamConsumerFactory,
                                     @Assisted Program program,
-                                    @Assisted DataSetInstantiator instantiator) {
+                                    @Assisted DatasetInstantiator instantiator) {
       super(txSystemClient, txExecutorFactory, queueClientFactory, streamConsumerFactory, program, instantiator);
     }
   }

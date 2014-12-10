@@ -34,7 +34,7 @@ project's ``pom.xml`` file:
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-stream-client</artifactId>
-      <version>1.0.1</version>
+      <version>1.0.2</version>
     </dependency>
 
 Example

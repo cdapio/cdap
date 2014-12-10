@@ -17,8 +17,8 @@
 package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
@@ -34,19 +34,19 @@ public class FileSetExample extends AbstractApplication {
 
   @Override
   public void configure() {
-    try {
-      setName("FileSetExample");
-      setDescription("Application with a MapReduce that uses a FileSet dataset");
-      createDataset("lines", "fileSet", FileSetProperties.builder()
-        .setInputFormat(TextInputFormat.class)
-        .setOutputFormat(TextOutputFormat.class).build());
-      createDataset("counts", "fileSet", FileSetProperties.builder()
-          .setInputFormat(TextInputFormat.class)
-          .setOutputFormat(TextOutputFormat.class).build());
-      addService(new FileSetService());
-      addMapReduce(new WordCount());
-    } catch (Throwable t) {
-      throw Throwables.propagate(t);
-    }
+    setName("FileSetExample");
+    setDescription("Application with a MapReduce that uses a FileSet dataset");
+    createDataset("lines", FileSet.class, FileSetProperties.builder()
+      .setBasePath("example/data/lines")
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .build());
+    createDataset("counts", FileSet.class, FileSetProperties.builder()
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":")
+      .build());
+    addService(new FileSetService());
+    addMapReduce(new WordCount());
   }
 }

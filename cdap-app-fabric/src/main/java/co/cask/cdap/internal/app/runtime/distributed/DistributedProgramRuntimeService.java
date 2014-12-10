@@ -50,11 +50,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
@@ -77,9 +79,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -339,7 +344,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     private final Path hbasePath;
     private final Path namedspacedPath;
     private final PathFilter namespacedFilter;
-    private final String rmUrl;
+    private final List<URL> rmUrls;
     private final String namespace;
     private FileSystem hdfs;
 
@@ -357,7 +362,46 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       this.namedspacedPath = new Path(namespace);
       this.hbasePath = new Path(hConf.get(HConstants.HBASE_DIR));
       this.namespacedFilter = new NamespacedPathFilter();
-      this.rmUrl = "http://" + hConf.get(YarnConfiguration.RM_WEBAPP_ADDRESS) + RM_CLUSTER_METRICS_PATH;
+      List<URL> rmUrls = Collections.emptyList();
+      try {
+        rmUrls = getResourceManagerURLs(hConf);
+      } catch (MalformedURLException e) {
+        LOG.error("webapp address for the resourcemanager is malformed." +
+                    " Cluster memory metrics will not be collected.", e);
+      }
+      LOG.trace("RM urls determined... {}", rmUrls);
+      this.rmUrls = rmUrls;
+    }
+
+    // if ha resourcemanager is being used, need to read the config differently
+    // HA rm has a setting for the rm ids, which is a comma separated list of ids.
+    // it then has a separate webapp.address.<id> setting for each rm.
+    private List<URL> getResourceManagerURLs(Configuration hConf) throws MalformedURLException {
+      List<URL> urls = Lists.newArrayList();
+
+      // if HA resource manager is enabled
+      if (hConf.getBoolean(YarnConfiguration.RM_HA_ENABLED, false)) {
+        LOG.trace("HA RM is enabled, determining webapp urls...");
+        // for each resource manager
+        for (String rmID : hConf.getStrings(YarnConfiguration.RM_HA_IDS)) {
+          urls.add(getResourceURL(hConf, rmID));
+        }
+      } else {
+        LOG.trace("HA RM is not enabled, determining webapp url...");
+        urls.add(getResourceURL(hConf, null));
+      }
+      return urls;
+    }
+
+    // get the url for resource manager cluster metrics, given the id of the resource manager.
+    private URL getResourceURL(Configuration hConf, String rmID) throws MalformedURLException {
+      String setting = YarnConfiguration.RM_WEBAPP_ADDRESS;
+      if (rmID != null) {
+        setting += "." + rmID;
+      }
+      String addrStr = "http://" + hConf.get(setting) + RM_CLUSTER_METRICS_PATH;
+      LOG.trace("Adding {} as a rm address.", addrStr);
+      return new URL(addrStr);
     }
 
     @Override
@@ -383,20 +427,39 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         }
       }
       reportClusterStorage();
-      reportClusterMemory();
+      boolean reported = false;
+      // if we have HA resourcemanager, need to cycle through possible webapps in case one is down.
+      for (URL url : rmUrls) {
+        // if we were able to hit the resource manager webapp, we don't have to try the others.
+        if (reportClusterMemory(url)) {
+          reported = true;
+          break;
+        }
+      }
+      if (!reported) {
+        LOG.warn("unable to get resource manager metrics, cluster memory metrics will be unavailable");
+      }
     }
 
     // YARN api is unstable, hit the webservice instead
-    private void reportClusterMemory() {
+    // returns whether or not it was able to hit the webservice.
+    private boolean reportClusterMemory(URL url) {
       Reader reader = null;
       HttpURLConnection conn = null;
+      LOG.trace("getting cluster memory from url {}", url);
       try {
-        URL url = new URL(rmUrl);
         conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
 
         reader = new InputStreamReader(conn.getInputStream(), Charsets.UTF_8);
-        JsonObject response = new Gson().fromJson(reader, JsonObject.class);
+        JsonObject response;
+        try {
+          response = new Gson().fromJson(reader, JsonObject.class);
+        } catch (JsonParseException e) {
+          // this is normal if this is not the active RM
+          return false;
+        }
+
         if (response != null) {
           JsonObject clusterMetrics = response.getAsJsonObject("clusterMetrics");
           long totalMemory = clusterMetrics.get("totalMB").getAsLong();
@@ -405,11 +468,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           LOG.trace("resource manager, total memory = " + totalMemory + " available = " + availableMemory);
           collector.increment("resources.total.memory", (int) totalMemory);
           collector.increment("resources.available.memory", (int) availableMemory);
-        } else {
-          LOG.warn("unable to get resource manager metrics, cluster memory metrics will be unavailable");
+          return true;
         }
-      } catch (IOException e) {
+        return false;
+      } catch (Exception e) {
         LOG.error("Exception getting cluster memory from ", e);
+        return false;
       } finally {
         if (reader != null) {
           try {

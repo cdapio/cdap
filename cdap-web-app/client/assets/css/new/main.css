@@ -1966,9 +1966,11 @@ a strong {
     background: transparent;
     border: 0;
     width: 35px;
+    height: 28px;
 }
 
 .start-stop-wrapper.panel-controls .btn-stop {
+    float: left;
     background: white;
 }
 
@@ -4378,4 +4380,19 @@ div.tooltip-inner {
 
 .sparks-metrics .metric-row{
     margin-bottom: 5px;
+}
+
+/* Disabling a link tag*/
+
+li.disabled {
+  list-style: none;
+}
+li.disabled > a:hover {
+  text-decoration: none;
+  cursor: not-allowed;
+  background-color: transparent;
+}
+
+li.disabled > a {
+  color: #777;
 }

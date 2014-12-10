@@ -24,7 +24,7 @@ Metrics Requests
 ----------------
 The general form of a metrics request is::
 
-  GET <base-url>/metrics/<scope>/<context>/<metric>?<time-range>
+  GET <base-url>/metrics/<scope>/<context>/<run-id>/<metric>?<time-range>
 
 .. list-table::
    :widths: 20 80
@@ -36,6 +36,8 @@ The general form of a metrics request is::
      - Either ``system`` (system metrics) or ``user`` (user-defined metrics)
    * - ``<context>``
      - Hierarchy of context; see `Available Contexts`_
+   * - ``<run-id>``
+     - Run-ID of the program; see `Querying by Run-ID`_
    * - ``<metric>``
      - Metric being queried; see `Available Metrics`_
    * - ``<time-range>``
@@ -56,9 +58,9 @@ Examples
      - 
    * - HTTP Method
      - ``GET <base-url>/metrics/user/apps/HelloWorld/flows/``
-       ``WhoFlow/flowlets/saver/names.bytes?aggregate=true``
+       ``WhoFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/saver/names.bytes?aggregate=true``
    * - Description
-     - Using a *User-Defined* metric, *names.bytes*
+     - Querying the *User-Defined* metric *names.bytes*, of the Flow *saver*, by its run-ID
    * - 
      - 
    * - HTTP Method
@@ -93,6 +95,14 @@ values only for the times where the metric was actually emitted (shown here "pre
   {"time":1382637110,"value":6856},
   {"time":1382637111,"value":6816},
   {"time":1382637112,"value":6765}]}
+
+Each run of a flow is identified by a run-ID. To retrieve the aggregate of events processed by the
+run of a flow, you can issue an HTTP GET method::
+
+  GET <base-url>/metrics/system/apps/CountRandom/flows/CountRandomFlow/runs/13ac3a50-a435-49c8-a752-83b3c1e1b9a8/flowlets/
+          splitter/process.events.processed?aggregate=true
+
+If the run-ID is not specified, we aggregate the events processed for all the runs of this flow.
 
 If you want the number of input objects processed across all Flowlets of a Flow, you address the metrics
 API at the Flow context::
@@ -139,7 +149,7 @@ The time range of a metric query can be specified in various ways:
    * - Time Range
      - Description
    * - ``start=now-30s&end=now``
-     - The last 30 seconds. The begin time is given in seconds relative to the current time.
+     - The last 30 seconds. The start time is given in seconds relative to the current time.
        You can apply simple math, using ``now`` for the current time, 
        ``s`` for seconds, ``m`` for minutes, ``h`` for hours and ``d`` for days. 
        For example: ``now-5d-12h`` is 5 days and 12 hours ago.
@@ -153,6 +163,12 @@ Instead of getting the values for each second of a time range, you can also retr
 aggregate of a metric over time. The following request will return the total number of input objects processed since the Application *CountRandom* was deployed, assuming that CDAP has not been stopped or restarted (you cannot specify a time range for aggregates)::
 
   GET <base-url>/metrics/system/apps/CountRandom/process.events.processed?aggregate=true
+
+If the metric is a gauge type, the aggregate will return the latest value set for the metric.
+
+This request will retrieve the completion percentage for the map-stage of the MapReduce Job ``PurchaseHistoryWorkflow_PurchaseHistoryBuilder``::
+
+  GET <base-ur>/metrics/system/apps/PurchaseHistory/mapreduce/PurchaseHistoryWorkflow_PurchaseHistoryBuilder/mappers/process.completion?aggregate=true
 
 Available Contexts
 ------------------
@@ -182,15 +198,17 @@ The context of a metric is typically enclosed into a hierarchy of contexts. For 
      - ``/apps/<app-id>/mapreduce/<mapreduce-id>``
    * - All MapReduce of an Application
      - ``/apps/<app-id>/mapreduce``
+   * - One Spark Program
+     - ``/apps/<app-id>/spark/<spark-id>``
    * - One Service Handler/Worker
      - ``/apps/<app-id>/services/<service-id>/runnables/<runnable-id>``
    * - One Service
      - ``/apps/<app-id>/services/<service-id>``
    * - All Services of an Application
      - ``/apps/<app-id>/services``
-   * - All elements of an Application
+   * - All components of an Application
      - ``/apps/<app-id>``
-   * - All elements of all Applications
+   * - All components of all Applications
      - ``/``
 
 Stream metrics are only available at the Stream level and the only available context is:
@@ -224,6 +242,22 @@ Flowlet, Procedure, Mapper, or Reducer level:
      - ``/datasets/<dataset-id>``
    * - All Datasets across all Applications
      - ``/``
+
+Querying by Run-ID
+------------------
+
+Each execution of an program (Flow, MapReduce, Spark, Services, Procedure) has an associated run-ID that uniquely identifies that program's run.
+We can query metrics for an program by its run-ID to see the metrics for a particular run.
+Please see the :ref:`Run Records and Schedule <rest-program-runs>` on retrieving active and historical program runs.
+
+When querying by run-ID, it is specified after the ``program-id`` in the path::
+
+  /apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/
+
+Examples ::
+
+    GET /apps/<app-id>/flows/<flow-id>/runs/<run-id>/flowlets/<flowlet-id>/
+    GET /apps/<app-id>/mapreduce/<mapreduce-id>/runs/<run-id>/
 
 Available Metrics
 -----------------
@@ -272,6 +306,33 @@ These metrics are available in the Mappers and Reducers context:
      - Number of entries read in by the Map or Reduce phase
    * - ``process.entries.out``
      - Number of entries written out by the Map or Reduce phase
+
+These metrics are available in the Spark context:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Spark Metric
+     - Description
+   * - ``<spark-id>.BlockManager.disk.diskSpaceUsed_MB``
+     - Disk space used by the Block Manager
+   * - ``<spark-id>.BlockManager.memory.maxMem_MB``
+     - Maximum memory given to the Block Manager
+   * - ``<spark-id>.BlockManager.memory.memUsed_MB``
+     - Memory used by the Block Manager
+   * - ``<spark-id>.BlockManager.memory.remainingMem_MB``
+     - Memory remaining to the Block Manager
+   * - ``<spark-id>.DAGScheduler.job.activeJobs``
+     - Number of active jobs
+   * - ``<spark-id>.DAGScheduler.job.allJobs``
+     - Total number of jobs
+   * - ``<spark-id>.DAGScheduler.stage.failedStages``
+     - Number of failed stages
+   * - ``<spark-id>.DAGScheduler.stage.runningStages``
+     - Number of running stages
+   * - ``<spark-id>.DAGScheduler.stage.waitingStages``
+     - Number of waiting stages
 
 These metrics are available in the Procedures context:
 

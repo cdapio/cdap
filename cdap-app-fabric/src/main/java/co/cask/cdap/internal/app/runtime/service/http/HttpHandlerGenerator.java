@@ -20,12 +20,15 @@ import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
@@ -33,7 +36,6 @@ import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -56,6 +58,7 @@ import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
@@ -81,8 +84,8 @@ import javax.ws.rs.Path;
  *       super(context);
  *     }
  *
- *     @literal@GET
- *     @literal@Path("/path")
+ *     @literal @GET
+ *     @literal @Path("/path")
  *     public void userMethod(HttpRequest request, HttpResponder responder) {
  *       // see generateTransactionalDelegateBody() for generated body.
  *     }
@@ -91,8 +94,18 @@ import javax.ws.rs.Path;
  */
 final class HttpHandlerGenerator {
 
+  private static final Set<Type> HTTP_ANNOTATION_TYPES = ImmutableSet.of(
+    Type.getType(GET.class),
+    Type.getType(POST.class),
+    Type.getType(PUT.class),
+    Type.getType(DELETE.class),
+    Type.getType(HEAD.class)
+  );
+
   ClassDefinition generate(TypeToken<? extends HttpServiceHandler> delegateType, String pathPrefix) throws IOException {
     Class<?> rawType = delegateType.getRawType();
+    List<Class<?>> preservedClasses = Lists.newArrayList();
+    preservedClasses.add(rawType);
 
     ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
@@ -108,14 +121,14 @@ final class HttpHandlerGenerator {
     // Inspect the delegate class hierarchy to generate public handler methods.
     for (TypeToken<?> type : delegateType.getTypes().classes()) {
       if (!Object.class.equals(type.getRawType())) {
-        inspectHandler(delegateType, type, pathPrefix, classType, classWriter);
+        inspectHandler(delegateType, type, pathPrefix, classType, classWriter, preservedClasses);
       }
     }
 
     generateConstructor(delegateType, classWriter);
     generateLogger(classType, classWriter);
 
-    ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className);
+    ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className, preservedClasses);
     // DEBUG block. Uncomment for debug
 //    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
@@ -129,7 +142,8 @@ final class HttpHandlerGenerator {
    * @param inspectType The type that needs to be inspected. It's either the delegateType or one of its parents
    */
   private void inspectHandler(final TypeToken<?> delegateType, final TypeToken<?> inspectType, final String pathPrefix,
-                              final Type classType, final ClassWriter classWriter) throws IOException {
+                              final Type classType, final ClassWriter classWriter,
+                              final List<Class<?>> preservedClasses) throws IOException {
     Class<?> rawType = inspectType.getRawType();
 
     // Visit the delegate class, copy and rewrite handler method, with method body just do delegation
@@ -189,8 +203,8 @@ final class HttpHandlerGenerator {
           if (!Modifier.isPublic(access)) {
             return mv;
           }
-          return new HandlerMethodVisitor(delegateType, mv, desc, signature,
-                                          access, name, exceptions, classType, classWriter);
+          return new HandlerMethodVisitor(delegateType, mv, desc, signature, access, name,
+                                          exceptions, classType, classWriter, preservedClasses);
         }
       }, ClassReader.SKIP_DEBUG);
     } finally {
@@ -202,21 +216,22 @@ final class HttpHandlerGenerator {
    * Generates the constructor. The constructor generated has signature {@code (DelegatorContext)}.
    */
   private void generateConstructor(TypeToken<? extends HttpServiceHandler> delegateType, ClassWriter classWriter) {
-    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class);
-    String signature = Signatures.getMethodSignature(constructor, getContextType(delegateType));
+    Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsCollector.class);
+    String signature = Signatures.getMethodSignature(constructor, getContextType(delegateType),
+                                                     TypeToken.of(MetricsCollector.class));
 
-    // Constructor(DelegatorContext)
+    // Constructor(DelegatorContext, MetricsCollector)
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, constructor, signature, null, classWriter);
 
-    // super(context);
+    // super(context, metricsCollector);
     mg.loadThis();
     mg.loadArg(0);
+    mg.loadArg(1);
     mg.invokeConstructor(Type.getType(AbstractHttpHandlerDelegator.class),
-                         Methods.getMethod(void.class, "<init>", DelegatorContext.class));
+                         Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsCollector.class));
     mg.returnValue();
     mg.endMethod();
   }
-
 
   /**
    * Generates a static Logger field for logging and a static initialization block to initialize the logger.
@@ -237,22 +252,7 @@ final class HttpHandlerGenerator {
    * Returns true if the annotation is of type {@link javax.ws.rs.HttpMethod} annotations.
    */
   private boolean isHandlerMethod(Type annotationType) {
-    if (annotationType.equals(Type.getType(GET.class))) {
-      return true;
-    }
-    if (annotationType.equals(Type.getType(POST.class))) {
-      return true;
-    }
-    if (annotationType.equals(Type.getType(PUT.class))) {
-      return true;
-    }
-    if (annotationType.equals(Type.getType(DELETE.class))) {
-      return true;
-    }
-    if (annotationType.equals(Type.getType(HEAD.class))) {
-      return true;
-    }
-    return false;
+    return HTTP_ANNOTATION_TYPES.contains(annotationType);
   }
 
   /**
@@ -300,6 +300,7 @@ final class HttpHandlerGenerator {
     private final String[] exceptions;
     private final Type classType;
     private final ClassWriter classWriter;
+    private final List<Class<?>> preservedClasses;
 
     /**
      * Constructs a {@link HandlerMethodVisitor}.
@@ -313,9 +314,12 @@ final class HttpHandlerGenerator {
      * @param exceptions Method exceptions list
      * @param classType Type of the generated class
      * @param classWriter Writer for generating bytecode
+     * @param preservedClasses List for storing classes that needs to be preserved for correct class loading.
+     *                         See {@link ClassDefinition} for details.
      */
-    HandlerMethodVisitor(TypeToken<?> delegateType, MethodVisitor mv, String desc, String signature,
-                         int access, String name, String[] exceptions, Type classType, ClassWriter classWriter) {
+    HandlerMethodVisitor(TypeToken<?> delegateType, MethodVisitor mv, String desc,
+                         String signature, int access, String name, String[] exceptions,
+                         Type classType, ClassWriter classWriter, List<Class<?>> preservedClasses) {
       super(Opcodes.ASM4, mv);
       this.delegateType = delegateType;
       this.desc = desc;
@@ -327,6 +331,7 @@ final class HttpHandlerGenerator {
       this.paramAnnotations = LinkedListMultimap.create();
       this.classType = classType;
       this.classWriter = classWriter;
+      this.preservedClasses = preservedClasses;
     }
 
     @Override
@@ -383,6 +388,8 @@ final class HttpHandlerGenerator {
       argTypes[0] = Type.getType(HttpRequest.class);
       argTypes[1] = Type.getType(HttpResponder.class);
 
+      preserveParameterClasses(argTypes);
+
       // Copy the method signature with the first two parameter types changed
       String methodDesc = Type.getMethodDescriptor(returnType, argTypes);
       MethodVisitor methodVisitor = classWriter.visitMethod(access, name, methodDesc,
@@ -403,6 +410,36 @@ final class HttpHandlerGenerator {
       generateTransactionalDelegateBody(mg, new Method(name, desc));
 
       super.visitEnd();
+    }
+
+    /**
+     * Preserves method parameter classes for class loading. The first two parameters are always
+     * {@link HttpServiceRequest} and {@link HttpServiceResponder}, which don't need to be preserved since
+     * they are always loaded by the CDAP system ClassLoader. The third and onward method parameter classes
+     * need to be preserved since they can be defined by user, hence in the user ClassLoader.
+     *
+     * @see ClassDefinition
+     */
+    private void preserveParameterClasses(Type[] argTypes) {
+      if (argTypes.length <= 2) {
+        return;
+      }
+      try {
+        for (int i = 2; i < argTypes.length; i++) {
+          // Only add object type parameter which is not Java class
+          if (argTypes[i].getSort() == Type.OBJECT) {
+            Class<?> cls = delegateType.getRawType().getClassLoader().loadClass(argTypes[i].getClassName());
+
+            // Classes loaded by bootstrap classloader are having null ClassLoader. They don't need to be preserved.
+            if (cls.getClassLoader() != null) {
+              preservedClasses.add(cls);
+            }
+          }
+        }
+      } catch (ClassNotFoundException e) {
+        // Shouldn't happen, as the parameter class should be loading from the user handler ClassLoader
+        throw Throwables.propagate(e);
+      }
     }
 
     /**
@@ -462,7 +499,7 @@ final class HttpHandlerGenerator {
      *       txContext.finish();
      *     } catch (TransactionFailureException e) {
      *        LOG.error("Transaction failure: ", e);
-     *        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+     *        wrapResponder(responder).sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
      *     }
      *   }
      * }
@@ -474,7 +511,6 @@ final class HttpHandlerGenerator {
       Type txFailureExceptionType = Type.getType(TransactionFailureException.class);
       Type loggerType = Type.getType(Logger.class);
       Type throwableType = Type.getType(Throwable.class);
-      Type httpResponseStatusType = Type.getType(HttpResponseStatus.class);
 
       Label txTryBegin = mg.newLabel();
       Label txTryEnd = mg.newLabel();
@@ -565,11 +601,14 @@ final class HttpHandlerGenerator {
       mg.invokeInterface(loggerType, Methods.getMethod(void.class, "error", String.class,
                                                        Throwable.class));
 
-      // responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      // wrapResponder(responder).sendStatus(500);
+      mg.loadThis();
       mg.loadArg(1);
-      mg.getStatic(httpResponseStatusType, "INTERNAL_SERVER_ERROR", httpResponseStatusType);
-      mg.invokeInterface(Type.getType(HttpResponder.class),
-                         Methods.getMethod(void.class, "sendStatus", HttpResponseStatus.class));
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(HttpServiceResponder.class, "wrapResponder", HttpResponder.class));
+      mg.visitLdcInsn(500);
+      mg.invokeInterface(Type.getType(HttpServiceResponder.class),
+                         Methods.getMethod(void.class, "sendStatus", int.class));
 
       mg.mark(txFinish);
 

@@ -33,7 +33,7 @@ import javax.ws.rs.Path;
 /**
  * Class for handling requests for a single metric in a context.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION + "/metrics")
+@Path(Constants.Gateway.API_VERSION_2 + "/metrics")
 public class MetricsQueryHandler extends BaseMetricsHandler {
 
   private final MetricsRequestExecutor requestExecutor;

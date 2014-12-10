@@ -44,7 +44,7 @@ You can implement a record-scannable Dataset that uses ``Entry`` as the record t
     }
 
 Note that Java's ``Class`` implements ``Type`` and you can simply return ``Entry.class`` as the record type.
-CDAP will use reflection to infer a SQL-style schema from the record type.
+CDAP will use reflection to infer a SQL-style schema using the fields of the record type.
 
 In the case of the above class ``Entry``, the schema will be::
 
@@ -300,11 +300,17 @@ CDAP provides a JDBC driver to make integrations with external programs and thir
 tools easier.
 
 The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``lib``
-directory of your SDK installation at ``lib/co.cask.cdap.cdap-explore-jdbc-<version>.jar``.
+directory of your SDK installation at::
 
-If you don't have a CDAP SDK and only want to connect to an existing instance of CDAP, you can download the CDAP JDBC
-driver using this `link <https://repository.continuuity.com/content/repositories/releases-public/co/cask/cdap/cdap-explore-jdbc/>`__.
-Go to the directory matching the version of your running CDAP instance, and download the file named ``cdap-explore-jdbc-<version>.jar``.
+  lib/co.cask.cdap.cdap-explore-jdbc-<version>.jar
+
+If you don't have a CDAP SDK and only want to connect to an existing instance of CDAP, 
+you can download the CDAP JDBC driver from `this link 
+<https://repository.continuuity.com/content/groups/public/co/cask/cdap/cdap-explore/>`__.
+Go to the directory matching the version of your running CDAP instance, and download the file 
+with the matching version number::
+
+  cdap-explore-jdbc-<version>.jar
 
 Using the CDAP JDBC driver in your Java code
 ............................................

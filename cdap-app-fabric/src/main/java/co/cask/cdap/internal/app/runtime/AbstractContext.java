@@ -17,7 +17,8 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metrics.Metrics;
@@ -30,7 +31,7 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.MetricsCollector;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -38,7 +39,6 @@ import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.PreferencesTable;
 import co.cask.cdap.data2.dataset2.lib.table.PreferencesTableDataset;
 import co.cask.cdap.proto.ProgramRecord;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.api.RunId;
@@ -53,7 +53,7 @@ import java.util.Set;
 /**
  * Base class for program runtime context
  */
-public abstract class AbstractContext extends AbstractServiceDiscoverer implements DataSetContext, RuntimeContext {
+public abstract class AbstractContext extends AbstractServiceDiscoverer implements DatasetContext, RuntimeContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
 
   private final Program program;
@@ -63,7 +63,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
 
   private final MetricsCollector programMetrics;
 
-  private final DataSetInstantiator dsInstantiator;
+  private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final ProgramRecord record;
   private PreferencesTableDataset table;
@@ -92,7 +92,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
       datasetMetrics = null;
     }
 
-    this.dsInstantiator = new DataSetInstantiator(dsFramework, conf, program.getClassLoader(),
+    this.dsInstantiator = new DatasetInstantiator(dsFramework, conf, program.getClassLoader(),
                                                   datasetMetrics, programMetrics);
     DatasetFramework sysds = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(conf,
                                                                                                      Namespace.SYSTEM));
@@ -125,26 +125,31 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   }
 
   // todo: this may be refactored further: avoid leaking dataset instantiator from context
-  public DataSetInstantiator getDatasetInstantiator() {
+  public DatasetInstantiator getDatasetInstantiator() {
     return dsInstantiator;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <T extends Closeable> T getDataSet(String name) {
+  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    T dataset = (T) datasets.get(name);
-    Preconditions.checkArgument(dataset != null, "%s is not a known Dataset.", name);
-    return dataset;
+    try {
+      @SuppressWarnings("unchecked")
+      T dataset = (T) datasets.get(name);
+      if (dataset != null) {
+        return dataset;
+      }
+    } catch (Throwable t) {
+      throw new DatasetInstantiationException(String.format("Can't instantiate dataset '%s'", name), t);
+    }
+    // if execution gets here, then dataset was null
+    throw new DatasetInstantiationException(String.format("'%s' is not a known Dataset", name));
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments) {
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
     // TODO this should allow to get a dataset that was not declared with @UseDataSet. Then we can support arguments.
-    T dataset = (T) datasets.get(name);
-    Preconditions.checkArgument(dataset != null, "%s is not a known Dataset.", name);
-    return dataset;
+    return getDataset(name);
   }
 
   public String getAccountId() {

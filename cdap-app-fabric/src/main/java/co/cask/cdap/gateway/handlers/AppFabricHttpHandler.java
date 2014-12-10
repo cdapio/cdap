@@ -17,7 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -170,7 +170,7 @@ import javax.ws.rs.QueryParam;
 /**
  *  HttpHandler class for app-fabric requests.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
+@Path(Constants.Gateway.API_VERSION_2) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
@@ -190,16 +190,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Timeout to upload to remote app fabric.
    */
   private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
-
-  private static final Map<String, ProgramType> RUNNABLE_TYPE_MAP = new ImmutableMap.Builder<String, ProgramType>()
-    .put("mapreduce", ProgramType.MAPREDUCE)
-    .put("spark", ProgramType.SPARK)
-    .put("flows", ProgramType.FLOW)
-    .put("procedures", ProgramType.PROCEDURE)
-    .put("workflows", ProgramType.WORKFLOW)
-    .put("webapp", ProgramType.WEBAPP)
-    .put("services", ProgramType.SERVICE)
-    .build();
 
   /**
    * Configuration object passed from higher up.
@@ -444,7 +434,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       String accountId = getAuthenticatedAccountId(request);
       final Id.Program id = Id.Program.from(accountId, appId, runnableId);
-      final ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+      final ProgramType type = ProgramType.valueOfCategoryName(runnableType);
       StatusMap statusMap = getStatus(id, type);
       // If status is null, then there was an error
       if (statusMap.getStatus() == null) {
@@ -685,7 +675,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                               @QueryParam("start") String startTs,
                               @QueryParam("end") String endTs,
                               @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
-    ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+    ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -704,7 +694,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-id") final String appId,
                                      @PathParam("runnable-type") final String runnableType,
                                      @PathParam("runnable-id") final String runnableId) {
-    ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+    ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -736,7 +726,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                       @PathParam("app-id") final String appId,
                                       @PathParam("runnable-type") final String runnableType,
                                       @PathParam("runnable-id") final String runnableId) {
-    ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+    ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
       return;
@@ -757,15 +747,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Throwable e) {
       LOG.error("Error getting runtime args {}", e.getMessage(), e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  private String getQueryParameter(Map<String, List<String>> parameters, String parameterName) {
-    if (parameters == null || parameters.isEmpty()) {
-      return null;
-    } else {
-      List<String> matchedParams = parameters.get(parameterName);
-      return matchedParams == null || matchedParams.isEmpty() ? null : matchedParams.get(0);
     }
   }
 
@@ -797,7 +778,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder,
                                              final String appId, final String runnableType,
                                              final String runnableId, final String action) {
-    ProgramType type = RUNNABLE_TYPE_MAP.get(runnableType);
+    ProgramType type = ProgramType.valueOfCategoryName(runnableType);
 
     if (type == null || (type == ProgramType.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -869,7 +850,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       ProgramRuntimeService.RuntimeInfo runtimeInfo =
         runtimeService.run(program, new SimpleProgramOptions(id.getId(), new BasicArguments(), userArguments, debug));
 
-      ProgramController controller = runtimeInfo.getController();
+      final ProgramController controller = runtimeInfo.getController();
       final String runId = controller.getRunId().getId();
 
       controller.addListener(new AbstractListener() {
@@ -881,7 +862,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             stopped();
           }
           if (state == ProgramController.State.ERROR) {
-            error(new Exception("Error Starting the Program"));
+            error(controller.getFailureCause());
           }
         }
         @Override
@@ -901,7 +882,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }, Threads.SAME_THREAD_EXECUTOR);
 
       return AppFabricServiceStatus.OK;
-    } catch (DataSetInstantiationException e) {
+    } catch (DatasetInstantiationException e) {
       return new AppFabricServiceStatus(HttpResponseStatus.UNPROCESSABLE_ENTITY, e.getMessage());
     } catch (Throwable throwable) {
       LOG.error(throwable.getMessage(), throwable);
@@ -2375,7 +2356,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
                                    discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.GATEWAY_VERSION,
+                                   Constants.Gateway.API_VERSION_2,
                                    scope.name().toLowerCase(),
                                    application.getName());
         sendMetricsDelete(url);
@@ -2384,7 +2365,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (applicationId == null) {
       String url = String.format("http://%s:%d%s/metrics", discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.GATEWAY_VERSION);
+                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.API_VERSION_2);
       sendMetricsDelete(url);
     }
   }
@@ -2404,7 +2385,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.GATEWAY_VERSION,
+                               Constants.Gateway.API_VERSION_2,
                                application, flow);
 
     long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
@@ -3196,16 +3177,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       }, ProgramType.values());
 
       if (appRunning) {
-        throw new Exception("App Still Running");
+        throw new Exception("Cannot reset while programs are running");
       }
 
       LOG.info("Deleting all data for account '" + account + "'.");
 
-      // NOTE: deleting new datasets stuff first because old datasets system deletes all blindly by prefix
-      //       which may damage metadata
-      for (DatasetSpecification spec : dsFramework.getInstances()) {
-        dsFramework.deleteInstance(spec.getName());
-      }
+      dsFramework.deleteAllInstances();
       dsFramework.deleteAllModules();
 
       deleteMetrics(account, null);
@@ -3224,6 +3201,49 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.warn(e.getMessage(), e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format(UserMessages.getMessage(UserErrors.RESET_FAIL), e.getMessage()));
+    }
+  }
+
+  /**
+   * DO NOT DOCUMENT THIS API.
+   */
+  @DELETE
+  @Path("/unrecoverable/data/datasets")
+  public void deleteDatasets(HttpRequest request, HttpResponder responder) {
+
+    try {
+      if (!configuration.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
+                                    Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
+        responder.sendStatus(HttpResponseStatus.FORBIDDEN);
+        return;
+      }
+      String account = getAuthenticatedAccountId(request);
+      final Id.Account accountId = Id.Account.from(account);
+
+      // Check if any program is still running
+      boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+        @Override
+        public boolean apply(Id.Program programId) {
+          return programId.getAccountId().equals(accountId.getId());
+        }
+      }, ProgramType.values());
+
+      if (appRunning) {
+        throw new Exception("Cannot delete all datasets while programs are running");
+      }
+
+      LOG.info("Deleting all datasets for account '" + account + "'.");
+
+      dsFramework.deleteAllInstances();
+
+      LOG.info("All datasets for account '" + account + "' deleted.");
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.warn(e.getMessage(), e);
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format(UserMessages.getMessage(UserErrors.DATASETS_DELETE_FAIL), e.getMessage()));
     }
   }
 

@@ -178,7 +178,7 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected URL getUrl(String resource) throws MalformedURLException {
-    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.GATEWAY_VERSION + resource);
+    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.API_VERSION_2 + resource);
   }
 
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {
@@ -223,10 +223,6 @@ public abstract class DatasetServiceTestBase {
   protected ObjectResponse<List<DatasetModuleMeta>> getModules() throws IOException {
     return ObjectResponse.fromJsonBody(HttpRequests.execute(HttpRequest.get(getUrl("/data/modules")).build()),
                                        new TypeToken<List<DatasetModuleMeta>>() { }.getType());
-  }
-
-  protected int deleteInstances() throws IOException {
-    return HttpRequests.execute(HttpRequest.delete(getUrl("/data/unrecoverable/datasets")).build()).getResponseCode();
   }
 
   protected int deleteModule(String moduleName) throws Exception {

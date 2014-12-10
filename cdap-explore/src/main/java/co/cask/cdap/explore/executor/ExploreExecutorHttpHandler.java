@@ -47,7 +47,7 @@ import javax.ws.rs.PathParam;
 /**
  * Handler that implements internal explore APIs.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
 

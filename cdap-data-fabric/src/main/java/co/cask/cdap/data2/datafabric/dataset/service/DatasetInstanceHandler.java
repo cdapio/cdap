@@ -33,7 +33,6 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -46,16 +45,12 @@ import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.jboss.netty.handler.codec.http.QueryStringDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
@@ -69,7 +64,7 @@ import javax.ws.rs.PathParam;
  * Handles dataset instance management calls.
  */
 // todo: do we want to make it authenticated? or do we treat it always as "internal" piece?
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
   private static final Gson GSON = new GsonBuilder()
@@ -98,33 +93,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/")
   public void list(HttpRequest request, final HttpResponder responder) {
     responder.sendJson(HttpResponseStatus.OK, instanceManager.getAll());
-  }
-
-  @DELETE
-  @Path("/data/unrecoverable/datasets/")
-  public void deleteAll(HttpRequest request, final HttpResponder responder) throws Exception {
-    if (!conf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET,
-                         Constants.Dangerous.DEFAULT_UNRECOVERABLE_RESET)) {
-      responder.sendStatus(HttpResponseStatus.FORBIDDEN);
-      return;
-    }
-
-    boolean succeeded = true;
-    for (DatasetSpecification spec : instanceManager.getAll()) {
-      try {
-        // It is okay if dataset not exists: someone may be deleting it at same time
-        dropDataset(spec);
-      } catch (Exception e) {
-        String msg = String.format("Cannot delete dataset %s: executing delete() failed, reason: %s",
-                                   spec.getName(), e.getMessage());
-        LOG.warn(msg, e);
-        succeeded = false;
-        // we continue deleting if something wring happens.
-        // todo: Will later be improved by doing all in async: see CDAP-7
-      }
-    }
-
-    responder.sendStatus(succeeded ? HttpResponseStatus.OK : HttpResponseStatus.INTERNAL_SERVER_ERROR);
   }
 
   @GET
