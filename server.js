@@ -3,7 +3,7 @@
  */
 var appMaker = require('./server/express.js'),
     Aggregator = require('./server/aggregator.js'),
-    configParser = require('./server/config/parser.js'),
+    parser = require('./server/config/parser.js'),
     sockjs = require('sockjs'),
     colors = require('colors/safe'),
     http = require('http'),
@@ -13,7 +13,7 @@ var appMaker = require('./server/express.js'),
 
 var cdapConfig;
 
-configParser.promise()
+parser.extractConfig('cdap')
 
   .then(function (c) {
     cdapConfig = c;
@@ -25,10 +25,6 @@ configParser.promise()
 
     if (cdapConfig['ssl.enabled'] === 'true') {
       httpBackend = https;
-      if (cdapConfig["dashboard.ssl.disable.cert.check"] === "true") {
-        // For self signed certs: see https://github.com/mikeal/request/issues/418
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-      }
     }
 
     // http

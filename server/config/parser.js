@@ -1,70 +1,71 @@
 /*global require, module, process */
 
 module.exports = {
-  promise: extractConfig
+  extractConfig: extractConfig
 };
 
 var promise = require('q'),
     fs = require('fs'),
     spawn = require('child_process').spawn,
     StringDecoder = require('string_decoder').StringDecoder,
-    configString = '',
-    configJson = null,
-    decoder = new StringDecoder('utf8');
+    decoder = new StringDecoder('utf8'),
+    cache = {},
+    buffer = '';
 
 
 /*
- *  Extracts the config based on mode.
- *  @returns {promise} Returns a promise that gets resolved once the the configs are fetched.
+ *  Extracts the config
+ *  @returns {promise}
  */
 
-function extractConfig() {
+function extractConfig(param) {
   var deferred = promise.defer(),
-      configReader;
+      tool;
 
-  if (configJson) {
-    deferred.resolve(configJson);
+  param = param || 'cdap';
+
+  if (cache[param]) {
+    deferred.resolve(cache[param]);
     return deferred.promise;
   }
 
   if (process.env.CDAP_MODE === 'enterprise') {
-    configReader = spawn(__dirname + '/../../bin/config-tool', ['--cdap']);
-    configReader.stderr.on('data', configReadFail.bind(this));
-    configReader.stdout.on('data', configRead.bind(this));
-    configReader.stdout.on('end', onConfigReadEnd.bind(this, deferred, isSecure));
+    buffer = '';
+    tool = spawn(__dirname + '/../../bin/config-tool', ['--'+param]);
+    tool.stderr.on('data', configReadFail.bind(this));
+    tool.stdout.on('data', configRead.bind(this));
+    tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));
   } else {
     try {
-      configJson = require('../../cdap-config.json');
+      cache[param] = require('../../cdap-config.json');
     } catch(e) {
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
       console.error('CDAP-UI using development configuration');
-      configJson = require('./development/default-config.json');
+      cache[param] = require('./development/default-config.json');
     }
 
-    deferred.resolve(configJson);
+    deferred.resolve(cache[param]);
   }
   return deferred.promise;
 }
 
-function onConfigReadEnd(deferred, isSecure, data) {
-   configJson = JSON.parse(configString);
-   deferred.resolve(configJson);
-   configString = '';
+function onConfigReadEnd (deferred, param) {
+   cache[param] = JSON.parse(buffer);
+   deferred.resolve(cache[param]);
 }
 
-function configRead() {
-  var textChunk = decoder.write(arguments[0]);
+function configRead (data) {
+  var textChunk = decoder.write(data);
   if (textChunk) {
-    configString += textChunk;
+    buffer += textChunk;
   }
 }
 
-function configReadFail() {
-  var decoder = new StringDecoder('utf-8');
-  var textChunk = decoder.write(arguments[0]);
+function configReadFail (data) {
+  var textChunk = decoder.write(data);
   if (textChunk) {
-    console.log('Extracting the config file failed!');
+    console.error('Failed to extract the configuration!');
     console.log(textChunk);
   }
 }

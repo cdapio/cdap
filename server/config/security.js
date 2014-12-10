@@ -1,17 +1,19 @@
 /*global require, module */
 
+
 module.exports = {
-  promise: function () {
-    return configParser.promise().then(function (config) {
+  initialize: function () {
+    return parser.extractConfig('security').then(function (config) {
       return (new Security(config)).doPing();
     });
   }
 };
 
 
-var configParser = require('./parser.js'),
+var parser = require('./parser.js'),
     request = require('request'),
     promise = require('q');
+
 
 var PING_INTERVAL = 1000,
     PING_MAX_RETRIES = 30,
@@ -19,9 +21,14 @@ var PING_INTERVAL = 1000,
 
 
 function Security (config) {
-  this.cdapConfig = config || {};
+  this.config = config || {};
   this.enabled = false;
   this.authServerAddresses = [];
+
+  if (config['dashboard.ssl.disable.cert.check'] === 'true') {
+    // For self signed certs: see https://github.com/mikeal/request/issues/418
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  }
 };
 
 
@@ -33,12 +40,12 @@ Security.prototype.doPing = function () {
   var self = this,
       deferred = promise.defer(),
       attempts = 0,
-      url = this.cdapConfig['router.server.address'];
+      url = this.config['router.server.address'];
 
-  if (this.cdapConfig['ssl.enabled'] === "true") {
-    url = 'https://' + url + ':' + this.cdapConfig['router.ssl.server.port'];
+  if (this.config['ssl.enabled'] === "true") {
+    url = 'https://' + url + ':' + this.config['router.ssl.server.port'];
   } else {
-    url = 'http://' + url + ':' + this.cdapConfig['router.bind.port'];
+    url = 'http://' + url + ':' + this.config['router.bind.port'];
   }
   url += PING_PATH;
 
@@ -49,7 +56,7 @@ Security.prototype.doPing = function () {
       console.error('Exceeded max attempts calling secure endpoint.');
       deferred.reject();
     } else {
-      // console.log('Calling security endpoint: ', url, ' attempt ', attempts);
+      console.log('Calling security endpoint: ', url, ' attempt ', attempts);
       request({
           method: 'GET',
           url: url,

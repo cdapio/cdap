@@ -1,7 +1,15 @@
 /*global require, module, process, __dirname */
 
+module.exports = {
+  promise: function () {
+    return security.initialize().then(function (security) {
+      return makeApp(security);
+    });
+  }
+};
+
 var pkg = require('../package.json'),
-    securityConfig = require('./config/security.js'),
+    security = require('./config/security.js'),
     morgan = require('morgan'),
     express = require('express'),
     finalhandler = require('finalhandler'),
@@ -42,8 +50,8 @@ function makeApp (security) {
 
       authorization: req.headers.authorization,
       cdap: {
-        routerServerUrl: security.cdapConfig['router.server.address'],
-        routerServerPort: security.cdapConfig['router.server.port']
+        routerServerUrl: security.config['router.server.address'],
+        routerServerPort: security.config['router.server.port']
       },
       securityEnabled: security.enabled
     });
@@ -111,10 +119,4 @@ function makeApp (security) {
 
 }
 
-module.exports = {
-  promise: function () {
-    return securityConfig.promise().then(function (security) {
-      return makeApp(security);
-    });
-  }
-};
+
