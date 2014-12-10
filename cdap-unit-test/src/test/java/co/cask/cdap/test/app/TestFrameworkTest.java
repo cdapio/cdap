@@ -397,8 +397,11 @@ public class TestFrameworkTest extends TestBase {
       // TestMetricsCollectionService
 
       LOG.info("DatasetUpdateService Started");
+      Map<String, String> args
+        = ImmutableMap.of(AppWithServices.WRITE_VALUE_RUN_KEY, AppWithServices.DATASET_TEST_VALUE,
+                          AppWithServices.WRITE_VALUE_STOP_KEY, AppWithServices.DATASET_TEST_VALUE_STOP);
       ServiceManager datasetWorkerServiceManager = applicationManager
-        .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
+        .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME, args);
       serviceStatusCheck(datasetWorkerServiceManager, true);
 
       ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
