@@ -21,14 +21,14 @@ parser.extractConfig('cdap')
   })
 
   .then(function (app) {
-    var httpBackend = http;
+    var backend = http;
 
     if (cdapConfig['ssl.enabled'] === 'true') {
-      httpBackend = https;
+      backend = https;
     }
 
     // http
-    httpBackend.createServer(app).listen(PORT, cdapConfig['router.bind.address'], function () {
+    backend.createServer(app).listen(PORT, cdapConfig['router.bind.address'], function () {
       console.info(colors.yellow('http')+' listening on port %s', PORT);
     });
 
@@ -46,5 +46,5 @@ parser.extractConfig('cdap')
       });
     });
 
-    sockServer.installHandlers(httpServer, { prefix: '/_sock' });
+    sockServer.installHandlers(backend, { prefix: '/_sock' });
   });

@@ -41,7 +41,7 @@ function extractConfig(param) {
     } catch(e) {
       // Indicates the backend is not running in local environment and that we want only the
       // UI to be running. This is here for convenience.
-      console.error('CDAP-UI using development configuration');
+      console.error(param, 'using development configuration');
       cache[param] = require('./development/default-config.json');
     }
 
