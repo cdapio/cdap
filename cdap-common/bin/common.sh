@@ -154,15 +154,15 @@ set_hive_classpath() {
       HIVE_VAR_OUT=`hive -e 'set -v' 2>/dev/null`
 
       if [ "x$HIVE_HOME" = "x" ]; then
-        HIVE_HOME=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HIVE_HOME' | cut -f 2 -d '='`
+        HIVE_HOME=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep '^env:HIVE_HOME=' | cut -f 2 -d '='`
       fi
 
       if [ "x$HIVE_CONF_DIR" = "x" ]; then
-        HIVE_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HIVE_CONF_DIR' | cut -f 2 -d '='`
+        HIVE_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep '^env:HIVE_CONF_DIR=' | cut -f 2 -d '='`
       fi
 
       if [ "x$HADOOP_CONF_DIR" = "x" ]; then
-        HADOOP_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep 'HADOOP_CONF_DIR=' | cut -f 2 -d '='`
+        HADOOP_CONF_DIR=`echo $HIVE_VAR_OUT | tr ' ' '\n' | grep '^env:HADOOP_CONF_DIR=' | cut -f 2 -d '='`
       fi
     fi
   fi
