@@ -2,7 +2,7 @@
 
 
 module.exports = {
-  initialize: function () {
+  ping: function () {
     return parser.extractConfig('security').then(function (config) {
       return (new Security(config)).doPing();
     });

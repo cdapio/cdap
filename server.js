@@ -1,7 +1,7 @@
 /**
  * Spins up servers
  */
-var appMaker = require('./server/express.js'),
+var express = require('./server/express.js'),
     Aggregator = require('./server/aggregator.js'),
     parser = require('./server/config/parser.js'),
     sockjs = require('sockjs'),
@@ -17,7 +17,7 @@ parser.extractConfig('cdap')
 
   .then(function (c) {
     cdapConfig = c;
-    return appMaker.promise(c);
+    return express.getApp(c);
   })
 
   .then(function (app) {

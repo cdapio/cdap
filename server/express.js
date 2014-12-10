@@ -1,9 +1,9 @@
 /*global require, module, process, __dirname */
 
 module.exports = {
-  promise: function () {
-    return security.initialize().then(function (security) {
-      return makeApp(security);
+  getApp: function () {
+    return security.ping().then(function (s) {
+      return makeApp(s);
     });
   }
 };
@@ -31,7 +31,7 @@ morgan.token('ms', function (req, res){
 var httpStaticLogger = morgan(colors.green('http')+' :method :url :ms :status');
 var httpIndexLogger = morgan(colors.inverse('http')+' :method :url :ms :status');
 
-function makeApp (security) {
+function makeApp (s) {
 
   var app = express();
   console.log(colors.underline(pkg.name) + ' v' + pkg.version + ' starting up...');
@@ -50,10 +50,10 @@ function makeApp (security) {
 
       authorization: req.headers.authorization,
       cdap: {
-        routerServerUrl: security.config['router.server.address'],
-        routerServerPort: security.config['router.server.port']
+        routerServerUrl: s.config['router.server.address'],
+        routerServerPort: s.config['router.server.port']
       },
-      securityEnabled: security.enabled
+      securityEnabled: s.enabled
     });
 
     res.header({
@@ -71,7 +71,7 @@ function makeApp (security) {
       res.status(400).send('Please specify username/password');
     }
     request({
-        url: security.getAuthServerAddress(),
+        url: s.getAuthServerAddress(),
         auth: {
           user: req.body.username,
           password: req.body.password
