@@ -85,17 +85,6 @@ public class IncrementSummingScannerTest {
 
       verifyCounts(region, new Scan(), new long[] {3L});
 
-      // test handling of a single total sum
-      p = new Put(Bytes.toBytes("r2"));
-      p.add(familyBytes, columnBytes, Bytes.toBytes(5L));
-      doPut(region, p);
-
-      verifyCounts(region, new Scan(Bytes.toBytes("r2")), new long[] {5L});
-
-      // test having single delta to sum with one of the multiple returned values
-      // (r1 and r2 in this case are returned, but there's single delta increment to sum in r1)
-      verifyCounts(region, new Scan(), new long[] {3L, 5L});
-
       // test handling of multiple increment values
       long now = System.currentTimeMillis();
       p = new Put(Bytes.toBytes("r3"));
@@ -107,6 +96,11 @@ public class IncrementSummingScannerTest {
 
       verifyCounts(region, new Scan(Bytes.toBytes("r3")).setMaxVersions(), new long[] {15L});
 
+      // test having single delta to sum with one of the multiple returned values
+      // (r1 and r3 in this case are returned, but there's single delta increment to sum in r1)
+      verifyCounts(region, new Scan().setMaxVersions(), new long[] {3L, 15L});
+
+
       // test handling of multiple increment values followed by a total sum, then other increments
       now = System.currentTimeMillis();
       p = new Put(Bytes.toBytes("r4"));
@@ -116,15 +110,16 @@ public class IncrementSummingScannerTest {
       p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
       doPut(region, p);
 
-      // this put will appear as a "total" sum prior to all the delta puts
+      // this put will appear as a delta prior to all the delta puts
       p = new Put(Bytes.toBytes("r4"));
       p.add(familyBytes, columnBytes, now - 5, Bytes.toBytes(5L));
+      p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
       doPut(region, p);
 
       verifyCounts(region, new Scan(Bytes.toBytes("r4")).setMaxVersions(), new long[] {8L});
 
       // test whatever we added so far
-      verifyCounts(region, new Scan().setMaxVersions(), new long[] {3L, 5L, 15L, 8L});
+      verifyCounts(region, new Scan().setMaxVersions(), new long[] {3L, 15L, 8L});
 
       // test handling of an increment column followed by a non-increment column
       p = new Put(Bytes.toBytes("r4"));
@@ -187,10 +182,7 @@ public class IncrementSummingScannerTest {
 
       byte[] row2 = Bytes.toBytes("row2");
       ts = System.currentTimeMillis();
-      // start with a full put
-      Put row2P = new Put(row2);
-      row2P.add(familyBytes, columnBytes, ts++, Bytes.toBytes(10L));
-      doPut(region, row2P);
+
       for (int i = 0; i < 10; i++) {
         Put p = new Put(row2);
         p.add(familyBytes, columnBytes, ts++, Bytes.toBytes(1L));
@@ -216,7 +208,7 @@ public class IncrementSummingScannerTest {
       // row2 should have a full put aggregating prior put + 10 increments
       KeyValue r2Cell = r2.getColumnLatest(familyBytes, columnBytes);
       assertNotNull(r2Cell);
-      assertEquals(20L, Bytes.toLong(r2Cell.getValue()));
+      assertEquals(10L, Bytes.toLong(r2Cell.getValue()));
     } finally {
       region.close();
     }
