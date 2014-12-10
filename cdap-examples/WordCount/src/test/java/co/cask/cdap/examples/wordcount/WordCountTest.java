@@ -72,14 +72,14 @@ public class WordCountTest extends TestBase {
     serviceStatusCheck(serviceManager, true);
 
     // First verify global statistics
-    String response = requestService(new URL(serviceManager.getServiceURL(), "stats"));
+    String response = requestService(new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "stats"));
     Map<String, String> map = new Gson().fromJson(response, stringMapType);
     Assert.assertEquals("9", map.get("totalWords"));
     Assert.assertEquals("6", map.get("uniqueWords"));
     Assert.assertEquals(((double) 42) / 9, Double.valueOf(map.get("averageLength")), 0.001);
 
     // Now verify statistics for a specific word
-    response = requestService(new URL(serviceManager.getServiceURL(), "count/world"));
+    response = requestService(new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "count/world"));
     Map<String, Object> omap = new Gson().fromJson(response, objectMapType);
     Assert.assertEquals("world", omap.get("word"));
     Assert.assertEquals(3.0, omap.get("count"));
