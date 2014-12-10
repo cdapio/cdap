@@ -83,31 +83,18 @@ public class IncrementSummingScannerTest {
       p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
       doPut(region, p);
 
-      Scan scan = new Scan();
-      RegionScanner scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan));
-      List<KeyValue> results = Lists.newArrayList();
-      scanner.next(results);
-
-      assertEquals(1, results.size());
-      KeyValue cell = results.get(0);
-      assertNotNull(cell);
-      assertEquals(3L, Bytes.toLong(cell.getValue()));
+      verifyCounts(region, new Scan(), new long[] {3L});
 
       // test handling of a single total sum
       p = new Put(Bytes.toBytes("r2"));
       p.add(familyBytes, columnBytes, Bytes.toBytes(5L));
       doPut(region, p);
 
-      scan = new Scan(Bytes.toBytes("r2"));
+      verifyCounts(region, new Scan(Bytes.toBytes("r2")), new long[] {5L});
 
-      scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan));
-      results = Lists.newArrayList();
-      scanner.next(results);
-
-      assertEquals(1, results.size());
-      cell = results.get(0);
-      assertNotNull(cell);
-      assertEquals(5L, Bytes.toLong(cell.getValue()));
+      // test having single delta to sum with one of the multiple returned values
+      // (r1 and r2 in this case are returned, but there's single delta increment to sum in r1)
+      verifyCounts(region, new Scan(), new long[] {3L, 5L});
 
       // test handling of multiple increment values
       long now = System.currentTimeMillis();
@@ -118,16 +105,7 @@ public class IncrementSummingScannerTest {
       p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
       doPut(region, p);
 
-      scan = new Scan(Bytes.toBytes("r3"));
-      scan.setMaxVersions();
-      scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan));
-      results = Lists.newArrayList();
-      scanner.next(results);
-
-      assertEquals(1, results.size());
-      cell = results.get(0);
-      assertNotNull(cell);
-      assertEquals(15L, Bytes.toLong(cell.getValue()));
+      verifyCounts(region, new Scan(Bytes.toBytes("r3")).setMaxVersions(), new long[] {15L});
 
       // test handling of multiple increment values followed by a total sum, then other increments
       now = System.currentTimeMillis();
@@ -143,30 +121,23 @@ public class IncrementSummingScannerTest {
       p.add(familyBytes, columnBytes, now - 5, Bytes.toBytes(5L));
       doPut(region, p);
 
-      scan = new Scan(Bytes.toBytes("r4"));
-      scan.setMaxVersions();
-      scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan));
-      results = Lists.newArrayList();
-      scanner.next(results);
+      verifyCounts(region, new Scan(Bytes.toBytes("r4")).setMaxVersions(), new long[] {8L});
 
-      assertEquals(1, results.size());
-      cell = results.get(0);
-      assertNotNull(cell);
-      assertEquals(8L, Bytes.toLong(cell.getValue()));
+      // test whatever we added so far
+      verifyCounts(region, new Scan().setMaxVersions(), new long[] {3L, 5L, 15L, 8L});
 
       // test handling of an increment column followed by a non-increment column
       p = new Put(Bytes.toBytes("r4"));
       p.add(familyBytes, Bytes.toBytes("c2"), Bytes.toBytes("value"));
       doPut(region, p);
 
-      scan = new Scan(Bytes.toBytes("r4"));
-      scan.setMaxVersions();
-      scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan));
-      results = Lists.newArrayList();
+      Scan scan = new Scan(Bytes.toBytes("r4")).setMaxVersions();
+      RegionScanner scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan));
+      List<KeyValue> results = Lists.newArrayList();
       scanner.next(results);
 
       assertEquals(2, results.size());
-      cell = results.get(0);
+      KeyValue cell = results.get(0);
       assertNotNull(cell);
       assertEquals(8L, Bytes.toLong(cell.getValue()));
 
@@ -176,6 +147,22 @@ public class IncrementSummingScannerTest {
     } finally {
       region.close();
     }
+
+  }
+
+  private void verifyCounts(HRegion region, Scan scan, long[] counts) throws Exception {
+    RegionScanner scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan));
+    // init with false if loop will execute zero times
+    boolean hasMore = counts.length > 0;
+    for (long count : counts) {
+      List<KeyValue> results = Lists.newArrayList();
+      hasMore = scanner.next(results);
+      assertEquals(1, results.size());
+      KeyValue cell = results.get(0);
+      assertNotNull(cell);
+      assertEquals(count, Bytes.toLong(cell.getValue()));
+    }
+    assertFalse(hasMore);
   }
 
   @Test

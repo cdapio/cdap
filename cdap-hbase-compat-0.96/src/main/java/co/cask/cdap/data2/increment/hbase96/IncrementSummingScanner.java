@@ -181,20 +181,25 @@ class IncrementSummingScanner implements RegionScanner {
               }
             }
             // 2b. otherwise emit the current cell
-            //LOG.info("Including raw cell " + cell);
+            if (LOG.isTraceEnabled()) {
+              LOG.trace("Including raw cell " + cell);
+            }
             cells.add(cell);
             addedCnt++;
           }
         }
-        // emit any left over increment, if we hit the end
-        if (!hasMore && previousIncrement != null) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
-          }
-          cells.add(newCell(previousIncrement, runningSum));
-        }
       }
+      // NOTE: if limit is -1 (unlimited) then we fetched all cells in one shot, so allow get out of the loop to prevent
+      //       fetching next row
     } while (hasMore && limit > 0 && addedCnt < limit);
+
+    // emit any left over increment, if we hit the end
+    if (previousIncrement != null) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
+      }
+      cells.add(newCell(previousIncrement, runningSum));
+    }
 
     return hasMore;
   }

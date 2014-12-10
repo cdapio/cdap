@@ -27,6 +27,7 @@ import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
+import co.cask.tephra.inmemory.DetachedTxSystemClient;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -488,6 +489,59 @@ public abstract class OrderedTableTest<T extends OrderedTable> {
 
     commitAndAssertSuccess(tx, (TransactionAware) myTable);
     admin.drop();
+  }
+
+  @Test
+  public void testReadlessIncrementGetAndScan() throws Exception {
+    // extra test to verify that single readless increments don't screw up with gets and scans (we had bugs)
+
+    DatasetProperties props = DatasetProperties.builder().add(OrderedTable.PROPERTY_READLESS_INCREMENT, "true").build();
+
+    getTableAdmin("incs", props).create();
+
+    OrderedTable table = getTable("incs");
+
+    DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
+    Transaction tx = txSystemClient.startShort();
+    ((TransactionAware) table).startTx(tx);
+    table.increment(R1, C1, 1L);
+    table.increment(R2, C1, 2L);
+    table.increment(R2, C2, 3L);
+    ((TransactionAware) table).commitTx();
+
+    tx = txSystemClient.startShort();
+    ((TransactionAware) table).startTx(tx);
+    verify(Bytes.toBytes(1L), table.get(R1, C1));
+    verify(Bytes.toBytes(2L), table.get(R2, C1));
+    verify(Bytes.toBytes(3L), table.get(R2, C2));
+
+    verify(a(R1, R2),
+           aa(a(C1, Bytes.toBytes(1L)),
+              a(C1, Bytes.toBytes(2L), C2, Bytes.toBytes(3L))),
+           table.scan(null, null));
+
+    ((TransactionAware) table).commitTx();
+
+    tx = txSystemClient.startShort();
+    ((TransactionAware) table).startTx(tx);
+    table.increment(R1, C1, 10L);
+    table.increment(R2, C1, 20L);
+    table.increment(R3, C3, 30L);
+    ((TransactionAware) table).commitTx();
+
+    tx = txSystemClient.startShort();
+    ((TransactionAware) table).startTx(tx);
+    verify(Bytes.toBytes(11L), table.get(R1, C1));
+    verify(Bytes.toBytes(22L), table.get(R2, C1));
+    verify(Bytes.toBytes(3L), table.get(R2, C2));
+    verify(Bytes.toBytes(30L), table.get(R3, C3));
+
+    verify(a(R1, R2, R3),
+           aa(a(C1, Bytes.toBytes(11L)),
+              a(C1, Bytes.toBytes(22L), C2, Bytes.toBytes(3L)),
+              a(C3, Bytes.toBytes(30L))),
+           table.scan(null, null));
+    ((TransactionAware) table).commitTx();
   }
 
   private void commitAndAssertSuccess(Transaction tx, TransactionAware txAware) throws Exception {
