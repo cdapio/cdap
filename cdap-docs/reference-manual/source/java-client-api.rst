@@ -104,7 +104,7 @@ ProgramClient
   programClient.start("WordCount", ProgramType.PROCEDURE, "RetrieveCounts");
 
   // Fetch live information from the HelloWorld example
-  // Live info includes the address of an element’s container host and the container’s debug port,
+  // Live info includes the address of an component’s container host and the container’s debug port,
   // formatted in JSON
   programClient.getLiveInfo("HelloWorld", ProgramType.PROCEDURE, "greet");
 

@@ -104,7 +104,7 @@ Building and Starting
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
 - Start CDAP, deploy and start the application as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Flow as described.
+  Make sure you start the Flow as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -117,6 +117,25 @@ Running CDAP Applications
 Running the Example
 ===================
 
+Starting the Flow
+------------------------------
+
+Once the application is deployed:
+
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click ``WebAnalyticsFlow`` in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow WebAnalytics.WebAnalyticsFlow``    
+
 Injecting Log Events
 ---------------------------------------
 
@@ -125,17 +144,23 @@ To inject a log event, you can use the ``curl`` command::
   $ curl -d '192.168.252.135 - - [14/Jan/2014:00:12:51 -0400] "GET /products HTTP/1.1" 500 182 \
        "http://www.example.org" "Mozilla/5.0"' http://localhost:10000/v2/streams/log
 
+**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
+SDK in ``libexec\bin\curl.exe``
+
 This sends the log event (formatted in the Common Log Format or CLF) to the CDAP instance located at
 ``localhost`` and listening on port ``10000``.
 
 The Application includes sample logs, located in ``test/resources/access.log`` that you can inject by running
-a provided script::
+a provided script:
 
-  $ bin/inject-data.sh
+.. list-table::
+  :widths: 20 80
+  :stub-columns: 1
 
-On Windows::
-
-  > bin\inject-data.bat
+  * - On Linux:
+    - ``$ ./bin/inject-data.sh``
+  * - On Windows:
+    - ``> bin\inject-data.bat``    
 
 Query the Unique Visitor Page Views
 ---------------------------------------
@@ -168,9 +193,21 @@ table line to expand the display and see the query results:
 
 Stopping the Application
 -------------------------------
-Once done, you can stop the application as described below:
+Once done, you can stop the application as described above in `Stopping an Application. 
+<#stopping-an-application>`__ Here is an example-specific description of the steps:
 
-.. include:: /../../developers-manual/source/getting-started/building-apps.rst
-   :start-line: 78
-   :end-line:   90
+**Stopping the Flow**
 
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click *WebAnalyticsFlow* in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow WebAnalytics.WebAnalyticsFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow WebAnalytics.WebAnalyticsFlow``    

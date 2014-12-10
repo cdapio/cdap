@@ -25,7 +25,7 @@ data. :doc:`Services <services>` and :doc:`Procedures <procedures>` are used to 
 
 To create an Application, implement the ``Application`` interface or subclass from
 ``AbstractApplication`` class, specifying the Application metadata and declaring and
-configuring each of the Application elements::
+configuring each of the Application components::
 
       public class MyApp extends AbstractApplication {
         @Override
