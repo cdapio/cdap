@@ -61,7 +61,7 @@ public class LogWriter implements Runnable {
       if (writeListMap.isEmpty()) {
         messages = 0;
 
-        long currentBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
+        long limitKey = System.currentTimeMillis() / eventBucketIntervalMs;
         synchronized (messageTable) {
           SortedSet<Long> rowKeySet = messageTable.rowKeySet();
           if (!rowKeySet.isEmpty()) {
@@ -72,7 +72,7 @@ public class LogWriter implements Runnable {
             for (Iterator<Map.Entry<String, Entry<Long, List<KafkaLogEvent>>>> it = row.entrySet().iterator();
                    it.hasNext(); ) {
               Map.Entry<String, Entry<Long, List<KafkaLogEvent>>> mapEntry = it.next();
-              if (currentBucketKey < (mapEntry.getValue().getKey() + maxNumberOfBucketsInTable)) {
+              if (limitKey < (mapEntry.getValue().getKey() + maxNumberOfBucketsInTable)) {
                 break;
               }
               writeListMap.putAll(mapEntry.getKey(), mapEntry.getValue().getValue());
