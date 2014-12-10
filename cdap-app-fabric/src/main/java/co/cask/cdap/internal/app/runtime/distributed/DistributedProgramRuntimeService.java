@@ -367,19 +367,16 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         if (metricContext == null) {
           continue;
         }
-        int containers = 0;
-        int memory = 0;
-        int vcores = 0;
+
         // will have multiple controllers if there are multiple runs of the same application
         for (TwillController controller : info.getControllers()) {
           ResourceReport report = controller.getResourceReport();
           if (report == null) {
             continue;
           }
-          containers++;
-          memory += report.getAppMasterResources().getMemoryMB();
-          vcores += report.getAppMasterResources().getVirtualCores();
-          sendMetrics(metricContext, containers, memory, vcores, controller.getRunId().getId());
+          int memory = report.getAppMasterResources().getMemoryMB();
+          int vcores = report.getAppMasterResources().getVirtualCores();
+          sendMetrics(metricContext, 1, memory, vcores, controller.getRunId().getId());
         }
       }
       reportClusterStorage();
