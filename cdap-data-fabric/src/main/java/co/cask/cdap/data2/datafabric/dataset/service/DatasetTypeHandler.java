@@ -29,13 +29,11 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -48,6 +46,7 @@ import java.util.Comparator;
 import java.util.List;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -114,26 +113,8 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
   @PUT
   @Path("/data/modules/{name}")
   public BodyConsumer addModule(final HttpRequest request, final HttpResponder responder,
-                                @PathParam("name") final String name) throws IOException {
-
-    final String className = request.getHeader(HEADER_CLASS_NAME);
-    if (className == null) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Required header 'class-name' is absent.",
-                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
-      return null;
-    }
-
-    LOG.info("Adding module {}, class name: {}", name, className);
-
-    DatasetModuleMeta existing = manager.getModule(name);
-    if (existing != null) {
-      String message = String.format("Cannot add module %s: module with same name already exists: %s",
-                                     name, existing);
-      LOG.warn(message);
-      responder.sendString(HttpResponseStatus.CONFLICT, message,
-                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
-      return null;
-    }
+                                @PathParam("name") final String name,
+                                @HeaderParam(HEADER_CLASS_NAME) final String className) throws IOException {
 
     // Store uploaded content to a local temp file
     File tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -145,6 +126,18 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     return new AbstractBodyConsumer(File.createTempFile("dataset-", ".jar", tempDir)) {
       @Override
       protected void onFinish(HttpResponder responder, File uploadedFile) throws Exception {
+        if (className == null) {
+          // We have to delay until body upload is completed due to the fact that not all client is
+          // requesting with "Expect: 100-continue" header and the client library we have cannot handle
+          // connection close, and yet be able to read response reliably.
+          // In longer term we should fix the client, as well as the netty-http server. However, since
+          // this handler will be gone in near future, it's ok to have this workaround.
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, "Required header 'class-name' is absent.");
+          return;
+        }
+
+        LOG.info("Adding module {}, class name: {}", name, className);
+
         Location archiveDir = locationFactory.create(archiveDirBase).append("account_placeholder");
         String archiveName = name + ".jar";
         Location archive = archiveDir.append(archiveName);
@@ -152,31 +145,27 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
         // Copy uploaded content to a temporary location
         Location tmpLocation = archive.getTempFile(".tmp");
         try {
+          conflictIfModuleExists(name);
+
           Locations.mkdirsIfNotExists(archiveDir);
 
           LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
           Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
 
           // Check if the module exists one more time to minimize the window of possible conflict
-          if (manager.getModule(name) == null) {
-            // Finally, move archive to final location
-            LOG.debug("Storing module {} jar at {}", name, archive.toURI());
-            if (tmpLocation.renameTo(archive) == null) {
-              throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                  tmpLocation.toURI(), archive.toURI()));
-            }
+          conflictIfModuleExists(name);
 
-            manager.addModule(name, className, archive);
-            // todo: response with DatasetModuleMeta of just added module (and log this info)
-            LOG.info("Added module {}", name);
-            responder.sendStatus(HttpResponseStatus.OK);
-
-          } else {
-            throw new DatasetModuleConflictException(
-              String.format("Cannot add module %s: module with same name already exists", name)
-            );
+          // Finally, move archive to final location
+          LOG.debug("Storing module {} jar at {}", name, archive.toURI());
+          if (tmpLocation.renameTo(archive) == null) {
+            throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
+                                                tmpLocation.toURI(), archive.toURI()));
           }
 
+          manager.addModule(name, className, archive);
+          // todo: response with DatasetModuleMeta of just added module (and log this info)
+          LOG.info("Added module {}", name);
+          responder.sendStatus(HttpResponseStatus.OK);
         } catch (Exception e) {
           // In case copy to temporary file failed, or rename failed
           try {
@@ -252,4 +241,18 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     }
   }
 
+  /**
+   * Checks if the given module name already exists.
+   *
+   * @param moduleName name of the module to check
+   * @throws DatasetModuleConflictException if the module exists
+   */
+  private void conflictIfModuleExists(String moduleName) throws DatasetModuleConflictException {
+    DatasetModuleMeta existing = manager.getModule(moduleName);
+    if (existing != null) {
+      String message = String.format("Cannot add module %s: module with same name already exists: %s",
+                                     moduleName, existing);
+      throw new DatasetModuleConflictException(message);
+    }
+  }
 }
