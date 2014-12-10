@@ -1745,7 +1745,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       throw new IOException("Could not create temporary directory at: " + tempDir);
     }
 
-    final Location archiveDir = locationFactory.create(this.archiveDir + "/" + accountId);
+    final Location archiveDir = locationFactory.create(this.archiveDir).append(accountId);
     final Location archive = archiveDir.append(archiveName);
 
     final SessionInfo sessionInfo = new SessionInfo(accountId, appId, archiveName, archive, DeployStatus.UPLOADING);
@@ -2139,7 +2139,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Nullable
   private SessionInfo retrieve(String accountId) {
     try {
-      final Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
+      final Location outputDir = locationFactory.create(archiveDir).append(accountId);
       if (!outputDir.exists()) {
         return null;
       }
@@ -2464,7 +2464,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private boolean save(SessionInfo info, String accountId) {
     try {
       Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
+      Location outputDir = locationFactory.create(archiveDir).append(accountId);
       if (!outputDir.exists()) {
         return false;
       }
