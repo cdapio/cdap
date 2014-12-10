@@ -165,7 +165,6 @@ public class MasterServiceMain extends DaemonMain {
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
-    serviceStore = baseInjector.getInstance(ServiceStore.class);
     exploreClient = baseInjector.getInstance(ExploreClient.class);
 
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
@@ -205,7 +204,7 @@ public class MasterServiceMain extends DaemonMain {
     logAppenderInitializer.initialize();
 
     Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
-
+    serviceStore = baseInjector.getInstance(ServiceStore.class);
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
