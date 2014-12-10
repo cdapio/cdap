@@ -196,6 +196,7 @@ class IncrementSummingScanner implements RegionScanner {
       //       than number of increment-by-delta cells for a counter it may result into multiple values of same cell to
       //       be returned or partial summation result to be returned. It may not be a problem as we don't yet use
       //       limit on scan explicitly for table datasets. But will cause issues when we do.
+      //       See CDAP-971.
     } while (hasMore && limit > 0 && addedCnt < limit);
 
     // emit any left over increment, if we hit the end
