@@ -409,8 +409,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         setting = YarnConfiguration.RM_PREFIX + "hostname";
         if (rmID != null) {
           setting += "." + rmID;
-          addrStr = hConf.get(setting) + ":" + YarnConfiguration.DEFAULT_RM_WEBAPP_PORT;
         }
+        addrStr = hConf.get(setting) + ":" + YarnConfiguration.DEFAULT_RM_WEBAPP_PORT;
       }
       addrStr = "http://" + addrStr + RM_CLUSTER_METRICS_PATH;
       LOG.trace("Adding {} as a rm address.", addrStr);
