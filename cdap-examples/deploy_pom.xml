@@ -57,6 +57,7 @@
     <slf4j.version>@slf4j.version@</slf4j.version>
     <junit.version>@junit.version@</junit.version>
     <spark.version>@spark.version@</spark.version>
+    <cask.common.version>@cask.common.version@</cask.common.version>
   </properties>
 
   <build>
