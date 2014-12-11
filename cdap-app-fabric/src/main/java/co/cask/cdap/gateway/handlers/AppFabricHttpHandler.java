@@ -60,7 +60,6 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
