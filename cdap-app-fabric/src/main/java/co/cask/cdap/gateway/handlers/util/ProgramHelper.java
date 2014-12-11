@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -31,7 +32,10 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.data2.OperationException;
+import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.WorkflowClient;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
@@ -66,8 +70,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -88,6 +95,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -128,6 +136,9 @@ public class ProgramHelper {
    */
   private final String appFabricDir;
 
+  private final DiscoveryServiceClient discoveryServiceClient;
+
+  private final QueueAdmin queueAdmin;
   /**
    * Convenience class for representing the necessary components for retrieving status
    */
@@ -171,14 +182,16 @@ public class ProgramHelper {
 
   @Inject
   public ProgramHelper(CConfiguration configuration, ProgramRuntimeService runtimeService, Scheduler scheduler,
-                       LocationFactory locationFactory, StoreFactory storeFactory,
-                       WorkflowClient workflowClient) {
+                       LocationFactory locationFactory, StoreFactory storeFactory, WorkflowClient workflowClient,
+                       QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient) {
     this.runtimeService = runtimeService;
     this.scheduler = scheduler;
     this.locationFactory = locationFactory;
     this.store = storeFactory.create();
     this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     this.workflowClient = workflowClient;
+    this.queueAdmin = queueAdmin;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   public final void programList(HttpResponder responder, String accountId, ProgramType type,
@@ -1300,6 +1313,164 @@ public class ProgramHelper {
     } catch (Throwable e) {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  public void getFlowletInstances(HttpResponder responder, String accountId, String appId, String flowId,
+                                  String flowletId) {
+    try {
+      int count = store.getFlowletInstances(Id.Program.from(accountId, appId, flowId), flowletId);
+      responder.sendJson(HttpResponseStatus.OK, new Instances(count));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  public void setFlowletInstances(HttpResponder responder, String accountId, String appId, String flowId,
+                                  String flowletId, int instances) {
+    try {
+      if (instances < 1) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Instance count should be greater than 0");
+        return;
+      }
+    } catch (Throwable th) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid instance count.");
+      return;
+    }
+
+    try {
+      Id.Program programID = Id.Program.from(accountId, appId, flowId);
+      int oldInstances = store.getFlowletInstances(programID, flowletId);
+      if (oldInstances != instances) {
+        store.setFlowletInstances(programID, flowletId, instances);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(accountId, appId, flowId, ProgramType.FLOW,
+                                                                        runtimeService);
+        if (runtimeInfo != null) {
+          runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
+                                              ImmutableMap.of("flowlet", flowletId,
+                                                              "newInstances", String.valueOf(instances),
+                                                              "oldInstances", String.valueOf(oldInstances))).get();
+        }
+      }
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  /**
+   * Respond with a 404 if a NoSuchElementException is thrown.
+   */
+  public boolean respondIfElementNotFound(Throwable t, HttpResponder responder) {
+    return respondIfRootCauseOf(t, NoSuchElementException.class, HttpResponseStatus.NOT_FOUND, responder,
+                                "Could not find element.", null);
+  }
+
+  private <T extends Throwable> boolean respondIfRootCauseOf(Throwable t, Class<T> type, HttpResponseStatus status,
+                                                             HttpResponder responder, String msgFormat,
+                                                             Object... args) {
+    if (type.isAssignableFrom(Throwables.getRootCause(t).getClass())) {
+      responder.sendString(status, String.format(msgFormat, args));
+      return true;
+    }
+    return false;
+  }
+
+  public void changeFlowletStreamConnection(HttpResponder responder, String accountId, String appId, String flowId,
+                                            String flowletId, String streamId, Map<String, String> arguments) {
+    try {
+      String oldStreamId = arguments.get("oldStreamId");
+      if (oldStreamId == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "oldStreamId param is required");
+        return;
+      }
+
+      StreamSpecification stream = store.getStream(Id.Account.from(accountId), streamId);
+      if (stream == null) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, "Stream specified with streamId param does not exist");
+        return;
+      }
+
+      Id.Program programID = Id.Program.from(accountId, appId, flowId);
+      store.changeFlowletSteamConnection(programID, flowletId, oldStreamId, streamId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      if (respondIfElementNotFound(e, responder)) {
+        return;
+      }
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  public void deleteFlowQueues(HttpResponder responder, String accountId, String appId, String flowId) {
+    Id.Program programId = Id.Program.from(accountId, appId, flowId);
+    try {
+      ProgramStatus status = getProgramStatus(programId, ProgramType.FLOW);
+      if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else if (status.getStatus().equals("RUNNING")) {
+        responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
+      } else {
+        queueAdmin.dropAllForFlow(appId, flowId);
+        // delete process metrics that are used to calculate the queue size (process.events.pending metric name)
+        deleteProcessMetricsForFlow(appId, flowId);
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  // deletes the process metrics for a flow
+  private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              3L, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      throw new IOException("Can't find Metrics endpoint");
+    }
+
+    LOG.debug("Deleting metrics for flow {}.{}", application, flow);
+    String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
+                               discoverable.getSocketAddress().getHostName(),
+                               discoverable.getSocketAddress().getPort(),
+                               Constants.Gateway.API_VERSION_2,
+                               application, flow);
+
+    long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+
+    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+      .setUrl(url)
+      .setRequestTimeoutInMs((int) timeout)
+      .build();
+
+    try {
+      client.delete().get(timeout, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      LOG.error("exception making metrics delete call", e);
+      Throwables.propagate(e);
+    } finally {
+      client.close();
     }
   }
 

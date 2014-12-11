@@ -190,7 +190,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable throwable) {
-      if (respondIfElementNotFound(throwable, responder)) {
+      if (programHelper.respondIfElementNotFound(throwable, responder)) {
         return;
       }
       LOG.error("Got exception : ", throwable);
