@@ -51,6 +51,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -203,7 +204,7 @@ public class MasterServiceMain extends DaemonMain {
     LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
 
-    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
     serviceStore = baseInjector.getInstance(ServiceStore.class);
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
