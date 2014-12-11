@@ -18,11 +18,10 @@ This example demonstrates a Spark application performing streaming log analysis,
 information about backlink URLs.
 
 Data from a sample file is sent to CDAP by the external script *inject-data*
-to the *backlinkURLStream*. This data is processed by the
-``BackLinkFlow``, which stores the URL pair event in its entirety in *backlinkURLs*, an ObjectStore Dataset.
+to the *backlinkURLStream*, which stores the URL pair event in its entirety.
 
-As these entries are created, they are taken up by the *SparkPageRankProgram*, which
-goes through the entries, calculates page rank and tabulates results in another ObjectStore Dataset, *ranks*.
+After these events are streamed, they are taken up by the *SparkPageRankProgram*, which
+goes through the entries, calculates page rank and tabulates results in an ObjectStore Dataset, *ranks*.
 
 Once the application completes, you can query the *ranks* Dataset by using the ``rank`` endpoint of the *RanksService*.
 It will send back a string result with page rank based on the ``url`` query parameter.
@@ -39,14 +38,13 @@ of the Application are tied together by the class ``SparkPageRankApp``:
    :language: java
    :lines: 39-74
 
-``backlinkURLs`` and ``ranks``: ObjectStore Data Storage
-------------------------------------------------------------
+``ranks``: ObjectStore Data Storage
+------------------------------------
 
-The raw URL pair data is stored in an ObjectStore Dataset, *backlinkURLs*.
-The calculated page rank data is stored in a second ObjectStore Dataset, *ranks*.
+The calculated page rank data is stored in an ObjectStore Dataset, *ranks*.
 
 ``RanksService``: Service
-------------------------------------------------------------
+--------------------------
 
 This service has a ``rank`` endpoint to obtain the page rank of a given URL.
 
