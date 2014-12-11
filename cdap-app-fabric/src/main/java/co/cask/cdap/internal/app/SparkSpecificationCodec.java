@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.internal.spark.DefaultSparkSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -57,6 +56,6 @@ final class SparkSpecificationCodec extends AbstractSpecificationCodec<SparkSpec
     String mainClassName = jsonObj.get("mainClassName").getAsString();
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 
-    return new DefaultSparkSpecification(className, name, description, mainClassName, properties);
+    return new SparkSpecification(className, name, description, mainClassName, properties);
   }
 }

@@ -21,7 +21,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.api.spark.SparkSpecification;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
@@ -45,12 +44,10 @@ public class TestSparkMetricsIntegrationApp extends AbstractApplication {
 
   public static class SparkMetricsProgramSpec extends AbstractSpark {
     @Override
-    public SparkSpecification configure() {
-      return SparkSpecification.Builder.with()
-        .setName(APP_SPARK_NAME)
-        .setDescription("Test Spark Metrics")
-        .setMainClassName(SparkMetricsProgram.class.getName())
-        .build();
+    public void configure() {
+      setName(APP_SPARK_NAME);
+      setDescription("Test Spark Metrics");
+      setMainClass(SparkMetricsProgram.class);
     }
   }
 
