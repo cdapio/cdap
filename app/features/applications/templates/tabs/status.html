@@ -1,0 +1,33 @@
+<div class="status">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      Programs
+      <button class="btn btn-default" type="button" ng-bind="programs.runningCount + ' Running'"></button>
+      <button class="btn btn-default" type="button" ng-bind="programs.failedCount + ' Failed'"></button>
+      <button class="btn btn-default" type="button" ng-bind="programs.deployedCount + ' Deployed'">Deployed</button>
+    </div>
+
+    <div class="panel-body">
+      <table class="table table-striped table-condensed">
+        <thead>
+          <tr>
+            <th> Status </th>
+            <th> Name </th>
+            <th> Type </th>
+            <th> Last Started </th>
+            <th> Last Stopped </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="program in programs">
+            <td ng-bind="program.status"></td>
+            <td ng-bind="program.name"></td>
+            <td ng-bind="program.type"></td>
+            <td ng-bind="program.lastStartTime"></td>
+            <td ng-bind="program.lastStopTime"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

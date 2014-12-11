@@ -8,6 +8,7 @@ angular
       PKG.name+'.feature.foo',
       PKG.name+'.feature.login',
       PKG.name+'.feature.dashboard',
+      PKG.name+'.feature.applications'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -29,6 +30,7 @@ angular
         'cask-angular-capitalize'
       ]).name,
 
+      'cask-angular-sortable',
       'mgcrea.ngStrap.alert',
       'mgcrea.ngStrap.tooltip',
       'mgcrea.ngStrap.popover',
@@ -36,7 +38,8 @@ angular
       'mgcrea.ngStrap.collapse',
       'mgcrea.ngStrap.button',
       'mgcrea.ngStrap.tab',
-      'mgcrea.ngStrap.modal'
+      'mgcrea.ngStrap.modal',
+      'ncy-angular-breadcrumb'
 
     ]).name,
 
@@ -143,4 +146,3 @@ angular
 
     console.timeEnd(PKG.name);
   });
-

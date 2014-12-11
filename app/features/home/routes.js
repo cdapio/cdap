@@ -22,7 +22,10 @@ angular.module(PKG.name+'.feature.home')
         },
         url: '/',
         templateUrl: '/assets/features/home/home.html',
-        controller: 'HomeCtrl'
+        controller: 'HomeCtrl',
+        ncyBreadcrumb: {
+          label: 'Home'
+        }
       })
 
       .state('404', {
