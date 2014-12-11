@@ -177,6 +177,12 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
+        <groupId>co.cask.cdap</groupId>
+        <artifactId>cdap-common</artifactId>
+        <version>${project.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
         <groupId>co.cask.http</groupId>
         <artifactId>netty-http</artifactId>
         <version>${netty.http.version}</version>
