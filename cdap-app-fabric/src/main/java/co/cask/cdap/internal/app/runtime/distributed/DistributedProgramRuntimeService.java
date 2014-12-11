@@ -399,7 +399,20 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       if (rmID != null) {
         setting += "." + rmID;
       }
-      String addrStr = "http://" + hConf.get(setting) + RM_CLUSTER_METRICS_PATH;
+      String addrStr = hConf.get(setting);
+      // in HA mode, you can either set yarn.resourcemanager.hostname.<rm-id>,
+      // or you can set yarn.resourcemanager.webapp.address.<rm-id>. In non-HA mode, the webapp address
+      // is populated based on the resourcemanager hostname, but this is not the case in HA mode.
+      // Therefore, if the webapp address is null, check for the resourcemanager hostname to derive the webapp address.
+      if (addrStr == null) {
+        // this setting is not a constant for some reason...
+        setting = YarnConfiguration.RM_PREFIX + "hostname";
+        if (rmID != null) {
+          setting += "." + rmID;
+        }
+        addrStr = hConf.get(setting) + ":" + YarnConfiguration.DEFAULT_RM_WEBAPP_PORT;
+      }
+      addrStr = "http://" + addrStr + RM_CLUSTER_METRICS_PATH;
       LOG.trace("Adding {} as a rm address.", addrStr);
       return new URL(addrStr);
     }
