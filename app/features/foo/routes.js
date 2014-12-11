@@ -12,26 +12,13 @@ angular.module(PKG.name+'.feature.foo')
         templateUrl: '/assets/features/foo/foo.html'
       })
 
-      .state('bar', {
+      .state('admin', {
+        data: {
+          authorizedRoles: MYAUTH_ROLE.admin
+        },
         parent: 'foo',
-        url: '/bar'
+        url: '/admin'
       })
-
-        .state('apps', {
-          data: {
-            authorizedRoles: MYAUTH_ROLE.all
-          },
-          parent: 'foo',
-          url: '/apps'
-        })
-
-        .state('admin', {
-          data: {
-            authorizedRoles: MYAUTH_ROLE.admin
-          },
-          parent: 'foo',
-          url: '/admin'
-        })
 
       ;
 
