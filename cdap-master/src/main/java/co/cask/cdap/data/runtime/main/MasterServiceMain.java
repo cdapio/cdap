@@ -259,7 +259,7 @@ public class MasterServiceMain extends DaemonMain {
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
-    Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
+    Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
 
     try {
       exploreClient.close();
