@@ -17,6 +17,7 @@ package co.cask.cdap.examples.purchase;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * This class represents the purchase history for one customer.
@@ -24,10 +25,12 @@ import java.util.List;
 public class PurchaseHistory {
 
   private final String customer;
+  private final UserProfile userProfile;
   private final List<Purchase> purchases;
 
-  public PurchaseHistory(String customer) {
+  public PurchaseHistory(String customer, @Nullable UserProfile userProfile) {
     this.customer = customer;
+    this.userProfile = userProfile;
     this.purchases = new ArrayList<Purchase>();
   }
 
@@ -45,5 +48,10 @@ public class PurchaseHistory {
    */
   public void add(Purchase purchase) {
     this.purchases.add(purchase);
+  }
+
+  @Nullable
+  public UserProfile getUserProfile() {
+    return userProfile;
   }
 }
