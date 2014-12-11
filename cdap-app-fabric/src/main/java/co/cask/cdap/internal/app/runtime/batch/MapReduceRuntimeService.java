@@ -39,6 +39,7 @@ import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.twill.ApplicationBundler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -69,7 +70,6 @@ import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
