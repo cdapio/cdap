@@ -78,4 +78,16 @@ public final class DirUtils {
                                       + TEMP_DIR_ATTEMPTS + " attempts (tried "
                                       + baseName + "0 to " + baseName + (TEMP_DIR_ATTEMPTS - 1) + ')');
   }
+
+  /**
+   * Creates a directory if the directory doesn't exists.
+   *
+   * @param dir The directory to create
+   * @return {@code true} if the directory exists or successfully created the directory.
+   */
+  public static boolean mkdirs(File dir) {
+    // The last clause is needed so that if there are multiple threads trying to create the same directory
+    // this method will still return true.
+    return dir.isDirectory() || dir.mkdirs() || dir.isDirectory();
+  }
 }
