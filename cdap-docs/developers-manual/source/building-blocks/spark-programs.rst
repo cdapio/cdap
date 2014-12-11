@@ -4,9 +4,9 @@
 
 .. _spark:
 
-============================================
-Spark Jobs *(Beta, Standalone CDAP only)*
-============================================
+=============================================
+Spark Programs *(Beta, Standalone CDAP only)*
+=============================================
 
 **Apache Spark** is used for in-memory cluster computing. It lets you load large sets of
 data into memory and query them repeatedly. This makes it suitable for both iterative and
@@ -95,8 +95,8 @@ depending upon the language (Java or Scala) in which the program is written. You
 Spark and Datasets
 ------------------
 Spark programs in CDAP can directly access **Dataset** similar to the way a MapReduce or
-Procedure can. These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a Datasets and also
-write RDD to a Dataset.
+Procedure can. These programs can create Spark's Resilient Distributed Dataset (RDD) by
+reading a Dataset and can also write RDD to a Dataset.
 
 - Creating an RDD from Dataset
 
@@ -210,9 +210,9 @@ You can also emit custom user metrics from the worker nodes of your Spark Progra
       }
     });
 
-.. rubric::  Examples of Using Spark Jobs
+.. rubric::  Examples of Using Spark Programs
 
-- For an example of **a Spark Job,** see the :ref:`Spark K-Means <examples-spark-k-means>`
+- For an example of **a Spark Program,** see the :ref:`Spark K-Means <examples-spark-k-means>`
   and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
 
 - For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.

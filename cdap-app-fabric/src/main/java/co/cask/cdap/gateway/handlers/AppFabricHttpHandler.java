@@ -30,6 +30,13 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
+import co.cask.cdap.common.http.AbstractBodyConsumer;
+import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.metrics.MetricsScope;
+import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -67,8 +74,16 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -716,8 +731,151 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceSpecification(HttpRequest request, HttpResponder responder,
                                    @PathParam("app-id") String appId,
                                    @PathParam("service-id") String serviceId) {
-    programHelper.runnableSpecification(responder, getAuthenticatedAccountId(request), appId,
-                                               ProgramType.SERVICE, serviceId);
+    runnableSpecification(request, responder, appId, ProgramType.SERVICE, serviceId);
+  }
+
+
+
+  private void runnableSpecification(HttpRequest request, HttpResponder responder,
+                                     final String appId, ProgramType runnableType,
+                                     final String runnableId) {
+    try {
+      String accountId = getAuthenticatedAccountId(request);
+      Id.Program id = Id.Program.from(accountId, appId, runnableId);
+      String specification = getProgramSpecification(id, runnableType);
+      if (specification == null || specification.isEmpty()) {
+        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      } else {
+        responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
+                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
+      }
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private BodyConsumer deployAppStream (final HttpRequest request,
+                                        final HttpResponder responder, final String appId) throws IOException {
+    final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
+    final String accountId = getAuthenticatedAccountId(request);
+
+    if (archiveName == null || archiveName.isEmpty()) {
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
+                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
+      return null;
+    }
+
+    // Store uploaded content to a local temp file
+    File tempDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
+                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    if (!DirUtils.mkdirs(tempDir)) {
+      throw new IOException("Could not create temporary directory at: " + tempDir);
+    }
+
+    final Location archiveDir = locationFactory.create(this.archiveDir).append(accountId);
+    final Location archive = archiveDir.append(archiveName);
+
+    final SessionInfo sessionInfo = new SessionInfo(accountId, appId, archiveName, archive, DeployStatus.UPLOADING);
+    sessions.put(accountId, sessionInfo);
+
+    return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
+
+      @Override
+      protected void onFinish(HttpResponder responder, File uploadedFile) {
+        try {
+          Locations.mkdirsIfNotExists(archiveDir);
+
+          // Copy uploaded content to a temporary location
+          Location tmpLocation = archive.getTempFile(".tmp");
+          try {
+            LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
+            Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
+
+            // Finally, move archive to final location
+            if (tmpLocation.renameTo(archive) == null) {
+              throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
+                                                  tmpLocation.toURI(), archive.toURI()));
+            }
+          } catch (IOException e) {
+            // In case copy to temporary file failed, or rename failed
+            tmpLocation.delete();
+            throw e;
+          }
+
+          sessionInfo.setStatus(DeployStatus.VERIFYING);
+          deploy(accountId, appId, archive);
+          sessionInfo.setStatus(DeployStatus.DEPLOYED);
+          responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
+        } catch (Exception e) {
+          sessionInfo.setStatus(DeployStatus.FAILED);
+          LOG.error("Deploy failure", e);
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
+        } finally {
+          save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
+          sessions.remove(accountId);
+        }
+      }
+    };
+  }
+
+  // deploy helper
+  private void deploy(final String accountId, final String appId , Location archive) throws Exception {
+
+    try {
+      Id.Account id = Id.Account.from(accountId);
+      Location archiveLocation = archive;
+      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+        @Override
+        public void stop(Id.Account id, Id.Program programId, ProgramType type) throws ExecutionException {
+          deleteHandler(programId, type);
+        }
+      });
+
+      ApplicationWithPrograms applicationWithPrograms =
+        manager.deploy(id, appId, archiveLocation).get();
+      ApplicationSpecification specification = applicationWithPrograms.getSpecification();
+      setupSchedules(accountId, specification);
+    } catch (Throwable e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception(e.getMessage());
+    }
+  }
+
+
+
+  private void setupSchedules(String accountId, ApplicationSpecification specification)  throws IOException {
+
+    for (Map.Entry<String, WorkflowSpecification> entry : specification.getWorkflows().entrySet()) {
+      Id.Program programId = Id.Program.from(accountId, specification.getName(), entry.getKey());
+      List<String> existingSchedules = scheduler.getScheduleIds(programId, ProgramType.WORKFLOW);
+      //Delete the existing schedules and add new ones.
+      if (!existingSchedules.isEmpty()) {
+        scheduler.deleteSchedules(programId, ProgramType.WORKFLOW, existingSchedules);
+      }
+      // Add new schedules.
+      if (!entry.getValue().getSchedules().isEmpty()) {
+        scheduler.schedule(programId, ProgramType.WORKFLOW, entry.getValue().getSchedules());
+      }
+    }
+  }
+
+
+  /**
+   * Defines the class for sending deploy status to client.
+   */
+  private static class Status {
+    private final int code;
+    private final String status;
+    private final String message;
+
+    public Status(int code, String message) {
+      this.code = code;
+      this.status = DeployStatus.getMessage(code);
+      this.message = message;
+    }
   }
 
   /**
@@ -807,6 +965,426 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /*
+   * Retrieves a {@link SessionInfo} from the file system.
+   */
+  @Nullable
+  private SessionInfo retrieve(String accountId) {
+    try {
+      final Location outputDir = locationFactory.create(archiveDir).append(accountId);
+      if (!outputDir.exists()) {
+        return null;
+      }
+      final Location sessionInfoFile = outputDir.append("session.json");
+      InputSupplier<Reader> reader = new InputSupplier<Reader>() {
+        @Override
+        public Reader getInput() throws IOException {
+          return new InputStreamReader(sessionInfoFile.getInputStream(), "UTF-8");
+        }
+      };
+
+      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
+      Reader r = reader.getInput();
+      try {
+        return gson.fromJson(r, SessionInfo.class);
+      } finally {
+        Closeables.closeQuietly(r);
+      }
+    } catch (IOException e) {
+      LOG.warn("Failed to retrieve session info for account.");
+    }
+    return null;
+  }
+
+  private AppFabricServiceStatus removeAll(Id.Account identifier) throws Exception {
+    List<ApplicationSpecification> allSpecs = new ArrayList<ApplicationSpecification>(
+      store.getAllApplications(identifier));
+
+    //Check if any App associated with this account is running
+    final Id.Account accId = Id.Account.from(identifier.getId());
+    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getApplication().getAccount().equals(accId);
+      }
+    }, ProgramType.values());
+
+    if (appRunning) {
+      return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    }
+
+    //All Apps are STOPPED, delete them
+    for (ApplicationSpecification appSpec : allSpecs) {
+      Id.Program id = Id.Program.from(identifier.getId(), appSpec.getName() , "");
+      removeApplication(id);
+    }
+    return AppFabricServiceStatus.OK;
+  }
+
+  private AppFabricServiceStatus removeApplication(Id.Program identifier) throws Exception {
+    Id.Account accountId = Id.Account.from(identifier.getAccountId());
+    final Id.Application appId = Id.Application.from(accountId, identifier.getApplicationId());
+
+    //Check if all are stopped.
+    boolean appRunning = checkAnyRunning(new Predicate<Id.Program>() {
+      @Override
+      public boolean apply(Id.Program programId) {
+        return programId.getApplication().equals(appId);
+      }
+    }, ProgramType.values());
+
+    if (appRunning) {
+      return AppFabricServiceStatus.PROGRAM_STILL_RUNNING;
+    }
+
+    ApplicationSpecification spec = store.getApplication(appId);
+    if (spec == null) {
+      return AppFabricServiceStatus.PROGRAM_NOT_FOUND;
+    }
+
+    //Delete the schedules
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      Id.Program workflowProgramId = Id.Program.from(appId, workflowSpec.getName());
+      List<String> schedules = scheduler.getScheduleIds(workflowProgramId, ProgramType.WORKFLOW);
+      if (!schedules.isEmpty()) {
+        scheduler.deleteSchedules(workflowProgramId, ProgramType.WORKFLOW, schedules);
+      }
+    }
+
+    deleteMetrics(identifier.getAccountId(), identifier.getApplicationId());
+
+    // Delete all streams and queues state of each flow
+    // TODO: This should be unified with the DeletedProgramHandlerStage
+    for (FlowSpecification flowSpecification : spec.getFlows().values()) {
+      Id.Program flowProgramId = Id.Program.from(appId, flowSpecification.getName());
+
+      // Collects stream name to all group ids consuming that stream
+      Multimap<String, Long> streamGroups = HashMultimap.create();
+      for (FlowletConnection connection : flowSpecification.getConnections()) {
+        if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
+          long groupId = FlowUtils.generateConsumerGroupId(flowProgramId, connection.getTargetName());
+          streamGroups.put(connection.getSourceName(), groupId);
+        }
+      }
+      // Remove all process states and group states for each stream
+      String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
+      for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
+        streamConsumerFactory.dropAll(QueueName.fromStream(entry.getKey()), namespace, entry.getValue());
+      }
+
+      queueAdmin.dropAllForFlow(identifier.getApplicationId(), flowSpecification.getName());
+    }
+    deleteProgramLocations(appId);
+
+    Location appArchive = store.getApplicationArchiveLocation(appId);
+    Preconditions.checkNotNull(appArchive, "Could not find the location of application", appId.getId());
+    appArchive.delete();
+    store.removeApplication(appId);
+    return AppFabricServiceStatus.OK;
+  }
+
+  private void deleteMetrics(String accountId, String applicationId) throws IOException, OperationException {
+    Collection<ApplicationSpecification> applications = Lists.newArrayList();
+    if (applicationId == null) {
+      applications = this.store.getAllApplications(new Id.Account(accountId));
+    } else {
+      ApplicationSpecification spec = this.store.getApplication
+        (new Id.Application(new Id.Account(accountId), applicationId));
+      applications.add(spec);
+    }
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      throw new IOException("Can't find Metrics endpoint");
+    }
+
+    for (MetricsScope scope : MetricsScope.values()) {
+      for (ApplicationSpecification application : applications) {
+        String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
+                                   discoverable.getSocketAddress().getHostName(),
+                                   discoverable.getSocketAddress().getPort(),
+                                   Constants.Gateway.API_VERSION_2,
+                                   scope.name().toLowerCase(),
+                                   application.getName());
+        sendMetricsDelete(url);
+      }
+    }
+
+    if (applicationId == null) {
+      String url = String.format("http://%s:%d%s/metrics", discoverable.getSocketAddress().getHostName(),
+                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.API_VERSION_2);
+      sendMetricsDelete(url);
+    }
+  }
+
+  // deletes the process metrics for a flow
+  private void deleteProcessMetricsForFlow(String application, String flow) throws IOException {
+    Iterable<Discoverable> discoverables = this.discoveryServiceClient.discover(Constants.Service.METRICS);
+    Discoverable discoverable = new TimeLimitEndpointStrategy(new RandomEndpointStrategy(discoverables),
+                                                              3L, TimeUnit.SECONDS).pick();
+
+    if (discoverable == null) {
+      LOG.error("Fail to get any metrics endpoint for deleting metrics.");
+      throw new IOException("Can't find Metrics endpoint");
+    }
+
+    LOG.debug("Deleting metrics for flow {}.{}", application, flow);
+    String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
+                               discoverable.getSocketAddress().getHostName(),
+                               discoverable.getSocketAddress().getPort(),
+                               Constants.Gateway.API_VERSION_2,
+                               application, flow);
+
+    long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+
+    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+      .setUrl(url)
+      .setRequestTimeoutInMs((int) timeout)
+      .build();
+
+    try {
+      client.delete().get(timeout, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      LOG.error("exception making metrics delete call", e);
+      Throwables.propagate(e);
+    } finally {
+      client.close();
+    }
+  }
+
+
+  private void sendMetricsDelete(String url) {
+    SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
+      .setUrl(url)
+      .setRequestTimeoutInMs((int) METRICS_SERVER_RESPONSE_TIMEOUT)
+      .build();
+
+    try {
+      client.delete().get(METRICS_SERVER_RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      LOG.error("exception making metrics delete call", e);
+      Throwables.propagate(e);
+    } finally {
+      client.close();
+    }
+  }
+
+  /**
+   * Check if any program that satisfy the given {@link Predicate} is running.
+   *
+   * @param predicate Get call on each running {@link Id.Program}.
+   * @param types Types of program to check
+   * returns True if a program is running as defined by the predicate.
+   */
+  private boolean checkAnyRunning(Predicate<Id.Program> predicate, ProgramType... types) {
+    for (ProgramType type : types) {
+      for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
+        ProgramController.State programState = entry.getValue().getController().getState();
+        if (programState == ProgramController.State.STOPPED || programState == ProgramController.State.ERROR) {
+          continue;
+        }
+        Id.Program programId = entry.getValue().getProgramId();
+        if (predicate.apply(programId)) {
+          LOG.trace("Program still running in checkAnyRunning: {} {} {} {}",
+                    programId.getApplicationId(), type, programId.getId(), entry.getValue().getController().getRunId());
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Delete the jar location of the program.
+   *
+   * @param appId        applicationId.
+   * @throws IOException if there are errors with location IO
+   */
+  private void deleteProgramLocations(Id.Application appId) throws IOException, OperationException {
+    ApplicationSpecification specification = store.getApplication(appId);
+
+    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
+                                                                   specification.getMapReduce().values(),
+                                                                   specification.getProcedures().values(),
+                                                                   specification.getWorkflows().values());
+
+    for (ProgramSpecification spec : programSpecs) {
+      ProgramType type = ProgramTypes.fromSpecification(spec);
+      Id.Program programId = Id.Program.from(appId, spec.getName());
+      try {
+        Location location = Programs.programLocation(locationFactory, appFabricDir, programId, type);
+        location.delete();
+      } catch (FileNotFoundException e) {
+        LOG.warn("Program jar for program {} not found.", programId.toString(), e);
+      }
+    }
+
+    // Delete webapp
+    // TODO: this will go away once webapp gets a spec
+    try {
+      Id.Program programId = Id.Program.from(appId.getAccountId(), appId.getId(),
+                                             ProgramType.WEBAPP.name().toLowerCase());
+      Location location = Programs.programLocation(locationFactory, appFabricDir, programId, ProgramType.WEBAPP);
+      location.delete();
+    } catch (FileNotFoundException e) {
+      // expected exception when webapp is not present.
+    }
+  }
+
+  /*
+   * Returns DeploymentStatus
+   */
+  private DeployStatus dstatus(String accountId) {
+    if (!sessions.containsKey(accountId)) {
+      SessionInfo info = retrieve(accountId);
+      if (info == null) {
+        return DeployStatus.NOT_FOUND;
+      }
+      return info.getStatus();
+    } else {
+      SessionInfo info = sessions.get(accountId);
+      return info.getStatus();
+    }
+  }
+
+  private void deleteHandler(Id.Program programId, ProgramType type)
+    throws ExecutionException {
+    try {
+      switch (type) {
+        case FLOW:
+          stopProgramIfRunning(programId, type);
+          break;
+        case PROCEDURE:
+          stopProgramIfRunning(programId, type);
+          break;
+        case WORKFLOW:
+          List<String> scheduleIds = scheduler.getScheduleIds(programId, type);
+          scheduler.deleteSchedules(programId, ProgramType.WORKFLOW, scheduleIds);
+          break;
+        case MAPREDUCE:
+          //no-op
+          break;
+        case SERVICE:
+          stopProgramIfRunning(programId, type);
+          break;
+      }
+    } catch (InterruptedException e) {
+      throw new ExecutionException(e);
+    }
+  }
+
+  private void stopProgramIfRunning(Id.Program programId, ProgramType type)
+    throws InterruptedException, ExecutionException {
+    ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getAccountId(),
+                                                                        programId.getApplicationId(),
+                                                                        programId.getId(),
+                                                                        type, runtimeService);
+    if (programRunInfo != null) {
+      doStop(programRunInfo);
+    }
+  }
+
+  /**
+   * Saves the {@link SessionInfo} to the filesystem.
+   *
+   * @param info to be saved.
+   * @return true if and only if successful; false otherwise.
+   */
+  private boolean save(SessionInfo info, String accountId) {
+    try {
+      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
+      Location outputDir = locationFactory.create(archiveDir).append(accountId);
+      if (!outputDir.exists()) {
+        return false;
+      }
+      final Location sessionInfoFile = outputDir.append("session.json");
+      OutputSupplier<Writer> writer = new OutputSupplier<Writer>() {
+        @Override
+        public Writer getOutput() throws IOException {
+          return new OutputStreamWriter(sessionInfoFile.getOutputStream(), "UTF-8");
+        }
+      };
+
+      Writer w = writer.getOutput();
+      try {
+        gson.toJson(info, w);
+      } finally {
+        Closeables.closeQuietly(w);
+      }
+    } catch (IOException e) {
+      LOG.warn(e.getMessage(), e);
+      return false;
+    }
+    return true;
+  }
+
+  private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
+    throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+    ProgramController controller = runtimeInfo.getController();
+    controller.stop().get();
+  }
+
+  /** NOTE: This was a temporary hack done to map the status to something that is
+   * UI friendly. Internal states of program controller are reasonable and hence
+   * no point in changing them.
+   */
+  private String controllerStateToString(ProgramController.State state) {
+    if (state == ProgramController.State.ALIVE) {
+      return "RUNNING";
+    }
+    if (state == ProgramController.State.ERROR) {
+      return "FAILED";
+    }
+    return state.toString();
+  }
+
+  private String getProgramSpecification(Id.Program id, ProgramType type)
+    throws Exception {
+
+    ApplicationSpecification appSpec;
+    try {
+      appSpec = store.getApplication(id.getApplication());
+      if (appSpec == null) {
+        return "";
+      }
+      String runnableId = id.getId();
+      if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getFlows().get(id.getId()));
+      } else if (type == ProgramType.PROCEDURE && appSpec.getProcedures().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getProcedures().get(id.getId()));
+      } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getMapReduce().get(id.getId()));
+      } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getSpark().get(id.getId()));
+      } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getWorkflows().get(id.getId()));
+      } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(runnableId)) {
+        return GSON.toJson(appSpec.getServices().get(id.getId()));
+      }
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      throw new Exception(throwable.getMessage());
+    }
+    return "";
+  }
+
+
+  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program identifier, ProgramType type) {
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
+                               identifier.getAccountId(), identifier.getApplicationId());
+    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
+      if (identifier.equals(info.getProgramId())) {
+        return info;
+      }
+    }
+    return null;
   }
 
   @GET

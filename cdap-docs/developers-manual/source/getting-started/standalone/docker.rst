@@ -55,7 +55,7 @@ To use the **Docker image**:
 - In order to begin building CDAP applications, have our :ref:`recommended software and tools
   <system-requirements>` installed in your environment.
 
-- For a full list of Docker Commands, see the `Docker Command-Line Documentation.
+- For a full list of Docker Commands, see the `Docker Command Line Documentation.
   <https://docs.docker.com/reference/commandline/cli/>`__
 
 .. include:: ../../../build/_includes/dev-env-versioned.rst  

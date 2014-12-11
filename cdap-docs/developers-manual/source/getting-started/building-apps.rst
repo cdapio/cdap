@@ -40,16 +40,16 @@ Once CDAP is started, you can deploy an example JAR by any of these methods:
 - Dragging and dropping the application JAR file (``example/target/<example>-<version>.jar``) onto the CDAP Console
   running at `http://localhost:9999/ <http://localhost:9999/>`__; or
 - Use the *Load App* button found on the *Overview* of the CDAP Console to browse and upload the Jar; or
-- From the example's project root run the App Manager script:
+- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI): <cli>`
 
   .. list-table::
     :widths: 20 80
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/app-manager.sh --action deploy``
+      - ``$ ./bin/cdap-cli.sh deploy app <path-to-jar-file>``
     * - On Windows:
-      - ``> bin\app-manager.bat deploy``
+      - ``> bin\cdap-cli.bat deploy app <path-to-jar-file>``
 
 Starting an Application
 ----------------------------------
@@ -60,16 +60,31 @@ Once an application is deployed:
   Application's name in the *Overview* page. (It can be reached by clicking on the
   *Application* button in the left sidebar of the window.) Now you can *Start* or *Stop* any
   of the Processes or Queries associated with the application; or
-- From the example's project root run the App Manager script:
+- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface<cli>`.
+  In each CDAP example, the CLI commands for that particular example are provided.
 
   .. list-table::
     :widths: 20 80
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/app-manager.sh --action start``
+      - ``$ ./bin/cdap-cli.sh start <program-type> <app-id.program-id>``
     * - On Windows:
-      - ``> bin\app-manager.bat start``
+      - ``> bin\cdap-cli.bat start <program-type> <app-id.program-id>``    
+
+  .. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - Parameter
+      - Description
+    * - ``<program-type>``
+      - One of ``flow``, ``procedure``, ``mapreduce``, ``workflow`` or ``service``
+    * - ``<app-id>``
+      - Name of the Application being called
+    * - ``<program-id>``
+      - Name of the *Flow*, *Procedure*, *MapReduce*, *Workflow*, or *Custom Service*
+        being called
 
 Stopping an Application
 ----------------------------------
@@ -78,16 +93,16 @@ Once an application is deployed:
 
 - On the Application's detail page in the CDAP Console, you can click the *Stop* button on 
   the Process and Query lists, if the application has either of them; or
-- From the example's project root run the App Manager script:
+- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface: <cli>`
 
   .. list-table::
     :widths: 20 80
     :stub-columns: 1
 
     * - On Linux:
-      - ``$ ./bin/app-manager.sh --action stop``
+      - ``$ ./bin/cdap-cli.sh stop <program-type> <app-id.program-id>``
     * - On Windows:
-      - ``> bin\app-manager.bat stop``
+      - ``> bin\cdap-cli.bat stop <program-type> <app-id.program-id>``
 
 Removing an Application
 ----------------------------------
@@ -101,4 +116,4 @@ Note that any Storage (Datasets) created or used by the Application will remain,
 are independent of the Application. Datasets can be deleted with the 
 :ref:`HTTP Restful API <restful-api>`, the 
 :ref:`Java Client API <java-client-api>`, or the 
-:ref:`Command-line Interface API <cli>`.
+:ref:`Command Line Interface API <cli>`.

@@ -18,7 +18,7 @@ and batch use cases, and deploy applications into production while satisfying en
 requirements.
 
 CDAP is a layer of software running on top of Apache |(TM)| Hadoop |(R)| platforms such as the
-Cloudera Enterprise Data Hub or the Hortonworks Data Platform. CDAP provides three essential elements:
+Cloudera Enterprise Data Hub or the Hortonworks Data Platform. CDAP provides three essential components:
 
 - Virtualization of data in the Hadoop environment through logical representations of underlying
   data;
@@ -91,9 +91,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 .. _advanced: advanced/index.html
 
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
-  developers who want a deeper dive into CDAP, with presentations on the Data Exploration
-  of Datasets, Client Authentication for Secure CDAP Instances, and Best Practices for
-  CDAP development.
+  developers who want a deeper dive into CDAP, with presentations on the **Data Exploration
+  of Datasets** and **Best Practices for CDAP development**.
   
 
 .. |(TM)| unicode:: U+2122 .. trademark sign

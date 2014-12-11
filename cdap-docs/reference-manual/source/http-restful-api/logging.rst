@@ -17,7 +17,7 @@ Logs emitted by any of the *Flows*, *Procedures*, *MapReduce* jobs, or
 *Services* running in CDAP can be downloaded with the Logging HTTP API. To do
 that, send an HTTP GET request::
 
-  GET <base-url>/apps/<app-id>/<element-type>/<element-id>/logs?start=<ts>&stop=<ts>
+  GET <base-url>/apps/<app-id>/<program-type>/<program-id>/logs?start=<ts>&stop=<ts>
 
 .. list-table::
    :widths: 20 80
@@ -27,10 +27,10 @@ that, send an HTTP GET request::
      - Description
    * - ``<app-id>``
      - Name of the Application being called
-   * - ``<element-type>``
+   * - ``<program-type>``
      - One of ``flows``, ``procedures``, ``mapreduce``, or ``services``
-   * - ``<element-id>``
-     - Name of the element (*Flow*, *Procedure*, *MapReduce* job, *Service*) being called
+   * - ``<program-id>``
+     - Name of the program (*Flow*, *Procedure*, *MapReduce* job, *Service*) being called
    * - ``<ts>``
      - *Start* and *stop* times, given as seconds since the start of the Epoch.
 
