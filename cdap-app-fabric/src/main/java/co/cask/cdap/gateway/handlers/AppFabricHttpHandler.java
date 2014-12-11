@@ -120,8 +120,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final Store store;
 
-  private final DiscoveryServiceClient discoveryServiceClient;
-
   private final QueueAdmin queueAdmin;
 
   private final StreamAdmin streamAdmin;
@@ -136,21 +134,18 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Inject
   public AppFabricHttpHandler(Authenticator authenticator, CConfiguration configuration,
                               StoreFactory storeFactory, ProgramRuntimeService runtimeService, StreamAdmin streamAdmin,
-                              QueueAdmin queueAdmin, DiscoveryServiceClient discoveryServiceClient,
-                              TransactionSystemClient txClient, DatasetFramework dsFramework, AppHelper appHelper,
-                              ProgramHelper programHelper) {
+                              QueueAdmin queueAdmin, TransactionSystemClient txClient, DatasetFramework dsFramework,
+                              AppHelper appHelper, ProgramHelper programHelper) {
 
     super(authenticator);
     this.streamAdmin = streamAdmin;
     this.configuration = configuration;
     this.runtimeService = runtimeService;
     this.store = storeFactory.create();
-    this.discoveryServiceClient = discoveryServiceClient;
     this.queueAdmin = queueAdmin;
     this.txClient = txClient;
     this.dsFramework =
-      new NamespacedDatasetFramework(dsFramework,
-                                     new DefaultDatasetNamespace(configuration, Namespace.USER));
+      new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(configuration, Namespace.USER));
     this.appHelper = appHelper;
     this.programHelper = programHelper;
   }
