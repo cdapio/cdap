@@ -22,6 +22,9 @@ package co.cask.cdap.notifications;
  */
 public abstract class TxRetryPolicy {
 
+  /**
+   * Failure policy option enum.
+   */
   public enum Policy {
     /**
      * Retry operation after failure.
@@ -42,6 +45,10 @@ public abstract class TxRetryPolicy {
    */
   public abstract Policy handleFailure(int failures, Throwable e);
 
+  /**
+   * @param tries number of tries before dropping a transaction.
+   * @return a {@link TxRetryPolicy} object that will drop after the given amount of {@code tries}.
+   */
   public static TxRetryPolicy dropAfter(final int tries) {
     return new TxRetryPolicy() {
       @Override

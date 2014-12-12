@@ -22,10 +22,6 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.service.TxRunnable;
-import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
-import co.cask.cdap.app.guice.NotificationFeedServiceRuntimeModule;
-import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
@@ -39,21 +35,23 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
-import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.client.NotificationFeedClient;
-import co.cask.cdap.notifications.guice.NotificationFeedClientRuntimeModule;
+import co.cask.cdap.notifications.guice.NotificationClientRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationFeedNotFoundException;
+import co.cask.cdap.notifications.service.NotificationFeedService;
+import co.cask.cdap.notifications.service.NotificationFeedStore;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Cancellable;
 import org.junit.Assert;
@@ -73,7 +71,6 @@ public abstract class NotificationTest {
   private static NotificationFeedClient feedClient;
   private static DatasetFramework dsFramework;
 
-  private static AppFabricServer appFabricServer;
   private static TransactionManager txManager;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
@@ -104,12 +101,18 @@ public abstract class NotificationTest {
                                     new IOModule(),
                                     new AuthModule(),
                                     new DataFabricModules().getInMemoryModules(),
-                                    new AppFabricServiceRuntimeModule().getInMemoryModules(),
-                                    new ProgramRunnerRuntimeModule().getInMemoryModules(),
-                                    new LoggingModules().getInMemoryModules(),
-                                    new ServiceStoreModules().getInMemoryModule(),
-                                    new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
-                                    new NotificationFeedClientRuntimeModule().getInMemoryModules()),
+                                    new NotificationClientRuntimeModule().getInMemoryModules(),
+                                    new AbstractModule() {
+                                      @Override
+                                      protected void configure() {
+                                        bind(NotificationFeedClient.class).to(NotificationFeedClientAndService.class)
+                                          .in(Scopes.SINGLETON);
+                                        bind(NotificationFeedService.class).to(NotificationFeedClientAndService.class)
+                                          .in(Scopes.SINGLETON);
+                                        bind(NotificationFeedStore.class).to(InMemoryNotificationFeedStore.class)
+                                          .in(Scopes.SINGLETON);
+                                      }
+                                    }),
                                   Arrays.asList(modules))
     );
   }
@@ -127,12 +130,9 @@ public abstract class NotificationTest {
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    appFabricServer = injector.getInstance(AppFabricServer.class);
-    appFabricServer.startAndWait();
   }
 
   public static void stopServices() throws Exception {
-    appFabricServer.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
@@ -313,6 +313,10 @@ public abstract class NotificationTest {
       feedClient.deleteFeed(feed);
     }
   }
+
+  // TODO other tests: one publisher multiple subscribers
+  // mutliple publishers one subscriber for all feeds, and for only one of the feeds (making sure not
+  // everybody receives everything)
 
 //  @Test
 //  public void onePublisherMultipleSubscribers() throws Exception {

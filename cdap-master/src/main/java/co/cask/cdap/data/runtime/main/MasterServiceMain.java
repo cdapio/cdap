@@ -17,7 +17,6 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
-import co.cask.cdap.app.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
@@ -158,8 +157,7 @@ public class MasterServiceMain extends DaemonMain {
       new DataSetsModules().getDistributedModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModule(),
-      new ExploreClientModule(),
-      new NotificationFeedServiceRuntimeModule().getDistributedModules()
+      new ExploreClientModule()
     );
 
     // Initialize ZK client

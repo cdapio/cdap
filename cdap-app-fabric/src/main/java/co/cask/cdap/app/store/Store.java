@@ -23,7 +23,7 @@ import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.OperationException;
-import co.cask.cdap.notifications.NotificationFeed;
+import co.cask.cdap.notifications.service.NotificationFeedStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
  * {@link Store} operates on a {@link Program}. It's responsible
  * for managing the non-runtime lifecycle of a {@link Program}
  */
-public interface Store {
+public interface Store extends NotificationFeedStore {
 
   /**
    * Loads a given program.
@@ -336,39 +336,4 @@ public interface Store {
    * @return a list of all registered namespaces
    */
   List<NamespaceMeta> listNamespaces();
-
-  /**
-   * Creates a new Notification feed.
-   *
-   * @param feed {@link NotificationFeed} representing the feed.
-   * @return existing {@link NotificationFeed} if a feed with the same id already exists, null if no feed with
-   * the same id exists, and the feed was created successfully.
-   */
-  @Nullable
-  NotificationFeed createNotificationFeed(NotificationFeed feed);
-
-  /**
-   * Retrieves a Notification feed from the metadata store.
-   *
-   * @param feedId id of the requested notification feed.
-   * @return {@link NotificationFeed} of the requested feed, or null if it was not found in the store.
-   */
-  @Nullable
-  NotificationFeed getNotificationFeed(String feedId);
-
-  /**
-   * Deletes a Notification feed from the metadata store.
-   *
-   * @param feedId id of the notification feed to delete.
-   * @return @link NotificationFeed} of the feed if it was found and deleted, null if the specified feed did not exist.
-   */
-  @Nullable
-  NotificationFeed deleteNotificationFeed(String feedId);
-
-  /**
-   * Lists all registered Notification feeds.
-   *
-   * @return a list of all registered feeds.
-   */
-  List<NotificationFeed> listNotificationFeeds();
 }

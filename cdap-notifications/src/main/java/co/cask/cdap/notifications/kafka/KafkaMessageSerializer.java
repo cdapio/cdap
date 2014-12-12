@@ -31,7 +31,7 @@ import java.nio.ByteBuffer;
  * Serializer/deserializer of Notifications to Kafka messages.
  */
 public class KafkaMessageSerializer {
-  private final static Gson GSON = new Gson();
+  private static final Gson GSON = new Gson();
 
   public static <N> byte[] encode(NotificationFeed feed, N notification) throws IOException {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

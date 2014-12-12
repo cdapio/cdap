@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.notifications.NotificationTest;
-import co.cask.cdap.test.internal.TempFolder;
+import co.cask.cdap.test.TempFolder;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;

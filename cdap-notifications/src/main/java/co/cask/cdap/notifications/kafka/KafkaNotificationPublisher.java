@@ -135,7 +135,13 @@ public class KafkaNotificationPublisher implements NotificationPublisher {
     };
   }
 
-  protected final static class GetNotificationRunnable<N> implements Runnable {
+  /**
+   * Runnable which only job is to wait for the get method of a future representing the pushing of Notification
+   * to return.
+   *
+   * @param <N> Type of the Notification being pushed.
+   */
+  private static final class GetNotificationRunnable<N> implements Runnable {
 
     private final ListenableFuture<Integer> future;
     private final N notification;

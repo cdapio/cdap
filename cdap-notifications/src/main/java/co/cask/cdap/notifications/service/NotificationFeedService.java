@@ -16,11 +16,64 @@
 
 package co.cask.cdap.notifications.service;
 
+import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.cdap.notifications.NotificationFeedManager;
-import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
+
+import java.util.List;
 
 /**
  * Service side of the {@link NotificationFeedManager}.
  */
-public interface NotificationFeedService extends Service, NotificationFeedManager {
+public class NotificationFeedService extends AbstractIdleService implements NotificationFeedManager {
+  private final NotificationFeedStore store;
+
+  @Inject
+  public NotificationFeedService(NotificationFeedStore store) {
+    this.store = store;
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // No-op
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    // No-op
+  }
+
+  @Override
+  public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
+    if (feed.getNamespace() == null || feed.getNamespace().isEmpty()) {
+      throw new NotificationFeedException("Namespace value cannot be null or empty.");
+    } else if (feed.getCategory() == null || feed.getCategory().isEmpty()) {
+      throw new NotificationFeedException("Category value cannot be null or empty.");
+    } else if (feed.getName() == null || feed.getName().isEmpty()) {
+      throw new NotificationFeedException("Name value cannot be null or empty.");
+    }
+    return store.createNotificationFeed(feed) == null;
+  }
+
+  @Override
+  public void deleteFeed(NotificationFeed feed) throws NotificationFeedException {
+    if (store.deleteNotificationFeed(feed.getId()) == null) {
+      throw new NotificationFeedNotFoundException("Feed did not exist in metadata store: " + feed);
+    }
+  }
+
+  @Override
+  public NotificationFeed getFeed(NotificationFeed feed) throws NotificationFeedException {
+    NotificationFeed f = store.getNotificationFeed(feed.getId());
+    if (f == null) {
+      throw new NotificationFeedNotFoundException("Feed did not exist in metadata store: " + feed);
+    }
+    return f;
+  }
+
+  @Override
+  public List<NotificationFeed> listFeeds() throws NotificationFeedException {
+    return store.listNotificationFeeds();
+  }
 }

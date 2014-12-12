@@ -21,6 +21,8 @@ import java.lang.reflect.Type;
 /**
  * Notification handler passed when subscribing to a {@link NotificationFeed} using
  * {@link NotificationSubscriber.Preparer#add}.
+ *
+ * @param <N> Type of the Notification to handle.
  */
 public interface NotificationHandler<N> {
 

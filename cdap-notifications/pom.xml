@@ -50,7 +50,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-app-fabric</artifactId>
+      <artifactId>cdap-watchdog</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

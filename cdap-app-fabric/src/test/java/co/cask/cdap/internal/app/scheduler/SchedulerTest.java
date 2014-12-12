@@ -34,7 +34,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.internal.TempFolder;
+import co.cask.cdap.test.TempFolder;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
 import com.google.inject.Guice;

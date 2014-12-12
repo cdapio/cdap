@@ -212,7 +212,7 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
       Assert.assertEquals(NAMESPACE, feed.get(NAMESPACE_FIELD).getAsString());
       Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
-      Assert.assertEquals(DESCRIPTION, feed.get(DESCRIPTION_FIELD).getAsString());
+      Assert.assertNull(feed.get(DESCRIPTION_FIELD));
       // cleanup
       response = deleteFeed(ID);
       assertResponseCode(200, response);
@@ -227,7 +227,7 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
       Assert.assertEquals(NAME, feed.get(NAME_FIELD).getAsString());
       Assert.assertEquals(NAMESPACE, feed.get(NAMESPACE_FIELD).getAsString());
       Assert.assertEquals(CATEGORY, feed.get(CATEGORY_FIELD).getAsString());
-      Assert.assertEquals(DESCRIPTION, feed.get(DESCRIPTION_FIELD).getAsString());
+      Assert.assertEquals("", feed.get(DESCRIPTION_FIELD).getAsString());
     } finally {
       // cleanup
       response = deleteFeed(ID);
