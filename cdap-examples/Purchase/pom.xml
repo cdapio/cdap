@@ -31,7 +31,6 @@
 
   <properties>
     <app.main.class>co.cask.cdap.examples.purchase.PurchaseApp</app.main.class>
-    <cdap.version>2.6.0-SNAPSHOT</cdap.version>
   </properties>
 
   <dependencies>
@@ -52,9 +51,8 @@
       <artifactId>netty-http</artifactId>
     </dependency>
     <dependency>
-      <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-common</artifactId>
-      <version>${cdap.version}</version>
+      <groupId>co.cask.common</groupId>
+      <artifactId>common-http</artifactId>
     </dependency>
   </dependencies>
 </project>
