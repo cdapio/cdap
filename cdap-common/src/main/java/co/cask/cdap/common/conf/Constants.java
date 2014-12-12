@@ -519,6 +519,7 @@ public final class Constants {
 
     public static final String LOCAL_DATA_DIR = "explore.local.data.dir";
     public static final String EXPLORE_ENABLED = "explore.enabled";
+    public static final String WRITES_ENABLED = "explore.writes.enabled";
 
     //max-instances of explore HTTP service
     public static final String MAX_INSTANCES = "explore.executor.max.instances";
