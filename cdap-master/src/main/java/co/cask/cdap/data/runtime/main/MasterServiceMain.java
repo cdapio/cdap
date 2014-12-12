@@ -52,6 +52,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -84,6 +85,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -204,8 +206,20 @@ public class MasterServiceMain extends DaemonMain {
     LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
 
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
-                                             serviceStore));
+    List<ListenableFuture<Service.State>> futureList = Futures.getUnchecked(
+      Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService, serviceStore));
+
+    for (ListenableFuture<Service.State> future : futureList) {
+      try {
+        Service.State state = future.get();
+        if (state != Service.State.RUNNING) {
+          LOG.error("Service is not in RUNNING state");
+        }
+      } catch (Exception e) {
+        LOG.debug("Not able to get the state of Service", e);
+      }
+    }
+
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
