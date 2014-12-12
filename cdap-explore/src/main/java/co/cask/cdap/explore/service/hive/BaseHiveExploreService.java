@@ -29,7 +29,6 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
-import co.cask.cdap.hive.datasets.DatasetOutputFormat;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
@@ -62,7 +61,6 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -120,6 +118,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final Configuration hConf;
   private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
+  private final boolean writesEnabled;
 
   // Handles that are running, or not yet completely fetched, they have longer timeout
   private final Cache<QueryHandle, OperationInfo> activeHandleCache;
@@ -152,6 +151,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
     this.metastoreClientReferenceQueue = new ReferenceQueue<Supplier<IMetaStoreClient>>();
+    this.writesEnabled = getWritesEnabled(cConf);
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -180,6 +180,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Active handle timeout = {} secs", cConf.getLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS));
     LOG.info("Inactive handle timeout = {} secs", cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS));
     LOG.info("Cleanup job schedule = {} secs", cleanupJobSchedule);
+  }
+
+  protected boolean getWritesEnabled(CConfiguration cConf) {
+    return cConf.getBoolean(Constants.Explore.WRITES_ENABLED);
   }
 
   protected HiveConf getHiveConf() {
@@ -866,13 +870,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
-
-    // Help Hive - hack to HIVE-5515
-    // The output format class will be overwritten in case Hive wants to write to
-    // a native Hive-managed output format. However, because of the bug related in the JIRA,
-    // writing to an non-native hive table with an external output format like the one in
-    // HBaseStorageHandler will not work - as Hive will try to use the DatasetOutputFormat
-    HiveFileFormatUtils.setRealOutputFormatClassName(DatasetOutputFormat.class.getName());
 
     return sessionConf;
   }

@@ -67,6 +67,15 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
   }
 
   @Override
+  protected boolean getWritesEnabled(CConfiguration cConf) {
+    if (cConf.getBoolean(Constants.Explore.WRITES_ENABLED)) {
+      LOG.warn("Writing to datasets through Hive is not supported in CDH4.x, overriding {} setting to false.",
+               Constants.Explore.WRITES_ENABLED);
+    }
+    return false;
+  }
+
+  @Override
   protected QueryStatus fetchStatus(OperationHandle operationHandle)
     throws HiveSQLException, ExploreException, HandleNotFoundException {
     try {

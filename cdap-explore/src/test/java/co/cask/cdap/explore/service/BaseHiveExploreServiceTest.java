@@ -79,6 +79,13 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreClient exploreClient;
 
   protected static Injector injector;
+
+  protected static void startServices() throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setBoolean(Constants.Explore.WRITES_ENABLED, true);
+    startServices(cConf);
+  }
+
   protected static void startServices(CConfiguration cConf) throws Exception {
     if (!runBefore) {
       return;
