@@ -7,7 +7,7 @@ angular.module(PKG.name+'.feature.login')
     $stateProvider
 
       .state('login', {
-        url: '/login',
+        url: '/login?next',
         templateUrl: '/assets/features/login/login.html',
         controller: 'LoginCtrl'
       })
@@ -16,11 +16,11 @@ angular.module(PKG.name+'.feature.login')
 
 
   })
-  .run(function ($rootScope, $state, $alert, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
+  .run(function ($rootScope, $state, $alert, myAuth, MYAUTH_EVENT, MYAUTH_ROLE, MY_CONFIG) {
 
     $rootScope.$on(MYAUTH_EVENT.loginSuccess, function () {
-      $alert({title:'Welcome!', content:'You\'re logged in!', type:'success'});
-      $state.go('home');
+      var next = $state.is('login') && $state.get($state.params.next);
+      $state.go(next || 'home');
     });
 
     $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {
@@ -32,19 +32,18 @@ angular.module(PKG.name+'.feature.login')
       $alert({title:'Authentication error!', content:'You are not allowed to access the requested page.', type:'warning'});
     });
 
-    angular.forEach([
-        MYAUTH_EVENT.loginFailed,
-        MYAUTH_EVENT.sessionTimeout,
-        MYAUTH_EVENT.notAuthenticated
-      ],
-      function (v) {
-        $rootScope.$on(v, function (event) {
-          $alert({title:event.name, type:'danger'});
-          if(!$state.is('login')) {
-            $state.go('login');
-          }
-        });
-      }
-    );
+    if(MY_CONFIG.securityEnabled) {
+      angular.forEach([
+          MYAUTH_EVENT.loginFailed,
+          MYAUTH_EVENT.sessionTimeout,
+          MYAUTH_EVENT.notAuthenticated
+        ],
+        function (v) {
+          $rootScope.$on(v, function (event) {
+            $alert({title:event.name, type:'danger'});
+          });
+        }
+      );
+    }
 
   });

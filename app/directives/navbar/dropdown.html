@@ -37,8 +37,8 @@
     </a>
   </li>
 
-  <li role="presentation" ng-show="currentUser">
-    <a role="menuitem" tabindex="-1" href="" ng-click="logout()">
+  <li role="presentation" ng-show="currentUser" ng-class="{disabled:!securityEnabled}">
+    <a role="menuitem" tabindex="-1" href="" ng-click="securityEnabled && logout()">
       <span class="fa fa-sign-out"></span>
       Log out
     </a>

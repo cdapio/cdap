@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.commons').directive('myNavbar',
-function myNavbarDirective ($dropdown, myAuth, caskTheme) {
+function myNavbarDirective ($dropdown, myAuth, caskTheme, MY_CONFIG) {
   return {
     restrict: 'A',
     templateUrl: 'navbar/navbar.html',
@@ -20,6 +20,8 @@ function myNavbarDirective ($dropdown, myAuth, caskTheme) {
       scope.logout = myAuth.logout;
 
       scope.theme = caskTheme;
+
+      scope.securityEnabled = MY_CONFIG.securityEnabled;
 
       scope.navbarLinks = [
         { sref: 'home',       label: 'Overview'     },
