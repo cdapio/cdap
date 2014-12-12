@@ -48,6 +48,7 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
   private final long eventBucketIntervalMs;
   private final long maxNumberOfBucketsInTable;
   private final CountDownLatch kafkaCancelCallbackLatch;
+  private static final long SLEEP_TIME_MS = 100;
 
   public LogCollectorCallback(RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
                               LoggingEventSerializer serializer, long eventBucketIntervalMs,
@@ -65,7 +66,7 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
     try {
       if (kafkaCancelCallbackLatch.await(50, TimeUnit.MICROSECONDS)) {
         // if count down occurred return
-        LOG.info("Countdown.1 occurred in Thread {}.", Thread.currentThread().getId());
+        LOG.info("Returning since callback is cancelled.");
         return;
       }
     } catch (InterruptedException e) {
@@ -75,7 +76,6 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
     }
 
     int count = 0;
-    long sleepTimeMs = 100;
 
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
@@ -102,12 +102,12 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
           // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
           // sleep for the time duration till event falls in the window
           if (key > (oldestBucketKey + maxNumberOfBucketsInTable)) {
-            LOG.debug("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms. Thread {}",
-                     key, oldestBucketKey, maxNumberOfBucketsInTable, sleepTimeMs, Thread.currentThread().getId());
+            LOG.debug("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
+                     key, oldestBucketKey, maxNumberOfBucketsInTable, SLEEP_TIME_MS);
 
-            if (kafkaCancelCallbackLatch.await(sleepTimeMs, TimeUnit.MILLISECONDS)) {
+            if (kafkaCancelCallbackLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
               // if count down occurred return
-              LOG.info("Countdown.2 occurred in Thread {}.", Thread.currentThread().getId());
+              LOG.info("Returning since callback is cancelled");
               return;
             }
           } else {
