@@ -20,7 +20,7 @@ var PING_INTERVAL = 1000,
     PING_PATH = '/v2/ping';
 
 
-function AuthAddress (cdapConfig) {
+function AuthAddress () {
   this.enabled = false;
   this.addresses = [];
 };
