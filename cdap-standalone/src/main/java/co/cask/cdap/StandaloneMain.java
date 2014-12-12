@@ -19,6 +19,7 @@ package co.cask.cdap;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
+import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -79,6 +80,7 @@ public class StandaloneMain {
   private final MetricsQueryService metricsQueryService;
   private final AppFabricServer appFabricServer;
   private final StreamHttpService streamHttpService;
+  private final ServiceStore serviceStore;
 
   private final MetricsCollectionService metricsCollectionService;
 
@@ -106,6 +108,7 @@ public class StandaloneMain {
 
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
+    serviceStore = injector.getInstance(ServiceStore.class);
 
     this.webCloudAppService = (webAppPath == null) ? null : injector.getInstance(WebCloudAppService.class);
 
@@ -148,6 +151,7 @@ public class StandaloneMain {
     txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
+    serviceStore.startAndWait();
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
@@ -201,6 +205,7 @@ public class StandaloneMain {
         exploreExecutorService.stopAndWait();
       }
       exploreClient.close();
+      serviceStore.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
