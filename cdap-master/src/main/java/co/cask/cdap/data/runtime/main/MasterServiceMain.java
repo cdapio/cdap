@@ -51,6 +51,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -165,10 +166,9 @@ public class MasterServiceMain extends DaemonMain {
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
-    serviceStore = baseInjector.getInstance(ServiceStore.class);
     exploreClient = baseInjector.getInstance(ExploreClient.class);
-
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
+    serviceStore = baseInjector.getInstance(ServiceStore.class);
 
     checkTransactionRequirements();
     checkExploreRequirements();
@@ -204,8 +204,8 @@ public class MasterServiceMain extends DaemonMain {
     LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
 
-    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
-
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
+                                             serviceStore));
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
@@ -259,7 +259,8 @@ public class MasterServiceMain extends DaemonMain {
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
-    Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
+    Futures.getUnchecked(Services.chainStop(serviceStore, metricsCollectionService, kafkaClientService,
+                                            zkClientService));
 
     try {
       exploreClient.close();
