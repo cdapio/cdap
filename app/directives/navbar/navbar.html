@@ -20,12 +20,11 @@
     </li>
   </ul>
 
-  <nav>
+  <nav ng-click="navbarCollapsed = false">
     <ul class="nav navbar-nav">
       <li
         ng-repeat="link in navbarLinks"
         ng-class="{active: $state.includes(link.sref)}"
-        ng-click="navbarCollapsed = false"
       >
         <a ui-sref="{{link.sref}}" ng-bind="link.label"></a>
       </li>
@@ -34,7 +33,7 @@
 
   <ul class="nav navbar-nav navbar-right">
 
-    <li>
+    <li class="hidden-xs">
       <form class="navbar-form" ng-submit="doSearch()">
         <div class="input-group input-group-sm">
           <input type="text" class="form-control" placeholder="Search" disabled>
