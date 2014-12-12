@@ -242,6 +242,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
       }
     }
     kafkaCancelMap.clear();
+    kafkaCancelCallbackLatchMap.clear();
   }
 
   private void subscribe(Set<Integer> partitions) throws Exception {
