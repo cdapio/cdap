@@ -167,8 +167,8 @@ public class MasterServiceMain extends DaemonMain {
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
     exploreClient = baseInjector.getInstance(ExploreClient.class);
-
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
+    serviceStore = baseInjector.getInstance(ServiceStore.class);
 
     checkTransactionRequirements();
     checkExploreRequirements();
@@ -204,8 +204,8 @@ public class MasterServiceMain extends DaemonMain {
     LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
 
-    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService));
-    serviceStore = baseInjector.getInstance(ServiceStore.class);
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
+                                             serviceStore));
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
@@ -259,7 +259,8 @@ public class MasterServiceMain extends DaemonMain {
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
-    Futures.getUnchecked(Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService));
+    Futures.getUnchecked(Services.chainStop(serviceStore, metricsCollectionService, kafkaClientService,
+                                            zkClientService));
 
     try {
       exploreClient.close();
