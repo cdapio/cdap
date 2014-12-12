@@ -47,6 +47,12 @@ class IncrementSummingScanner implements RegionScanner {
   private final long compactionUpperBound;
   private final ScanType scanType;
 
+  // Leftovers from "unfinished" next() invocation:
+  // we don't know the number of delta increments for a cell, so we can fetch more than needed from baseScanner, in
+  // which case we remember it between next() invocations.
+  private Cell previousIncrement = null;
+  private long runningSum = 0;
+
   IncrementSummingScanner(HRegion region, int batchSize, InternalScanner baseScanner) {
     this(region, batchSize, baseScanner, ScanType.USER_SCAN, Long.MAX_VALUE);
   }
@@ -126,8 +132,8 @@ class IncrementSummingScanner implements RegionScanner {
   }
 
   private boolean nextInternal(List<Cell> cells, int limit) throws IOException {
-    Cell previousIncrement = null;
-    long runningSum = 0;
+    // hint: it could be that we may improve by caching currentRow in class field
+    byte[] currentRow = previousIncrement == null ? null : CellUtil.cloneRow(previousIncrement);
     boolean hasMore;
     int addedCnt = 0;
     do {
@@ -135,12 +141,10 @@ class IncrementSummingScanner implements RegionScanner {
       hasMore = baseScanner.next(tmpCells, limit);
       // compact any delta writes
       if (!tmpCells.isEmpty()) {
+        if (currentRow == null) {
+          currentRow = CellUtil.cloneRow(tmpCells.get(0));
+        }
         for (Cell cell : tmpCells) {
-          if (limit > 0 && addedCnt >= limit) {
-            // haven't reached the end of current cells, so hasMore is true
-            return true;
-          }
-
           // NOTE: compactionUpperBound is Long.MAX_VALUE for client scans, so it will squash everything;
           //       while during flush & compaction we can only squash up to it, as may be transactions in progress that
           //       can see only part of the delta-incs group.
@@ -148,14 +152,16 @@ class IncrementSummingScanner implements RegionScanner {
           if (IncrementHandler.isIncrement(cell) && cell.getTimestamp() < compactionUpperBound) {
             if (LOG.isTraceEnabled()) {
               LOG.trace("Found increment for row=" + Bytes.toStringBinary(CellUtil.cloneRow(cell)) + ", " +
-                         "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)));
+                         "column=" + Bytes.toStringBinary(CellUtil.cloneQualifier(cell)) +
+                          ", val=" + Bytes.toStringBinary(CellUtil.cloneValue(cell)));
             }
             if (!sameCell(previousIncrement, cell)) {
               if (previousIncrement != null) {
                 // 1b. if different qualifier, and prev qualifier non-null
                 // 1bi. emit the previous sum
                 if (LOG.isTraceEnabled()) {
-                  LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement);
+                  LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement +
+                              ", val: " + Bytes.toStringBinary(CellUtil.cloneValue(previousIncrement)));
                 }
                 cells.add(newCell(previousIncrement, runningSum));
                 addedCnt++;
@@ -166,11 +172,16 @@ class IncrementSummingScanner implements RegionScanner {
             // add this increment to the tally
             runningSum += Bytes.toLong(cell.getValueArray(),
                                        cell.getValueOffset() + IncrementHandler.DELTA_MAGIC_PREFIX.length);
+            if (LOG.isTraceEnabled()) {
+              LOG.trace("Increased runSum: sum=" + runningSum + ", cell=" + cell +
+                          ", val: " + Bytes.toStringBinary(CellUtil.cloneValue(cell)));
+            }
           } else {
             // 2. otherwise (not an increment)
             if (previousIncrement != null) {
               if (LOG.isTraceEnabled()) {
-                LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement);
+                LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement +
+                            ", val: " + Bytes.toStringBinary(CellUtil.cloneValue(previousIncrement)));
               }
               cells.add(newCell(previousIncrement, runningSum));
               addedCnt++;
@@ -179,32 +190,56 @@ class IncrementSummingScanner implements RegionScanner {
             }
             // emit the current cell as is
             if (LOG.isTraceEnabled()) {
-              LOG.trace("Including raw cell " + cell);
+              LOG.trace("Including raw cell " + cell + ", val: " + Bytes.toStringBinary(CellUtil.cloneValue(cell)));
             }
             cells.add(cell);
             addedCnt++;
           }
         }
       }
+
+      // we want to exit if we reached next row
+      if (previousIncrement != null && !CellUtil.matchingRow(previousIncrement, currentRow)) {
+        // we have more cells, but of the different row
+        return true;
+      }
+
       // NOTE: if limit is -1 (unlimited) then we fetched all cells in one shot, so allow get out of the loop to prevent
       //       fetching next row
-      // todo: the baseScanner may have more increment-by-delta cells that has to be merged into one counter value,
-      //       which we don't verify by only looking at addedCnt < limit condition. Hence if limit set on scan is less
-      //       than number of increment-by-delta cells for a counter it may result into multiple values of same cell to
-      //       be returned or partial summation result to be returned. It may not be a problem as we don't yet use
-      //       limit on scan explicitly for table datasets. But will cause issues when we do.
-      //       See CDAP-971.
     } while (hasMore && limit > 0 && addedCnt < limit);
 
-    // emit any left over increment, if we hit the end
-    if (previousIncrement != null) {
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
-      }
-      cells.add(newCell(previousIncrement, runningSum));
+    // No leftover, simply return if there's anything left in baseScanner.
+    if (previousIncrement == null) {
+      return hasMore;
     }
 
-    return hasMore;
+    // At this point, we
+    // * either added "enough" (up to limit) or
+    // * there's nothing left in baseScanner (hasMore=false) or
+    // * limit is -1, hasMore can be true or false, but there are no cells for this row left in scanner (since we
+    //   fetched all by passing limit=-1 to baseScanner)
+    // And we know there's leftover.
+    if (!hasMore || limit < 0) {
+      // A. nothing left in base scanner for current row
+      //    see if we can add leftover or need to return back for it in next iteration
+      if (limit < 0 || addedCnt < limit) {
+        // A-1. has not reached limit, can add last one, there's nothing to be left in this case.
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement +
+                      ", val: " + Bytes.toStringBinary(CellUtil.cloneValue(previousIncrement)));
+        }
+        cells.add(newCell(previousIncrement, runningSum));
+        previousIncrement = null;
+        runningSum = 0;
+        return hasMore;
+      }
+      // A-2. has reached limit. We have to ask to return for leftover in next batch to comply with given limit
+      return true;
+    }
+
+    // B. There's more in base scanner, we have leftover which we'll attempt to merge with those left in base scanner
+    //    in next iteration
+    return true;
   }
 
   private boolean sameCell(Cell first, Cell second) {

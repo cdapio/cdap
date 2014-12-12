@@ -145,8 +145,55 @@ public class IncrementSummingScannerTest {
 
   }
 
+  @Test
+  public void testIncrementScanningWithLimit() throws Exception {
+    TableName tableName = TableName.valueOf("TestIncrementSummingScannerWithLimit");
+    byte[] familyBytes = Bytes.toBytes("f");
+    byte[] columnBytes = Bytes.toBytes("c");
+    HRegion region = createRegion(tableName, familyBytes);
+    try {
+      region.initialize();
+
+      long now = System.currentTimeMillis();
+      // adding 5 delta increments into each of two rows
+      for (int i = 0; i < 5; i++) {
+        Put p = new Put(Bytes.toBytes("r1"), now + i);
+        p.add(familyBytes, columnBytes, Bytes.toBytes(1L));
+        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        region.put(p);
+      }
+      // Verify scans with different batch limit work. At least these cases we want to cover:
+      // * batch=<not set> // unlimited by default
+      // * batch=1
+      // * batch size less than delta inc group size
+      // * batch size greater than delta inc group size
+      // * batch size is bigger than all delta incs available
+      for (int i = 0; i < 7; i++) {
+        verifyCounts(region, new Scan().setMaxVersions(), new long[] {5L}, i > 0 ? i : -1);
+      }
+
+      // Now test same with two groups of increments
+      for (int i = 0; i < 5; i++) {
+        Put p = new Put(Bytes.toBytes("r2"), now + 5 + i);
+        p.add(familyBytes, columnBytes, Bytes.toBytes(2L));
+        p.setAttribute(HBaseOrderedTable.DELTA_WRITE, TRUE);
+        region.put(p);
+      }
+
+      for (int i = 0; i < 12; i++) {
+        verifyCounts(region, new Scan().setMaxVersions(), new long[] {5L, 10L}, i > 0 ? i : -1);
+      }
+    } finally {
+      region.close();
+    }
+  }
+
   private void verifyCounts(HRegion region, Scan scan, long[] counts) throws Exception {
-    RegionScanner scanner = new IncrementSummingScanner(region, -1, region.getScanner(scan));
+    verifyCounts(region, scan, counts, -1);
+  }
+
+  private void verifyCounts(HRegion region, Scan scan, long[] counts, int batch) throws Exception {
+    RegionScanner scanner = new IncrementSummingScanner(region, batch, region.getScanner(scan));
     // init with false if loop will execute zero times
     boolean hasMore = counts.length > 0;
     for (long count : counts) {
