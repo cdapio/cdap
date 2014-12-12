@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.SortedSet;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,19 +47,36 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
   private final LoggingEventSerializer serializer;
   private final long eventBucketIntervalMs;
   private final long maxNumberOfBucketsInTable;
+  private final CountDownLatch kafkaCancelCallbackLatch;
 
   public LogCollectorCallback(RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
                               LoggingEventSerializer serializer, long eventBucketIntervalMs,
-                              long maxNumberOfBucketsInTable) {
+                              long maxNumberOfBucketsInTable, CountDownLatch kafkaCancelCallbackLatch) {
     this.messageTable = messageTable;
     this.serializer = serializer;
     this.eventBucketIntervalMs = eventBucketIntervalMs;
     this.maxNumberOfBucketsInTable = maxNumberOfBucketsInTable;
+    this.kafkaCancelCallbackLatch = kafkaCancelCallbackLatch;
   }
 
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
+
+    try {
+      if (kafkaCancelCallbackLatch.await(50, TimeUnit.MICROSECONDS)) {
+        // if count down occurred return
+        LOG.info("Countdown.1 occurred in Thread {}.", Thread.currentThread().getId());
+        return;
+      }
+    } catch (InterruptedException e) {
+      LOG.error("Exception: ", e);
+      Thread.currentThread().interrupt();
+      return;
+    }
+
     int count = 0;
+    long sleepTimeMs = 100;
+
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
       try {
@@ -84,8 +102,14 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
           // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
           // sleep for the time duration till event falls in the window
           if (key > (oldestBucketKey + maxNumberOfBucketsInTable)) {
-            TimeUnit.MILLISECONDS.sleep((key - (oldestBucketKey + maxNumberOfBucketsInTable))
-                                     * eventBucketIntervalMs);
+            LOG.debug("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms. Thread {}",
+                     key, oldestBucketKey, maxNumberOfBucketsInTable, sleepTimeMs, Thread.currentThread().getId());
+
+            if (kafkaCancelCallbackLatch.await(sleepTimeMs, TimeUnit.MILLISECONDS)) {
+              // if count down occurred return
+              LOG.info("Countdown.2 occurred in Thread {}.", Thread.currentThread().getId());
+              return;
+            }
           } else {
             break;
           }

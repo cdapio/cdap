@@ -83,8 +83,8 @@ Console *Services Explorer* shows the ``log.saver`` Service as not OK, in additi
 messages in the logs.
 
 By default, the Log Saver process is limited to 1GB of memory and the buffer keeps eight buckets of events
-in memory. Each event bucket contains logs generated for one second. When it is expected that logs exceeding
-these settings will be produced, for example, greater than 1GB of logs generated in eight seconds, increase
+in-memory. Each event bucket contains logs generated for one second. When it is expected that logs exceeding
+these settings will be produced—for example, greater than 1GB of logs generated in eight seconds—increase
 the memory allocated to the Log Saver or increase the number of Log Saver instances. If the cluster has
 limited memory or containers available, you can choose instead to decrease the number of in-memory event buckets.
 However, decreasing the number of in-memory buckets may lead to out-of-order log events.
