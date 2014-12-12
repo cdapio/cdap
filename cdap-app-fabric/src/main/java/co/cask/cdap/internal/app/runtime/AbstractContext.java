@@ -103,7 +103,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
                                                         null, null);
       this.dsInstantiator.addTransactionAware(stateStore);
     } catch (Exception e) {
-      LOG.error("Unable to find Preference Table", e);
+      LOG.error("Unable to create/get StateStore Table", e);
       Throwables.propagate(e);
     }
     record = new ProgramRecord(program.getType(), program.getApplicationId(), program.getName());

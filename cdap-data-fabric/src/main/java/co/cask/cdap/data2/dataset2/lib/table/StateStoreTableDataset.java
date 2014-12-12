@@ -31,7 +31,7 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
- * Dataset that manages a table of Program Preferences.
+ * Dataset that manages a table of Program State.
  */
 public class StateStoreTableDataset extends AbstractDataset implements StateStoreTable {
   private static final Logger LOG = LoggerFactory.getLogger(StateStoreTableDataset.class);
@@ -40,7 +40,7 @@ public class StateStoreTableDataset extends AbstractDataset implements StateStor
   private static final Gson GSON = new Gson();
   private final KeyValueTable table;
 
-  public StateStoreTableDataset(DatasetSpecification spec, @EmbeddedDataset("prefs") KeyValueTable table) {
+  public StateStoreTableDataset(DatasetSpecification spec, @EmbeddedDataset("states") KeyValueTable table) {
     super(spec.getName(), table);
     this.table = table;
   }

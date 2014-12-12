@@ -22,7 +22,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import java.util.Map;
 
 /**
- * Preference Table Interface that stores ProgramPreference.
+ * StateStore Table Interface that stores a Program's state.
  */
 public interface StateStoreTable extends Dataset {
 
