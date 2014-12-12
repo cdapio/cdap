@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
@@ -95,9 +96,8 @@ public abstract class DatasetServiceTestBase {
   public void before() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     File datasetDir = new File(tmpFolder.newFolder(), "dataset");
-    if (!datasetDir.mkdirs()) {
-      throw
-        new RuntimeException(String.format("Could not create DatasetFramework output dir %s", datasetDir.getPath()));
+    if (!DirUtils.mkdirs(datasetDir)) {
+      throw new RuntimeException(String.format("Could not create DatasetFramework output dir %s", datasetDir));
     }
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");

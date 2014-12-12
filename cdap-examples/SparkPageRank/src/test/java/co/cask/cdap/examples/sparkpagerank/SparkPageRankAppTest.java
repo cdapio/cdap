@@ -66,7 +66,8 @@ public class SparkPageRankAppTest extends TestBase {
     // Wait service startup
     serviceStatusCheck(serviceManager, true);
 
-    String response = requestService(new URL(serviceManager.getServiceURL(), "rank?url=http://example.com/page1"));
+    String response = requestService(new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS),
+                                             "rank?url=http://example.com/page1"));
     Assert.assertEquals(RANK, response);
 
     appManager.stopAll();

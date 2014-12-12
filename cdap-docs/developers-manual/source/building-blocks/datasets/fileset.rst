@@ -2,9 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-===================
-The FileSet Dataset
-===================
+.. _datasets-fileset:
+
+===============
+FileSet Dataset
+===============
 
 .. highlight:: java
 
