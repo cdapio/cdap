@@ -2,13 +2,6 @@ angular.module(PKG.name+'.feature.login')
   .config(function ($stateProvider, $urlRouterProvider) {
 
     /**
-     * Redirects and Otherwise
-     */
-    $urlRouterProvider
-      .when('/signin', '/login');
-
-
-    /**
      * State Configurations
      */
     $stateProvider
@@ -27,7 +20,7 @@ angular.module(PKG.name+'.feature.login')
 
     $rootScope.$on(MYAUTH_EVENT.loginSuccess, function () {
       $alert({title:'Welcome!', content:'You\'re logged in!', type:'success'});
-      $state.go(myAuth.currentUser.hasRole(MYAUTH_ROLE.admin) ? 'home' : 'login');
+      $state.go('home');
     });
 
     $rootScope.$on(MYAUTH_EVENT.logoutSuccess, function () {
@@ -37,7 +30,6 @@ angular.module(PKG.name+'.feature.login')
 
     $rootScope.$on(MYAUTH_EVENT.notAuthorized, function () {
       $alert({title:'Authentication error!', content:'You are not allowed to access the requested page.', type:'warning'});
-      $state.go('login');
     });
 
     angular.forEach([

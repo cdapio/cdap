@@ -8,25 +8,17 @@ angular.module(PKG.name+'.feature.foo')
     $stateProvider
 
       .state('foo', {
-        // data: {
-        //   authorizedRoles: MYAUTH_ROLE.admin
-        // },
         url: '/foo',
         templateUrl: '/assets/features/foo/foo.html'
       })
 
-      .state('bar', {
+      .state('admin', {
         data: {
           authorizedRoles: MYAUTH_ROLE.admin
         },
         parent: 'foo',
-        url: '/bar'
+        url: '/admin'
       })
-
-        .state('admin', {
-          parent: 'foo',
-          url: '/admin'
-        })
 
       ;
 

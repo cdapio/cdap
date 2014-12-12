@@ -11,9 +11,9 @@ function ($scope) {
     c = {items:[]};
     for (var j = 0; j < 2; j++) {
       c.items.push(i+'/'+j);
-    };
+    }
     $scope.columns.push(c);
-  };
+  }
 
   $scope.dragdrop = {
     dragStart: function (drag) {
@@ -22,7 +22,7 @@ function ($scope) {
     dragEnd: function (drag) {
       console.log('dragEnd', drag.source, drag.dest);
     }
-  }
+  };
 
 });
 

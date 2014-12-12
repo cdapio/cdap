@@ -17,7 +17,7 @@ module.constant('MYAUTH_EVENT', {
 
 module.constant('MYAUTH_ROLE', {
   all: '*',
-  superadmin: 'superadmin',
+  user: 'user',
   admin: 'admin'
 });
 
@@ -50,7 +50,6 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
   var persist = angular.bind(this, function (u) {
     this.currentUser = u;
     $rootScope.currentUser = u;
-    $localStorage.currentUser = u ? u.getStorageInfo() : null;
   });
 
   /**
@@ -69,12 +68,12 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
    * @param  {object} credentials
    * @return {promise} resolved on sucessful login
    */
-  this.login = function (credentials) {
-    return myAuthPromise(credentials).then(
+  this.login = function (cred) {
+    return myAuthPromise(cred).then(
       function(data) {
         var user = new MyAuthUser(data);
         persist(user);
-        $localStorage.remember = credentials.remember && user.getStorageInfo();
+        $localStorage.remember = cred.remember && user.storable();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
       function() {
@@ -102,23 +101,33 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
 });
 
 
-module.factory('myAuthPromise', function myAuthPromiseFactory (MYAUTH_ROLE, $timeout, $q, $http) {
+module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $http) {
   return function myAuthPromise (credentials) {
     var deferred = $q.defer();
 
-    $http({
-      url: '/login',
-      method: 'POST',
-      data: credentials
-    })
-    .success(function (data, status, headers, config) {
-      deferred.resolve(angular.extend(data, {
+    if(MY_CONFIG.securityEnabled) {
+
+      $http({
+        url: '/login',
+        method: 'POST',
+        data: credentials
+      })
+      .success(function (data, status, headers, config) {
+        deferred.resolve(angular.extend(data, {
+          username: credentials.username
+        }));
+      })
+      .error(function (data, status, headers, config) {
+        deferred.reject(data);
+      });
+
+    } else {
+
+      deferred.resolve({
         username: credentials.username
-      }));
-    })
-    .error(function (data, status, headers, config) {
-      deferred.reject(data);
-    });
+      });
+
+    }
 
     return deferred.promise;
   };
@@ -132,29 +141,15 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
    * @param {object} user data
    */
   function User(data) {
-    this.token = data.token;
+    this.token = data.access_token;
     this.username = data.username;
-    this.tenant = data.tenant;
+    this.role = MYAUTH_ROLE.user;
 
-    // wholly insecure while we wait for real auth
-    if (data.username===MYAUTH_ROLE.admin) {
-      if(data.tenant===MYAUTH_ROLE.superadmin) {
-        this.role = MYAUTH_ROLE.superadmin;
-      }
-      else if(data.tenant) {
-        this.role = MYAUTH_ROLE.admin;
-      }
+    if (data.username==='admin') {
+      this.role = MYAUTH_ROLE.admin;
     }
   }
 
-  /**
-   * attempts to make a User from data
-   * @param  {Object} stored data
-   * @return {User|null}
-   */
-  User.revive = function(data) {
-    return angular.isObject(data) ? new User(data) : null;
-  };
 
   /**
    * do i haz one of given roles?
@@ -162,19 +157,27 @@ module.factory('MyAuthUser', function MyAuthUserFactory (MYAUTH_ROLE) {
    * @return {Boolean}
    */
   User.prototype.hasRole = function(authorizedRoles) {
-    // All roles authorized.
-    return true;
+    if(this.role === MYAUTH_ROLE.admin) {
+      return true;
+    }
+    if (!angular.isArray(authorizedRoles)) {
+      authorizedRoles = [authorizedRoles];
+    }
+    return authorizedRoles.indexOf(this.role) !== -1;
   };
 
+
   /**
-   * Omits secure info (i.e. token) and gets object for storage.
+   * Omits secure info (i.e. token) and gets object for use
+   * in localstorage.
    * @return {Object} storage info.
    */
-  User.prototype.getStorageInfo = function () {
+  User.prototype.storable = function () {
     return {
       username: this.username
     };
   };
+
 
   return User;
 });

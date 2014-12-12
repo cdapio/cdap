@@ -5,10 +5,10 @@ angular
 
     angular.module(PKG.name+'.features', [
       PKG.name+'.feature.home',
-      PKG.name+'.feature.foo',
       PKG.name+'.feature.login',
       PKG.name+'.feature.dashboard',
-      PKG.name+'.feature.applications'
+      PKG.name+'.feature.applications',
+      PKG.name+'.feature.foo'
     ]).name,
 
     angular.module(PKG.name+'.commons', [

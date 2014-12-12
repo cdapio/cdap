@@ -63,11 +63,15 @@ body.theme-cdap {
           &.open {
             a.dropdown-toggle {
               background-color: @cdap-darkness;
+              border-top-left-radius: @border-radius-base;
+              border-top-right-radius: @border-radius-base;
             }
           }
 
           ul.dropdown-menu {
             background-color: @cdap-darkness;
+            border-color: @cdap-darkness;
+            border-top-left-radius: @border-radius-base;
             a {
               color: white;
               &:hover {
@@ -76,6 +80,11 @@ body.theme-cdap {
             }
             li.divider {
               background-color: @cdap-header;
+            }
+            li.disabled {
+              a {
+                color: @gray-light;
+              }
             }
           }
         }
