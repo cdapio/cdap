@@ -50,6 +50,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
@@ -477,9 +478,15 @@ public class MasterServiceMain extends DaemonMain {
 
     // Add all the conf files needed by hive as resources available to containers
     Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    Set<String> addedFiles = Sets.newHashSet();
     for (File file : hiveConfFilesFiles) {
-      if (file.getName().matches(".*\\.xml")) {
-        preparer = preparer.withResources(ExploreServiceUtils.hijackHiveConfFile(file).toURI());
+      if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {
+        if (addedFiles.add(file.getName())) {
+          LOG.debug("Adding config file: {}", file.getAbsolutePath());
+          preparer = preparer.withResources(ExploreServiceUtils.hijackHiveConfFile(file).toURI());
+        } else {
+          LOG.warn("Ignoring duplicate config file: {}", file.getAbsolutePath());
+        }
       }
     }
 
