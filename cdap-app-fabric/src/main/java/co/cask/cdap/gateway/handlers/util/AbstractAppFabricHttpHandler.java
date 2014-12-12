@@ -69,6 +69,54 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   protected static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
+  protected static final String DEFAULT_NAMESPACE = "default";
+
+  /**
+   * Class to represent status of programs.
+   */
+  protected static final class AppFabricServiceStatus {
+
+    public static final AppFabricServiceStatus OK = new AppFabricServiceStatus(HttpResponseStatus.OK, "");
+
+    public static final AppFabricServiceStatus PROGRAM_STILL_RUNNING =
+      new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "Program is still running");
+
+    public static final AppFabricServiceStatus PROGRAM_ALREADY_RUNNING =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program is already running");
+
+    public static final AppFabricServiceStatus PROGRAM_ALREADY_STOPPED =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT, "Program already stopped");
+
+    public static final AppFabricServiceStatus RUNTIME_INFO_NOT_FOUND =
+      new AppFabricServiceStatus(HttpResponseStatus.CONFLICT,
+                                 UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+
+    public static final AppFabricServiceStatus PROGRAM_NOT_FOUND =
+      new AppFabricServiceStatus(HttpResponseStatus.NOT_FOUND, "Program not found");
+
+    public static final AppFabricServiceStatus INTERNAL_ERROR =
+      new AppFabricServiceStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+
+    private final HttpResponseStatus code;
+    private final String message;
+
+    /**
+     * Describes the output status of app fabric operations.
+     */
+    public AppFabricServiceStatus(HttpResponseStatus code, String message) {
+      this.code = code;
+      this.message = message;
+    }
+
+    public HttpResponseStatus getCode() {
+      return code;
+    }
+
+    public String getMessage() {
+      return message;
+    }
+  }
+
   public AbstractAppFabricHttpHandler(Authenticator authenticator) {
     super(authenticator);
   }
