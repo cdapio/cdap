@@ -27,11 +27,11 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
 
   $scope.$on('$viewContentLoaded', function() {
     if(myAuth.isAuthenticated()) {
+      $state.go('home');
       $alert({
         content: 'You are already logged in!',
         type: 'warning'
       });
-      $state.go('home');
     }
     else {
 
@@ -39,7 +39,7 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
         focusLoginField();
       }
       else { // auto-login
-        myAuth.login({username:'admin', password:'admin'});
+        myAuth.login({username:'admin'});
       }
 
     }
@@ -56,8 +56,4 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
   }
 
 });
-
-
-
-
 
