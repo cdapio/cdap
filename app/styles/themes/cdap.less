@@ -10,7 +10,7 @@ body.theme-cdap {
   }
 
   main.container {
-    padding-top: 132px;
+    padding-top: 80px;
 
     @media (max-width: @screen-xs-max) {
       > div { display: none; }
@@ -88,7 +88,7 @@ body.theme-cdap {
           }
         }
 
-        .navbar-right li.dropdown {
+        li.dropdown {
 
           &.open {
             a.dropdown-toggle {
@@ -101,7 +101,7 @@ body.theme-cdap {
           ul.dropdown-menu {
             background-color: @cdap-darkness;
             border-color: @cdap-darkness;
-            border-top-left-radius: @border-radius-base;
+            border-top-right-radius: @border-radius-base;
             a {
               color: white;
               &:hover {
@@ -116,6 +116,13 @@ body.theme-cdap {
                 color: @gray-light;
               }
             }
+          }
+        }
+
+        .navbar-right li.dropdown {
+          ul.dropdown-menu {
+            border-top-right-radius: 0;
+            border-top-left-radius: @border-radius-base;
           }
         }
 
