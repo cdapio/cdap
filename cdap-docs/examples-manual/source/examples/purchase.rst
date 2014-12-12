@@ -247,7 +247,7 @@ For your convenience, the SDK includes a script, ``bin/cdap-cli.sh``, that can e
 
 From within the SDK root directory::
 
-  ./bin/cdap-cli.sh execute "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
+  ./bin/cdap-cli.sh execute "\"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')\""
   
 (On Windows, use ``bin\cdap-cli.bat ...``)
 
