@@ -27,32 +27,34 @@ import org.junit.Test;
 import java.util.Map;
 
 /**
- * PreferencesTable Dataset Tests.
+ * StateStore Dataset Tests.
  */
-public class PreferencesTableDatasetTest extends AbstractDatasetTest {
+public class StateStoreTableDatasetTest extends AbstractDatasetTest {
 
   @Test
   public void testBasics() throws Exception {
-    addModule("prefTableModule", new PreferencesTableModule());
+    addModule("stateStoreModule", new StateStoreTableModule());
     Map<String, String> content = Maps.newHashMap();
     content.put("k1", "v1");
     content.put("k2", "v2");
-    content.put("key1", "v1");
-    content.put("key2", "v2");
+    content.put("key1", "val1");
+    content.put("key2", "val2");
 
-    createInstance(PreferencesTable.class.getName(), "myPrefTable", DatasetProperties.EMPTY);
-    PreferencesTable myPrefTable = getInstance("myPrefTable");
+    createInstance(StateStoreTable.class.getName(), "myStateTable", DatasetProperties.EMPTY);
+    StateStoreTable myStateTable = getInstance("myStateTable");
 
     ProgramRecord record = new ProgramRecord(ProgramType.FLOW, "MyApp", "MyFlow");
-    Assert.assertEquals(null, myPrefTable.getState(record, "key1"));
-    myPrefTable.saveState(record, "key1", "val1");
-    Assert.assertEquals("val1", myPrefTable.getState(record, "key1"));
-    Assert.assertEquals(null, myPrefTable.getState(record, "key2"));
-    myPrefTable.saveState(record, content);
-    Map<String, String> notes = myPrefTable.getState(record);
-    Assert.assertEquals(4, notes.size());
-    Assert.assertEquals("v1", notes.get("k1"));
-    Assert.assertEquals("v1", notes.get("key1"));
-    deleteModule("prefTableModule");
+    Assert.assertEquals(null, myStateTable.getState(record));
+    myStateTable.saveState(record, content);
+    Assert.assertEquals(content.get("key1"), myStateTable.getState(record).get("key1"));
+    Assert.assertEquals(false, myStateTable.getState(record).containsKey("key3"));
+    Map<String, String> testContent = myStateTable.getState(record);
+    Assert.assertEquals(content.size(), testContent.size());
+    Assert.assertEquals(content.keySet(), testContent.keySet());
+    content.remove("key1");
+    myStateTable.saveState(record, content);
+    Assert.assertEquals(content.size(), myStateTable.getState(record).size());
+    Assert.assertEquals(false, myStateTable.getState(record).containsKey("key1"));
+    deleteModule("stateStoreModule");
   }
 }

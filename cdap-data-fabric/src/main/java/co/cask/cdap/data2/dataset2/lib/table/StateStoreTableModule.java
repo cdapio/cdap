@@ -18,18 +18,18 @@ package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 
 /**
- * {@link DatasetModule} for {@link PreferencesTable}
+ * {@link DatasetModule} for {@link StateStoreTable}
  */
-public class PreferencesTableModule implements DatasetModule {
+public class StateStoreTableModule implements DatasetModule {
   @Override
   public void register(DatasetDefinitionRegistry registry) {
-    DatasetDefinition<OrderedTable, DatasetAdmin> tableDefinition = registry.get(OrderedTable.class.getName());
-    registry.add(new PreferencesTableDefinition("prefTable", tableDefinition));
-    registry.add(new PreferencesTableDefinition(PreferencesTable.class.getName(), tableDefinition));
+    DatasetDefinition<KeyValueTable, DatasetAdmin> tableDefinition = registry.get(KeyValueTable.class.getName());
+    registry.add(new StateStoreTableDefinition("stateStore", tableDefinition));
+    registry.add(new StateStoreTableDefinition(StateStoreTable.class.getName(), tableDefinition));
   }
 }

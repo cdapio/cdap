@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.logging.run.LogSaverTwillRunnable;
-import co.cask.cdap.metrics.runtime.ConfigServiceTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
 import com.google.common.base.Preconditions;
@@ -69,10 +68,9 @@ public class MasterTwillApplication implements TwillApplication {
             addLogSaverService(
                 addStreamService(
                     addTransactionService(
-                      addConfigService(
                         addMetricsProcessor(
                           addMetricsService(
-                            TwillSpecification.Builder.with().setName(NAME).withRunnable())))))));
+                            TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
 
     if (runHiveService) {
       LOG.info("Adding explore runnable.");
@@ -128,25 +126,6 @@ public class MasterTwillApplication implements TwillApplication {
 
     return builder.add(new MetricsProcessorTwillRunnable(Constants.Service.METRICS_PROCESSOR, "cConf.xml", "hConf.xml"),
                        metricsProcessorSpec)
-      .withLocalFiles()
-      .add("cConf.xml", cConfFile.toURI())
-      .add("hConf.xml", hConfFile.toURI())
-      .apply();
-  }
-
-  private TwillSpecification.Builder.RunnableSetter addConfigService(TwillSpecification.Builder.MoreRunnable builder) {
-    int numCores = cConf.getInt(Constants.ConfigService.NUM_CORES, 1);
-    int memoryMb = cConf.getInt(Constants.ConfigService.MEMORY_MB, 512);
-    int instances = instanceCountMap.get(Constants.Service.CONFIG_SERVICE);
-
-    ResourceSpecification spec = ResourceSpecification.Builder
-      .with()
-      .setVirtualCores(numCores)
-      .setMemory(memoryMb, ResourceSpecification.SizeUnit.MEGA)
-      .setInstances(instances)
-      .build();
-
-    return builder.add(new ConfigServiceTwillRunnable(Constants.Service.CONFIG_SERVICE, "cConf.xml", "hConf.xml"), spec)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())

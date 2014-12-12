@@ -28,8 +28,10 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
 import org.junit.Assert;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -70,7 +72,12 @@ public class AppUsingStore extends AbstractApplication {
 
     @Tick(delay =  1L, unit = TimeUnit.SECONDS)
     void process() {
-      getContext().saveState("key" + i, "value" + i);
+      Map<String, String> state = getContext().getState();
+      if (state == null) {
+        state = Maps.newHashMap();
+      }
+      state.put("key" + i, "value" + i);
+      getContext().saveState(state);
       emitter.emit("key" + i);
       i++;
     }
@@ -81,7 +88,7 @@ public class AppUsingStore extends AbstractApplication {
 
     @ProcessInput
     void process(String key) {
-      Assert.assertEquals("value" + i, getContext().getState(key));
+      Assert.assertEquals("value" + i, getContext().getState().get(key));
       i++;
     }
   }
@@ -91,10 +98,15 @@ public class AppUsingStore extends AbstractApplication {
     @Path("count")
     @POST
     public void incrCount(HttpServiceRequest request, HttpServiceResponder responder) {
-      if (getContext().getState("call") == null) {
-        getContext().saveState("call", Integer.toString(1));
+      Map<String, String> state = getContext().getState();
+      if (getContext().getState() == null) {
+        state = Maps.newHashMap();
+        state.put("call", Integer.toString(1));
+        getContext().saveState(state);
       } else {
-        getContext().saveState("call", Integer.toString(Integer.valueOf(getContext().getState("call")) + 1));
+        String call = Integer.toString(Integer.valueOf(state.get("call")) + 1);
+        state.put("call", call);
+        getContext().saveState(state);
       }
       responder.sendStatus(200);
     }
@@ -102,7 +114,7 @@ public class AppUsingStore extends AbstractApplication {
     @Path("count")
     @GET
     public void getCount(HttpServiceRequest request, HttpServiceResponder responder) {
-      responder.sendString(200, getContext().getState("call"), Charsets.UTF_8);
+      responder.sendString(200, getContext().getState().get("call"), Charsets.UTF_8);
     }
   }
 }

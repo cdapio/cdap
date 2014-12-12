@@ -29,20 +29,6 @@ public interface RuntimeContext {
   Map<String, String> getRuntimeArguments();
 
   /**
-   * Store a key, value pair in StateStore of the Program.
-   * @param key Key
-   * @param value Value
-   */
-  void saveState(String key, String value);
-
-  /**
-   * Retrieve the value for a key from StateStore of the Program.
-   * @param key Key
-   * @return Value
-   */
-  String getState(String key);
-
-  /**
    * Retrieve the contents from StateStore of the Program.
    * @return Map of Key and Value
    */

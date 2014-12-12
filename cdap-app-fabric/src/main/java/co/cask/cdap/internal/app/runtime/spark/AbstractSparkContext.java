@@ -267,16 +267,6 @@ abstract class AbstractSparkContext implements SparkContext {
   }
 
   @Override
-  public String getState(String key) {
-    return basicSparkContext.getState(key);
-  }
-
-  @Override
-  public void saveState(String key, String value) {
-    basicSparkContext.saveState(key, value);
-  }
-
-  @Override
   public Map<String, String> getState() {
     return basicSparkContext.getState();
   }

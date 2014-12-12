@@ -23,8 +23,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.data.configuration.ConfigServiceManager;
-import co.cask.cdap.data.configuration.InMemoryConfigServiceManager;
 import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
@@ -118,8 +116,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.CONFIG_SERVICE)
-                                        .to(InMemoryConfigServiceManager.class);
                              }
                            });
   }
@@ -152,8 +148,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(InMemoryDatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(InMemoryExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.CONFIG_SERVICE)
-                                        .to(InMemoryConfigServiceManager.class);
                              }
                            });
   }
@@ -187,8 +181,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                         .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
                                         .to(ExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.CONFIG_SERVICE)
-                                        .to(ConfigServiceManager.class);
                              }
                            });
   }

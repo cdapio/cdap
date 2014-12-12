@@ -184,16 +184,6 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public void saveState(String key, String value) {
-      //no-op
-    }
-
-    @Override
-    public String getState(String key) {
-      return null;
-    }
-
-    @Override
     public Map<String, String> getState() {
       return null;
     }

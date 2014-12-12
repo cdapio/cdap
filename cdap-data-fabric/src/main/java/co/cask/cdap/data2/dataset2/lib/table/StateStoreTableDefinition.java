@@ -21,19 +21,19 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
-import co.cask.cdap.api.dataset.table.OrderedTable;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
- * {@link DatasetDefinition} for {@link PreferencesTable}.
+ * {@link DatasetDefinition} for {@link StateStoreTable}.
  */
-public class PreferencesTableDefinition extends AbstractDatasetDefinition<PreferencesTable, DatasetAdmin> {
+public class StateStoreTableDefinition extends AbstractDatasetDefinition<StateStoreTable, DatasetAdmin> {
 
-  private final DatasetDefinition<? extends OrderedTable, ?> tableDefinition;
+  private final DatasetDefinition<? extends KeyValueTable, ?> tableDefinition;
 
-  public PreferencesTableDefinition(String name, DatasetDefinition<? extends OrderedTable, ?> tableDefinition) {
+  public StateStoreTableDefinition(String name, DatasetDefinition<? extends KeyValueTable, ?> tableDefinition) {
     super(name);
     this.tableDefinition = tableDefinition;
   }
@@ -52,10 +52,10 @@ public class PreferencesTableDefinition extends AbstractDatasetDefinition<Prefer
   }
 
   @Override
-  public PreferencesTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
+  public StateStoreTable getDataset(DatasetSpecification spec, Map<String, String> arguments, ClassLoader classLoader)
     throws IOException {
     DatasetSpecification tableSpec = spec.getSpecification("data");
-    OrderedTable table = tableDefinition.getDataset(tableSpec, arguments, classLoader);
-    return new PreferencesTableDataset(spec, table);
+    KeyValueTable table = tableDefinition.getDataset(tableSpec, arguments, classLoader);
+    return new StateStoreTableDataset(spec, table);
   }
 }

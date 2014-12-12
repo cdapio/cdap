@@ -52,7 +52,7 @@ import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.table.PreferencesTableDataset;
+import co.cask.cdap.data2.dataset2.lib.table.StateStoreTableDataset;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -2231,43 +2231,42 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private void deleteStateStore(final ApplicationSpecification spec) throws Exception {
-    final PreferencesTableDataset prefDataset = sysdsFramework.getDataset(Constants.ConfigService.PREFERENCE_TABLE,
-                                                                          null, null);
-    if (prefDataset == null) {
-      LOG.warn("Unable to find PreferencesTable. Can't delete StateStore");
+    final StateStoreTableDataset stateStore = sysdsFramework.getDataset(Constants.StateStore.STATE_STORE_TABLE,
+                                                                        null, null);
+    if (stateStore == null) {
+      LOG.warn("Unable to find StateStoreTable. Can't delete StateStore for {}", spec.getName());
       return;
     }
 
     final String appName = spec.getName();
     List<TransactionAware> txAware = Lists.newArrayList();
-    txAware.add(prefDataset);
+    txAware.add(stateStore);
     final TransactionExecutor executor = executorFactory.createExecutor(txAware);
 
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() {
         for (FlowSpecification flowSpecification : spec.getFlows().values()) {
-          prefDataset.deleteState(new ProgramRecord(ProgramType.FLOW, appName, flowSpecification.getName()));
+          stateStore.deleteState(new ProgramRecord(ProgramType.FLOW, appName, flowSpecification.getName()));
         }
 
         for (MapReduceSpecification mapReduceSpecification : spec.getMapReduce().values()) {
-          prefDataset.deleteState(new ProgramRecord(ProgramType.MAPREDUCE, appName, mapReduceSpecification.getName()));
+          stateStore.deleteState(new ProgramRecord(ProgramType.MAPREDUCE, appName, mapReduceSpecification.getName()));
         }
 
         for (SparkSpecification sparkSpecification : spec.getSpark().values()) {
-          prefDataset.deleteState(new ProgramRecord(ProgramType.SPARK, appName, sparkSpecification.getName()));
+          stateStore.deleteState(new ProgramRecord(ProgramType.SPARK, appName, sparkSpecification.getName()));
         }
 
         for (ProcedureSpecification procedureSpecification : spec.getProcedures().values()) {
-          prefDataset.deleteState(new ProgramRecord(ProgramType.PROCEDURE, appName, procedureSpecification.getName()));
+          stateStore.deleteState(new ProgramRecord(ProgramType.PROCEDURE, appName, procedureSpecification.getName()));
         }
 
         for (ServiceSpecification serviceSpecification : spec.getServices().values()) {
-          prefDataset.deleteState(new ProgramRecord(ProgramType.SERVICE, appName, serviceSpecification.getName()));
+          stateStore.deleteState(new ProgramRecord(ProgramType.SERVICE, appName, serviceSpecification.getName()));
         }
       }
     });
-
   }
 
   private AppFabricServiceStatus removeApplication(Id.Program identifier) throws Exception {

@@ -36,8 +36,8 @@ import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
-import co.cask.cdap.data2.dataset2.lib.table.PreferencesTable;
-import co.cask.cdap.data2.dataset2.lib.table.PreferencesTableDataset;
+import co.cask.cdap.data2.dataset2.lib.table.StateStoreTable;
+import co.cask.cdap.data2.dataset2.lib.table.StateStoreTableDataset;
 import co.cask.cdap.proto.ProgramRecord;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -66,7 +66,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   private final DatasetInstantiator dsInstantiator;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final ProgramRecord record;
-  private PreferencesTableDataset table;
+  private StateStoreTableDataset stateStore;
 
   public AbstractContext(Program program, RunId runId,
                          Arguments arguments,
@@ -96,12 +96,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
                                                   datasetMetrics, programMetrics);
     DatasetFramework sysds = new NamespacedDatasetFramework(dsFramework, new DefaultDatasetNamespace(conf,
                                                                                                      Namespace.SYSTEM));
-    this.table = null;
+    this.stateStore = null;
     try {
-      this.table = DatasetsUtil.getOrCreateDataset(sysds, Constants.ConfigService.PREFERENCE_TABLE,
-                                                   PreferencesTable.class.getName(), DatasetProperties.EMPTY,
-                                                   null, null);
-      this.dsInstantiator.addTransactionAware(table);
+      this.stateStore = DatasetsUtil.getOrCreateDataset(sysds, Constants.StateStore.STATE_STORE_TABLE,
+                                                        StateStoreTable.class.getName(), DatasetProperties.EMPTY,
+                                                        null, null);
+      this.dsInstantiator.addTransactionAware(stateStore);
     } catch (Exception e) {
       LOG.error("Unable to find Preference Table", e);
       Throwables.propagate(e);
@@ -185,6 +185,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
     for (Closeable ds : datasets.values()) {
       closeDataSet(ds);
     }
+    closeDataSet(stateStore);
   }
 
   /**
@@ -204,22 +205,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer implemen
   }
 
   @Override
-  public String getState(String key) {
-    return table.getState(record, key);
-  }
-
-  @Override
   public Map<String, String> getState() {
-    return table.getState(record);
-  }
-
-  @Override
-  public void saveState(String key, String value) {
-    table.saveState(record, key, value);
+    return stateStore.getState(record);
   }
 
   @Override
   public void saveState(Map<String, String> state) {
-    table.saveState(record, state);
+    stateStore.saveState(record, state);
   }
 }

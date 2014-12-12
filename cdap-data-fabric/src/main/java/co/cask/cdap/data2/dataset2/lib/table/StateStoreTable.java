@@ -24,23 +24,7 @@ import java.util.Map;
 /**
  * Preference Table Interface that stores ProgramPreference.
  */
-public interface PreferencesTable extends Dataset {
-
-  /**
-   * Returns the value stored for a key in a given {@link ProgramRecord}
-   * @param program Program
-   * @param key Key
-   * @return Value
-   */
-  public String getState(ProgramRecord program, String key);
-
-  /**
-   * Sets the value for a key in a given {@link ProgramRecord}
-   * @param program Program
-   * @param key Key
-   * @param value Value
-   */
-  public void saveState(ProgramRecord program, String key, String value);
+public interface StateStoreTable extends Dataset {
 
   /**
    * Returns the contents from StateStore for the given {@link ProgramRecord}
