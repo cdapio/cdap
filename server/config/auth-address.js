@@ -5,7 +5,7 @@ module.exports = {
   ping: function () {
     return require('./parser.js').extractConfig('cdap')
       .then(function (cdapConfig) {
-        return (new Security()).doPing(cdapConfig);
+        return (new AuthAddress()).doPing(cdapConfig);
       });
   }
 };
@@ -20,9 +20,9 @@ var PING_INTERVAL = 1000,
     PING_PATH = '/v2/ping';
 
 
-function Security (cdapConfig) {
+function AuthAddress () {
   this.enabled = false;
-  this.authServerAddresses = [];
+  this.addresses = [];
 };
 
 
@@ -30,7 +30,7 @@ function Security (cdapConfig) {
  * Ping the backend to figure out if auth is enabled.
  * @return {Promise} resolved with Security instance.
  */
-Security.prototype.doPing = function (cdapConfig) {
+AuthAddress.prototype.doPing = function (cdapConfig) {
   var self = this,
       deferred = promise.defer(),
       attempts = 0,
@@ -62,7 +62,7 @@ Security.prototype.doPing = function (cdapConfig) {
           if (!err && response) {
             if (response.statusCode === 401) {
               self.enabled = true;
-              self.authServerAddresses = JSON.parse(body).auth_uri || [];
+              self.addresses = JSON.parse(body).auth_uri || [];
             }
             console.info('Security is '+(self.enabled ? 'enabled': 'disabled'));
             deferred.resolve(self);
@@ -85,10 +85,10 @@ Security.prototype.doPing = function (cdapConfig) {
  * Picks an auth server address from options.
  * @return {String} Auth server address.
  */
-Security.prototype.getAuthServerAddress = function () {
-  if (!this.authServerAddresses.length) {
+AuthAddress.prototype.get = function () {
+  if (!this.addresses.length) {
     return null;
   }
-  return this.authServerAddresses[Math.floor(Math.random() * this.authServerAddresses.length)];
+  return this.addresses[Math.floor(Math.random() * this.addresses.length)];
 };
 
