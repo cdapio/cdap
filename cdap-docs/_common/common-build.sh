@@ -137,6 +137,20 @@ function build_docs() {
   sphinx-build -b html -d build/doctrees source build/html
 }
 
+################################################## new
+
+function build_docs2() {
+# Copies source code to higher-level
+#   clean # Performed by higher-level command
+  cd $SCRIPT_PATH
+#   check_includes # This needs to be the step that modifies the copied source files in-place
+
+}
+
+################################################## new
+
+
+
 function build_docs_google() {
   clean
   cd $SCRIPT_PATH
@@ -355,6 +369,7 @@ function run_command() {
     build-web )         build_web; exit 1;;
     check-includes )    check_includes; exit 1;;
     docs )              build_docs;;
+    docs2 )             build_docs2;;
     license-pdfs )      build_license_pdfs; exit 1;;
     build-standalone )  build_standalone; exit 1;;
     copy-javadocs )     copy_javadocs; exit 1;;

@@ -14,5 +14,5 @@ CDAP Reference: APIs, Licenses, and Dependencies
     Javadocs <javadocs/index>
     Java Client API <java-client-api>
     Command Line Interface API <cli-api>
-    License and Dependencies </licenses/index>
+    License and Dependencies <licenses/index>
 

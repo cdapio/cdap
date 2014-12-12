@@ -9,7 +9,6 @@ CDAP Administration
 .. toctree::
    :maxdepth: 3
 
-    Introduction </index>
-    Installation</installation/index>
-    Operations </operations/index>
-    
+    Introduction <index>
+    Installation<installation/index>
+    Operations <operations/index>

@@ -29,13 +29,18 @@
 API="cdap-api"
 BUILD="build"
 BUILD_TEMP="build-temp"
+COMMON="_common"
+COMMON_CONF_PY="$COMMON/common_conf.py"
+COMMON_SOURCE="$COMMON/_source"
+COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index.rst"
 GITHUB="github"
-WEB="web"
 HTML="html"
 PROJECT="cdap"
 PROJECT_CAPS="CDAP"
 SCRIPT=`basename $0`
 SCRIPT_PATH=`pwd`
+SOURCE="source"
+WEB="web"
 
 REDIRECT_DEVELOPER_HTML=`cat <<EOF
 <!DOCTYPE HTML>
@@ -74,6 +79,7 @@ function usage() {
   echo "  Options (select one)"
   echo "    all            Clean build of everything: HTML docs and Javadocs, GitHub and Web versions"
   echo "    docs           Clean build of just the HTML docs"
+  echo "    docs2          Clean build of just the HTML docs, new version"
   echo "    docs-javadocs  Clean build of HTML docs and Javadocs"
   echo "    docs-github    Clean build of HTML docs and Javadocs, zipped for placing on GitHub"
   echo "    docs-web       Clean build of HTML docs and Javadocs, zipped for placing on docs.cask.co webserver"
@@ -94,6 +100,7 @@ function run_command() {
   case "$1" in
     all )               build_all; exit 1;;
     docs )              build_docs; exit 1;;
+    docs2 )             build_docs2; exit 1;;
     docs-javadocs )     build_docs_javadocs; exit 1;;
     docs-github )       build_docs_github; exit 1;;
     docs-web )          build_docs_web; exit 1;;
@@ -104,6 +111,58 @@ function run_command() {
     * )                 usage; exit 1;;
   esac
 }
+################################################## new
+
+function clean2() {
+  cd $SCRIPT_PATH
+  rm -rf $SCRIPT_PATH/$BUILD/*
+  mkdir -p $SCRIPT_PATH/$BUILD/$HTML
+  mkdir -p $SCRIPT_PATH/$BUILD/$SOURCE
+  echo "Cleaned $BUILD directory"
+  echo ""
+}
+
+
+function build_docs2() {
+  clean2
+  copy_source admin-manual
+  copy_source developers-manual
+  copy_source reference-manual
+  copy_source examples-manual
+  # build all docs
+  cd $SCRIPT_PATH
+  cp $COMMON_CONF_PY $BUILD/$SOURCE/conf.py
+  cp $COMMON_SOURCE/index.rst $BUILD/$SOURCE/
+  cp $COMMON_SOURCE/table-of-contents.rst $BUILD/$SOURCE/
+  sphinx-build -b html -d build/doctrees build/source build/html
+  copy_html admin-manual
+  copy_html developers-manual
+  copy_html reference-manual
+  copy_html examples-manual
+#   add_redirect
+}
+
+function copy_source() {
+  echo "Copying source for $1..."
+  cd $SCRIPT_PATH
+  mkdir -p $SCRIPT_PATH/$BUILD/$SOURCE/$1
+  cp -r $COMMON_PLACEHOLDER $BUILD/$SOURCE/$1/index.rst
+  echo ""
+}
+
+function copy_html() {
+  echo "Copying html for $1..."
+  cd $SCRIPT_PATH
+  rm -rf $SCRIPT_PATH/$BUILD/$HTML/$1
+  cp -r $1/$BUILD/$HTML $BUILD/$HTML/$1
+  echo ""
+}
+
+
+
+
+
+################################################## current
 
 function clean() {
   cd $SCRIPT_PATH
