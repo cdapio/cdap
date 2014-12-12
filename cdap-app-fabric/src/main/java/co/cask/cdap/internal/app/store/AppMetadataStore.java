@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
+import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -36,7 +37,6 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -61,6 +61,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   private static final String TYPE_PROGRAM_ARGS = "programArgs";
   private static final String TYPE_NAMESPACE = "namespace";
+  private static final String TYPE_NOTIFICATION_FEED = "feed";
 
   public AppMetadataStore(Table table) {
     super(table);
@@ -275,4 +276,19 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return builder.build();
   }
 
+  public void createNotificationFeed(NotificationFeed feed) {
+    write(new Key.Builder().add(TYPE_NOTIFICATION_FEED, feed.getId()).build(), feed);
+  }
+
+  public NotificationFeed getNotificationFeed(String feedId) {
+    return get(new Key.Builder().add(TYPE_NOTIFICATION_FEED, feedId).build(), NotificationFeed.class);
+  }
+
+  public void deleteNotificationFeed(String feedId) {
+    deleteAll(new Key.Builder().add(TYPE_NOTIFICATION_FEED, feedId).build());
+  }
+
+  public List<NotificationFeed> listNotificationFeeds() {
+    return list(new Key.Builder().add(TYPE_NOTIFICATION_FEED).build(), NotificationFeed.class);
+  }
 }

@@ -25,6 +25,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.notifications.service.NotificationFeedService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
@@ -57,6 +58,7 @@ public final class AppFabricServer extends AbstractIdleService {
   private final InetAddress hostname;
   private final SchedulerService schedulerService;
   private final ProgramRuntimeService programRuntimeService;
+  private final NotificationFeedService notificationFeedService;
 
   private NettyHttpService httpService;
   private Set<HttpHandler> handlers;
@@ -72,7 +74,8 @@ public final class AppFabricServer extends AbstractIdleService {
                          @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
                          @Named("appfabric.http.handler") Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
-                         ProgramRuntimeService programRuntimeService) {
+                         ProgramRuntimeService programRuntimeService,
+                         NotificationFeedService notificationFeedService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.schedulerService = schedulerService;
@@ -80,6 +83,7 @@ public final class AppFabricServer extends AbstractIdleService {
     this.configuration = configuration;
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
+    this.notificationFeedService = notificationFeedService;
   }
 
   /**
@@ -97,6 +101,7 @@ public final class AppFabricServer extends AbstractIdleService {
 
     schedulerService.start();
     programRuntimeService.start();
+    notificationFeedService.start();
 
     // Run http service on random port
     httpService = new CommonNettyHttpServiceBuilder(configuration)
@@ -163,6 +168,7 @@ public final class AppFabricServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     httpService.stopAndWait();
+    notificationFeedService.stopAndWait();
     programRuntimeService.stopAndWait();
     schedulerService.stopAndWait();
   }

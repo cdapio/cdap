@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -366,7 +367,8 @@ public class StandaloneMain {
       new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModule(),
-      new ExploreClientModule()
+      new ExploreClientModule(),
+      new NotificationFeedServiceRuntimeModule().getStandaloneModules()
     );
   }
 }
