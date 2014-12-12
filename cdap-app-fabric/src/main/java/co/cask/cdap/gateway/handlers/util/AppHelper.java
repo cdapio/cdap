@@ -31,9 +31,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
+import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -206,61 +208,51 @@ public class AppHelper {
     }
   }
 
-  private BodyConsumer deployAppStream(final HttpRequest request, final HttpResponder responder, final String accountId,
-                                       final String appId) throws IOException {
+  private BodyConsumer deployAppStream (final HttpRequest request, final HttpResponder responder,
+                                        final String accountId, final String appId) throws IOException {
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
-    final Location uploadDir = locationFactory.create(archiveDir + "/" + accountId);
-    final Location archive = uploadDir.append(archiveName);
-
-    // Copy archive to a temporary location
-    File tempDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
-                                     configuration.get(Constants.AppFabric.TEMP_DIR)),
-                            accountId).getAbsoluteFile();
-    if (!tempDir.exists() && !tempDir.mkdirs() && !tempDir.exists()) {
-      throw new IOException("Could not create temporary directory at: " + tempDir.getAbsolutePath());
-    }
-    final File tmpArchive = File.createTempFile("app-", ".jar", tempDir);
-    LOG.debug("Moving archive to temporary file on local disk: {}", tmpArchive.getAbsolutePath());
-    final OutputStream fos = new FileOutputStream(tmpArchive);
 
     if (archiveName == null || archiveName.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
+                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
+      return null;
     }
+
+    // Store uploaded content to a local temp file
+    File tempDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
+                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    if (!DirUtils.mkdirs(tempDir)) {
+      throw new IOException("Could not create temporary directory at: " + tempDir);
+    }
+
+    final Location archiveDir = locationFactory.create(this.archiveDir).append(accountId);
+    final Location archive = archiveDir.append(archiveName);
 
     final SessionInfo sessionInfo = new SessionInfo(accountId, appId, archiveName, archive, DeployStatus.UPLOADING);
     sessions.put(accountId, sessionInfo);
 
-    return new BodyConsumer() {
-      @Override
-      public void chunk(ChannelBuffer request, HttpResponder responder) {
-        try {
-          request.readBytes(fos, request.readableBytes());
-        } catch (IOException e) {
-          sessionInfo.setStatus(DeployStatus.FAILED);
-          LOG.error("Failed to write deploy jar", e);
-          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-      }
+    return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
       @Override
-      public void finished(HttpResponder responder) {
+      protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
-          fos.close();
-          // Moving archive from temporary location in local file system to temporary location in targeted file system
-          Location tmpLocation = archive.getTempFile("");
+          Locations.mkdirsIfNotExists(archiveDir);
+
+          // Copy uploaded content to a temporary location
+          Location tmpLocation = archive.getTempFile(".tmp");
           try {
-            LOG.debug("Moving archive to temporary file on final file system: {}", tmpLocation.toURI().toString());
-            Files.copy(tmpArchive, Locations.newOutputSupplier(tmpLocation));
+            LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
+            Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
+
             // Finally, move archive to final location
-            Location finalLocation = tmpLocation.renameTo(archive);
-            if (finalLocation == null) {
+            if (tmpLocation.renameTo(archive) == null) {
               throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                  tmpLocation.toURI().toString(), archive.toURI().toString()));
+                                                  tmpLocation.toURI(), archive.toURI()));
             }
           } catch (IOException e) {
             // In case copy to temporary file failed, or rename failed
             tmpLocation.delete();
-            throw Throwables.propagate(e);
+            throw e;
           }
 
           sessionInfo.setStatus(DeployStatus.VERIFYING);
@@ -272,30 +264,34 @@ public class AppHelper {
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } finally {
-          if (!tmpArchive.delete()) {
-            LOG.debug("Could not delete archive in temporary location: {}", tmpArchive.getAbsolutePath());
-          }
-          save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
-          sessions.remove(accountId);
-        }
-      }
-
-      @Override
-      public void handleError(Throwable t) {
-        try {
-          Closeables.closeQuietly(fos);
-          sessionInfo.setStatus(DeployStatus.FAILED);
-          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getCause().getMessage());
-        } finally {
-          if (!tmpArchive.delete()) {
-            LOG.debug("Could not delete archive in temporary location: {}", tmpArchive.getAbsolutePath());
-          }
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
         }
       }
     };
+  }
 
+  // deploy helper
+  private void deploy(final String accountId, final String appId , Location archive) throws Exception {
+
+    try {
+      Id.Account id = Id.Account.from(accountId);
+      Location archiveLocation = archive;
+      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
+        @Override
+        public void stop(Id.Account id, Id.Program programId, ProgramType type) throws ExecutionException {
+          programHelper.deleteHandler(programId, type);
+        }
+      });
+
+      ApplicationWithPrograms applicationWithPrograms =
+        manager.deploy(id, appId, archiveLocation).get();
+      ApplicationSpecification specification = applicationWithPrograms.getSpecification();
+      setupSchedules(accountId, specification);
+    } catch (Throwable e) {
+      LOG.warn(e.getMessage(), e);
+      throw new Exception(e.getMessage());
+    }
   }
 
   public void getAppDetails(HttpResponder responder, String accountId, String appid) {
@@ -340,30 +336,6 @@ public class AppHelper {
     }
   }
 
-
-  // deploy helper
-  private void deploy(final String accountId, final String appId, Location archive) throws Exception {
-
-    try {
-      Id.Account id = Id.Account.from(accountId);
-      Location archiveLocation = archive;
-      Manager<Location, ApplicationWithPrograms> manager = managerFactory.create(new ProgramTerminator() {
-        @Override
-        public void stop(Id.Account id, Id.Program programId, ProgramType type) throws ExecutionException {
-          programHelper.deleteHandler(programId, type);
-        }
-      });
-
-      ApplicationWithPrograms applicationWithPrograms =
-        manager.deploy(id, appId, archiveLocation).get();
-      ApplicationSpecification specification = applicationWithPrograms.getSpecification();
-      setupSchedules(accountId, specification);
-    } catch (Throwable e) {
-      LOG.warn(e.getMessage(), e);
-      throw new Exception(e.getMessage());
-    }
-  }
-
   /**
    * Saves the {@link SessionInfo} to the filesystem.
    *
@@ -373,7 +345,7 @@ public class AppHelper {
   private boolean save(SessionInfo info, String accountId) {
     try {
       Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
+      Location outputDir = locationFactory.create(archiveDir).append(accountId);
       if (!outputDir.exists()) {
         return false;
       }
@@ -459,12 +431,12 @@ public class AppHelper {
   }
 
   /*
-   * Retrieves a {@link SessionInfo} from the file system.
-   */
+    * Retrieves a {@link SessionInfo} from the file system.
+    */
   @Nullable
   private SessionInfo retrieve(String accountId) {
     try {
-      final Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
+      final Location outputDir = locationFactory.create(archiveDir).append(accountId);
       if (!outputDir.exists()) {
         return null;
       }
