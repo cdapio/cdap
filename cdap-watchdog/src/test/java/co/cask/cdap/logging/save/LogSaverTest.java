@@ -120,8 +120,8 @@ public class LogSaverTest extends KafkaTestBase {
     cConf.set(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, "10");
     cConf.set(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, "10240");
     cConf.set(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, "5120");
-    cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS, "300");
-    cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS, "600");
+    cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS, "100");
+    cConf.set(LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS, "2");
     cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
 
     Configuration conf = HBaseConfiguration.create();
@@ -345,7 +345,12 @@ public class LogSaverTest extends KafkaTestBase {
         for (int j = 0; j < 6; ++j) {
           for (int i = 0; i < 10; ++i) {
             logger.warn("Test log message " + (10 * j + i) + " {} {}", "arg1", "arg2", e2);
-            TimeUnit.MILLISECONDS.sleep(1);
+            if (j == 0 && (i <= 3)) {
+              // For some events introduce the sleep of more than 8 seconds for windowing to take effect
+              TimeUnit.MILLISECONDS.sleep(300);
+            } else {
+              TimeUnit.MILLISECONDS.sleep(1);
+            }
           }
           TimeUnit.MILLISECONDS.sleep(1200);
         }

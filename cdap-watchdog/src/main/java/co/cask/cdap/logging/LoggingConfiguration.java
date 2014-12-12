@@ -37,7 +37,7 @@ public final class LoggingConfiguration {
   public static final String NUM_PARTITIONS = "log.publish.num.partitions";
   public static final String KAFKA_SEED_BROKERS = "kafka.seed.brokers";
   public static final String LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = "log.saver.event.bucket.interval.ms";
-  public static final String LOG_SAVER_EVENT_PROCESSING_DELAY_MS = "log.saver.event.processing.delay.ms";
+  public static final String LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = "log.saver.event.max.inmemory.buckets";
   public static final String LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = "log.saver.inactive.file.interval.ms";
   public static final String LOG_SAVER_CHECKPOINT_INTERVAL_MS = "log.saver.checkpoint.interval.ms";
   public static final String LOG_SAVER_TOPIC_WAIT_SLEEP_MS = "log.saver.topic.wait.sleep.ms";
@@ -57,8 +57,8 @@ public final class LoggingConfiguration {
   public static final String DEFAULT_NUM_PARTITIONS = "10";
   public static final int DEFAULT_LOG_CLEANUP_RUN_INTERVAL_MINS = 24 * 60;
 
-  public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 4 * 1000;
-  public static final long DEFAULT_LOG_SAVER_EVENT_PROCESSING_DELAY_MS = 8 * 1000;
+  public static final long DEFAULT_LOG_SAVER_EVENT_BUCKET_INTERVAL_MS = 1 * 1000;
+  public static final long DEFAULT_LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS = 8;
   public static final long DEFAULT_LOG_SAVER_INACTIVE_FILE_INTERVAL_MS = 60 * 60 * 1000;
   public static final long DEFAULT_LOG_SAVER_CHECKPOINT_INTERVAL_MS = 60 * 1000;
   public static final long DEFAULT_LOG_RETENTION_DURATION_DAYS = 30;
