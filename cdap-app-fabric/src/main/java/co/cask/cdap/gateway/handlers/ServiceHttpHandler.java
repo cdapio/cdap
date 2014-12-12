@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.util.ProgramHelper;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
@@ -60,13 +61,15 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final Store store;
   private final ProgramRuntimeService runtimeService;
+  private final ProgramHelper programHelper;
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                            ProgramRuntimeService runtimeService) {
+                            ProgramRuntimeService runtimeService, ProgramHelper programHelper) {
     super(authenticator);
     this.store = storeFactory.create();
     this.runtimeService = runtimeService;
+    this.programHelper = programHelper;
   }
 
   /**
@@ -75,7 +78,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.SERVICE, null, store);
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.SERVICE,
+                              null, store);
   }
 
   /**
@@ -84,7 +88,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/services")
   @GET
   public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
-    programList(request, responder, ProgramType.SERVICE, appId, store);
+    programHelper.programList(responder, getAuthenticatedAccountId(request), ProgramType.SERVICE,
+                              appId, store);
   }
 
   /**
@@ -169,10 +174,11 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
           store.setServiceWorkerInstances(programId, runnableName, instances);
         }
 
-        ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId.getAccountId(),
-                                                                        programId.getApplicationId(),
-                                                                        programId.getId(),
-                                                                        ProgramType.SERVICE, runtimeService);
+        ProgramRuntimeService.RuntimeInfo runtimeInfo = programHelper.findRuntimeInfo(programId.getAccountId(),
+                                                                                      programId.getApplicationId(),
+                                                                                      programId.getId(),
+                                                                                      ProgramType.SERVICE,
+                                                                                      runtimeService);
         if (runtimeInfo != null) {
           runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                               ImmutableMap.of("runnable", runnableName,
@@ -184,7 +190,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable throwable) {
-      if (respondIfElementNotFound(throwable, responder)) {
+      if (programHelper.respondIfElementNotFound(throwable, responder)) {
         return;
       }
       LOG.error("Got exception : ", throwable);
@@ -197,7 +203,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceLiveInfo(HttpRequest request, HttpResponder responder,
                               @PathParam("app-id") String appId,
                               @PathParam("service-id") String serviceId) {
-    getLiveInfo(request, responder, appId, serviceId, ProgramType.SERVICE, runtimeService);
+    programHelper.getLiveInfo(responder, getAuthenticatedAccountId(request), appId, serviceId,
+                              ProgramType.SERVICE, runtimeService);
   }
 
   @Nullable
