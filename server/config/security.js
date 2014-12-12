@@ -3,15 +3,15 @@
 
 module.exports = {
   ping: function () {
-    return parser.extractConfig('security').then(function (config) {
-      return (new Security(config)).doPing();
-    });
+    return require('./parser.js').extractConfig('cdap')
+      .then(function (cdapConfig) {
+        return (new Security()).doPing(cdapConfig);
+      });
   }
 };
 
 
-var parser = require('./parser.js'),
-    request = require('request'),
+var request = require('request'),
     promise = require('q');
 
 
@@ -20,15 +20,9 @@ var PING_INTERVAL = 1000,
     PING_PATH = '/v2/ping';
 
 
-function Security (config) {
-  this.config = config || {};
+function Security (cdapConfig) {
   this.enabled = false;
   this.authServerAddresses = [];
-
-  if (config['dashboard.ssl.disable.cert.check'] === 'true') {
-    // For self signed certs: see https://github.com/mikeal/request/issues/418
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  }
 };
 
 
@@ -36,16 +30,16 @@ function Security (config) {
  * Ping the backend to figure out if auth is enabled.
  * @return {Promise} resolved with Security instance.
  */
-Security.prototype.doPing = function () {
+Security.prototype.doPing = function (cdapConfig) {
   var self = this,
       deferred = promise.defer(),
       attempts = 0,
-      url = this.config['router.server.address'];
+      url = cdapConfig['router.server.address'];
 
-  if (this.config['ssl.enabled'] === "true") {
-    url = 'https://' + url + ':' + this.config['router.ssl.server.port'];
+  if (cdapConfig['ssl.enabled'] === "true") {
+    url = 'https://' + url + ':' + cdapConfig['router.ssl.server.port'];
   } else {
-    url = 'http://' + url + ':' + this.config['router.bind.port'];
+    url = 'http://' + url + ':' + cdapConfig['router.bind.port'];
   }
   url += PING_PATH;
 

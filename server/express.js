@@ -2,14 +2,15 @@
 
 module.exports = {
   getApp: function () {
-    return security.ping().then(function (s) {
-      return makeApp(s);
-    });
+    return require('q').all([
+        require('./config/security.js').ping(),
+        require('./config/parser.js').extractConfig('cdap')
+      ])
+      .spread(makeApp);
   }
 };
 
 var pkg = require('../package.json'),
-    security = require('./config/security.js'),
     morgan = require('morgan'),
     express = require('express'),
     finalhandler = require('finalhandler'),
@@ -31,7 +32,7 @@ morgan.token('ms', function (req, res){
 var httpStaticLogger = morgan(colors.green('http')+' :method :url :ms :status');
 var httpIndexLogger = morgan(colors.inverse('http')+' :method :url :ms :status');
 
-function makeApp (s) {
+function makeApp (security, cdapConfig) {
 
   var app = express();
   console.log(colors.underline(pkg.name) + ' v' + pkg.version + ' starting up...');
@@ -50,10 +51,10 @@ function makeApp (s) {
 
       authorization: req.headers.authorization,
       cdap: {
-        routerServerUrl: s.config['router.server.address'],
-        routerServerPort: s.config['router.server.port']
+        routerServerUrl: cdapConfig['router.server.address'],
+        routerServerPort: cdapConfig['router.server.port']
       },
-      securityEnabled: s.enabled
+      securityEnabled: security.enabled
     });
 
     res.header({
@@ -71,7 +72,7 @@ function makeApp (s) {
       res.status(400).send('Please specify username/password');
     }
     request({
-        url: s.getAuthServerAddress(),
+        url: security.getAuthServerAddress(),
         auth: {
           user: req.body.username,
           password: req.body.password
