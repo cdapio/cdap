@@ -50,5 +50,9 @@
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>
     </dependency>
+    <dependency>
+      <groupId>co.cask.common</groupId>
+      <artifactId>common-http</artifactId>
+    </dependency>
   </dependencies>
 </project>

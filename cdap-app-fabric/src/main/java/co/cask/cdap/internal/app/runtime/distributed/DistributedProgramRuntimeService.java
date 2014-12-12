@@ -399,7 +399,20 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       if (rmID != null) {
         setting += "." + rmID;
       }
-      String addrStr = "http://" + hConf.get(setting) + RM_CLUSTER_METRICS_PATH;
+      String addrStr = hConf.get(setting);
+      // in HA mode, you can either set yarn.resourcemanager.hostname.<rm-id>,
+      // or you can set yarn.resourcemanager.webapp.address.<rm-id>. In non-HA mode, the webapp address
+      // is populated based on the resourcemanager hostname, but this is not the case in HA mode.
+      // Therefore, if the webapp address is null, check for the resourcemanager hostname to derive the webapp address.
+      if (addrStr == null) {
+        // this setting is not a constant for some reason...
+        setting = YarnConfiguration.RM_PREFIX + "hostname";
+        if (rmID != null) {
+          setting += "." + rmID;
+        }
+        addrStr = hConf.get(setting) + ":" + YarnConfiguration.DEFAULT_RM_WEBAPP_PORT;
+      }
+      addrStr = "http://" + addrStr + RM_CLUSTER_METRICS_PATH;
       LOG.trace("Adding {} as a rm address.", addrStr);
       return new URL(addrStr);
     }
@@ -411,19 +424,16 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         if (metricContext == null) {
           continue;
         }
-        int containers = 0;
-        int memory = 0;
-        int vcores = 0;
+
         // will have multiple controllers if there are multiple runs of the same application
         for (TwillController controller : info.getControllers()) {
           ResourceReport report = controller.getResourceReport();
           if (report == null) {
             continue;
           }
-          containers++;
-          memory += report.getAppMasterResources().getMemoryMB();
-          vcores += report.getAppMasterResources().getVirtualCores();
-          sendMetrics(metricContext, containers, memory, vcores, controller.getRunId().getId());
+          int memory = report.getAppMasterResources().getMemoryMB();
+          int vcores = report.getAppMasterResources().getVirtualCores();
+          sendMetrics(metricContext, 1, memory, vcores, controller.getRunId().getId());
         }
       }
       reportClusterStorage();
@@ -466,8 +476,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
           long availableMemory = clusterMetrics.get("availableMB").getAsLong();
           MetricsCollector collector = getCollector(CLUSTER_METRICS_CONTEXT);
           LOG.trace("resource manager, total memory = " + totalMemory + " available = " + availableMemory);
-          collector.increment("resources.total.memory", (int) totalMemory);
-          collector.increment("resources.available.memory", (int) availableMemory);
+          collector.gauge("resources.total.memory", totalMemory);
+          collector.gauge("resources.available.memory", availableMemory);
           return true;
         }
         return false;
@@ -508,13 +518,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
         long storageAvailable = hdfsStatus.getRemaining();
 
         MetricsCollector collector = getCollector(CLUSTER_METRICS_CONTEXT);
-        // TODO: metrics should support longs
         LOG.trace("total cluster storage = " + storageCapacity + " total used = " + totalUsed);
-        collector.increment("resources.total.storage", (int) (storageCapacity / 1024 / 1024));
-        collector.increment("resources.available.storage", (int) (storageAvailable / 1024 / 1024));
-        collector.increment("resources.used.storage", (int) (totalUsed / 1024 / 1024));
-        collector.increment("resources.used.files", (int) totalFiles);
-        collector.increment("resources.used.directories", (int) totalDirectories);
+        collector.gauge("resources.total.storage", (storageCapacity / 1024 / 1024));
+        collector.gauge("resources.available.storage", (storageAvailable / 1024 / 1024));
+        collector.gauge("resources.used.storage", (totalUsed / 1024 / 1024));
+        collector.gauge("resources.used.files", totalFiles);
+        collector.gauge("resources.used.directories", totalDirectories);
       } catch (IOException e) {
         LOG.warn("Exception getting hdfs metrics", e);
       }

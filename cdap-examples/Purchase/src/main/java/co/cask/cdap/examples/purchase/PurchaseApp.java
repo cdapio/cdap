@@ -41,6 +41,9 @@ public class PurchaseApp extends AbstractApplication {
     // Store processed data in a Dataset
     createDataset("frequentCustomers", KeyValueTable.class);
 
+    // Store user profiles in a Dataset
+    createDataset("userProfiles", KeyValueTable.class);
+
     // Process events in realtime using a Flow
     addFlow(new PurchaseFlow());
 
@@ -49,6 +52,9 @@ public class PurchaseApp extends AbstractApplication {
 
     // Retrieve the processed data using a Service
     addService(new PurchaseHistoryService());
+
+    // Store and retrieve user profile data using a Service
+    addService(UserProfileServiceHandler.SERVICE_NAME, new UserProfileServiceHandler());
 
     // Provide a Service to Application components
     addService(new CatalogLookupService());

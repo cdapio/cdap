@@ -22,15 +22,21 @@ and write to another.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
-    included in the example's ``/bin`` directory, or using the CDAP Console.
+    included in the example's ``/bin`` directory, or by using the CDAP Console.
   - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input String into a
     Purchase object and stores the object in the *purchases* Dataset.
+  - User profile information for the user can be added by using ``curl`` calls (or another method) which are
+    then stored in the *userProfiles* Dataset.
   - The ``CatalogLookupService`` fetches the catalog id for a given product. The CatalogLookupService
     is called from the PurchaseStore Flowlet. The host and port of the CatalogLookupService is discovered
     using the Service discovery framework.
+  - The ``UserProfileService`` is responsible for storing and retrieving the user information
+    for a given user id from the *userProfiles* Dataset. The host and port of the ``UserProfileService`` is
+    discovered using the Service discovery framework.
   - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
-    job reads the *purchases* Dataset, creates a purchase history, and stores the purchase
-    history in the *history* Dataset every morning at 4:00 A.M.
+    job reads the *purchases* Dataset. It fetches the user profile information, if it is available, from
+    the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
+    *history* Dataset every morning at 4:00 A.M.
   - You can either manually (in the Process screen of the CDAP Console) or 
     programmatically execute the ``PurchaseHistoryBuilder`` MapReduce job to store 
     customers' purchase history in the *history* Dataset.
@@ -78,6 +84,20 @@ implements the ``RecordScannable`` interface to allow SQL queries over the Datas
 
 This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer.
 
+
+``UserProfileService``: Service
+------------------------------------------------
+
+This service has two endpoints:
+
+``user`` endpoint to add a user's profile information to the system::
+
+  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
+    "{'id':'alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
+
+``user/{id}`` endpoint to obtain profile information for a specified user::
+
+  ./bin/cdap-cli.sh call service PurchaseHistory.UserProfileService GET user/alice
 
 Building and Starting
 =================================
@@ -227,7 +247,7 @@ For your convenience, the SDK includes a script, ``bin/cdap-cli.sh``, that can e
 
 From within the SDK root directory::
 
-  ./bin/cdap-cli.sh execute "SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')"
+  ./bin/cdap-cli.sh execute "\"SELECT * FROM cdap_user_history WHERE customer IN ('Alice','Bob')\""
   
 (On Windows, use ``bin\cdap-cli.bat ...``)
 
@@ -239,6 +259,12 @@ reformatted to fit)::
   +========================================================================================+
   | cdap_user_history.customer: STRING | cdap_user_history.purchases:                      |
   |                                    |   array<struct<customer:string,                   |
+  |                                    |                userProfile:<struct<               |
+  |                                    |                          id:string,               |
+  |                                    |                          firstName:string,        |
+  |                                    |                          lastName:string,         |
+  |                                    |                          categories:array<string> |
+  |                                    |                          >> optional,
   |                                    |                product:string,                    |
   |                                    |                quantity:int,                      |
   |                                    |                price:int,                         |
@@ -246,12 +272,28 @@ reformatted to fit)::
   |                                    |                catalogid:string>>                 |
   +========================================================================================+
   | Alice                              | [{"customer":"Alice",                             |
+  |                                    |                "userProfile":{                    |
+  |                                    |                    "id":"alice",                  |
+  |                                    |                    "firstName":"Alice",           |
+  |                                    |                    "lastName":"Bernard",          |
+  |                                    |                    "categories":[                 |
+  |                                    |                          "fruits"                 |
+  |                                    |                          ]                        |
+  |                                    |                },                                 |
   |                                    |                "product":"coconut",               |
   |                                    |                "quantity":2,                      |
   |                                    |                "price":5,                         |
   |                                    |                "purchasetime":1415237567039,      |
   |                                    |                "catalogid":"Catalog-coconut"},    |
   |                                    |  {"customer":"Alice",                             |
+  |                                    |                "userProfile":{                    |
+  |                                    |                    "id":"alice",                  |
+  |                                    |                    "firstName":"Alice",           |
+  |                                    |                    "lastName":"Bernard",          |
+  |                                    |                    "categories":[                 |
+  |                                    |                          "fruits"                 |
+  |                                    |                          ]                        |
+  |                                    |                },                                 |
   |                                    |                "product":"grapefruit",            |
   |                                    |                "quantity":12,                     |
   |                                    |                "price":10,                        |
