@@ -118,7 +118,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
   private final Configuration hConf;
   private final HiveConf hiveConf;
   private final TransactionSystemClient txClient;
-  private final boolean writesEnabled;
 
   // Handles that are running, or not yet completely fetched, they have longer timeout
   private final Cache<QueryHandle, OperationInfo> activeHandleCache;
@@ -151,7 +150,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.metastoreClientLocal = new ThreadLocal<Supplier<IMetaStoreClient>>();
     this.metastoreClientReferences = Maps.newConcurrentMap();
     this.metastoreClientReferenceQueue = new ReferenceQueue<Supplier<IMetaStoreClient>>();
-    this.writesEnabled = getWritesEnabled(cConf);
 
     // Create a Timer thread to periodically collect metastore clients that are no longer in used and call close on them
     this.metastoreClientsExecutorService =
@@ -180,10 +178,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     LOG.info("Active handle timeout = {} secs", cConf.getLong(Constants.Explore.ACTIVE_OPERATION_TIMEOUT_SECS));
     LOG.info("Inactive handle timeout = {} secs", cConf.getLong(Constants.Explore.INACTIVE_OPERATION_TIMEOUT_SECS));
     LOG.info("Cleanup job schedule = {} secs", cleanupJobSchedule);
-  }
-
-  protected boolean getWritesEnabled(CConfiguration cConf) {
-    return cConf.getBoolean(Constants.Explore.WRITES_ENABLED);
   }
 
   protected HiveConf getHiveConf() {
