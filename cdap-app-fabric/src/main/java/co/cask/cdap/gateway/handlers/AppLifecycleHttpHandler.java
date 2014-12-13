@@ -419,10 +419,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
     Preconditions.checkArgument(!namespace.isEmpty(), "Namespace should not be empty.");
     if (store.getNamespace(Id.Namespace.from(namespace)) == null) {
-      if (DEFAULT_NAMESPACE.equals(namespace)) {
-        NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder().setName(DEFAULT_NAMESPACE)
-                                                         .setDisplayName(DEFAULT_NAMESPACE)
-                                                         .setDescription(DEFAULT_NAMESPACE).build());
+      if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
+        NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE)
+                                                         .setDisplayName(Constants.DEFAULT_NAMESPACE)
+                                                         .setDescription(Constants.DEFAULT_NAMESPACE).build());
         if (existing != null) {
           LOG.trace("Default namespace already exists.");
         } else {

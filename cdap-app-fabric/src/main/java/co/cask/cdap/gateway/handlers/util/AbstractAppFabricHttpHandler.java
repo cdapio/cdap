@@ -69,8 +69,6 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
 
   protected static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  protected static final String DEFAULT_NAMESPACE = "default";
-
   /**
    * Class to represent status of programs.
    */
