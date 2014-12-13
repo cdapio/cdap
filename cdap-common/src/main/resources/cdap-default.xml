@@ -885,6 +885,12 @@
     <property>
         <name>explore.enabled</name>
         <value>false</value>
+        <description>Whether ad-hoc SQL queries are enabled</description>
+    </property>
+    <property>
+        <name>explore.writes.enabled</name>
+        <value>true</value>
+        <description>Whether writing to a table through ad-hoc SQL queries is enabled</description>
     </property>
     <property>
         <name>explore.start.on.demand</name>
