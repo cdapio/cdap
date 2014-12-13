@@ -26,6 +26,8 @@
 # Builds each of these individually, and then packages them into a single zip file for distribution.
 # _common directory holds common files and scripts.
 
+source _common/common-build.sh
+
 API="cdap-api"
 BUILD="build"
 BUILD_TEMP="build-temp"
@@ -127,7 +129,7 @@ function copy_source() {
   echo "Copying source for $1..."
   cd $SCRIPT_PATH
   mkdir -p $SCRIPT_PATH/$BUILD/$SOURCE/$1
-  cp -r $COMMON_PLACEHOLDER $BUILD/$SOURCE/$1/index.rst
+  rewrite $COMMON_PLACEHOLDER $BUILD/$SOURCE/$1/index.rst "<placeholder>" $1
   echo ""
 }
 
