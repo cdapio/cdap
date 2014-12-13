@@ -36,6 +36,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.StringUtils;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.data.Namespace;
@@ -1359,6 +1360,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+    rewriteRequest(request);
     try {
       return appLifecycleHttpHandler.deployAppStream(request, responder, Constants.DEFAULT_NAMESPACE, appId);
     } catch (Exception ex) {
@@ -1375,6 +1377,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder) {
     // null means use name provided by app spec
+    rewriteRequest(request);
     try {
       return appLifecycleHttpHandler.deployAppStream(request, responder, Constants.DEFAULT_NAMESPACE, null);
     } catch (Exception ex) {
@@ -1632,6 +1635,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/deploy/status")
   public void getDeployStatus(HttpRequest request, HttpResponder responder) {
+    rewriteRequest(request);
     appLifecycleHttpHandler.getDeployStatus(responder, Constants.DEFAULT_NAMESPACE);
   }
 
@@ -1797,6 +1801,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("app-id") final String appId) {
+    rewriteRequest(request);
     try {
       Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, "");
       AppFabricServiceStatus appStatus = appLifecycleHttpHandler.removeApplication(id);
@@ -1816,6 +1821,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder) {
+    rewriteRequest(request);
     try {
       Id.Account id = Id.Account.from(Constants.DEFAULT_NAMESPACE);
       AppFabricServiceStatus status = appLifecycleHttpHandler.removeAll(id);
@@ -2076,6 +2082,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder) {
+    rewriteRequest(request);
     appLifecycleHttpHandler.getAppDetails(responder, Constants.DEFAULT_NAMESPACE, null);
   }
 
@@ -2086,6 +2093,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") final String appId) {
+    rewriteRequest(request);
     appLifecycleHttpHandler.getAppDetails(responder, Constants.DEFAULT_NAMESPACE, appId);
   }
 
@@ -2724,5 +2732,16 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     public void setStatus(String status) {
       this.status = status;
     }
+  }
+
+  /**
+   * Updates the request URI to its v3 URI before forwarding (or even when delegating the handler method to a method in
+   * a v3 handler)
+   *
+   * @param request the original {@link HttpRequest}
+   */
+  private void rewriteRequest(HttpRequest request) {
+    String originalUri = request.getUri();
+    request.setUri(originalUri.replaceFirst("/v2", "/v3/" + Constants.DEFAULT_NAMESPACE));
   }
 }
