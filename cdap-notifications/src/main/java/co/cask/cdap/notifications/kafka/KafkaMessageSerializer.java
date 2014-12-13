@@ -21,6 +21,7 @@ import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.common.io.ByteBufferInputStream;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,14 +45,19 @@ public class KafkaMessageSerializer {
     return outputStream.toByteArray();
   }
 
-  public static <N> N decode(NotificationFeed feed, ByteBuffer byteBuffer, Type notificationType)
+  public static String decodeMessageKey(ByteBuffer byteBuffer) throws IOException {
+    BinaryDecoder decoder = new BinaryDecoder(new ByteBufferInputStream(byteBuffer));
+    return decoder.readString();
+  }
+
+  public static <N> N decode(ByteBuffer byteBuffer, Type notificationType)
     throws IOException {
     BinaryDecoder decoder = new BinaryDecoder(new ByteBufferInputStream(byteBuffer));
-    String msgKey = decoder.readString();
-    if (!msgKey.equals(buildKafkaMessageKey(feed))) {
+    try {
+      return GSON.fromJson(decoder.readString(), notificationType);
+    } catch (JsonSyntaxException e) {
       return null;
     }
-    return GSON.fromJson(decoder.readString(), notificationType);
   }
 
   public static String buildKafkaMessageKey(NotificationFeed feed) {

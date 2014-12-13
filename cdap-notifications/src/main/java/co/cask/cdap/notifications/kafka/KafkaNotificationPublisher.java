@@ -42,7 +42,6 @@ import java.util.concurrent.Executors;
 /**
  * Kafka implementation of a {@link co.cask.cdap.notifications.NotificationSubscriber}.
  */
-// TODO worry about thread safety
 public class KafkaNotificationPublisher implements NotificationPublisher {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaNotificationPublisher.class);
 
@@ -56,8 +55,6 @@ public class KafkaNotificationPublisher implements NotificationPublisher {
   public KafkaNotificationPublisher(KafkaClient kafkaClient, NotificationFeedClient notificationFeedClient) {
     this.kafkaClient = kafkaClient;
     this.notificationFeedClient = notificationFeedClient;
-
-    // TODO think about that ack
     this.ack = KafkaPublisher.Ack.LEADER_RECEIVED;
   }
 
@@ -87,23 +84,26 @@ public class KafkaNotificationPublisher implements NotificationPublisher {
     // And the resource owner should have created the feed first hand.
     notificationFeedClient.getFeed(feed);
 
+    String topic = KafkaNotificationUtils.getKafkaTopic(feed);
+    final KafkaPublisher.Preparer preparer = kafkaPublisher.prepare(topic);
+
     return new Sender<N>() {
 
       private final ExecutorService executor = Executors.newSingleThreadExecutor(
         Threads.createDaemonThreadFactory("notification-sender-%d"));
 
       @Override
-      public void shutdown() {
+      public synchronized void shutdown() {
         executor.shutdown();
       }
 
       @Override
-      public boolean isShutdown() {
+      public synchronized boolean isShutdown() {
         return executor.isShutdown();
       }
 
       @Override
-      public List<N> shutdownNow() {
+      public synchronized List<N> shutdownNow() {
         List<Runnable> runnables = executor.shutdownNow();
         ImmutableList.Builder<N> builder = ImmutableList.builder();
         for (Runnable r : runnables) {
@@ -115,7 +115,7 @@ public class KafkaNotificationPublisher implements NotificationPublisher {
       }
 
       @Override
-      public ListenableFuture<Void> send(N notification) throws IOException, SenderShutdownException {
+      public synchronized ListenableFuture<Void> send(N notification) throws IOException, SenderShutdownException {
         if (isShutdown()) {
           LOG.warn("Cannot publish notification, sender is shut down.");
           throw new SenderShutdownException("Tried to publish notification " + notification + " after shut down.");
@@ -124,8 +124,6 @@ public class KafkaNotificationPublisher implements NotificationPublisher {
         LOG.debug("Publishing on notification feed [{}]: {}", feed, notification);
 
         ByteBuffer bb = ByteBuffer.wrap(KafkaMessageSerializer.encode(feed, notification));
-        String topic = KafkaNotificationUtils.getKafkaTopic(feed);
-        KafkaPublisher.Preparer preparer = kafkaPublisher.prepare(topic);
         preparer.add(bb, KafkaMessageSerializer.buildKafkaMessageKey(feed));
 
         final ListenableFuture<Integer> future = preparer.send();

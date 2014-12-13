@@ -35,7 +35,6 @@ public interface NotificationFeedManager {
    */
   boolean createFeed(NotificationFeed feed) throws NotificationFeedException;
 
-
   /**
    * Deletes the {@code feed} from the manager store. To determine if the feed exists,
    * the {@link NotificationFeed#getId} method is used.

@@ -22,7 +22,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Store for {@link NotificationFeed} objects.
  */
 public interface NotificationFeedStore {
 

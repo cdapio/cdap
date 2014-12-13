@@ -46,6 +46,7 @@ import co.cask.tephra.TransactionManager;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -61,6 +62,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -68,7 +71,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class NotificationTest {
   private static final Logger LOG = LoggerFactory.getLogger(NotificationTest.class);
 
-  private static NotificationFeedClient feedClient;
+  protected static NotificationFeedClient feedClient;
   private static DatasetFramework dsFramework;
 
   private static TransactionManager txManager;
@@ -78,11 +81,16 @@ public abstract class NotificationTest {
   private static Provider<NotificationPublisher> publisherProvider;
   private static Provider<NotificationSubscriber> subscriberProvider;
 
-  protected NotificationPublisher getNewPublisher() {
+  protected static final NotificationFeed FEED1 = new NotificationFeed.Builder()
+    .setNamespace("namespace").setCategory("stream").setName("foo").setDescription("").build();
+  protected static final NotificationFeed FEED2 = new NotificationFeed.Builder()
+    .setNamespace("namespace").setCategory("stream").setName("bar").setDescription("").build();
+
+  protected static NotificationPublisher getNewPublisher() {
     return publisherProvider.get();
   }
 
-  protected NotificationSubscriber getNewSubscriber() {
+  protected static NotificationSubscriber getNewSubscriber() {
     return subscriberProvider.get();
   }
 
@@ -143,15 +151,40 @@ public abstract class NotificationTest {
   public void onePublisherOneSubscriberTest() throws Exception {
     final int messagesCount = 20;
 
-    NotificationFeed feed = new NotificationFeed.Builder()
-      .setNamespace("namespace").setCategory("stream").setName("foo").setDescription("").build();
-    Assert.assertTrue(feedClient.createFeed(feed));
+    Assert.assertTrue(feedClient.createFeed(FEED1));
     try {
       NotificationPublisher publisher = getNewPublisher();
-
-      final NotificationPublisher.Sender<String> sender = publisher.createSender(feed, String.class);
+      final NotificationPublisher.Sender<String> sender = publisher.createSender(FEED1, String.class);
 
       try {
+        // Create a subscribing process
+        NotificationSubscriber subscriber = getNewSubscriber();
+        NotificationSubscriber.Preparer preparer = subscriber.prepare();
+
+        final AtomicInteger receiveCount = new AtomicInteger(0);
+        final AtomicBoolean assertionOk = new AtomicBoolean(true);
+
+        preparer.add(FEED1, new NotificationHandler<String>() {
+          @Override
+          public Type getNotificationFeedType() {
+            return String.class;
+          }
+
+          @Override
+          public void processNotification(String notification, NotificationContext notificationContext) {
+            LOG.debug("Received notification payload: {}", notification);
+            try {
+              Assert.assertEquals("fake-payload-" + receiveCount.get(), notification);
+              receiveCount.incrementAndGet();
+            } catch (Throwable t) {
+              assertionOk.set(false);
+              Throwables.propagate(t);
+            }
+          }
+        });
+
+        Cancellable cancellable = preparer.consume();
+
         // Runnable to publish notifications on behalf of the publisher entity
         Runnable publisherRunnable = new Runnable() {
           @Override
@@ -168,33 +201,8 @@ public abstract class NotificationTest {
         };
         Thread publisherThread = new Thread(publisherRunnable);
 
-        // Create a subscribing process
-        NotificationSubscriber subscriber = getNewSubscriber();
-        NotificationSubscriber.Preparer preparer = subscriber.prepare();
-
-        final AtomicInteger receiveCount = new AtomicInteger(0);
-        final AtomicBoolean assertionOk = new AtomicBoolean(true);
-
-        preparer.add(feed, new NotificationHandler<String>() {
-          @Override
-          public Type getNotificationFeedType() {
-            return String.class;
-          }
-
-          @Override
-          public void processNotification(String notification, NotificationContext notificationContext) {
-            LOG.debug("Received notification payload: {}", notification);
-            try {
-              Assert.assertEquals("fake-payload-" + receiveCount.get(), notification);
-              receiveCount.incrementAndGet();
-            } catch (Throwable t) {
-              assertionOk.set(false);
-            }
-          }
-        });
-
-        Cancellable cancellable = preparer.consume();
-
+        // Give the subscriber some time to prepare for published messages before starting the publisher
+        TimeUnit.MILLISECONDS.sleep(500);
         publisherThread.start();
         publisherThread.join();
         TimeUnit.MILLISECONDS.sleep(2000);
@@ -212,9 +220,9 @@ public abstract class NotificationTest {
         }
       }
     } finally {
-      feedClient.deleteFeed(feed);
+      feedClient.deleteFeed(FEED1);
       try {
-        feedClient.getFeed(feed);
+        feedClient.getFeed(FEED1);
         Assert.fail("Should throw NotificationFeedNotFoundException.");
       } catch (NotificationFeedNotFoundException e) {
         // Expected
@@ -224,14 +232,11 @@ public abstract class NotificationTest {
 
   @Test
   public void feedNotCreatedTest() throws Exception {
-    NotificationFeed feed = new NotificationFeed.Builder()
-      .setNamespace("namespace").setCategory("stream").setName("foo").setDescription("").build();
-
     try {
       // Try subscribing to a feed before creating it
       NotificationSubscriber subscriber = getNewSubscriber();
       NotificationSubscriber.Preparer preparer = subscriber.prepare();
-      preparer.add(feed, new NotificationHandler<String>() {
+      preparer.add(FEED1, new NotificationHandler<String>() {
         @Override
         public Type getNotificationFeedType() {
           return String.class;
@@ -250,7 +255,7 @@ public abstract class NotificationTest {
     try {
       // Try publishing to a feed before creating it
       NotificationPublisher publisher = getNewPublisher();
-      publisher.createSender(feed, String.class);
+      publisher.createSender(FEED1, String.class);
       Assert.fail("Should throw NotificationFeedNotFoundException.");
     } catch (NotificationFeedNotFoundException e) {
       // Expected
@@ -263,14 +268,13 @@ public abstract class NotificationTest {
     // keyValueTable is a system dataset module
     dsFramework.addInstance("keyValueTable", "myTable", DatasetProperties.EMPTY);
 
-    NotificationFeed feed = new NotificationFeed.Builder()
-      .setNamespace("namespace").setCategory("stream").setName("foo").setDescription("").build();
-
-    Assert.assertTrue(feedClient.createFeed(feed));
+    Assert.assertTrue(feedClient.createFeed(FEED1));
     try {
       NotificationSubscriber subscriber = getNewSubscriber();
       NotificationSubscriber.Preparer preparer = subscriber.prepare();
-      preparer.add(feed, new NotificationHandler<String>() {
+      preparer.add(FEED1, new NotificationHandler<String>() {
+        private int received = 0;
+
         @Override
         public Type getNotificationFeedType() {
           return String.class;
@@ -282,14 +286,14 @@ public abstract class NotificationTest {
             @Override
             public void run(DatasetContext context) throws Exception {
               KeyValueTable table = context.getDataset("myTable");
-              table.write("foo", notification);
+              table.write("foo", String.format("%s-%d", notification, received++));
             }
           }, TxRetryPolicy.dropAfter(5));
         }
       });
       Cancellable cancellable = preparer.consume();
 
-      NotificationPublisher.Sender<String> sender = getNewPublisher().createSender(feed, String.class);
+      NotificationPublisher.Sender<String> sender = getNewPublisher().createSender(FEED1, String.class);
       try {
         sender.send("foobar");
         // Waiting for the subscriber to receive that notification
@@ -299,7 +303,7 @@ public abstract class NotificationTest {
         Assert.assertNotNull(table);
         Transaction tx1 = txManager.startShort(100);
         table.startTx(tx1);
-        Assert.assertEquals("foobar", Bytes.toString(table.read("foo")));
+        Assert.assertEquals("foobar-0", Bytes.toString(table.read("foo")));
         Assert.assertTrue(table.commitTx());
         txManager.canCommit(tx1, table.getTxChanges());
         txManager.commit(tx1);
@@ -310,69 +314,395 @@ public abstract class NotificationTest {
       }
     } finally {
       dsFramework.deleteInstance("myTable");
-      feedClient.deleteFeed(feed);
+      feedClient.deleteFeed(FEED1);
     }
   }
 
-  // TODO other tests: one publisher multiple subscribers
-  // mutliple publishers one subscriber for all feeds, and for only one of the feeds (making sure not
-  // everybody receives everything)
+  @Test
+  public void onePublisherMultipleSubscribersTest() throws Exception {
+    final int messagesCount = 20;
+    int subscribersCount = 10;
 
-//  @Test
-//  public void onePublisherMultipleSubscribers() throws Exception {
-//    final int messagesCount = 5;
-//    int subscribersCount = 1;
-//    final Publisher publisher = new Publisher(ActorType.QUERY, "fake-query-handle-2");
-//    Runnable publisherRunnable = new Runnable() {
-//      @Override
-//      public void run() {
-//        try {
-//          for (int i = 0; i < messagesCount; i++) {
-//            getNotificationPublisher().publish(publisher,
-//                                               new Notification(0, String.format("fake-payload-%d", i).getBytes()));
-//            TimeUnit.MILLISECONDS.sleep(100);
-//          }
-//        } catch (Throwable e) {
-//          Throwables.propagate(e);
-//        }
-//      }
-//    };
-//    Thread publisherThread = new Thread(publisherRunnable);
-//    publisherThread.start();
-//
-//    final int[] receiveCounts = new int[subscribersCount];
-//    final AtomicBoolean assertionOk = new AtomicBoolean(true);
-//    List<NotificationSubscriber> notificationSubscribers = Lists.newArrayList();
-//    for (int i = 0; i < subscribersCount; i++) {
-//      final int j = i;
-//      final Subscriber subscriber = new Subscriber(ActorType.DATASET, "fake-dataset-" + i);
-//      NotificationSubscriber notificationSubscriber = getNotificationSubscriber(subscriber);
-//      notificationSubscribers.add(notificationSubscriber);
-//
-//      notificationSubscriber.subscribe(publisher, new NotificationHandler() {
-//        @Override
-//        public void handle(Notification notification) {
-//          String payloadStr = Bytes.toString(notification.getPayload());
-//          LOG.debug("Received notification for subscriberID {}, payload: {}", subscriber, payloadStr);
-//          try {
-//            Assert.assertEquals(String.format("fake-payload-%d", receiveCounts[j]), payloadStr);
-//            receiveCounts[j]++;
-//          } catch (Throwable t) {
-//            assertionOk.set(false);
-//          }
-//        }
-//      });
-//    }
-//
-//    publisherThread.join();
-//    TimeUnit.MILLISECONDS.sleep(2000);
-//    for (NotificationSubscriber notificationSubscriber : notificationSubscribers) {
-//      Closeables.closeQuietly(notificationSubscriber);
-//    }
-//
-//    Assert.assertTrue(assertionOk.get());
-//    for (int i : receiveCounts) {
-//      Assert.assertEquals(messagesCount, i);
-//    }
-//  }
+    Assert.assertTrue(feedClient.createFeed(FEED1));
+    try {
+      NotificationPublisher publisher = getNewPublisher();
+      final NotificationPublisher.Sender<String> sender = publisher.createSender(FEED1, String.class);
+      Runnable publisherRunnable = new Runnable() {
+        @Override
+        public void run() {
+          try {
+            for (int i = 0; i < messagesCount; i++) {
+              sender.send(String.format("fake-payload-%d", i));
+              TimeUnit.MILLISECONDS.sleep(100);
+            }
+          } catch (Throwable e) {
+            Throwables.propagate(e);
+          } finally {
+            sender.shutdownNow();
+          }
+        }
+      };
+      Thread publisherThread = new Thread(publisherRunnable);
+
+      final int[] receiveCounts = new int[subscribersCount];
+      final AtomicBoolean assertionOk = new AtomicBoolean(true);
+      List<Cancellable> notificationSubscribersCancellables = Lists.newArrayList();
+      for (int i = 0; i < subscribersCount; i++) {
+        final int j = i;
+
+        NotificationSubscriber subscriber = getNewSubscriber();
+        NotificationSubscriber.Preparer preparer = subscriber.prepare();
+
+        preparer.add(FEED1, new NotificationHandler<String>() {
+          @Override
+          public Type getNotificationFeedType() {
+            return String.class;
+          }
+
+          @Override
+          public void processNotification(String notification, NotificationContext notificationContext) {
+            LOG.debug("Received notification payload: {}", notification);
+            try {
+              Assert.assertEquals("fake-payload-" + receiveCounts[j], notification);
+              receiveCounts[j]++;
+            } catch (Throwable t) {
+              assertionOk.set(false);
+              Throwables.propagate(t);
+            }
+          }
+        });
+
+        notificationSubscribersCancellables.add(preparer.consume());
+      }
+
+      // Give the subscriber some time to prepare for published messages before starting the publisher
+      TimeUnit.MILLISECONDS.sleep(500);
+      publisherThread.start();
+      publisherThread.join();
+      TimeUnit.MILLISECONDS.sleep(2000);
+      for (Cancellable cancellable : notificationSubscribersCancellables) {
+        cancellable.cancel();
+      }
+
+      Assert.assertTrue(assertionOk.get());
+      for (int i : receiveCounts) {
+        Assert.assertEquals(messagesCount, i);
+      }
+    } finally {
+      feedClient.deleteFeed(FEED1);
+    }
+  }
+
+  @Test
+  public void multiplePublishersOneSubscriberTest() throws Exception {
+    /*
+      This configuration should not happen, as, by design, we want only one publisher to publisher the changes attached
+      to a resource. But since the low level APIs allow it, this should still be tested.
+     */
+
+    final int messagesCount = 15;
+    int publishersCount = 5;
+
+    Assert.assertTrue(feedClient.createFeed(FEED1));
+    try {
+      // Create a subscribing process
+      NotificationSubscriber subscriber = getNewSubscriber();
+      NotificationSubscriber.Preparer preparer = subscriber.prepare();
+
+      final AtomicBoolean assertionOk = new AtomicBoolean(true);
+      final int[] receiveCounts = new int[publishersCount];
+
+      preparer.add(FEED1, new NotificationHandler<SimpleNotification>() {
+        @Override
+        public Type getNotificationFeedType() {
+          return SimpleNotification.class;
+        }
+
+        @Override
+        public void processNotification(SimpleNotification notification, NotificationContext notificationContext) {
+          LOG.debug("Received notification payload: {}", notification);
+          try {
+            Assert.assertEquals("fake-payload-" + receiveCounts[notification.getPublisherId()],
+                                notification.getPayload());
+            receiveCounts[notification.getPublisherId()]++;
+          } catch (Throwable t) {
+            assertionOk.set(false);
+            Throwables.propagate(t);
+          }
+        }
+      });
+
+      Cancellable cancellable = preparer.consume();
+      // Give the subscriber some time to prepare for published messages before starting the publisher
+      TimeUnit.MILLISECONDS.sleep(500);
+
+      List<Thread> publisherThreads = Lists.newArrayList();
+      for (int i = 0; i < publishersCount; i++) {
+        NotificationPublisher publisher = getNewPublisher();
+        final NotificationPublisher.Sender<SimpleNotification> sender =
+          publisher.createSender(FEED1, SimpleNotification.class);
+        final int k = i;
+        Runnable publisherRunnable = new Runnable() {
+          @Override
+          public void run() {
+            try {
+              Random r = new Random();
+              for (int j = 0; j < messagesCount; j++) {
+                sender.send(new SimpleNotification(k, String.format("fake-payload-%d", j)));
+                TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
+              }
+            } catch (Throwable e) {
+              Throwables.propagate(e);
+            } finally {
+              sender.shutdownNow();
+            }
+          }
+        };
+        Thread publisherThread = new Thread(publisherRunnable);
+        publisherThread.start();
+        publisherThreads.add(publisherThread);
+      }
+
+      for (Thread t : publisherThreads) {
+        t.join();
+      }
+      TimeUnit.MILLISECONDS.sleep(2000);
+      cancellable.cancel();
+
+      Assert.assertTrue(assertionOk.get());
+      for (int i : receiveCounts) {
+        Assert.assertEquals(messagesCount, i);
+      }
+    } finally {
+      feedClient.deleteFeed(FEED1);
+    }
+  }
+
+  @Test
+  public void multipleFeedsOneSubscriber() throws Exception {
+    // One subscriber subscribes to two feeds
+    final int messagesCount = 15;
+
+    Assert.assertTrue(feedClient.createFeed(FEED1));
+    Assert.assertTrue(feedClient.createFeed(FEED2));
+    try {
+      // Create a subscribing process
+      NotificationSubscriber subscriber = getNewSubscriber();
+      NotificationSubscriber.Preparer preparer = subscriber.prepare();
+
+      final AtomicBoolean assertionOk = new AtomicBoolean(true);
+      final int[] receiveCounts = new int[2];
+
+      preparer.add(FEED1, new NotificationHandler<SimpleNotification>() {
+        @Override
+        public Type getNotificationFeedType() {
+          return SimpleNotification.class;
+        }
+
+        @Override
+        public void processNotification(SimpleNotification notification, NotificationContext notificationContext) {
+          LOG.debug("Received notification payload: {}", notification);
+          try {
+            Assert.assertEquals("fake-payload-" + receiveCounts[0],
+                                notification.getPayload());
+            receiveCounts[0]++;
+          } catch (Throwable t) {
+            assertionOk.set(false);
+            Throwables.propagate(t);
+          }
+        }
+      });
+
+      preparer.add(FEED2, new NotificationHandler<String>() {
+        @Override
+        public Type getNotificationFeedType() {
+          return String.class;
+        }
+
+        @Override
+        public void processNotification(String notification, NotificationContext notificationContext) {
+          LOG.debug("Received notification payload: {}", notification);
+          try {
+            Assert.assertEquals("fake-payload-" + receiveCounts[1], notification);
+            receiveCounts[1]++;
+          } catch (Throwable t) {
+            assertionOk.set(false);
+            Throwables.propagate(t);
+          }
+        }
+      });
+
+      Cancellable cancellable = preparer.consume();
+      // Give the subscriber some time to prepare for published messages before starting the publisher
+      TimeUnit.MILLISECONDS.sleep(500);
+
+      final NotificationPublisher.Sender<SimpleNotification> sender1 =
+        getNewPublisher().createSender(FEED1, SimpleNotification.class);
+      Runnable publisherRunnable1 = new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Random r = new Random();
+            for (int j = 0; j < messagesCount; j++) {
+              sender1.send(new SimpleNotification(0, String.format("fake-payload-%d", j)));
+              TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
+            }
+          } catch (Throwable e) {
+            Throwables.propagate(e);
+          } finally {
+            sender1.shutdownNow();
+          }
+        }
+      };
+      Thread publisherThread1 = new Thread(publisherRunnable1);
+      publisherThread1.start();
+
+      final NotificationPublisher.Sender<String> sender2 = getNewPublisher().createSender(FEED2, String.class);
+      Runnable publisherRunnable2 = new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Random r = new Random();
+            for (int j = 0; j < messagesCount; j++) {
+              sender2.send(String.format("fake-payload-%d", j));
+              TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
+            }
+          } catch (Throwable e) {
+            Throwables.propagate(e);
+          } finally {
+            sender2.shutdownNow();
+          }
+        }
+      };
+      Thread publisherThread2 = new Thread(publisherRunnable2);
+      publisherThread2.start();
+
+      publisherThread1.join();
+      publisherThread2.join();
+      TimeUnit.MILLISECONDS.sleep(2000);
+      cancellable.cancel();
+
+      Assert.assertTrue(assertionOk.get());
+      for (int i : receiveCounts) {
+        Assert.assertEquals(messagesCount, i);
+      }
+    } finally {
+      feedClient.deleteFeed(FEED1);
+      feedClient.deleteFeed(FEED2);
+    }
+  }
+
+  @Test
+  public void twoFeedsPublishOneFeedSubscribeTest() throws Exception {
+    // Test two publishers on two different feeds, but only one subscriber subscribing to one of the feeds
+
+    final int messagesCount = 15;
+    Assert.assertTrue(feedClient.createFeed(FEED1));
+    Assert.assertTrue(feedClient.createFeed(FEED2));
+    try {
+
+      // Create a subscribing process
+      final AtomicInteger receiveCount = new AtomicInteger(0);
+      final AtomicBoolean assertionOk = new AtomicBoolean(true);
+
+      NotificationSubscriber subscriber = getNewSubscriber();
+      NotificationSubscriber.Preparer preparer = subscriber.prepare();
+
+      preparer.add(FEED1, new NotificationHandler<String>() {
+        @Override
+        public Type getNotificationFeedType() {
+          return String.class;
+        }
+
+        @Override
+        public void processNotification(String notification, NotificationContext notificationContext) {
+          LOG.debug("Received notification payload: {}", notification);
+          try {
+            Assert.assertEquals("fake-payload-" + receiveCount.get(), notification);
+            receiveCount.incrementAndGet();
+          } catch (Throwable t) {
+            assertionOk.set(false);
+            Throwables.propagate(t);
+          }
+        }
+      });
+      Cancellable cancellable = preparer.consume();
+      // Give the subscriber some time to prepare for published messages before starting the publisher
+      TimeUnit.MILLISECONDS.sleep(500);
+
+      final NotificationPublisher.Sender<String> sender1 = getNewPublisher().createSender(FEED1, String.class);
+      Runnable publisherRunnable1 = new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Random r = new Random();
+            for (int j = 0; j < messagesCount; j++) {
+              sender1.send(String.format("fake-payload-%d", j));
+              TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
+            }
+          } catch (Throwable e) {
+            Throwables.propagate(e);
+          } finally {
+            sender1.shutdownNow();
+          }
+        }
+      };
+      Thread publisherThread1 = new Thread(publisherRunnable1);
+      publisherThread1.start();
+
+      final NotificationPublisher.Sender<String> sender2 = getNewPublisher().createSender(FEED2, String.class);
+      Runnable publisherRunnable2 = new Runnable() {
+        @Override
+        public void run() {
+          try {
+            Random r = new Random();
+            for (int j = 0; j < messagesCount; j++) {
+              sender2.send(String.format("fake-payload2-%d", j));
+              TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
+            }
+          } catch (Throwable e) {
+            Throwables.propagate(e);
+          } finally {
+            sender2.shutdownNow();
+          }
+        }
+      };
+      Thread publisherThread2 = new Thread(publisherRunnable2);
+      publisherThread2.start();
+
+      publisherThread1.join();
+      publisherThread2.join();
+      TimeUnit.MILLISECONDS.sleep(2000);
+      cancellable.cancel();
+
+      Assert.assertTrue(assertionOk.get());
+      Assert.assertEquals(messagesCount, receiveCount.get());
+    } finally {
+      feedClient.deleteFeed(FEED1);
+      feedClient.deleteFeed(FEED2);
+    }
+  }
+
+  private static final class SimpleNotification {
+    private final int publisherId;
+    private final String payload;
+
+    private SimpleNotification(int publisherId, String payload) {
+      this.publisherId = publisherId;
+      this.payload = payload;
+    }
+
+    public int getPublisherId() {
+      return publisherId;
+    }
+
+    public String getPayload() {
+      return payload;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("id: %d, payload: %s", publisherId, payload);
+    }
+  }
 }

@@ -22,8 +22,17 @@ import co.cask.cdap.notifications.NotificationFeed;
  *
  */
 public class KafkaNotificationUtils {
+  /**
+   * Map a {@link NotificationFeed} to a Kafka topic.
+   *
+   * @param feed {@link NotificationFeed} object.
+   * @return Kafka topic that should contain the Notifications published on the {@code feed}.
+   */
   public static String getKafkaTopic(NotificationFeed feed) {
-    // TODO implement, the topic will depend on the feed type
-    return "notification-topic";
+    // For now, we only have a topic per feed Category.
+    // Later, we may want to have multiple topics per categories, defined in cdap-site.
+    // For example, we may have 10 topics for the category streams, which names would be
+    // notifications-streams-1 .. notifications-streams-10.
+    return String.format("notifications-%s", feed.getCategory());
   }
 }

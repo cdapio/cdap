@@ -52,6 +52,8 @@ public interface NotificationSubscriber {
      * handled by the {@code handler}.
      * Before this call is made, the {@code feed} has to be created using the {@link NotificationFeedManager}.
      * The subscriptions are not active until the {@link #consume} method is called.
+     * Adding a subscription to a {@link NotificationFeed} that already exists will overwrite the previous
+     * {@code handler} that was attached to the feed.
      *
      * @param feed {@link NotificationFeed} to subscribe to.
      * @param handler {@link NotificationHandler} that will handle the notifications coming from the feed.
@@ -59,7 +61,8 @@ public interface NotificationSubscriber {
      * @return This {@link Preparer} instance.
      * @throws co.cask.cdap.notifications.service.NotificationFeedNotFoundException if the feed does not exist,
      * according to the {@link NotificationFeedManager}.
-     * @throws NotificationFeedException in case of any other error.
+     * @throws NotificationFeedException in case the {@link #consume} method has already been called,
+     * or in case of any other error
      */
     <N> Preparer add(NotificationFeed feed, NotificationHandler<N> handler) throws NotificationFeedException;
 

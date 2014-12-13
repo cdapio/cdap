@@ -75,20 +75,31 @@ public class KafkaNotificationSubscriber implements NotificationSubscriber {
     final Map<NotificationFeed, NotificationHandler> feedMap = Maps.newConcurrentMap();
 
     return new Preparer() {
+      private boolean isConsuming = false;
+
       @Override
-      public <N> Preparer add(NotificationFeed feed, NotificationHandler<N> handler) throws NotificationFeedException {
+      public synchronized <N> Preparer add(NotificationFeed feed, NotificationHandler<N> handler)
+        throws NotificationFeedException {
+        if (isConsuming) {
+          throw new NotificationFeedException("Preparer is already consuming Notifications, feeds cannot be added.");
+        }
+
         // This call will make sure that the feed exists
         feedClient.getFeed(feed);
 
         String topic = KafkaNotificationUtils.getKafkaTopic(feed);
-        // TODO pay attention to that - we may miss notifications when the topic is empty, at the beginning
-        kafkaPreparer.addFromBeginning(topic, 0); // TODO change to addLatest
+
+        // TODO there is a bug in twill, that when the topic doesn't exist, add latest will not make subscription
+        // start from offset 0 - but that will be fixed soon
+        kafkaPreparer.addLatest(topic, 0);
+
         feedMap.put(feed, handler);
         return this;
       }
 
       @Override
-      public Cancellable consume() {
+      public synchronized Cancellable consume() {
+        isConsuming = true;
         return kafkaPreparer.consume(new KafkaConsumer.MessageCallback() {
           @Override
           public void onReceived(Iterator<FetchedMessage> messages) {
@@ -98,22 +109,29 @@ public class KafkaNotificationSubscriber implements NotificationSubscriber {
               ByteBuffer payload = message.getPayload();
 
               try {
+                String msgKey = KafkaMessageSerializer.decodeMessageKey(payload);
                 for (Map.Entry<NotificationFeed, NotificationHandler> feedEntry : feedMap.entrySet()) {
-                  Object notification = KafkaMessageSerializer.decode(feedEntry.getKey(), payload,
+                  if (!msgKey.equals(KafkaMessageSerializer.buildKafkaMessageKey(feedEntry.getKey()))) {
+                    continue;
+                  }
+                  Object notification = KafkaMessageSerializer.decode(payload,
                                                                       feedEntry.getValue().getNotificationFeedType());
                   if (notification == null) {
                     continue;
                   }
-                  feedEntry.getValue().processNotification(notification, new BasicNotificationContext());
-                  count++;
+                  try {
+                    feedEntry.getValue().processNotification(notification, new BasicNotificationContext());
+                    count++;
+                  } catch (Throwable t) {
+                    LOG.warn("Error while processing notification: {}", notification, t);
+                  }
                 }
               } catch (IOException e) {
-                // TODO What should be done here?...
-                LOG.error("Could not decode Kafka message {}", message);
-                Throwables.propagate(e);
+                LOG.error("Could not decode Kafka message {} using Gson. Make sure that the " +
+                            "getNotificationFeedType() method is correctly set.", message, e);
               }
             }
-            LOG.debug("Got {} messages from kafka", count);
+            LOG.debug("Successfully handled {} messages from kafka", count);
           }
 
           @Override

@@ -17,14 +17,14 @@
 package co.cask.cdap.notifications;
 
 import co.cask.cdap.notifications.service.NotificationFeedException;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Objects;
 
 /**
  * Notification Feed POJO.
  */
 public class NotificationFeed {
-
-  private final String id;  // TODO limit characters inside this id: a / couldn't be there
+  private final String id;
   private final String category;
   private final String namespace;
   private final String name;
@@ -44,6 +44,14 @@ public class NotificationFeed {
     this.name = name;
     this.id = String.format("%s.%s.%s", namespace, category, name);
     this.description = description;
+  }
+
+  private boolean isId(final String name) {
+    return CharMatcher.inRange('A', 'Z')
+      .or(CharMatcher.inRange('a', 'z'))
+      .or(CharMatcher.is('-'))
+      .or(CharMatcher.is('_'))
+      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
   }
 
   public String getCategory() {

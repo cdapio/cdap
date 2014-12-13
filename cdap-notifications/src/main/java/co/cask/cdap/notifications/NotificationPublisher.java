@@ -32,6 +32,8 @@ import java.util.List;
  *   sender.send("foobar");
  *   sender.shutdownNow()
  * </tt>
+ * The same instance of this class can be used to create multiple {@link Sender}s using the {@link #createSender}
+ * method.
  */
 public interface NotificationPublisher {
 

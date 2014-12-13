@@ -53,14 +53,20 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
     .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription(DESCRIPTION).build();
   private static final NotificationFeed METADATA_EMPTY_NAME = new NotificationFeed.Builder().setName("")
     .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription(DESCRIPTION).build();
+  private static final NotificationFeed METADATA_INVALID_NAME = new NotificationFeed.Builder().setName("$.a")
+    .setNamespace(NAMESPACE).setCategory(CATEGORY).setDescription(DESCRIPTION).build();
   private static final NotificationFeed METADATA_MISSING_NAMESPACE = new NotificationFeed.Builder().setName(NAME)
     .setCategory(CATEGORY).setDescription(DESCRIPTION).build();
   private static final NotificationFeed METADATA_EMPTY_NAMESPACE = new NotificationFeed.Builder().setName(NAME)
     .setCategory(CATEGORY).setNamespace("").setDescription(DESCRIPTION).build();
+  private static final NotificationFeed METADATA_INVALID_NAMESPACE = new NotificationFeed.Builder().setName(NAME)
+    .setCategory(CATEGORY).setNamespace("$.a").setDescription(DESCRIPTION).build();
   private static final NotificationFeed METADATA_MISSING_CATEGORY = new NotificationFeed.Builder().setName(NAME)
     .setNamespace(NAMESPACE).setDescription(DESCRIPTION).build();
   private static final NotificationFeed METADATA_EMPTY_CATEGORY = new NotificationFeed.Builder().setName(NAME)
     .setCategory("").setNamespace(NAMESPACE).setDescription(DESCRIPTION).build();
+  private static final NotificationFeed METADATA_INVALID_CATEGORY = new NotificationFeed.Builder().setName(NAME)
+    .setCategory("$.a").setNamespace(NAMESPACE).setDescription(DESCRIPTION).build();
   private static final NotificationFeed METADATA_MISSING_DESCRIPTION = new NotificationFeed.Builder().setName(NAME)
     .setNamespace(NAMESPACE).setCategory(CATEGORY).build();
   private static final NotificationFeed METADATA_EMPTY_DESCRIPTION = new NotificationFeed.Builder().setName(NAME)
@@ -173,29 +179,35 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testCreateMissingOrEmptyName() throws Exception {
+  public void testCreateMissingEmptyOrInvalidName() throws Exception {
     // name must be non-null, non-empty
     HttpResponse response = createFeed(METADATA_MISSING_NAME);
     assertResponseCode(400, response);
     response = createFeed(METADATA_EMPTY_NAME);
     assertResponseCode(400, response);
+    response = createFeed(METADATA_INVALID_NAME);
+    assertResponseCode(400, response);
   }
 
   @Test
-  public void testCreateMissingOrEmptyNamespace() throws Exception {
+  public void testCreateMissingEmptyOrInvalidNamespace() throws Exception {
     // namespace must be non-null, non-empty
     HttpResponse response = createFeed(METADATA_MISSING_NAMESPACE);
     assertResponseCode(400, response);
     response = createFeed(METADATA_EMPTY_NAMESPACE);
     assertResponseCode(400, response);
+    response = createFeed(METADATA_INVALID_NAMESPACE);
+    assertResponseCode(400, response);
   }
 
   @Test
-  public void testCreateMissingOrEmptyCategory() throws Exception {
+  public void testCreateMissingEmptyOrInvalidCategory() throws Exception {
     // category must be non-null, non-empty
     HttpResponse response = createFeed(METADATA_MISSING_CATEGORY);
     assertResponseCode(400, response);
     response = createFeed(METADATA_EMPTY_CATEGORY);
+    assertResponseCode(400, response);
+    response = createFeed(METADATA_INVALID_CATEGORY);
     assertResponseCode(400, response);
   }
 
