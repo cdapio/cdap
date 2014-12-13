@@ -16,8 +16,6 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

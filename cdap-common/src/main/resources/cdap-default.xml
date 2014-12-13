@@ -889,7 +889,7 @@
     </property>
     <property>
         <name>explore.writes.enabled</name>
-        <value>false</value>
+        <value>true</value>
         <description>Whether writing to a table through ad-hoc SQL queries is enabled</description>
     </property>
     <property>

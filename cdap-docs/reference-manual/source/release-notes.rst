@@ -123,6 +123,8 @@ Known Issues
   is because of a change in the format of emitted metrics, and can result in a small
   amount of metrics data points being lost. (`CDAP-745
   <https://issues.cask.co/browse/CDAP-745>`__).
+- Writing to datasets through Hive is not supported in CDH4.x
+  (`CDAP-988 <https://issues.cask.co/browse/CDAP-988>`__).
 
 Release 2.5.2
 =============
