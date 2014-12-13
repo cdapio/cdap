@@ -3,7 +3,7 @@
     :copyright: Copyright © 2014 Cask Data, Inc.
 
 ============================================
-CDAP Administration
+CDAP Administration Manual Table of Contents
 ============================================
 
 .. toctree::

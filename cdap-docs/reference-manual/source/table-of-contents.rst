@@ -3,7 +3,7 @@
     :copyright: Copyright © 2014 Cask Data, Inc.
 
 =================================================
-CDAP Reference: APIs, Licenses, and Dependencies
+CDAP Reference Manual Table of Contents
 =================================================
 
 .. toctree::

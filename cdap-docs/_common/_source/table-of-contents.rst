@@ -5,7 +5,7 @@
 :hide-relations: true
 
 ============================================
-CDAP Documentation
+CDAP Documentation Table of Contents
 ============================================
 
 .. toctree::
