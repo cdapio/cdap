@@ -75,6 +75,7 @@ import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.Discoverable;
@@ -110,11 +111,12 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *
+ * {@link co.cask.http.HttpHandler} for managing application lifecycle.
  */
+@Singleton
 @Path(Constants.Gateway.API_VERSION_3)
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AppLifecycleHttpHandler.class);
 
   /**
    * Json serializer.
