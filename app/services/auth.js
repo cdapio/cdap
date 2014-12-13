@@ -22,7 +22,7 @@ module.constant('MYAUTH_ROLE', {
 });
 
 
-module.run(function ($rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
+module.run(function ($state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
   $rootScope.currentUser = myAuth.currentUser;
 
   $rootScope.$on('$stateChangeStart', function (event, next) {
@@ -34,15 +34,20 @@ module.run(function ($rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
       if (authorizedRoles === MYAUTH_ROLE.all) { return; } // any logged-in user is welcome
       if (user.hasRole(authorizedRoles)) { return; } // user is legit
     }
+
     // in all other cases, prevent going to this state
     event.preventDefault();
+
+    // and go to login instead
+    $state.go('login', {next: next.name});
+
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
 
 });
 
 
-module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAuthPromise, $rootScope, $localStorage) {
+module.service('myAuth', function myAuthService (MY_CONFIG, MYAUTH_EVENT, MyAuthUser, myAuthPromise, $rootScope, $localStorage) {
 
   /**
    * private method to sync the user everywhere
@@ -123,6 +128,7 @@ module.factory('myAuthPromise', function myAuthPromiseFactory (MY_CONFIG, $q, $h
 
     } else {
 
+      console.warn('Security is disabled, logging in automatically');
       deferred.resolve({
         username: credentials.username
       });
