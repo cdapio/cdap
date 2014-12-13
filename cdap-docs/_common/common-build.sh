@@ -356,6 +356,22 @@ function test() {
   echo "Test completed."
 }
 
+function rewrite() {
+  # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4.
+  cd $SCRIPT_PATH
+  local rewrite_source=$1
+  local rewrite_target=$2
+  local sub_string=$3
+  local new_sub_string=$4  
+  echo "Re-writing"
+  echo "    $rewrite_source"
+  echo "  to"
+  echo "    $rewrite_target"
+  echo "  $sub_string -> $new_sub_string "
+  
+  sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
+}
+
 if [ $# -lt 1 ]; then
   usage
 #   exit 1

@@ -30,8 +30,9 @@ API="cdap-api"
 BUILD="build"
 BUILD_TEMP="build-temp"
 COMMON="_common"
-COMMON_CONF_PY="$COMMON/common_conf.py"
 COMMON_SOURCE="$COMMON/_source"
+COMMON_CONF_PY="$COMMON/common_conf.py"
+COMMON_HIGHLEVEL_PY="$COMMON/highlevel_conf.py"
 COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index.rst"
 GITHUB="github"
 HTML="html"
@@ -122,26 +123,6 @@ function clean2() {
   echo ""
 }
 
-
-function build_docs2() {
-  clean2
-  copy_source admin-manual
-  copy_source developers-manual
-  copy_source reference-manual
-  copy_source examples-manual
-  # build all docs
-  cd $SCRIPT_PATH
-  cp $COMMON_CONF_PY $BUILD/$SOURCE/conf.py
-  cp $COMMON_SOURCE/index.rst $BUILD/$SOURCE/
-  cp $COMMON_SOURCE/table-of-contents.rst $BUILD/$SOURCE/
-  sphinx-build -b html -d build/doctrees build/source build/html
-  copy_html admin-manual
-  copy_html developers-manual
-  copy_html reference-manual
-  copy_html examples-manual
-#   add_redirect
-}
-
 function copy_source() {
   echo "Copying source for $1..."
   cd $SCRIPT_PATH
@@ -158,8 +139,25 @@ function copy_html() {
   echo ""
 }
 
-
-
+function build_docs2() {
+  clean2
+  copy_source admin-manual
+  copy_source developers-manual
+  copy_source reference-manual
+  copy_source examples-manual
+  # build all docs
+  cd $SCRIPT_PATH
+#   cp $COMMON_CONF_PY $BUILD/$SOURCE/conf.py
+  cp $COMMON_HIGHLEVEL_PY $BUILD/$SOURCE/conf.py
+  cp $COMMON_SOURCE/index.rst $BUILD/$SOURCE/
+  cp $COMMON_SOURCE/table-of-contents.rst $BUILD/$SOURCE/
+  sphinx-build -b html -d build/doctrees build/source build/html
+  copy_html admin-manual
+  copy_html developers-manual
+  copy_html reference-manual
+  copy_html examples-manual
+#   add_redirect
+}
 
 
 ################################################## current

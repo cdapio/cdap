@@ -167,7 +167,10 @@ html_theme = 'cdap'
 # further.  For a list of options available for each theme, see the
 # documentation.
 # html_theme_options = {"showtoc_include_showtocs":"false"}
-html_theme_options = {"manuals":["admin-manual", "developers-manual", "reference-manual", "examples-manual"]}
+html_theme_options = {
+  "manuals":["developers-manual","admin-manual","examples-manual","reference-manual",],
+  "manualtitles":[u"Developers’ Manual","Administration Manual","Examples, Guides, and Tutorials", "Reference Manual",],
+}
   
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']

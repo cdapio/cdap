@@ -27,22 +27,6 @@ source ../_common/common-build.sh
 
 CHECK_INCLUDES=$TRUE
 
-function version_tag_rewrite() {
-  # Re-writes tags in an RST-snippet file to have the current tag version.
-  cd $SCRIPT_PATH
-  local rewrite_source=$1
-  local rewrite_target=$2
-  local sub_string=$3
-  local new_sub_string=$4  
-  echo "Re-writing"
-  echo "    $rewrite_source"
-  echo "  to"
-  echo "    $rewrite_target"
-  echo "  $sub_string -> $new_sub_string "
-  
-  sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
-}
-
 function pandoc_includes() {
   # Uses pandoc to translate the README markdown files to rst in the target directory
   INCLUDES_DIR=$1
@@ -91,9 +75,9 @@ function pandoc_includes() {
   version
   cd $SCRIPT_PATH
   local get_start="$SCRIPT_PATH/$SOURCE/getting-started"
-  version_tag_rewrite $get_start/dev-env-version.txt               $INCLUDES_DIR/dev-env-versioned.rst         "<version>" $PROJECT_VERSION
-  version_tag_rewrite $get_start/start-stop-cdap-version.txt       $INCLUDES_DIR/start-stop-cdap-versioned.rst "<version>" $PROJECT_VERSION
-  version_tag_rewrite $get_start/standalone/standalone-version.txt $INCLUDES_DIR/standalone-versioned.rst      "<version>" $PROJECT_VERSION
+  rewrite $get_start/dev-env-version.txt               $INCLUDES_DIR/dev-env-versioned.rst         "<version>" $PROJECT_VERSION
+  rewrite $get_start/start-stop-cdap-version.txt       $INCLUDES_DIR/start-stop-cdap-versioned.rst "<version>" $PROJECT_VERSION
+  rewrite $get_start/standalone/standalone-version.txt $INCLUDES_DIR/standalone-versioned.rst      "<version>" $PROJECT_VERSION
 }
 
 function test_includes () {
