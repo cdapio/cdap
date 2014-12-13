@@ -4,6 +4,36 @@
 body.theme-cdap {
   visibility: visible;
 
+  .container {
+    // http://getbootstrap.com/examples/non-responsive/
+    width: 1170px !important;
+  }
+
+  main.container {
+    padding-top: 132px;
+
+    @media (max-width: @screen-xs-max) {
+      > div { display: none; }
+      &:before {
+        font-size: 200%;
+        margin-top: 1em;
+        display: block;
+        padding: 8px 15px;
+        border-radius: 25px;
+        background-color: @cdap-orange;
+        color: white;
+        content: "Please resize your browser!";
+      }
+      &:after {
+        padding: 16px;
+        font-style: italic;
+        content: "Mobile devices are not supported.";
+      }
+    }
+
+  }
+
+
   header {
     background-color: @cdap-header;
 
@@ -92,10 +122,6 @@ body.theme-cdap {
       }
 
     }
-  }
-
-  main.container {
-    padding-top: 132px;
   }
 
   footer {
