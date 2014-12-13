@@ -1039,19 +1039,7 @@
     <value>10010</value>
   </property>
 
-  <!-- Router configuration-->
-
-  <property>
-    <name>router.server.address</name>
-    <value>localhost</value>
-  </property>
-
   <!-- Frontend configuration -->
-
-  <property>
-    <name>dashboard.bind.port</name>
-    <value>9999</value>
-  </property>
 
   <property>
     <name>dashboard.ssl.bind.port</name>
