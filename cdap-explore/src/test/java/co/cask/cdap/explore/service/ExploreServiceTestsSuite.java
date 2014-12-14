@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -37,7 +36,7 @@ public class ExploreServiceTestsSuite {
 
   @BeforeClass
   public static void init() throws Exception {
-    BaseHiveExploreServiceTest.startServices(CConfiguration.create());
+    BaseHiveExploreServiceTest.startServices();
     BaseHiveExploreServiceTest.runBefore = false;
     BaseHiveExploreServiceTest.runAfter = false;
   }

@@ -574,10 +574,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // Excludes libraries that are for sure not needed.
     // Hadoop - Available from the cluster
     // Spark - MR never uses Spark
-    // Fastutil - 16MB library that only used in tehpra server
     ApplicationBundler appBundler = new ApplicationBundler(ImmutableList.of("org.apache.hadoop",
-                                                                            "org.apache.spark",
-                                                                            "it.unimi.dsi.fastutil"),
+                                                                            "org.apache.spark"),
                                                            ImmutableList.of("org.apache.hadoop.hbase",
                                                                             "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();

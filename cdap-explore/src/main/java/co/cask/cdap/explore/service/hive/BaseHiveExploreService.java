@@ -30,7 +30,6 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
-import co.cask.cdap.hive.datasets.DatasetOutputFormat;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
@@ -63,7 +62,6 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -868,13 +866,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
-
-    // Help Hive - hack to HIVE-5515
-    // The output format class will be overwritten in case Hive wants to write to
-    // a native Hive-managed output format. However, because of the bug related in the JIRA,
-    // writing to an non-native hive table with an external output format like the one in
-    // HBaseStorageHandler will not work - as Hive will try to use the DatasetOutputFormat
-    HiveFileFormatUtils.setRealOutputFormatClassName(DatasetOutputFormat.class.getName());
 
     return sessionConf;
   }

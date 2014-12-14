@@ -68,7 +68,7 @@ import static co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinitio
 public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   @BeforeClass
   public static void start() throws Exception {
-    startServices(CConfiguration.create());
+    startServices();
 
     datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 

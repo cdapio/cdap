@@ -66,6 +66,11 @@ public class HiveCDH4ExploreService extends BaseHiveExploreService {
                                    @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir) {
     super(txClient, datasetFramework, cConf, hConf, hiveConf, previewsDir, streamAdmin);
     System.setProperty("hive.server2.blocking.query", "false");
+    if (cConf.getBoolean(Constants.Explore.WRITES_ENABLED)) {
+      LOG.warn("Writing to datasets through Hive is not supported in CDH4.x, overriding {} setting to false.",
+               Constants.Explore.WRITES_ENABLED);
+      cConf.setBoolean(Constants.Explore.WRITES_ENABLED, false);
+    }
   }
 
   @Override

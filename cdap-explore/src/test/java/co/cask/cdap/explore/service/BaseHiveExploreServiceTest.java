@@ -94,6 +94,10 @@ public class BaseHiveExploreServiceTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  protected static void startServices() throws Exception {
+    startServices(CConfiguration.create());
+  }
+
   protected static void startServices(CConfiguration cConf) throws Exception {
     startServices(cConf, false);
   }

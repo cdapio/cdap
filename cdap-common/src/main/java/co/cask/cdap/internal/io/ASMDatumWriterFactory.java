@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.io;
 
-import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.internal.asm.ByteCodeClassLoader;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import com.google.common.base.Objects;
@@ -26,8 +25,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import javax.inject.Inject;
@@ -37,8 +34,6 @@ import javax.inject.Inject;
  * It serves as an in memory cache for generated {@link DatumWriter} {@link Class} using ASM.
  */
 public final class ASMDatumWriterFactory implements DatumWriterFactory {
-
-  private static final Logger LOG = LoggerFactory.getLogger(ASMDatumWriterFactory.class);
 
   private final LoadingCache<CacheKey, Class<DatumWriter<?>>> datumWriterClasses;
   private final FieldAccessorFactory fieldAccessorFactory;
@@ -82,15 +77,15 @@ public final class ASMDatumWriterFactory implements DatumWriterFactory {
     public Class<DatumWriter<?>> load(CacheKey key) throws Exception {
       ClassDefinition classDef = new DatumWriterGenerator().generate(key.getType(), key.getSchema());
 
-      ClassLoader typeClassloader = ClassLoaders.getClassLoader(key.getType());
       ByteCodeClassLoader classloader = classloaders.get(key.getType());
       if (classloader == null) {
-        classloader = new ByteCodeClassLoader(typeClassloader);
+        // The ClassLoader of the generated DatumWriter has CDAP system ClassLoader as parent.
+        // The ClassDefinition contains list of classes that should not be loaded by the generated class ClassLoader
+        classloader = new ByteCodeClassLoader(ASMDatumWriterFactory.class.getClassLoader());
         classloaders.put(key.getType(), classloader);
       }
 
-      return (Class<DatumWriter<?>>) classloader.addClass(classDef, key.getType().getRawType())
-                                                .loadClass(classDef.getClassName());
+      return (Class<DatumWriter<?>>) classloader.addClass(classDef).loadClass(classDef.getClassName());
     }
   }
 

@@ -259,7 +259,7 @@ convenient to send it as the body of a POST request.
 We can also use SQL to bypass the service and query the raw contents of the underlying
 table (reformatted to fit)::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute select '*' from cdap_user_pageviewstore where key = '"255.255.255.249"'
+  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT * FROM cdap_user_pageviewstore WHERE key = '255.255.255.249'\""
   +===============================================================================================+
   | cdap_user_pageviewstore.key: STRING | cdap_user_pageviewstore.value: map<string,bigint>       |
   +===============================================================================================+
@@ -308,7 +308,7 @@ We can inquire as to the status of the MapReduce job::
 When the job has finished, the returned status will be *STOPPED*. Now we can query the
 bounce counts with SQL. Let's take a look at the schema first::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "describe cdap_user_bouncecountstore"
+  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"DESCRIBE cdap_user_bouncecountstore\""
   Successfully connected CDAP instance at 127.0.0.1:10000
   +==========================================================+
   | col_name: STRING | data_type: STRING | comment: STRING   |
@@ -320,8 +320,8 @@ bounce counts with SQL. Let's take a look at the schema first::
 
 For example, to get the five URLs with the highest bounce-to-visit ratio (or bounce rate)::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "SELECT uri, bounces/totalvisits AS ratio \
-    FROM cdap_user_bouncecountstore ORDER BY ratio DESC LIMIT 5"
+  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT uri, bounces/totalvisits AS ratio \
+    FROM cdap_user_bouncecountstore ORDER BY ratio DESC LIMIT 5\""
   +===================================+
   | uri: STRING | ratio: DOUBLE       |
   +===================================+
@@ -339,8 +339,8 @@ We can also use the full power of the `Hive query language
 queries. For example, Hive allows us to explode the page view counts into a table with
 fixed columns::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "SELECT key AS ip, uri, count FROM cdap_user_pageviewstore \
-    LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10"
+  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT key AS ip, uri, count FROM cdap_user_pageviewstore \
+    LATERAL VIEW explode(value) t AS uri,count ORDER BY count DESC LIMIT 10\""
   +====================================================+
   | ip: STRING      | uri: STRING      | count: BIGINT |
   +====================================================+
@@ -364,12 +364,12 @@ pages?
 
 ::
 
-  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "SELECT views.uri, ratio, ip, count FROM \
+  $ <path-to-CDAP-SDK>/bin/cdap-cli.sh execute "\"SELECT views.uri, ratio, ip, count FROM \
        (SELECT uri, totalvisits/bounces AS ratio \
           FROM cdap_user_bouncecountstore ORDER BY ratio DESC LIMIT 3) bounce, \
        (SELECT key AS ip, uri, count \
           FROM cdap_user_pageviewstore LATERAL VIEW explode(value) t AS uri,count) views \
-    WHERE views.uri = bounce.uri AND views.count >= 3"
+    WHERE views.uri = bounce.uri AND views.count >= 3\""
   +=========================================================================+
   | views.uri: STRING | ratio: DOUBLE     | ip: STRING      | count: BIGINT |
   +=========================================================================+
