@@ -8,6 +8,7 @@ angular
       PKG.name+'.feature.login',
       PKG.name+'.feature.dashboard',
       PKG.name+'.feature.applications',
+      PKG.name+'.feature.admin',
       PKG.name+'.feature.foo'
     ]).name,
 
@@ -39,7 +40,8 @@ angular
       'mgcrea.ngStrap.button',
       'mgcrea.ngStrap.tab',
       'mgcrea.ngStrap.modal',
-      'ncy-angular-breadcrumb'
+      'ncy-angular-breadcrumb',
+      'RecursionHelper'
 
     ]).name,
 

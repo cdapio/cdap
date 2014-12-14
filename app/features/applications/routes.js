@@ -28,7 +28,7 @@ angular.module(PKG.name+'.feature.applications')
 
       .state('apps.application', {
         url: '/apps/:appId',
-        templateUrl: '/assets/features/applications/templates/applications.html',
+        templateUrl: '/assets/features/applications/templates/application.html',
         controller: 'ApplicationController',
         ncyBreadcrumb: {
           parent: 'apps.list',
