@@ -4,6 +4,36 @@
 body.theme-cdap {
   visibility: visible;
 
+  .container {
+    // http://getbootstrap.com/examples/non-responsive/
+    width: 1170px !important;
+  }
+
+  main.container {
+    padding-top: 100px;
+
+    @media (max-width: @screen-xs-max) {
+      > div { display: none; }
+      &:before {
+        font-size: 200%;
+        margin-top: 1em;
+        display: block;
+        padding: 8px 15px;
+        border-radius: 25px;
+        background-color: @cdap-orange;
+        color: white;
+        content: "Please resize your browser!";
+      }
+      &:after {
+        padding: 16px;
+        font-style: italic;
+        content: "Mobile devices are not supported.";
+      }
+    }
+
+  }
+
+
   header {
     background-color: @cdap-header;
 
@@ -13,7 +43,7 @@ body.theme-cdap {
       padding-bottom: 15px;
 
       .navbar-brand {
-        > span {
+        > strong {
           display: inline-block;
           visibility: hidden;
           width: 77px;
@@ -26,17 +56,17 @@ body.theme-cdap {
       @media (min-width: @screen-sm-min) {
         nav {
           position: absolute;
-          // top: 15px;
+          top: 20px;
           left: 50%;
-          margin-left: -225px;
+          margin-left: -180px;
 
           > ul.nav {
             background-color: @cdap-darkness;
             border-radius: 25px;
-            height: 50px;
+            height: 37px;
 
             li {
-              width: 150px;
+              width: 120px;
               overflow: hidden;
 
               text-align: center;
@@ -45,20 +75,23 @@ body.theme-cdap {
 
               > a {
                 border-radius: 25px;
-                padding: 12px;
-                margin: 5px;
+                padding: 8px;
+                margin: 2px;
+                &:hover {
+                  color: @cdap-orange;
+                }
               }
 
               &.active > a {
                 cursor: default;
-                color: @cdap-darkness;
+                color: @gray-lighter;
                 background-color: @cdap-orange;
               }
             }
           }
         }
 
-        .navbar-right li.dropdown {
+        li.dropdown {
 
           &.open {
             a.dropdown-toggle {
@@ -71,7 +104,7 @@ body.theme-cdap {
           ul.dropdown-menu {
             background-color: @cdap-darkness;
             border-color: @cdap-darkness;
-            border-top-left-radius: @border-radius-base;
+            border-top-right-radius: @border-radius-base;
             a {
               color: white;
               &:hover {
@@ -89,13 +122,16 @@ body.theme-cdap {
           }
         }
 
+        .navbar-right li.dropdown {
+          ul.dropdown-menu {
+            border-top-right-radius: 0;
+            border-top-left-radius: @border-radius-base;
+          }
+        }
+
       }
 
     }
-  }
-
-  main.container {
-    padding-top: 132px;
   }
 
   footer {

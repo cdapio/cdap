@@ -6,26 +6,49 @@
     <span class="icon-bar"></span>
   </button>
   <a class="navbar-brand" href="/">
-     <span>CDAP</span>
+     <strong>CDAP</strong>
   </a>
 </div>
 <div class="collapse navbar-collapse" ng-class="{in:navbarCollapsed}">
 
-  <nav ng-click="navbarCollapsed = false">
+  <ul class="nav navbar-nav hidden-sm">
+    <li class="dropdown">
+      <a href="" class="dropdown-toggle">
+        {{currentNamespace}}
+        <span class="caret"></span>
+      </a>
+    </li>
+  </ul>
 
+  <nav ng-click="navbarCollapsed = false">
     <ul class="nav navbar-nav">
-      <li ng-repeat="link in navbarLinks" ng-class="{active: $state.includes(link.sref)}">
+      <li
+        ng-repeat="link in navbarLinks"
+        ng-class="{active: $state.includes(link.sref)}"
+      >
         <a ui-sref="{{link.sref}}" ng-bind="link.label"></a>
       </li>
     </ul>
-
   </nav>
 
   <ul class="nav navbar-nav navbar-right">
 
+    <li class="hidden-xs">
+      <form class="navbar-form" ng-submit="doSearch()">
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" placeholder="Search" disabled>
+          <span class="input-group-btn">
+            <button type="submit" class="btn btn-default">
+              <span class="fa fa-search"></span>
+              <span class="sr-only">Submit</span>
+            </button>
+          </span>
+        </div>
+      </form>
+    </li>
     <li class="dropdown">
       <a href="" class="dropdown-toggle">
-        Dropdown
+        <span class="fa fa-cog"></span>
         <span class="caret"></span>
       </a>
     </li>

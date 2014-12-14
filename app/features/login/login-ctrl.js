@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.login').controller('LoginCtrl',
-function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT, caskFocusManager) {
+function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT, MY_CONFIG, caskFocusManager) {
 
   $scope.credentials = myAuth.remembered();
 
@@ -17,6 +17,11 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
       .finally(function(){
         $scope.submitting = false;
         cfpLoadingBar.complete();
+        $alert({
+          title:'Welcome!',
+          content:'You\'re logged in!',
+          type:'success'
+        });
       });
   };
 
@@ -29,7 +34,14 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
       });
     }
     else {
-      focusLoginField();
+
+      if(MY_CONFIG.securityEnabled) {
+        focusLoginField();
+      }
+      else { // auto-login
+        myAuth.login({username:'admin'});
+      }
+
     }
   });
 
@@ -44,8 +56,4 @@ function ($scope, myAuth, $alert, $state, cfpLoadingBar, $timeout, MYAUTH_EVENT,
   }
 
 });
-
-
-
-
 
