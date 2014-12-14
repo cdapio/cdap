@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.proto.ColumnDesc;
@@ -39,7 +40,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    startServices(CConfiguration.create());
+    startServices();
 
     datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
