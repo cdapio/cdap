@@ -1,0 +1,14 @@
+<li ng-repeat="menu in treeList">
+   <a ui-sref="{{menu.state}}" ng-show="menu.children.length == 0">
+    <div ng-bind="menu.label"> </div>
+  </a>
+  <div ng-show="menu.children.length > 0"
+        class="menu-title"
+        ng-click="showSubMenu=!showSubMenu">
+    <span ng-class="showSubMenu ? 'fa fa-caret-down': 'fa fa-caret-right'"> </span>
+    <span ng-bind="menu.label"> </span>
+  </div>
+  <ul ng-show="showSubMenu">
+    <tree-view data-tree-list="menu.children"> </tree-view>
+  </ul>
+</li>
