@@ -9,27 +9,27 @@ angular.module(PKG.name + '.feature.admin')
         label: 'Namespace1',
         children: [
           {
-            state: 'admin.namespace.settings()',
+            state: 'admin.namespace.settings({namespaceId: "namespace1"})',
             label: 'Settings',
             children: []
           },
           {
-            state: 'admin.namespace.users()',
+            state: 'admin.namespace.users({namespaceId: "namespace1"})',
             label: 'Users',
             children: []
           },
           {
-            state: 'admin.namespace.datatypes()',
+            state: 'admin.namespace.datatypes({namespaceId: "namespace1"})',
             label: 'Data Types',
             children: []
           },
           {
-            state: 'admin.namespace.datasets()',
+            state: 'admin.namespace.datasets({namespaceId: "namespace1"})',
             label: 'Datasets',
             children: []
           },
           {
-            state: 'admin.namespace.apps()',
+            state: 'admin.namespace.apps({namespaceId: "namespace1"})',
             label: 'Apps',
             children: []
           }
