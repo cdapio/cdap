@@ -660,13 +660,13 @@
     </property>
 
     <property>
-        <name>metrics.data.table.retention.resolution.3600.seconds</name>
+        <name>metrics.data.table.retention.resolution.60.seconds</name>
         <value>2592000</value>
-        <description>Retention resolution 1 hour table (in seconds)</description>
+        <description>Retention resolution 1 minute table (in seconds)</description>
     </property>
 
     <property>
-        <name>metrics.data.table.retention.resolution.60.seconds</name>
+        <name>metrics.data.table.retention.resolution.3600.seconds</name>
         <value>2592000</value>
         <description>Retention resolution 1 hour table (in seconds)</description>
     </property>

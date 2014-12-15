@@ -43,7 +43,6 @@ public final class TimeSeriesMetricsProcessor implements MetricsProcessor {
   private static final int MAX_RECORDLIST_SIZE = 100;
 
   private final LoadingCache<String, List<TimeSeriesTable>> timeSeriesTables;
-  private List<MetricsRecord> metricsRecords = Lists.newArrayList();
 
 
   @Inject
@@ -63,6 +62,7 @@ public final class TimeSeriesMetricsProcessor implements MetricsProcessor {
   @Override
   public void process(MetricsScope scope, Iterator<MetricsRecord> records) {
     try {
+      List<MetricsRecord> metricsRecords = Lists.newArrayList();
       List<TimeSeriesTable> listTimeSeriesTables = timeSeriesTables.getUnchecked(scope.name());
       while (records.hasNext()) {
         metricsRecords.add(records.next());
