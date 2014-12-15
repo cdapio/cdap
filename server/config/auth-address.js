@@ -16,7 +16,7 @@ var request = require('request'),
 
 
 var PING_INTERVAL = 1000,
-    PING_MAX_RETRIES = 30,
+    PING_MAX_RETRIES = 3,
     PING_PATH = '/v2/ping';
 
 
@@ -64,7 +64,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
               self.enabled = true;
               self.addresses = JSON.parse(body).auth_uri || [];
             }
-            console.info('Security is '+(self.enabled ? 'enabled': 'disabled'));
+            console.info('Security is '+(self.enabled ? 'enabled': 'disabled')+'.');
             deferred.resolve(self);
           }
           else {
@@ -75,7 +75,14 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
     }
   };
 
-  pingAttempt();
+  if(process.env.CDAP_NO_AUTH) {
+    console.info('[CDAP_NO_AUTH] Security is disabled.');
+    deferred.resolve(self);
+  }
+  else {
+    pingAttempt();
+  }
+
 
   return deferred.promise;
 };
