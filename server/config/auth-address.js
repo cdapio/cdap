@@ -48,7 +48,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
     attempts++;
     if (attempts > PING_MAX_RETRIES) {
       console.error('Exceeded max attempts calling secure endpoint.');
-      deferred.resolve(self);
+      deferred.reject();
     } else {
       console.log('Calling security endpoint: ', url, ' attempt ', attempts);
       request({
@@ -64,7 +64,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
               self.enabled = true;
               self.addresses = JSON.parse(body).auth_uri || [];
             }
-            console.info('Security is '+(self.enabled ? 'enabled': 'disabled'));
+            console.info('Security is '+(self.enabled ? 'enabled': 'disabled')+'.');
             deferred.resolve(self);
           }
           else {
@@ -75,7 +75,14 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
     }
   };
 
-  pingAttempt();
+  if(process.env.CDAP_NO_AUTH) {
+    console.info('[CDAP_NO_AUTH] Security is disabled.');
+    deferred.resolve(self);
+  }
+  else {
+    pingAttempt();
+  }
+
 
   return deferred.promise;
 };
