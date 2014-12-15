@@ -118,6 +118,8 @@ public abstract class TimeSeriesTableTestBase {
     });
   }
 
+
+
   @Test
   public void testTimeSeriesMinuteResolutionAggregation() throws OperationException {
     TimeSeriesTable timeSeriesTable = getTableFactory().createTimeSeries("minute-agg", 60);
