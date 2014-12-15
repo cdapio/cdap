@@ -1,7 +1,7 @@
 angular.module(PKG.name + '.commons')
-  .directive('treeView', function(RecursionHelper) {
+  .directive('myTreeView', function(RecursionHelper) {
     return {
-      strict: 'E',
+      restrict: 'E',
       scope: {
         treeList: '='
       },
