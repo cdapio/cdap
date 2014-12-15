@@ -28,6 +28,8 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.service.StreamHttpService;
+import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -51,14 +53,22 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.ws.rs.HttpMethod;
 
 /**
  * Base class for tests that need explore service to be running.
@@ -75,21 +85,31 @@ public class BaseHiveExploreServiceTest {
   protected static ExploreExecutorService exploreExecutorService;
   protected static EndpointStrategy datasetManagerEndpointStrategy;
   protected static ExploreService exploreService;
+  protected static StreamHttpService streamHttpService;
 
   protected static ExploreClient exploreClient;
 
   protected static Injector injector;
+
+  @ClassRule
+  public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   protected static void startServices() throws Exception {
     startServices(CConfiguration.create());
   }
 
   protected static void startServices(CConfiguration cConf) throws Exception {
+    startServices(cConf, false);
+  }
+
+  protected static void startServices(CConfiguration cConf, boolean useStandalone) throws Exception {
     if (!runBefore) {
       return;
     }
 
-    injector = Guice.createInjector(createInMemoryModules(cConf, new Configuration()));
+    Configuration hConf = new Configuration();
+    List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf) : createInMemoryModules(cConf, hConf);
+    injector = Guice.createInjector(modules);
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
@@ -111,6 +131,8 @@ public class BaseHiveExploreServiceTest {
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
+    streamHttpService = injector.getInstance(StreamHttpService.class);
+    streamHttpService.startAndWait();
   }
 
   @AfterClass
@@ -119,6 +141,7 @@ public class BaseHiveExploreServiceTest {
       return;
     }
 
+    streamHttpService.stopAndWait();
     exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
@@ -191,6 +214,35 @@ public class BaseHiveExploreServiceTest {
     return newResults;
   }
 
+  protected static void createStream(String streamName) throws IOException {
+    HttpURLConnection urlConn = openStreamConnection(streamName);
+    urlConn.setRequestMethod(HttpMethod.PUT);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+  }
+
+  protected static void sendStreamEvent(String streamName, Map<String, String> headers, byte[] body)
+    throws IOException {
+    HttpURLConnection urlConn = openStreamConnection(streamName);
+    urlConn.setRequestMethod(HttpMethod.POST);
+    urlConn.setDoOutput(true);
+    for (Map.Entry<String, String> header : headers.entrySet()) {
+      // headers must be prefixed by the stream name, otherwise they are filtered out by the StreamHandler.
+      // the handler also strips the stream name from the key before writing it to the stream.
+      urlConn.addRequestProperty(streamName + "." + header.getKey(), header.getValue());
+    }
+    urlConn.getOutputStream().write(body);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
+    urlConn.disconnect();
+  }
+
+  private static HttpURLConnection openStreamConnection(String streamName) throws IOException {
+    int port = streamHttpService.getBindAddress().getPort();
+    URL url = new URL(String.format("http://127.0.0.1:%d%s/streams/%s",
+                                    port, Constants.Gateway.API_VERSION_2, streamName));
+    return (HttpURLConnection) url.openConnection();
+  }
+
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf) {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
     configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
@@ -208,7 +260,38 @@ public class BaseHiveExploreServiceTest {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new AuthModule(),
       new ExploreRuntimeModule().getInMemoryModules(),
-      new ExploreClientModule()
+      new ExploreClientModule(),
+      new StreamServiceRuntimeModule().getInMemoryModules()
+    );
+  }
+
+  // these are needed if we actually want to query streams, as the stream input format looks at the filesystem
+  // to figure out splits.
+  private static List<Module> createStandaloneModules(CConfiguration cConf, Configuration hConf)
+    throws IOException {
+    File localDataDir = tmpFolder.newFolder();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
+    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    cConf.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
+
+    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
+    hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
+    hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
+
+    return ImmutableList.of(
+      new ConfigModule(cConf, hConf),
+      new IOModule(),
+      new DiscoveryRuntimeModule().getStandaloneModules(),
+      new LocationRuntimeModule().getStandaloneModules(),
+      new DataFabricModules().getStandaloneModules(),
+      new DataSetsModules().getLocalModule(),
+      new DataSetServiceModules().getLocalModule(),
+      new MetricsClientRuntimeModule().getStandaloneModules(),
+      new AuthModule(),
+      new ExploreRuntimeModule().getStandaloneModules(),
+      new ExploreClientModule(),
+      new StreamServiceRuntimeModule().getStandaloneModules()
     );
   }
 }

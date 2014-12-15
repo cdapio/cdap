@@ -36,8 +36,8 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.http.HttpRequest;
@@ -140,7 +140,7 @@ public abstract class DatasetServiceTestBase {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
+                                 new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
                                  new HashSet<DatasetMetricsReporter>());
 
     // Start dataset service, wait for it to be discoverable

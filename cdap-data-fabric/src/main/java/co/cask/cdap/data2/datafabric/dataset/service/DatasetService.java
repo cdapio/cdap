@@ -26,7 +26,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.explore.client.DatasetExploreFacade;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
@@ -80,7 +80,7 @@ public class DatasetService extends AbstractExecutionThreadService {
                         MetricsCollectionService metricsCollectionService,
                         DatasetOpExecutor opExecutorClient,
                         MDSDatasetsRegistry mdsDatasets,
-                        DatasetExploreFacade datasetExploreFacade,
+                        ExploreFacade exploreFacade,
                         Set<DatasetMetricsReporter> metricReporters) throws Exception {
 
     this.typeManager = typeManager;
@@ -88,7 +88,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
     builder.addHttpHandlers(ImmutableList.of(new DatasetTypeHandler(typeManager, locationFactory, cConf),
                                              new DatasetInstanceHandler(typeManager, instanceManager, opExecutorClient,
-                                                                        datasetExploreFacade, cConf)));
+                                                                        exploreFacade, cConf)));
 
     builder.setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.DATASET_MANAGER)));

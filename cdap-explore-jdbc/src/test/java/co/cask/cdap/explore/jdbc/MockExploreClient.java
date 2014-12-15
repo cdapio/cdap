@@ -54,12 +54,22 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
-  public ListenableFuture<Void> enableExplore(String datasetInstance) {
+  public ListenableFuture<Void> enableExploreDataset(String datasetInstance) {
     return null;
   }
 
   @Override
-  public ListenableFuture<Void> disableExplore(String datasetInstance) {
+  public ListenableFuture<Void> disableExploreDataset(String datasetInstance) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<Void> enableExploreStream(String streamName) {
+    return null;
+  }
+
+  @Override
+  public ListenableFuture<Void> disableExploreStream(String streamName) {
     return null;
   }
 

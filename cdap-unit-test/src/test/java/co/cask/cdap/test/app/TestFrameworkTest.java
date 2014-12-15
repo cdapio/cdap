@@ -769,13 +769,9 @@ public class TestFrameworkTest extends TestBase {
 
       Connection connection = getQueryClient();
       try {
-        // list the tables and make sure the table is there
-        ResultSet results = connection.prepareStatement("show tables").executeQuery();
-        Assert.assertTrue(results.next());
-        Assert.assertTrue("cdap_user_mytable".equalsIgnoreCase(results.getString(1)));
 
         // run a query over the dataset
-        results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
+        ResultSet results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
           .executeQuery();
         Assert.assertTrue(results.next());
         Assert.assertEquals("a", results.getString(1));

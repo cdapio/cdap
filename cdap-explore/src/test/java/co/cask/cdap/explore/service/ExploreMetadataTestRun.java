@@ -73,9 +73,9 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "my_table", "TABLE", "Cask CDAP Dataset")),
+                              "", "default", "my_table", "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "other_table", "TABLE", "Cask CDAP Dataset")))
+                              "", "default", "other_table", "TABLE", "CDAP Dataset")))
     );
 
     // Pattern on table name
@@ -90,7 +90,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "other_table", "TABLE", "Cask CDAP Dataset")))
+                              "", "default", "other_table", "TABLE", "CDAP Dataset")))
     );
   }
 

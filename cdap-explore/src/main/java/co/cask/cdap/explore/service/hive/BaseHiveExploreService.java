@@ -19,6 +19,7 @@ package co.cask.cdap.explore.service.hive;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
@@ -30,6 +31,7 @@ import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
+import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
@@ -142,7 +144,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf, File previewsDir) {
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                                   File previewsDir, StreamAdmin streamAdmin) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
@@ -171,7 +174,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.cliService = new CLIService();
 
     this.txClient = txClient;
-    ContextManager.saveContext(datasetFramework);
+    ContextManager.saveContext(datasetFramework, streamAdmin);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 
@@ -489,8 +492,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                                                      column.getComment()));
       }
       String storageHandler = tableInfo.getParameters().get("storage_handler");
-      boolean isDatasetTable = storageHandler != null &&
-        storageHandler.equals(DatasetStorageHandler.class.getName());
+      boolean isDatasetTable = DatasetStorageHandler.class.getName().equals(storageHandler) ||
+        StreamStorageHandler.class.getName().equals(storageHandler);
 
       return new TableInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
                            (long) tableInfo.getCreateTime() * 1000, (long) tableInfo.getLastAccessTime() * 1000,
