@@ -40,8 +40,7 @@ angular
       'mgcrea.ngStrap.button',
       'mgcrea.ngStrap.tab',
       'mgcrea.ngStrap.modal',
-      'ncy-angular-breadcrumb',
-      'RecursionHelper'
+      'ncy-angular-breadcrumb'
 
     ]).name,
 
