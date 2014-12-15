@@ -215,8 +215,9 @@ see the :ref:`configuration-security` section.
      - Logging service account
    * - ``log.saver.event.bucket.interval.ms``
      - ``1000``
-     - Log events published in this interval (in milliseconds) will be put in one in-memory bucket and processed in a
-     batch. Smaller values will increase the odds of log events going out-of-order.
+     - Log events published in this interval (in milliseconds) will be put in one
+       in-memory bucket and processed in a batch. Smaller values will increase the odds of
+       log events going out-of-order.
    * - ``log.saver.event.max.inmemory.buckets``
      - ``8``
      - Maximum number of event buckets in memory.
