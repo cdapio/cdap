@@ -57,7 +57,7 @@ if [ "x$2" == "x" ]; then
 else
   PROJECT_PATH="$SCRIPT_PATH/../../../$2"
 fi
-# PROJECT_JAVADOCS="$PROJECT_PATH/target/site/apidocs"
+
 SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
 
 CHECK_INCLUDES="false"
@@ -72,13 +72,16 @@ ZIP_FILE_NAME=$HTML
 ZIP="$ZIP_FILE_NAME.zip"
 
 # Set Google Analytics Codes
+
 # Corporate Docs Code
 GOOGLE_ANALYTICS_WEB="UA-55077523-3"
 WEB="web"
+
 # CDAP Project Code
 GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
 GITHUB="github"
 
+# Redirect placed in top to redirect to en directory
 REDIRECT_EN_HTML=`cat <<EOF
 <!DOCTYPE HTML>
 <html lang="en-US">
@@ -136,20 +139,6 @@ function build_docs() {
   check_includes
   sphinx-build -b html -d build/doctrees source build/html
 }
-
-################################################## new
-
-function build_docs2() {
-# Copies source code to higher-level
-#   clean # Performed by higher-level command
-  cd $SCRIPT_PATH
-#   check_includes # This needs to be the step that modifies the copied source files in-place
-
-}
-
-################################################## new
-
-
 
 function build_docs_google() {
   clean
@@ -241,9 +230,8 @@ function make_zip_localized() {
 
 function build_extras() {
   # Over-ride this function in guides where Javadocs or licenses are being built or copied.
+  # Currently performed in reference-manual
   echo "No extras being built."
-#   build_javadocs_sdk
-#   copy_license_pdfs
 }
 
 function build() {
@@ -368,7 +356,6 @@ function rewrite() {
   echo "  to"
   echo "    $rewrite_target"
   echo "  $sub_string -> $new_sub_string "
-  
   sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
 }
 
@@ -385,7 +372,6 @@ function run_command() {
     build-web )         build_web; exit 1;;
     check-includes )    check_includes; exit 1;;
     docs )              build_docs;;
-    docs2 )             build_docs2;;
     license-pdfs )      build_license_pdfs; exit 1;;
     build-standalone )  build_standalone; exit 1;;
     copy-javadocs )     copy_javadocs; exit 1;;

@@ -88,19 +88,19 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 
 .. |release-notes| replace:: **Release Notes:**
-.. _release-notes: release-notes.html
+.. _release-notes: reference-manual/release-notes.html
 
 - |release-notes|_ Notes for current and previous CDAP versions
 
 
 .. |glossary| replace:: **Glossary:**
-.. _glossary: glossary.html
+.. _glossary: reference-manual/glossary.html
 
 - |glossary|_ Definitions of terms and phrases used in CDAP
 
 
 .. |faq| replace:: **FAQ:**
-.. _faq: faq.html
+.. _faq: reference-manual/faq.html
 
 - |faq|_ Answers to questions you might have about CDAP
 

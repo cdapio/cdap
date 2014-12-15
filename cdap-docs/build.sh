@@ -28,38 +28,28 @@
 
 source _common/common-build.sh
 
-API="cdap-api"
-BUILD="build"
 BUILD_TEMP="build-temp"
 COMMON="_common"
 COMMON_SOURCE="$COMMON/_source"
 COMMON_CONF_PY="$COMMON/common_conf.py"
 COMMON_HIGHLEVEL_PY="$COMMON/highlevel_conf.py"
 COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index.rst"
-GITHUB="github"
-HTML="html"
-PROJECT="cdap"
-PROJECT_CAPS="CDAP"
-SCRIPT=`basename $0`
-SCRIPT_PATH=`pwd`
-SOURCE="source"
-WEB="web"
 
-REDIRECT_DEVELOPER_HTML=`cat <<EOF
-<!DOCTYPE HTML>
-<html lang="en-US">
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="0;url=developers-manual/index.html">
-        <script type="text/javascript">
-            window.location.href = "developers-manual/index.html"
-        </script>
-        <title></title>
-    </head>
-    <body>
-    </body>
-</html>
-EOF`
+# REDIRECT_DEVELOPER_HTML=`cat <<EOF
+# <!DOCTYPE HTML>
+# <html lang="en-US">
+#     <head>
+#         <meta charset="UTF-8">
+#         <meta http-equiv="refresh" content="0;url=developers-manual/index.html">
+#         <script type="text/javascript">
+#             window.location.href = "developers-manual/index.html"
+#         </script>
+#         <title></title>
+#     </head>
+#     <body>
+#     </body>
+# </html>
+# EOF`
 
 ARG_1="$1"
 ARG_2="$2"
@@ -81,9 +71,7 @@ function usage() {
   echo ""
   echo "  Options (select one)"
   echo "    all            Clean build of everything: HTML docs and Javadocs, GitHub and Web versions"
-  echo "    docs           Clean build of just the HTML docs"
-  echo "    docs2          Clean build of just the HTML docs, new version"
-  echo "    docs-javadocs  Clean build of HTML docs and Javadocs"
+  echo "    docs           Clean build of just the HTML docs, skipping Javadocs"
   echo "    docs-github    Clean build of HTML docs and Javadocs, zipped for placing on GitHub"
   echo "    docs-web       Clean build of HTML docs and Javadocs, zipped for placing on docs.cask.co webserver"
   echo ""
@@ -103,8 +91,6 @@ function run_command() {
   case "$1" in
     all )               build_all; exit 1;;
     docs )              build_docs; exit 1;;
-    docs2 )             build_docs2; exit 1;;
-    docs-javadocs )     build_docs_javadocs; exit 1;;
     docs-github )       build_docs_github; exit 1;;
     docs-web )          build_docs_web; exit 1;;
     zip )               build_zip $2; exit 1;;
@@ -116,7 +102,7 @@ function run_command() {
 }
 ################################################## new
 
-function clean2() {
+function clean() {
   cd $SCRIPT_PATH
   rm -rf $SCRIPT_PATH/$BUILD/*
   mkdir -p $SCRIPT_PATH/$BUILD/$HTML
@@ -141,8 +127,8 @@ function copy_html() {
   echo ""
 }
 
-function build_docs2() {
-  clean2
+function build_docs_outer_level() {
+  clean
   copy_source admin-manual      "Administration Manual"
   copy_source developers-manual "Developers’ Manual"
   copy_source reference-manual  "Reference Manual"
@@ -162,7 +148,7 @@ function build_docs2() {
 
 ################################################## current
 
-function clean() {
+function clean_old() {
   cd $SCRIPT_PATH
   rm -rf $SCRIPT_PATH/$BUILD
   mkdir -p $SCRIPT_PATH/$BUILD/$HTML
@@ -185,52 +171,55 @@ function build_all() {
 }
 
 function build_docs() {
+#   clean_old
   build "docs"
+  build_docs_outer_level
+  build_zip $WEB
 }
 
 function build_docs_javadocs() {
+#   clean_old
   build "build"
 }
 
 function build_docs_github() {
   build "build-github"
-  build_docs2
+  build_docs_outer_level
   build_zip $GITHUB
 }
 
 function build_docs_web() {
   build "build-web"
-  build_docs2
+  build_docs_outer_level
   build_zip $WEB
 }
 
 function build() {
-  clean
   build_specific_doc admin-manual $1
   build_specific_doc developers-manual $1
   build_specific_doc reference-manual $1
   build_specific_doc examples-manual $1
-  add_redirect
+#   add_redirect
 }
 
-function add_redirect() {
-  cd $SCRIPT_PATH/$BUILD/$HTML
-  echo "$REDIRECT_DEVELOPER_HTML" > index.html
-}
+# function add_redirect() {
+#   cd $SCRIPT_PATH/$BUILD/$HTML
+#   echo "$REDIRECT_DEVELOPER_HTML" > index.html
+# }
 
 function build_specific_doc() {
   echo "Building $1, target $2..."
-  cd $1
+  cd $SCRIPT_PATH/$1
   ./build.sh $2 $ARG_2 $ARG_3
-  cd $SCRIPT_PATH
-  echo "Copying $1 results..."
-  cp -r $1/$BUILD/$HTML $BUILD/$HTML/$1
-  echo ""
+#   cd $SCRIPT_PATH
+#   echo "Copying $1 results..."
+#   cp -r $1/$BUILD/$HTML $BUILD/$HTML/$1
+#   echo ""
 }
 
 function build_zip() {
   cd $SCRIPT_PATH
-  source _common/common-build.sh
+#   source _common/common-build.sh
   set_project_path
   print_version
   if [ "x$1" == "x" ]; then

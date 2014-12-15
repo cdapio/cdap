@@ -70,7 +70,7 @@ function pandoc_includes() {
   
   # Fix version(s)
   local version="1.1.0-SNAPSHOT" # Version to be written into file
-  version_tag_rewrite $java_client_working $java_client "{version}" $version
+  rewrite $java_client_working $java_client "{version}" $version
   
   version
   cd $SCRIPT_PATH
