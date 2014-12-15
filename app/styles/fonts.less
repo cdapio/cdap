@@ -1,16 +1,18 @@
-.font-face(@fontName: sans-serif; @fontFile: sans-serif; @fontWeight: normal; @fontStyle: normal) {
-    @font-face {
-        font-family: @fontName;
-        src: url('../fonts/@{fontFile}.eot');
-        src: url('../fonts/@{fontFile}.eot') format('embedded-opentype'),
-             url("../fonts/@{fontFile}.woff2") format("woff2"),
-             url('../fonts/@{fontFile}.woff') format('woff'),
-             url('../fonts/@{fontFile}.ttf') format('truetype'),
-             url('../fonts/@{fontFile}.svg#@{fontName}') format('svg');
-        font-weight: @fontWeight;
-        font-style: @fontStyle;
-    }
-}
+@import (css) url(http://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,400,300,700);
 
-.font-face(Gotham, gotham-light);
-.font-face(Gotham, gotham-medium, bold);
+// .font-face(@fontName: sans-serif; @fontFile: sans-serif; @fontWeight: normal; @fontStyle: normal) {
+//     @font-face {
+//         font-family: @fontName;
+//         src: url('../fonts/@{fontFile}.eot');
+//         src: url('../fonts/@{fontFile}.eot') format('embedded-opentype'),
+//              url("../fonts/@{fontFile}.woff2") format("woff2"),
+//              url('../fonts/@{fontFile}.woff') format('woff'),
+//              url('../fonts/@{fontFile}.ttf') format('truetype'),
+//              url('../fonts/@{fontFile}.svg#@{fontName}') format('svg');
+//         font-weight: @fontWeight;
+//         font-style: @fontStyle;
+//     }
+// }
+
+// .font-face(Gotham, gotham-light);
+// .font-face(Gotham, gotham-medium, bold);

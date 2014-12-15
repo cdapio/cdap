@@ -1,37 +1,53 @@
-<h1>
-  Dashboard
-</h1>
+<div class="btn-group pull-right" role="toolbar">
 
-<div class="row">
-
-  <div class="col-sm-4"
-    ng-repeat="column in columns"
-    ng-model="column.items"
-    as-sortable="dragdrop">
-
-    <div class="panel panel-default"
-      ng-repeat="item in column.items"
-      as-sortable-item>
-
-      <div class="panel-heading" as-sortable-item-handle>
-        <span class="badge">{{item}}</span>
-        This is a header
-      </div>
-
-      <div class="panel-body">
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-        quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat.</p>
-      </div>
-
-      <div class="panel-footer">
-        This is a footer
-      </div>
-    </div>
-
-  </div>
-
+  <a class="btn btn-warning" ng-click="addWidget()">
+    <span class="fa fa-plus"></span>
+    add widget
+  </a>
 
 </div>
 
+<div
+  bs-active-pane="dashboards.activeTab"
+  bs-tabs>
+
+  <section
+    data-title="{{dashboard.title}}"
+    ng-repeat="dashboard in dashboards"
+    bs-pane>
+
+    <div class="row">
+
+      <div ng-class="'col-sm-'+(12/dashboard.columns.length)"
+        ng-repeat="column in dashboard.columns"
+        ng-model="column"
+        as-sortable="dragdrop">
+
+        <div class="panel panel-default"
+          ng-repeat="wdgt in column"
+          as-sortable-item>
+
+          <div class="panel-heading"
+            as-sortable-item-handle>
+
+            <a class="pull-right btn btn-default btn-xs"
+              title="remove widget"
+              ng-click="rmWidget(wdgt)" no-drag>
+              <span class="fa fa-close"></span>
+            </a>
+
+            {{wdgt.title}}
+            <span class="badge" ng-bind="wdgt.badge"></span>
+          </div>
+
+          <div class="panel-body"
+            ng-include="'assets/features/dashboard/widget.html'"
+            ></div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+</div>

@@ -45,9 +45,9 @@ gulp.task('fonts', function() {
  */
 gulp.task('css:app', function() {
   return gulp.src([
-      './app/directives/**/*.{less,css}',
-      './app/styles/themes/*.less',
       './app/styles/common.less',
+      './app/styles/themes/*.less',
+      './app/directives/**/*.{less,css}',
       './app/features/**/*.{less,css}'
     ])
     .pipe(plug.if('*.less', plug.less()))
