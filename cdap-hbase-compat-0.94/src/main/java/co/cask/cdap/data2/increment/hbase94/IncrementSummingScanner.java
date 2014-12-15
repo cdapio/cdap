@@ -23,6 +23,7 @@ import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
+import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -42,12 +43,14 @@ class IncrementSummingScanner implements RegionScanner {
   // Highest timestamp, beyond which we cannot aggregate increments during flush and compaction.
   // Increments newer than this may still be visible to running transactions
   private final long compactionUpperBound;
+  private final ScanType scanType;
 
   IncrementSummingScanner(HRegion region, int batchSize, InternalScanner baseScanner) {
-    this(region, batchSize, baseScanner, Long.MAX_VALUE);
+    this(region, batchSize, baseScanner, ScanType.USER_SCAN, Long.MAX_VALUE);
   }
 
-  IncrementSummingScanner(HRegion region, int batchSize, InternalScanner baseScanner, long compationUpperBound) {
+  IncrementSummingScanner(HRegion region, int batchSize, InternalScanner baseScanner,
+                          ScanType scanType, long compationUpperBound) {
     this.region = region;
     this.batchSize = batchSize;
     this.baseScanner = baseScanner;
@@ -55,6 +58,7 @@ class IncrementSummingScanner implements RegionScanner {
       this.baseRegionScanner = (RegionScanner) baseScanner;
     }
     this.compactionUpperBound = compationUpperBound;
+    this.scanType = scanType;
   }
 
   @Override
@@ -135,6 +139,9 @@ class IncrementSummingScanner implements RegionScanner {
             return true;
           }
 
+          // NOTE: compactionUpperBound is Long.MAX_VALUE for client scans, so it will squash everything;
+          //       while during flush & compaction we can only squash up to it, as may be transactions in progress that
+          //       can see only part of the delta-incs group.
           // 1. if this is an increment
           if (IncrementHandler.isIncrement(cell) && cell.getTimestamp() < compactionUpperBound) {
             if (LOG.isTraceEnabled()) {
@@ -161,11 +168,6 @@ class IncrementSummingScanner implements RegionScanner {
             // 2. otherwise (not an increment)
             if (previousIncrement != null) {
               boolean skipCurrent = false;
-              if (sameCell(previousIncrement, cell)) {
-                // 2a. if qualifier matches previous and this is a long, add to running sum, emit
-                runningSum += Bytes.toLong(cell.getBuffer(), cell.getValueOffset());
-                skipCurrent = true;
-              }
               if (LOG.isTraceEnabled()) {
                 LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement);
               }
@@ -173,26 +175,33 @@ class IncrementSummingScanner implements RegionScanner {
               addedCnt++;
               previousIncrement = null;
               runningSum = 0;
-
-              if (skipCurrent) {
-                continue;
-              }
             }
-            // 2b. otherwise emit the current cell
-            //LOG.info("Including raw cell " + cell);
+            // emit the current cell as is
+            if (LOG.isTraceEnabled()) {
+              LOG.trace("Including raw cell " + cell);
+            }
             cells.add(cell);
             addedCnt++;
           }
         }
-        // emit any left over increment, if we hit the end
-        if (!hasMore && previousIncrement != null) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
-          }
-          cells.add(newCell(previousIncrement, runningSum));
-        }
       }
+      // NOTE: if limit is -1 (unlimited) then we fetched all cells in one shot, so allow get out of the loop to prevent
+      //       fetching next row
+      // todo: the baseScanner may have more increment-by-delta cells that has to be merged into one counter value,
+      //       which we don't verify by only looking at addedCnt < limit condition. Hence if limit set on scan is less
+      //       than number of increment-by-delta cells for a counter it may result into multiple values of same cell to
+      //       be returned or partial summation result to be returned. It may not be a problem as we don't yet use
+      //       limit on scan explicitly for table datasets. But will cause issues when we do.
+      //       See CDAP-971.
     } while (hasMore && limit > 0 && addedCnt < limit);
+
+    // emit any left over increment, if we hit the end
+    if (previousIncrement != null) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
+      }
+      cells.add(newCell(previousIncrement, runningSum));
+    }
 
     return hasMore;
   }
@@ -210,8 +219,14 @@ class IncrementSummingScanner implements RegionScanner {
   }
 
   private KeyValue newCell(KeyValue toCopy, long value) {
-    return new KeyValue(toCopy.getRow(), toCopy.getFamily(), toCopy.getQualifier(), toCopy.getTimestamp(),
-                        Bytes.toBytes(value));
+    // we want to give normal long value to the user scan, while for compaction we want to write summation as delta
+    if (scanType == ScanType.USER_SCAN) {
+      return new KeyValue(toCopy.getRow(), toCopy.getFamily(), toCopy.getQualifier(),
+                          toCopy.getTimestamp(), Bytes.toBytes(value));
+    } else {
+      return IncrementHandler.createDeltaIncrement(toCopy.getRow(), toCopy.getFamily(), toCopy.getQualifier(),
+                                                   toCopy.getTimestamp(), Bytes.toBytes(value));
+    }
   }
 
   @Override
