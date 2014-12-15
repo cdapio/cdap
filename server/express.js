@@ -13,6 +13,7 @@ module.exports = {
 var pkg = require('../package.json'),
     morgan = require('morgan'),
     express = require('express'),
+    compression = require('compression'),
     finalhandler = require('finalhandler'),
     serveFavicon = require('serve-favicon'),
     request = require('request'),
@@ -40,8 +41,8 @@ function makeApp (authAddress, cdapConfig) {
   // middleware
   try { app.use(serveFavicon(DIST_PATH + '/assets/img/favicon.png')); }
   catch(e) { console.error('Favicon missing! Did you run `gulp build`?'); }
+  app.use(compression());
   app.use(bodyParser.json());
-
 
   // serve the config file
   app.get('/config.js', function (req, res) {
