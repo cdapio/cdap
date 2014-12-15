@@ -16,7 +16,7 @@ var request = require('request'),
 
 
 var PING_INTERVAL = 1000,
-    PING_MAX_RETRIES = 30,
+    PING_MAX_RETRIES = 3,
     PING_PATH = '/v2/ping';
 
 
@@ -48,7 +48,7 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
     attempts++;
     if (attempts > PING_MAX_RETRIES) {
       console.error('Exceeded max attempts calling secure endpoint.');
-      deferred.reject();
+      deferred.resolve(self);
     } else {
       console.log('Calling security endpoint: ', url, ' attempt ', attempts);
       request({
