@@ -1,3 +1,12 @@
+<div class="btn-group pull-right" role="toolbar">
+
+  <a class="btn btn-warning" ng-click="addWidget()">
+    <span class="fa fa-plus"></span>
+    add widget
+  </a>
+
+</div>
+
 <div
   bs-active-pane="dashboards.activeTab"
   bs-tabs>
@@ -21,12 +30,13 @@
           <div class="panel-heading"
             as-sortable-item-handle>
 
-            <a class="btn btn-xs pull-right btn-default"
+            <a class="pull-right btn btn-default btn-xs"
+              title="remove widget"
               ng-click="rmWidget(wdgt)" no-drag>
               <span class="fa fa-close"></span>
             </a>
 
-            <em>{{wdgt.title}}</em>
+            {{wdgt.title}}
             <span class="badge" ng-bind="wdgt.badge"></span>
           </div>
 

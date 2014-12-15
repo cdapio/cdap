@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state) {
+function ($scope, $state, $alert) {
 
 
   $scope.dashboards = ['First','Second','Third'].map(function (t, k){
@@ -49,13 +49,30 @@ function ($scope, $state) {
 
 
   $scope.rmWidget = function (wdgt) {
-    var d = $scope.dashboards[$scope.dashboards.activeTab];
+    var n = 0,
+        a = $scope.dashboards.activeTab,
+        d = $scope.dashboards[a];
     angular.forEach(d.columns, function (c, i) {
       d.columns[i] = c.filter(function (p) {
         return wdgt !== p;
       });
+      n += d.columns[i].length;
     });
-  }
+    if(!n && $scope.dashboards.length>1) {
+      console.log('last widget removed, removing dashboard', a);
+      $scope.dashboards.splice(a, 1);
+      $scope.dashboards.activeTab = Math.max(0, a-1);
+    }
+  };
+
+
+  $scope.addWidget = function () {
+    $alert({
+      title: 'Sorry!',
+      content: 'It does not work yet.',
+      type: 'danger'
+    });
+  };
 
 
   $scope.dragdrop = {
