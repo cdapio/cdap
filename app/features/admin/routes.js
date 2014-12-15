@@ -1,5 +1,6 @@
 angular.module(PKG.name + '.feature.admin')
   .config(function($stateProvider, $urlRouterProvider) {
+    $urlRouterProvider.when('/admin', '/admin/overview');
     $stateProvider
       .state('admin', {
         url: '/admin',

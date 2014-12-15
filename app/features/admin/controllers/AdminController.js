@@ -5,7 +5,7 @@ angular.module(PKG.name + '.feature.admin')
     };
     $scope.nsList = [
       {
-        state: 'admin.namespace({namespaceId: "namespace1"})',
+        //state: 'admin.namespace({namespaceId: "namespace1"})',
         label: 'Namespace1',
         children: [
           {
