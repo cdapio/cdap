@@ -13,7 +13,7 @@ angular.module(PKG.name+'.feature.dashboard')
       })
 
         .state('dashboard.tab', {
-          url: '/dashboard?tab'
+          url: '?tab'
         })
       ;
 
