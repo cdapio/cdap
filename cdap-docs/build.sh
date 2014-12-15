@@ -219,12 +219,15 @@ function build_specific_doc() {
 
 function build_zip() {
   cd $SCRIPT_PATH
-#   source _common/common-build.sh
+  # re-sourcing replaces the commands in this file with common ones
+  source _common/common-build.sh
   set_project_path
   print_version
   if [ "x$1" == "x" ]; then
+    echo "make_zip"
     make_zip
   else
+    echo "make_zip_localized $1"
     make_zip_localized $1
   fi
   echo "Building zip completed."
@@ -241,6 +244,7 @@ function build_license_depends() {
 }
 
 function print_version() {
+  echo "print_version '$ARG_1' '$ARG_2' '$ARG_3'"
   cd developers-manual
   ./build.sh $ARG_1 $ARG_2 $ARG_3
 }

@@ -103,7 +103,7 @@ function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
   echo "Build script for '$PROJECT_CAPS' docs"
-  echo "Usage: $SCRIPT < option > [source]"
+  echo "Usage: $SCRIPT < option > [source test_includes]"
   echo ""
   echo "  Options (select one)"
   echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
@@ -358,11 +358,6 @@ function rewrite() {
   echo "  $sub_string -> $new_sub_string "
   sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
 }
-
-if [ $# -lt 1 ]; then
-  usage
-#   exit 1
-fi
 
 function run_command() {
   case "$1" in
