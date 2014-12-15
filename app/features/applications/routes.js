@@ -11,7 +11,7 @@ angular.module(PKG.name+'.feature.applications')
         templateUrl: '/assets/features/applications/templates/apps.html',
         resolve: {
           namespace: function() {
-            return "ns1";
+            return 'ns1';
           }
         }
       })
@@ -40,6 +40,6 @@ angular.module(PKG.name+'.feature.applications')
           ncyBreadcrumb: {
             skip: true
           }
-        })
+        });
 
   });

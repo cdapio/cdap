@@ -5,7 +5,7 @@ angular.module(PKG.name + '.feature.admin')
       .state('admin', {
         url: '/admin',
         templateUrl: '/assets/features/admin/templates/admin.html',
-        controller: "AdminController"
+        controller: 'AdminController'
       })
         .state('admin.overview', {
           url: '/overview',
@@ -23,7 +23,7 @@ angular.module(PKG.name + '.feature.admin')
           url: '/namespace/:namespaceId',
           resolve: {
             namespaceId: function() {
-              return "namespace1";
+              return 'namespace1';
             }
           },
           templateUrl: '/assets/features/admin/templates/namespace.html'
@@ -47,5 +47,5 @@ angular.module(PKG.name + '.feature.admin')
           .state('admin.namespace.apps', {
             url: '/apps',
             templateUrl: 'assets/features/admin/templates/namespace/apps.html'
-          })
+          });
   });

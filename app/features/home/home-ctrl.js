@@ -8,10 +8,10 @@ function ($scope, $alert, MyDataSource) {
   var dataSrc = new MyDataSource($scope);
   $scope.apps = [];
   dataSrc.fetch({
-    _cdap: "GET /apps/"
+    _cdap: 'GET /apps/'
   }, function(res) {
     $scope.apps = res;
-    console.log("Apps: ", $scope.apps);
+    console.log('Apps: ', $scope.apps);
   });
 
 });

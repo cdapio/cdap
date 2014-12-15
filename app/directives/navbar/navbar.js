@@ -10,7 +10,7 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG) {
 
     link: function (scope, element, attrs) {
 
-      scope.currentNamespace = "Namespace 1";
+      scope.currentNamespace = 'Namespace 1';
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
 

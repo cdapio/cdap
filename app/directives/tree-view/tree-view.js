@@ -12,5 +12,5 @@ angular.module(PKG.name + '.commons')
       controller: function($scope) {
         $scope.showSubMenu = false;
       }
-    }
-  })
+    };
+  });
