@@ -6,19 +6,22 @@ angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
 function ($scope, $state) {
 
 
-  $scope.dashboards = ['First','Second'].map(function (t, k){
+  $scope.dashboards = ['First','Second','Third'].map(function (t, k){
 
     var c, columns = [];
-    if (k) {
-      columns.push({
-        items:['single widget']
-      });
+    if (k===1) {
+      columns.push([{
+        title: 'single widget'
+      }]);
     }
     else {
       for (var i = 0; i < 3; i++) {
-        c = {items:[]};
+        c = [];
         for (var j = 0; j < 2; j++) {
-          c.items.push(i+'/'+j);
+          c.push({
+            title: 'widget #'+(j+1),
+            badge: 'c'+i
+          });
         }
         columns.push(c);
       }
@@ -45,6 +48,14 @@ function ($scope, $state) {
   });
 
 
+  $scope.rmWidget = function (wdgt) {
+    var d = $scope.dashboards[$scope.dashboards.activeTab];
+    angular.forEach(d.columns, function (c, i) {
+      d.columns[i] = c.filter(function (p) {
+        return wdgt !== p;
+      });
+    });
+  }
 
 
   $scope.dragdrop = {

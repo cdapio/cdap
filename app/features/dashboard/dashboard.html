@@ -11,15 +11,30 @@
 
       <div ng-class="'col-sm-'+(12/dashboard.columns.length)"
         ng-repeat="column in dashboard.columns"
-        ng-model="column.items"
+        ng-model="column"
         as-sortable="dragdrop">
 
-        <div ng-repeat="item in column.items">
-          <ng-include
-            src="'assets/features/dashboard/widget.html'"
-            ></ng-include>
-        </div>
+        <div class="panel panel-default"
+          ng-repeat="wdgt in column"
+          as-sortable-item>
 
+          <div class="panel-heading"
+            as-sortable-item-handle>
+
+            <a class="btn btn-xs pull-right btn-default"
+              ng-click="rmWidget(wdgt)" no-drag>
+              <span class="fa fa-close"></span>
+            </a>
+
+            <em>{{wdgt.title}}</em>
+            <span class="badge" ng-bind="wdgt.badge"></span>
+          </div>
+
+          <div class="panel-body"
+            ng-include="'assets/features/dashboard/widget.html'"
+            ></div>
+
+        </div>
       </div>
 
     </div>
