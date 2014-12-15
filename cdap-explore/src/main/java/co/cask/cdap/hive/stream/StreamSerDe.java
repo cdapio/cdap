@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.AbstractSerDe;
+import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -37,9 +38,10 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * SerDe to serialize Dataset Objects.
+ * SerDe to deserialize Stream Events. It MUST implement the deprecated SerDe interface instead of extending the
+ * abstract SerDe class, otherwise we get ClassNotFound exceptions on cdh4.x.
  */
-public class StreamSerDe extends AbstractSerDe {
+public class StreamSerDe implements SerDe {
   private ArrayList<String> columnNames;
   private ArrayList<TypeInfo> columnTypes;
   private ObjectInspector inspector;

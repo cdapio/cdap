@@ -353,7 +353,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   // schema is exposed to users.
   @SuppressWarnings("unused")
   private static class StreamSchema {
-    private long timestamp;
+    // can't use 'timestamp' as it is a reserved Hive keyword (though not for all versions of Hive)
+    private long ts;
     // the body is actually a byte array, but that is not very useful when performing queries.
     // we therefore assume the body is a string.
     private String body;

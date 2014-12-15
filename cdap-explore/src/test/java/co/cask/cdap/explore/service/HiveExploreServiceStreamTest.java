@@ -30,7 +30,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -75,7 +74,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
                  new ColumnDesc("comment", "STRING", 3, "from deserializer")
                ),
                Lists.newArrayList(
-                 new QueryResult(Lists.<Object>newArrayList("timestamp", "bigint", "from deserializer")),
+                 new QueryResult(Lists.<Object>newArrayList("ts", "bigint", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("body", "string", "from deserializer")),
                  new QueryResult(Lists.<Object>newArrayList("headers", "map<string,string>",
                                                             "from deserializer"))
@@ -88,7 +87,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     ExploreExecutionResult results = exploreClient.submit("select * from " + streamTableName).get();
     // check schema
     List<ColumnDesc> expectedSchema = Lists.newArrayList(
-      new ColumnDesc(streamTableName + ".timestamp", "BIGINT", 1, null),
+      new ColumnDesc(streamTableName + ".ts", "BIGINT", 1, null),
       new ColumnDesc(streamTableName + ".body", "STRING", 2, null),
       new ColumnDesc(streamTableName + ".headers", "map<string,string>", 3, null)
     );

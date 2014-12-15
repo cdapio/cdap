@@ -298,6 +298,8 @@ public class ExploreServiceUtils {
                                                  bootstrapClassPaths, usingCL));
     orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.DatasetStorageHandler",
                                                  bootstrapClassPaths, usingCL));
+    orderedDependencies.addAll(traceDependencies("co.cask.cdap.hive.datasets.StreamStorageHandler",
+                                                 bootstrapClassPaths, usingCL));
     orderedDependencies.addAll(traceDependencies("org.apache.hadoop.hive.ql.exec.mr.ExecDriver",
                                                  bootstrapClassPaths, usingCL));
     orderedDependencies.addAll(traceDependencies("org.apache.hive.service.cli.CLIService",

@@ -31,6 +31,7 @@ import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
+import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
@@ -491,8 +492,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                                                      column.getComment()));
       }
       String storageHandler = tableInfo.getParameters().get("storage_handler");
-      boolean isDatasetTable = storageHandler != null &&
-        storageHandler.equals(DatasetStorageHandler.class.getName());
+      boolean isDatasetTable = DatasetStorageHandler.class.getName().equals(storageHandler) ||
+        StreamStorageHandler.class.getName().equals(storageHandler);
 
       return new TableInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
                            (long) tableInfo.getCreateTime() * 1000, (long) tableInfo.getLastAccessTime() * 1000,
