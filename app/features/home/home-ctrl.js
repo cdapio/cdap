@@ -14,7 +14,7 @@ function ($scope, $alert, MyDataSource) {
   }, function(res) {
 
     $scope.apps = res;
-
+    console.log('Apps: ', $scope.apps);
   });
 
 });

@@ -10,7 +10,7 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG) {
 
     link: function (scope, element, attrs) {
 
-      scope.currentNamespace = "Namespace 1";
+      scope.currentNamespace = 'Namespace 1';
 
       var toggles = element[0].querySelectorAll('a.dropdown-toggle');
 
@@ -33,9 +33,9 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG) {
       scope.securityEnabled = MY_CONFIG.securityEnabled;
 
       scope.navbarLinks = [
-        { sref: 'home',       label: 'Development'  },
-        { sref: 'dashboard',  label: 'Operations'   },
-        { sref: 'admin',      label: 'Management'   }
+        { sref: 'home',                label: 'Development'  },
+        { sref: 'dashboard',           label: 'Operations'   },
+        { sref: 'admin.overview',      label: 'Management'   }
       ];
 
 

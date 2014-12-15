@@ -11,7 +11,7 @@ angular.module(PKG.name+'.feature.applications')
         templateUrl: '/assets/features/applications/templates/apps.html',
         resolve: {
           namespace: function() {
-            return "ns1";
+            return 'ns1';
           }
         }
       })
@@ -28,7 +28,7 @@ angular.module(PKG.name+'.feature.applications')
 
       .state('apps.application', {
         url: '/apps/:appId',
-        templateUrl: '/assets/features/applications/templates/applications.html',
+        templateUrl: '/assets/features/applications/templates/application.html',
         controller: 'ApplicationController',
         ncyBreadcrumb: {
           parent: 'apps.list',
@@ -40,6 +40,6 @@ angular.module(PKG.name+'.feature.applications')
           ncyBreadcrumb: {
             skip: true
           }
-        })
+        });
 
   });
