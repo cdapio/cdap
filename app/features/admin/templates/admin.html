@@ -1,30 +1,29 @@
-<div class="admin">
-  <div class="row">
-    <div class="col-sm-3">
-      <ul class="sidebar">
-        <li>
-          <a ui-sref="admin.system">
-            <div> System Configuration </div>
-          </a>
-        </li>
-        <li>
-          <a ui-sref="admin.security">
-            <div>Security Configuration </div>
-          </a>
-        </li>
-        <li>
-          <div class="menu-title"
-                ng-click="showSubMenu=!showSubMenu">
-            <a> Namespaces </a>
-          </div>
-        </li>
-        <ul ng-show="showSubMenu">
-          <my-tree-view data-tree-list="nsList"></my-tree-view>
-        </ul>
+
+<div class="row">
+  <div class="col-sm-3">
+    <ul class="sidebar">
+      <li>
+        <a ui-sref="admin.system">
+          <div> System Configuration </div>
+        </a>
+      </li>
+      <li>
+        <a ui-sref="admin.security">
+          <div>Security Configuration </div>
+        </a>
+      </li>
+      <li>
+        <div class="menu-title"
+              ng-click="showSubMenu=!showSubMenu">
+          <a> Namespaces </a>
+        </div>
+      </li>
+      <ul ng-show="showSubMenu">
+        <my-tree-view data-model="nsList"></my-tree-view>
       </ul>
-    </div>
-    <div class="col-sm-9">
-      <div ui-view></div>
-    </div>
+    </ul>
+  </div>
+  <div class="col-sm-9">
+    <div ui-view></div>
   </div>
 </div>

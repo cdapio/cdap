@@ -1,4 +1,4 @@
-<li ng-repeat="menu in treeList">
+<li ng-repeat="menu in model">
    <a ui-sref="{{menu.state}}" ng-show="menu.children.length == 0">
     <div ng-bind="menu.label"> </div>
   </a>
@@ -9,6 +9,6 @@
     <span ng-bind="menu.label"> </span>
   </div>
   <ul ng-show="showSubMenu">
-    <my-tree-view data-tree-list="menu.children"> </my-tree-view>
+    <my-tree-view data-model="menu.children"> </my-tree-view>
   </ul>
 </li>

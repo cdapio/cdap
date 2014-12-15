@@ -3,7 +3,7 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'E',
       scope: {
-        treeList: '='
+        model: '='
       },
       templateUrl: 'tree-view/tree-view.html',
       compile: function(element) {
