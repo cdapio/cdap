@@ -49,24 +49,16 @@ function ($scope, $state, $alert) {
 
 
   $scope.rmWidget = function (wdgt) {
-    var n = 0,
-        a = $scope.dashboards.activeTab,
-        d = $scope.dashboards[a];
+    var d = $scope.dashboards[$scope.dashboards.activeTab];
     angular.forEach(d.columns, function (c, i) {
       d.columns[i] = c.filter(function (p) {
         return wdgt !== p;
       });
-      n += d.columns[i].length;
     });
-    if(!n && $scope.dashboards.length>1) {
-      console.log('last widget removed, removing dashboard', a);
-      $scope.dashboards.splice(a, 1);
-      $scope.dashboards.activeTab = Math.max(0, a-1);
-    }
   };
 
 
-  $scope.addWidget = function () {
+  $scope.addDashboard = function () {
     $alert({
       title: 'Sorry!',
       content: 'It does not work yet.',
