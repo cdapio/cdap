@@ -40,9 +40,11 @@ import java.util.List;
 public final class TimeSeriesMetricsProcessor implements MetricsProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(TimeSeriesMetricsProcessor.class);
+  private static final int MAX_RECORDLIST_SIZE = 100;
 
   private final LoadingCache<String, List<TimeSeriesTable>> timeSeriesTables;
-  private List<MetricsRecord> metricsRecords;
+  private List<MetricsRecord> metricsRecords = Lists.newArrayList();
+
 
   @Inject
   public TimeSeriesMetricsProcessor(final MetricsTableFactory tableFactory) {
@@ -62,11 +64,15 @@ public final class TimeSeriesMetricsProcessor implements MetricsProcessor {
   public void process(MetricsScope scope, Iterator<MetricsRecord> records) {
     try {
       List<TimeSeriesTable> listTimeSeriesTables = timeSeriesTables.getUnchecked(scope.name());
-      metricsRecords = Lists.newArrayList(records);
-      for (TimeSeriesTable table : listTimeSeriesTables) {
-        table.save(metricsRecords.iterator());
+      while (records.hasNext()) {
+        metricsRecords.add(records.next());
+        if (metricsRecords.size() == MAX_RECORDLIST_SIZE || !records.hasNext()) {
+          for (TimeSeriesTable table : listTimeSeriesTables) {
+            table.save(metricsRecords.iterator());
+          }
+          metricsRecords.clear();
+        }
       }
-      metricsRecords.clear();
     } catch (OperationException e) {
       LOG.error("Failed to write to time series table: {}", e.getMessage(), e);
     }
