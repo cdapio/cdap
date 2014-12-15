@@ -44,6 +44,7 @@ def build_common_index(app, exception):
         return
     manuals = html_theme_options["manuals"]
     master = load_index(builder)
+    clean(master)
     
     for manual in manuals:
         index = load_index(builder, "../../%s/build/html" % manual)
@@ -89,29 +90,45 @@ def dump_search_index(builder, index):
     movefile(searchindexfn + '.tmp', searchindexfn)
     builder.info('done')
 
+FILENAMES = 'filenames'
+TERMS = 'terms'
+TITLES = 'titles'
+TITLETERMS = 'titleterms'
 
-# Merge two indexes b into main, where the second index is located in manual
-# index [u'envversion', u'terms', u'objtypes', u'objnames', u'filenames', u'titles', u'objects', u'titleterms']
+# Remove all references to subdirectories from master as they are replaced
+def clean(master):
+    for ref in range(len(master[FILENAMES])):
+        file = master[FILENAMES][ref]
+        if file.endswith("/index"):
+            # Remove any file number references
+            for term in master[TERMS]:
+                files = master[TERMS][term]
+                if isinstance(files, list) and ref in files:
+                    master[TERMS][term] = files.remove(ref)
+                    print "Deleted list reference: %s" % ref             
+                elif ref == files: # A single file reference
+                    del master[TERMS][term]
+                    print "Deleted single reference: %s" % ref             
+
+
+# Merge an index back into master, where the second index is located in a manual
+# index dict format [u'envversion', u'terms', u'objtypes', u'objnames', u'filenames', u'titles', u'objects', u'titleterms']
 # Steps:
-# get number of master.filenames; that +1 becomes what's added to second
-# append all new.filenames as manual/filename to master.filenames
-# append all new.titles to master.titles
-# add all new.terms to master.terms, converting filenumbers by adding offset
-# add all new.titleterms to master.titleterms, converting filenumbers by adding offset
+# - get number of master.filenames; that +1 becomes what's added to second
+# - append all new.filenames as manual/filename to master.filenames
+# - append all new.titles to master.titles
+# - merge all new.terms to master.terms, converting filenumbers by adding offset
+# - merge all new.titleterms to master.titleterms, converting filenumbers by adding offset
 def merge(master, new, manual):
-    FILENAMES = 'filenames'
-    TERMS = 'terms'
-    TITLES = 'titles'
-    TITLETERMS = 'titleterms'
     offset = len(master[FILENAMES])
     
     # Append all new.titles to master.titles
     master[FILENAMES] = master[FILENAMES] + [ "%s/%s" % (manual, filename) for filename in new[FILENAMES]]
     master[TITLES] = master[TITLES] + new[TITLES]
     
-    # Add to terms
+    # Merge to terms
     master[TERMS] = merger(master[TERMS], new[TERMS], offset)
-    # Add to titleterms
+    # Merge to titleterms
     master[TITLETERMS] = merger(master[TITLETERMS], new[TITLETERMS], offset)
     
     return master
@@ -120,7 +137,7 @@ def merge(master, new, manual):
 def merger(dict1, dict2, offset):
     # merges dict2 into dict1, adjusting by offset
     # accounts for if existing items are lists or single objects
-    # dict:{document:[0,3],cdap:[0,3],placehold:[1,4,2,5],test:0}
+    # dict:{document:[0,3],cdap:[0,3],placeholder:[1,4,2,5],test:0}
 
     terms = dict1.keys()
     for term in dict2.keys():

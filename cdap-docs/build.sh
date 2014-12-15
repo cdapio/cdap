@@ -126,10 +126,10 @@ function clean2() {
 }
 
 function copy_source() {
-  echo "Copying source for $1..."
+  echo "Copying source for $1 ($2) ..."
   cd $SCRIPT_PATH
   mkdir -p $SCRIPT_PATH/$BUILD/$SOURCE/$1
-  rewrite $COMMON_PLACEHOLDER $BUILD/$SOURCE/$1/index.rst "<placeholder>" $1
+  rewrite $COMMON_PLACEHOLDER $BUILD/$SOURCE/$1/index.rst "<placeholder>" "$2"
   echo ""
 }
 
@@ -143,13 +143,12 @@ function copy_html() {
 
 function build_docs2() {
   clean2
-  copy_source admin-manual
-  copy_source developers-manual
-  copy_source reference-manual
-  copy_source examples-manual
+  copy_source admin-manual      "Administration Manual"
+  copy_source developers-manual "Developers’ Manual"
+  copy_source reference-manual  "Reference Manual"
+  copy_source examples-manual   "Examples, Guides, and Tutorials"
   # build all docs
   cd $SCRIPT_PATH
-#   cp $COMMON_CONF_PY $BUILD/$SOURCE/conf.py
   cp $COMMON_HIGHLEVEL_PY $BUILD/$SOURCE/conf.py
   cp $COMMON_SOURCE/index.rst $BUILD/$SOURCE/
   cp $COMMON_SOURCE/table-of-contents.rst $BUILD/$SOURCE/
@@ -158,7 +157,6 @@ function build_docs2() {
   copy_html developers-manual
   copy_html reference-manual
   copy_html examples-manual
-#   add_redirect
 }
 
 
@@ -196,11 +194,13 @@ function build_docs_javadocs() {
 
 function build_docs_github() {
   build "build-github"
+  build_docs2
   build_zip $GITHUB
 }
 
 function build_docs_web() {
   build "build-web"
+  build_docs2
   build_zip $WEB
 }
 

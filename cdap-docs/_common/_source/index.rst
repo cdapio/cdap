@@ -86,7 +86,24 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Command Line Interface API:** Methods for interacting with a CDAP instance from within a shell
   - **Licenses and Dependencies:** License information for the CDAP and list of CDAP Dependent Packages
 
-  
+
+.. |release-notes| replace:: **Release Notes:**
+.. _release-notes: release-notes.html
+
+- |release-notes|_ Notes for current and previous CDAP versions
+
+
+.. |glossary| replace:: **Glossary:**
+.. _glossary: glossary.html
+
+- |glossary|_ Definitions of terms and phrases used in CDAP
+
+
+.. |faq| replace:: **FAQ:**
+.. _faq: faq.html
+
+- |faq|_ Answers to questions you might have about CDAP
+
 
 .. |(TM)| unicode:: U+2122 .. trademark sign
    :ltrim:

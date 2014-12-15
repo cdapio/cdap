@@ -171,7 +171,22 @@ html_theme_options = {
   "manuals":["developers-manual","admin-manual","examples-manual","reference-manual",],
   "manualtitles":[u"Developers’ Manual","Administration Manual","Examples, Guides, and Tutorials", "Reference Manual",],
 }
-  
+
+def get_manuals():
+    return html_theme_options["manuals"]
+
+def get_manual_titles():
+    return html_theme_options["manualtitles"]
+
+def get_manual_titles_bash():
+    PREFIX = "declare -a MANUAL_TITLES=("
+    SUFFIX = ");"
+    manualtitles = PREFIX
+    for title in html_theme_options["manualtitles"]:
+        manualtitles += "'%s'" % title
+    manualtitles += SUFFIX
+    return manualtitles 
+
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']
 
