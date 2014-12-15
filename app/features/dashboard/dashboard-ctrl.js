@@ -57,8 +57,15 @@ function ($scope, $state, $alert) {
     });
   };
 
-
   $scope.addDashboard = function () {
+    var n = $scope.dashboards.push({
+      title: 'new dashboard',
+      columns: [[],[],[]]
+    });
+    $scope.dashboards.activeTab = n-1;
+  };
+
+  $scope.shareDashboard = $scope.addWidget = function () {
     $alert({
       title: 'Sorry!',
       content: 'It does not work yet.',
