@@ -41,13 +41,12 @@ public interface NotificationPublisher {
    * Creates a {@link Sender} object.
    * Before this call is made, the {@code feed} has to be created using the {@link NotificationFeedManager}.
    *
-   * @param feed Identity of the feed.
-   * @param notificationType Type of the Notification published.
    * @param <N> Type of the Notification published.
+   * @param feed Identity of the feed.
    * @return a {@link Sender} object.
    * @throws NotificationFeedException if anything wrong happens when trying to build a {@link Sender} object.
    */
-  <N> Sender<N> createSender(NotificationFeed feed, Class<N> notificationType) throws NotificationFeedException;
+  <N> Sender<N> createSender(NotificationFeed feed) throws NotificationFeedException;
 
   /**
    * Object responsible for sending Notifications to one {@link NotificationFeed}.

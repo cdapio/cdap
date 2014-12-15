@@ -154,7 +154,7 @@ public abstract class NotificationTest {
     Assert.assertTrue(feedClient.createFeed(FEED1));
     try {
       NotificationPublisher publisher = getNewPublisher();
-      final NotificationPublisher.Sender<String> sender = publisher.createSender(FEED1, String.class);
+      final NotificationPublisher.Sender<String> sender = publisher.createSender(FEED1);
 
       try {
         // Create a subscribing process
@@ -255,7 +255,7 @@ public abstract class NotificationTest {
     try {
       // Try publishing to a feed before creating it
       NotificationPublisher publisher = getNewPublisher();
-      publisher.createSender(FEED1, String.class);
+      publisher.createSender(FEED1);
       Assert.fail("Should throw NotificationFeedNotFoundException.");
     } catch (NotificationFeedNotFoundException e) {
       // Expected
@@ -293,7 +293,7 @@ public abstract class NotificationTest {
       });
       Cancellable cancellable = preparer.consume();
 
-      NotificationPublisher.Sender<String> sender = getNewPublisher().createSender(FEED1, String.class);
+      NotificationPublisher.Sender<String> sender = getNewPublisher().createSender(FEED1);
       try {
         sender.send("foobar");
         // Waiting for the subscriber to receive that notification
@@ -326,7 +326,7 @@ public abstract class NotificationTest {
     Assert.assertTrue(feedClient.createFeed(FEED1));
     try {
       NotificationPublisher publisher = getNewPublisher();
-      final NotificationPublisher.Sender<String> sender = publisher.createSender(FEED1, String.class);
+      final NotificationPublisher.Sender<String> sender = publisher.createSender(FEED1);
       Runnable publisherRunnable = new Runnable() {
         @Override
         public void run() {
@@ -440,7 +440,7 @@ public abstract class NotificationTest {
       for (int i = 0; i < publishersCount; i++) {
         NotificationPublisher publisher = getNewPublisher();
         final NotificationPublisher.Sender<SimpleNotification> sender =
-          publisher.createSender(FEED1, SimpleNotification.class);
+          publisher.createSender(FEED1);
         final int k = i;
         Runnable publisherRunnable = new Runnable() {
           @Override
@@ -537,7 +537,7 @@ public abstract class NotificationTest {
       TimeUnit.MILLISECONDS.sleep(500);
 
       final NotificationPublisher.Sender<SimpleNotification> sender1 =
-        getNewPublisher().createSender(FEED1, SimpleNotification.class);
+        getNewPublisher().createSender(FEED1);
       Runnable publisherRunnable1 = new Runnable() {
         @Override
         public void run() {
@@ -557,7 +557,7 @@ public abstract class NotificationTest {
       Thread publisherThread1 = new Thread(publisherRunnable1);
       publisherThread1.start();
 
-      final NotificationPublisher.Sender<String> sender2 = getNewPublisher().createSender(FEED2, String.class);
+      final NotificationPublisher.Sender<String> sender2 = getNewPublisher().createSender(FEED2);
       Runnable publisherRunnable2 = new Runnable() {
         @Override
         public void run() {
@@ -630,7 +630,7 @@ public abstract class NotificationTest {
       // Give the subscriber some time to prepare for published messages before starting the publisher
       TimeUnit.MILLISECONDS.sleep(500);
 
-      final NotificationPublisher.Sender<String> sender1 = getNewPublisher().createSender(FEED1, String.class);
+      final NotificationPublisher.Sender<String> sender1 = getNewPublisher().createSender(FEED1);
       Runnable publisherRunnable1 = new Runnable() {
         @Override
         public void run() {
@@ -650,7 +650,7 @@ public abstract class NotificationTest {
       Thread publisherThread1 = new Thread(publisherRunnable1);
       publisherThread1.start();
 
-      final NotificationPublisher.Sender<String> sender2 = getNewPublisher().createSender(FEED2, String.class);
+      final NotificationPublisher.Sender<String> sender2 = getNewPublisher().createSender(FEED2);
       Runnable publisherRunnable2 = new Runnable() {
         @Override
         public void run() {

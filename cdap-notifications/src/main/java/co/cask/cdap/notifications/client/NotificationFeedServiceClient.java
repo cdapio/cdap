@@ -23,32 +23,27 @@ import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
 import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.cdap.notifications.service.NotificationFeedException;
 import co.cask.cdap.notifications.service.NotificationFeedNotFoundException;
-import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * Notification feed service client.
@@ -70,7 +65,7 @@ public class NotificationFeedServiceClient implements NotificationFeedClient {
     });
   }
 
-  private InetSocketAddress getExploreServiceAddress() {
+  private InetSocketAddress getServiceAddress() {
     EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
     if (endpointStrategy == null || endpointStrategy.pick() == null) {
       String message = String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP);
@@ -83,7 +78,9 @@ public class NotificationFeedServiceClient implements NotificationFeedClient {
 
   @Override
   public boolean createFeed(NotificationFeed feed) throws NotificationFeedException {
-    HttpResponse response = doPut("feeds", GSON.toJson(feed), null);
+
+    HttpRequest request = HttpRequest.put(resolve("feeds")).withBody(GSON.toJson(feed)).build();
+    HttpResponse response = execute(request);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return true;
     } else if (response.getResponseCode() == HttpURLConnection.HTTP_CONFLICT) {
@@ -94,7 +91,7 @@ public class NotificationFeedServiceClient implements NotificationFeedClient {
 
   @Override
   public void deleteFeed(NotificationFeed feed) throws NotificationFeedException {
-    HttpResponse response = doDelete(String.format("feeds/%s", feed.getId()));
+    HttpResponse response = execute(HttpRequest.delete(resolve(String.format("feeds/%s", feed.getId()))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotificationFeedNotFoundException(String.format("Notification feed %s does not exist.", feed.getId()));
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -104,78 +101,24 @@ public class NotificationFeedServiceClient implements NotificationFeedClient {
 
   @Override
   public NotificationFeed getFeed(NotificationFeed feed) throws NotificationFeedException {
-    HttpResponse response = doGet(String.format("feeds/%s", feed.getId()));
+    HttpResponse response = execute(HttpRequest.get(resolve(String.format("feeds/%s", feed.getId()))).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotificationFeedNotFoundException(String.format("Notification feed %s does not exist.", feed.getId()));
     } else if (response.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new NotificationFeedException("Cannot delete notification feed. Reason: " + getDetails(response));
     }
-    return parseJson(response, NotificationFeed.class);
+    return ObjectResponse.fromJsonBody(response, NotificationFeed.class).getResponseObject();
   }
 
   @Override
   public List<NotificationFeed> listFeeds() throws NotificationFeedException {
-    HttpResponse response = doGet("feeds");
+    HttpResponse response = execute(HttpRequest.get(resolve("feeds")).build());
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      return parseJson(response, new TypeToken<List<NotificationFeed>>() { }.getType());
+      ObjectResponse<List<NotificationFeed>> r =
+        ObjectResponse.fromJsonBody(response, new TypeToken<List<NotificationFeed>>() { }.getType());
+      return r.getResponseObject();
     }
     throw new NotificationFeedException("Cannot delete notification feed. Reason: " + getDetails(response));
-  }
-
-  private <T> T parseJson(HttpResponse response, Type type) throws NotificationFeedException {
-    String responseString = new String(response.getResponseBody(), Charsets.UTF_8);
-    try {
-      return GSON.fromJson(responseString, type);
-    } catch (JsonSyntaxException e) {
-      String message = String.format("Cannot parse server response: %s", responseString);
-      LOG.error(message, e);
-      throw new NotificationFeedException(message, e);
-    } catch (JsonParseException e) {
-      String message = String.format("Cannot parse server response as map: %s", responseString);
-      LOG.error(message, e);
-      throw new NotificationFeedException(message, e);
-    }
-  }
-
-  private HttpResponse doGet(String resource) throws NotificationFeedException {
-    return doRequest(resource, "GET", null, null);
-  }
-
-  private HttpResponse doPost(String resource, String body, Map<String, String> headers)
-    throws NotificationFeedException {
-    return doRequest(resource, "POST", headers, body);
-  }
-
-  private HttpResponse doPut(String resource, String body, Map<String, String> headers)
-    throws NotificationFeedException {
-    return doRequest(resource, "PUT", headers, body);
-  }
-
-  private HttpResponse doDelete(String resource) throws NotificationFeedException {
-    return doRequest(resource, "DELETE", null, null);
-  }
-
-  private HttpResponse doRequest(String resource, String requestMethod,
-                                 @Nullable Map<String, String> headers,
-                                 @Nullable String body) throws NotificationFeedException {
-    Map<String, String> newHeaders = headers;
-    String resolvedUrl = resolve(resource);
-    try {
-      URL url = new URL(resolvedUrl);
-      if (body != null) {
-        return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
-                                      .addHeaders(newHeaders).withBody(body).build());
-      } else {
-        return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
-                                      .addHeaders(newHeaders).build());
-      }
-    } catch (IOException e) {
-      throw new NotificationFeedException(
-        String.format("Error connecting to Explore Service at %s while doing %s with headers %s and body %s",
-                      resolvedUrl, requestMethod,
-                      newHeaders == null ? "null" : Joiner.on(",").withKeyValueSeparator("=").join(newHeaders),
-                      body == null ? "null" : body), e);
-    }
   }
 
   private String getDetails(HttpResponse response) {
@@ -186,12 +129,25 @@ public class NotificationFeedServiceClient implements NotificationFeedClient {
 
   }
 
-  private String resolve(String resource) {
-    InetSocketAddress addr = getExploreServiceAddress();
+  private URL resolve(String resource) throws NotificationFeedException {
+    InetSocketAddress addr = getServiceAddress();
     String url = String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
                                Constants.Gateway.API_VERSION_3, resource);
-    LOG.trace("Explore URL = {}", url);
-    return url;
+    LOG.trace("Notification Feed Service URL = {}", url);
+    try {
+      return new URL(url);
+    } catch (MalformedURLException e) {
+      throw new NotificationFeedException(String.format("URL %s is malformed", url));
+    }
   }
 
+  private HttpResponse execute(HttpRequest request) throws NotificationFeedException {
+    try {
+      return HttpRequests.execute(request);
+    } catch (IOException e) {
+      throw new NotificationFeedException(
+        String.format("Error connecting to Notification Feed Service at %s while doing %s",
+                      request.getURL(), request.getMethod()));
+    }
+  }
 }

@@ -96,8 +96,8 @@ public class KafkaNotificationTest extends NotificationTest {
     // TODO remove once Twill addLatest bug is fixed
     feedClient.createFeed(FEED1);
     feedClient.createFeed(FEED2);
-    getNewPublisher().createSender(FEED1, String.class).send("test").get();
-    getNewPublisher().createSender(FEED2, String.class).send("test").get();
+    getNewPublisher().createSender(FEED1).send("test").get();
+    getNewPublisher().createSender(FEED2).send("test").get();
     feedClient.deleteFeed(FEED1);
     feedClient.deleteFeed(FEED2);
   }

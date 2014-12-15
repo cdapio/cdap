@@ -72,7 +72,7 @@ public class KafkaNotificationPublisher implements NotificationPublisher {
   }
 
   @Override
-  public <N> Sender<N> createSender(final NotificationFeed feed, Class<N> notificationType)
+  public <N> Sender<N> createSender(final NotificationFeed feed)
     throws NotificationFeedException {
     final KafkaPublisher kafkaPublisher = getKafkaPublisher();
     if (kafkaPublisher == null) {
