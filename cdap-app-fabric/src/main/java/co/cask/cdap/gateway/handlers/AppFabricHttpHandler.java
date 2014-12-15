@@ -1362,7 +1362,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
     rewriteRequest(request);
     try {
-      return appLifecycleHttpHandler.deployAppStream(request, responder, Constants.DEFAULT_NAMESPACE, appId);
+      return appLifecycleHttpHandler.deploy(request, responder, Constants.DEFAULT_NAMESPACE, appId);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -1379,7 +1379,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     // null means use name provided by app spec
     rewriteRequest(request);
     try {
-      return appLifecycleHttpHandler.deployAppStream(request, responder, Constants.DEFAULT_NAMESPACE, null);
+      return appLifecycleHttpHandler.deploy(request, responder, Constants.DEFAULT_NAMESPACE, null);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -1636,7 +1636,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/deploy/status")
   public void getDeployStatus(HttpRequest request, HttpResponder responder) {
     rewriteRequest(request);
-    appLifecycleHttpHandler.getDeployStatus(responder, Constants.DEFAULT_NAMESPACE);
+    appLifecycleHttpHandler.getDeployStatus(request, responder, Constants.DEFAULT_NAMESPACE);
   }
 
 
@@ -1802,17 +1802,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("app-id") final String appId) {
     rewriteRequest(request);
-    try {
-      Id.Program id = Id.Program.from(Constants.DEFAULT_NAMESPACE, appId, "");
-      AppFabricServiceStatus appStatus = appLifecycleHttpHandler.removeApplication(id);
-      LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
-      responder.sendString(appStatus.getCode(), appStatus.getMessage());
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    appLifecycleHttpHandler.deleteApp(request, responder, Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -1822,17 +1812,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder) {
     rewriteRequest(request);
-    try {
-      Id.Account id = Id.Account.from(Constants.DEFAULT_NAMESPACE);
-      AppFabricServiceStatus status = appLifecycleHttpHandler.removeAll(id);
-      LOG.trace("Delete All call at AppFabricHttpHandler");
-      responder.sendString(status.getCode(), status.getMessage());
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    appLifecycleHttpHandler.deleteAllApps(request, responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -2083,7 +2063,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder) {
     rewriteRequest(request);
-    appLifecycleHttpHandler.getAppDetails(responder, Constants.DEFAULT_NAMESPACE, null);
+    appLifecycleHttpHandler.getAllApps(request, responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -2094,7 +2074,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") final String appId) {
     rewriteRequest(request);
-    appLifecycleHttpHandler.getAppDetails(responder, Constants.DEFAULT_NAMESPACE, appId);
+    appLifecycleHttpHandler.getAppInfo(request, responder, Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**

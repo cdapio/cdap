@@ -261,7 +261,16 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/{namespace-id}/deploy/status")
   public void getDeployStatus(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
-    getDeployStatus(responder, namespaceId);
+    try {
+      DeployStatus status  = dstatus(namespaceId);
+      LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
+      responder.sendJson(HttpResponseStatus.OK, new Status(status.getCode(), status.getMessage()));
+    } catch (SecurityException e) {
+      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    } catch (Throwable e) {
+      LOG.error("Got exception:", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /**
@@ -326,10 +335,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * Protected only to support v2 APIs
-   */
-  protected BodyConsumer deployAppStream (final HttpRequest request,
+  private BodyConsumer deployAppStream (final HttpRequest request,
                                         final HttpResponder responder, final String namespaceId,
                                         final String appId) throws IOException {
     validateNamespace(namespaceId, responder);
@@ -530,10 +536,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     controller.stop().get();
   }
 
-  /**
-   * Protected only to support v2 APIs
-   */
-  protected void getAppDetails(HttpResponder responder, String namespaceId, String appId) {
+  private void getAppDetails(HttpResponder responder, String namespaceId, String appId) {
     if (appId != null && appId.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "app-id is empty");
       return;
@@ -571,22 +574,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception : ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  /**
-   * Protected only to support v2 APIs
-   */
-  protected void getDeployStatus(HttpResponder responder, String namespaceId) {
-    try {
-      DeployStatus status  = dstatus(namespaceId);
-      LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
-      responder.sendJson(HttpResponseStatus.OK, new Status(status.getCode(), status.getMessage()));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -666,10 +653,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return AppFabricServiceStatus.OK;
   }
 
-  /**
-   * Protected only to support v2 APIs
-   */
-  protected AppFabricServiceStatus removeApplication(Id.Program identifier) throws Exception {
+  private AppFabricServiceStatus removeApplication(Id.Program identifier) throws Exception {
     Id.Account accountId = Id.Account.from(identifier.getAccountId());
     final Id.Application appId = Id.Application.from(accountId, identifier.getApplicationId());
 
@@ -732,7 +716,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Protected only to support v2 APIs
+   * Temporarily protected only to support v2 APIs. Currently used in unrecoverable/reset. Should become private once
+   * the reset API has a v3 version
    */
   protected void deleteMetrics(String namespaceId, String applicationId) throws IOException, OperationException {
     Collection<ApplicationSpecification> applications = Lists.newArrayList();
