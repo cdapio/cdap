@@ -30,6 +30,7 @@ import co.cask.cdap.test.internal.guice.AppFabricTestModule;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
@@ -255,10 +256,21 @@ public abstract class AppFabricTestBase {
   protected static HttpResponse deploy(Class<?> application) throws Exception {
     return deploy(application, null);
   }
+
+  protected static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
+    return deploy(application, null, null, appName);
+  }
+
+  protected static HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace)
+    throws Exception {
+    return deploy(application, apiVersion, namespace, null);
+  }
+
   /**
    * Deploys an application with (optionally) a defined app name
    */
-  protected static HttpResponse deploy(Class<?> application, @Nullable String appName) throws Exception {
+  protected static HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
+                                       @Nullable String appName) throws Exception {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
@@ -302,14 +314,33 @@ public abstract class AppFabricTestBase {
     }
 
     HttpEntityEnclosingRequestBase request;
+    String versionedApiPath = getVersionedAPIPath("apps/", apiVersion, namespace);
     if (appName == null) {
-      request = getPost("/v2/apps");
+      request = getPost(versionedApiPath);
     } else {
-      request = getPut("/v2/apps/" + appName);
+      request = getPut(versionedApiPath + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
     request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
     request.setEntity(new ByteArrayEntity(bos.toByteArray()));
     return execute(request);
+  }
+
+  protected static String getVersionedAPIPath(String nonVersionedApiPath, @Nullable String version,
+                                              @Nullable String namespace) {
+    StringBuilder versionedApiBuilder = new StringBuilder("/");
+    if (version == null) {
+      version = Constants.Gateway.API_VERSION_2_TOKEN;
+      Preconditions.checkArgument(namespace == null, String.format("Cannot specify namespace for v2 APIs. Namespace " +
+                                                                     "will be %s", Constants.DEFAULT_NAMESPACE));
+    }
+    if (Constants.Gateway.API_VERSION_2_TOKEN.equals(version)) {
+      versionedApiBuilder.append(version).append("/");
+    } else if (Constants.Gateway.API_VERSION_3_TOKEN.equals(version)) {
+      Preconditions.checkArgument(namespace != null, "Namespace cannot be null for v3 APIs.");
+      versionedApiBuilder.append(version).append("/").append(namespace).append("/");
+    }
+    versionedApiBuilder.append(nonVersionedApiPath);
+    return versionedApiBuilder.toString();
   }
 }
