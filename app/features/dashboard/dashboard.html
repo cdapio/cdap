@@ -7,46 +7,22 @@
     ng-repeat="dashboard in dashboards"
     bs-pane>
 
+    <div class="row">
 
+      <div ng-class="'col-sm-'+(12/dashboard.columns.length)"
+        ng-repeat="column in dashboard.columns"
+        ng-model="column.items"
+        as-sortable="dragdrop">
 
-<div class="row">
+        <div ng-repeat="item in column.items">
+          <ng-include
+            src="'assets/features/dashboard/widget.html'"
+            ></ng-include>
+        </div>
 
-  <div ng-class="'col-sm-'+(12/dashboard.columns.length)"
-    ng-repeat="column in dashboard.columns"
-    ng-model="column.items"
-    as-sortable="dragdrop">
-
-    <div class="panel panel-default"
-      ng-repeat="item in column.items"
-      as-sortable-item>
-
-      <div class="panel-heading" as-sortable-item-handle>
-        <span class="badge">{{item}}</span>
-        This is a header
       </div>
 
-      <div class="panel-body">
-        <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-        quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat.</p>
-      </div>
-
-      <div class="panel-footer">
-        This is a footer
-      </div>
     </div>
-
-  </div>
-
-
-</div>
-
-
-
 
   </section>
 </div>
-
-
-
