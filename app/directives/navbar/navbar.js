@@ -33,9 +33,9 @@ function myNavbarDirective ($dropdown, $alert, myAuth, caskTheme, MY_CONFIG) {
       scope.securityEnabled = MY_CONFIG.securityEnabled;
 
       scope.navbarLinks = [
-        { sref: 'home',       label: 'Overview'     },
+        { sref: 'home',       label: 'Development'     },
         { sref: 'dashboard',  label: 'Operations'   },
-        { sref: 'admin',      label: 'Admin'        }
+        { sref: 'admin',      label: 'Management'        }
       ];
 
 
