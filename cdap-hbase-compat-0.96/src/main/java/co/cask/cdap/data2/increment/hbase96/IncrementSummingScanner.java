@@ -181,20 +181,31 @@ class IncrementSummingScanner implements RegionScanner {
               }
             }
             // 2b. otherwise emit the current cell
-            //LOG.info("Including raw cell " + cell);
+            if (LOG.isTraceEnabled()) {
+              LOG.trace("Including raw cell " + cell);
+            }
             cells.add(cell);
             addedCnt++;
           }
         }
-        // emit any left over increment, if we hit the end
-        if (!hasMore && previousIncrement != null) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
-          }
-          cells.add(newCell(previousIncrement, runningSum));
-        }
       }
+      // NOTE: if limit is -1 (unlimited) then we fetched all cells in one shot, so allow get out of the loop to prevent
+      //       fetching next row
+      // todo: the baseScanner may have more increment-by-delta cells that has to be merged into one counter value,
+      //       which we don't verify by only looking at addedCnt < limit condition. Hence if limit set on scan is less
+      //       than number of increment-by-delta cells for a counter it may result into multiple values of same cell to
+      //       be returned or partial summation result to be returned. It may not be a problem as we don't yet use
+      //       limit on scan explicitly for table datasets. But will cause issues when we do.
+      //       See CDAP-971.
     } while (hasMore && limit > 0 && addedCnt < limit);
+
+    // emit any left over increment, if we hit the end
+    if (previousIncrement != null) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
+      }
+      cells.add(newCell(previousIncrement, runningSum));
+    }
 
     return hasMore;
   }
