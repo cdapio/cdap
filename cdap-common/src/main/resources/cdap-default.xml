@@ -875,6 +875,16 @@
     </property>
 
     <property>
+        <name>dashboard.ssl.bind.port</name>
+        <value>9443</value>
+    </property>
+
+    <property>
+        <name>dashboard.ssl.disable.cert.check</name>
+        <value>false</value>
+    </property>
+
+    <property>
         <name>router.server.address</name>
         <value>localhost</value>
     </property>
@@ -1043,30 +1053,6 @@
   <property>
     <name>security.auth.server.ssl.bind.port</name>
     <value>10010</value>
-  </property>
-
-  <!-- Router configuration-->
-
-  <property>
-    <name>router.server.address</name>
-    <value>localhost</value>
-  </property>
-
-  <!-- Frontend configuration -->
-
-  <property>
-    <name>dashboard.bind.port</name>
-    <value>9999</value>
-  </property>
-
-  <property>
-    <name>dashboard.ssl.bind.port</name>
-    <value>9443</value>
-  </property>
-
-  <property>
-    <name>dashboard.ssl.disable.cert.check</name>
-    <value>false</value>
   </property>
 
 </configuration>
