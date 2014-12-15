@@ -23,34 +23,48 @@
 # Targets for both a limited and complete set of javadocs
 # Targets not included in usage are intended for internal usage by script
 
-FALSE="false"
-TRUE="true"
-DATE_STAMP=`date`
-SCRIPT=`basename $0`
-
-SOURCE="source"
+API="cdap-api"
+APIDOCS="apidocs"
+APIS="apis"
 BUILD="build"
 BUILD_PDF="build-pdf"
 HTML="html"
 INCLUDES="_includes"
-
-API="cdap-api"
-APIDOCS="apidocs"
-APIS="apis"
 JAVADOCS="javadocs"
 LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
 PROJECT="cdap"
 PROJECT_CAPS="CDAP"
 REFERENCE="reference-manual"
+SOURCE="source"
 
+FALSE="false"
+TRUE="true"
+
+# Redirect placed in top to redirect to 'en' directory
+REDIRECT_EN_HTML=`cat <<EOF
+<!DOCTYPE HTML>
+<html lang="en-US">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="refresh" content="0;url=en/index.html">
+        <script type="text/javascript">
+            window.location.href = "en/index.html"
+        </script>
+        <title></title>
+    </head>
+    <body>
+    </body>
+</html>
+EOF`
+
+SCRIPT=`basename $0`
 SCRIPT_PATH=`pwd`
 
-SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
+DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
 BUILD_PATH="$SCRIPT_PATH/$BUILD"
 HTML_PATH="$BUILD_PATH/$HTML"
-
-DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
+SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
 
 if [ "x$2" == "x" ]; then
   PROJECT_PATH="$SCRIPT_PATH/../../"
@@ -80,23 +94,6 @@ WEB="web"
 # CDAP Project Code
 GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
 GITHUB="github"
-
-# Redirect placed in top to redirect to en directory
-REDIRECT_EN_HTML=`cat <<EOF
-<!DOCTYPE HTML>
-<html lang="en-US">
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="0;url=en/index.html">
-        <script type="text/javascript">
-            window.location.href = "en/index.html"
-        </script>
-        <title></title>
-    </head>
-    <body>
-    </body>
-</html>
-EOF`
 
 
 function usage() {
@@ -326,7 +323,7 @@ function version() {
   GIT_BRANCH="${branch[1]}"
 }
 
-function print_version() {
+function display_version() {
   version
   echo "PROJECT_PATH: $PROJECT_PATH"
   echo "PROJECT_VERSION: $PROJECT_VERSION"
@@ -336,7 +333,7 @@ function print_version() {
 function test() {
   echo "Test..."
   echo "Version..."
-  print_version
+  display_version
 #   echo "Build all docs..."
 #   build
 #   echo "Build SDK..."
@@ -375,7 +372,7 @@ function run_command() {
     javadocs-full )     build_javadocs_full; exit 1;;
     depends )           build_dependencies; exit 1;;
     sdk )               build_sdk; exit 1;;
-    version )           print_version; exit 1;;
+    version )           display_version; exit 1;;
     test )              test; exit 1;;
     zip )               make_zip; exit 1;;
     * )                 usage; exit 1;;
