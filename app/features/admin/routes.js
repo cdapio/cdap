@@ -20,7 +20,7 @@ angular.module(PKG.name + '.feature.admin')
           templateUrl: '/assets/features/admin/templates/security.html'
         })
         .state('admin.namespace', {
-          url: '/namespace/:namespaceId',
+          url: '/ns/:namespaceId',
           resolve: {
             namespaceId: function() {
               return 'namespace1';
