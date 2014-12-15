@@ -193,7 +193,7 @@ public class ExploreExecutorHttpHandlerTest {
 
     Assert.assertEquals("(key string, value struct<name:string,ints:array<int>>)",
                         ExploreExecutorHttpHandler.hiveSchemaFor(KeyValue.class));
-    Assert.assertEquals("(timestamp bigint, body string, headers map<string,string>)",
+    Assert.assertEquals("(ts bigint, body string, headers map<string,string>)",
                         ExploreExecutorHttpHandler.hiveSchemaForStream());
   }
 

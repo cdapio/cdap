@@ -134,7 +134,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
 
   @Test
   public void testSelectAndFilterQueryOnStream() throws Exception {
-    runCommand("select body from " + streamTableName + " where timestamp > " + Long.MAX_VALUE,
+    runCommand("select body from " + streamTableName + " where ts > " + Long.MAX_VALUE,
                false,
                Lists.newArrayList(new ColumnDesc("body", "STRING", 1, null)),
                Lists.<QueryResult>newArrayList());
