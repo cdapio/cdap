@@ -1,11 +1,18 @@
-<h1>
-  Dashboard
-</h1>
+<div
+  bs-active-pane="dashboards.activeTab"
+  bs-tabs>
+
+  <section
+    data-title="{{dashboard.title}}"
+    ng-repeat="dashboard in dashboards"
+    bs-pane>
+
+
 
 <div class="row">
 
-  <div class="col-sm-4"
-    ng-repeat="column in columns"
+  <div ng-class="'col-sm-'+(12/dashboard.columns.length)"
+    ng-repeat="column in dashboard.columns"
     ng-model="column.items"
     as-sortable="dragdrop">
 
@@ -34,4 +41,12 @@
 
 
 </div>
+
+
+
+
+  </section>
+</div>
+
+
 

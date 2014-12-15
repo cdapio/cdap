@@ -12,6 +12,9 @@ angular.module(PKG.name+'.feature.dashboard')
         controller: 'DashboardCtrl'
       })
 
+        .state('dashboard.tab', {
+          url: '/dashboard?tab'
+        })
       ;
 
 
