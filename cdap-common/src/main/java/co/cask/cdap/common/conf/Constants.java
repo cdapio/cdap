@@ -150,6 +150,15 @@ public final class Constants {
   }
 
   /**
+   * Config Service options.
+   */
+  public static final class ConfigService {
+    public static final String CONFIG_STORE_TABLE = "configstore";
+    public static final String DASHBOARD_OWNER_TABLE = "dbowner";
+    public static final String METADATA_TABLE = "metadata";
+  }
+
+  /**
    * Datasets.
    */
   public static final class Dataset {

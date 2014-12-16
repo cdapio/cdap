@@ -16,7 +16,9 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.app.config.ConfigService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
+import co.cask.cdap.app.guice.ConfigServiceModules;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
@@ -121,6 +123,7 @@ public class MasterServiceMain extends DaemonMain {
   private MetricsCollectionService metricsCollectionService;
   private DatasetService dsService;
   private ServiceStore serviceStore;
+  private ConfigService configService;
   private HBaseSecureStoreUpdater secureStoreUpdater;
   private ExploreClient exploreClient;
 
@@ -158,6 +161,7 @@ public class MasterServiceMain extends DaemonMain {
       new DataSetsModules().getDistributedModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModule(),
+      new ConfigServiceModules().getDistribtuedModule(),
       new ExploreClientModule()
     );
 
@@ -169,6 +173,7 @@ public class MasterServiceMain extends DaemonMain {
     exploreClient = baseInjector.getInstance(ExploreClient.class);
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
     serviceStore = baseInjector.getInstance(ServiceStore.class);
+    configService = baseInjector.getInstance(ConfigService.class);
 
     checkTransactionRequirements();
     checkExploreRequirements();
@@ -205,7 +210,7 @@ public class MasterServiceMain extends DaemonMain {
     logAppenderInitializer.initialize();
 
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
-                                             serviceStore));
+                                             serviceStore, configService));
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
@@ -259,7 +264,7 @@ public class MasterServiceMain extends DaemonMain {
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
-    Futures.getUnchecked(Services.chainStop(serviceStore, metricsCollectionService, kafkaClientService,
+    Futures.getUnchecked(Services.chainStop(configService, serviceStore, metricsCollectionService, kafkaClientService,
                                             zkClientService));
 
     try {
