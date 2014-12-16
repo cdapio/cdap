@@ -34,7 +34,8 @@ footer {
 }
 
 main.container {
-  padding: 50px 15px 0;
+  margin-top: 50px;
+  padding-top: 1em;
 }
 
 #alerts {
@@ -68,7 +69,9 @@ main.container {
 .modal-backdrop {
   // see https://github.com/twbs/bootstrap/pull/14724
   z-index: ( @zindex-modal - 1 );
+  height: 100%;
 }
+
 
 fieldset.row {
   margin-bottom: 1px;
@@ -117,4 +120,14 @@ fieldset.tab-pane {
 
 body div.progress {
   margin: 1px; /* by default they have just margin-bottom: 20px */
+}
+
+body .dropdown-menu {
+  > li > a,
+  > li.dropdown-header {
+    padding-left: 14px;
+  }
+  > li > a > span.fa-fw {
+    margin-right: 5px;
+  }
 }

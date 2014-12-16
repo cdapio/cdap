@@ -2,9 +2,36 @@
 
 body.state-dashboard {
 
-  section {
-    padding-top: 2em;
+  main {
+    position: relative;
+
+    aside {
+      position: absolute;
+      z-index: 2;
+      right: 15px;
+      margin-top: 10px;
+    }
+
+    .nav-tabs {
+      margin-bottom: 10px;
+      > li {
+        > a > .caret {
+          visibility: hidden;
+        }
+        &.active > a {
+          cursor: pointer;
+          &:hover {
+            color: @cdap-orange;
+          }
+          > .caret {
+            visibility: visible;
+          }
+        }
+      }
+    }
+
   }
+
 
   [as-sortable],
   .as-sortable-item,
@@ -25,9 +52,19 @@ body.state-dashboard {
     opacity: .6;
   }
 
-  .panel-heading,
-  .panel-footer {
+
+  .panel-heading {
     user-select: none;
+    padding-top: 5px;
+    padding-bottom: 5px;
+
+    .btn-group {
+      float: right;
+      position: relative;
+      right: -12px;
+      top: -2px;
+    }
   }
+
 
 }
