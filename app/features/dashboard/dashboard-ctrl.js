@@ -11,7 +11,7 @@ function ($scope, $state, $alert, $dropdown) {
     var c, columns = [];
     if (k===1) {
       columns.push([{
-        title: 'single widget'
+        title: 'full width widget'
       }]);
     }
     else {
@@ -29,7 +29,7 @@ function ($scope, $state, $alert, $dropdown) {
 
 
     return {
-      title: t+' Dashboard',
+      title: t,
       columns: columns
     };
   });
@@ -48,7 +48,7 @@ function ($scope, $state, $alert, $dropdown) {
   });
 
 
-
+  // todo: make a directive
   $scope.activeTabClick = function (event) {
 
     var toggle = angular.element(event.target);
@@ -60,20 +60,23 @@ function ($scope, $state, $alert, $dropdown) {
       return;
     }
 
+    var scope = $scope.$new();
+
     var dd = $dropdown(toggle, {
       template: 'assets/features/dashboard/templates/dropdown.html',
       animation: 'am-flip-x',
       trigger: 'manual',
-      prefixEvent: 'dashboard-tab-dropdown'
-    })
+      prefixEvent: 'dashboard-tab-dropdown',
+      scope: scope
+    });
 
     dd.$promise.then(function(){
-      dd.$scope.$on('dashboard-tab-dropdown.hide', function () {
-        dd.destroy();
-      });
       dd.show();
     });
 
+    scope.$on('dashboard-tab-dropdown.hide', function () {
+      dd.destroy();
+    });
 
   };
 
@@ -89,6 +92,9 @@ function ($scope, $state, $alert, $dropdown) {
     });
   };
 
+
+
+
   $scope.addDashboard = function () {
     var n = $scope.dashboards.push({
       title: 'new dashboard',
@@ -97,11 +103,29 @@ function ($scope, $state, $alert, $dropdown) {
     $scope.dashboards.activeTab = n-1;
   };
 
-  $scope.shareDashboard = $scope.addWidget = function () {
-    $alert({
-      title: 'Sorry!',
-      content: 'It does not work yet.',
-      type: 'danger'
+
+  $scope.rmDashboard = function () {
+    $scope.dashboards.splice($scope.dashboards.activeTab, 1);
+  };
+
+
+  $scope.addWidget = function () {
+    var columns = $scope.dashboards[$scope.dashboards.activeTab].columns,
+        index = 0,
+        smallest;
+
+    // find the columns with the least widgets
+    for (var i = 0; i < columns.length; i++) {
+      var c = columns[i].length;
+      if(smallest===undefined || (c < smallest)) {
+        smallest = c;
+        index = i;
+      }
+    };
+
+    // add a widget there
+    columns[index].unshift({
+      title: 'added widget'
     });
   };
 

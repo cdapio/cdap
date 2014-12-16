@@ -1,7 +1,7 @@
 <ul class="dropdown-menu" role="menu">
 
-  <li role="presentation" class="disabled">
-    <a role="menuitem" tabindex="-1" href="">
+  <li role="presentation">
+    <a role="menuitem" tabindex="-1" href="" ng-click="addWidget()">
       <span class="fa fa-fw fa-dashboard"></span>
       Add widget
     </a>
@@ -11,15 +11,24 @@
 
   <li role="presentation" class="disabled">
     <a role="menuitem" tabindex="-1" href="">
-      <span class="fa fa-fw fa-trash"></span>
-      Delete dashboard
+      <span class="fa fa-fw fa-share-alt"></span>
+      Share
     </a>
   </li>
 
   <li role="presentation" class="disabled">
     <a role="menuitem" tabindex="-1" href="">
-      <span class="fa fa-fw fa-share-alt"></span>
-      Share dashboard
+      <span class="fa fa-fw fa-pencil"></span>
+      Rename
+    </a>
+  </li>
+
+  <li role="presentation" class="divider"></li>
+
+  <li role="presentation" ng-class="{disabled: dashboards.length<2}">
+    <a role="menuitem" tabindex="-1" href="" ng-click="dashboards.length>1 && rmDashboard()">
+      <span class="fa fa-fw fa-trash"></span>
+      Delete
     </a>
   </li>
 
