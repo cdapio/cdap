@@ -12,9 +12,21 @@ body.state-dashboard {
     }
 
     .nav-tabs {
-      // height: 40px;
-      // overflow: hidden;
       margin-bottom: 10px;
+      > li {
+        > a > .caret {
+          visibility: hidden;
+        }
+        &.active > a {
+          cursor: pointer;
+          &:hover {
+            color: @cdap-orange;
+          }
+          > .caret {
+            visibility: visible;
+          }
+        }
+      }
     }
 
   }
