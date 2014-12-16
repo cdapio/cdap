@@ -26,5 +26,5 @@
 
   <artifactId>cdap-app-archetype</artifactId>
   <packaging>jar</packaging>
-  <name>Cask Data Application Platform (CDAP) Application Archetype</name>
+  <name>CDAP Application Archetype</name>
 </project>
