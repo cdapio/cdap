@@ -129,31 +129,20 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertNotNull(response.getEntity());
 
     //make sure testnamespace1 has 1 app
-    response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
-    List<JsonObject> apps = readResponse(response, typeToken);
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
     Assert.assertEquals(1, apps.size());
 
     //make sure testnamespace2 has 1 app
-    response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    apps = readResponse(response, typeToken);
+    apps = getAppList(TEST_NAMESPACE2);
     Assert.assertEquals(1, apps.size());
 
     //get and verify app details in testnamespace1
-    response = doGet(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    typeToken = new TypeToken<JsonObject>() { }.getType();
-    JsonObject result = readResponse(response, typeToken);
+    JsonObject result = getAppDetails(TEST_NAMESPACE1, "WordCountApp");
     Assert.assertEquals("App", result.get("type").getAsString());
     Assert.assertEquals("WordCountApp", result.get("name").getAsString());
 
     //get and verify app details in testnamespace2
-    response = doGet(getVersionedAPIPath("apps/" + appName, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    typeToken = new TypeToken<JsonObject>() { }.getType();
-    result = readResponse(response, typeToken);
+    result = getAppDetails(TEST_NAMESPACE2, appName);
     Assert.assertEquals(appName, result.get("id").getAsString());
 
     //delete app in testnamespace1
@@ -163,6 +152,21 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     //delete app in testnamespace2
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  private List<JsonObject> getAppList(String namespace) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
+  private JsonObject getAppDetails(String namespace, String appName) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s", appName),
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<JsonObject>() { }.getType();
+    return readResponse(response, typeToken);
   }
 
   /**
