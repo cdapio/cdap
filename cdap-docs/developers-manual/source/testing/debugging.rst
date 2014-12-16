@@ -6,7 +6,7 @@
 Debugging a CDAP Application
 ================================================
 
-.. _DebugCDAP:
+.. _debugging-cdap:
 
 Debugging an Application in Standalone CDAP
 ===========================================
@@ -168,7 +168,7 @@ You may need to adjust them for your installation or version.
 #. The control stops at the breakpoint and you can proceed with debugging.
 
 
-.. _TxDebugger:
+.. _tx-debugger:
 
 Debugging the Transaction Manager (Advanced Use)
 ================================================
