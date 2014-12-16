@@ -236,6 +236,7 @@ public class MasterServiceMain extends DaemonMain {
 
         dsService.stopAndWait();
         if (twillRunnerService != null) {
+          // this shuts down the twill runner service but not the twill services themselves
           twillRunnerService.stopAndWait();
         }
         if (appFabricServer != null) {
@@ -381,6 +382,14 @@ public class MasterServiceMain extends DaemonMain {
         }
         LOG.warn("Stopped extra instances of {}", serviceName);
       }
+
+      // we have to start the dataset service. Because twill services are already running,
+      // it will not be started by the service listener callback below.
+      if (!dsService.isRunning()) {
+        LOG.info("Starting Dataset service");
+        dsService.startAndWait();
+      }
+
     } else {
       LOG.info("Starting {} application", serviceName);
       TwillPreparer twillPreparer = getPreparer();
