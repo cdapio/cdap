@@ -126,8 +126,12 @@ function build_docs_outer_level() {
   cp $COMMON_SOURCE/index.rst $BUILD/$SOURCE/
   cp $COMMON_SOURCE/table-of-contents.rst $BUILD/$SOURCE/
 
-  sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees build/source build/html
-
+  if [ "x$1" == "x" ]; then
+    sphinx-build -b html -d build/doctrees build/source build/html
+  else
+    sphinx-build -D googleanalytics_id=$1 -D googleanalytics_enabled=1 -b html -d build/doctrees build/source build/html
+  fi
+  
   # Copy lower-level doc manuals
   copy_html admin-manual
   copy_html developers-manual
