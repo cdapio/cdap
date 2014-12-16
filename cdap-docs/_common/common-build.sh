@@ -23,62 +23,25 @@
 # Targets for both a limited and complete set of javadocs
 # Targets not included in usage are intended for internal usage by script
 
-FALSE="false"
-TRUE="true"
-DATE_STAMP=`date`
-SCRIPT=`basename $0`
-
-SOURCE="source"
+API="cdap-api"
+APIDOCS="apidocs"
+APIS="apis"
 BUILD="build"
 BUILD_PDF="build-pdf"
 HTML="html"
 INCLUDES="_includes"
-
-API="cdap-api"
-APIDOCS="apidocs"
-APIS="apis"
 JAVADOCS="javadocs"
 LICENSES="licenses"
 LICENSES_PDF="licenses-pdf"
 PROJECT="cdap"
 PROJECT_CAPS="CDAP"
 REFERENCE="reference-manual"
+SOURCE="source"
 
-SCRIPT_PATH=`pwd`
+FALSE="false"
+TRUE="true"
 
-SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
-BUILD_PATH="$SCRIPT_PATH/$BUILD"
-HTML_PATH="$BUILD_PATH/$HTML"
-
-DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
-
-if [ "x$2" == "x" ]; then
-  PROJECT_PATH="$SCRIPT_PATH/../../"
-else
-  PROJECT_PATH="$SCRIPT_PATH/../../../$2"
-fi
-# PROJECT_JAVADOCS="$PROJECT_PATH/target/site/apidocs"
-SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
-
-CHECK_INCLUDES="false"
-TEST_INCLUDES_LOCAL="local"
-if [ "x$3" == "x" ]; then
-  TEST_INCLUDES="remote"
-else
-  TEST_INCLUDES="$3"
-fi
-
-ZIP_FILE_NAME=$HTML
-ZIP="$ZIP_FILE_NAME.zip"
-
-# Set Google Analytics Codes
-# Corporate Docs Code
-GOOGLE_ANALYTICS_WEB="UA-55077523-3"
-WEB="web"
-# CDAP Project Code
-GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
-GITHUB="github"
-
+# Redirect placed in top to redirect to 'en' directory
 REDIRECT_EN_HTML=`cat <<EOF
 <!DOCTYPE HTML>
 <html lang="en-US">
@@ -95,12 +58,49 @@ REDIRECT_EN_HTML=`cat <<EOF
 </html>
 EOF`
 
+SCRIPT=`basename $0`
+SCRIPT_PATH=`pwd`
+
+DOC_GEN_PY="$SCRIPT_PATH/../tools/doc-gen.py"
+BUILD_PATH="$SCRIPT_PATH/$BUILD"
+HTML_PATH="$BUILD_PATH/$HTML"
+SOURCE_PATH="$SCRIPT_PATH/$SOURCE"
+
+if [ "x$2" == "x" ]; then
+  PROJECT_PATH="$SCRIPT_PATH/../../"
+else
+  PROJECT_PATH="$SCRIPT_PATH/../../../$2"
+fi
+
+SDK_JAVADOCS="$PROJECT_PATH/$API/target/site/$APIDOCS"
+
+CHECK_INCLUDES="false"
+TEST_INCLUDES_LOCAL="local"
+if [ "x$3" == "x" ]; then
+  TEST_INCLUDES="remote"
+else
+  TEST_INCLUDES="$3"
+fi
+
+ZIP_FILE_NAME=$HTML
+ZIP="$ZIP_FILE_NAME.zip"
+
+# Set Google Analytics Codes
+
+# Corporate Docs Code
+GOOGLE_ANALYTICS_WEB="UA-55077523-3"
+WEB="web"
+
+# CDAP Project Code
+GOOGLE_ANALYTICS_GITHUB="UA-55081520-2"
+GITHUB="github"
+
 
 function usage() {
   cd $PROJECT_PATH
   PROJECT_PATH=`pwd`
   echo "Build script for '$PROJECT_CAPS' docs"
-  echo "Usage: $SCRIPT < option > [source]"
+  echo "Usage: $SCRIPT < option > [source test_includes]"
   echo ""
   echo "  Options (select one)"
   echo "    build          Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
@@ -227,9 +227,8 @@ function make_zip_localized() {
 
 function build_extras() {
   # Over-ride this function in guides where Javadocs or licenses are being built or copied.
+  # Currently performed in reference-manual
   echo "No extras being built."
-#   build_javadocs_sdk
-#   copy_license_pdfs
 }
 
 function build() {
@@ -324,7 +323,7 @@ function version() {
   GIT_BRANCH="${branch[1]}"
 }
 
-function print_version() {
+function display_version() {
   version
   echo "PROJECT_PATH: $PROJECT_PATH"
   echo "PROJECT_VERSION: $PROJECT_VERSION"
@@ -334,7 +333,7 @@ function print_version() {
 function test() {
   echo "Test..."
   echo "Version..."
-  print_version
+  display_version
 #   echo "Build all docs..."
 #   build
 #   echo "Build SDK..."
@@ -342,10 +341,20 @@ function test() {
   echo "Test completed."
 }
 
-if [ $# -lt 1 ]; then
-  usage
-#   exit 1
-fi
+function rewrite() {
+  # Substitutes text in file $1 and outputting to file $2, replacing text $3 with text $4.
+  cd $SCRIPT_PATH
+  local rewrite_source=$1
+  local rewrite_target=$2
+  local sub_string=$3
+  local new_sub_string=$4  
+  echo "Re-writing"
+  echo "    $rewrite_source"
+  echo "  to"
+  echo "    $rewrite_target"
+  echo "  $sub_string -> $new_sub_string "
+  sed -e "s|$sub_string|$new_sub_string|g" $rewrite_source > $rewrite_target
+}
 
 function run_command() {
   case "$1" in
@@ -363,7 +372,7 @@ function run_command() {
     javadocs-full )     build_javadocs_full; exit 1;;
     depends )           build_dependencies; exit 1;;
     sdk )               build_sdk; exit 1;;
-    version )           print_version; exit 1;;
+    version )           display_version; exit 1;;
     test )              test; exit 1;;
     zip )               make_zip; exit 1;;
     * )                 usage; exit 1;;
