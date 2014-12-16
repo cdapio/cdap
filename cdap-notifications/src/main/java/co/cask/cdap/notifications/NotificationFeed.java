@@ -17,7 +17,6 @@
 package co.cask.cdap.notifications;
 
 import co.cask.cdap.notifications.service.NotificationFeedException;
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Objects;
 
 /**
@@ -44,14 +43,6 @@ public class NotificationFeed {
     this.name = name;
     this.id = String.format("%s.%s.%s", namespace, category, name);
     this.description = description;
-  }
-
-  private boolean isId(final String name) {
-    return CharMatcher.inRange('A', 'Z')
-      .or(CharMatcher.inRange('a', 'z'))
-      .or(CharMatcher.is('-'))
-      .or(CharMatcher.is('_'))
-      .or(CharMatcher.inRange('0', '9')).matchesAllOf(name);
   }
 
   public String getCategory() {
