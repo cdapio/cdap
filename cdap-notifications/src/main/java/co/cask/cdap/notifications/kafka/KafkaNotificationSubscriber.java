@@ -17,7 +17,9 @@
 package co.cask.cdap.notifications.kafka;
 
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.notifications.BasicNotificationContext;
 import co.cask.cdap.notifications.NotificationFeed;
+import co.cask.cdap.notifications.NotificationHandler;
 import co.cask.cdap.notifications.client.AbstractNotificationSubscriber;
 import co.cask.cdap.notifications.client.NotificationFeedClient;
 import co.cask.tephra.TransactionSystemClient;
@@ -28,9 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Kafka implementation of a {@link co.cask.cdap.notifications.client.NotificationClient.Subscriber}.
@@ -39,11 +41,15 @@ public class KafkaNotificationSubscriber extends AbstractNotificationSubscriber 
   private static final Logger LOG = LoggerFactory.getLogger(KafkaNotificationSubscriber.class);
 
   private final KafkaConsumer.Preparer kafkaPreparer;
+  private final DatasetFramework dsFramework;
+  private final TransactionSystemClient transactionSystemClient;
 
   protected KafkaNotificationSubscriber(NotificationFeedClient feedClient, KafkaConsumer.Preparer kafkaPreparer,
                                         DatasetFramework dsFramework, TransactionSystemClient transactionSystemClient) {
-    super(feedClient, dsFramework, transactionSystemClient);
+    super(feedClient);
     this.kafkaPreparer = kafkaPreparer;
+    this.dsFramework = dsFramework;
+    this.transactionSystemClient = transactionSystemClient;
   }
 
   @Override
@@ -56,26 +62,7 @@ public class KafkaNotificationSubscriber extends AbstractNotificationSubscriber 
   }
 
   @Override
-  protected String decodeMessageKey(ByteBuffer buffer) throws IOException {
-    return KafkaMessageSerializer.decodeMessageKey(buffer);
-  }
-
-  @Override
-  protected String buildMessageKey(NotificationFeed feed) {
-    return KafkaMessageSerializer.buildKafkaMessageKey(feed);
-  }
-
-  @Override
-  protected Object decodePayload(ByteBuffer buffer, Type type) throws IOException {
-    return KafkaMessageSerializer.decode(buffer, type);
-  }
-
-  @Override
-  public synchronized Cancellable consume() {
-    if (isConsuming()) {
-      throw new UnsupportedOperationException("Subscriber is already consuming.");
-    }
-    startConsuming();
+  protected Cancellable doConsume() {
     return kafkaPreparer.consume(new KafkaConsumer.MessageCallback() {
       @Override
       public void onReceived(Iterator<FetchedMessage> messages) {
@@ -84,8 +71,24 @@ public class KafkaNotificationSubscriber extends AbstractNotificationSubscriber 
           FetchedMessage message = messages.next();
           ByteBuffer payload = message.getPayload();
           try {
-            handlePayload(payload);
-            count++;
+            String msgKey = KafkaMessageSerializer.decodeMessageKey(payload);
+            for (Map.Entry<NotificationFeed, NotificationHandler> feedEntry : getFeedMap().entrySet()) {
+              if (!msgKey.equals(KafkaMessageSerializer.buildKafkaMessageKey(feedEntry.getKey()))) {
+                continue;
+              }
+              Object notification = KafkaMessageSerializer.decode(payload,
+                                                                  feedEntry.getValue().getNotificationFeedType());
+              if (notification == null) {
+                continue;
+              }
+              try {
+                feedEntry.getValue().processNotification(
+                  notification, new BasicNotificationContext(dsFramework, transactionSystemClient));
+                count++;
+              } catch (Throwable t) {
+                LOG.warn("Error while processing notification: {}", notification, t);
+              }
+            }
           } catch (IOException e) {
             LOG.error("Could not decode Kafka message {} using Gson. Make sure that the " +
                         "getNotificationFeedType() method is correctly set.", message, e);

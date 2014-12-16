@@ -41,7 +41,7 @@ public class KafkaNotificationPublisher<N> extends AbstractNotificationPublisher
   }
 
   @Override
-  protected ListenableFuture<Void> doSend(N notification) throws IOException {
+  protected ListenableFuture<Void> doPublish(N notification) throws IOException {
     ByteBuffer bb = ByteBuffer.wrap(KafkaMessageSerializer.encode(feed, notification));
     preparer.add(bb, KafkaMessageSerializer.buildKafkaMessageKey(feed));
     return Futures.transform(preparer.send(), Functions.<Void>constant(null));

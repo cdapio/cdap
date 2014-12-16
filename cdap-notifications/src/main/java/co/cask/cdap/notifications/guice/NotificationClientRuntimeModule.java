@@ -20,6 +20,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.notifications.client.NotificationClient;
+import co.cask.cdap.notifications.inmemory.InMemoryNotificationClient;
+import co.cask.cdap.notifications.inmemory.InMemoryNotificationService;
 import co.cask.cdap.notifications.kafka.KafkaNotificationClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -34,32 +36,37 @@ public class NotificationClientRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return new NotificationClientModule();
+    return new InMemoryNotificationClientModule();
   }
 
   @Override
   public Module getStandaloneModules() {
-    return new NotificationClientModule();
+    return new InMemoryNotificationClientModule();
   }
 
   @Override
   public Module getDistributedModules() {
-    return new NotificationClientModule();
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(KafkaNotificationClient.class).in(Scopes.SINGLETON);
+      }
+
+      @Provides
+      @SuppressWarnings("unused")
+      private NotificationClient notificationPublisher(CConfiguration cConf, Injector injector) {
+        // TODO use that constant once we have more core systems
+        String coreSystem = cConf.get(Constants.Notification.CORE_SYSTEM, "kafka");
+        return injector.getInstance(KafkaNotificationClient.class);
+      }
+    };
   }
 
-  private static class NotificationClientModule extends AbstractModule {
+  private static class InMemoryNotificationClientModule extends AbstractModule {
     @Override
     protected void configure() {
-      bind(KafkaNotificationClient.class).in(Scopes.SINGLETON);
+      bind(InMemoryNotificationService.class).in(Scopes.SINGLETON);
+      bind(NotificationClient.class).to(InMemoryNotificationClient.class).in(Scopes.SINGLETON);
     }
-
-    @Provides
-    @SuppressWarnings("unused")
-    private NotificationClient notificationPublisher(CConfiguration cConf, Injector injector) {
-      // TODO use that constant once we have more core systems
-      String coreSystem = cConf.get(Constants.Notification.CORE_SYSTEM, "kafka");
-      return injector.getInstance(KafkaNotificationClient.class);
-    }
-
   }
 }

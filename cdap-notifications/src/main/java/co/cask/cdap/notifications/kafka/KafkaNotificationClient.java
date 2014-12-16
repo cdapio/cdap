@@ -29,7 +29,7 @@ import org.apache.twill.kafka.client.KafkaConsumer;
 import org.apache.twill.kafka.client.KafkaPublisher;
 
 /**
- *
+ * Kafka implementation of the {@link co.cask.cdap.notifications.client.NotificationClient}.
  */
 public class KafkaNotificationClient implements NotificationClient {
 

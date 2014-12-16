@@ -38,12 +38,23 @@ public abstract class AbstractNotificationPublisher<N> implements NotificationCl
   private final ExecutorService executor;
   private final NotificationFeed feed;
 
+  /**
+   * Publish the {@code notification} to the Notification service, which handles the storing of notifications.
+   *
+   * @param notification notification to publish.
+   * @return A {@link ListenableFuture} describing the pushing of the notification to the service.
+   * @throws IOException
+   */
+  protected abstract ListenableFuture<Void> doPublish(N notification) throws IOException;
+
   protected AbstractNotificationPublisher(NotificationFeed feed) {
     this.executor = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("notification-sender-%d"));
     this.feed = feed;
   }
 
-  protected abstract ListenableFuture<Void> doSend(N notification) throws IOException;
+  public NotificationFeed getFeed() {
+    return feed;
+  }
 
   @Override
   public synchronized void shutdown() {
@@ -76,7 +87,7 @@ public abstract class AbstractNotificationPublisher<N> implements NotificationCl
         "Tried to publish notification " + notification + " after shut down.");
     }
     LOG.debug("Publishing on notification feed [{}]: {}", feed, notification);
-    ListenableFuture<Void> future = doSend(notification);
+    ListenableFuture<Void> future = doPublish(notification);
     executor.submit(new GetNotificationRunnable<N>(future, notification));
     return future;
   }

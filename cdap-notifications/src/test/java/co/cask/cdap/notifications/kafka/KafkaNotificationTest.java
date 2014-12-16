@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.notifications.NotificationTest;
+import co.cask.cdap.notifications.guice.NotificationClientRuntimeModule;
 import co.cask.cdap.test.TempFolder;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
@@ -60,6 +61,7 @@ public class KafkaNotificationTest extends NotificationTest {
     Injector injector = createInjector(
       cConf,
       new KafkaClientModule(),
+      new NotificationClientRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

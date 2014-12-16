@@ -16,12 +16,12 @@
 
 package co.cask.cdap.notifications;
 
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
@@ -38,7 +38,6 @@ import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.client.NotificationClient;
 import co.cask.cdap.notifications.client.NotificationFeedClient;
-import co.cask.cdap.notifications.guice.NotificationClientRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.NotificationFeedService;
 import co.cask.cdap.notifications.service.NotificationFeedStore;
@@ -103,7 +102,6 @@ public abstract class NotificationTest {
                                     new IOModule(),
                                     new AuthModule(),
                                     new DataFabricModules().getInMemoryModules(),
-                                    new NotificationClientRuntimeModule().getInMemoryModules(),
                                     new AbstractModule() {
                                       @Override
                                       protected void configure() {

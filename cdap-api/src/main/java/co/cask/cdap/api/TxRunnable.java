@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.Dataset;
 
 /**
- * A runnable that provides a {@link DatasetContext} to {@link co.cask.cdap.api.service.ServiceWorker}s which may be used to get
+ * A runnable that provides a {@link DatasetContext} to programs which may be used to get
  * access to and use datasets.
  */
 public interface TxRunnable {

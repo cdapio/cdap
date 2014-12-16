@@ -150,6 +150,7 @@ public interface NotificationClient {
 
     /**
      * Starts the consumption of Notification as being configured by this {@link Subscriber}.
+     * The consumption of all {@link NotificationFeed}s is handled by one single threaded executor.
      *
      * @return A {@link Cancellable} for cancelling Notification consumption.
      */

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.notifications;
 
-import co.cask.cdap.api.service.TxRunnable;
+import co.cask.cdap.api.TxRunnable;
 
 /**
  * Context accessible when handling the reception of a Notification by the
