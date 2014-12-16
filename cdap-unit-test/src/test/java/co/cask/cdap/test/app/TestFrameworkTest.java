@@ -111,7 +111,6 @@ public class TestFrameworkTest extends TestBase {
                           gson.fromJson(client.query("result", ImmutableMap.of("type", "highpass")), String.class));
     } finally {
       applicationManager.stopAll();
-      TimeUnit.SECONDS.sleep(1);
     }
   }
 
@@ -119,53 +118,55 @@ public class TestFrameworkTest extends TestBase {
   @Test
   public void testDeployWorkflowApp() throws InterruptedException {
     ApplicationManager applicationManager = deployApplication(AppWithSchedule.class);
-    WorkflowManager wfmanager = applicationManager.startWorkflow("SampleWorkflow", null);
-    List<String> schedules = wfmanager.getSchedules();
-    Assert.assertEquals(1, schedules.size());
-    String scheduleId = schedules.get(0);
-    Assert.assertNotNull(scheduleId);
-    Assert.assertFalse(scheduleId.isEmpty());
+    try {
+      WorkflowManager wfmanager = applicationManager.startWorkflow("SampleWorkflow", null);
+      List<String> schedules = wfmanager.getSchedules();
+      Assert.assertEquals(1, schedules.size());
+      String scheduleId = schedules.get(0);
+      Assert.assertNotNull(scheduleId);
+      Assert.assertFalse(scheduleId.isEmpty());
 
-    List<RunRecord> history;
-    int workflowRuns = 0;
-    workFlowHistoryCheck(5, wfmanager, 0);
+      List<RunRecord> history;
+      int workflowRuns = 0;
+      workFlowHistoryCheck(5, wfmanager, 0);
 
-    String status = wfmanager.getSchedule(scheduleId).status();
-    Assert.assertEquals("SCHEDULED", status);
+      String status = wfmanager.getSchedule(scheduleId).status();
+      Assert.assertEquals("SCHEDULED", status);
 
-    wfmanager.getSchedule(scheduleId).suspend();
-    workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
+      wfmanager.getSchedule(scheduleId).suspend();
+      workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
 
-    TimeUnit.SECONDS.sleep(3);
-    history = wfmanager.getHistory();
-    workflowRuns = history.size();
+      TimeUnit.SECONDS.sleep(3);
+      history = wfmanager.getHistory();
+      workflowRuns = history.size();
 
-    //Sleep for some time and verify there are no more scheduled jobs after the suspend.
-    TimeUnit.SECONDS.sleep(10);
-    int workflowRunsAfterSuspend = wfmanager.getHistory().size();
-    Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
+      //Sleep for some time and verify there are no more scheduled jobs after the suspend.
+      TimeUnit.SECONDS.sleep(10);
+      int workflowRunsAfterSuspend = wfmanager.getHistory().size();
+      Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
-    wfmanager.getSchedule(scheduleId).resume();
+      wfmanager.getSchedule(scheduleId).resume();
 
-    //Check that after resume it goes to "SCHEDULED" state
-    workFlowStatusCheck(5, scheduleId, wfmanager, "SCHEDULED");
+      //Check that after resume it goes to "SCHEDULED" state
+      workFlowStatusCheck(5, scheduleId, wfmanager, "SCHEDULED");
 
-    workFlowHistoryCheck(5, wfmanager, workflowRunsAfterSuspend);
+      workFlowHistoryCheck(5, wfmanager, workflowRunsAfterSuspend);
 
-    //check scheduled state
-    Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleId).status());
+      //check scheduled state
+      Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleId).status());
 
-    //check status of non-existent schedule
-    Assert.assertEquals("NOT_FOUND", wfmanager.getSchedule("doesnt exist").status());
+      //check status of non-existent schedule
+      Assert.assertEquals("NOT_FOUND", wfmanager.getSchedule("doesnt exist").status());
 
-    //suspend the schedule
-    wfmanager.getSchedule(scheduleId).suspend();
+      //suspend the schedule
+      wfmanager.getSchedule(scheduleId).suspend();
 
-    //Check that after suspend it goes to "SUSPENDED" state
-    workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
+      //Check that after suspend it goes to "SUSPENDED" state
+      workFlowStatusCheck(5, scheduleId, wfmanager, "SUSPENDED");
 
-    TimeUnit.SECONDS.sleep(10);
-    applicationManager.stopAll();
+    } finally {
+      applicationManager.stopAll();
+    }
   }
 
   private void workFlowHistoryCheck(int retries, WorkflowManager wfmanager, int expected) throws InterruptedException {
@@ -245,35 +246,39 @@ public class TestFrameworkTest extends TestBase {
   @Test
   public void testGetServiceURL() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppUsingGetServiceURL.class);
-    ServiceManager centralServiceManager = applicationManager.startService(AppUsingGetServiceURL.CENTRAL_SERVICE);
-    serviceStatusCheck(centralServiceManager, true);
+    try {
+      ServiceManager centralServiceManager = applicationManager.startService(AppUsingGetServiceURL.CENTRAL_SERVICE);
+      serviceStatusCheck(centralServiceManager, true);
 
-    // Test procedure's getServiceURL
-    ProcedureManager procedureManager = applicationManager.startProcedure(AppUsingGetServiceURL.PROCEDURE);
-    ProcedureClient procedureClient = procedureManager.getClient();
-    String result = procedureClient.query("ping", Collections.<String, String>emptyMap());
-    String decodedResult = new Gson().fromJson(result, String.class);
-    // Verify that the procedure was able to hit the CentralService and retrieve the answer.
-    Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
+      // Test procedure's getServiceURL
+      ProcedureManager procedureManager = applicationManager.startProcedure(AppUsingGetServiceURL.PROCEDURE);
+      ProcedureClient procedureClient = procedureManager.getClient();
+      String result = procedureClient.query("ping", Collections.<String, String>emptyMap());
+      String decodedResult = new Gson().fromJson(result, String.class);
+      // Verify that the procedure was able to hit the CentralService and retrieve the answer.
+      Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
 
 
-    // Test serviceWorker's getServiceURL
-    ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
-    serviceStatusCheck(serviceWithWorker, true);
-    // Since the worker is passive (we can not ping it), allow the service worker 2 seconds to ping the CentralService,
-    // get the appropriate response, and write to to a dataset.
-    Thread.sleep(2000);
-    serviceWithWorker.stop();
-    serviceStatusCheck(serviceWithWorker, false);
+      // Test serviceWorker's getServiceURL
+      ServiceManager serviceWithWorker = applicationManager.startService(AppUsingGetServiceURL.SERVICE_WITH_WORKER);
+      serviceStatusCheck(serviceWithWorker, true);
+      // Since the worker is passive (we can not ping it), allow the service worker 2 seconds to ping
+      // the CentralService, get the appropriate response, and write to to a dataset.
+      Thread.sleep(2000);
+      serviceWithWorker.stop();
+      serviceStatusCheck(serviceWithWorker, false);
 
-    result = procedureClient.query("readDataSet", ImmutableMap.of(AppUsingGetServiceURL.DATASET_WHICH_KEY,
-                                                           AppUsingGetServiceURL.DATASET_KEY));
-    decodedResult = new Gson().fromJson(result, String.class);
-    Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
-    procedureManager.stop();
+      result = procedureClient.query("readDataSet", ImmutableMap.of(AppUsingGetServiceURL.DATASET_WHICH_KEY,
+                                                                    AppUsingGetServiceURL.DATASET_KEY));
+      decodedResult = new Gson().fromJson(result, String.class);
+      Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
+      procedureManager.stop();
 
-    centralServiceManager.stop();
-    serviceStatusCheck(centralServiceManager, false);
+      centralServiceManager.stop();
+      serviceStatusCheck(centralServiceManager, false);
+    } finally {
+      applicationManager.stopAll();
+    }
   }
 
   /**
@@ -349,130 +354,153 @@ public class TestFrameworkTest extends TestBase {
   @Category(SlowTests.class)
   @Test(expected = IllegalArgumentException.class)
   public void testServiceWithInvalidHandler() throws Exception {
-      deployApplication(AppWithInvalidHandler.class);
+    deployApplication(AppWithInvalidHandler.class);
   }
 
   @Category(SlowTests.class)
   @Test
   public void testAppWithServices() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
-    LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
-    serviceStatusCheck(serviceManager, true);
+    try {
+      LOG.info("Deployed.");
+      ServiceManager serviceManager = applicationManager.startService(AppWithServices.SERVICE_NAME);
+      serviceStatusCheck(serviceManager, true);
 
-    LOG.info("Service Started");
+      LOG.info("Service Started");
 
-    // Call the ping endpoint
-    URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
-    HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
+      // Call the ping endpoint
+      URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
+      HttpRequest request = HttpRequest.get(url).build();
+      HttpResponse response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
 
-    // Call the failure endpoint
-    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "failure");
-    request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
-    Assert.assertEquals(response.getResponseCode(), 500);
+      // Call the failure endpoint
+      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "failure");
+      request = HttpRequest.get(url).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(500, response.getResponseCode());
 
-    // Call the verify ClassLoader endpoint
-    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "verifyClassLoader");
-    request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
+      // Call the verify ClassLoader endpoint
+      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "verifyClassLoader");
+      request = HttpRequest.get(url).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
 
-    LOG.info("Service Stopped");
-    // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the system scope test in
-    // TestMetricsCollectionService
+      RuntimeMetrics serviceMetrics = RuntimeStats.getServiceMetrics(AppWithServices.APP_NAME,
+                                                                     AppWithServices.SERVICE_NAME);
+      serviceMetrics.waitForinput(3, 5, TimeUnit.SECONDS);
+      Assert.assertEquals(3, serviceMetrics.getInput());
+      Assert.assertEquals(2, serviceMetrics.getProcessed());
+      Assert.assertEquals(1, serviceMetrics.getException());
 
-    LOG.info("DatasetUpdateService Started");
-    ServiceManager datasetWorkerServiceManager = applicationManager
-      .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
-    serviceStatusCheck(datasetWorkerServiceManager, true);
+      // we can verify metrics, by adding getServiceMetrics in RuntimeStats and then disabling the system scope test in
+      // TestMetricsCollectionService
 
-    ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
-    ProcedureClient procedureClient = procedureManager.getClient();
+      LOG.info("DatasetUpdateService Started");
+      Map<String, String> args
+        = ImmutableMap.of(AppWithServices.WRITE_VALUE_RUN_KEY, AppWithServices.DATASET_TEST_VALUE,
+                          AppWithServices.WRITE_VALUE_STOP_KEY, AppWithServices.DATASET_TEST_VALUE_STOP);
+      ServiceManager datasetWorkerServiceManager = applicationManager
+        .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME, args);
+      serviceStatusCheck(datasetWorkerServiceManager, true);
 
-    String result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
-                                                                  AppWithServices.DATASET_TEST_KEY));
-    String decodedResult = new Gson().fromJson(result, String.class);
-    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
+      ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
+      ProcedureClient procedureClient = procedureManager.getClient();
 
-    // Test that a service can discover another service
-    String path = String.format("discover/%s/%s",
-                                AppWithServices.APP_NAME, AppWithServices.DATASET_WORKER_SERVICE_NAME);
-    url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), path);
-    request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
+      String result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
+                                                                    AppWithServices.DATASET_TEST_KEY));
+      String decodedResult = new Gson().fromJson(result, String.class);
+      Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE, decodedResult);
 
-    datasetWorkerServiceManager.stop();
-    serviceStatusCheck(datasetWorkerServiceManager, false);
-    serviceManager.stop();
-    serviceStatusCheck(serviceManager, false);
-    LOG.info("DatasetUpdateService Stopped");
+      // Test that a service can discover another service
+      String path = String.format("discover/%s/%s",
+                                  AppWithServices.APP_NAME, AppWithServices.DATASET_WORKER_SERVICE_NAME);
+      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), path);
+      request = HttpRequest.get(url).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
 
-    result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
-                                                           AppWithServices.DATASET_TEST_KEY_STOP));
-    decodedResult = new Gson().fromJson(result, String.class);
-    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
+      datasetWorkerServiceManager.stop();
+      serviceStatusCheck(datasetWorkerServiceManager, false);
+      LOG.info("DatasetUpdateService Stopped");
+      serviceManager.stop();
+      serviceStatusCheck(serviceManager, false);
+      LOG.info("ServerService Stopped");
 
-    procedureManager.stop();
+      result = procedureClient.query("ping", ImmutableMap.of(AppWithServices.PROCEDURE_DATASET_KEY,
+                                                             AppWithServices.DATASET_TEST_KEY_STOP));
+      decodedResult = new Gson().fromJson(result, String.class);
+      Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
+
+      procedureManager.stop();
+    } finally {
+      applicationManager.stopAll();
+    }
   }
 
   @Test
   public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(AppWithServices.class);
-    LOG.info("Deployed.");
-    ServiceManager serviceManager = applicationManager.startService(AppWithServices.TRANSACTIONS_SERVICE_NAME);
-    serviceStatusCheck(serviceManager, true);
+    try {
+      LOG.info("Deployed.");
+      ServiceManager serviceManager = applicationManager.startService(AppWithServices.TRANSACTIONS_SERVICE_NAME);
+      serviceStatusCheck(serviceManager, true);
 
-    LOG.info("Service Started");
+      LOG.info("Service Started");
 
 
-    final URL baseUrl = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
+      final URL baseUrl = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
 
-    // Make a request to write in a separate thread and wait for it to return.
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    Future<Integer> requestFuture = executorService.submit(new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        try {
-          URL url = new URL(String.format("%s/write/%s/%s/%d",
-                                          baseUrl,
-                                          AppWithServices.DATASET_TEST_KEY,
-                                          AppWithServices.DATASET_TEST_VALUE,
-                                          10000));
-          HttpRequest request = HttpRequest.get(url).build();
-          HttpResponse response = HttpRequests.execute(request);
-          return response.getResponseCode();
-        } catch (Exception e) {
-          LOG.error("Request thread got exception.", e);
-          throw Throwables.propagate(e);
+      // Make a request to write in a separate thread and wait for it to return.
+      ExecutorService executorService = Executors.newSingleThreadExecutor();
+      Future<Integer> requestFuture = executorService.submit(new Callable<Integer>() {
+        @Override
+        public Integer call() throws Exception {
+          try {
+            URL url = new URL(String.format("%s/write/%s/%s/%d",
+                                            baseUrl,
+                                            AppWithServices.DATASET_TEST_KEY,
+                                            AppWithServices.DATASET_TEST_VALUE,
+                                            10000));
+            HttpRequest request = HttpRequest.get(url).build();
+            HttpResponse response = HttpRequests.execute(request);
+            return response.getResponseCode();
+          } catch (Exception e) {
+            LOG.error("Request thread got exception.", e);
+            throw Throwables.propagate(e);
+          }
         }
-      }
-    });
+      });
 
-    // The dataset should not be written by the time this request is made, since the transaction to write
-    // has not been committed yet.
-    URL url = new URL(String.format("%s/read/%s", baseUrl, AppWithServices.DATASET_TEST_KEY));
-    HttpRequest request = HttpRequest.get(url).build();
-    HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(204, response.getResponseCode());
+      // The dataset should not be written by the time this request is made, since the transaction to write
+      // has not been committed yet.
+      URL url = new URL(String.format("%s/read/%s", baseUrl, AppWithServices.DATASET_TEST_KEY));
+      HttpRequest request = HttpRequest.get(url).build();
+      HttpResponse response = HttpRequests.execute(request);
+      Assert.assertEquals(204, response.getResponseCode());
 
-    // Wait for the transaction to commit.
-    Integer writeStatusCode = requestFuture.get();
-    Assert.assertEquals(200, writeStatusCode.intValue());
+      // Wait for the transaction to commit.
+      Integer writeStatusCode = requestFuture.get();
+      Assert.assertEquals(200, writeStatusCode.intValue());
 
-    // Make the same request again. By now the transaction should've completed.
-    request = HttpRequest.get(url).build();
-    response = HttpRequests.execute(request);
-    Assert.assertEquals(200, response.getResponseCode());
-    Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE,
-                        new Gson().fromJson(response.getResponseBodyAsString(), String.class));
+      // Make the same request again. By now the transaction should've completed.
+      request = HttpRequest.get(url).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
+      Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE,
+                          new Gson().fromJson(response.getResponseBodyAsString(), String.class));
 
-    executorService.shutdown();
-    serviceManager.stop();
-    serviceStatusCheck(serviceManager, false);
+      executorService.shutdown();
+      serviceManager.stop();
+      serviceStatusCheck(serviceManager, false);
+
+      DataSetManager<KeyValueTable> dsManager
+        = applicationManager.getDataSet(AppWithServices.TRANSACTIONS_DATASET_NAME);
+      String value = Bytes.toString(dsManager.get().read(AppWithServices.DESTROY_KEY));
+      Assert.assertEquals(AppWithServices.VALUE, value);
+    } finally {
+      applicationManager.stopAll();
+    }
   }
 
   private void serviceStatusCheck(ServiceManager serviceManger, boolean running) throws InterruptedException {
@@ -491,7 +519,6 @@ public class TestFrameworkTest extends TestBase {
     throws IOException, TimeoutException, InterruptedException {
 
     ApplicationManager applicationManager = deployApplication(app);
-
     try {
       applicationManager.startFlow("WordCountFlow");
 
@@ -556,7 +583,6 @@ public class TestFrameworkTest extends TestBase {
   @Test
   public void testGenerator() throws InterruptedException, IOException, TimeoutException {
     ApplicationManager applicationManager = deployApplication(GenSinkApp2.class);
-
     try {
       applicationManager.startFlow("GenSinkFlow");
 
@@ -593,61 +619,69 @@ public class TestFrameworkTest extends TestBase {
   @Test
   public void testAppRedeployKeepsData() {
     ApplicationManager appManager = deployApplication(AppWithTable.class);
-    DataSetManager<Table> myTableManager = appManager.getDataSet("my_table");
-    myTableManager.get().put(new Put("key1", "column1", "value1"));
-    myTableManager.flush();
+    try {
+      DataSetManager<Table> myTableManager = appManager.getDataSet("my_table");
+      myTableManager.get().put(new Put("key1", "column1", "value1"));
+      myTableManager.flush();
 
-    // Changes should be visible to other instances of datasets
-    DataSetManager<Table> myTableManager2 = appManager.getDataSet("my_table");
-    Assert.assertEquals("value1", myTableManager2.get().get(new Get("key1", "column1")).getString("column1"));
+      // Changes should be visible to other instances of datasets
+      DataSetManager<Table> myTableManager2 = appManager.getDataSet("my_table");
+      Assert.assertEquals("value1", myTableManager2.get().get(new Get("key1", "column1")).getString("column1"));
 
-    // Even after redeploy of an app: changes should be visible to other instances of datasets
-    appManager = deployApplication(AppWithTable.class);
-    DataSetManager<Table> myTableManager3 = appManager.getDataSet("my_table");
-    Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
+      // Even after redeploy of an app: changes should be visible to other instances of datasets
+      appManager = deployApplication(AppWithTable.class);
+      DataSetManager<Table> myTableManager3 = appManager.getDataSet("my_table");
+      Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
 
-    // Calling commit again (to test we can call it multiple times)
-    myTableManager.get().put(new Put("key1", "column1", "value2"));
-    myTableManager.flush();
+      // Calling commit again (to test we can call it multiple times)
+      myTableManager.get().put(new Put("key1", "column1", "value2"));
+      myTableManager.flush();
 
-    Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
+      Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
+    } finally {
+      appManager.stopAll();
+    }
   }
 
 
   @Test (timeout = 60000L)
   public void testFlowletInitAndSetInstances() throws TimeoutException, InterruptedException {
     ApplicationManager appManager = deployApplication(DataSetInitApp.class);
-    FlowManager flowManager = appManager.startFlow("DataSetFlow");
+    try {
+      FlowManager flowManager = appManager.startFlow("DataSetFlow");
 
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
+      RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("DataSetInitApp", "DataSetFlow", "Consumer");
 
-    flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
+      flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
 
-    // Now change generator to 3 instances
-    flowManager.setFlowletInstances("Generator", 3);
+      // Now change generator to 3 instances
+      flowManager.setFlowletInstances("Generator", 3);
 
-    // Now should have 3 processed from the consumer flowlet
-    flowletMetrics.waitForProcessed(3, 10, TimeUnit.SECONDS);
+      // Now should have 3 processed from the consumer flowlet
+      flowletMetrics.waitForProcessed(3, 10, TimeUnit.SECONDS);
 
-    // Now reset to 1 instances
-    flowManager.setFlowletInstances("Generator", 1);
+      // Now reset to 1 instances
+      flowManager.setFlowletInstances("Generator", 1);
 
-    // Shouldn't have new item
-    TimeUnit.SECONDS.sleep(3);
-    Assert.assertEquals(3, flowletMetrics.getProcessed());
+      // Shouldn't have new item
+      TimeUnit.SECONDS.sleep(3);
+      Assert.assertEquals(3, flowletMetrics.getProcessed());
 
-    // Now set to 2 instances again. Since there is a new instance, expect one new item emitted
-    flowManager.setFlowletInstances("Generator", 2);
-    flowletMetrics.waitForProcessed(4, 10, TimeUnit.SECONDS);
+      // Now set to 2 instances again. Since there is a new instance, expect one new item emitted
+      flowManager.setFlowletInstances("Generator", 2);
+      flowletMetrics.waitForProcessed(4, 10, TimeUnit.SECONDS);
 
-    flowManager.stop();
+      flowManager.stop();
 
-    DataSetManager<Table> dataSetManager = appManager.getDataSet("conf");
-    Table confTable = dataSetManager.get();
+      DataSetManager<Table> dataSetManager = appManager.getDataSet("conf");
+      Table confTable = dataSetManager.get();
 
-    Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
+      Assert.assertEquals("generator", confTable.get(new Get("key", "column")).getString("column"));
 
-    dataSetManager.flush();
+      dataSetManager.flush();
+    } finally {
+      appManager.stopAll();
+    }
   }
 
   @Test(timeout = 60000L)
@@ -705,7 +739,6 @@ public class TestFrameworkTest extends TestBase {
 
   private void testAppWithDataset(Class<? extends Application> app, String procedureName) throws Exception {
     ApplicationManager applicationManager = deployApplication(app);
-
     try {
       // Query the result
       ProcedureManager procedureManager = applicationManager.startProcedure(procedureName);
@@ -717,7 +750,6 @@ public class TestFrameworkTest extends TestBase {
       Assert.assertEquals("value1", new Gson().fromJson(response, String.class));
 
     } finally {
-      TimeUnit.SECONDS.sleep(2);
       applicationManager.stopAll();
     }
   }
@@ -726,34 +758,66 @@ public class TestFrameworkTest extends TestBase {
   public void testSQLQuery() throws Exception {
     deployDatasetModule("my-kv", AppsWithDataset.KeyValueTableDefinition.Module.class);
     ApplicationManager appManager = deployApplication(AppsWithDataset.AppWithAutoCreate.class);
-    DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
-        appManager.getDataSet("myTable");
-    AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
-    kvTable.put("a", "1");
-    kvTable.put("b", "2");
-    kvTable.put("c", "1");
-    myTableManager.flush();
-
-    Connection connection = getQueryClient();
     try {
-      // list the tables and make sure the table is there
-      ResultSet results = connection.prepareStatement("show tables").executeQuery();
-      Assert.assertTrue(results.next());
-      Assert.assertTrue("cdap_user_mytable".equalsIgnoreCase(results.getString(1)));
+      DataSetManager<AppsWithDataset.KeyValueTableDefinition.KeyValueTable> myTableManager =
+        appManager.getDataSet("myTable");
+      AppsWithDataset.KeyValueTableDefinition.KeyValueTable kvTable = myTableManager.get();
+      kvTable.put("a", "1");
+      kvTable.put("b", "2");
+      kvTable.put("c", "1");
+      myTableManager.flush();
 
-      // run a query over the dataset
-      results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
+      Connection connection = getQueryClient();
+      try {
+
+        // run a query over the dataset
+        ResultSet results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
           .executeQuery();
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("a", results.getString(1));
-      Assert.assertTrue(results.next());
-      Assert.assertEquals("c", results.getString(1));
-      Assert.assertFalse(results.next());
+        Assert.assertTrue(results.next());
+        Assert.assertEquals("a", results.getString(1));
+        Assert.assertTrue(results.next());
+        Assert.assertEquals("c", results.getString(1));
+        Assert.assertFalse(results.next());
 
+      } finally {
+        connection.close();
+      }
     } finally {
-      connection.close();
       appManager.stopAll();
     }
   }
 
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testByteCodeClassLoader() throws Exception {
+    // This test verify bytecode generated classes ClassLoading
+
+    ApplicationManager appManager = deployApplication(ClassLoaderTestApp.class);
+    try {
+      FlowManager flowManager = appManager.startFlow("BasicFlow");
+
+      // Wait for at least 10 records being generated
+      RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics("ClassLoaderTestApp", "BasicFlow", "Sink");
+      flowMetrics.waitForProcessed(10, 1000, TimeUnit.MILLISECONDS);
+      flowManager.stop();
+
+      // Query record
+      ServiceManager serviceManager = appManager.startService("RecordQuery");
+      URL url = new URL(serviceManager.getServiceURL(2000, TimeUnit.MILLISECONDS), "query?type=public");
+      HttpRequest request = HttpRequest.get(url).build();
+      HttpResponse response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
+
+      long count = Long.parseLong(response.getResponseBodyAsString());
+      serviceManager.stop();
+
+      // Verify the record count with dataset
+      KeyValueTable records = appManager.<KeyValueTable>getDataSet("records").get();
+      Assert.assertTrue(count == Bytes.toLong(records.read("PUBLIC")));
+
+    } finally {
+      appManager.stopAll();
+    }
+  }
 }

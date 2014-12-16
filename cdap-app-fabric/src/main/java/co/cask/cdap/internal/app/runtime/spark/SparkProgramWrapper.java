@@ -18,9 +18,9 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.ScalaSparkProgram;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import com.google.common.base.Throwables;
 import org.apache.spark.network.ConnectionManager;
 import org.slf4j.Logger;
@@ -288,5 +288,12 @@ public class SparkProgramWrapper {
    */
   public static void setBasicSparkContext(BasicSparkContext basicSparkContext) {
     SparkProgramWrapper.basicSparkContext = basicSparkContext;
+  }
+
+  /**
+   * @return The {@link BasicSparkContext} which will be used to run the user's {@link Spark} program
+   */
+  public static BasicSparkContext getBasicSparkContext() {
+    return basicSparkContext;
   }
 }

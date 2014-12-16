@@ -73,7 +73,7 @@ public final class SparkDatasetInputFormat<KEY, VALUE> extends InputFormat<KEY, 
     BasicSparkContext sparkContext = contextProvider.get();
     //TODO: Metrics should be started here when implemented
     String dataSetName = getInputName(conf);
-    BatchReadable<KEY, VALUE> inputDataset = (BatchReadable<KEY, VALUE>) sparkContext.getDataSet(dataSetName);
+    BatchReadable<KEY, VALUE> inputDataset = (BatchReadable<KEY, VALUE>) sparkContext.getDataset(dataSetName);
     SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it

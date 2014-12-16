@@ -23,7 +23,7 @@ import java.io.IOException;
  * to stream data back to client or call {@link #sendJson(ProcedureResponse, Object)} to send json
  * object back to client.
  *
- * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
+ * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.http.HttpServiceResponder}
  */
 @Deprecated
 public interface ProcedureResponder {

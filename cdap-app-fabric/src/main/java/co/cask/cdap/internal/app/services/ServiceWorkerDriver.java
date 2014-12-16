@@ -22,10 +22,10 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.service.BasicServiceWorkerContext;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.proto.Id;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
@@ -50,7 +50,7 @@ public class ServiceWorkerDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
-    Id.Program programId = program.getId();
+    LoggingContextAccessor.setLoggingContext(context.getLoggingContext());
 
     // Instantiate worker instance
     Class<?> workerClass = program.getClassLoader().loadClass(spec.getClassName());

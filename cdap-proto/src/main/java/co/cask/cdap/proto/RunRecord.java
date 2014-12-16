@@ -31,16 +31,12 @@ public final class RunRecord {
   private final long startTs;
 
   @SerializedName("end")
-  private final long stopTs;
+  private final Long stopTs;
 
   @SerializedName("status")
   private final ProgramRunStatus status;
 
-  public RunRecord(String pid, long startTs) {
-    this(pid, startTs, -1, null);
-  }
-
-  public RunRecord(String pid, long startTs, long stopTs, ProgramRunStatus status) {
+  public RunRecord(String pid, long startTs, Long stopTs, ProgramRunStatus status) {
     this.pid = pid;
     this.startTs = startTs;
     this.stopTs = stopTs;

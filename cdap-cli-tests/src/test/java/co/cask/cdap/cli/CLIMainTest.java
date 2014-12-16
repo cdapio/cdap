@@ -16,10 +16,10 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.cli.app.EchoHandler;
 import co.cask.cdap.cli.app.FakeApp;
 import co.cask.cdap.cli.app.FakeProcedure;
 import co.cask.cdap.cli.app.FakeSpark;
+import co.cask.cdap.cli.app.PrefixedEchoHandler;
 import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
@@ -31,7 +31,12 @@ import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -41,6 +46,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -51,18 +57,33 @@ import javax.annotation.Nullable;
 public class CLIMainTest extends StandaloneTestBase {
 
   private static final Logger LOG = LoggerFactory.getLogger(CLIMainTest.class);
+  private static final Gson GSON = new Gson();
 
-  @Test
-  public void testCommands() throws Exception {
-    CLIConfig cliConfig = new CLIConfig("localhost");
+  private static final String PREFIX = "123ff1_";
+  private static final boolean START_LOCAL_STANDALONE = true;
+  private static final String PROTOCOL = "http";
+  private static final String HOSTNAME = "localhost";
+  private static final String PORT = "10000";
+
+  private static ProgramClient programClient;
+  private static CLIConfig cliConfig;
+  private static CLI cli;
+
+  @BeforeClass
+  public static void setUpClass() throws Exception {
+    if (START_LOCAL_STANDALONE) {
+      StandaloneTestBase.setUpClass();
+    }
+
+    cliConfig = new CLIConfig(HOSTNAME);
+    cliConfig.getClientConfig().setAllTimeouts(60000);
+
+    programClient = new ProgramClient(cliConfig.getClientConfig());
+
     CLIMain cliMain = new CLIMain(cliConfig);
-    CLI cli = cliMain.getCLI();
+    cli = cliMain.getCLI();
 
-    testCommandOutputContains(cli, "connect fakehost", "could not be reached");
-    testCommandOutputContains(cli, "connect localhost", "Successfully connected");
-    testCommandOutputContains(cli, "connect http://localhost", "Successfully connected");
-    testCommandOutputContains(cli, "connect http://localhost:10000", "Successfully connected");
-
+    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
     testCommandOutputNotContains(cli, "list apps", FakeApp.NAME);
 
     File appJarFile = createAppJarFile(FakeApp.class);
@@ -70,25 +91,49 @@ public class CLIMainTest extends StandaloneTestBase {
     if (!appJarFile.delete()) {
       LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
     }
+  }
 
+  @AfterClass
+  public static void tearDownClass() throws Exception {
+    testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
+
+    if (START_LOCAL_STANDALONE) {
+      StandaloneTestBase.tearDownClass();
+    }
+  }
+
+  @Test
+  public void testConnect() throws Exception {
+    testCommandOutputContains(cli, "connect fakehost", "could not be reached");
+    testCommandOutputContains(cli, "connect " + HOSTNAME, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME, "Successfully connected");
+    testCommandOutputContains(cli, "connect " + PROTOCOL + "://" + HOSTNAME + ":" + PORT, "Successfully connected");
+  }
+
+  @Test
+  public void testList() throws Exception {
     testCommandOutputContains(cli, "list apps", FakeApp.NAME);
     testCommandOutputContains(cli, "list dataset instances", FakeApp.DS_NAME);
     testCommandOutputContains(cli, "list streams", FakeApp.STREAM_NAME);
     testCommandOutputContains(cli, "list flows", FakeApp.FLOWS.get(0));
+  }
 
-    // test program-related commands
+  @Test
+  public void testProgram() throws Exception {
     String flowId = FakeApp.FLOWS.get(0);
     String qualifiedFlowId = FakeApp.NAME + "." + flowId;
     testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started Flow");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "RUNNING");
     testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped Flow");
-    ProgramClient programClient = new ProgramClient(cliConfig.getClientConfig());
     assertProgramStatus(programClient, FakeApp.NAME, ProgramType.FLOW, flowId, "STOPPED");
     testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
     testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "COMPLETED");
     testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
+  }
 
-    // test stream commands
-    String streamId = "sdf123";
+  @Test
+  public void testStream() throws Exception {
+    String streamId = PREFIX + "sdf123";
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
@@ -101,52 +146,100 @@ public class CLIMainTest extends StandaloneTestBase {
     testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
     testCommandOutputContains(cli, "set stream ttl " + streamId + " 123", "Successfully set TTL of stream");
     testCommandOutputContains(cli, "describe stream " + streamId, "123");
+  }
 
-    // test dataset commands
-    String datasetName = "sdf123lkj";
+  @Test
+  public void testDataset() throws Exception {
+    String datasetName = PREFIX + "sdf123lkj";
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
     DatasetTypeMeta datasetType = datasetTypeClient.list().get(0);
     testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
                               "Successfully created dataset");
-    testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated dataset");
-    testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted dataset");
+    try {
+      testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated dataset");
+    } finally {
+      testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted dataset");
+    }
+  }
 
-    // test procedure commands
+  @Test
+  public void testProcedure() throws Exception {
     String qualifiedProcedureId = String.format("%s.%s", FakeApp.NAME, FakeProcedure.NAME);
     testCommandOutputContains(cli, "start procedure " + qualifiedProcedureId, "Successfully started Procedure");
-    testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
-      + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
-    testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "RUNNING");
+    try {
+      testCommandOutputContains(cli, "call procedure " + qualifiedProcedureId
+        + " " + FakeProcedure.METHOD_NAME + " 'customer bob'", "realbob");
+    } finally {
+      testCommandOutputContains(cli, "stop procedure " + qualifiedProcedureId, "Successfully stopped Procedure");
+      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.PROCEDURE, FakeProcedure.NAME, "STOPPED");
+    }
+  }
 
-    //test service commands
-    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, EchoHandler.NAME);
+  @Test
+  public void testService() throws Exception {
+    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
-    testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "POST");
-    testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "/echo");
-    testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"", "testBody");
-    testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "RUNNING");
+    try {
+      testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "POST");
+      testCommandOutputContains(cli, "get endpoints service " + qualifiedServiceId, "/echo");
+      testCommandOutputContains(cli, "call service " + qualifiedServiceId
+        + " POST /echo body \"testBody\"", ":testBody");
+    } finally {
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+    }
+  }
 
-    // test spark commands
+  @Test
+  public void testRuntimeArgs() throws Exception {
+    String qualifiedServiceId = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
+
+    Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
+    String runtimeArgsKV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs);
+    testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
+                              "Successfully started Service");
+    try {
+      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "RUNNING");
+      testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
+                                "bacon:testBody");
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+
+      Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
+      String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
+      String runtimeArgs2KV = Joiner.on(" ").withKeyValueSeparator("=").join(runtimeArgs2);
+      testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
+                                "Successfully set runtime args");
+      testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started Service");
+      testCommandOutputContains(cli, "get service runtimeargs " + qualifiedServiceId, runtimeArgs2Json);
+      testCommandOutputContains(cli, "call service " + qualifiedServiceId + " POST /echo body \"testBody\"",
+                                "chickenz:testBody");
+    } finally {
+      testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped Service");
+      assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SERVICE, PrefixedEchoHandler.NAME, "STOPPED");
+    }
+  }
+
+  @Test
+  public void testSpark() throws Exception {
     String sparkId = FakeApp.SPARK.get(0);
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;
     testCommandOutputContains(cli, "list spark", sparkId);
     testCommandOutputContains(cli, "start spark " + qualifiedSparkId, "Successfully started Spark");
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING", 180);
-    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED", 180);
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "RUNNING");
+    assertProgramStatus(programClient, FakeApp.NAME, ProgramType.SPARK, FakeSpark.NAME, "STOPPED");
     testCommandOutputContains(cli, "get spark status " + qualifiedSparkId, "STOPPED");
     testCommandOutputContains(cli, "get spark runs " + qualifiedSparkId, "COMPLETED");
     testCommandOutputContains(cli, "get spark logs " + qualifiedSparkId, "HelloFakeSpark");
-
-    // cleanup
-    testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
-    testCommandOutputContains(cli, "delete dataset instance " + FakeApp.DS_NAME, "Successfully deleted dataset");
   }
 
-  private File createAppJarFile(Class<?> cls) {
+  private static File createAppJarFile(Class<?> cls) {
     return new File(AppFabricTestHelper.createAppJar(cls).toURI());
   }
 
-  private void testCommandOutputContains(CLI cli, String command, final String expectedOutput) throws Exception {
+  private static void testCommandOutputContains(CLI cli, String command, final String expectedOutput) throws Exception {
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override
@@ -158,7 +251,8 @@ public class CLIMainTest extends StandaloneTestBase {
     });
   }
 
-  private void testCommandOutputNotContains(CLI cli, String command, final String expectedOutput) throws Exception {
+  private static void testCommandOutputNotContains(CLI cli, String command,
+                                                   final String expectedOutput) throws Exception {
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override
@@ -170,7 +264,7 @@ public class CLIMainTest extends StandaloneTestBase {
     });
   }
 
-  private void testCommand(CLI cli, String command, Function<String, Void> outputValidator) throws Exception {
+  private static void testCommand(CLI cli, String command, Function<String, Void> outputValidator) throws Exception {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     PrintStream printStream = new PrintStream(outputStream);
     cli.execute(command, printStream);
@@ -184,7 +278,6 @@ public class CLIMainTest extends StandaloneTestBase {
 
     String status;
     int numTries = 0;
-    int maxTries = 10;
     do {
       status = programClient.getStatus(appId, programType, programId);
       numTries++;
@@ -201,7 +294,7 @@ public class CLIMainTest extends StandaloneTestBase {
                                      String programId, String programStatus)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
-    assertProgramStatus(programClient, appId, programType, programId, programStatus, 10);
+    assertProgramStatus(programClient, appId, programType, programId, programStatus, 180);
   }
 
 }

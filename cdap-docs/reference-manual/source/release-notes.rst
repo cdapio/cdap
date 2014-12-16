@@ -22,6 +22,110 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+Release 2.6.0
+=============
+
+API Changes
+-----------
+-  API for specifying Services and MapReduce Jobs has been changed to use a "configurer" 
+   style; this will require modification of user classes implementing either MapReduce
+   or Service as the interfaces have changed (`CDAP-335
+   <https://issues.cask.co/browse/CDAP-335>`__).
+
+
+New Features
+------------
+
+General
+.......
+- Health checks are now available for CDAP system services
+  (`CDAP-663 <https://issues.cask.co/browse/CDAP-663>`__).
+
+Applications
+............
+-  Jar deployment now uses a chunked request and writes to a local temp file
+   (`CDAP-91 <https://issues.cask.co/browse/CDAP-91>`__).
+
+MapReduce
+.........
+-  MapReduce jobs can now read binary stream data
+   (`CDAP-331 <https://issues.cask.co/browse/CDAP-331>`__).
+
+Datasets
+........
+- Added :ref:`FileSet <datasets-fileset>`, a new core dataset type for working with sets of files
+  (`CDAP-1 <https://issues.cask.co/browse/CDAP-1>`__).
+
+Spark
+.....
+- Spark programs now emit system and custom user metrics
+  (`CDAP-346 <https://issues.cask.co/browse/CDAP-346>`__).
+- Services can be called from Spark programs and its worker nodes
+  (`CDAP-348 <https://issues.cask.co/browse/CDAP-348>`__).
+- Spark programs can now read from Streams
+  (`CDAP-403 <https://issues.cask.co/browse/CDAP-403>`__).
+- Added Spark support to the CDAP CLI (Command-line Interface)
+  (`CDAP-425 <https://issues.cask.co/browse/CDAP-425>`__).
+- Improved speed of Spark unit tests
+  (`CDAP-600 <https://issues.cask.co/browse/CDAP-600>`__).
+- Spark Programs now display system metrics in the CDAP Console
+  (`CDAP-652 <https://issues.cask.co/browse/CDAP-652>`__).
+
+Procedures
+..........
+- Procedures have been deprecated in favor of Services
+  (`CDAP-413 <https://issues.cask.co/browse/CDAP-413>`__).
+
+Services
+........
+- Added an HTTP endpoint that returns the endpoints a particular Service exposes
+  (`CDAP-412 <https://issues.cask.co/browse/CDAP-412>`__).
+- Added an HTTP endpoint that lists all Services
+  (`CDAP-469 <https://issues.cask.co/browse/CDAP-469>`__).
+- Default metrics for Services have been added to the CDAP Console
+  (`CDAP-512 <https://issues.cask.co/browse/CDAP-512>`__).
+- The annotations ``@QueryParam`` and ``@DefaultValue`` are now supported in custom Service handlers
+  (`CDAP-664 <https://issues.cask.co/browse/CDAP-664>`__).
+
+Metrics
+.......
+- System and User Metrics now support gauge metrics
+  (`CDAP-484 <https://issues.cask.co/browse/CDAP-484>`__).
+- Metrics can be queried using a Program’s run-ID
+  (`CDAP-620 <https://issues.cask.co/browse/CDAP-620>`__).
+
+Documentation
+.............
+- A :ref:\`Quick Start Guide <installation-quick-start>` has been added to the 
+  :ref:\`CDAP Administration Manual <admin-index>` 
+  (`CDAP-695 <https://issues.cask.co/browse/CDAP-695>`__).
+
+CDAP Bug Fixes
+--------------
+
+- Fixed a problem with readless increments not being used when they were enabled in a Dataset
+  (`CDAP-383 <https://issues.cask.co/browse/CDAP-383>`__).
+- Fixed a problem with applications, whose Spark or Scala user classes were not extended
+  from either ``JavaSparkProgram`` or ``ScalaSparkProgram``, failing with a class loading error
+  (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__).
+
+.. _known-issues-260:
+
+Known Issues
+------------
+
+- When running secure Hadoop clusters, metrics and debug logs from MapReduce programs are
+  not available (`CDAP-64 <https://issues.cask.co/browse/CDAP-64>`__ and `CDAP-797
+  <https://issues.cask.co/browse/CDAP-797>`__).
+- When upgrading a cluster from an earlier version of CDAP, warning messages may appear in
+  the master log indicating that in-transit (emitted, but not yet processed) metrics
+  system messages could not be decoded (*Failed to decode message to MetricsRecord*). This
+  is because of a change in the format of emitted metrics, and can result in a small
+  amount of metrics data points being lost. (`CDAP-745
+  <https://issues.cask.co/browse/CDAP-745>`__).
+- Writing to datasets through Hive is not supported in CDH4.x
+  (`CDAP-988 <https://issues.cask.co/browse/CDAP-988>`__).
+
 Release 2.5.2
 =============
 
@@ -75,7 +179,7 @@ CDAP Bug Fixes
 --------------
 
 - Improved the documentation of the CDAP Authentication and Stream Clients, both Java and Python APIs.
-- Fixed problems with the CDAP Command-line Interface (CLI):
+- Fixed problems with the CDAP Command Line Interface (CLI):
 
   - Did not work in non-interactive mode;
   - Printed excessive debug log messages;
@@ -91,8 +195,8 @@ Other Changes
 -------------
 
 - The scripts ``send-query.sh``, ``access-token.sh`` and ``access-token.bat`` has been replaced by the 
-  :ref:`CDAP Command-line Interface, <cli>` ``cdap-cli.sh``.
-- The CDAP Command-line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
+  :ref:`CDAP Command Line Interface, <cli>` ``cdap-cli.sh``.
+- The CDAP Command Line Interface now uses and saves access tokens when connecting to a secure CDAP instance.
 - The CDAP Java Stream Client now allows empty String events to be sent.
 - The CDAP Python Authentication Client's ``configure()`` method now takes a dictionary rather than a filepath.
 
@@ -153,7 +257,7 @@ Streams
 
 Clients
 .................
-- Added a Command-line Interface
+- Added a Command Line Interface
 - Added a Java Client Interface
 
 

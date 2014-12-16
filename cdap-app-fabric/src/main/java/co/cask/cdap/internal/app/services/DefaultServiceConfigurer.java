@@ -25,6 +25,7 @@ import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import co.cask.http.HttpHandler;
@@ -154,7 +155,7 @@ public class DefaultServiceConfigurer implements ServiceConfigurer {
   }
 
   private <T extends HttpServiceHandler> HttpHandler createHttpHandler(T handler) {
-    HttpHandlerFactory factory = new HttpHandlerFactory("");
+    HttpHandlerFactory factory = new HttpHandlerFactory("", "0", new NoOpMetricsCollectionService(), "");
     @SuppressWarnings("unchecked")
     TypeToken<T> type = (TypeToken<T>) TypeToken.of(handler.getClass());
     return factory.createHttpHandler(type, new VerificationDelegateContext<T>(handler));

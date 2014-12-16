@@ -19,6 +19,7 @@ package co.cask.cdap.explore.service.hive;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.explore.service.HandleNotFoundException;
@@ -29,8 +30,8 @@ import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
-import co.cask.cdap.hive.datasets.DatasetOutputFormat;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
+import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryInfo;
@@ -62,7 +63,6 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -144,7 +144,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     throws HiveSQLException, ExploreException;
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf, File previewsDir) {
+                                   CConfiguration cConf, Configuration hConf, HiveConf hiveConf,
+                                   File previewsDir, StreamAdmin streamAdmin) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.hiveConf = hiveConf;
@@ -173,7 +174,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     this.cliService = new CLIService();
 
     this.txClient = txClient;
-    ContextManager.saveContext(datasetFramework);
+    ContextManager.saveContext(datasetFramework, streamAdmin);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 
@@ -491,8 +492,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                                                                      column.getComment()));
       }
       String storageHandler = tableInfo.getParameters().get("storage_handler");
-      boolean isDatasetTable = storageHandler != null &&
-        storageHandler.equals(DatasetStorageHandler.class.getName());
+      boolean isDatasetTable = DatasetStorageHandler.class.getName().equals(storageHandler) ||
+        StreamStorageHandler.class.getName().equals(storageHandler);
 
       return new TableInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
                            (long) tableInfo.getCreateTime() * 1000, (long) tableInfo.getLastAccessTime() * 1000,
@@ -866,13 +867,6 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     ConfigurationUtil.set(sessionConf, Constants.Explore.TX_QUERY_KEY, TxnCodec.INSTANCE, tx);
     ConfigurationUtil.set(sessionConf, Constants.Explore.CCONF_KEY, CConfCodec.INSTANCE, cConf);
     ConfigurationUtil.set(sessionConf, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE, hConf);
-
-    // Help Hive - hack to HIVE-5515
-    // The output format class will be overwritten in case Hive wants to write to
-    // a native Hive-managed output format. However, because of the bug related in the JIRA,
-    // writing to an non-native hive table with an external output format like the one in
-    // HBaseStorageHandler will not work - as Hive will try to use the DatasetOutputFormat
-    HiveFileFormatUtils.setRealOutputFormatClassName(DatasetOutputFormat.class.getName());
 
     return sessionConf;
   }

@@ -16,52 +16,54 @@
 
 package $package;
 
-import co.cask.cdap.api.annotation.Handle;
-import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.procedure.AbstractProcedure;
-import co.cask.cdap.api.procedure.ProcedureRequest;
-import co.cask.cdap.api.procedure.ProcedureResponder;
+import co.cask.cdap.api.service.Service;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.base.Charsets;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.UUID;
+import java.net.HttpURLConnection;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
- * Application that calculates page rank of URLs from an input stream.
+ * An Application that calculates page rank of URLs from an input stream.
  */
 public class SparkPageRankApp extends AbstractApplication {
 
-  public static final Charset UTF8 = Charset.forName("UTF-8");
+  public static final String RANKS_SERVICE_NAME = "RanksService";
+  public static final String GOOGLE_TYPE_PR_SERVICE_NAME = "GoogleTypePR";
 
   @Override
   public void configure() {
     setName("SparkPageRank");
-    setDescription("Spark page rank app");
-    addStream(new Stream("backlinkURLStream"));
-    addFlow(new BackLinkFlow());
-    addSpark(new SparkPageRankSpecification());
-    addProcedure(new RanksProcedure());
+    setDescription("Spark page rank application.");
 
+    // Ingest data into the Application via a Stream
+    addStream(new Stream("backlinkURLStream"));
+
+    // Run a Spark program on the acquired data
+    addSpark(new SparkPageRankSpecification());
+
+    // Retrieve the processed data using a Service
+    addService(RANKS_SERVICE_NAME, new RanksServiceHandler());
+
+    // Service which converts calculated pageranks to Google type page ranks
+    addService(GOOGLE_TYPE_PR_SERVICE_NAME, new GoogleTypePRHandler());
+
+    // Store input and processed data in ObjectStore Datasets
     try {
-      ObjectStores.createObjectStore(getConfigurer(), "backlinkURLs", String.class);
-      ObjectStores.createObjectStore(getConfigurer(), "ranks", Double.class);
+      ObjectStores.createObjectStore(getConfigurer(), "ranks", Integer.class);
     } catch (UnsupportedTypeException e) {
       // This exception is thrown by ObjectStore if its parameter type cannot be
       // (de)serialized (for example, if it is an interface and not a class, then there is
@@ -74,7 +76,8 @@ public class SparkPageRankApp extends AbstractApplication {
   /**
    * A Spark program that calculates page rank.
    */
-  public static class SparkPageRankSpecification extends AbstractSpark {
+  public static final class SparkPageRankSpecification extends AbstractSpark {
+
     @Override
     public SparkSpecification configure() {
       return SparkSpecification.Builder.with()
@@ -86,96 +89,42 @@ public class SparkPageRankApp extends AbstractApplication {
   }
 
   /**
-   * This is a simple Flow that consumes URL pair events from a Stream and stores them in a dataset.
+   * A {@link Service} that responds with rank of the URL.
    */
-  public static class BackLinkFlow implements Flow {
+  public static final class RanksServiceHandler extends AbstractHttpServiceHandler {
 
-    @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("BackLinkFlow")
-        .setDescription("Reads URL pair and stores in dataset")
-        .withFlowlets()
-        .add("reader", new BacklinkURLsReader())
-        .connect()
-        .fromStream("backlinkURLStream").to("reader")
-        .build();
-    }
-  }
-
-  /**
-   * This Flowlet reads events from a Stream and saves them to a datastore.
-   */
-  public static class BacklinkURLsReader extends AbstractFlowlet {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BacklinkURLsReader.class);
-
-    // Annotation indicates that backlinkURLs dataset is used in the Flowlet.
-    @UseDataSet("backlinkURLs")
-    private ObjectStore<String> backlinkStore;
-
-    /**
-     * Input file format should be pairs of an URL and a backlink URL:
-     * URL backlink-URL
-     * URL backlink-URL
-     * URL backlink-URL
-     * ...
-     * where URL and its backlink URL are separated by a space.
-     */
-    @ProcessInput
-    public void process(StreamEvent event) {
-      String body = Bytes.toString(event.getBody());
-      LOG.trace("Backlink info: {}", body);
-      // Store the URL pairs in one row. One pair is kept in the value of an table entry.
-      backlinkStore.write(getIdAsByte(UUID.randomUUID()), body);
-    }
-
-    private static byte[] getIdAsByte(UUID uuid) {
-      ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
-      bb.putLong(uuid.getMostSignificantBits());
-      bb.putLong(uuid.getLeastSignificantBits());
-      return bb.array();
-    }
-  }
-
-  /**
-   * A Procedure that returns rank of the URL.
-   */
-  public static class RanksProcedure extends AbstractProcedure {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RanksProcedure.class);
-
-    // Annotation indicates that ranks dataset is used in the Procedure.
     @UseDataSet("ranks")
-    private ObjectStore<Double> ranks;
+    private ObjectStore<Integer> ranks;
 
-    @Handle("rank")
-    public void getRank(ProcedureRequest request, ProcedureResponder responder)
-      throws IOException, InterruptedException {
-
-      // Get the url from the query parameters.
-      String urlParam = "";
-      for (String key : request.getArguments().keySet()) {
-        if (key.equalsIgnoreCase("url")) {
-          urlParam = request.getArgument(key);
-        }
-      }
-      if (urlParam.isEmpty()) {
-        responder.error(ProcedureResponse.Code.CLIENT_ERROR, "URL must be given as argument");
-      }
-      byte[] url = urlParam.getBytes(UTF8);
-
-      // Get the rank from the ranks dataset.
-      Double rank = ranks.read(url);
-      if (rank == null) {
-        responder.error(ProcedureResponse.Code.NOT_FOUND, "No rank found for " + urlParam);
+    @Path("rank")
+    @GET
+    public void getRank(HttpServiceRequest request, HttpServiceResponder responder, @QueryParam("url") String url) {
+      if (url == null) {
+        responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
+                             String.format("The url parameter must be specified"), Charsets.UTF_8);
         return;
       }
 
-      LOG.trace("Key: {}, Data: {}", Arrays.toString(url), rank);
+      // Get the rank from the ranks dataset
+      Integer rank = ranks.read(url.getBytes(Charsets.UTF_8));
+      if (rank == null) {
+        responder.sendString(HttpURLConnection.HTTP_NO_CONTENT,
+                             String.format("No rank found of %s", url), Charsets.UTF_8);
+      } else {
+        responder.sendString(rank.toString());
+      }
+    }
+  }
 
-      // Send response in JSON format.
-      responder.sendJson(String.valueOf(rank));
+  /**
+   * A {@link Service} which converts the page rank to a Google Type page rank (from 0 to 10).
+   */
+  public static final class GoogleTypePRHandler extends AbstractHttpServiceHandler {
+
+    @Path("transform/{pr}")
+    @GET
+    public void transform(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("pr") String pr) {
+      responder.sendString(String.valueOf((int) (Math.round(Double.parseDouble(pr) * 10))));
     }
   }
 }

@@ -18,6 +18,9 @@ package co.cask.cdap.proto;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Defines types of programs supported by the system.
  */
@@ -46,6 +49,15 @@ public enum ProgramType {
   @SerializedName("Spark")
   SPARK(7, "spark", "Spark", true);
 
+  private static final Map<String, ProgramType> CATEGORY_MAP;
+
+  static {
+    CATEGORY_MAP = new HashMap<String, ProgramType>();
+    for (ProgramType type : ProgramType.values()) {
+      CATEGORY_MAP.put(type.getCategoryName(), type);
+    }
+  }
+
   private final int programType;
   private final String prettyName;
   private final boolean listable;
@@ -72,6 +84,14 @@ public enum ProgramType {
 
   public static ProgramType valueOfPrettyName(String pretty) {
     return valueOf(pretty.toUpperCase());
+  }
+
+  public static ProgramType valueOfCategoryName(String categoryName) {
+    ProgramType type = CATEGORY_MAP.get(categoryName);
+    if (type == null) {
+      throw new IllegalArgumentException("Unknown category name " + categoryName);
+    }
+    return type;
   }
 
   @Override

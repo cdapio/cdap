@@ -9,7 +9,7 @@
 Word Count
 ==========
 
-A Cask Data Application Platform (CDAP) Example demonstrating Flows, Datasets and Procedures.
+A Cask Data Application Platform (CDAP) Example demonstrating Flows, Datasets and Services.
 
 Overview
 ========
@@ -28,7 +28,7 @@ store the results and statistics in datasets.
     forwards this word to the ``unique`` flowlet.
   - The ``unique`` flowlet receives a word and updates the ``uniqueCount`` table, if it sees this word for the first time.
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The Word Count Application
 --------------------------
@@ -38,7 +38,7 @@ of the Application are tied together by the class ``WordCount``:
 
 .. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
    :language: java
-   :lines: 26-
+   :lines: 27-
 
 
 Data Storage
@@ -49,14 +49,16 @@ Data Storage
 - ``uniqueCount`` is a custom dataset that stores the total count of unique words received so far.
 - ``wordAssocs`` is a custom dataset that stores the count for word associations.
 
-RetrieveCounts Procedure
+RetrieveCounts Service
 --------------------------
 
-This Procedure has three methods:
+The Service serves read requests for calculated statistics, word counts and associations.
+It exposes these endpoints:
 
-- ``getStats()``: Returns global statistics such as "total words received", "total length of words received" and "average length of words".
-- ``getCount()``: Given a word, this returns the total count of occurrences and the top-10 associated words for this word.
-- ``getAssoc()``: Given a pair, "word1" and "word2", this returns the association count for the pair.
+- ``/stats`` returns the total number of words, the number of unique words, and the average word length;
+- ``/count/{word}`` returns the word count of a specified word and its word associations,
+  up to the specified limit or a pre-set limit of ten if not specified;
+- ``/assoc/{word1}/{word2}`` returns the top associated words (those with the highest counts).
 
 
 Building and Starting
@@ -64,9 +66,9 @@ Building and Starting
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application as described below in 
+- Start CDAP, deploy and start the application and its components as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the flow and procedure as described.
+  Make sure you start the Flow and Service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -77,6 +79,47 @@ Running CDAP Applications
 
 Running the Example
 ===================
+
+Running the Example
+===================
+
+Starting the Flow
+------------------------------
+
+Once the application is deployed:
+
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click ``WordCounter`` in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow WordCount.WordCounter``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow WordCount.WordCounter``    
+
+Starting the Service
+------------------------------
+
+Once the application is deployed:
+
+- Click on ``WordCount`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service WordCount.RetrieveCounts``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service WordCount.RetrieveCounts``    
 
 Injecting Sentences
 ------------------------------
@@ -93,47 +136,67 @@ Querying the Results
 
 .. highlight:: console
 
-If the Procedure has not already been started, you start it either through the
+If the Service has not already been started, you start it either through the
 CDAP Console or via an HTTP request using the ``curl`` command::
 
-	curl -v -X POST 'http://localhost:10000/v2/apps/WordCount/procedures/RetrieveCounts/start'
+  curl -v -X POST 'http://localhost:10000/v2/apps/WordCount/services/RetrieveCounts/start'
 
-There are two ways to query the  ``RetrieveCounts`` procedure:
+To query the ``RetrieveCounts`` service,
+send a query via an HTTP request using the ``curl`` command. For example::
 
-1. Send a query via an HTTP request using the ``curl`` command. For example::
+  curl -w '\n' -v 'http://localhost:10000/v2/apps/WordCount/services/RetrieveCounts/methods/count/CDAP'
 
-	curl -w '\n' -v -d '{"word": "CDAP"}' \
-	  'http://localhost:10000/v2/apps/WordCount/procedures/RetrieveCounts/methods/getCount'
+**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
+SDK in ``libexec\bin\curl.exe``
 
-  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the project SDK.
-
-#. Click on the ``RetrieveCounts`` in the Application page of the Console to get to the
-   Procedure dialogue. Type in the method name ``getCount``, and enter a word in the parameters
-   field, such as::
-
-	  { "word" : "CDAP" }
-
-   Then click the *Execute* button. 
-   
 The word count and top-10 associations words for that word will be displayed in JSON
 format (example reformatted to fit)::
 
   {
     "assocs": {
-        "Hello": 1,
-        "BigData":3,
-        "Cask":5,
+      "Hello": 1,
+      "BigData":3,
+      "Cask":5,
     },
     "count": 6,
     "word": "CDAP"
   }
 
-From the Console dialog, you can try executing other methods available in this procedure:
-
-- ``getStats`` - This returns statistics such as "average length", "total words received" and so on.
-- ``getAssoc`` - You need to provide two words as parameters to retrieve their association
-  count; example: ``{"word1":"Hello", "word2":"CDAP"}``.
+You can also request other endpoints available in this Service, which described above.
 
 Stopping the Application
 -------------------------------
-Once done, you can stop the application as described above in `Stopping an Application. <#stopping-an-application>`__
+Once done, you can stop the application as described above in `Stopping an Application. 
+<#stopping-an-application>`__ Here is an example-specific description of the steps:
+
+**Stopping the Flow**
+
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click ``WordCounter`` in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow WordCount.WordCounter``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow WordCount.WordCounter``    
+
+**Stopping the Service**
+
+- Click on ``WordCount`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service WordCount.RetrieveCounts``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service WordCount.RetrieveCounts``    

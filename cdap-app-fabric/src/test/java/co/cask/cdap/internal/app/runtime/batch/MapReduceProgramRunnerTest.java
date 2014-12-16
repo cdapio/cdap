@@ -34,7 +34,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -88,7 +88,7 @@ public class MapReduceProgramRunnerTest {
 
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
-  private static DataSetInstantiator dataSetInstantiator;
+  private static DatasetInstantiator datasetInstantiator;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -118,8 +118,8 @@ public class MapReduceProgramRunnerTest {
                                                  new DefaultDatasetNamespace(conf, Namespace.USER));
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    dataSetInstantiator =
-      new DataSetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
+    datasetInstantiator =
+      new DatasetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
                               MapReduceProgramRunnerTest.class.getClassLoader(), null, null);
 
     txService.startAndWait();
@@ -163,7 +163,7 @@ public class MapReduceProgramRunnerTest {
 
     // write a handful of numbers to a file; compute their sum, too.
     final long[] values = { 15L, 17L, 7L, 3L };
-    final FileSet input = dataSetInstantiator.getDataSet(inputDatasetName, inputArgs);
+    final FileSet input = datasetInstantiator.getDataset(inputDatasetName, inputArgs);
     long sum = 0L, count = 1;
     for (Location inputLocation : input.getInputLocations()) {
       final PrintWriter writer = new PrintWriter(inputLocation.getOutputStream());
@@ -184,7 +184,7 @@ public class MapReduceProgramRunnerTest {
     // output location in file system is a directory that contains a part file, a _SUCCESS file, and checksums
     // (.<filename>.crc) for these files. Find the actual part file. Its name begins with "part". In this case,
     // there should be only one part file (with this small data, we have a single reducer).
-    final FileSet results = dataSetInstantiator.getDataSet(outputDatasetName, outputArgs);
+    final FileSet results = datasetInstantiator.getDataset(outputDatasetName, outputArgs);
     Location resultLocation = results.getOutputLocation();
     if (resultLocation.isDirectory()) {
       for (Location child : resultLocation.list()) {
@@ -201,7 +201,7 @@ public class MapReduceProgramRunnerTest {
       CharStreams.newReaderSupplier(
         Locations.newInputSupplier(resultLocation), Charsets.UTF_8));
     Assert.assertNotNull(line);
-    String[] fields = line.split("\t");
+    String[] fields = line.split(":");
     Assert.assertEquals(2, fields.length);
     Assert.assertEquals(AppWithMapReduceUsingFileSet.FileMapper.ONLY_KEY, fields[0]);
     Assert.assertEquals(sum, Long.parseLong(fields[1]));
@@ -213,12 +213,12 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
 
-    final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
+    final ObjectStore<String> input = datasetInstantiator.getDataset("keys");
 
     final String testString = "persisted data";
 
     //Populate some input
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -229,9 +229,9 @@ public class MapReduceProgramRunnerTest {
 
     runProgram(app, AppWithMapReduceUsingObjectStore.ComputeCounts.class, false);
 
-    final KeyValueTable output = dataSetInstantiator.getDataSet("count");
+    final KeyValueTable output = datasetInstantiator.getDataset("count");
     //read output and verify result
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -255,10 +255,10 @@ public class MapReduceProgramRunnerTest {
     final String inputPath = createInput();
     final java.io.File outputDir = new java.io.File(tmpFolder.newFolder(), "output");
 
-    final KeyValueTable jobConfigTable = dataSetInstantiator.getDataSet("jobConfig");
+    final KeyValueTable jobConfigTable = datasetInstantiator.getDataset("jobConfig");
 
     // write config into dataset
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -296,14 +296,14 @@ public class MapReduceProgramRunnerTest {
                                                                                          TEMP_FOLDER_SUPPLIER);
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
-    final TimeseriesTable table = (TimeseriesTable) dataSetInstantiator.getDataSet("timeSeries");
-    final KeyValueTable beforeSubmitTable = dataSetInstantiator.getDataSet("beforeSubmit");
-    final KeyValueTable onFinishTable = dataSetInstantiator.getDataSet("onFinish");
-    final Table counters = dataSetInstantiator.getDataSet("counters");
-    final Table countersFromContext = dataSetInstantiator.getDataSet("countersFromContext");
+    final TimeseriesTable table = (TimeseriesTable) datasetInstantiator.getDataset("timeSeries");
+    final KeyValueTable beforeSubmitTable = datasetInstantiator.getDataset("beforeSubmit");
+    final KeyValueTable onFinishTable = datasetInstantiator.getDataset("onFinish");
+    final Table counters = datasetInstantiator.getDataset("counters");
+    final Table countersFromContext = datasetInstantiator.getDataset("countersFromContext");
 
     // 1) fill test data
-    fillTestInputData(txExecutorFactory, dataSetInstantiator, table, false);
+    fillTestInputData(txExecutorFactory, datasetInstantiator, table, false);
 
     // 2) run job
     final long start = System.currentTimeMillis();
@@ -311,7 +311,7 @@ public class MapReduceProgramRunnerTest {
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -368,14 +368,14 @@ public class MapReduceProgramRunnerTest {
                                                                                          TEMP_FOLDER_SUPPLIER);
 
     // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
-    final TimeseriesTable table = dataSetInstantiator.getDataSet("timeSeries");
-    final KeyValueTable beforeSubmitTable = dataSetInstantiator.getDataSet("beforeSubmit");
-    final KeyValueTable onFinishTable = dataSetInstantiator.getDataSet("onFinish");
-    final Table counters = dataSetInstantiator.getDataSet("counters");
-    final Table countersFromContext = dataSetInstantiator.getDataSet("countersFromContext");
+    final TimeseriesTable table = datasetInstantiator.getDataset("timeSeries");
+    final KeyValueTable beforeSubmitTable = datasetInstantiator.getDataset("beforeSubmit");
+    final KeyValueTable onFinishTable = datasetInstantiator.getDataset("onFinish");
+    final Table counters = datasetInstantiator.getDataset("counters");
+    final Table countersFromContext = datasetInstantiator.getDataset("countersFromContext");
 
     // 1) fill test data
-    fillTestInputData(txExecutorFactory, dataSetInstantiator, table, true);
+    fillTestInputData(txExecutorFactory, datasetInstantiator, table, true);
 
     // 2) run job
     final long start = System.currentTimeMillis();
@@ -383,7 +383,7 @@ public class MapReduceProgramRunnerTest {
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -404,10 +404,10 @@ public class MapReduceProgramRunnerTest {
   }
 
   private void fillTestInputData(TransactionExecutorFactory txExecutorFactory,
-                                 DataSetInstantiator dataSetInstantiator,
+                                 DatasetInstantiator datasetInstantiator,
                                  final TimeseriesTable table,
                                  final boolean withBadData) throws TransactionFailureException, InterruptedException {
-    TransactionExecutor executor = txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware());
+    TransactionExecutor executor = txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware());
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() {

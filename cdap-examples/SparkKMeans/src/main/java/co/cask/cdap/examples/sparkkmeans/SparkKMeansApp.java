@@ -33,7 +33,6 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 import org.slf4j.Logger;
@@ -87,12 +86,10 @@ public class SparkKMeansApp extends AbstractApplication {
   public static final class SparkKMeansSpecification extends AbstractSpark {
 
     @Override
-    public SparkSpecification configure() {
-      return SparkSpecification.Builder.with()
-        .setName("SparkKMeansProgram")
-        .setDescription("Spark KMeans Program")
-        .setMainClassName(SparkKMeansProgram.class.getName())
-        .build();
+    public void configure() {
+      setName("SparkKMeansProgram");
+      setDescription("Spark KMeans Program");
+      setMainClass(SparkKMeansProgram.class);
     }
   }
 

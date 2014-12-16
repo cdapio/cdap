@@ -68,7 +68,7 @@ public class HelloWorldTest extends TestBase {
     // Wait service startup
     serviceStatusCheck(serviceManager, true);
 
-    URL url = new URL(serviceManager.getServiceURL(), "greet");
+    URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "greet");
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
     String response;

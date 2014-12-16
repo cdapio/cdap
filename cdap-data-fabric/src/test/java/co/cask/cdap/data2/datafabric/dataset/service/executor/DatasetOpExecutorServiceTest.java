@@ -218,7 +218,7 @@ public class DatasetOpExecutorServiceTest {
   private URL resolve(String path) throws URISyntaxException, MalformedURLException {
     InetSocketAddress socketAddress = endpointStrategy.pick().getSocketAddress();
     return new URL(String.format("http://%s:%d%s%s", socketAddress.getHostName(),
-                                 socketAddress.getPort(), Constants.Gateway.GATEWAY_VERSION, path));
+                                 socketAddress.getPort(), Constants.Gateway.API_VERSION_2, path));
   }
 
   private DatasetAdminOpResponse getResponse(byte[] body) {

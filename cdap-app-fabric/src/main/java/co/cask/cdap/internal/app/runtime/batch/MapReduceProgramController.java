@@ -32,6 +32,12 @@ public final class MapReduceProgramController extends ProgramControllerServiceAd
     this.context = context;
   }
 
+  @Override
+  protected boolean propagateServiceError() {
+    // Don't propagate MR failure as failure. Quick fix for CDAP-749.
+    return false;
+  }
+
   /**
    * Returns the {@link MapReduceContext} for MapReduce run represented by this controller.
    */

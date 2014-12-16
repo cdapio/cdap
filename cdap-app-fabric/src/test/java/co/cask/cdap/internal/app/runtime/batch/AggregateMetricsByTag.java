@@ -76,7 +76,7 @@ public class AggregateMetricsByTag {
 
     @Override
     public void initialize(MapReduceContext context) throws Exception {
-      countersFromContext = context.getDataSet("countersFromContext");
+      countersFromContext = context.getDataset("countersFromContext");
     }
 
     @Override
@@ -120,7 +120,7 @@ public class AggregateMetricsByTag {
 
     @Override
     public void initialize(MapReduceContext context) throws Exception {
-      countersFromContext = context.getDataSet("countersFromContext");
+      countersFromContext = context.getDataset("countersFromContext");
     }
 
     @Override

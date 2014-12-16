@@ -1,4 +1,4 @@
-# Cask Data Application Platform  Examples
+# Cask Data Application Platform Examples
 
 This /examples directory contains example apps for the Cask Data Application Platform (CDAP). 
 They are not compiled as part of the master build, and they should only depend 
@@ -55,8 +55,7 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
     Process screen in the CDAP Console) or programmatically execute the 
     PurchaseHistoryBuilder MapReduce job to store customers' purchase history in the
     history Dataset.
-  - Execute the PurchaseQuery procedure to query the history Dataset to discover the 
-    purchase history of each user.
+  - Request the ``PurchaseHistoryService`` retrieve from the *history* Dataset the purchase history of a user.
   - You can use SQL to formulate ad-hoc queries over the history Dataset. This is done by
     a series of ``curl`` calls, as described in the RESTful API section of the Developer Guide.
 

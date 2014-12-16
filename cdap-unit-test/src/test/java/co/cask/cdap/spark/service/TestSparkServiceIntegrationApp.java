@@ -26,7 +26,6 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.api.spark.SparkSpecification;
 import com.google.common.io.Closeables;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.commons.io.Charsets;
@@ -65,12 +64,10 @@ public class TestSparkServiceIntegrationApp extends AbstractApplication {
 
   public static class SparkServiceProgramSpec extends AbstractSpark {
     @Override
-    public SparkSpecification configure() {
-      return SparkSpecification.Builder.with()
-        .setName("SparkServiceProgram")
-        .setDescription("Test Spark with Service")
-        .setMainClassName(SparkServiceProgram.class.getName())
-        .build();
+    public void configure() {
+      setName("SparkServiceProgram");
+      setDescription("Test Spark with Service");
+      setMainClass(SparkServiceProgram.class);
     }
   }
 

@@ -62,10 +62,13 @@ Reserved and Unsafe Characters
 ==============================
 
 In path parameters, reserved and unsafe characters must be replaced with their equivalent
-percent-encoded format, using the "%hh" syntax, as described in 
+percent-encoded format, using the "``%hh``" syntax, as described in 
 `RFC3986: Uniform Resource Identifier (URI): Generic Syntax <http://tools.ietf.org/html/rfc3986#section-2.1>`__.
 
 In general, any character that is not a letter, a digit, or one of ``$-_.+!*'()`` should be encoded.
+
+See the section on :ref:`Path Parameters<services-path-parameters>` for suggested approaches to
+encoding parameters.
 
 
 Status Codes

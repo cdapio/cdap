@@ -19,7 +19,6 @@ package co.cask.cdap.internal.asm;
 import com.google.common.collect.Maps;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ClassLoader} for loading known bytecode.
@@ -43,15 +42,11 @@ public class ByteCodeClassLoader extends ClassLoader {
    * loaded for the first time, the byte code inside the definition will be used to load the class.
    *
    * @param classDef The class definition
-   * @param typeClass An optional class that the given class definition is generated from. This is to make sure
-   *                  the type class is always loaded by the original ClassLoader when resolving the generated class
-   *                  as given by the class definition.
    */
-  public final synchronized ByteCodeClassLoader addClass(ClassDefinition classDef,
-                                                         @Nullable Class<?> typeClass) {
+  public final synchronized ByteCodeClassLoader addClass(ClassDefinition classDef) {
     bytecodes.put(classDef.getClassName(), classDef.getBytecode());
-    if (typeClass != null) {
-      typeClasses.put(typeClass.getName(), typeClass);
+    for (Class<?> cls : classDef.getPreservedClasses()) {
+      typeClasses.put(cls.getName(), cls);
     }
     return this;
   }

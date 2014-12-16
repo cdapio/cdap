@@ -29,7 +29,7 @@ import java.net.URI;
 public class ServePathGenerator {
   public static final String SRC_PATH = "/src/";
   public static final String DEFAULT_DIR_NAME = "default";
-  private static final String GATEWAY_PATH = Constants.Gateway.GATEWAY_VERSION.substring(1) + "/";
+  private static final String GATEWAY_PATH = Constants.Gateway.API_VERSION_2.substring(1) + "/";
 
   private static final String DEFAULT_PORT_STR = ":80";
 

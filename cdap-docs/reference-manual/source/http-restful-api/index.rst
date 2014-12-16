@@ -30,7 +30,7 @@ CDAP HTTP RESTful API
 The Cask Data Application Platform (CDAP) has an HTTP interface for a multitude of purposes:
 
 - :doc:`Introduction: <introduction>` conventions, status codes, and working with CDAP Security
-- :doc:`Lifecycle: <lifecycle>` deploying and managing Applications and managing the life cycle of Flows,
+- :doc:`Lifecycle: <lifecycle>` deploying and managing Applications and managing the lifecycle of Flows,
   Procedures, MapReduce Jobs, Workflows, and Custom Services
 - :doc:`Stream: <stream>` sending data events to a Stream or to inspect the contents of a Stream
 - :doc:`Dataset: <dataset>` interacting with Datasets, Dataset Modules, and Dataset Types

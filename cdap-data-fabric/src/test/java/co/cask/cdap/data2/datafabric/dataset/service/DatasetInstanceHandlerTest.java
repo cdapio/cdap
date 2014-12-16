@@ -206,7 +206,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     });
 
     // delete all tables, check that they deleted, create again and verify that they are empty
-    Assert.assertEquals(HttpStatus.SC_OK, deleteInstances());
+    deleteInstances();
     Assert.assertEquals(0, getInstances().getResponseObject().size());
     Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable1", "table", DatasetProperties.EMPTY));
     Assert.assertEquals(HttpStatus.SC_OK, createInstance("myTable2", "table", DatasetProperties.EMPTY));
@@ -222,7 +222,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     });
 
     // cleanup
-    Assert.assertEquals(HttpStatus.SC_OK, deleteInstances());
+    deleteInstances();
     Assert.assertEquals(HttpStatus.SC_OK, deleteModules());
   }
 
@@ -261,6 +261,14 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private int deleteInstance(String instanceName) throws IOException {
     HttpRequest request = HttpRequest.delete(getUrl("/data/datasets/" + instanceName)).build();
     return HttpRequests.execute(request).getResponseCode();
+  }
+
+  private void deleteInstances() throws IOException {
+    // NOTE: intentionally, there's no endpoint to delete all datasets instances currently to prevent bad things
+    //       happen by accident
+    for (DatasetSpecification spec : getInstances().getResponseObject()) {
+      deleteInstance(spec.getName());
+    }
   }
 
   private static DatasetSpecification createSpec(String instanceName, String typeName,

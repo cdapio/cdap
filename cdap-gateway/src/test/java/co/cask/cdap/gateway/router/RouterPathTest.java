@@ -286,4 +286,12 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.METRICS, result);
   }
 
+  @Test
+  public void testRouterV3PathLookup() {
+    final String namespacePath = "/v3////namespace/////";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), namespacePath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, namespacePath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+  }
+
 }

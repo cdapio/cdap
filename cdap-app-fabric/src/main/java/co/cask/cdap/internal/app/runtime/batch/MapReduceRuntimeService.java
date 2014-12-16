@@ -409,7 +409,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     LOG.debug("Using Dataset {} as input for MapReduce Job", inputDatasetName);
 
     // We checked on validation phase that it implements BatchReadable or InputFormatProvider
-    Dataset dataset = context.getDataSet(inputDatasetName);
+    Dataset dataset = context.getDataset(inputDatasetName);
     if (dataset instanceof BatchReadable) {
       BatchReadable inputDataset = (BatchReadable) dataset;
       List<Split> inputSplits = context.getInputDataSelection();
@@ -454,7 +454,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     LOG.debug("Using Dataset {} as output for MapReduce Job", outputDatasetName);
 
     // We checked on validation phase that it implements BatchWritable or OutputFormatProvider
-    Dataset dataset = context.getDataSet(outputDatasetName);
+    Dataset dataset = context.getDataset(outputDatasetName);
     if (dataset instanceof BatchWritable) {
       DataSetOutputFormat.setOutput(job, outputDatasetName);
       return;
@@ -574,10 +574,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // Excludes libraries that are for sure not needed.
     // Hadoop - Available from the cluster
     // Spark - MR never uses Spark
-    // Fastutil - 16MB library that only used in tehpra server
     ApplicationBundler appBundler = new ApplicationBundler(ImmutableList.of("org.apache.hadoop",
-                                                                            "org.apache.spark",
-                                                                            "it.unimi.dsi.fastutil"),
+                                                                            "org.apache.spark"),
                                                            ImmutableList.of("org.apache.hadoop.hbase",
                                                                             "org.apache.hadoop.hive"));
     Id.Program programId = context.getProgram().getId();
@@ -603,7 +601,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
       // If it is StreamInputFormat, also add the StreamEventCodec class as well.
       if (StreamInputFormat.class.isAssignableFrom(inputFormatClass)) {
-        Class<? extends StreamEventDecoder> decoderType = StreamInputFormat.getDecoderClass(jobConf.getConfiguration());
+        Class<? extends StreamEventDecoder> decoderType =
+          StreamInputFormat.getDecoderClass(jobConf.getConfiguration());
         if (decoderType != null) {
           classes.add(decoderType);
         }

@@ -107,7 +107,9 @@ public interface ApplicationConfigurer {
    * Adds a {@link Procedure} to the Application with a single instance.
    *
    * @param procedure The {@link Procedure} to include in the Application
+   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   void addProcedure(Procedure procedure);
 
   /**
@@ -115,7 +117,9 @@ public interface ApplicationConfigurer {
    *
    * @param procedure The {@link Procedure} to include in the Application
    * @param instances Number of instances to be included
+   * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
+  @Deprecated
   void addProcedure(Procedure procedure, int instances);
 
   /**

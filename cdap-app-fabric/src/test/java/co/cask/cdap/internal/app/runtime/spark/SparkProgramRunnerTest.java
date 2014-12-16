@@ -26,7 +26,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.Namespace;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
@@ -76,7 +76,7 @@ public class SparkProgramRunnerTest {
 
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
-  private static DataSetInstantiator dataSetInstantiator;
+  private static DatasetInstantiator datasetInstantiator;
 
   final String testString1 = "persisted data";
   final String testString2 = "distributed systems";
@@ -110,8 +110,8 @@ public class SparkProgramRunnerTest {
                                                  new DefaultDatasetNamespace(conf, Namespace.USER));
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    dataSetInstantiator =
-      new DataSetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
+    datasetInstantiator =
+      new DatasetInstantiator(datasetFramework, injector.getInstance(CConfiguration.class),
                               SparkProgramRunnerTest.class.getClassLoader(), null, null);
 
     txService.startAndWait();
@@ -151,10 +151,10 @@ public class SparkProgramRunnerTest {
   }
 
   private void prepareInputData() throws TransactionFailureException, InterruptedException {
-    final ObjectStore<String> input = dataSetInstantiator.getDataSet("keys");
+    final ObjectStore<String> input = datasetInstantiator.getDataset("keys");
 
     //Populate some input
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -165,9 +165,9 @@ public class SparkProgramRunnerTest {
   }
 
   private void checkOutputData() throws TransactionFailureException, InterruptedException {
-    final KeyValueTable output = dataSetInstantiator.getDataSet("count");
+    final KeyValueTable output = datasetInstantiator.getDataset("count");
     //read output and verify result
-    txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {

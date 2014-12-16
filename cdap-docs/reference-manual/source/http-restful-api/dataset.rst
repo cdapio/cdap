@@ -191,7 +191,7 @@ Deleting all Datasets
 If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is set to ``true``, you can delete all Datasets
 by issuing an HTTP DELETE request to the URL::
 
-  DELETE <base-url>/data/unrecoverable/datasets
+  DELETE <base-url>/unrecoverable/data/datasets
 
 HTTP Responses
 ..............
@@ -206,7 +206,9 @@ HTTP Responses
 
 
 If the property ``enable.unrecoverable.reset`` in ``cdap-site.xml`` is not set to ``true``,
-this operation will return a Status Code ``403 Forbidden``.
+this operation will return a Status Code ``403 Forbidden``. Note that this operation can only be performed if
+all programs are stopped. If there's at least one program that is running
+this operation will return a Status Code ``400 Bad Request``
 
 Truncating a Dataset
 --------------------

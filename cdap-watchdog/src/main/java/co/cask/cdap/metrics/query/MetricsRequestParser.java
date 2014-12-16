@@ -55,7 +55,8 @@ final class MetricsRequestParser {
     DATASETS,
     STREAMS,
     CLUSTER,
-    SERVICES;
+    SERVICES,
+    SPARK
   }
 
   public enum RequestType {
@@ -63,7 +64,8 @@ final class MetricsRequestParser {
     MAPREDUCE("b"),
     PROCEDURES("p"),
     HANDLERS("h"),
-    SERVICES("s");
+    SERVICES("u"),
+    SPARK("s");
 
     private final String code;
 
@@ -109,7 +111,7 @@ final class MetricsRequestParser {
    */
   static String stripVersionAndMetricsFromPath(String path) {
     // +8 for "/metrics"
-    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 8;
+    int startPos = Constants.Gateway.API_VERSION_2.length() + 8;
     return path.substring(startPos, path.length());
   }
 
@@ -177,7 +179,7 @@ final class MetricsRequestParser {
       throw new MetricsPathException("invalid type: " + pathTypeStr);
     }
 
-    switch(pathType) {
+    switch (pathType) {
       case APPS:
         parseSubContext(pathParts, contextBuilder);
         break;
@@ -255,7 +257,7 @@ final class MetricsRequestParser {
       return;
     }
 
-    switch(requestType) {
+    switch (requestType) {
       case MAPREDUCE:
         String mrTypeStr = pathParts.next();
         if (mrTypeStr.equals(RUN_ID)) {
@@ -291,6 +293,13 @@ final class MetricsRequestParser {
           }
         }
         break;
+      case SPARK:
+        if (pathParts.hasNext()) {
+          if (pathParts.next().equals(RUN_ID)) {
+            parseRunId(pathParts, builder);
+          }
+        }
+        break;
     }
     if (pathParts.hasNext()) {
       throw new MetricsPathException("path contains too many elements");
@@ -298,7 +307,7 @@ final class MetricsRequestParser {
   }
 
   private static void buildComponentTypeContext(Iterator<String> pathParts, MetricsRequestContext.Builder builder,
-                                              String componentType, String requestType)
+                                                String componentType, String requestType)
     throws MetricsPathException {
     String nextPath = pathParts.next();
 

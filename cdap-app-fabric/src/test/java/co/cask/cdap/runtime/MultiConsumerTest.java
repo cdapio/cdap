@@ -21,7 +21,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
@@ -80,11 +80,11 @@ public class MultiConsumerTest {
 
     DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
-    DataSetInstantiator dataSetInstantiator =
-      new DataSetInstantiator(datasetFramework, CConfiguration.create(),
+    DatasetInstantiator datasetInstantiator =
+      new DatasetInstantiator(datasetFramework, CConfiguration.create(),
                               getClass().getClassLoader(), null, null);
 
-    final KeyValueTable accumulated = dataSetInstantiator.getDataSet("accumulated");
+    final KeyValueTable accumulated = datasetInstantiator.getDataset("accumulated");
     TransactionExecutorFactory txExecutorFactory =
       AppFabricTestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
 
@@ -92,7 +92,7 @@ public class MultiConsumerTest {
     int trial = 0;
     while (trial < 60) {
       try {
-        txExecutorFactory.createExecutor(dataSetInstantiator.getTransactionAware())
+        txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware())
           .execute(new TransactionExecutor.Subroutine() {
             @Override
             public void apply() throws Exception {

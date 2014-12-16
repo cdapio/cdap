@@ -16,6 +16,8 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.internal.app.program.TypeId;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
@@ -32,6 +34,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class RuntimeStats {
 
   private static ConcurrentMap<String, AtomicLong> counters = Maps.newConcurrentMap();
+
+  public static void resetAll() {
+    counters.clear();
+  }
 
   public static void count(String name, long count) {
     AtomicLong oldValue = counters.putIfAbsent(name, new AtomicLong(count));
@@ -56,6 +62,22 @@ public final class RuntimeStats {
     String exceptionName = String.format("%s.query.failures", prefix);
 
     return getMetrics(prefix, inputName, processedName, exceptionName);
+  }
+
+  public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
+    String prefix = String.format("%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SERVICE), serviceId);
+    String inputName = String.format("%s.requests.count", prefix);
+    String processedName = String.format("%s.response.successful.count", prefix);
+    String exceptionName = String.format("%s.response.server.error.count", prefix);
+
+    return getMetrics(prefix, inputName, processedName, exceptionName);
+  }
+
+  public static long getSparkMetrics(String applicationId, String procedureId, String key) {
+    String inputName = String.format("%s.%s.%s.%s", applicationId, TypeId.getMetricContextId(ProgramType.SPARK),
+                                     procedureId, key);
+    AtomicLong input = counters.get(inputName);
+    return input == null ? 0 : input.get();
   }
 
   private static RuntimeMetrics getMetrics(final String prefix,

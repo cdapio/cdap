@@ -19,9 +19,11 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.spark.metrics.SparkMetricsSink;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -33,6 +35,7 @@ import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -115,21 +118,34 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           SparkContextConfig.set(sparkHConf, context, cConf, tx, programJarCopy);
           Location dependencyJar = buildDependencyJar(context, SparkContextConfig.getHConf());
           try {
-            sparkSubmitArgs = prepareSparkSubmitArgs(sparkSpecification, sparkHConf, programJarCopy, dependencyJar);
-            LOG.info("Submitting Spark program: {} with arguments {}", context, Arrays.toString(sparkSubmitArgs));
-            this.transaction = tx;
-            this.cleanupTask = createCleanupTask(dependencyJar, programJarCopy);
+            File tmpFile = File.createTempFile(SparkMetricsSink.SPARK_METRICS_PROPERTIES_FILENAME,
+                                               Location.TEMP_FILE_SUFFIX,
+                                               new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)),
+                                                        cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+            try {
+              SparkMetricsSink.generateSparkMetricsConfig(tmpFile);
+              context.setMetricsPropertyFile(tmpFile);
+              sparkSubmitArgs = prepareSparkSubmitArgs(sparkSpecification, sparkHConf, programJarCopy, dependencyJar);
+              LOG.info("Submitting Spark program: {} with arguments {}", context, Arrays.toString(sparkSubmitArgs));
+              this.transaction = tx;
+              this.cleanupTask = createCleanupTask(ImmutableList.of(tmpFile),
+                                                   ImmutableList.of(dependencyJar, programJarCopy));
+            } catch (Throwable t) {
+              tmpFile.delete();
+              throw t;
+            }
           } catch (Throwable t) {
+            LOG.error("Exception while creating metrics properties file for Spark", t);
             Locations.deleteQuietly(dependencyJar);
-            throw Throwables.propagate(t);
+            throw t;
           }
         } catch (Throwable t) {
           Transactions.invalidateQuietly(txClient, tx);
-          throw Throwables.propagate(t);
+          throw t;
         }
       } catch (Throwable t) {
         Locations.deleteQuietly(programJarCopy);
-        throw Throwables.propagate(t);
+        throw t;
       }
     } catch (Throwable t) {
       LOG.error("Exception while preparing for submitting Spark Job: {}", context, t);
@@ -355,11 +371,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     return programJarCopy;
   }
 
-  private Runnable createCleanupTask(final Location... locations) {
+  private Runnable createCleanupTask(final Iterable<File> files, final Iterable<Location> locations) {
     return new Runnable() {
 
       @Override
       public void run() {
+        for (File file : files) {
+          file.delete();
+        }
         for (Location location : locations) {
           Locations.deleteQuietly(location);
         }

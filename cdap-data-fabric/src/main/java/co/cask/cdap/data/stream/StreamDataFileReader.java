@@ -336,8 +336,6 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
     try {
       while (!eof) {
-        positionBound = eventInput.getPos();
-
         // Read timestamp
         long timestamp = readTimestamp();
 
@@ -351,6 +349,13 @@ public final class StreamDataFileReader implements FileReader<PositionStreamEven
 
         // Jump to next timestamp
         eventInput.seek(eventInput.getPos() + len);
+        positionBound = eventInput.getPos();
+
+        // need to check this here before we loop around again because it's possible the condition was
+        // satisfied by moving up the position even though the timestamp has not changed yet.
+        if (condition.apply(positionBound, timestamp)) {
+          break;
+        }
       }
 
       if (eof) {

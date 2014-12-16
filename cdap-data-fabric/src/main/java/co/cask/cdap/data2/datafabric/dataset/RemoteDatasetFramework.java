@@ -150,7 +150,10 @@ public class RemoteDatasetFramework implements DatasetFramework {
 
   @Override
   public void deleteAllInstances() throws DatasetManagementException, IOException {
-    client.deleteInstances();
+    // delete all one by one
+    for (DatasetSpecification spec : getInstances()) {
+      deleteInstance(spec.getName());
+    }
   }
 
   @Override

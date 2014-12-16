@@ -31,25 +31,23 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
 import co.cask.tephra.TransactionFailureException;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 /**
- * DataSetService Store implements ServiceStore using DataSets without Transaction.
+ * DatasetService Store implements ServiceStore using Datasets without Transaction.
  */
-public final class DatasetServiceStore implements ServiceStore {
-  private final NoTxKeyValueTable table;
+public final class DatasetServiceStore extends AbstractIdleService implements ServiceStore {
+  private final DatasetFramework dsFramework;
+  private NoTxKeyValueTable table;
 
   @Inject
   public DatasetServiceStore(CConfiguration cConf, DatasetDefinitionRegistryFactory dsRegistryFactory,
                              @Named("serviceModule") DatasetModule datasetModule) throws Exception {
-    DatasetFramework dsFramework =
-      new NamespacedDatasetFramework(new InMemoryDatasetFramework(dsRegistryFactory),
-                                     new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
-    dsFramework.addModule("basicKVTable", datasetModule);
-    table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INSTANCE_TABLE_NAME,
-                                            NoTxKeyValueTable.class.getName(),
-                                            DatasetProperties.EMPTY, null, null);
+    this.dsFramework = new NamespacedDatasetFramework(new InMemoryDatasetFramework(dsRegistryFactory),
+                                                      new DefaultDatasetNamespace(cConf, Namespace.SYSTEM));
+    this.dsFramework.addModule("basicKVTable", datasetModule);
   }
 
   @Override
@@ -61,5 +59,17 @@ public final class DatasetServiceStore implements ServiceStore {
   @Override
   public synchronized void setServiceInstance(final String serviceName, final int instances) {
     table.put(Bytes.toBytes(serviceName), Bytes.toBytes(String.valueOf(instances)));
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    table = DatasetsUtil.getOrCreateDataset(dsFramework, Constants.Service.SERVICE_INSTANCE_TABLE_NAME,
+                                            NoTxKeyValueTable.class.getName(),
+                                            DatasetProperties.EMPTY, null, null);
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    table.close();
   }
 }

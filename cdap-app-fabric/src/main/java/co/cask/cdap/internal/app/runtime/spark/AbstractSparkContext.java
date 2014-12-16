@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
@@ -61,6 +62,7 @@ abstract class AbstractSparkContext implements SparkContext {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSparkContext.class);
   private static final Pattern SPACES = Pattern.compile("\\s+");
   private static final String[] NO_ARGS = {};
+  private static final String SPARK_METRICS_CONF_KEY = "spark.metrics.conf";
 
   private final Configuration hConf;
   private final long logicalStartTime;
@@ -86,6 +88,7 @@ abstract class AbstractSparkContext implements SparkContext {
   private SparkConf initializeSparkConf() {
     SparkConf sparkConf = new SparkConf();
     sparkConf.setAppName(basicSparkContext.getProgramName());
+    sparkConf.set(SPARK_METRICS_CONF_KEY, basicSparkContext.getMetricsPropertyFile().getAbsolutePath());
     return sparkConf;
   }
 
@@ -129,7 +132,7 @@ abstract class AbstractSparkContext implements SparkContext {
    */
   Configuration setInputDataset(String datasetName) {
     Configuration hConf = new Configuration(getHConf());
-    Dataset dataset = basicSparkContext.getDataSet(datasetName);
+    Dataset dataset = basicSparkContext.getDataset(datasetName);
     List<Split> inputSplits;
     if (dataset instanceof BatchReadable) {
       BatchReadable curDataset = (BatchReadable) dataset;
@@ -204,8 +207,8 @@ abstract class AbstractSparkContext implements SparkContext {
 
     String decoderType = stream.getDecoderType();
     if (decoderType == null) {
-        // If the user don't specify the decoder, detect the type
-        StreamInputFormat.inferDecoderClass(hConf, vClass);
+      // If the user don't specify the decoder, detect the type
+      StreamInputFormat.inferDecoderClass(hConf, vClass);
     } else {
       StreamInputFormat.setDecoderClassName(hConf, decoderType);
     }
@@ -261,5 +264,10 @@ abstract class AbstractSparkContext implements SparkContext {
   @Override
   public ServiceDiscoverer getServiceDiscoverer() {
     return basicSparkContext.getSerializableServiceDiscoverer();
+  }
+
+  @Override
+  public Metrics getMetrics() {
+    return basicSparkContext.getMetrics();
   }
 }

@@ -22,7 +22,7 @@ instructions for
 `installation <#installation>`__ and
 `verification <#verification>`__ of
 the CDAP components so they work with your existing Hadoop cluster. 
-There are specific instructions for :ref:`upgrading existing CDAP installations <install-upgrade>`.
+There are specific instructions for :ref:`upgrading existing CDAP installations<install-upgrade>`.
 
 These are the CDAP components:
 
@@ -504,8 +504,6 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 .. _install-upgrade:
 
-.. highlight:: console
-
 Upgrading an Existing Version
 ---------------------------------
 When upgrading an existing CDAP installation from a previous version, you will need
@@ -513,6 +511,8 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
+
+.. highlight:: console
 
 1. Stop all CDAP processes::
 
@@ -536,7 +536,7 @@ and then restart CDAP.
 
 #. Run the upgrade tool::
 
-     /opt/cdap/cdap-master/bin/svc-master run com.cdap.data.tools.Main upgrade
+     /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.Main upgrade
 
 #. Restart the CDAP processes::
 

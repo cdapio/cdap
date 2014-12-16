@@ -34,6 +34,8 @@ import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
+import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
+import co.cask.cdap.explore.service.datasets.NotRecordScannableTableDefinition;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.tephra.Transaction;

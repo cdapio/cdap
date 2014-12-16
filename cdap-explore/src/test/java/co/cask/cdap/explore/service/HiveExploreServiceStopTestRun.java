@@ -32,7 +32,7 @@ public class HiveExploreServiceStopTestRun extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    startServices(CConfiguration.create());
+    startServices();
   }
 
   @Test

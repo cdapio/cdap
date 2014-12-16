@@ -20,7 +20,7 @@ import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DataSetContext;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.procedure.AbstractProcedure;
 import co.cask.cdap.api.procedure.ProcedureRequest;
@@ -136,13 +136,14 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         setInstances(5);
       }
 
+      @Override
       public void initialize(ServiceWorkerContext context) throws Exception {
         super.initialize(context);
 
         getContext().execute(new TxRunnable() {
           @Override
-          public void run(DataSetContext context) throws Exception {
-            KeyValueTable table = context.getDataSet(WORKER_INSTANCES_DATASET);
+          public void run(DatasetContext context) throws Exception {
+            KeyValueTable table = context.getDataset(WORKER_INSTANCES_DATASET);
             String key = String.format("%d.%d", getContext().getInstanceId(), System.nanoTime());
             table.write(key, Bytes.toBytes(getContext().getInstanceCount()));
           }
@@ -152,8 +153,8 @@ public class AppUsingGetServiceURL extends AbstractApplication {
       private void writeToDataSet(final String key, final String val) {
         getContext().execute(new TxRunnable() {
           @Override
-          public void run(DataSetContext context) throws Exception {
-            KeyValueTable table = context.getDataSet(DATASET_NAME);
+          public void run(DatasetContext context) throws Exception {
+            KeyValueTable table = context.getDataset(DATASET_NAME);
             table.write(key, val);
           }
         });

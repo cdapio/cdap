@@ -21,6 +21,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
+import co.cask.cdap.api.metrics.Metrics;
 
 /**
  * Counter Flowlet.
@@ -29,13 +30,17 @@ public class Counter extends AbstractFlowlet {
   @UseDataSet("wordCounts")
   private KeyValueTable wordCountsTable;
   private OutputEmitter<String> wordOutput;
+  private Metrics metrics;
+  int longestWordLength = 0;
 
   @ProcessInput("wordOut")
   public void process(String word) {
-    
     // Count number of times we have seen this word
     this.wordCountsTable.increment(Bytes.toBytes(word), 1L);
-
+    if (word.length() > longestWordLength) {
+      longestWordLength = word.length();
+      metrics.gauge("longest.word.length", longestWordLength);
+    }
     // Forward the word to the unique counter Flowlet to do the unique count
     wordOutput.emit(word);
   }

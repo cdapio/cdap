@@ -66,7 +66,7 @@ import javax.ws.rs.PathParam;
 /**
  * Provides REST endpoints for {@link co.cask.cdap.explore.service.ExploreService} operations.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class QueryExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
   private static final Gson GSON = new Gson();

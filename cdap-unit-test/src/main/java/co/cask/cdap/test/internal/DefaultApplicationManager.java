@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.dataset.DataSetInstantiator;
+import co.cask.cdap.data.dataset.DatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
@@ -70,7 +70,7 @@ public class DefaultApplicationManager implements ApplicationManager {
   private final String accountId;
   private final String applicationId;
   private final TransactionSystemClient txSystemClient;
-  private final DataSetInstantiator dataSetInstantiator;
+  private final DatasetInstantiator datasetInstantiator;
   private final StreamWriterFactory streamWriterFactory;
   private final ProcedureClientFactory procedureClientFactory;
   private final AppFabricClient appFabricClient;
@@ -102,7 +102,7 @@ public class DefaultApplicationManager implements ApplicationManager {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
       ClassLoader classLoader = ProgramClassLoader.create(tempDir, getClass().getClassLoader());
-      this.dataSetInstantiator = new DataSetInstantiator(datasetFramework, configuration,
+      this.datasetInstantiator = new DatasetInstantiator(datasetFramework, configuration,
                                                          new DataSetClassLoader(classLoader),
                                                          // todo: collect metrics for datasets outside programs too
                                                          null, null);
@@ -128,9 +128,9 @@ public class DefaultApplicationManager implements ApplicationManager {
   static class ProgramId {
     private final String appId;
     private final String runnableId;
-    private final String runnableType;
+    private final ProgramType runnableType;
 
-    ProgramId(String applicationId, String runnableId, String runnableType) {
+    ProgramId(String applicationId, String runnableId, ProgramType runnableType) {
       this.appId = applicationId;
       this.runnableId = runnableId;
       this.runnableType = runnableType;
@@ -141,7 +141,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     public String getRunnableId() {
       return this.runnableId;
     }
-    public String getRunnableType() {
+    public ProgramType getRunnableType() {
       return this.runnableType;
     }
   }
@@ -153,36 +153,23 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public FlowManager startFlow(final String flowName, Map<String, String> arguments) {
-    try {
-      final ProgramId flowId = new ProgramId(applicationId, flowName, "flows");
-      Preconditions.checkState(runningProcesses.putIfAbsent(flowName, flowId) == null,
-                               "Flow %s is already running", flowName);
-      try {
-        appFabricClient.startProgram(applicationId, flowName, "flows", arguments);
-      } catch (Exception e) {
-        runningProcesses.remove(flowName);
-        throw Throwables.propagate(e);
+    final ProgramId flowId = startProgram(flowName, arguments, ProgramType.FLOW);
+    return new FlowManager() {
+      @Override
+      public void setFlowletInstances(String flowletName, int instances) {
+        Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
+        try {
+          appFabricClient.setFlowletInstances(applicationId, flowName, flowletName, instances);
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
       }
 
-      return new FlowManager() {
-        @Override
-        public void setFlowletInstances(String flowletName, int instances) {
-          Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
-          try {
-            appFabricClient.setFlowletInstances(applicationId, flowName, flowletName, instances);
-          } catch (Exception e) {
-            throw Throwables.propagate(e);
-          }
-        }
-
-        @Override
-        public void stop() {
-          stopProgram(flowId);
-        }
-      };
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+      @Override
+      public void stop() {
+        stopProgram(flowId);
+      }
+    };
   }
 
   @Override
@@ -192,11 +179,11 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public MapReduceManager startMapReduce(final String jobName, Map<String, String> arguments) {
-    return getMapReduceManager(jobName, arguments, ProgramType.MAPREDUCE.name().toLowerCase());
+    return getMapReduceManager(jobName, arguments, ProgramType.MAPREDUCE);
   }
 
   private MapReduceManager getMapReduceManager(final String jobName, Map<String, String> arguments,
-                                               final String programType) {
+                                               final ProgramType programType) {
     try {
       final ProgramId jobId = startProgram(jobName, arguments, programType);
       return new MapReduceManager() {
@@ -223,11 +210,11 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public SparkManager startSpark(String jobName, Map<String, String> arguments) {
-    return getSparkManager(jobName, arguments, ProgramType.SPARK.name().toLowerCase());
+    return getSparkManager(jobName, arguments, ProgramType.SPARK);
   }
 
   private SparkManager getSparkManager(final String jobName, Map<String, String> arguments,
-                                       final String programType) {
+                                       final ProgramType programType) {
     try {
       final ProgramId jobId = startProgram(jobName, arguments, programType);
       return new SparkManager() {
@@ -246,7 +233,7 @@ public class DefaultApplicationManager implements ApplicationManager {
     }
   }
 
-  private ProgramId startProgram(String jobName, Map<String, String> arguments, String programType) {
+  private ProgramId startProgram(String jobName, Map<String, String> arguments, ProgramType programType) {
     final ProgramId jobId = new ProgramId(applicationId, jobName, programType);
     // program can stop by itself, so refreshing info about its state
     if (!isRunning(jobId)) {
@@ -283,79 +270,59 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public ProcedureManager startProcedure(final String procedureName, Map<String, String> arguments) {
-    try {
-      final ProgramId procedureId = new ProgramId(applicationId, procedureName, "procedures");
-      Preconditions.checkState(runningProcesses.putIfAbsent(procedureName, procedureId) == null,
-                               "Procedure %s is already running", procedureName);
-      try {
-        appFabricClient.startProgram(applicationId, procedureName, "procedures", arguments);
-      } catch (Exception e) {
-        runningProcesses.remove(procedureName);
-        throw Throwables.propagate(e);
+    final ProgramId procedureId = startProgram(procedureName, arguments, ProgramType.PROCEDURE);
+    return new ProcedureManager() {
+      @Override
+      public void stop() {
+        stopProgram(procedureId);
       }
 
-      return new ProcedureManager() {
-        @Override
-        public void stop() {
-          stopProgram(procedureId);
-        }
-
-        @Override
-        public ProcedureClient getClient() {
-          return procedureClientFactory.create(accountId, applicationId, procedureName);
-        }
-      };
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+      @Override
+      public ProcedureClient getClient() {
+        return procedureClientFactory.create(accountId, applicationId, procedureName);
+      }
+    };
   }
 
 
 
   @Override
   public WorkflowManager startWorkflow(final String workflowName, Map<String, String> arguments) {
-    try {
-      final ProgramId workflowId = new ProgramId(applicationId, workflowName, "workflows");
-      Preconditions.checkState(runningProcesses.putIfAbsent(workflowName, workflowId) == null,
-                               "Workflow %s is already running", workflowName);
+    final ProgramId workflowId = new ProgramId(applicationId, workflowName, ProgramType.WORKFLOW);
+    // currently we are using it for schedule, so not starting the workflow
 
-      // currently we are using it for schedule, so not starting the workflow
+    return new WorkflowManager() {
+      @Override
+      public List<String> getSchedules() {
+        return appFabricClient.getSchedules(applicationId, workflowName);
+      }
 
-      return new WorkflowManager() {
-        @Override
-        public List<String> getSchedules() {
-          return appFabricClient.getSchedules(applicationId, workflowName);
-        }
+      @Override
+      public List<RunRecord> getHistory() {
+        return appFabricClient.getHistory(applicationId, workflowName);
+      }
 
-        @Override
-        public List<RunRecord> getHistory() {
-          return appFabricClient.getHistory(applicationId, workflowName);
-        }
+      public ScheduleManager getSchedule(final String schedName) {
 
-        public ScheduleManager getSchedule(final String schedName) {
+        return new ScheduleManager() {
+          @Override
+          public void suspend() {
+            appFabricClient.suspend(applicationId, workflowName, schedName);
+          }
 
-          return new ScheduleManager() {
-            @Override
-            public void suspend() {
-              appFabricClient.suspend(applicationId, workflowName, schedName);
-            }
+          @Override
+          public void resume() {
+            appFabricClient.resume(applicationId, workflowName, schedName);
+          }
 
-            @Override
-            public void resume() {
-              appFabricClient.resume(applicationId, workflowName, schedName);
-            }
+          @Override
+          public String status() {
+            return appFabricClient.scheduleStatus(applicationId, workflowName, schedName);
+          }
+        };
+      }
 
-            @Override
-            public String status() {
-              return appFabricClient.scheduleStatus(applicationId, workflowName, schedName);
-            }
-          };
-        }
-
-      };
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    };
   }
 
   @Override
@@ -365,22 +332,9 @@ public class DefaultApplicationManager implements ApplicationManager {
 
   @Override
   public ServiceManager startService(final String serviceName, Map<String, String> arguments) {
-    try {
-      final ProgramId serviceId = new ProgramId(applicationId, serviceName, "services");
-      Preconditions.checkState(runningProcesses.putIfAbsent(serviceName, serviceId) == null,
-                               "Service %s is already running", serviceName);
-      try {
-        appFabricClient.startProgram(applicationId, serviceName, "services", arguments);
-      } catch (Exception e) {
-        runningProcesses.remove(serviceName);
-        throw Throwables.propagate(e);
-      }
-
-      return new DefaultServiceManager(accountId, serviceId, appFabricClient,
-                                       discoveryServiceClient, this);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
+    final ProgramId serviceId = startProgram(serviceName, arguments, ProgramType.SERVICE);
+    return new DefaultServiceManager(accountId, serviceId, appFabricClient,
+                                     discoveryServiceClient, this);
   }
 
   @Override
@@ -392,11 +346,11 @@ public class DefaultApplicationManager implements ApplicationManager {
   @Override
   public <T> DataSetManager<T> getDataSet(String dataSetName) {
     @SuppressWarnings("unchecked")
-    final T dataSet = (T) dataSetInstantiator.getDataSet(dataSetName);
+    final T dataSet = (T) datasetInstantiator.getDataset(dataSetName);
 
     try {
       final TransactionContext txContext =
-        new TransactionContext(txSystemClient, dataSetInstantiator.getTransactionAware());
+        new TransactionContext(txSystemClient, datasetInstantiator.getTransactionAware());
       txContext.start();
       return new DataSetManager<T>() {
         @Override

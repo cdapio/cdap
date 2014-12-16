@@ -757,6 +757,7 @@ WebAppServer.prototype.bindRoutes = function() {
       'product_name': PRODUCT_NAME,
       'product_version': PRODUCT_VERSION,
       'ip': IP_ADDRESS,
+      'explore_enabled' : self.config['explore.enabled'],
       'security_enabled': SECURITY_ENABLED
     };
 

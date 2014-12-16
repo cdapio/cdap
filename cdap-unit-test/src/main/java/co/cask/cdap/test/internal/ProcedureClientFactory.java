@@ -21,7 +21,9 @@ import com.google.inject.assistedinject.Assisted;
 
 /**
  * This interface is using Guice assisted inject to create instance of {@link co.cask.cdap.test.ProcedureClient}.
+ * @deprecated As of version 2.6.0, with no direct replacement, see {@link co.cask.cdap.api.service.Service}
  */
+@Deprecated
 public interface ProcedureClientFactory {
 
   ProcedureClient create(@Assisted("accountId") String accountId, @Assisted("applicationId") String applicationId,

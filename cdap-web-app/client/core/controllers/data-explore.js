@@ -65,7 +65,12 @@ define(['core/lib/lodash'], function (lodash) {
         // If jquery's ajax is used properly then the nesting could be avoided.
         // http.js getJSON does not return $.get which internally calls $.ajax
         C.set("showLoadingIcon", true);
-        self.HTTP.rest('data/explore/tables', function(response) {
+        self.HTTP.rest('data/explore/tables', function(response, responseCode) {
+
+          if (C.Env.explore_enabled === false) {
+            clearInterval(self.interval);
+            return;
+          }
           response.forEach(function (dataset) {
             var name = dataset.table;
             self.HTTP.rest('data/explore/tables/' + name + '/info', function (response, status) {
@@ -198,6 +203,9 @@ define(['core/lib/lodash'], function (lodash) {
     },
 
     fetchQueries: function (userAction) {
+      if (C.Env.explore_enabled === false) {
+        return;
+      }
       var self = this;
       if(self.largest == self.pageMgr.largestEver) {
         //If the user is trying to go to a previous page when already viewing the most recent query:

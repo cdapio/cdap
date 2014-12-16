@@ -39,9 +39,9 @@ import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
+import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.internal.spark.DefaultSparkSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -129,6 +129,10 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     flows.put(spec.getName(), spec);
   }
 
+  /*
+  * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
+  */
+  @Deprecated
   @Override
   public void addProcedure(Procedure procedure) {
     Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
@@ -136,6 +140,10 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
     procedures.put(spec.getName(), spec);
   }
 
+  /*
+  * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
+  */
+  @Deprecated
   @Override
   public void addProcedure(Procedure procedure, int instance) {
     Preconditions.checkArgument(procedure != null, "Procedure cannot be null.");
@@ -157,7 +165,9 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addSpark(Spark spark) {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
-    DefaultSparkSpecification spec = new DefaultSparkSpecification(spark);
+    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
+    spark.configure(configurer);
+    SparkSpecification spec = configurer.createSpecification();
     sparks.put(spec.getName(), spec);
   }
 

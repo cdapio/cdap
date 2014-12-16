@@ -109,6 +109,10 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     return flows;
   }
 
+  /*
+  * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.Service}
+  */
+  @Deprecated
   @Override
   public Map<String, ProcedureSpecification> getProcedures() {
     return procedures;

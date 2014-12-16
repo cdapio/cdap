@@ -20,6 +20,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 
 import java.io.Serializable;
@@ -142,4 +143,12 @@ public interface SparkContext extends RuntimeContext {
    * @return A {@link Serializable} {@link ServiceDiscoverer}
    */
   public ServiceDiscoverer getServiceDiscoverer();
+
+  /**
+   * Returns a {@link Serializable} {@link Metrics} which can be used to emit custom metrics from user's {@link Spark}
+   * program. This can also be passed in Spark program's closures and workers can emit their own metrics
+   *
+   * @return {@link Serializable} {@link Metrics} for {@link Spark} programs
+   */
+  public Metrics getMetrics();
 }

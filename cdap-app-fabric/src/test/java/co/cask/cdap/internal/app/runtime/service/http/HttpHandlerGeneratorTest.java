@@ -16,13 +16,15 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
-import co.cask.cdap.api.data.DataSetInstantiationException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
@@ -35,7 +37,6 @@ import com.google.common.reflect.TypeToken;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.URLConnection;
@@ -88,7 +89,8 @@ public class HttpHandlerGeneratorTest {
 
   @Test
   public void testHttpHandlerGenerator() throws Exception {
-    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix");
+    HttpHandlerFactory factory = new HttpHandlerFactory("/prefix", "0",
+                                                        new NoOpMetricsCollectionService(), "test.scope");
 
     HttpHandler httpHandler = factory.createHttpHandler(
       TypeToken.of(MyHttpHandler.class), new AbstractDelegatorContext<MyHttpHandler>() {
@@ -182,15 +184,15 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public <T extends Closeable> T getDataSet(String name) throws DataSetInstantiationException {
-      return getDataSet(name, null);
+    public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+      return getDataset(name, null);
     }
 
     @Override
-    public <T extends Closeable> T getDataSet(String name, Map<String, String> arguments)
-      throws DataSetInstantiationException {
-      throw new DataSetInstantiationException("Dataset '" + name + "' cannot be instantiated. " +
-                                                "Operation not supported in " + getClass().getName());
+    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+      throws DatasetInstantiationException {
+      throw new DatasetInstantiationException(
+        String.format("Dataset '%s' cannot be instantiated. Operation not supported", name));
     }
 
     @Override
