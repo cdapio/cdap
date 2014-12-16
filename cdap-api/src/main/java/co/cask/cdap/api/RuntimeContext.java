@@ -22,8 +22,21 @@ import java.util.Map;
  * This interface represents a context for a processor or elements of a processor.
  */
 public interface RuntimeContext {
+
   /**
    * @return A map of argument key and value.
    */
   Map<String, String> getRuntimeArguments();
+
+  /**
+   * Retrieve the contents from StateStore of the Program.
+   * @return Map of Key and Value
+   */
+  Map<String, String> getState();
+
+  /**
+   * Set the contents in the StateStore of the Program.
+   * @param state Map of Key and Value
+   */
+  void saveState(Map<String, String> state);
 }

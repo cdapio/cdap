@@ -47,7 +47,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- *
+ * Service Http Handler Generator Test.
  */
 public class HttpHandlerGeneratorTest {
 
@@ -181,6 +181,16 @@ public class HttpHandlerGeneratorTest {
     @Override
     public Map<String, String> getRuntimeArguments() {
       return null;
+    }
+
+    @Override
+    public Map<String, String> getState() {
+      return null;
+    }
+
+    @Override
+    public void saveState(Map<String, String> state) {
+      //no-op
     }
 
     @Override

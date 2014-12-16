@@ -43,6 +43,7 @@ import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -751,6 +752,37 @@ public class TestFrameworkTest extends TestBase {
 
     } finally {
       applicationManager.stopAll();
+    }
+  }
+
+  @Test
+  public void testStateStore() throws Exception {
+    final int count = 10;
+    ApplicationManager appManager = deployApplication(AppUsingStore.class);
+    try {
+      FlowManager manager = appManager.startFlow("StoreCheckFlow");
+      //Testing done within the Flow. So sleep for sometime.
+      TimeUnit.SECONDS.sleep(5);
+      manager.stop();
+      ServiceManager serviceManager = appManager.startService("NoOpService");
+      serviceStatusCheck(serviceManager, true);
+
+      // Call the count endpoint
+      URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "count");
+      HttpRequest request;
+      HttpResponse response;
+
+      for (int i = 0; i < count; i++) {
+        request = HttpRequest.post(url).build();
+        response = HttpRequests.execute(request);
+        Assert.assertEquals(200, response.getResponseCode());
+      }
+
+      request = HttpRequest.get(url).build();
+      response = HttpRequests.execute(request);
+      Assert.assertEquals(Integer.toString(count), response.getResponseBodyAsString(Charsets.UTF_8));
+    } finally {
+      appManager.stopAll();
     }
   }
 

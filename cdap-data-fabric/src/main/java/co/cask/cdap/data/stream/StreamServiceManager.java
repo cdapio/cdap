@@ -28,7 +28,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
  */
 public class StreamServiceManager extends AbstractDistributedMasterServiceManager {
 
-
   @Inject
   public StreamServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
                               DiscoveryServiceClient discoveryServiceClient) {

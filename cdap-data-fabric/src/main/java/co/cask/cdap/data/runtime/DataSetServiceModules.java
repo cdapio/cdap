@@ -33,6 +33,7 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.ACLTableModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
+import co.cask.cdap.data2.dataset2.lib.table.StateStoreTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseOrderedTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
@@ -71,6 +72,7 @@ public class DataSetServiceModules {
     INMEMORY_DATASET_MODULES.put("core", new CoreDatasetsModule());
     INMEMORY_DATASET_MODULES.put("fileSet", new FileSetModule());
     INMEMORY_DATASET_MODULES.put("aclTable", new ACLTableModule());
+    INMEMORY_DATASET_MODULES.put("stateStore", new StateStoreTableModule());
   }
 
   public Module getInMemoryModule() {
@@ -82,8 +84,9 @@ public class DataSetServiceModules {
         defaultModules.put("orderedTable-memory", new InMemoryOrderedTableModule());
         defaultModules.put("metricsTable-memory", new InMemoryMetricsTableModule());
         defaultModules.put("core", new CoreDatasetsModule());
-        defaultModules.put("aclTable", new ACLTableModule());
         defaultModules.put("fileSet", new FileSetModule());
+        defaultModules.put("aclTable", new ACLTableModule());
+        defaultModules.put("stateStore", new StateStoreTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -126,6 +129,7 @@ public class DataSetServiceModules {
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("aclTable", new ACLTableModule());
+        defaultModules.put("stateStore", new StateStoreTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);
@@ -170,6 +174,7 @@ public class DataSetServiceModules {
         defaultModules.put("core", new CoreDatasetsModule());
         defaultModules.put("fileSet", new FileSetModule());
         defaultModules.put("aclTable", new ACLTableModule());
+        defaultModules.put("stateStore", new StateStoreTableModule());
 
         bind(new TypeLiteral<Map<String, ? extends DatasetModule>>() { })
           .annotatedWith(Names.named("defaultDatasetModules")).toInstance(defaultModules);

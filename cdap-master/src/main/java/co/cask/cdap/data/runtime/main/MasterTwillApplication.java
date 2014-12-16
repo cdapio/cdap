@@ -68,9 +68,9 @@ public class MasterTwillApplication implements TwillApplication {
             addLogSaverService(
                 addStreamService(
                     addTransactionService(
-                        addMetricsProcessor (
-                            addMetricsService(
-                                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
+                        addMetricsProcessor(
+                          addMetricsService(
+                            TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
 
     if (runHiveService) {
       LOG.info("Adding explore runnable.");
@@ -150,7 +150,6 @@ public class MasterTwillApplication implements TwillApplication {
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())
       .apply();
-
   }
 
   private TwillSpecification.Builder.RunnableSetter addTransactionService(TwillSpecification.Builder.MoreRunnable
