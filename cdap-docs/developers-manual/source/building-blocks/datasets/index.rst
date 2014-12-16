@@ -46,7 +46,7 @@ Datasets on top of Tables.
 .. rubric:: Creating a Dataset
 
 You can create a Dataset in CDAP using either the :ref:`http-restful-api-dataset`, the
-:ref:`command-line tools<cli>`, or in an :ref:`Application specification. <applications>`
+:ref:`Command Line Interface<cli>`, or in an :ref:`Application specification. <applications>`
 
 You tell Applications to create a Dataset if it does not already
 exist by declaring the Dataset details in the Application specification.

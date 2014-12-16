@@ -20,7 +20,7 @@ This application demonstrates the use of the FileSet dataset:
   - The ``counts`` FileSet is used as output for the ``WordCount`` MapReduce Job.
   - The ``FileSetService`` allows uploading and downloading files within these two file sets.
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The FileSetExample Application
 ------------------------------
@@ -81,9 +81,9 @@ Building and Starting
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application as described below in
+- Start CDAP, deploy and start the application and its component as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the service as described.
+  Make sure you start the Service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -95,9 +95,30 @@ Running CDAP Applications
 Running the Example
 ===================
 
+Starting the Service
+------------------------------
+
+Once the application is deployed:
+
+- Click on ``FileSetExample`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``FileSetService`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service FileSetExample.FileSetService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service FileSetExample.FileSetService``    
+
+Uploading and Downloading Files
+-------------------------------
 First we will upload a text file that we will use as input for the WordCount.
 This is done by making a REST call to the ``FileSetService``.
-A sample text file is included in the ``resources`` directory::
+A sample text file is included in the ``resources`` directory of the example::
 
   curl -v localhost:10000/v2/apps/FileSetExample/services/FileSetService/methods/lines?path=some.txt \
     -XPUT --data-binary @resources/lines.txt
@@ -117,6 +138,26 @@ Note that we have to download a part file that is under the output path that was
 This is because in MapReduce, every reducer writes a separate part file into the output directory.
 In this case, as we have fixed the number of reducers to one, there is only a single part file to download.
 
+**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
+SDK in ``libexec\bin\curl.exe``
+
 Stopping the Application
 -------------------------------
-Once done, you can stop the application as described above in `Stopping an Application. <#stopping-an-application>`__
+Once done, you can stop the application as described above in `Stopping an Application. 
+<#stopping-an-application>`__ Here is an example-specific description of the step:
+
+**Stopping the Service**
+
+- Click on ``FileSetExample`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``FileSetService`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service FileSetExample.FileSetService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service FileSetExample.FileSetService``    

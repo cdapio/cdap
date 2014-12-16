@@ -16,7 +16,7 @@ to—the data virtualization layer in CDAP.
 **Application virtualizations** include *Programs,* *Services,* and *Procedures.*
 
 Programs include :doc:`Flows <flows-flowlets/index>`, :doc:`MapReduce Jobs <mapreduce-jobs>`,
-:doc:`Workflows <workflows>`, and :doc:`Spark Jobs <spark-jobs>`, and are used to process
+:doc:`Workflows <workflows>`, and :doc:`Spark Programs <spark-programs>`, and are used to process
 data. :doc:`Services <services>` and :doc:`Procedures <procedures>` are used to serve data.
 
 **Data virtualizations** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
@@ -25,7 +25,7 @@ data. :doc:`Services <services>` and :doc:`Procedures <procedures>` are used to 
 
 To create an Application, implement the ``Application`` interface or subclass from
 ``AbstractApplication`` class, specifying the Application metadata and declaring and
-configuring each of the Application elements::
+configuring each of the Application components::
 
       public class MyApp extends AbstractApplication {
         @Override
@@ -58,7 +58,7 @@ A typical design of a CDAP Application consists of:
 - Streams to ingest data into CDAP;
 - Flows, consisting of Flowlets linked together, to process the ingested data
   in realtime or batch;
-- MapReduce Jobs, Spark Jobs, and Workflows for batch processing tasks;
+- MapReduce Jobs, Spark Programs, and Workflows for batch processing tasks;
 - Datasets for storage of data, either raw or the processed results; and
 - Services and Procedures for serving data and processed results.
 

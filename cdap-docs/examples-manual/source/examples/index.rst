@@ -35,7 +35,7 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - Example Name
     - Description
   * - :doc:`Hello World<hello-world>`
-    - A simple HelloWorld App that's written using CDAP. It introduces how the elements Stream, Flow, Dataset,
+    - A simple HelloWorld App that's written using CDAP. It introduces how the components Stream, Flow, Dataset,
       and Service are used in a CDAP application.
   * - :doc:`Word Count<word-count>`
     - A simple application that counts words, and tracks word associations and unique words seen on the Stream.
@@ -47,11 +47,11 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
     - An application that demonstrates the ``@Tick`` feature of Flows. It uses a tick method to generate random
       numbers which are then counted by downstream Flowlets.
   * - :doc:`Purchase<purchase>`
-    - This example demonstrates use of many of the CDAP elements—Streams, Flows, Flowlets, Datasets, Queries,
-      MapReduce, Workflows, and Services—in a single Application.
+    - This example demonstrates use of many of the CDAP components—Streams, Flows, Flowlets, Datasets, Queries,
+      MapReduce Programs, Workflows, and Services—in a single Application.
 
       A Flow receives events from a Stream, each event describing a purchase ("John bought 5 apples for $2");
-      the Flow processes the events and stores them in a Dataset. A Mapreduce Job reads the Dataset, compiles
+      the Flow processes the events and stores them in a Dataset. A MapReduce Job reads the Dataset, compiles
       the purchases for each customer into a purchase history and stores the histories in a second Dataset.
       The purchase histories can then be queried either through a Service or an ad-hoc SQL query.
   * - :doc:`Spark K-Means<spark-k-means>`

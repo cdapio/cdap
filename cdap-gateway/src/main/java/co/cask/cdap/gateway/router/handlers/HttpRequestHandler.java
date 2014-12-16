@@ -67,7 +67,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private final List<ProxyRule> proxyRules;
 
   private MessageSender chunkSender;
-  private AtomicBoolean channelClosed = new AtomicBoolean(false);
+  private volatile boolean channelClosed;
 
   public HttpRequestHandler(ClientBootstrap clientBootstrap,
                             RouterServiceLookup serviceLookup,
@@ -82,10 +82,10 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   public void messageReceived(ChannelHandlerContext ctx,
                               MessageEvent event) throws Exception {
 
-    if (channelClosed.get()) {
+    if (channelClosed) {
       return;
     }
-    Channel inboundChannel = event.getChannel();
+    final Channel inboundChannel = event.getChannel();
     Object msg = event.getMessage();
 
     if (msg instanceof HttpChunk) {
@@ -108,15 +108,27 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
 
       // If no event sender, make new connection, otherwise reuse existing one.
       MessageSender sender =  discoveryLookup.get(discoverable);
-      if (sender == null) {
+      if (sender == null || !sender.isConnected()) {
         InetSocketAddress address = discoverable.getSocketAddress();
 
         ChannelFuture future = clientBootstrap.connect(address);
-        Channel outboundChannel = future.getChannel();
+        final Channel outboundChannel = future.getChannel();
         outboundChannel.getPipeline().addAfter("request-encoder",
                                                "outbound-handler", new OutboundHandler(inboundChannel));
         sender = new MessageSender(inboundChannel, future);
         discoveryLookup.put(discoverable, sender);
+
+        // Remember the in-flight outbound channel
+        inboundChannel.setAttachment(outboundChannel);
+        outboundChannel.getCloseFuture().addListener(new ChannelFutureListener() {
+          @Override
+          public void operationComplete(ChannelFuture future) throws Exception {
+            // When the outbound channel closed, close the inbound channel as well if it carries the in-flight request
+            if (outboundChannel.equals(inboundChannel.getAttachment())) {
+              closeOnFlush(inboundChannel);
+            }
+          }
+        });
       }
 
       // Send the message.
@@ -145,8 +157,8 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)  {
     Throwable cause = e.getCause();
 
-    LOG.error("Exception raised in Request Handler {}", ctx.getChannel().getId(), cause);
-    if (ctx.getChannel().isConnected() && !channelClosed.get()) {
+    LOG.error("Exception raised in Request Handler {}", ctx.getChannel(), cause);
+    if (ctx.getChannel().isConnected() && !channelClosed) {
       HttpResponse response = (cause instanceof HandlerException) ?
                               ((HandlerException) cause).createFailureResponse() :
                               new DefaultHttpResponse(HttpVersion.HTTP_1_1,
@@ -159,11 +171,11 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
     // Close all event sender
-    LOG.trace("Channel closed {}", ctx.getChannel().getId());
+    LOG.trace("Channel closed {}", ctx.getChannel());
     for (Closeable c : discoveryLookup.values()) {
       Closeables.closeQuietly(c);
     }
-    channelClosed.compareAndSet(false, true);
+    channelClosed = true;
     super.channelClosed(ctx, e);
   }
 
@@ -171,7 +183,9 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
    * Closes the specified channel after all queued write requests are flushed.
    */
   static void closeOnFlush(Channel ch) {
-    if (ch.isConnected()) {
+    // We need to check for both connected state and the close future.
+    // This is because depending on who initiate the close, the state may be reflected in different order.
+    if (ch.isConnected() && !ch.getCloseFuture().isDone()) {
       ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
     }
   }
@@ -214,7 +228,14 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
       this.writer = new AtomicBoolean(false);
     }
 
+    private boolean isConnected() {
+      return channelFuture.getChannel().isConnected();
+    }
+
     private void send(Object msg) {
+      // Attach the outbound channel to the inbound to indicate the in-flight request outbound.
+      inBoundChannel.setAttachment(channelFuture.getChannel());
+
       final OutboundMessage message = new OutboundMessage(msg);
       messages.add(message);
       if (channelFuture.isSuccess()) {

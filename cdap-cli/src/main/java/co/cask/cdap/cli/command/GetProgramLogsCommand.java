@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -46,10 +47,16 @@ public class GetProgramLogsCommand implements Command {
 
     String logs;
     if (elementType == ElementType.RUNNABLE) {
+      if (programIdParts.length < 3) {
+        throw new CommandInputError(this);
+      }
       String serviceId = programIdParts[1];
       String runnableId = programIdParts[2];
       logs = programClient.getServiceRunnableLogs(appId, serviceId, runnableId, start, stop);
     } else if (elementType.getProgramType() != null) {
+      if (programIdParts.length < 2) {
+        throw new CommandInputError(this);
+      }
       String programId = programIdParts[1];
       logs = programClient.getProgramLogs(appId, elementType.getProgramType(), programId, start, stop);
     } else {

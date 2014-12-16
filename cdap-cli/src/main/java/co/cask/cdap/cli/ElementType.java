@@ -56,13 +56,13 @@ public enum ElementType {
        ProgramType.FLOW, null,
        ArgumentName.FLOW,
        Capability.RUNS, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS, Capability.START_STOP,
-       Capability.LIST),
+       Capability.LIST, Capability.RUNTIME_ARGS),
 
   WORKFLOW("Workflow", "Workflows", "workflow", "workflows",
            ProgramType.WORKFLOW, null,
            ArgumentName.WORKFLOW,
            Capability.RUNS, Capability.STATUS, Capability.START_STOP,
-           Capability.LIST),
+           Capability.LIST, Capability.RUNTIME_ARGS),
 
   FLOWLET("Flowlet", "Flowlets", "flowlet", "flowlets",
           null, ProgramType.FLOW,
@@ -73,12 +73,12 @@ public enum ElementType {
             ProgramType.PROCEDURE, null,
             ArgumentName.PROCEDURE,
             Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,
-            Capability.START_STOP, Capability.LIST),
+            Capability.START_STOP, Capability.LIST, Capability.RUNTIME_ARGS),
 
   SERVICE("Service", "Services", "service", "services",
           ProgramType.SERVICE, null,
           ArgumentName.SERVICE,
-          Capability.START_STOP, Capability.STATUS, Capability.LIST),
+          Capability.START_STOP, Capability.STATUS, Capability.LIST, Capability.RUNTIME_ARGS),
 
   RUNNABLE("Runnable", "Runnables", "runnable", "runnables",
            null, ProgramType.SERVICE,
@@ -88,12 +88,14 @@ public enum ElementType {
   MAPREDUCE("MapReduce Job", "MapReduce Jobs", "mapreduce", "mapreduce",
             ProgramType.MAPREDUCE, null,
             ArgumentName.MAPREDUCE,
-            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST),
+            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
+            Capability.RUNTIME_ARGS),
 
   SPARK("Spark Program", "Spark Programs", "spark", "spark",
             ProgramType.SPARK, null,
             ArgumentName.SPARK,
-            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST);
+            Capability.LOGS, Capability.RUNS, Capability.STATUS, Capability.START_STOP, Capability.LIST,
+            Capability.RUNTIME_ARGS);
 
   private final String pluralName;
   private final String pluralPrettyName;
@@ -188,7 +190,11 @@ public enum ElementType {
     return capabilities.contains(Capability.LIST);
   }
 
+  public boolean hasRuntimeArgs() {
+    return capabilities.contains(Capability.RUNTIME_ARGS);
+  }
+
   private enum Capability {
-    SCALE, RUNS, LOGS, LIVE_INFO, STATUS, START_STOP, LIST
+    SCALE, RUNS, LOGS, LIVE_INFO, STATUS, START_STOP, LIST, RUNTIME_ARGS
   }
 }

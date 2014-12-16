@@ -26,6 +26,7 @@ public final class Id  {
 
   /**
    * Represents ID of an account.
+   * TODO: This should be removed in favor of {@link Id.Namespace}
    */
   public static final class Account {
     private final String id;
@@ -201,4 +202,40 @@ public final class Id  {
     }
   }
 
+  /**
+   * Represents ID of a namespace.
+   */
+  public static final class Namespace {
+    private final String id;
+
+    public Namespace(String id) {
+      Preconditions.checkNotNull(id, "Namespace cannot be null.");
+      this.id = id;
+    }
+
+    public String getId() {
+      return id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      return id.equals(((Namespace) o).id);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(id);
+    }
+
+    public static Namespace from(String namespace) {
+      return new Namespace(namespace);
+    }
+  }
 }

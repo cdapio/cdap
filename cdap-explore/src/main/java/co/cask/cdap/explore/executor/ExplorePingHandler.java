@@ -30,7 +30,7 @@ import javax.ws.rs.Path;
 /**
  * Explore ping handler - reachable outside of CDAP.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class ExplorePingHandler extends AbstractHttpHandler {
 
   @Path("/explore/status")

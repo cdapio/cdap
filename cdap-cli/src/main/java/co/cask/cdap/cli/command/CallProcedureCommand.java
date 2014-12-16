@@ -18,6 +18,7 @@ package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.client.ProcedureClient;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -42,6 +43,10 @@ public class CallProcedureCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String[] appIdAndProcedureId = arguments.get(ArgumentName.PROCEDURE.toString()).split("\\.");
+    if (appIdAndProcedureId.length < 2) {
+      throw new CommandInputError(this);
+    }
+
     String appId = appIdAndProcedureId[0];
     String procedureId = appIdAndProcedureId[1];
     String methodId = arguments.get(ArgumentName.METHOD.toString());

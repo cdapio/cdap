@@ -69,6 +69,9 @@ public class AppWithServices extends AbstractApplication {
   public static final String DESTROY_KEY = "destroy";
   public static final String VALUE = "true";
 
+  public static final String WRITE_VALUE_RUN_KEY = "write.value.run";
+  public static final String WRITE_VALUE_STOP_KEY = "write.value.stop";
+
     @Override
     public void configure() {
       setName(APP_NAME);
@@ -205,6 +208,8 @@ public class AppWithServices extends AbstractApplication {
       private long sleepMs = 1000;
 
       private String dataset;
+      private String valueToWriteOnRun;
+      private String valueToWriteOnStop;
 
       public DatasetUpdateWorker(String dataset) {
         // Remember the dataset name so that it can set in configure time.
@@ -220,6 +225,8 @@ public class AppWithServices extends AbstractApplication {
       @Override
       public void initialize(ServiceWorkerContext context) throws Exception {
         super.initialize(context);
+        valueToWriteOnRun = context.getRuntimeArguments().get(WRITE_VALUE_RUN_KEY);
+        valueToWriteOnStop = context.getRuntimeArguments().get(WRITE_VALUE_STOP_KEY);
         getContext().execute(new TxRunnable() {
           @Override
           public void run(DatasetContext context) throws Exception {
@@ -235,7 +242,7 @@ public class AppWithServices extends AbstractApplication {
           @Override
           public void run(DatasetContext context) throws Exception {
             KeyValueTable table = context.getDataset(DATASET_NAME);
-            table.write(DATASET_TEST_KEY_STOP, DATASET_TEST_VALUE_STOP);
+            table.write(DATASET_TEST_KEY_STOP, valueToWriteOnStop);
           }
         });
         workerStopped = true;
@@ -252,7 +259,7 @@ public class AppWithServices extends AbstractApplication {
                 KeyValueTable table = context.getDataset(DATASET_NAME);
                 // Write only if the dataset instance is the same as the one gotten in initialize.
                 if (datasetHashCode == System.identityHashCode(table)) {
-                  table.write(DATASET_TEST_KEY, DATASET_TEST_VALUE);
+                  table.write(DATASET_TEST_KEY, valueToWriteOnRun);
                 }
               }
             });

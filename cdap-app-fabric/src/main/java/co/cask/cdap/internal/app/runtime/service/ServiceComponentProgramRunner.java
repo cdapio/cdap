@@ -113,7 +113,7 @@ public class ServiceComponentProgramRunner implements ProgramRunner {
 
       BasicServiceWorkerContext context = new BasicServiceWorkerContext(workerSpec, program, runId, instanceId,
                                                                         workerSpec.getInstances(),
-                                                                        options.getArguments(), cConf,
+                                                                        options.getUserArguments(), cConf,
                                                                         metricsCollectionService, datasetFramework,
                                                                         txClient, discoveryServiceClient);
       component = new ServiceWorkerDriver(program, workerSpec, context);

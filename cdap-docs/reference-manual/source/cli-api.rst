@@ -5,13 +5,13 @@
 .. _cli:
 
 ============================================
-Command-Line Interface API
+Command Line Interface API
 ============================================
 
 Introduction
 ============
 
-The Command-Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
+The Command Line Interface (CLI) provides methods to interact with the CDAP server from within a shell,
 similar to HBase shell or ``bash``. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
 script or a Windows ``.bat`` file.
 
@@ -106,25 +106,31 @@ These are the available commands:
    ``get flow live <app-id.flow-id>``,"Gets the live info of a Flow"
    ``get flow logs <app-id.flow-id> [<start-time>] [<end-time>]``,"Gets the logs of a Flow"
    ``get flow runs <app-id.flow-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a Flow"
+   ``get flow runtimeargs <app-id.flow-id>``,"Gets the runtime arguments of a Flow"
    ``get flow status <app-id.flow-id>``,"Gets the status of a Flow"
    ``get flowlet instances <app-id.flow-id.flowlet-id>``,"Gets the instances of a Flowlet"
    ``get mapreduce logs <app-id.mapreduce-id> [<start-time>] [<end-time>]``,"Gets the logs of a MapReduce Job"
    ``get mapreduce runs <app-id.mapreduce-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a MapReduce Job"
+   ``get mapreduce runtimeargs <app-id.mapreduce-id>``,"Gets the runtime arguments of a MapReduce Job"
    ``get mapreduce status <app-id.mapreduce-id>``,"Gets the status of a MapReduce Job"
    ``get procedure instances <app-id.procedure-id>``,"Gets the instances of a Procedure"
    ``get procedure live <app-id.procedure-id>``,"Gets the live info of a Procedure"
    ``get procedure logs <app-id.procedure-id> [<start-time>] [<end-time>]``,"Gets the logs of a Procedure"
    ``get procedure runs <app-id.procedure-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a Procedure"
+   ``get procedure runtimeargs <app-id.procedure-id>``,"Gets the runtime arguments of a Procedure"
    ``get procedure status <app-id.procedure-id>``,"Gets the status of a Procedure"
-   ``get runnable instances <app-id.runnable-id>``,"Gets the instances of a Runnable"
-   ``get runnable logs <app-id.runnable-id> [<start-time>] [<end-time>]``,"Gets the logs of a Runnable"
-   ``get runnable runs <app-id.runnable-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a Runnable"
+   ``get runnable instances <app-id.service-id.runnable-id>``,"Gets the instances of a Runnable"
+   ``get runnable logs <app-id.service-id.runnable-id> [<start-time>] [<end-time>]``,"Gets the logs of a Runnable"
+   ``get runnable runs <app-id.service-id.runnable-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a Runnable"
+   ``get service runtimeargs <app-id.service-id>``,"Gets the runtime arguments of a Service"
    ``get service status <app-id.service-id>``,"Gets the status of a Service"
    ``get spark logs <app-id.spark-id> [<start-time>] [<end-time>]``,"Gets the logs of a Spark Program"
    ``get spark runs <app-id.spark-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a Spark Program"
+   ``get spark runtimeargs <app-id.spark-id>``,"Gets the runtime arguments of a Spark Program"
    ``get spark status <app-id.spark-id>``,"Gets the status of a Spark Program"
    ``get stream <stream-id> [<start-time>] [<end-time>] [<limit>]``,"Gets events from a Stream. The time format for <start-time> and <end-time> can be a timestamp in milliseconds or a relative time in the form of [+|-][0-9][d|h|m|s]. <start-time> is relative to current time; <end-time>, it is relative to start time. Special constants ""min"" and ""max"" can also be used to represent ""0"" and ""max timestamp"" respectively."
    ``get workflow runs <app-id.workflow-id> [<status>] [<start-time>] [<end-time>] [<limit>]``,"Gets the run history of a Workflow"
+   ``get workflow runtimeargs <app-id.workflow-id>``,"Gets the runtime arguments of a Workflow"
    ``get workflow status <app-id.workflow-id>``,"Gets the status of a Workflow"
    **Listing Elements**
    ``list apps``,"Lists all applications"
@@ -142,17 +148,23 @@ These are the available commands:
    **Sending Events**
    ``send stream <stream-id> <stream-event>``,"Sends an event to a Stream"
    **Setting**
+   ``set flow runtimeargs <app-id.flow-id> <runtime-args>``,"Sets the runtime arguments of a Flow. <runtime-args> is specified in the format ""key1=a key2=b"""
    ``set flowlet instances <app-id.flow-id.flowlet-id> <num-instances>``,"Sets the instances of a Flowlet"
+   ``set mapreduce runtimeargs <app-id.mapreduce-id> <runtime-args>``,"Sets the runtime arguments of a MapReduce Job. <runtime-args> is specified in the format ""key1=a key2=b"""
    ``set procedure instances <app-id.procedure-id> <num-instances>``,"Sets the instances of a Procedure"
-   ``set runnable instances <app-id.runnable-id> <num-instances>``,"Sets the instances of a Runnable"
+   ``set procedure runtimeargs <app-id.procedure-id> <runtime-args>``,"Sets the runtime arguments of a Procedure. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``set runnable instances <app-id.service-id.runnable-id> <num-instances>``,"Sets the instances of a Runnable"
+   ``set service runtimeargs <app-id.service-id> <runtime-args>``,"Sets the runtime arguments of a Service. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``set spark runtimeargs <app-id.spark-id> <runtime-args>``,"Sets the runtime arguments of a Spark Program. <runtime-args> is specified in the format ""key1=a key2=b"""
    ``set stream ttl <stream-id> <ttl-in-seconds>``,"Sets the Time-to-Live (TTL) of a Stream"
+   ``set workflow runtimeargs <app-id.workflow-id> <runtime-args>``,"Sets the runtime arguments of a Workflow. <runtime-args> is specified in the format ""key1=a key2=b"""
    **Starting**
-   ``start flow <app-id.flow-id>``,"Starts a Flow"
-   ``start mapreduce <app-id.mapreduce-id>``,"Starts a MapReduce Job"
-   ``start procedure <app-id.procedure-id>``,"Starts a Procedure"
-   ``start service <app-id.service-id>``,"Starts a Service"
-   ``start spark <app-id.spark-id>``,"Starts a Spark Program"
-   ``start workflow <app-id.workflow-id>``,"Starts a Workflow"
+   ``start flow <app-id.flow-id> [<runtime-args>]``,"Starts a Flow. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``start mapreduce <app-id.mapreduce-id> [<runtime-args>]``,"Starts a MapReduce Job. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``start procedure <app-id.procedure-id> [<runtime-args>]``,"Starts a Procedure. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``start service <app-id.service-id> [<runtime-args>]``,"Starts a Service. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``start spark <app-id.spark-id> [<runtime-args>]``,"Starts a Spark Program. <runtime-args> is specified in the format ""key1=a key2=b"""
+   ``start workflow <app-id.workflow-id> [<runtime-args>]``,"Starts a Workflow. <runtime-args> is specified in the format ""key1=a key2=b"""
    **Stopping**
    ``stop flow <app-id.flow-id>``,"Stops a Flow"
    ``stop mapreduce <app-id.mapreduce-id>``,"Stops a MapReduce Job"

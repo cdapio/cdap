@@ -43,9 +43,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.TimeLimitEndpointStrategy;
+import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -133,11 +135,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -165,7 +165,7 @@ import javax.ws.rs.QueryParam;
 /**
  *  HttpHandler class for app-fabric requests.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION) //this will be removed/changed when gateway goes.
+@Path(Constants.Gateway.API_VERSION_2) //this will be removed/changed when gateway goes.
 public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricHttpHandler.class);
 
@@ -1731,57 +1731,48 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                                         final HttpResponder responder, final String appId) throws IOException {
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
     final String accountId = getAuthenticatedAccountId(request);
-    final Location uploadDir = locationFactory.create(archiveDir + "/" + accountId);
-    final Location archive = uploadDir.append(archiveName);
-
-    // Copy archive to a temporary location
-    File tempDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
-                                     configuration.get(Constants.AppFabric.TEMP_DIR)),
-                            accountId).getAbsoluteFile();
-    if (!tempDir.exists() && !tempDir.mkdirs() && !tempDir.exists()) {
-      throw new IOException("Could not create temporary directory at: " + tempDir.getAbsolutePath());
-    }
-    final File tmpArchive = File.createTempFile("app-", ".jar", tempDir);
-    LOG.debug("Moving archive to temporary file on local disk: {}", tmpArchive.getAbsolutePath());
-    final OutputStream fos = new FileOutputStream(tmpArchive);
 
     if (archiveName == null || archiveName.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present");
+      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
+                           ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
+      return null;
     }
+
+    // Store uploaded content to a local temp file
+    File tempDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
+                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    if (!DirUtils.mkdirs(tempDir)) {
+      throw new IOException("Could not create temporary directory at: " + tempDir);
+    }
+
+    final Location archiveDir = locationFactory.create(this.archiveDir).append(accountId);
+    final Location archive = archiveDir.append(archiveName);
 
     final SessionInfo sessionInfo = new SessionInfo(accountId, appId, archiveName, archive, DeployStatus.UPLOADING);
     sessions.put(accountId, sessionInfo);
 
-    return new BodyConsumer() {
+    return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
+
       @Override
-      public void chunk(ChannelBuffer request, HttpResponder responder) {
+      protected void onFinish(HttpResponder responder, File uploadedFile) {
         try {
-          request.readBytes(fos, request.readableBytes());
-        } catch (IOException e) {
-          sessionInfo.setStatus(DeployStatus.FAILED);
-          LOG.error("Failed to write deploy jar", e);
-          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-      }
-      @Override
-      public void finished(HttpResponder responder) {
-        try {
-          fos.close();
-          // Moving archive from temporary location in local file system to temporary location in targeted file system
-          Location tmpLocation = archive.getTempFile("");
+          Locations.mkdirsIfNotExists(archiveDir);
+
+          // Copy uploaded content to a temporary location
+          Location tmpLocation = archive.getTempFile(".tmp");
           try {
-            LOG.debug("Moving archive to temporary file on final file system: {}", tmpLocation.toURI().toString());
-            Files.copy(tmpArchive, Locations.newOutputSupplier(tmpLocation));
+            LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
+            Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
+
             // Finally, move archive to final location
-            Location finalLocation = tmpLocation.renameTo(archive);
-            if (finalLocation == null) {
+            if (tmpLocation.renameTo(archive) == null) {
               throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                  tmpLocation.toURI().toString(), archive.toURI().toString()));
+                                                  tmpLocation.toURI(), archive.toURI()));
             }
           } catch (IOException e) {
             // In case copy to temporary file failed, or rename failed
             tmpLocation.delete();
-            throw Throwables.propagate(e);
+            throw e;
           }
 
           sessionInfo.setStatus(DeployStatus.VERIFYING);
@@ -1793,29 +1784,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } finally {
-          if (!tmpArchive.delete()) {
-            LOG.debug("Could not delete archive in temporary location: {}", tmpArchive.getAbsolutePath());
-          }
-          save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
-          sessions.remove(accountId);
-        }
-      }
-      @Override
-      public void handleError(Throwable t) {
-        try {
-          Closeables.closeQuietly(fos);
-          sessionInfo.setStatus(DeployStatus.FAILED);
-          responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getCause().getMessage());
-        } finally {
-          if (!tmpArchive.delete()) {
-            LOG.debug("Could not delete archive in temporary location: {}", tmpArchive.getAbsolutePath());
-          }
           save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
           sessions.remove(accountId);
         }
       }
     };
-
   }
 
   // deploy helper
@@ -2166,7 +2139,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Nullable
   private SessionInfo retrieve(String accountId) {
     try {
-      final Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
+      final Location outputDir = locationFactory.create(archiveDir).append(accountId);
       if (!outputDir.exists()) {
         return null;
       }
@@ -2301,7 +2274,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
         String url = String.format("http://%s:%d%s/metrics/%s/apps/%s",
                                    discoverable.getSocketAddress().getHostName(),
                                    discoverable.getSocketAddress().getPort(),
-                                   Constants.Gateway.GATEWAY_VERSION,
+                                   Constants.Gateway.API_VERSION_2,
                                    scope.name().toLowerCase(),
                                    application.getName());
         sendMetricsDelete(url);
@@ -2310,7 +2283,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
 
     if (applicationId == null) {
       String url = String.format("http://%s:%d%s/metrics", discoverable.getSocketAddress().getHostName(),
-                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.GATEWAY_VERSION);
+                                 discoverable.getSocketAddress().getPort(), Constants.Gateway.API_VERSION_2);
       sendMetricsDelete(url);
     }
   }
@@ -2330,7 +2303,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     String url = String.format("http://%s:%d%s/metrics/system/apps/%s/flows/%s?prefixEntity=process",
                                discoverable.getSocketAddress().getHostName(),
                                discoverable.getSocketAddress().getPort(),
-                               Constants.Gateway.GATEWAY_VERSION,
+                               Constants.Gateway.API_VERSION_2,
                                application, flow);
 
     long timeout = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
@@ -2491,7 +2464,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private boolean save(SessionInfo info, String accountId) {
     try {
       Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      Location outputDir = locationFactory.create(archiveDir + "/" + accountId);
+      Location outputDir = locationFactory.create(archiveDir).append(accountId);
       if (!outputDir.exists()) {
         return false;
       }

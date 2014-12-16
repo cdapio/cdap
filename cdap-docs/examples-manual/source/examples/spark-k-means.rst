@@ -26,7 +26,7 @@ goes through the entries, calculates centers and tabulates results in another Ob
 Once the application completes, you can query the *centers* Dataset by using the ``centers/{index}`` endpoint
 of the *CentersService*. It will respond with the center's coordinates based on the ``index`` parameter (e.g. "9.1,9.1,9.1").
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The SparkKMeans Application
 ------------------------------------------------------------
@@ -36,7 +36,7 @@ of the Application are tied together by the class ``SparkKMeansApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
    :language: java
-   :lines: 48-80
+   :lines: 49-82
 
 ``points`` and ``centers``: ObjectStore Data Storage
 ------------------------------------------------------------
@@ -55,9 +55,9 @@ Building and Starting
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application as described below in 
+- Start CDAP, deploy and start the application and its components as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Flow and Service as described.
+  Make sure you start the Flow and Service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -71,59 +71,146 @@ Running the Example
 
 .. highlight:: console
 
+Starting the Flow
+------------------------------
+
+Once the application is deployed:
+
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click *PointsFlow* in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow SparkKMeans.PointsFlow``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow SparkKMeans.PointsFlow``    
+
+Starting the Service
+------------------------------
+
+Once the application is deployed:
+
+- Click on *SparkKMeans* in the Overview page of the CDAP Console to get to the
+  Application detail page, click *CentersService* in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service SparkKMeans.CentersService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service SparkKMeans.CentersService``    
+
 Injecting Points Data
 ------------------------------
 
 Run this script to inject points data to the Stream named *pointsStream* in the
-``SparkKMeans`` application::
+``SparkKMeans`` application:
 
-  $ ./bin/inject-data.sh
+.. list-table::
+  :widths: 20 80
+  :stub-columns: 1
 
-On Windows::
-
-  > bin\inject-data.bat
+  * - On Linux:
+    - ``$ ./bin/inject-data.sh``
+  * - On Windows:
+    - ``> bin\inject-data.bat``    
 
 Running the Spark program
 ------------------------------
 There are three ways to start the Spark program:
 
-1. Click on the ``SparkKMeansProgram`` in the Application page of the CDAP Console to get to the
-   Spark dialogue, then click the *Start* button.
+1. Click on the *Process* button in the left sidebar of the CDAP Console,
+   then click *SparkKMeansProgram* in the *Process* page to get to the
+   Spark detail page, then click the *Start* button; or
 
-2. Send a query via an HTTP request using the ``curl`` command::
+#. Send a query via an HTTP request using the ``curl`` command::
 
     curl -w '\n' -v -d '{args="3"}' \
       'http://localhost:10000/v2/apps/SparkKMeans/spark/SparkKMeansProgram/start'
 
-   On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
+   **Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
+   SDK in ``libexec\bin\curl.exe``
 
-    libexec\curl...
+#. Use the Command Line Interface:
 
-3. Use the command::
+   .. list-table::
+     :widths: 20 80
+     :stub-columns: 1
 
-    $ ./bin/app-manager.sh --action run
-
-   On Windows::
-
-    > bin\app-manager.bat run
+     * - On Linux:
+       - ``$ ./bin/cdap-cli.sh start spark SparkKMeans.SparkKMeansProgram``
+     * - On Windows:
+       - ``> bin\cdap-cli.bat start spark SparkKMeans.SparkKMeansProgram``    
 
 Querying the Results
 ------------------------------
-
-If the Service has not already been started, you can start it either through the
-CDAP Console or via an HTTP request using the ``curl`` command::
-
-  curl -v -X POST 'http://localhost:10000/v2/apps/SparkKMeans/services/CentersService/start'
 
 To query the *centers* ObjectStore using the ``CentersService``,
 send a query via an HTTP request using the ``curl`` command. For example::
 
     curl -w '\n' -v 'http://localhost:10000/v2/apps/SparkKMeans/services/CentersService/methods/centers/1'
 
-  On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the SDK::
+**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
+SDK in ``libexec\bin\curl.exe``
 
-    libexec\curl...
+You can also use the Command Line Interface:
+
+.. list-table::
+  :widths: 20 80
+  :stub-columns: 1
+
+  * - On Linux:
+    - ``$ ./bin/cdap-cli.sh call service SparkKMeans.CentersService GET centers/1``
+  * - On Windows:
+    - ``> bin\cdap-cli.bat call service SparkKMeans.CentersService GET centers/1``
+
 
 Stopping the Application
 -------------------------------
-Once done, you can stop the application as described above in `Stopping an Application. <#stopping-an-application>`__
+Once done, you can stop the application as described above in `Stopping an Application. 
+<#stopping-an-application>`__ Here is an example-specific description of the steps:
+
+**Stopping the Flow and Spark Program**
+
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click *PointsFlow* in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; similarly for the *SparkKMeansProgram*: or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow SparkKMeans.PointsFlow``
+    * -
+      - ``$ ./bin/cdap-cli.sh stop flow SparkKMeans.SparkKMeansProgram``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow SparkKMeans.PointsFlow``    
+    * - 
+      - ``> bin\cdap-cli.bat stop flow SparkKMeans.SparkKMeansProgram``    
+
+**Stopping the Service**
+
+- Click on *SparkKMeans* in the Overview page of the CDAP Console to get to the
+  Application detail page, click *CentersService* in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow SparkKMeans.CentersService``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow SparkKMeans.CentersService``    

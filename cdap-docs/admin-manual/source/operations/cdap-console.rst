@@ -20,7 +20,7 @@ Here is a screen-capture of the CDAP Console running on a Distributed CDAP.
 
 Down the left sidebar, underneath the **Cask** logo, are five buttons: *Application, Collect
 Process, Store,* and *Query.* These buttons gives you access to CDAP Console facilities for
-managing each of these CDAP elements.
+managing each of these CDAP components.
 
 In the far upper-right are two buttons: the *Metrics* and *Services* buttons, which take
 you to their respective explorers.

@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,10 +48,9 @@ public class ProgramControllerTest {
     // If there is race, there is a chance that this test will fail in some env.
     // Otherwise it should always pass
     ExecutorService executor = Executors.newCachedThreadPool();
-    final AtomicInteger aliveCount = new AtomicInteger(0);
 
     int serviceCount = 1000;
-    Random random = new Random();
+    final CountDownLatch latch = new CountDownLatch(serviceCount);
     for (int i = 0; i < serviceCount; i++) {
       // Creates a controller for a guava service do nothing in start/stop.
       // The short time in start creates a chance to have out-of-order init() and alive() call if there is a race.
@@ -65,14 +65,14 @@ public class ProgramControllerTest {
         public void init(ProgramController.State currentState) {
           initCalled = true;
           if (currentState == ProgramController.State.ALIVE) {
-            aliveCount.incrementAndGet();
+            latch.countDown();
           }
         }
 
         @Override
         public void alive() {
           if (initCalled) {
-            aliveCount.incrementAndGet();
+            latch.countDown();
           } else {
             LOG.error("init() not called before alive()");
           }
@@ -83,7 +83,7 @@ public class ProgramControllerTest {
       service.stopAndWait();
     }
 
-    Assert.assertEquals(serviceCount, aliveCount.get());
+    Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
   }
 
   private static final class TestService extends AbstractIdleService {

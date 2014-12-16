@@ -301,7 +301,7 @@ public class NettyRouter extends AbstractIdleService {
     clientBootstrap = new ClientBootstrap(
       new NioClientSocketChannelFactory(
         new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
-        new ShareableWorkerPool<NioWorker>(new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize))));
+        new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize)));
 
     clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       @Override

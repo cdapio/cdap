@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -1465,7 +1466,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       int index = (hashCode + i & Integer.MAX_VALUE) % dirs.length;
       File file = new File(dirs[index], path);
       File dir = file.getParentFile();
-      if (dir.exists() || dir.mkdirs()) {
+      if (DirUtils.mkdirs(dir)) {
         return file;
       }
     }
