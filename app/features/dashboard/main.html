@@ -1,13 +1,12 @@
 <aside role="toolbar">
-  <a class="btn btn-sm btn-warning" ng-click="addDashboard()">
+  <a class="btn btn-xs btn-info" ng-click="addDashboard()" title="add dashboard">
     <span class="fa fa-plus"></span>
-    add dashboard
   </a>
 </aside>
 
 <div
   bs-active-pane="dashboards.activeTab"
-  bs-tabs data-template="assets/features/dashboard/templates/tab.html">
+  bs-tabs data-template="assets/features/dashboard/partials/tab.html">
 
   <div
     data-title="{{dashboard.title}}"
@@ -39,7 +38,7 @@
           </div>
 
           <div class="panel-body"
-            ng-include="'assets/features/dashboard/templates/widget.html'"
+            ng-include="'assets/features/dashboard/partials/widget.html'"
             ></div>
 
         </div>

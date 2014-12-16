@@ -8,12 +8,12 @@ angular.module(PKG.name+'.feature.dashboard')
 
       .state('dashboard', {
         url: '/dashboard',
-        templateUrl: '/assets/features/dashboard/templates/dashboard.html',
+        templateUrl: '/assets/features/dashboard/main.html',
         controller: 'DashboardCtrl'
       })
 
         .state('dashboard.tab', {
-          url: '?tab'
+          url: '/:tab'
         })
       ;
 
