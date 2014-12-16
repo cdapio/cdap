@@ -145,6 +145,14 @@ function ($scope, $state, $alert, $dropdown) {
 
 
 
+  $scope.renameWidget = function () {
+    $alert({
+      title: 'Sorry!',
+      content: 'renameWidget is not yet implemented.',
+      type: 'danger'
+    });
+  };
+
 
 
   $scope.dragdrop = {
