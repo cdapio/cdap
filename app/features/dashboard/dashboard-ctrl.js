@@ -135,7 +135,7 @@ function ($scope, $state, $alert, $dropdown) {
         smallest = c;
         index = i;
       }
-    };
+    }
 
     columns[index].unshift({
       title: 'added widget'
