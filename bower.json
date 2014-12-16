@@ -18,6 +18,7 @@
     "cask-angular-focus": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-focus.zip?raw=true",
     "cask-angular-window-manager": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-window-manager.zip?raw=true",
     "cask-angular-sortable": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-sortable.zip?raw=true",
+    "cask-angular-confirmable": "https://github.com/caskdata/ng-capsules/blob/develop/zip/cask-angular-confirmable.zip?raw=true",
     "sockjs-client": "~0.3.4",
     "d3": "~3.4.13",
     "epoch": "~0.6.0",

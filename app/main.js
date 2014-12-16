@@ -32,6 +32,7 @@ angular
       ]).name,
 
       'cask-angular-sortable',
+      'cask-angular-confirmable',
       'mgcrea.ngStrap.alert',
       'mgcrea.ngStrap.tooltip',
       'mgcrea.ngStrap.popover',

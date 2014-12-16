@@ -25,20 +25,11 @@
           as-sortable-item>
 
           <div class="panel-heading"
-            as-sortable-item-handle>
-
-            <a class="pull-right btn btn-default btn-xs"
-              title="remove widget"
-              ng-click="rmWidget(wdgt)" no-drag>
-              <span class="fa fa-close"></span>
-            </a>
-
-            {{wdgt.title}}
-            <span class="badge" ng-bind="wdgt.badge"></span>
-          </div>
+            ng-include="'assets/features/dashboard/partials/wdgt-head.html'"
+            as-sortable-item-handle></div>
 
           <div class="panel-body"
-            ng-include="'assets/features/dashboard/partials/widget.html'"
+            ng-include="'assets/features/dashboard/partials/wdgt-body.html'"
             ></div>
 
         </div>

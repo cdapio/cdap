@@ -6,13 +6,20 @@ angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
 function ($scope, $state, $alert, $dropdown) {
 
 
-  $scope.dashboards = [{
-    title: 'default dashboard',
-    columns: [[{
-      title: 'my first widget',
-      badge: ':-)'
-    }],[],[]]
-  }];
+  $scope.dashboards = [
+    {
+      title: 'grid',
+      columns: [[{
+        title: 'widget title'
+      }],[],[]]
+    },
+    {
+      title: 'full-width',
+      columns: [[{
+        title: 'hello world'
+      }]]
+    }
+  ];
 
 
 

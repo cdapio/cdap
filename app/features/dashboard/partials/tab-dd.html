@@ -26,7 +26,10 @@
   <li role="presentation" class="divider"></li>
 
   <li role="presentation" ng-class="{disabled: dashboards.length<2}">
-    <a role="menuitem" tabindex="-1" href="" ng-click="dashboards.length>1 && rmDashboard()">
+    <a role="menuitem" tabindex="-1" href=""
+      ng-click="dashboards.length>1 && caskConfirm()"
+      cask-confirmable="rmDashboard()"
+      data-confirmable-content="Really delete the dashboard?">
       <span class="fa fa-fw fa-trash"></span>
       Delete
     </a>
