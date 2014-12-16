@@ -195,7 +195,7 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
     byte[] endRowPrefix = Bytes.stopKeyForPrefix(startRowPrefix);
     Scanner scanner = configTable.scan(startRowPrefix, endRowPrefix);
     Row row;
-    while((row = scanner.next()) != null) {
+    while ((row = scanner.next()) != null) {
       String rowKey = Bytes.toString(row.getRow());
       configs.add(rowKey.substring(rowKey.indexOf('.') + 1));
     }
