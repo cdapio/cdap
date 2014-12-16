@@ -4,8 +4,8 @@
 
 angular.module(PKG.name+'.feature.home').controller('HomeCtrl',
 function ($scope, $alert, MyDataSource) {
-
   $scope.apps = [];
+  $scope.hideWelcomeMessage = false;
 
   var dataSrc = new MyDataSource($scope);
 
