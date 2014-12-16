@@ -1,42 +1,20 @@
-<div class="pull-right">
+<aside role="toolbar">
   <a class="btn btn-sm btn-warning" ng-click="addDashboard()">
     <span class="fa fa-plus"></span>
     add dashboard
   </a>
-</div>
+</aside>
 
 <div
   bs-active-pane="dashboards.activeTab"
-  bs-tabs>
+  bs-tabs data-template="assets/features/dashboard/templates/tab.html">
 
   <div
     data-title="{{dashboard.title}}"
     ng-repeat="dashboard in dashboards"
     bs-pane>
 
-    <section class="text-right">
-
-      <div class="btn-group btn-group-xs" role="toolbar">
-
-        <a class="btn btn-default" ng-click="addWidget(dashboard)">
-          <span class="fa fa-dashboard"></span>
-          add widget
-        </a>
-        <a class="btn btn-default" ng-click="shareDashboard(dashboard)">
-          <span class="fa fa-share-alt"></span>
-          share dashboard
-        </a>
-        <a class="btn btn-default" disabled>
-          <span class="fa fa-cube"></span>
-          some other action
-        </a>
-      </div>
-
-    </section>
-
-
-
-    <section class="row">
+    <div class="row">
 
       <div ng-class="'col-sm-'+(12/dashboard.columns.length)"
         ng-repeat="column in dashboard.columns"
@@ -61,13 +39,13 @@
           </div>
 
           <div class="panel-body"
-            ng-include="'assets/features/dashboard/widget.html'"
+            ng-include="'assets/features/dashboard/templates/widget.html'"
             ></div>
 
         </div>
-      </section>
+      </div>
 
-    </section>
+    </div>
 
   </div>
 </div>

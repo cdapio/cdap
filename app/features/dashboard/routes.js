@@ -8,7 +8,7 @@ angular.module(PKG.name+'.feature.dashboard')
 
       .state('dashboard', {
         url: '/dashboard',
-        templateUrl: '/assets/features/dashboard/dashboard.html',
+        templateUrl: '/assets/features/dashboard/templates/dashboard.html',
         controller: 'DashboardCtrl'
       })
 

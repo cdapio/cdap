@@ -3,7 +3,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, $alert) {
+function ($scope, $state, $alert, $dropdown) {
 
 
   $scope.dashboards = ['First','Second','Third'].map(function (t, k){
@@ -46,6 +46,38 @@ function ($scope, $state, $alert) {
     }
     $scope.dashboards.activeTab = tab;
   });
+
+
+
+  $scope.activeTabClick = function (event) {
+
+    var toggle = angular.element(event.target);
+    if(!toggle.hasClass('dropdown-toggle')) {
+      toggle = toggle.parent();
+    }
+
+    if(toggle.parent().hasClass('open')) {
+      return;
+    }
+
+    var dd = $dropdown(toggle, {
+      template: 'assets/features/dashboard/templates/dropdown.html',
+      animation: 'am-flip-x',
+      trigger: 'manual',
+      prefixEvent: 'dashboard-tab-dropdown'
+    })
+
+    dd.$promise.then(function(){
+      dd.$scope.$on('dashboard-tab-dropdown.hide', function () {
+        dd.destroy();
+      });
+      dd.show();
+    });
+
+
+  };
+
+
 
 
   $scope.rmWidget = function (wdgt) {
