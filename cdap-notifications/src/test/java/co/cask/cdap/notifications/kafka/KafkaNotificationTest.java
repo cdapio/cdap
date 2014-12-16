@@ -72,6 +72,7 @@ public class KafkaNotificationTest extends NotificationTest {
         @Singleton
         @SuppressWarnings("unused")
         private ZKClientService providesZkClientService(InMemoryZKServer zkServer) {
+          zkServer.startAndWait();
           ZKClientService clientService = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
           return clientService;
         }
@@ -80,7 +81,6 @@ public class KafkaNotificationTest extends NotificationTest {
     startServices(injector);
 
     zkServer = injector.getInstance(InMemoryZKServer.class);
-    zkServer.startAndWait();
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
@@ -96,8 +96,8 @@ public class KafkaNotificationTest extends NotificationTest {
     // TODO remove once Twill addLatest bug is fixed
     feedClient.createFeed(FEED1);
     feedClient.createFeed(FEED2);
-    getNewPublisher().createSender(FEED1).send("test").get();
-    getNewPublisher().createSender(FEED2).send("test").get();
+    getNotificationClient().createPublisher(FEED1).publish("test").get();
+    getNotificationClient().createPublisher(FEED2).publish("test").get();
     feedClient.deleteFeed(FEED1);
     feedClient.deleteFeed(FEED2);
   }

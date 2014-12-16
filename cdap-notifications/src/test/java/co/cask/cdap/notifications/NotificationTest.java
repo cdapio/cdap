@@ -36,6 +36,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.auth.AuthModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.client.NotificationClient;
 import co.cask.cdap.notifications.client.NotificationFeedClient;
 import co.cask.cdap.notifications.guice.NotificationClientRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationFeedNotFoundException;
@@ -51,7 +52,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Cancellable;
@@ -78,22 +78,16 @@ public abstract class NotificationTest {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
 
-  private static Provider<NotificationPublisher> publisherProvider;
-  private static Provider<NotificationSubscriber> subscriberProvider;
+  private static NotificationClient notificationClient;
 
   protected static final NotificationFeed FEED1 = new NotificationFeed.Builder()
     .setNamespace("namespace").setCategory("stream").setName("foo").setDescription("").build();
   protected static final NotificationFeed FEED2 = new NotificationFeed.Builder()
     .setNamespace("namespace").setCategory("stream").setName("bar").setDescription("").build();
 
-  protected static NotificationPublisher getNewPublisher() {
-    return publisherProvider.get();
+  protected static NotificationClient getNotificationClient() {
+    return notificationClient;
   }
-
-  protected static NotificationSubscriber getNewSubscriber() {
-    return subscriberProvider.get();
-  }
-
 
   public static Injector createInjector(CConfiguration cConf, Module... modules) {
 
@@ -126,8 +120,7 @@ public abstract class NotificationTest {
   }
 
   public static void startServices(Injector injector) throws Exception {
-    publisherProvider = injector.getProvider(NotificationPublisher.class);
-    subscriberProvider = injector.getProvider(NotificationSubscriber.class);
+    notificationClient = injector.getInstance(NotificationClient.class);
 
     feedClient = injector.getInstance(NotificationFeedClient.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
@@ -153,18 +146,16 @@ public abstract class NotificationTest {
 
     Assert.assertTrue(feedClient.createFeed(FEED1));
     try {
-      NotificationPublisher publisher = getNewPublisher();
-      final NotificationPublisher.Sender<String> sender = publisher.createSender(FEED1);
+      final NotificationClient.Publisher<String> publisher = getNotificationClient().createPublisher(FEED1);
 
       try {
         // Create a subscribing process
-        NotificationSubscriber subscriber = getNewSubscriber();
-        NotificationSubscriber.Preparer preparer = subscriber.prepare();
+        NotificationClient.Subscriber subscriber = getNotificationClient().createSubscriber();
 
         final AtomicInteger receiveCount = new AtomicInteger(0);
         final AtomicBoolean assertionOk = new AtomicBoolean(true);
 
-        preparer.add(FEED1, new NotificationHandler<String>() {
+        subscriber.add(FEED1, new NotificationHandler<String>() {
           @Override
           public Type getNotificationFeedType() {
             return String.class;
@@ -183,7 +174,7 @@ public abstract class NotificationTest {
           }
         });
 
-        Cancellable cancellable = preparer.consume();
+        Cancellable cancellable = subscriber.consume();
 
         // Runnable to publish notifications on behalf of the publisher entity
         Runnable publisherRunnable = new Runnable() {
@@ -191,7 +182,7 @@ public abstract class NotificationTest {
           public void run() {
             try {
               for (int i = 0; i < messagesCount; i++) {
-                sender.send(String.format("fake-payload-%d", i));
+                publisher.publish(String.format("fake-payload-%d", i));
                 TimeUnit.MILLISECONDS.sleep(100);
               }
             } catch (Throwable e) {
@@ -211,11 +202,11 @@ public abstract class NotificationTest {
         Assert.assertTrue(assertionOk.get());
         Assert.assertEquals(messagesCount, receiveCount.get());
       } finally {
-        sender.shutdownNow();
+        publisher.shutdownNow();
         try {
-          sender.send("foo");
+          publisher.publish("foo");
           Assert.fail();
-        } catch (NotificationPublisher.SenderShutdownException e) {
+        } catch (NotificationClient.PublisherShutdownException e) {
           // Expected.
         }
       }
@@ -234,9 +225,8 @@ public abstract class NotificationTest {
   public void feedNotCreatedTest() throws Exception {
     try {
       // Try subscribing to a feed before creating it
-      NotificationSubscriber subscriber = getNewSubscriber();
-      NotificationSubscriber.Preparer preparer = subscriber.prepare();
-      preparer.add(FEED1, new NotificationHandler<String>() {
+      NotificationClient.Subscriber subscriber = getNotificationClient().createSubscriber();
+      subscriber.add(FEED1, new NotificationHandler<String>() {
         @Override
         public Type getNotificationFeedType() {
           return String.class;
@@ -254,8 +244,7 @@ public abstract class NotificationTest {
 
     try {
       // Try publishing to a feed before creating it
-      NotificationPublisher publisher = getNewPublisher();
-      publisher.createSender(FEED1);
+      getNotificationClient().createPublisher(FEED1);
       Assert.fail("Should throw NotificationFeedNotFoundException.");
     } catch (NotificationFeedNotFoundException e) {
       // Expected
@@ -270,9 +259,8 @@ public abstract class NotificationTest {
 
     Assert.assertTrue(feedClient.createFeed(FEED1));
     try {
-      NotificationSubscriber subscriber = getNewSubscriber();
-      NotificationSubscriber.Preparer preparer = subscriber.prepare();
-      preparer.add(FEED1, new NotificationHandler<String>() {
+      NotificationClient.Subscriber subscriber = getNotificationClient().createSubscriber();
+      subscriber.add(FEED1, new NotificationHandler<String>() {
         private int received = 0;
 
         @Override
@@ -291,11 +279,11 @@ public abstract class NotificationTest {
           }, TxRetryPolicy.dropAfter(5));
         }
       });
-      Cancellable cancellable = preparer.consume();
+      Cancellable cancellable = subscriber.consume();
 
-      NotificationPublisher.Sender<String> sender = getNewPublisher().createSender(FEED1);
+      NotificationClient.Publisher<String> publisher = getNotificationClient().createPublisher(FEED1);
       try {
-        sender.send("foobar");
+        publisher.publish("foobar");
         // Waiting for the subscriber to receive that notification
         TimeUnit.SECONDS.sleep(5);
 
@@ -309,7 +297,7 @@ public abstract class NotificationTest {
         txManager.commit(tx1);
         table.postTxCommit();
       } finally {
-        sender.shutdownNow();
+        publisher.shutdownNow();
         cancellable.cancel();
       }
     } finally {
@@ -325,20 +313,19 @@ public abstract class NotificationTest {
 
     Assert.assertTrue(feedClient.createFeed(FEED1));
     try {
-      NotificationPublisher publisher = getNewPublisher();
-      final NotificationPublisher.Sender<String> sender = publisher.createSender(FEED1);
+      final NotificationClient.Publisher<String> publisher = getNotificationClient().createPublisher(FEED1);
       Runnable publisherRunnable = new Runnable() {
         @Override
         public void run() {
           try {
             for (int i = 0; i < messagesCount; i++) {
-              sender.send(String.format("fake-payload-%d", i));
+              publisher.publish(String.format("fake-payload-%d", i));
               TimeUnit.MILLISECONDS.sleep(100);
             }
           } catch (Throwable e) {
             Throwables.propagate(e);
           } finally {
-            sender.shutdownNow();
+            publisher.shutdownNow();
           }
         }
       };
@@ -346,14 +333,13 @@ public abstract class NotificationTest {
 
       final int[] receiveCounts = new int[subscribersCount];
       final AtomicBoolean assertionOk = new AtomicBoolean(true);
-      List<Cancellable> notificationSubscribersCancellables = Lists.newArrayList();
+      List<Cancellable> cancellables = Lists.newArrayList();
       for (int i = 0; i < subscribersCount; i++) {
         final int j = i;
 
-        NotificationSubscriber subscriber = getNewSubscriber();
-        NotificationSubscriber.Preparer preparer = subscriber.prepare();
+        NotificationClient.Subscriber subscriber = getNotificationClient().createSubscriber();
 
-        preparer.add(FEED1, new NotificationHandler<String>() {
+        subscriber.add(FEED1, new NotificationHandler<String>() {
           @Override
           public Type getNotificationFeedType() {
             return String.class;
@@ -372,7 +358,7 @@ public abstract class NotificationTest {
           }
         });
 
-        notificationSubscribersCancellables.add(preparer.consume());
+        cancellables.add(subscriber.consume());
       }
 
       // Give the subscriber some time to prepare for published messages before starting the publisher
@@ -380,7 +366,7 @@ public abstract class NotificationTest {
       publisherThread.start();
       publisherThread.join();
       TimeUnit.MILLISECONDS.sleep(2000);
-      for (Cancellable cancellable : notificationSubscribersCancellables) {
+      for (Cancellable cancellable : cancellables) {
         cancellable.cancel();
       }
 
@@ -406,13 +392,12 @@ public abstract class NotificationTest {
     Assert.assertTrue(feedClient.createFeed(FEED1));
     try {
       // Create a subscribing process
-      NotificationSubscriber subscriber = getNewSubscriber();
-      NotificationSubscriber.Preparer preparer = subscriber.prepare();
+      NotificationClient.Subscriber subscriber = getNotificationClient().createSubscriber();
 
       final AtomicBoolean assertionOk = new AtomicBoolean(true);
       final int[] receiveCounts = new int[publishersCount];
 
-      preparer.add(FEED1, new NotificationHandler<SimpleNotification>() {
+      subscriber.add(FEED1, new NotificationHandler<SimpleNotification>() {
         @Override
         public Type getNotificationFeedType() {
           return SimpleNotification.class;
@@ -432,15 +417,14 @@ public abstract class NotificationTest {
         }
       });
 
-      Cancellable cancellable = preparer.consume();
+      Cancellable cancellable = subscriber.consume();
       // Give the subscriber some time to prepare for published messages before starting the publisher
       TimeUnit.MILLISECONDS.sleep(500);
 
       List<Thread> publisherThreads = Lists.newArrayList();
       for (int i = 0; i < publishersCount; i++) {
-        NotificationPublisher publisher = getNewPublisher();
-        final NotificationPublisher.Sender<SimpleNotification> sender =
-          publisher.createSender(FEED1);
+        final NotificationClient.Publisher<SimpleNotification> publisher =
+          getNotificationClient().createPublisher(FEED1);
         final int k = i;
         Runnable publisherRunnable = new Runnable() {
           @Override
@@ -448,13 +432,13 @@ public abstract class NotificationTest {
             try {
               Random r = new Random();
               for (int j = 0; j < messagesCount; j++) {
-                sender.send(new SimpleNotification(k, String.format("fake-payload-%d", j)));
+                publisher.publish(new SimpleNotification(k, String.format("fake-payload-%d", j)));
                 TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
               }
             } catch (Throwable e) {
               Throwables.propagate(e);
             } finally {
-              sender.shutdownNow();
+              publisher.shutdownNow();
             }
           }
         };
@@ -487,13 +471,12 @@ public abstract class NotificationTest {
     Assert.assertTrue(feedClient.createFeed(FEED2));
     try {
       // Create a subscribing process
-      NotificationSubscriber subscriber = getNewSubscriber();
-      NotificationSubscriber.Preparer preparer = subscriber.prepare();
+      NotificationClient.Subscriber subscriber = getNotificationClient().createSubscriber();
 
       final AtomicBoolean assertionOk = new AtomicBoolean(true);
       final int[] receiveCounts = new int[2];
 
-      preparer.add(FEED1, new NotificationHandler<SimpleNotification>() {
+      subscriber.add(FEED1, new NotificationHandler<SimpleNotification>() {
         @Override
         public Type getNotificationFeedType() {
           return SimpleNotification.class;
@@ -513,7 +496,7 @@ public abstract class NotificationTest {
         }
       });
 
-      preparer.add(FEED2, new NotificationHandler<String>() {
+      subscriber.add(FEED2, new NotificationHandler<String>() {
         @Override
         public Type getNotificationFeedType() {
           return String.class;
@@ -532,45 +515,45 @@ public abstract class NotificationTest {
         }
       });
 
-      Cancellable cancellable = preparer.consume();
+      Cancellable cancellable = subscriber.consume();
       // Give the subscriber some time to prepare for published messages before starting the publisher
       TimeUnit.MILLISECONDS.sleep(500);
 
-      final NotificationPublisher.Sender<SimpleNotification> sender1 =
-        getNewPublisher().createSender(FEED1);
+      final NotificationClient.Publisher<SimpleNotification> publisher1 =
+        getNotificationClient().createPublisher(FEED1);
       Runnable publisherRunnable1 = new Runnable() {
         @Override
         public void run() {
           try {
             Random r = new Random();
             for (int j = 0; j < messagesCount; j++) {
-              sender1.send(new SimpleNotification(0, String.format("fake-payload-%d", j)));
+              publisher1.publish(new SimpleNotification(0, String.format("fake-payload-%d", j)));
               TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
             }
           } catch (Throwable e) {
             Throwables.propagate(e);
           } finally {
-            sender1.shutdownNow();
+            publisher1.shutdownNow();
           }
         }
       };
       Thread publisherThread1 = new Thread(publisherRunnable1);
       publisherThread1.start();
 
-      final NotificationPublisher.Sender<String> sender2 = getNewPublisher().createSender(FEED2);
+      final NotificationClient.Publisher<String> publisher2 = getNotificationClient().createPublisher(FEED2);
       Runnable publisherRunnable2 = new Runnable() {
         @Override
         public void run() {
           try {
             Random r = new Random();
             for (int j = 0; j < messagesCount; j++) {
-              sender2.send(String.format("fake-payload-%d", j));
+              publisher2.publish(String.format("fake-payload-%d", j));
               TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
             }
           } catch (Throwable e) {
             Throwables.propagate(e);
           } finally {
-            sender2.shutdownNow();
+            publisher2.shutdownNow();
           }
         }
       };
@@ -605,10 +588,9 @@ public abstract class NotificationTest {
       final AtomicInteger receiveCount = new AtomicInteger(0);
       final AtomicBoolean assertionOk = new AtomicBoolean(true);
 
-      NotificationSubscriber subscriber = getNewSubscriber();
-      NotificationSubscriber.Preparer preparer = subscriber.prepare();
+      NotificationClient.Subscriber subscriber = getNotificationClient().createSubscriber();
 
-      preparer.add(FEED1, new NotificationHandler<String>() {
+      subscriber.add(FEED1, new NotificationHandler<String>() {
         @Override
         public Type getNotificationFeedType() {
           return String.class;
@@ -626,44 +608,44 @@ public abstract class NotificationTest {
           }
         }
       });
-      Cancellable cancellable = preparer.consume();
+      Cancellable cancellable = subscriber.consume();
       // Give the subscriber some time to prepare for published messages before starting the publisher
       TimeUnit.MILLISECONDS.sleep(500);
 
-      final NotificationPublisher.Sender<String> sender1 = getNewPublisher().createSender(FEED1);
+      final NotificationClient.Publisher<String> publisher1 = getNotificationClient().createPublisher(FEED1);
       Runnable publisherRunnable1 = new Runnable() {
         @Override
         public void run() {
           try {
             Random r = new Random();
             for (int j = 0; j < messagesCount; j++) {
-              sender1.send(String.format("fake-payload-%d", j));
+              publisher1.publish(String.format("fake-payload-%d", j));
               TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
             }
           } catch (Throwable e) {
             Throwables.propagate(e);
           } finally {
-            sender1.shutdownNow();
+            publisher1.shutdownNow();
           }
         }
       };
       Thread publisherThread1 = new Thread(publisherRunnable1);
       publisherThread1.start();
 
-      final NotificationPublisher.Sender<String> sender2 = getNewPublisher().createSender(FEED2);
+      final NotificationClient.Publisher<String> publisher2 = getNotificationClient().createPublisher(FEED2);
       Runnable publisherRunnable2 = new Runnable() {
         @Override
         public void run() {
           try {
             Random r = new Random();
             for (int j = 0; j < messagesCount; j++) {
-              sender2.send(String.format("fake-payload2-%d", j));
+              publisher2.publish(String.format("fake-payload2-%d", j));
               TimeUnit.MILLISECONDS.sleep(r.nextInt(200));
             }
           } catch (Throwable e) {
             Throwables.propagate(e);
           } finally {
-            sender2.shutdownNow();
+            publisher2.shutdownNow();
           }
         }
       };

@@ -19,18 +19,13 @@ package co.cask.cdap.notifications.guice;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.notifications.NotificationPublisher;
-import co.cask.cdap.notifications.NotificationSubscriber;
-import co.cask.cdap.notifications.client.NotificationFeedClient;
-import co.cask.cdap.notifications.kafka.KafkaNotificationPublisher;
-import co.cask.cdap.notifications.kafka.KafkaNotificationSubscriber;
-import co.cask.tephra.TransactionSystemClient;
+import co.cask.cdap.notifications.client.NotificationClient;
+import co.cask.cdap.notifications.kafka.KafkaNotificationClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provides;
-import org.apache.twill.kafka.client.KafkaClient;
+import com.google.inject.Scopes;
 
 /**
  *
@@ -55,26 +50,16 @@ public class NotificationClientRuntimeModule extends RuntimeModule {
   private static class NotificationClientModule extends AbstractModule {
     @Override
     protected void configure() {
+      bind(KafkaNotificationClient.class).in(Scopes.SINGLETON);
     }
 
     @Provides
     @SuppressWarnings("unused")
-    private NotificationPublisher notificationPublisher(CConfiguration cConf, NotificationFeedClient feedClient,
-                                                        Injector injector) {
+    private NotificationClient notificationPublisher(CConfiguration cConf, Injector injector) {
       // TODO use that constant once we have more core systems
       String coreSystem = cConf.get(Constants.Notification.CORE_SYSTEM, "kafka");
-      return new KafkaNotificationPublisher(injector.getInstance(KafkaClient.class), feedClient);
+      return injector.getInstance(KafkaNotificationClient.class);
     }
 
-    @Provides
-    @SuppressWarnings("unused")
-    private NotificationSubscriber notificationSubscriber(CConfiguration cConf, NotificationFeedClient feedClient,
-                                                          TransactionSystemClient txSystemClient,
-                                                          Injector injector) {
-      // TODO use that constant once we have more core systems
-      String coreSystem = cConf.get(Constants.Notification.CORE_SYSTEM, "kafka");
-      return new KafkaNotificationSubscriber(injector.getInstance(KafkaClient.class),
-                                             injector.getInstance(DatasetFramework.class), feedClient, txSystemClient);
-    }
   }
 }

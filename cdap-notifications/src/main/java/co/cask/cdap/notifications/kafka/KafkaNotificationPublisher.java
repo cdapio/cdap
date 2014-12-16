@@ -17,150 +17,33 @@
 package co.cask.cdap.notifications.kafka;
 
 import co.cask.cdap.notifications.NotificationFeed;
-import co.cask.cdap.notifications.NotificationPublisher;
-import co.cask.cdap.notifications.client.NotificationFeedClient;
-import co.cask.cdap.notifications.service.NotificationFeedException;
+import co.cask.cdap.notifications.client.AbstractNotificationPublisher;
 import com.google.common.base.Functions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.inject.Inject;
-import org.apache.twill.common.Threads;
-import org.apache.twill.kafka.client.Compression;
-import org.apache.twill.kafka.client.KafkaClient;
 import org.apache.twill.kafka.client.KafkaPublisher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
- * Kafka implementation of a {@link co.cask.cdap.notifications.NotificationSubscriber}.
+ * Kafka implementation of a {@link co.cask.cdap.notifications.client.NotificationClient.Publisher}.
  */
-public class KafkaNotificationPublisher implements NotificationPublisher {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaNotificationPublisher.class);
+public class KafkaNotificationPublisher<N> extends AbstractNotificationPublisher<N> {
 
-  private final KafkaClient kafkaClient;
-  private final KafkaPublisher.Ack ack;
+  private final NotificationFeed feed;
+  private final KafkaPublisher.Preparer preparer;
 
-  private KafkaPublisher kafkaPublisher;
-  private final NotificationFeedClient notificationFeedClient;
-
-  @Inject
-  public KafkaNotificationPublisher(KafkaClient kafkaClient, NotificationFeedClient notificationFeedClient) {
-    this.kafkaClient = kafkaClient;
-    this.notificationFeedClient = notificationFeedClient;
-    this.ack = KafkaPublisher.Ack.LEADER_RECEIVED;
-  }
-
-  private KafkaPublisher getKafkaPublisher() {
-    if (kafkaPublisher != null) {
-      return kafkaPublisher;
-    }
-    try {
-      kafkaPublisher = kafkaClient.getPublisher(ack, Compression.SNAPPY);
-    } catch (IllegalStateException e) {
-      // can happen if there are no kafka brokers because the kafka server is down.
-      kafkaPublisher = null;
-    }
-    return kafkaPublisher;
+  public KafkaNotificationPublisher(NotificationFeed feed, KafkaPublisher.Preparer preparer) {
+    super(feed);
+    this.feed = feed;
+    this.preparer = preparer;
   }
 
   @Override
-  public <N> Sender<N> createSender(final NotificationFeed feed)
-    throws NotificationFeedException {
-    final KafkaPublisher kafkaPublisher = getKafkaPublisher();
-    if (kafkaPublisher == null) {
-      throw new NotificationFeedException("Unable to get kafka publisher, will not be able to publish Notification.");
-    }
-
-    // This call will make sure that the feed exists - at this point it really should
-    // Because only the resource owner can publish changes from the resource
-    // And the resource owner should have created the feed first hand.
-    notificationFeedClient.getFeed(feed);
-
-    String topic = KafkaNotificationUtils.getKafkaTopic(feed);
-    final KafkaPublisher.Preparer preparer = kafkaPublisher.prepare(topic);
-
-    return new Sender<N>() {
-
-      private final ExecutorService executor = Executors.newSingleThreadExecutor(
-        Threads.createDaemonThreadFactory("notification-sender-%d"));
-
-      @Override
-      public synchronized void shutdown() {
-        executor.shutdown();
-      }
-
-      @Override
-      public synchronized boolean isShutdown() {
-        return executor.isShutdown();
-      }
-
-      @Override
-      public synchronized List<N> shutdownNow() {
-        List<Runnable> runnables = executor.shutdownNow();
-        ImmutableList.Builder<N> builder = ImmutableList.builder();
-        for (Runnable r : runnables) {
-          if (r instanceof GetNotificationRunnable) {
-            builder.add(((GetNotificationRunnable<N>) r).getNotification());
-          }
-        }
-        return builder.build();
-      }
-
-      @Override
-      public synchronized ListenableFuture<Void> send(N notification) throws IOException, SenderShutdownException {
-        if (isShutdown()) {
-          LOG.warn("Cannot publish notification, sender is shut down.");
-          throw new SenderShutdownException("Tried to publish notification " + notification + " after shut down.");
-        }
-
-        LOG.debug("Publishing on notification feed [{}]: {}", feed, notification);
-
-        ByteBuffer bb = ByteBuffer.wrap(KafkaMessageSerializer.encode(feed, notification));
-        preparer.add(bb, KafkaMessageSerializer.buildKafkaMessageKey(feed));
-
-        final ListenableFuture<Integer> future = preparer.send();
-        executor.submit(new GetNotificationRunnable<N>(future, notification));
-        return Futures.transform(future, Functions.<Void>constant(null));
-      }
-    };
-  }
-
-  /**
-   * Runnable which only job is to wait for the get method of a future representing the pushing of Notification
-   * to return.
-   *
-   * @param <N> Type of the Notification being pushed.
-   */
-  private static final class GetNotificationRunnable<N> implements Runnable {
-
-    private final ListenableFuture<Integer> future;
-    private final N notification;
-
-    public GetNotificationRunnable(ListenableFuture<Integer> future, N notification) {
-      this.future = future;
-      this.notification = notification;
-    }
-
-    public N getNotification() {
-      return notification;
-    }
-
-    @Override
-    public void run() {
-      try {
-        future.get();
-      } catch (Exception e) {
-        LOG.error("Could not get publish notification result", e);
-        Throwables.propagate(e);
-      }
-    }
+  protected ListenableFuture<Void> doSend(N notification) throws IOException {
+    ByteBuffer bb = ByteBuffer.wrap(KafkaMessageSerializer.encode(feed, notification));
+    preparer.add(bb, KafkaMessageSerializer.buildKafkaMessageKey(feed));
+    return Futures.transform(preparer.send(), Functions.<Void>constant(null));
   }
 }
