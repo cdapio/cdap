@@ -386,6 +386,8 @@ public class MasterServiceMain extends DaemonMain {
       // we have to start the dataset service. Because twill services are already running,
       // it will not be started by the service listener callback below.
       if (!dsService.isRunning()) {
+        // we need a new dataset service (the old one may have run before and can't be restarted)
+        dsService = baseInjector.getInstance(DatasetService.class); // not a singleton
         LOG.info("Starting Dataset service");
         dsService.startAndWait();
       }
