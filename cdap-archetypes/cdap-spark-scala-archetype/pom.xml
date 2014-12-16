@@ -26,7 +26,7 @@
 
   <artifactId>cdap-spark-scala-archetype</artifactId>
   <packaging>jar</packaging>
-  <name>Cask Data Application Platform (CDAP) Spark Scala Archetype</name>
+  <name>CDAP Spark Scala Archetype</name>
 
   <build>
     <pluginManagement>
