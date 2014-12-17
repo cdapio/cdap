@@ -39,7 +39,7 @@ function pandoc_includes() {
     # https://raw.githubusercontent.com/caskdata/cdap-clients/develop/cdap-authentication-clients/java/README.md
     # https://raw.githubusercontent.com/caskdata/cdap-ingest/release/1.0.0/cdap-file-drop-zone/README.md
     GITHUB_URL="https://raw.githubusercontent.com/caskdata"
-    MD_CLIENTS="$GITHUB_URL/cdap-clients/develop"
+    MD_CLIENTS="$GITHUB_URL/cdap-clients/release/1.1.0"
     MD_INGEST="$GITHUB_URL/cdap-ingest/release/1.0.0"
   fi
 
@@ -48,29 +48,18 @@ function pandoc_includes() {
   # authentication-client java
   local java_client_working="$INCLUDES_DIR/cdap-authentication-clients-java_working.rst"
   local java_client="$INCLUDES_DIR/cdap-authentication-clients-java.rst"
-  pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md  -o $java_client_working
-  
-  # authentication-client python
+  pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/java/README.md    -o $java_client_working
   pandoc -t rst -r markdown $MD_CLIENTS/cdap-authentication-clients/python/README.md  -o $INCLUDES_DIR/cdap-authentication-clients-python.rst
-  
-  # file-drop-zone
-  pandoc -t rst -r markdown $MD_INGEST/cdap-file-drop-zone/README.md  -o $INCLUDES_DIR/cdap-file-drop-zone.rst
-  
-  # file-tailer
-  pandoc -t rst -r markdown $MD_INGEST/cdap-file-tailer/README.md  -o $INCLUDES_DIR/cdap-file-tailer.rst
-  
-  # flume
-  pandoc -t rst -r markdown $MD_INGEST/cdap-flume/README.md  -o $INCLUDES_DIR/cdap-flume.rst
-  
-  # stream-client java
-  pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md  -o $INCLUDES_DIR/cdap-stream-clients-java.rst
-  
-  # stream-client python
-  pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md  -o $INCLUDES_DIR/cdap-stream-clients-python.rst
+
+  pandoc -t rst -r markdown $MD_INGEST/cdap-file-drop-zone/README.md        -o $INCLUDES_DIR/cdap-file-drop-zone.rst
+  pandoc -t rst -r markdown $MD_INGEST/cdap-file-tailer/README.md           -o $INCLUDES_DIR/cdap-file-tailer.rst
+  pandoc -t rst -r markdown $MD_INGEST/cdap-flume/README.md                 -o $INCLUDES_DIR/cdap-flume.rst
+  pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/java/README.md   -o $INCLUDES_DIR/cdap-stream-clients-java.rst
+  pandoc -t rst -r markdown $MD_INGEST/cdap-stream-clients/python/README.md -o $INCLUDES_DIR/cdap-stream-clients-python.rst
   
   # Fix version(s)
-  local version="1.1.0-SNAPSHOT" # Version to be written into file
-  rewrite $java_client_working $java_client "{version}" $version
+  local release_version="1.1.0-SNAPSHOT" # Version to be written into file
+  rewrite $java_client_working $java_client "{version}" $release_version
   
   version
   cd $SCRIPT_PATH
