@@ -44,9 +44,13 @@ public enum Namespace {
   // returns null if given name doesn't belong to namespace
   @Nullable
   public String fromNamespaced(String namespacedDatasetName) {
-    if (!namespacedDatasetName.startsWith(prefix)) {
+    if (!contains(namespacedDatasetName)) {
       return null;
     }
     return namespacedDatasetName.substring(prefix.length());
+  }
+
+  public boolean contains(String namespacedDatasetName) {
+    return namespacedDatasetName.startsWith(prefix);
   }
 }
