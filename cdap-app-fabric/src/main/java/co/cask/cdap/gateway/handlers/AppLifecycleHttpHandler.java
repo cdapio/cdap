@@ -338,10 +338,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private BodyConsumer deployAppStream (final HttpRequest request,
-                                        final HttpResponder responder, final String namespaceId,
-                                        final String appId) throws IOException {
-    validateNamespace(namespaceId, responder);
+  private BodyConsumer deployAppStream(final HttpRequest request, final HttpResponder responder,
+                                       final String namespaceId, final String appId) throws IOException {
+    if (!namespaceExists(namespaceId)) {
+      LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
+                                                                         "exist.", namespaceId));
+      return null;
+    }
 
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
 
@@ -426,23 +430,30 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void validateNamespace(String namespace, HttpResponder responder) {
-    Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
-    Preconditions.checkArgument(!namespace.isEmpty(), "Namespace should not be empty.");
-    if (store.getNamespace(Id.Namespace.from(namespace)) == null) {
-      if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
-        NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE)
-                                                         .setDisplayName(Constants.DEFAULT_NAMESPACE)
-                                                         .setDescription(Constants.DEFAULT_NAMESPACE).build());
-        if (existing != null) {
-          LOG.trace("Default namespace already exists.");
-        } else {
-          LOG.trace("Created default namespace.");
-        }
+  private boolean namespaceExists(String namespace) {
+    boolean isValid = false;
+    if (namespace != null && !namespace.isEmpty()) {
+      if (store.getNamespace(Id.Namespace.from(namespace)) != null) {
+        isValid = true;
       } else {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespace));
+        // null namespace found. check if this is default, and try to create it.
+        // This logic could be changed later to figure out a way to create the 'default' namespace at a better
+        // time during the initialization of CDAP.
+        if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
+          NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
+                                                           .setName(Constants.DEFAULT_NAMESPACE)
+                                                           .setDisplayName(Constants.DEFAULT_NAMESPACE)
+                                                           .setDescription(Constants.DEFAULT_NAMESPACE).build());
+          if (existing != null) {
+            LOG.trace("Default namespace already exists.");
+          } else {
+            LOG.trace("Created default namespace.");
+          }
+          isValid = true;
+        }
       }
     }
+    return isValid;
   }
 
   /**
