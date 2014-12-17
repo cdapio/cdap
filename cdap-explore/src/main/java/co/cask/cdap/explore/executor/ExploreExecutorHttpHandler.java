@@ -33,6 +33,7 @@ import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.Lists;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -46,7 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Map;
+import java.util.List;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -57,12 +58,6 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_2 + "/data/explore")
 public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
-  // a constant for now, but will soon come from StreamConfig.
-  private static final Schema STREAM_SCHEMA = Schema.recordOf(
-    "streamEvent",
-    Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
-    Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))),
-    Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
 
   private final ExploreService exploreService;
   private final DatasetFramework datasetFramework;
@@ -84,8 +79,9 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     try {
 
       String streamLocationURI;
+      StreamConfig streamConfig;
       try {
-        StreamConfig streamConfig = streamAdmin.getConfig(streamName);
+        streamConfig = streamAdmin.getConfig(streamName);
         Location streamLocation = streamConfig.getLocation();
         if (streamLocation == null) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find location of stream " + streamName);
@@ -101,7 +97,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.debug("Enabling explore for stream {} at location {}", streamName, streamLocationURI);
       String createStatement;
       try {
-        createStatement = generateStreamCreateStatement(streamName, streamLocationURI);
+        createStatement = generateStreamCreateStatement(streamName, streamLocationURI,
+                                                        streamConfig.getFormat().getSchema());
       } catch (UnsupportedTypeException e) {
         LOG.error("Exception while generating create statement for stream {}", streamName, e);
         responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
@@ -281,11 +278,19 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    *
    * @param name name of the stream
    * @param location location of the stream
+   * @param bodySchema schema for the body of a stream event
    * @return hive statement to use when creating the external table for querying the stream
    * @throws UnsupportedTypeException
    */
-  public static String generateStreamCreateStatement(String name, String location) throws UnsupportedTypeException {
-    String hiveSchema = SchemaConverter.toHiveSchema(STREAM_SCHEMA);
+  public static String generateStreamCreateStatement(String name, String location, Schema bodySchema)
+    throws UnsupportedTypeException {
+    // schema of a stream is always timestamp, headers, and then the schema of the body.
+    List<Schema.Field> fields = Lists.newArrayList(
+      Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
+    fields.addAll(bodySchema.getFields());
+    Schema schema = Schema.recordOf("streamEvent", fields);
+    String hiveSchema = SchemaConverter.toHiveSchema(schema);
     String tableName = getStreamTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Stream\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +

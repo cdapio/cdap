@@ -17,6 +17,7 @@
 package co.cask.cdap.hive.serde;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.internal.io.StructuredRecord;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
@@ -38,10 +39,6 @@ import java.util.UUID;
  */
 public class ObjectTranslator {
 
-  // TODO: Will need some sort of Record class that we check for here, as
-  //       we want to be able to have formats that take a schema as input and return a record
-  //       matching their input schema. In such cases they cannot return some predefined java class,
-  //       but must return something that still allows us to get the fields of the record.
   /**
    * Using reflection, flatten an object into a list of fields so it can be examined by an ObjectInspector.
    * Assumes the field names and types given as input were derived from the schema of the object.
@@ -59,8 +56,7 @@ public class ObjectTranslator {
     for (int i = 0; i < fieldNames.size(); i++) {
       String fieldName = fieldNames.get(i);
       TypeInfo fieldType = fieldTypes.get(i);
-      Object recordField;
-      recordField = getRecordField(obj, fieldName);
+      Object recordField = getRecordField(obj, fieldName);
       objectFields.add(translateField(recordField, fieldType));
     }
     return objectFields;
@@ -162,8 +158,13 @@ public class ObjectTranslator {
     return translatedMap;
   }
 
+  // get a field from the object using the get method if the object is a StructuredRecord,
+  // or using reflection if it is not.
   private static Object getRecordField(Object record, String fieldName)
     throws NoSuchFieldException, IllegalAccessException {
+    if (record instanceof StructuredRecord) {
+      return ((StructuredRecord) record).get(fieldName);
+    }
     Class recordClass = record.getClass();
     Field field = recordClass.getDeclaredField(fieldName);
     field.setAccessible(true);

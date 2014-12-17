@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -209,11 +210,23 @@ public class Bytes {
    * @return String made from <code>buf</code> or null
    */
   public static String toString(ByteBuffer buf) {
+    return toString(buf, Charsets.UTF_8);
+  }
+
+  /**
+   * This method will convert the remaining bytes of an
+   * encoded byte buffer into a string of the given charset.
+   *
+   * @param buf Encoded byte buffer.
+   * @param charset Charset of the string encoded in the byte buffer.
+   * @return String made from <code>buf</code> or null
+   */
+  public static String toString(ByteBuffer buf, Charset charset) {
     if (buf == null) {
       return null;
     }
     buf.mark();
-    String s = Charsets.UTF_8.decode(buf).toString();
+    String s = charset.decode(buf).toString();
     buf.reset();
     return s;
   }

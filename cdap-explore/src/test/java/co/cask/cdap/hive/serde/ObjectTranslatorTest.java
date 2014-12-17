@@ -17,7 +17,9 @@
 package co.cask.cdap.hive.serde;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.hive.serde.ObjectTranslator;
+import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.internal.io.Schema;
+import co.cask.cdap.internal.io.StructuredRecord;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -41,6 +43,7 @@ import java.util.UUID;
  */
 public class ObjectTranslatorTest {
 
+  // contains all types our Schema allows
   private static class SimpleRecord {
     final boolean booleanField = Boolean.TRUE;
     final byte byteField = Byte.MAX_VALUE;
@@ -63,6 +66,7 @@ public class ObjectTranslatorTest {
     }
   }
 
+  // Hive version of SimpleRecord, with types changed to expected types for Hive
   private static class HiveSimpleRecord {
     boolean booleanField = Boolean.TRUE;
     int byteField = Byte.MAX_VALUE;
@@ -192,6 +196,7 @@ public class ObjectTranslatorTest {
 
   @Test
   public void testIdentityTranslations() throws Exception {
+    // include all types that are the same in our schema as they are in Hive
     Map<Object, TypeInfo> inputs = Maps.newHashMap();
     inputs.put("foobar", TypeInfoFactory.stringTypeInfo);
     inputs.put(5, TypeInfoFactory.intTypeInfo);
@@ -273,6 +278,37 @@ public class ObjectTranslatorTest {
     List<TypeInfo> fieldTypes = HiveSimpleRecord.getFieldTypes();
     List<Object> expected = hiveSimpleRecord.getAsList();
     List<Object> translated = ObjectTranslator.flattenRecord(simpleRecord, fieldNames, fieldTypes);
+    assertSimpleRecordEquals(expected, translated);
+  }
+
+  @Test
+  public void testFlattenSimpleStructuredRecord() throws Exception {
+    SimpleRecord simpleRecord = new SimpleRecord(new URI("http://abc.com"), new URL("http://123.com"));
+    Schema schema = new ReflectionSchemaGenerator().generate(SimpleRecord.class);
+    StructuredRecord structuredRecord = StructuredRecord.builder(schema)
+      .set("booleanField", simpleRecord.booleanField)
+      .set("byteField", simpleRecord.byteField)
+      .set("charField", simpleRecord.charField)
+      .set("shortField", simpleRecord.shortField)
+      .set("intField", simpleRecord.intField)
+      .set("longField", simpleRecord.longField)
+      .set("floatField", simpleRecord.floatField)
+      .set("doubleField", simpleRecord.doubleField)
+      .set("stringField", simpleRecord.stringField)
+      .set("bytesField", simpleRecord.bytesField)
+      .set("byteBufferField", simpleRecord.byteBufferField)
+      .set("uuidField", simpleRecord.uuidField)
+      .set("uriField", simpleRecord.uriField)
+      .set("urlField", simpleRecord.urlField)
+      .build();
+
+    // create the Hive version of the record
+    HiveSimpleRecord hiveSimpleRecord = new HiveSimpleRecord(simpleRecord);
+    List<String> fieldNames = HiveSimpleRecord.getFieldNames();
+    List<TypeInfo> fieldTypes = HiveSimpleRecord.getFieldTypes();
+    List<Object> expected = hiveSimpleRecord.getAsList();
+    // flatten the StructuredRecord into a list of objects
+    List<Object> translated = ObjectTranslator.flattenRecord(structuredRecord, fieldNames, fieldTypes);
     assertSimpleRecordEquals(expected, translated);
   }
 
