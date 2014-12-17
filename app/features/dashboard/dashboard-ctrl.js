@@ -107,8 +107,21 @@ function ($scope, $state, $alert, $dropdown) {
    * rename the currently active dashboard tab
    */
   $scope.renameDashboard = function (newName) {
-    alert(newName);
+    if(newName) {
+      $scope.dashboards[$scope.dashboards.activeTab].title = newName;
+    }
   };
+
+
+  /**
+   * rename a widget
+   */
+  $scope.renameWidget = function (wdgt, newName) {
+    if(newName) {
+      wdgt.title = newName;
+    }
+  };
+
 
 
   /**
@@ -145,17 +158,6 @@ function ($scope, $state, $alert, $dropdown) {
 
     columns[index].unshift({
       title: 'added widget'
-    });
-  };
-
-
-
-
-  $scope.renameWidget = function () {
-    $alert({
-      title: 'Sorry!',
-      content: 'renameWidget is not yet implemented.',
-      type: 'danger'
     });
   };
 

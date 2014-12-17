@@ -19,7 +19,7 @@
   <li role="presentation">
     <a role="menuitem" tabindex="-1" href=""
       ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeTab].title)"
-      cask-promptable="dashboards[dashboards.activeTab].title = $value">
+      cask-promptable="renameDashboard($value)">
       <span class="fa fa-fw fa-pencil"></span>
       Rename
     </a>
