@@ -106,11 +106,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import com.ning.http.client.Body;
-import com.ning.http.client.BodyGenerator;
-import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
@@ -132,7 +128,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -141,7 +136,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -171,11 +165,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final long METRICS_SERVER_RESPONSE_TIMEOUT = TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES);
 
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
-
-  /**
-   * Timeout to upload to remote app fabric.
-   */
-  private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
 
   /**
    * Configuration object passed from higher up.
@@ -1804,160 +1793,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       if (!entry.getValue().getSchedules().isEmpty()) {
         scheduler.schedule(programId, ProgramType.WORKFLOW, entry.getValue().getSchedules());
       }
-    }
-  }
-
-  /**
-   * Promote an application to another CDAP instance.
-   */
-  @POST
-  @Path("/apps/{app-id}/promote")
-  public void promoteApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
-    try {
-      String postBody = null;
-
-      try {
-        postBody = IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
-      } catch (IOException e) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        return;
-      }
-
-      Map<String, String> content = null;
-      try {
-        content = GSON.fromJson(postBody, STRING_MAP_TYPE);
-      } catch (JsonSyntaxException e) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Not a valid body specified.");
-        return;
-      }
-
-      if (!content.containsKey("hostname")) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Hostname not specified.");
-        return;
-      }
-
-      // Checks DNS, Ipv4, Ipv6 address in one go.
-      String hostname = content.get("hostname");
-      Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
-
-      String accountId = getAuthenticatedAccountId(request);
-      String token = request.getHeader(Constants.Gateway.API_KEY);
-
-      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId, appId));
-      if (appArchive == null || !appArchive.exists()) {
-        throw new IOException("Unable to locate the application.");
-      }
-
-      if (!promote(token, accountId, appId, hostname)) {
-        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to promote application " + appId);
-      } else {
-        responder.sendStatus(HttpResponseStatus.OK);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  public boolean promote(String authToken, String accountId, String appId, String hostname) throws Exception {
-
-    try {
-      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId,
-                                                                                          appId));
-      if (appArchive == null || !appArchive.exists()) {
-        throw new Exception("Unable to locate the application.");
-      }
-
-      String schema = "https";
-      if ("localhost".equals(hostname)) {
-        schema = "http";
-      }
-
-      // Construct URL for promotion of application to remote cluster
-      int gatewayPort;
-      if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
-        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.ROUTER_SSL_PORT,
-                                                         Constants.Router.DEFAULT_ROUTER_SSL_PORT));
-      } else {
-        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.ROUTER_PORT,
-                                                         Constants.Router.DEFAULT_ROUTER_PORT));
-      }
-
-      String url = String.format("%s://%s:%s/v2/apps/%s",
-                                 schema, hostname, gatewayPort, appId);
-
-      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-        .setUrl(url)
-        .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
-        .setHeader("X-Archive-Name", appArchive.getName())
-        .setHeader(Constants.Gateway.API_KEY, authToken)
-        .build();
-
-      try {
-        Future<Response> future = client.put(new LocationBodyGenerator(appArchive));
-        Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
-        if (response.getStatusCode() != 200) {
-          throw new RuntimeException(response.getResponseBody());
-        }
-        return true;
-      } finally {
-        client.close();
-      }
-    } catch (Exception ex) {
-      LOG.warn(ex.getMessage(), ex);
-      throw ex;
-    }
-  }
-
-  private static final class LocationBodyGenerator implements BodyGenerator {
-
-    private final Location location;
-
-    private LocationBodyGenerator(Location location) {
-      this.location = location;
-    }
-
-    @Override
-    public Body createBody() throws IOException {
-      final InputStream input = location.getInputStream();
-
-      return new Body() {
-        @Override
-        public long getContentLength() {
-          try {
-            return location.length();
-          } catch (IOException e) {
-            throw Throwables.propagate(e);
-          }
-        }
-
-        @Override
-        public long read(ByteBuffer buffer) throws IOException {
-          // Fast path
-          if (buffer.hasArray()) {
-            int len = input.read(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
-            if (len > 0) {
-              buffer.position(buffer.position() + len);
-            }
-            return len;
-          }
-
-          byte[] bytes = new byte[buffer.remaining()];
-          int len = input.read(bytes);
-          if (len < 0) {
-            return len;
-          }
-          buffer.put(bytes, 0, len);
-          return len;
-        }
-
-        @Override
-        public void close() throws IOException {
-          input.close();
-        }
-      };
     }
   }
 
