@@ -121,36 +121,17 @@ public class LogCleanupTest {
 
     Assert.assertFalse(notDelete.isEmpty());
 
-    List<Long> toDeleteListKeys = Lists.newArrayList();
-    while (toDeleteListKeys.size() < toDelete.size()) {
-      long key = deletionBoundary - RANDOM.nextInt(50000) - 10000;
-      if (!toDeleteListKeys.contains(key)) {
-        toDeleteListKeys.add(key);
-      }
-    }
-
-    Assert.assertEquals(toDelete.size(), toDeleteListKeys.size());
-
+    int counter = 0;
     for (Location location : toDelete) {
-      fileMetaDataManager.writeMetaData(dummyContext, toDeleteListKeys.get(0),
+      fileMetaDataManager.writeMetaData(dummyContext, deletionBoundary - counter - 10000,
                                         createFile(location));
-      toDeleteListKeys.remove(0);
+      counter++;
     }
-
-    List<Long> notDeleteListKeys = Lists.newArrayList();
-    while (notDeleteListKeys.size() < notDelete.size()) {
-      long key = deletionBoundary + RANDOM.nextInt(50000) + 10000;
-      if (!notDeleteListKeys.contains(key)) {
-        notDeleteListKeys.add(key);
-      }
-    }
-
-    Assert.assertEquals(notDelete.size(), notDeleteListKeys.size());
 
     for (Location location : notDelete) {
-      fileMetaDataManager.writeMetaData(dummyContext, notDeleteListKeys.get(0),
+      fileMetaDataManager.writeMetaData(dummyContext, deletionBoundary + counter + 10000,
                                         createFile(location));
-      notDeleteListKeys.remove(0);
+      counter++;
     }
 
     Assert.assertEquals(locationListsToString(toDelete, notDelete),
