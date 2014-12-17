@@ -29,9 +29,9 @@ import co.cask.cdap.watchdog.election.PartitionChangeHandler;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Table;
+import com.google.common.collect.RowSortedTable;
+import com.google.common.collect.TreeBasedTable;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -45,9 +45,12 @@ import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -64,19 +67,21 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   private final KafkaClientService kafkaClient;
 
   private final CheckpointManager checkpointManager;
-  private final Table<Long, String, List<KafkaLogEvent>> messageTable;
+  private final RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable;
 
   private final long eventBucketIntervalMs;
-  private final long eventProcessingDelayMs;
   private final int logCleanupIntervalMins;
+  private final long maxNumberOfBucketsInTable;
 
   private final LogFileWriter<KafkaLogEvent> logFileWriter;
   private final ListeningScheduledExecutorService scheduledExecutor;
   private final LogCleanup logCleanup;
 
-  private Cancellable kafkaCancel;
   private ScheduledFuture<?> logWriterFuture;
   private ScheduledFuture<?> cleanupFuture;
+
+  private Map<Integer, Cancellable> kafkaCancelMap;
+  private Map<Integer, CountDownLatch> kafkaCancelCallbackLatchMap;
 
   @Inject
 
@@ -90,7 +95,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
 
     this.checkpointManager = new CheckpointManager(tableUtil, txClient, topic);
     FileMetaDataManager fileMetaDataManager = new FileMetaDataManager(tableUtil, txClient, locationFactory);
-    this.messageTable = HashBasedTable.create();
+    this.messageTable = TreeBasedTable.create();
 
     this.kafkaClient = kafkaClient;
 
@@ -128,10 +133,13 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     Preconditions.checkArgument(this.eventBucketIntervalMs > 0,
                                 "Event bucket interval is invalid: %s", this.eventBucketIntervalMs);
 
-    this.eventProcessingDelayMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_EVENT_PROCESSING_DELAY_MS,
-                                                  LoggingConfiguration.DEFAULT_LOG_SAVER_EVENT_PROCESSING_DELAY_MS);
-    Preconditions.checkArgument(this.eventProcessingDelayMs > 0,
-                                "Event processing delay interval is invalid: %s", this.eventProcessingDelayMs);
+    this.maxNumberOfBucketsInTable = cConfig.getLong
+      (LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS,
+       LoggingConfiguration.DEFAULT_LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS);
+    Preconditions.checkArgument(this.maxNumberOfBucketsInTable > 0,
+                                "Maximum number of event buckets in memory is invalid: %s",
+                                this.maxNumberOfBucketsInTable);
+
 
     long topicCreationSleepMs = cConfig.getLong(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS,
                                                 LoggingConfiguration.DEFAULT_LOG_SAVER_TOPIC_WAIT_SLEEP_MS);
@@ -156,11 +164,14 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
         Threads.createDaemonThreadFactory("log-saver-main")));
     this.logCleanup = new LogCleanup(fileMetaDataManager, logBaseDir, retentionDurationMs);
 
+    this.kafkaCancelMap = new HashMap<Integer, Cancellable>();
+    this.kafkaCancelCallbackLatchMap = new HashMap<Integer, CountDownLatch>();
   }
 
   @Override
   public void partitionsChanged(Set<Integer> partitions) {
     try {
+      LOG.info("Changed partitions: {}", partitions);
       unscheduleTasks();
       scheduleTasks(partitions);
     } catch (Exception e) {
@@ -177,7 +188,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
   protected void shutDown() throws Exception {
     LOG.info("Stopping LogSaver...");
 
-    kafkaCancel.cancel();
+    cancelLogCollectorCallbacks();
     scheduledExecutor.shutdown();
 
     logFileWriter.flush();
@@ -194,7 +205,7 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     subscribe(partitions);
 
     LogWriter logWriter = new LogWriter(logFileWriter, messageTable,
-                                        eventProcessingDelayMs, eventBucketIntervalMs);
+                                        eventBucketIntervalMs, maxNumberOfBucketsInTable);
     logWriterFuture = scheduledExecutor.scheduleWithFixedDelay(logWriter, 100, 200, TimeUnit.MILLISECONDS);
 
     if (partitions.contains(0)) {
@@ -216,21 +227,30 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
     }
 
     logFileWriter.flush();
-    if (kafkaCancel != null) {
-      kafkaCancel.cancel();
-      kafkaCancel = null;
-    }
+
+    cancelLogCollectorCallbacks();
 
     messageTable.clear();
   }
 
-  private void subscribe(Set<Integer> partitions) throws Exception {
-    LOG.info("Prepare to subscribe.");
+  private void cancelLogCollectorCallbacks() {
+    for (Entry<Integer, Cancellable> entry : kafkaCancelMap.entrySet()) {
+      if (entry.getValue() != null) {
+        LOG.info("Cancelling kafka callback for partition {}", entry.getKey());
+        kafkaCancelCallbackLatchMap.get(entry.getKey()).countDown();
+        entry.getValue().cancel();
+      }
+    }
+    kafkaCancelMap.clear();
+    kafkaCancelCallbackLatchMap.clear();
+  }
 
-    KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
+  private void subscribe(Set<Integer> partitions) throws Exception {
+    LOG.info("Prepare to subscribe for partitions: {}", partitions);
 
     Map<Integer, Long> partitionOffset = Maps.newHashMap();
     for (int part : partitions) {
+      KafkaConsumer.Preparer preparer = kafkaClient.getConsumer().prepare();
       long offset = checkpointManager.getCheckpoint(part);
       partitionOffset.put(part, offset);
 
@@ -239,10 +259,13 @@ public final class LogSaver extends AbstractIdleService implements PartitionChan
       } else {
         preparer.addFromBeginning(topic, part);
       }
-    }
 
-    kafkaCancel = preparer.consume(
-      new LogCollectorCallback(messageTable, serializer, eventBucketIntervalMs));
+      kafkaCancelCallbackLatchMap.put(part, new CountDownLatch(1));
+      kafkaCancelMap.put(part, preparer.consume(
+        new LogCollectorCallback(messageTable, serializer,
+                                 eventBucketIntervalMs, maxNumberOfBucketsInTable,
+                                 kafkaCancelCallbackLatchMap.get(part))));
+    }
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);
   }

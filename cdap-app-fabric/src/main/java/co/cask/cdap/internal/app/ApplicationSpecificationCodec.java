@@ -71,8 +71,8 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                               context, StreamSpecification.class);
     Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
     Map<String, DatasetCreationSpec> datasetInstances = deserializeMap(jsonObj.get("datasetInstances"),
-                                                                               context,
-                                                                               DatasetCreationSpec.class);
+                                                                       context,
+                                                                       DatasetCreationSpec.class);
     Map<String, FlowSpecification> flows = deserializeMap(jsonObj.get("flows"),
                                                           context, FlowSpecification.class);
     Map<String, ProcedureSpecification> procedures = deserializeMap(jsonObj.get("procedures"),
@@ -80,7 +80,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     Map<String, MapReduceSpecification> mapReduces = deserializeMap(jsonObj.get("mapReduces"),
                                                                     context, MapReduceSpecification.class);
     Map<String, SparkSpecification> sparks = deserializeMap(jsonObj.get("sparks"),
-                                                                    context, SparkSpecification.class);
+                                                            context, SparkSpecification.class);
     Map<String, WorkflowSpecification> workflows = deserializeMap(jsonObj.get("workflows"),
                                                                   context, WorkflowSpecification.class);
 

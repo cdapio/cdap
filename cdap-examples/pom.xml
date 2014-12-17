@@ -27,7 +27,7 @@
 
   <artifactId>cdap-examples</artifactId>
   <packaging>pom</packaging>
-  <name>Cask Data Application Platform (CDAP) Examples</name>
+  <name>CDAP Examples</name>
 
   <modules>
     <module>CountRandom</module>

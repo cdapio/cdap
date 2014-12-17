@@ -18,6 +18,7 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
 import co.cask.cdap.proto.ColumnDesc;
@@ -39,7 +40,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
 
   @BeforeClass
   public static void start() throws Exception {
-    startServices(CConfiguration.create());
+    startServices();
 
     datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
@@ -72,9 +73,9 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "my_table", "TABLE", "Cask CDAP Dataset")),
+                              "", "default", "my_table", "TABLE", "CDAP Dataset")),
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "other_table", "TABLE", "Cask CDAP Dataset")))
+                              "", "default", "other_table", "TABLE", "CDAP Dataset")))
     );
 
     // Pattern on table name
@@ -89,7 +90,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                           ),
                           Lists.newArrayList(
                             new QueryResult(Lists.<Object>newArrayList(
-                              "", "default", "other_table", "TABLE", "Cask CDAP Dataset")))
+                              "", "default", "other_table", "TABLE", "CDAP Dataset")))
     );
   }
 

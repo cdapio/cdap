@@ -214,14 +214,13 @@ see the :ref:`configuration-security` section.
      - ``cdap``
      - Logging service account
    * - ``log.saver.event.bucket.interval.ms``
-     - ``4000``
-     - Log events published in this interval (in milliseconds) will be processed in a batch.
-       Smaller values will increase the odds of log events going out-of-order.
-   * - ``log.saver.event.processing.delay.ms``
-     - ``8000``
-     - Buffer log events in memory for given time, in milliseconds. Log events received after
-       this delay will show up out-of-order. This needs to be greater than
-       ``log.saver.event.bucket.interval.ms`` by at least a few hundred milliseconds.
+     - ``1000``
+     - Log events published in this interval (in milliseconds) will be put in one
+       in-memory bucket and processed in a batch. Smaller values will increase the odds of
+       log events going out-of-order.
+   * - ``log.saver.event.max.inmemory.buckets``
+     - ``8``
+     - Maximum number of event buckets in memory.
    * - ``log.saver.num.instances``
      - ``1``
      - Log Saver instances to run in YARN

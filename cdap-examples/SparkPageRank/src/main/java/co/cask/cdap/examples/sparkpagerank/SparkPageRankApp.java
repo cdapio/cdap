@@ -26,7 +26,6 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
-import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 
@@ -79,12 +78,10 @@ public class SparkPageRankApp extends AbstractApplication {
   public static final class SparkPageRankSpecification extends AbstractSpark {
 
     @Override
-    public SparkSpecification configure() {
-      return SparkSpecification.Builder.with()
-        .setName("SparkPageRankProgram")
-        .setDescription("Spark Page Rank Program")
-        .setMainClassName(SparkPageRankProgram.class.getName())
-        .build();
+    public void configure() {
+      setName("SparkPageRankProgram");
+      setDescription("Spark Page Rank Program");
+      setMainClass(SparkPageRankProgram.class);
     }
   }
 
