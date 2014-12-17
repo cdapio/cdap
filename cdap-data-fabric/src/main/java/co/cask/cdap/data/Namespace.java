@@ -49,4 +49,8 @@ public enum Namespace {
     }
     return namespacedDatasetName.substring(prefix.length());
   }
+
+  public boolean contains(String datasetName) {
+    return datasetName.startsWith(prefix);
+  }
 }
