@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.datafabric.dataset.type;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.DirectoryClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -23,7 +24,6 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.hash.HashCodes;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
@@ -109,7 +109,7 @@ public class DistributedDatasetTypeClassLoaderFactory implements DatasetTypeClas
       }
 
       // The folder name to expand to is formed by the module name and the checksum.
-      String dirName = String.format("%s.%s", moduleMeta.getName(), HashCodes.fromBytes(messageDigest.digest()));
+      String dirName = String.format("%s.%s", moduleMeta.getName(), Bytes.toStringBinary(messageDigest.digest()));
       File expandDir = new File(tmpJar.getParent(), dirName);
 
       if (!expandDir.isDirectory()) {
