@@ -11,44 +11,42 @@
       <button class="pull-right btn btn-default fa fa-close" ng-click="hideWelcomeMessage=true"> </button>
     </div>
     <div class="panel-body">
-      <div class="message-section">
         <div class="row">
           <div class="col-sm-4">
-            <section>
-              <h2> First </h2>
-              <p>
-                It is a long established fact that a reader will be distracted by the readable content of
-                a page when looking at its layout. The point of using Lorem Ipsum is that it has a
-                more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
-                making it look like readable English.
-              </p>
-            </section>
+            <h2> First </h2>
+            <p class="text-justify">
+              It is a long established fact that a reader will be distracted by the readable content of
+              a page when looking at its layout. The point of using Lorem Ipsum is that it has a
+              more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
+              making it look like readable English.
+            </p>
           </div>
           <div class="col-sm-4">
-            <section>
-              <h2> Next </h2>
-              <p>
-                It is a long established fact that a reader will be distracted by the readable content of
-                a page when looking at its layout. The point of using Lorem Ipsum is that it has a
-                more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
-                making it look like readable English.
-              </p>
-            </section>
+            <h2> Next </h2>
+            <p class="text-justify">
+              It is a long established fact that a reader will be distracted by the readable content of
+              a page when looking at its layout. The point of using Lorem Ipsum is that it has a
+              more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
+              making it look like readable English.
+            </p>
           </div>
           <div class="col-sm-4">
-            <section>
-              <h2> Finally </h2>
-              <p>
-                It is a long established fact that a reader will be distracted by the readable content of
-                a page when looking at its layout. The point of using Lorem Ipsum is that it has a
-                more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
-                making it look like readable English.
-              </p>
-            </section>
+            <h2> Finally </h2>
+            <p class="text-justify">
+              It is a long established fact that a reader will be distracted by the readable content of
+              a page when looking at its layout. The point of using Lorem Ipsum is that it has a
+              more-or-less normal distribution of letters, as opposed to using 'Content here, content here',
+              making it look like readable English.
+            </p>
           </div>
         </div>
-      </div>
     </div>
   </div>
 </div>
-<div ng-include="'assets/features/home/templates/data-apps-section.html'"> </div>
+<hr />
+<div ng-show="apps.length > 0">
+  <div ng-include="'assets/features/home/templates/data-apps-section.html'"> </div>
+</div>
+<div ng-show="apps.length == 0">
+  <div ng-include="'assets/features/home/templates/data-apps-default-view.html'"> </div>
+</div>
