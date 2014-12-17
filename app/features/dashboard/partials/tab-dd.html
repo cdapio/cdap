@@ -16,10 +16,10 @@
     </a>
   </li>
 
-  <li role="presentation" class="disabled">
+  <li role="presentation">
     <a role="menuitem" tabindex="-1" href=""
-      ng-click="caskPrompt('Dashboard name', 'whatever')"
-      cask-promptable="renameDashboard($value)">
+      ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeTab].title)"
+      cask-promptable="dashboards[dashboards.activeTab].title = $value">
       <span class="fa fa-fw fa-pencil"></span>
       Rename
     </a>
