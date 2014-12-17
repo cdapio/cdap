@@ -1,0 +1,260 @@
+/*
+ * Copyright © 2014 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package co.cask.cdap.test;
+
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.client.ApplicationClient;
+import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.client.ProgramClient;
+import co.cask.cdap.client.StreamClient;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.exception.ApplicationNotFoundException;
+import co.cask.cdap.client.exception.NotFoundException;
+import co.cask.cdap.client.exception.ProgramNotFoundException;
+import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.Namespace;
+import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
+import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.StreamRecord;
+import co.cask.cdap.test.internal.AppFabricTestHelper;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import org.apache.twill.filesystem.Location;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
+
+/**
+ *
+ */
+public class IntegrationTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestBase.class);
+
+  /**
+   * If empty, start our own CDAP standalone instance for testing.
+   * If not empty, use the provided remote CDAP instance for testing.
+   */
+  private static final String INSTANCE_URI = System.getProperty("instanceUri", "");
+
+  @Before
+  public void setUp() throws Exception {
+    StandaloneContainer.start();
+
+    assertNoApps();
+    assertNoUserDatasets();
+    // TODO: check metrics, streams, etc.
+
+    // TODO: check no streams once streams can be deleted instead of truncating all streams
+    StreamClient streamClient = getStreamClient();
+    List<StreamRecord> streamRecords = streamClient.list();
+    if (streamRecords.size() > 0) {
+      for (StreamRecord streamRecord : streamRecords) {
+        try {
+          streamClient.truncate(streamRecord.getId());
+        } catch (Exception e) {
+          Assert.fail("All existing streams must be truncated" +
+                      " - failed to truncate stream '" + streamRecord.getId() + "'");
+        }
+      }
+    }
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    assertNoApps();
+    assertNoUserDatasets();
+    // TODO: check metrics, streams, etc.
+
+    StandaloneContainer.stop();
+  }
+
+  protected void assertNoUserDatasets() throws Exception {
+    DatasetClient datasetClient = getDatasetClient();
+    List<DatasetSpecification> datasets = datasetClient.list();
+
+    final DefaultDatasetNamespace systemDatasetNamespace = new DefaultDatasetNamespace(
+      CConfiguration.create(), Namespace.SYSTEM);
+
+    Iterable<DatasetSpecification> filteredDatasts = Iterables.filter(datasets,
+                                                                      new Predicate<DatasetSpecification>() {
+      @Override
+      public boolean apply(@Nullable DatasetSpecification input) {
+        if (input == null) {
+          return true;
+        }
+
+        return !systemDatasetNamespace.contains(input.getName());
+      }
+    });
+
+    Iterable<String> filteredDatasetsNames = Iterables.transform(filteredDatasts,
+                                                                 new Function<DatasetSpecification, String>() {
+      @Nullable
+      @Override
+      public String apply(@Nullable DatasetSpecification input) {
+        if (input == null) {
+          return "<null>";
+        }
+
+        return input.getName();
+      }
+    });
+
+    Assert.assertFalse("Must have no user datasets, but found the following user datasets: "
+                       + Joiner.on(", ").join(filteredDatasetsNames),
+                       filteredDatasts.iterator().hasNext());
+  }
+
+  protected void assertNoApps() throws Exception {
+    ApplicationClient applicationClient = getApplicationClient();
+    List<ApplicationRecord> applicationRecords = applicationClient.list();
+    List<String> applicationIds = Lists.newArrayList();
+    for (ApplicationRecord applicationRecord : applicationRecords) {
+      applicationIds.add(applicationRecord.getId());
+    }
+
+    Assert.assertEquals("Must have no deployed apps, but found the following apps: "
+                          + Joiner.on(", ").join(applicationIds),
+                        0, applicationRecords.size());
+  }
+
+  protected ClientConfig getClientConfig() {
+    if (INSTANCE_URI.isEmpty()) {
+      return new ClientConfig.Builder().setUri(URI.create("http://localhost:10000")).build();
+    } else {
+      return new ClientConfig.Builder().setUri(URI.create(INSTANCE_URI)).build();
+    }
+  }
+
+  protected ApplicationClient getApplicationClient() {
+    return new ApplicationClient(getClientConfig());
+  }
+
+  protected StreamClient getStreamClient() {
+    return new StreamClient(getClientConfig());
+  }
+
+  protected DatasetClient getDatasetClient() {
+    return new DatasetClient(getClientConfig());
+  }
+
+  protected void tryDeleteApp(String appId) throws IOException, UnAuthorizedAccessTokenException {
+    ApplicationClient applicationClient = getApplicationClient();
+    try {
+      applicationClient.delete(appId);
+    } catch (ApplicationNotFoundException e) {
+      // NO-OP
+    }
+  }
+
+  protected void verifyProgramNames(List<String> expected, List<ProgramRecord> actual) {
+    Assert.assertEquals(expected.size(), actual.size());
+    for (ProgramRecord actualProgramRecord : actual) {
+      Assert.assertTrue(expected.contains(actualProgramRecord.getId()));
+    }
+  }
+
+  protected void verifyProgramNames(List<String> expected, Map<ProgramType, List<ProgramRecord>> actual) {
+    verifyProgramNames(expected, convert(actual));
+  }
+
+  private List<ProgramRecord> convert(Map<ProgramType, List<ProgramRecord>> map) {
+    List<ProgramRecord> result = Lists.newArrayList();
+    for (List<ProgramRecord> subList : map.values()) {
+      result.addAll(subList);
+    }
+    return result;
+  }
+
+  protected void assertProcedureInstances(ProgramClient programClient, String appId, String procedureId,
+                                          int numInstances)
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
+
+    int actualInstances;
+    int numTries = 0;
+    int maxTries = 5;
+    do {
+      actualInstances = programClient.getProcedureInstances(appId, procedureId);
+      numTries++;
+    } while (actualInstances != numInstances && numTries <= maxTries);
+    Assert.assertEquals(numInstances, actualInstances);
+  }
+
+  protected void assertFlowletInstances(ProgramClient programClient, String appId, String flowId, String flowletId,
+                                        int numInstances)
+    throws IOException, NotFoundException, UnAuthorizedAccessTokenException {
+
+    int actualInstances;
+    int numTries = 0;
+    int maxTries = 5;
+    do {
+      actualInstances = programClient.getFlowletInstances(appId, flowId, flowletId);
+      numTries++;
+    } while (actualInstances != numInstances && numTries <= maxTries);
+    Assert.assertEquals(numInstances, actualInstances);
+  }
+
+  protected void assertProgramRunning(ProgramClient programClient, String appId, ProgramType programType,
+                                      String programId)
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
+
+    assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
+  }
+
+  protected void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
+                                      String programId)
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
+
+    assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
+  }
+
+  protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
+                                     String programId, String programStatus)
+    throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
+
+    try {
+      programClient.waitForStatus(appId, programType, programId, programStatus, 30, TimeUnit.SECONDS);
+    } catch (TimeoutException e) {
+      // NO-OP
+    }
+
+    Assert.assertEquals(programStatus, programClient.getStatus(appId, programType, programId));
+  }
+
+  protected File createAppJarFile(Class<?> cls) throws IOException {
+    Location appJarLocation = AppFabricTestHelper.createAppJar(cls);
+    return new File(appJarLocation.toURI());
+  }
+}
