@@ -109,16 +109,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     JsonObject json = new JsonObject();
     json.addProperty("instances", instances);
     HttpResponse response = doPut("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/" +
-                                                         flowletId + "/instances", json.toString());
+                                    flowletId + "/instances", json.toString());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-  }
-  private String getDeploymentStatus() throws Exception {
-    HttpResponse response =
-      doGet("/v2/deploy/status/");
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() { }.getType());
-    return o.get("status");
   }
 
   private int getRunnableStartStop(String runnableType, String appId, String runnableId, String action)
@@ -790,9 +782,8 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
   public void testStatus() throws Exception {
 
     //deploy and check the status
-    deploy(WordCountApp.class);
-    //check the status of the deployment
-    Assert.assertEquals("DEPLOYED", getDeploymentStatus());
+    Assert.assertEquals(200, deploy(WordCountApp.class).getStatusLine().getStatusCode());
+
     Assert.assertEquals("STOPPED", getRunnableStatus("flows", "WordCountApp", "WordCountFlow"));
 
     //start flow and check the status
