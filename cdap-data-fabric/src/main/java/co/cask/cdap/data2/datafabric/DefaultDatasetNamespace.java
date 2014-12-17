@@ -50,4 +50,10 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
     // will return null if doesn't belong to namespace
     return namespace.fromNamespaced(name.substring(namespacePrefix.length()));
   }
+
+  @Override
+  public boolean contains(String name) {
+    return name.length() > namespacePrefix.length() &&
+      namespace.contains(name.substring(namespacePrefix.length()));
+  }
 }

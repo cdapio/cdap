@@ -1394,6 +1394,14 @@
       </modules>
     </profile>
 
+    <!-- Profile to run integration tests -->
+    <profile>
+      <id>integration-tests</id>
+      <modules>
+        <module>cdap-integration-tests</module>
+      </modules>
+    </profile>
+
     <!-- Profile to run fast tests only -->
     <profile>
       <id>test-fast</id>
