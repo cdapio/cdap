@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -170,6 +171,8 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
+      DatasetSpecification datasetSpec = datasetFramework.getDatasetSpec(datasetName);
+      //datasetSpec.
       if (!(dataset instanceof RecordScannable || dataset instanceof RecordWritable)) {
         // It is not an error to get non-RecordEnabled datasets, since the type of dataset may not be known where this
         // call originates from.

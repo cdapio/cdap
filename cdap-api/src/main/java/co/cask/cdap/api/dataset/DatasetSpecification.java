@@ -297,7 +297,7 @@ public final class DatasetSpecification {
         specifications.put(entry.getKey(), namespace(namespace, entry.getValue()));
       }
 
-      return new DatasetSpecification(name, type, spec.properties, specifications);
+      return new DatasetSpecification(name, spec.type, spec.properties, specifications);
     }
   }
 }
