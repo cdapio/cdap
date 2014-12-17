@@ -2,7 +2,9 @@
 
   <a class="btn btn-default"
     title="rename widget"
-    ng-click="renameWidget(wdgt)">
+    ng-click="caskPrompt(wdgt.title)"
+    cask-promptable="wdgt.title"
+    cask-prompt-title="Widget name:">
     <span class="fa fa-pencil"></span>
   </a>
 
