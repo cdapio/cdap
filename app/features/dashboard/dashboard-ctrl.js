@@ -98,18 +98,24 @@ function ($scope, $state, $alert, $dropdown) {
   /**
    * remove the currently active dashboard tab
    */
-  $scope.rmDashboard = function () {
+  $scope.removeDashboard = function () {
     $scope.dashboards.splice($scope.dashboards.activeTab, 1);
   };
 
 
+  /**
+   * rename the currently active dashboard tab
+   */
+  $scope.renameDashboard = function (newName) {
+    alert(newName);
+  };
 
 
   /**
    * remove a widget from the active dashboard tab
    * @param  {object} wdgt the widget object
    */
-  $scope.rmWidget = function (wdgt) {
+  $scope.removeWidget = function (wdgt) {
     var d = $scope.dashboards[$scope.dashboards.activeTab];
     angular.forEach(d.columns, function (c, i) {
       d.columns[i] = c.filter(function (p) {
