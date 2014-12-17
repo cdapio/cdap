@@ -101,7 +101,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       doGet("/v2/apps/" + appId + "/flows/" + flowId + "/flowlets/" + flowletId + "/instances");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String result = EntityUtils.toString(response.getEntity());
-    Map<String, String> reply = new Gson().fromJson(result, new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> reply = GSON.fromJson(result, new TypeToken<Map<String, String>>() { }.getType());
     return Integer.parseInt(reply.get("instances"));
   }
 
@@ -117,7 +117,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       doGet("/v2/deploy/status/");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() { }.getType());
+    Map<String, String> o = GSON.fromJson(s, new TypeToken<Map<String, String>>() { }.getType());
     return o.get("status");
   }
 
@@ -169,7 +169,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet(url);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       json = EntityUtils.toString(response.getEntity());
-      history = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+      history = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
       workflowRuns = history.size();
       if (workflowRuns > expected) {
         return;
@@ -190,7 +190,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet(url);
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       json = EntityUtils.toString(response.getEntity());
-      output = new Gson().fromJson(json, MAP_STRING_STRING_TYPE);
+      output = GSON.fromJson(json, MAP_STRING_STRING_TYPE);
       status = output.get("status");
       if (status.equals(expected)) {
         return;
@@ -519,7 +519,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/apps");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       String s = EntityUtils.toString(response.getEntity());
-      List<Map<String, String>> o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      List<Map<String, String>> o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(2, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "App", "id", "WordCountApp", "name", "WordCountApp",
                                                    "description", "Application for counting words")));
@@ -530,7 +530,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/apps/WordCountApp");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      Map<String, String> app = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+      Map<String, String> app = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
       Assert.assertEquals(ImmutableMap.of("type", "App", "id", "WordCountApp", "name", "WordCountApp",
                                           "description", "Application for counting words"), app);
 
@@ -538,7 +538,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/flows");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
                                                    "WordCountFlow", "description", "Flow for counting words")));
@@ -547,7 +547,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/apps/WordCountApp/flows");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
                                                    "WordCountFlow", "description", "Flow for counting words")));
@@ -556,7 +556,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/procedures");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WordCountApp", "id", "WordFrequency",
                                                    "name", "WordFrequency", "description",
@@ -566,7 +566,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/apps/WordCountApp/procedures");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "Procedure", "app", "WordCountApp", "id", "WordFrequency",
                                                    "name", "WordFrequency", "description",
@@ -577,7 +577,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/mapreduce");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "Mapreduce", "app", "WordCountApp", "id", "VoidMapReduceJob",
                                                    "name", "VoidMapReduceJob",
@@ -588,7 +588,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/workflows");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of(
         "type", "Workflow", "app", "AppWithWorkflow", "id", "SampleWorkflow",
@@ -609,29 +609,29 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/apps/AppWithWorkflow/flows");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertTrue(o.isEmpty());
       response = doGet("/v2/apps/AppWithWorkflow/procedures");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertTrue(o.isEmpty());
       response = doGet("/v2/apps/AppWithWorkflow/mapreduce");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertTrue(o.isEmpty());
       response = doGet("/v2/apps/WordCountApp/workflows");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertTrue(o.isEmpty());
 
       // verify flows by stream
       response = doGet("/v2/streams/text/flows");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
                                                    "WordCountFlow", "description", "Flow for counting words")));
@@ -640,7 +640,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/datasets/mydataset/flows");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       Assert.assertTrue(o.contains(ImmutableMap.of("type", "Flow", "app", "WordCountApp", "id", "WordCountFlow", "name",
                                                    "WordCountFlow", "description", "Flow for counting words")));
@@ -649,7 +649,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/datasets/mydataset");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      Map<String, String> map = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+      Map<String, String> map = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
       Assert.assertNotNull(map);
       Assert.assertEquals("mydataset", map.get("id"));
       Assert.assertEquals("mydataset", map.get("name"));
@@ -658,7 +658,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/datasets");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(3, o.size());
       Map<String, String> expectedDataSets = ImmutableMap.<String, String>builder()
         .put("input", ObjectStore.class.getName())
@@ -677,7 +677,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/apps/WordCountApp/datasets");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       expectedDataSets = ImmutableMap.<String, String>builder()
         .put("mydataset", KeyValueTable.class.getName()).build();
@@ -694,19 +694,19 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/streams/text");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      map = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+      map = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
       Assert.assertNotNull(map);
       Assert.assertEquals("text", map.get("id"));
       Assert.assertEquals("text", map.get("name"));
       Assert.assertNotNull(map.get("specification"));
-      StreamSpecification sspec = new Gson().fromJson(map.get("specification"), StreamSpecification.class);
+      StreamSpecification sspec = GSON.fromJson(map.get("specification"), StreamSpecification.class);
       Assert.assertNotNull(sspec);
 
       // verify all streams
       response = doGet("/v2/streams");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       Set<String> expectedStreams = ImmutableSet.of("text");
       for (Map<String, String> stream : o) {
@@ -719,7 +719,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
       response = doGet("/v2/apps/WordCountApp/streams");
       Assert.assertEquals(200, response.getStatusLine().getStatusCode());
       s = EntityUtils.toString(response.getEntity());
-      o = new Gson().fromJson(s, LIST_MAP_STRING_STRING_TYPE);
+      o = GSON.fromJson(s, LIST_MAP_STRING_STRING_TYPE);
       Assert.assertEquals(1, o.size());
       expectedStreams = ImmutableSet.of("text");
       for (Map<String, String> stream : o) {
@@ -747,7 +747,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+    Map<String, String> result = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, result.size());
     Assert.assertEquals(1, Integer.parseInt(result.get("instances")));
 
@@ -761,7 +761,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     s = EntityUtils.toString(response.getEntity());
-    result = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+    result = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, result.size());
     Assert.assertEquals(10, Integer.parseInt(result.get("instances")));
 
@@ -823,7 +823,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = doGet("/v2/apps/" + appId + "/" + "webapp" + "/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
-    Map<String, String> o = new Gson().fromJson(s, MAP_STRING_STRING_TYPE);
+    Map<String, String> o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
     return o.get("status");
   }
 
@@ -977,19 +977,19 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doGet("/v2/apps/WordCountApp/flows");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> flows = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> flows = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, flows.size());
 
     response = doGet("/v2/apps/WordCountApp/procedures");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> procedures = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> procedures = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, procedures.size());
 
     response = doGet("/v2/apps/WordCountApp/mapreduce");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> mapreduce = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    List<Map<String, String>> mapreduce = GSON.fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(1, mapreduce.size());
 
     response = doGet("/v2/apps/WordCountApp/workflows");
@@ -1020,7 +1020,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/schedules");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
-    List<String> schedules = new Gson().fromJson(json, new TypeToken<List<String>>() { }.getType());
+    List<String> schedules = GSON.fromJson(json, new TypeToken<List<String>>() { }.getType());
     Assert.assertEquals(1, schedules.size());
     String scheduleId = schedules.get(0);
     Assert.assertNotNull(scheduleId);
@@ -1046,7 +1046,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    List<Map<String, String>> history = new Gson().fromJson(json,
+    List<Map<String, String>> history = GSON.fromJson(json,
                                   LIST_MAP_STRING_STRING_TYPE);
     int workflowRuns = history.size();
 
@@ -1055,7 +1055,7 @@ public class AppFabricHttpHandlerTest extends AppFabricTestBase {
 
     response = doGet("/v2/apps/AppWithSchedule/workflows/SampleWorkflow/runs?status=completed");
     json = EntityUtils.toString(response.getEntity());
-    history = new Gson().fromJson(json,
+    history = GSON.fromJson(json,
                                   LIST_MAP_STRING_STRING_TYPE);
     int workflowRunsAfterSuspend = history.size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);

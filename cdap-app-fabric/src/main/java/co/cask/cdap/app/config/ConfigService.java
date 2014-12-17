@@ -26,23 +26,113 @@ import java.util.Map;
  */
 public interface ConfigService extends Service {
 
-  void writeSetting(ConfigType type, String name, String key, String value) throws Exception;
+  /**
+   * Write setting to a Configuration.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param name Name of the Configuration
+   * @param key Key
+   * @param value Value
+   * @throws Exception
+   */
+  void writeSetting(String namespace, ConfigType type, String name, String key, String value) throws Exception;
 
-  void writeSetting(ConfigType type, String name, Map<String, String> settingsMap) throws Exception;
+  /**
+   * Write a Map of settings to a Configuration.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param name Name of the Configuration
+   * @param settingsMap Map of Key/Value
+   * @throws Exception
+   */
+  void writeSetting(String namespace, ConfigType type, String name, Map<String, String> settingsMap) throws Exception;
 
-  String readSetting(ConfigType type, String name, String key) throws Exception;
+  /**
+   * Read a setting of a Configuration.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param name Name of the Configuration
+   * @param key Key
+   * @return Value
+   * @throws Exception
+   */
+  String readSetting(String namespace, ConfigType type, String name, String key) throws Exception;
 
-  Map<String, String> readSetting(ConfigType type, String name) throws Exception;
+  /**
+   * Read settings of a Configuration.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param name Name of the Configuration
+   * @return Map of Key/Value
+   * @throws Exception
+   */
+  Map<String, String> readSetting(String namespace, ConfigType type, String name) throws Exception;
 
-  void deleteSetting(ConfigType type, String name, String key) throws Exception;
+  /**
+   * Delete a setting of a Configuration.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param name Name of the Configuration
+   * @param key Key
+   * @throws Exception
+   */
+  void deleteSetting(String namespace, ConfigType type, String name, String key) throws Exception;
 
-  void deleteConfig(ConfigType type, String accId, String name) throws Exception;
+  /**
+   * Delete all the settings of a Configuration.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param name Name of the Configuration
+   * @throws Exception
+   */
+  void deleteSetting(String namespace, ConfigType type, String name) throws Exception;
 
-  String createConfig(ConfigType type, String accId) throws Exception;
+  /**
+   * Delete a Configuration.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param accId Account Id
+   * @param name Name of the Configuration
+   * @throws Exception
+   */
+  void deleteConfig(String namespace, ConfigType type, String accId, String name) throws Exception;
 
-  List<String> getConfig(ConfigType type, String accId) throws Exception;
+  /**
+   * Create a Configuration.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param accId Account Id
+   * @return Configuration Id
+   * @throws Exception
+   */
+  String createConfig(String namespace, ConfigType type, String accId) throws Exception;
 
-  List<String> getConfig(ConfigType type) throws Exception;
+  /**
+   * Get the list of Configurations belonging to a specific Account Id.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param accId Account Id
+   * @return List of Configuration Ids
+   * @throws Exception
+   */
+  List<String> getConfig(String namespace, ConfigType type, String accId) throws Exception;
 
-  boolean checkConfig(ConfigType type, String name) throws Exception;
+  /**
+   * Get the list of Configurations.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @return List of Configuration Ids
+   * @throws Exception
+   */
+  List<String> getConfig(String namespace, ConfigType type) throws Exception;
+
+  /**
+   * Check if a Configuration exists.
+   * @param namespace Namespace
+   * @param type Configuration Type
+   * @param name Name of the Configuration
+   * @return True if the configuration exists
+   * @throws Exception
+   */
+  boolean checkConfig(String namespace, ConfigType type, String name) throws Exception;
 }

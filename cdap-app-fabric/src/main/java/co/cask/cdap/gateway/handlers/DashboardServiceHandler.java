@@ -37,11 +37,12 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Dashboard Service HTTP Handler.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/configuration/dashboard")
+@Path(Constants.Gateway.API_VERSION_3)
 public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DashboardServiceHandler.class);
   private static final Gson GSON = new Gson();
@@ -53,110 +54,129 @@ public class DashboardServiceHandler extends AbstractAppFabricHttpHandler {
     this.configService = configService;
   }
 
-  @Path("/")
+  @Path("/{namespace-id}/configuration/dashboard")
   @POST
-  public void createDashboard(final HttpRequest request, final HttpResponder responder) throws Exception {
-    String id = configService.createConfig(ConfigType.DASHBOARD, getAuthenticatedAccountId(request));
+  public void createDashboard(final HttpRequest request, final HttpResponder responder,
+                              @PathParam("namespace-id") String namespace) throws Exception {
+    String id = configService.createConfig(namespace, ConfigType.DASHBOARD, getAuthenticatedAccountId(request));
     Map<String, String> settings = decodeArguments(request);
     if (settings != null) {
-      configService.writeSetting(ConfigType.DASHBOARD, id, settings);
+      configService.writeSetting(namespace, ConfigType.DASHBOARD, id, settings);
     }
     responder.sendString(HttpResponseStatus.OK, id);
   }
 
-  @Path("/")
+  @Path("/{namespace-id}/configuration/dashboard")
   @GET
-  public void listDashboard(final HttpRequest request, final HttpResponder responder) throws Exception {
-    //TODO: Check for filter=all and return all dashboards for which user has read permission
-    List<String> dashboardIds = configService.getConfig(ConfigType.DASHBOARD, getAuthenticatedAccountId(request));
+  public void listDashboard(final HttpRequest request, final HttpResponder responder,
+                            @PathParam("namespace-id") String namespace,
+                            @QueryParam("filter") String filter) throws Exception {
+    List<String> dashboardIds;
+    if (filter != null && filter.equals("all")) {
+      dashboardIds = configService.getConfig(namespace, ConfigType.DASHBOARD);
+    } else {
+      dashboardIds = configService.getConfig(namespace, ConfigType.DASHBOARD, getAuthenticatedAccountId(request));
+    }
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(dashboardIds));
   }
 
-  @Path("/{dashboard-id}")
+  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}")
   @DELETE
   public void deleteDashboard(final HttpRequest request, final HttpResponder responder,
+                              @PathParam("namespace-id") String namespace,
                               @PathParam("dashboard-id") String dashboard) throws Exception {
-    //TODO: The accId should be the owner of the dashboard!
-    if (!isDashboardPresent(dashboard)) {
+    //TODO: Only the owner of the dashboard can delete the dashboard?
+    if (!isDashboardPresent(namespace, dashboard)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      configService.deleteConfig(ConfigType.DASHBOARD, getAuthenticatedAccountId(request), dashboard);
+      configService.deleteConfig(namespace, ConfigType.DASHBOARD, getAuthenticatedAccountId(request), dashboard);
       responder.sendStatus(HttpResponseStatus.OK);
     }
   }
 
-  @Path("/{dashboard-id}/properties")
+  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties")
   @GET
   public void getProperties(final HttpRequest request, final HttpResponder responder,
-                          @PathParam("dashboard-id") String dashboard) throws Exception {
-    if (!isDashboardPresent(dashboard)) {
+                            @PathParam("namespace-id") String namespace,
+                            @PathParam("dashboard-id") String dashboard) throws Exception {
+    if (!isDashboardPresent(namespace, dashboard)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      Map<String, String> settings = configService.readSetting(ConfigType.DASHBOARD, dashboard);
+      Map<String, String> settings = configService.readSetting(namespace, ConfigType.DASHBOARD, dashboard);
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(settings));
     }
   }
 
-  @Path("/{dashboard-id}/properties")
+  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties")
   @POST
   public void setProperties(final HttpRequest request, final HttpResponder responder,
+                            @PathParam("namespace-id") String namespace,
                             @PathParam("dashboard-id") String dashboard) throws Exception {
-    if (!isDashboardPresent(dashboard)) {
+    if (!isDashboardPresent(namespace, dashboard)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      configService.writeSetting(ConfigType.DASHBOARD, dashboard, decodeArguments(request));
+      configService.writeSetting(namespace, ConfigType.DASHBOARD, dashboard, decodeArguments(request));
       responder.sendStatus(HttpResponseStatus.OK);
     }
   }
 
-  @Path("/{dashboard-id}/properties")
+  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties")
   @DELETE
   public void deleteProperties(final HttpRequest request, final HttpResponder responder,
+                               @PathParam("namespace-id") String namespace,
                                @PathParam("dashboard-id") String dashboard) throws Exception {
-    //TODO: Implement!
-  }
-
-  @Path("/{dashboard-id}/properties/{property-name}")
-  @GET
-  public void getProperty(final HttpRequest request, final HttpResponder responder,
-                          @PathParam("dashboard-id") String dashboard, @PathParam("property-name") String property)
-    throws Exception {
-    if (!isDashboardPresent(dashboard)) {
+    if (!isDashboardPresent(namespace, dashboard)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      String value = configService.readSetting(ConfigType.DASHBOARD, dashboard, property);
+      configService.deleteSetting(namespace, ConfigType.DASHBOARD, dashboard);
+      responder.sendStatus(HttpResponseStatus.OK);
+    }
+  }
+
+  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties/{property-name}")
+  @GET
+  public void getProperty(final HttpRequest request, final HttpResponder responder,
+                          @PathParam("namespace-id") String namespace,
+                          @PathParam("dashboard-id") String dashboard, @PathParam("property-name") String property)
+    throws Exception {
+    if (!isDashboardPresent(namespace, dashboard)) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } else {
+      String value = configService.readSetting(namespace, ConfigType.DASHBOARD, dashboard, property);
       responder.sendString(HttpResponseStatus.OK, value);
     }
   }
 
-  @Path("/{dashboard-id}/properties/{property-name}")
+  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties/{property-name}")
   @PUT
   public void putProperty(final HttpRequest request, final HttpResponder responder,
+                          @PathParam("namespace-id") String namespace,
                           @PathParam("dashboard-id") String dashboard, @PathParam("property-name") String property)
     throws Exception {
-    if (!isDashboardPresent(dashboard)) {
+    if (!isDashboardPresent(namespace, dashboard)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       String value = parseBody(request, String.class);
-      configService.writeSetting(ConfigType.DASHBOARD, dashboard, property, value);
+      configService.writeSetting(namespace, ConfigType.DASHBOARD, dashboard, property, value);
       responder.sendStatus(HttpResponseStatus.OK);
     }
   }
 
-  @Path("/{dashboard-id}/properties/{property-name}")
+  @Path("/{namespace-id}/configuration/dashboard/{dashboard-id}/properties/{property-name}")
   @DELETE
   public void deleteProperty(final HttpRequest request, final HttpResponder responder,
+                             @PathParam("namespace-id") String namespace,
                              @PathParam("dashboard-id") String dashboard, @PathParam("property-name") String property)
     throws Exception {
-    if (!isDashboardPresent(dashboard)) {
+    if (!isDashboardPresent(namespace, dashboard)) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
-      configService.deleteSetting(ConfigType.DASHBOARD, dashboard, property);
+      configService.deleteSetting(namespace, ConfigType.DASHBOARD, dashboard, property);
       responder.sendStatus(HttpResponseStatus.OK);
     }
   }
 
-  private boolean isDashboardPresent(String id) throws Exception {
-    return configService.checkConfig(ConfigType.DASHBOARD, id);
+  private boolean isDashboardPresent(String namespace, String id) throws Exception {
+    return configService.checkConfig(namespace, ConfigType.DASHBOARD, id);
   }
 }

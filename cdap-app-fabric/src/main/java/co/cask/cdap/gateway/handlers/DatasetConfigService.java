@@ -87,46 +87,52 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
   }
 
   @Override
-  public void writeSetting(final ConfigType type, final String name, final String key, final String value)
+  public void writeSetting(final String namespace, final ConfigType type, final String name, final String key,
+                           final String value)
     throws Exception {
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        configTable.put(getRowKey(type, name), Bytes.toBytes(key), Bytes.toBytes(value));
+        configTable.put(getRowKey(namespace, type, name), Bytes.toBytes(key), Bytes.toBytes(value));
       }
     });
   }
 
   @Override
-  public void writeSetting(final ConfigType type, final String name, final Map<String, String> settingsMap)
+  public void writeSetting(final String namespace, final ConfigType type, final String name,
+                           final Map<String, String> settingsMap)
     throws Exception {
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         for (Map.Entry<String, String> setting : settingsMap.entrySet()) {
-          configTable.put(getRowKey(type, name), Bytes.toBytes(setting.getKey()), Bytes.toBytes(setting.getValue()));
+          configTable.put(getRowKey(namespace, type, name), Bytes.toBytes(setting.getKey()),
+                          Bytes.toBytes(setting.getValue()));
         }
       }
     });
   }
 
   @Override
-  public String readSetting(final ConfigType type, final String name, final String key) throws Exception {
+  public String readSetting(final String namespace, final ConfigType type, final String name, final String key)
+    throws Exception {
     return executor.execute(new TransactionExecutor.Function<Object, String>() {
       @Override
       public String apply(Object o) throws Exception {
-        return Bytes.toString(configTable.get(getRowKey(type, name), Bytes.toBytes(key)));
+        return Bytes.toString(configTable.get(getRowKey(namespace, type, name), Bytes.toBytes(key)));
       }
     }, null);
   }
 
   @Override
-  public Map<String, String> readSetting(final ConfigType type, final String name) throws Exception {
+  public Map<String, String> readSetting(final String namespace, final ConfigType type, final String name)
+    throws Exception {
     return executor.execute(new TransactionExecutor.Function<Object, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Object i) throws Exception {
         Map<String, String> settings = Maps.newHashMap();
-        for (Map.Entry<byte[], byte[]> entry : configTable.get(getRowKey(type, name)).getColumns().entrySet()) {
+        byte[] rowKey = getRowKey(namespace, type, name);
+        for (Map.Entry<byte[], byte[]> entry : configTable.get(rowKey).getColumns().entrySet()) {
           settings.put(Bytes.toString(entry.getKey()), Bytes.toString(entry.getValue()));
         }
         return settings;
@@ -135,48 +141,63 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
   }
 
   @Override
-  public void deleteSetting(final ConfigType type, final String name, final String key) throws Exception {
+  public void deleteSetting(final String namespace, final ConfigType type, final String name, final String key)
+    throws Exception {
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        configTable.delete(getRowKey(type, name), Bytes.toBytes(key));
+        configTable.delete(getRowKey(namespace, type, name), Bytes.toBytes(key));
       }
     });
   }
 
   @Override
-  public void deleteConfig(final ConfigType type, final String accId, final String name) throws Exception {
+  public void deleteSetting(final String namespace, final ConfigType type, final String name) throws Exception {
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        configTable.delete(getRowKey(type, name));
+        configTable.delete(getRowKey(namespace, type, name));
+      }
+    });
+  }
+
+  @Override
+  public void deleteConfig(final String namespace, final ConfigType type, final String accId, final String name)
+    throws Exception {
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        configTable.delete(getRowKey(namespace, type, name));
         if (type == ConfigType.DASHBOARD) {
           dashboardTable.delete(Bytes.toBytes(accId), Bytes.toBytes(name));
+          metaDataTable.delete(getRowKey(namespace, type, name));
         }
       }
     });
   }
 
   @Override
-  public String createConfig(final ConfigType type, final String accId) throws Exception {
+  public String createConfig(final String namespace, final ConfigType type, final String accId) throws Exception {
+    final String countId = String.format("namespace.%s.%s", namespace, RECENT_DASHBOARD_ID);
     return executor.execute(new TransactionExecutor.Function<Object, String>() {
       @Override
       public String apply(Object i) throws Exception {
         if (type != ConfigType.DASHBOARD) {
           return null;
         }
-        byte[] value = metaDataTable.read(RECENT_DASHBOARD_ID);
+        byte[] value = metaDataTable.read(countId);
         Long id =  (value == null) ? 0 : (Bytes.toLong(value) + 1);
         String dashboardId = Long.toString(id);
         dashboardTable.put(Bytes.toBytes(accId), Bytes.toBytes(dashboardId), Bytes.toBytes(true));
-        metaDataTable.write(RECENT_DASHBOARD_ID, Bytes.toBytes(id));
+        metaDataTable.write(countId, Bytes.toBytes(id));
+        metaDataTable.write(getRowKey(namespace, type, dashboardId), Bytes.toBytes(true));
         return dashboardId;
       }
     }, null);
   }
 
   @Override
-  public List<String> getConfig(final ConfigType type, final String accId) throws Exception {
+  public List<String> getConfig(final String namespace, final ConfigType type, final String accId) throws Exception {
     List<String> configs = Lists.newArrayList();
     if (type == ConfigType.USER) {
       configs.add(accId);
@@ -189,9 +210,9 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
   }
 
   @Override
-  public List<String> getConfig(final ConfigType type) throws Exception {
+  public List<String> getConfig(final String namespace, final ConfigType type) throws Exception {
     List<String> configs = Lists.newArrayList();
-    byte[] startRowPrefix = getRowKey(type, "");
+    byte[] startRowPrefix = getRowKey(namespace, type, "");
     byte[] endRowPrefix = Bytes.stopKeyForPrefix(startRowPrefix);
     Scanner scanner = configTable.scan(startRowPrefix, endRowPrefix);
     Row row;
@@ -203,20 +224,20 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
   }
 
   @Override
-  public boolean checkConfig(final ConfigType type, final String name) throws Exception {
+  public boolean checkConfig(final String namespace, final ConfigType type, final String name) throws Exception {
     return executor.execute(new TransactionExecutor.Function<Object, Boolean>() {
       @Override
       public Boolean apply(Object i) throws Exception {
-        Row row = configTable.get(getRowKey(type, name));
-        return (row.getRow() != null);
+        byte[] value = (metaDataTable.read(getRowKey(namespace, type, name)));
+        return (value != null);
       }
     }, null);
   }
 
-  private byte[] getRowKey(ConfigType type, String name) {
+  private byte[] getRowKey(String namespace, ConfigType type, String name) {
     String rowKeyString = null;
     if (ConfigType.DASHBOARD == type) {
-      rowKeyString = String.format("dashboard.%s", name);
+      rowKeyString = String.format("namespace.%s.dashboard.%s", namespace, name);
     } else if (ConfigType.USER == type) {
       rowKeyString = String.format("user.%s", name);
     }

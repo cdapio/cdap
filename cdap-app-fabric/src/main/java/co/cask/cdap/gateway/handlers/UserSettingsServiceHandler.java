@@ -42,6 +42,7 @@ import javax.ws.rs.PathParam;
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/configuration/uisettings")
 public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
+  private static final String DEFAULT_NAMESPACE = "default";
   private static final Logger LOG = LoggerFactory.getLogger(UserSettingsServiceHandler.class);
   private static final Gson GSON = new Gson();
   private final ConfigService configService;
@@ -56,17 +57,27 @@ public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void getUIProperty(final HttpRequest request, final HttpResponder responder,
                             @PathParam("property-name") String property) throws Exception {
-    responder.sendString(HttpResponseStatus.OK, configService.readSetting(ConfigType.USER,
-                                                                             getAuthenticatedAccountId(request),
-                                                                             property));
+    String value = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
+                                             property);
+    if (value == null) {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    } else {
+      responder.sendString(HttpResponseStatus.OK, value);
+    }
   }
 
   @Path("/properties/{property-name}")
   @DELETE
   public void deleteUIProperty(final HttpRequest request, final HttpResponder responder,
                                @PathParam("property-name") String property) throws Exception {
-    configService.deleteSetting(ConfigType.USER, getAuthenticatedAccountId(request), property);
-    responder.sendStatus(HttpResponseStatus.OK);
+    String value = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
+                                             property);
+    if (value != null) {
+      configService.deleteSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request), property);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } else {
+      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+    }
   }
 
   @Path("/properties/{property-name}")
@@ -74,27 +85,31 @@ public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
   public void putUIProperty(final HttpRequest request, final HttpResponder responder,
                             @PathParam("property-name") String property) throws Exception {
     String value = parseBody(request, String.class);
-    configService.writeSetting(ConfigType.USER, getAuthenticatedAccountId(request), property, value);
+    configService.writeSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request), property, value);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/properties")
   @POST
   public void postUIProperty(final HttpRequest request, final HttpResponder responder) throws Exception {
-    configService.writeSetting(ConfigType.USER, getAuthenticatedAccountId(request), decodeArguments(request));
+    configService.writeSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
+                               decodeArguments(request));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @Path("/properties")
   @GET
   public void getUIProperties(final HttpRequest request, final HttpResponder responder) throws Exception {
-    Map<String, String> settings = configService.readSetting(ConfigType.USER, getAuthenticatedAccountId(request));
+    Map<String, String> settings = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER,
+                                                             getAuthenticatedAccountId(request));
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(settings));
   }
 
   @Path("/properties")
   @DELETE
   public void deleteUIProperties(final HttpRequest request, final HttpResponder responder) throws Exception {
-    configService.deleteConfig(ConfigType.USER, getAuthenticatedAccountId(request), getAuthenticatedAccountId(request));
+    configService.deleteConfig(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
+                               getAuthenticatedAccountId(request));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 }
