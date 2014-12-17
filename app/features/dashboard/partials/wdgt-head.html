@@ -2,14 +2,15 @@
 
   <a class="btn btn-default"
     title="rename widget"
-    ng-click="renameWidget(wdgt)">
+    ng-click="caskPrompt('Widget name', wdgt.title)"
+    cask-promptable="renameWidget(wdgt, $value)">
     <span class="fa fa-pencil"></span>
   </a>
 
   <a class="btn btn-default"
     title="remove widget"
     ng-click="caskConfirm()"
-    cask-confirmable="rmWidget(wdgt)"
+    cask-confirmable="removeWidget(wdgt)"
     data-confirmable-content="Really delete the widget?">
     <span class="fa fa-close"></span>
   </a>

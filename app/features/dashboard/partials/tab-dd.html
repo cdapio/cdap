@@ -16,8 +16,10 @@
     </a>
   </li>
 
-  <li role="presentation" class="disabled">
-    <a role="menuitem" tabindex="-1" href="">
+  <li role="presentation">
+    <a role="menuitem" tabindex="-1" href=""
+      ng-click="caskPrompt('Dashboard name', dashboards[dashboards.activeTab].title)"
+      cask-promptable="renameDashboard($value)">
       <span class="fa fa-fw fa-pencil"></span>
       Rename
     </a>
@@ -28,7 +30,7 @@
   <li role="presentation" ng-class="{disabled: dashboards.length<2}">
     <a role="menuitem" tabindex="-1" href=""
       ng-click="dashboards.length>1 && caskConfirm()"
-      cask-confirmable="rmDashboard()"
+      cask-confirmable="removeDashboard()"
       data-confirmable-content="Really delete the dashboard?">
       <span class="fa fa-fw fa-trash"></span>
       Delete
