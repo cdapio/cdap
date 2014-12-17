@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NavigableMap;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
@@ -133,9 +134,15 @@ public class Bytes {
    * @return the byte array
    */
   public static byte[] toBytes(ByteBuffer bb) {
-    int length = bb.limit();
+    int length = bb.remaining();
     byte [] result = new byte[length];
-    System.arraycopy(bb.array(), bb.arrayOffset(), result, 0, length);
+    if (bb.hasArray()) {
+      System.arraycopy(bb.array(), bb.position(), result, 0, length);
+    } else {
+      int pos = bb.position();
+      bb.get(result);
+      bb.position(pos);
+    }
     return result;
   }
 
@@ -719,6 +726,27 @@ public class Bytes {
     return result;
   }
 
+  /**
+   * Returns a copy of the byte representation of the given UUID.
+   * @param uuid UUID to get the byte representation of
+   * @return byte representation of the given UUID
+   */
+  public static byte[] toBytes(UUID uuid) {
+    ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
+    bb.putLong(uuid.getMostSignificantBits());
+    bb.putLong(uuid.getLeastSignificantBits());
+    return bb.array();
+  }
+
+  /**
+   * Convert the given byte representation of a UUID into a UUID.
+   * @param bytes byte representation of a UUID
+   * @return UUID
+   */
+  public static UUID toUUID(byte [] bytes) {
+    ByteBuffer bb = ByteBuffer.wrap(bytes);
+    return new UUID(bb.getLong(), bb.getLong());
+  }
 
   /**
    * Converts a byte array to a BigDecimal.

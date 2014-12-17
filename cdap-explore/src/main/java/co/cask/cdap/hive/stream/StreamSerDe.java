@@ -19,10 +19,10 @@ package co.cask.cdap.hive.stream;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
+import co.cask.cdap.hive.serde.ObjectTranslator;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.serdeConstants;
-import org.apache.hadoop.hive.serde2.AbstractSerDe;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
@@ -32,7 +32,10 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -42,8 +45,11 @@ import java.util.Properties;
  * abstract SerDe class, otherwise we get ClassNotFound exceptions on cdh4.x.
  */
 public class StreamSerDe implements SerDe {
+  private static final Logger LOG = LoggerFactory.getLogger(StreamSerDe.class);
   private ArrayList<String> columnNames;
   private ArrayList<TypeInfo> columnTypes;
+  private List<String> bodyColumnNames;
+  private List<TypeInfo> bodyColumnTypes;
   private ObjectInspector inspector;
 
   // initialize gets called multiple times by Hive. It may seem like a good idea to put additional settings into
@@ -61,6 +67,8 @@ public class StreamSerDe implements SerDe {
     // object inspectors will reflect them.
     columnNames = Lists.newArrayList(properties.getProperty(serdeConstants.LIST_COLUMNS).split(","));
     columnTypes = TypeInfoUtils.getTypeInfosFromTypeString(properties.getProperty(serdeConstants.LIST_COLUMN_TYPES));
+    bodyColumnNames = columnNames.subList(2, columnNames.size());
+    bodyColumnTypes = columnTypes.subList(2, columnTypes.size());
 
     int numCols = columnNames.size();
 
@@ -93,19 +101,35 @@ public class StreamSerDe implements SerDe {
   public Object deserialize(Writable writable) throws SerDeException {
     // this should always contain a StreamEvent object
     ObjectWritable objectWritable = (ObjectWritable) writable;
-    // we return a list of the fields instead of just the StreamEvent because Hive's reflection object inspector
-    // only looks at declared fields for that object class, and since StreamEvent extends StreamEventData,
-    // the body and headers would be filtered out.  It also does not know what to do with a ByteBuffer.
     StreamEvent streamEvent = (StreamEvent) objectWritable.get();
-    // This will be replaced with schema related logic soon.  For now, convert the body to a string.
-    return Lists.newArrayList(
-      streamEvent.getTimestamp(),
-      Bytes.toString(streamEvent.getBody()),
-      streamEvent.getHeaders());
+
+    // timestamp and headers are always guaranteed to be first.
+    List<Object> event = Lists.newArrayList();
+    event.add(streamEvent.getTimestamp());
+    event.add(streamEvent.getHeaders());
+
+    try {
+      // TODO: replace with conversion to a format specific object. The body should always be a record.
+      StreamBody formattedBody = new StreamBody(streamEvent.getBody());
+      event.addAll(ObjectTranslator.flattenRecord(formattedBody, bodyColumnNames, bodyColumnTypes));
+      return event;
+    } catch (Throwable t) {
+      LOG.info("Unable to format the stream body.", t);
+      throw new SerDeException("Unable to format the stream body.", t);
+    }
   }
 
   @Override
   public ObjectInspector getObjectInspector() throws SerDeException {
     return inspector;
+  }
+
+  // TODO: temporary class that will be removed once format logic is in place.
+  private static class StreamBody {
+    private final String body;
+
+    private StreamBody(ByteBuffer bodyBytes) {
+      this.body = Bytes.toString(bodyBytes);
+    }
   }
 }

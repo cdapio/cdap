@@ -24,9 +24,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.explore.schema.SchemaConverter;
 import co.cask.cdap.explore.service.ExploreService;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
+import co.cask.cdap.internal.io.Schema;
 import co.cask.cdap.internal.io.UnsupportedTypeException;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.http.AbstractHttpHandler;
@@ -55,6 +57,12 @@ import javax.ws.rs.PathParam;
 @Path(Constants.Gateway.API_VERSION_2 + "/data/explore")
 public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(QueryExecutorHttpHandler.class);
+  // a constant for now, but will soon come from StreamConfig.
+  private static final Schema STREAM_SCHEMA = Schema.recordOf(
+    "streamEvent",
+    Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
+    Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))),
+    Schema.Field.of("body", Schema.of(Schema.Type.STRING)));
 
   private final ExploreService exploreService;
   private final DatasetFramework datasetFramework;
@@ -277,7 +285,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
    * @throws UnsupportedTypeException
    */
   public static String generateStreamCreateStatement(String name, String location) throws UnsupportedTypeException {
-    String hiveSchema = hiveSchemaForStream();
+    String hiveSchema = SchemaConverter.toHiveSchema(STREAM_SCHEMA);
     String tableName = getStreamTableName(name);
     return String.format("CREATE EXTERNAL TABLE %s %s COMMENT \"CDAP Stream\" " +
                            "STORED BY \"%s\" WITH SERDEPROPERTIES(\"%s\" = \"%s\") " +
@@ -316,10 +324,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     throw new UnsupportedTypeException("Dataset neither implements RecordScannable not RecordWritable.");
   }
 
-  static String hiveSchemaForStream() throws UnsupportedTypeException {
-    return hiveSchemaFor(StreamSchema.class);
-  }
-
+  // TODO: replace with SchemaConverter.toHiveSchema when we tackle queries on Tables.
   static String hiveSchemaFor(Type type) throws UnsupportedTypeException {
     // This call will make sure that the type is not recursive
     new ReflectionSchemaGenerator().generate(type, false);
@@ -347,17 +352,5 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     sb.append(")");
 
     return sb.toString();
-  }
-
-  // hardcoded schema for a stream. This will be replaced with a schema that comes from the stream when
-  // schema is exposed to users.
-  @SuppressWarnings("unused")
-  private static class StreamSchema {
-    // can't use 'timestamp' as it is a reserved Hive keyword (though not for all versions of Hive)
-    private long ts;
-    // the body is actually a byte array, but that is not very useful when performing queries.
-    // we therefore assume the body is a string.
-    private String body;
-    private Map<String, String> headers;
   }
 }
