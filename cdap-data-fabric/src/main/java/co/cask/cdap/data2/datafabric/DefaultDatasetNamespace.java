@@ -52,8 +52,7 @@ public class DefaultDatasetNamespace implements DatasetNamespace {
 
   @Override
   public boolean contains(String name) {
-    return name.length() >= namespacePrefix.length() &&
-      name.startsWith(namespacePrefix) &&
+    return name.startsWith(namespacePrefix) &&
       namespace.contains(name.substring(namespacePrefix.length()));
   }
 
