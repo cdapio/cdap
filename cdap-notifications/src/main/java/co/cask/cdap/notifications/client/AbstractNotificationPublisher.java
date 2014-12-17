@@ -31,6 +31,8 @@ import java.util.concurrent.Executors;
 
 /**
  * Common implementation of a {@link co.cask.cdap.notifications.client.NotificationClient.Publisher}.
+ *
+ * @param <N> Type of the Notifications to publish.
  */
 public abstract class AbstractNotificationPublisher<N> implements NotificationClient.Publisher<N> {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractNotificationPublisher.class);

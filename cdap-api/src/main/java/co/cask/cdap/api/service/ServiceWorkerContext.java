@@ -31,7 +31,7 @@ public interface ServiceWorkerContext extends RuntimeContext, ServiceDiscoverer 
   ServiceWorkerSpecification getSpecification();
 
   /**
-   * Execute a set of operations on datasets via a {@link co.cask.cdap.api.TxRunnable} that are committed as a single transaction.
+   * Execute a set of operations on datasets via a {@link TxRunnable} that are committed as a single transaction.
    * @param runnable The runnable to be executed in the transaction
    */
   void execute(TxRunnable runnable);

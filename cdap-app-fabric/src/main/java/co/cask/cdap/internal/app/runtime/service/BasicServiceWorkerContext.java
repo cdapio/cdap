@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -23,7 +24,6 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.app.metrics.ServiceRunnableMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;

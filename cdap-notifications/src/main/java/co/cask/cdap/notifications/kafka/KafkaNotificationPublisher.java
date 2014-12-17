@@ -28,6 +28,8 @@ import java.nio.ByteBuffer;
 
 /**
  * Kafka implementation of a {@link co.cask.cdap.notifications.client.NotificationClient.Publisher}.
+ *
+ * @param <N> Type of the Notifications being published.
  */
 public class KafkaNotificationPublisher<N> extends AbstractNotificationPublisher<N> {
 
