@@ -1359,9 +1359,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/apps/{app-id}")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
-    rewriteRequest(request);
     try {
-      return appLifecycleHttpHandler.deploy(request, responder, Constants.DEFAULT_NAMESPACE, appId);
+      return appLifecycleHttpHandler.deploy(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -1376,9 +1375,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder) {
     // null means use name provided by app spec
-    rewriteRequest(request);
     try {
-      return appLifecycleHttpHandler.deploy(request, responder, Constants.DEFAULT_NAMESPACE, null);
+      return appLifecycleHttpHandler.deploy(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, null);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -1634,8 +1632,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/deploy/status")
   public void getDeployStatus(HttpRequest request, HttpResponder responder) {
-    rewriteRequest(request);
-    appLifecycleHttpHandler.getDeployStatus(request, responder, Constants.DEFAULT_NAMESPACE);
+    appLifecycleHttpHandler.getDeployStatus(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
 
@@ -1800,8 +1797,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                         @PathParam("app-id") final String appId) {
-    rewriteRequest(request);
-    appLifecycleHttpHandler.deleteApp(request, responder, Constants.DEFAULT_NAMESPACE, appId);
+    appLifecycleHttpHandler.deleteApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -1810,8 +1806,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder) {
-    rewriteRequest(request);
-    appLifecycleHttpHandler.deleteAllApps(request, responder, Constants.DEFAULT_NAMESPACE);
+    appLifecycleHttpHandler.deleteAllApps(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -2061,8 +2056,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder) {
-    rewriteRequest(request);
-    appLifecycleHttpHandler.getAllApps(request, responder, Constants.DEFAULT_NAMESPACE);
+    appLifecycleHttpHandler.getAllApps(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -2072,8 +2066,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("app-id") final String appId) {
-    rewriteRequest(request);
-    appLifecycleHttpHandler.getAppInfo(request, responder, Constants.DEFAULT_NAMESPACE, appId);
+    appLifecycleHttpHandler.getAppInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId);
   }
 
   /**
@@ -2717,9 +2710,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
    *
    * @param request the original {@link HttpRequest}
+   * @return {@link HttpRequest} with modified URI
    */
-  private void rewriteRequest(HttpRequest request) {
+  private HttpRequest rewriteRequest(HttpRequest request) {
     String originalUri = request.getUri();
     request.setUri(originalUri.replaceFirst("/v2", "/v3/" + Constants.DEFAULT_NAMESPACE));
+    return request;
   }
 }
