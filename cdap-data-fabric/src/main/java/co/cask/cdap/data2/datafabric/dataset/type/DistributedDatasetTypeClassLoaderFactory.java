@@ -109,7 +109,7 @@ public class DistributedDatasetTypeClassLoaderFactory implements DatasetTypeClas
       }
 
       // The folder name to expand to is formed by the module name and the checksum.
-      String dirName = String.format("%s.%s", moduleMeta.getName(), Bytes.toStringBinary(messageDigest.digest()));
+      String dirName = String.format("%s.%s", moduleMeta.getName(), Bytes.toHexString(messageDigest.digest()));
       File expandDir = new File(tmpJar.getParent(), dirName);
 
       if (!expandDir.isDirectory()) {
