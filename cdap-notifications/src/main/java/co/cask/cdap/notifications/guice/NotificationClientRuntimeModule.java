@@ -56,7 +56,7 @@ public class NotificationClientRuntimeModule extends RuntimeModule {
       @SuppressWarnings("unused")
       private NotificationClient notificationPublisher(CConfiguration cConf, Injector injector) {
         // TODO use that constant once we have more core systems
-        String coreSystem = cConf.get(Constants.Notification.CORE_SYSTEM, "kafka");
+        String coreSystem = cConf.get(Constants.Notification.TRANSPORT_SYSTEM, "kafka");
         return injector.getInstance(KafkaNotificationClient.class);
       }
     };

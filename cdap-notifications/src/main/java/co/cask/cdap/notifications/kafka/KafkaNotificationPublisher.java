@@ -18,13 +18,13 @@ package co.cask.cdap.notifications.kafka;
 
 import co.cask.cdap.notifications.NotificationFeed;
 import co.cask.cdap.notifications.client.AbstractNotificationPublisher;
-import com.google.common.base.Functions;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import co.cask.cdap.notifications.service.NotificationException;
+import com.google.common.base.Throwables;
 import org.apache.twill.kafka.client.KafkaPublisher;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Kafka implementation of a {@link co.cask.cdap.notifications.client.NotificationClient.Publisher}.
@@ -43,9 +43,20 @@ public class KafkaNotificationPublisher<N> extends AbstractNotificationPublisher
   }
 
   @Override
-  protected ListenableFuture<Void> doPublish(N notification) throws IOException {
-    ByteBuffer bb = ByteBuffer.wrap(KafkaMessageSerializer.encode(feed, notification));
-    preparer.add(bb, KafkaMessageSerializer.buildKafkaMessageKey(feed));
-    return Futures.transform(preparer.send(), Functions.<Void>constant(null));
+  protected void doPublish(N notification) throws NotificationException {
+    try {
+      ByteBuffer bb = ByteBuffer.wrap(KafkaMessageSerializer.encode(feed, notification));
+      preparer.add(bb, KafkaMessageSerializer.buildKafkaMessageKey(feed));
+
+      try {
+        preparer.send().get();
+      } catch (InterruptedException e) {
+        Throwables.propagate(e);
+      } catch (ExecutionException e) {
+        throw new NotificationException(e.getCause());
+      }
+    } catch (IOException e) {
+      throw new NotificationException(e);
+    }
   }
 }

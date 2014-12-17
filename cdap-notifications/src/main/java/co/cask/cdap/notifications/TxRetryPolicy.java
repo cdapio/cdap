@@ -49,7 +49,7 @@ public abstract class TxRetryPolicy {
    * @param tries number of tries before dropping a transaction.
    * @return a {@link TxRetryPolicy} object that will drop after the given amount of {@code tries}.
    */
-  public static TxRetryPolicy dropAfter(final int tries) {
+  public static TxRetryPolicy maxRetries(final int tries) {
     return new TxRetryPolicy() {
       @Override
       public Policy handleFailure(int failures, Throwable e) {

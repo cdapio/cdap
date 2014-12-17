@@ -92,7 +92,7 @@ public interface NotificationClient {
      * @throws java.io.IOException if the Notification could not be serialized to the Notification System successfully.
      * @throws PublisherShutdownException if this {@link Publisher} is already shut down.
      */
-    ListenableFuture<Void> publish(N notification) throws IOException, PublisherShutdownException;
+    ListenableFuture<N> publish(N notification) throws IOException, PublisherShutdownException;
 
     /**
      * Initiates an orderly shutdown in which previously submitted notification are sent,

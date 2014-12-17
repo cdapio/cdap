@@ -27,7 +27,6 @@ import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,14 +76,14 @@ public final class BasicNotificationContext implements NotificationContext {
     }
   }
 
-  private void abortTransaction(Exception e, String message, TransactionContext context) {
+  private void abortTransaction(Exception e, String message, TransactionContext context) throws Exception {
     try {
       LOG.error(message, e);
       context.abort();
-      throw Throwables.propagate(e);
+      throw e;
     } catch (TransactionFailureException e1) {
       LOG.error("Failed to abort transaction.", e1);
-      throw Throwables.propagate(e1);
+      throw e1;
     }
   }
 

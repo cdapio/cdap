@@ -204,7 +204,7 @@ public abstract class NotificationTest {
         try {
           publisher.publish("foo");
           Assert.fail();
-        } catch (NotificationClient.PublisherShutdownException e) {
+        } catch (IllegalStateException e) {
           // Expected.
         }
       }
@@ -274,7 +274,7 @@ public abstract class NotificationTest {
               KeyValueTable table = context.getDataset("myTable");
               table.write("foo", String.format("%s-%d", notification, received++));
             }
-          }, TxRetryPolicy.dropAfter(5));
+          }, TxRetryPolicy.maxRetries(5));
         }
       });
       Cancellable cancellable = subscriber.consume();

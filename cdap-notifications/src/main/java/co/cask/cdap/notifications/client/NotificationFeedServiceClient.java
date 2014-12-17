@@ -65,14 +65,12 @@ public class NotificationFeedServiceClient implements NotificationFeedClient {
     });
   }
 
-  private InetSocketAddress getServiceAddress() {
+  private InetSocketAddress getServiceAddress() throws NotificationFeedException {
     EndpointStrategy endpointStrategy = this.endpointStrategySupplier.get();
-    if (endpointStrategy == null || endpointStrategy.pick() == null) {
+    if (endpointStrategy.pick() == null) {
       String message = String.format("Cannot discover service %s", Constants.Service.APP_FABRIC_HTTP);
-      LOG.debug(message);
-      throw new RuntimeException(message);
+      throw new NotificationFeedException(message);
     }
-
     return endpointStrategy.pick().getSocketAddress();
   }
 

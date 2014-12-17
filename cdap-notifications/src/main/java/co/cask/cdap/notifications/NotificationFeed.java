@@ -117,7 +117,6 @@ public class NotificationFeed {
     }
 
     NotificationFeed that = (NotificationFeed) o;
-
     return Objects.equal(this.id, that.id) &&
       Objects.equal(this.category, that.category) &&
       Objects.equal(this.namespace, that.namespace) &&
@@ -126,10 +125,6 @@ public class NotificationFeed {
 
   @Override
   public int hashCode() {
-    int result = id != null ? id.hashCode() : 0;
-    result = 31 * result + (category != null ? category.hashCode() : 0);
-    result = 31 * result + (namespace != null ? namespace.hashCode() : 0);
-    result = 31 * result + (name != null ? name.hashCode() : 0);
-    return result;
+    return Objects.hashCode(id, category, namespace, name);
   }
 }

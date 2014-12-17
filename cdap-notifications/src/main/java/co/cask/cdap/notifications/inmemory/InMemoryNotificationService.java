@@ -23,8 +23,8 @@ import co.cask.cdap.notifications.NotificationHandler;
 import co.cask.cdap.notifications.client.AbstractNotificationSubscriber;
 import co.cask.cdap.notifications.kafka.KafkaNotificationSubscriber;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,8 +35,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -48,9 +47,8 @@ public class InMemoryNotificationService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaNotificationSubscriber.class);
   private static final int EXECUTOR_POOL_SIZE = 10;
 
-
-  private Map<NotificationFeed, List<AbstractNotificationSubscriber>> feedsToSubscribers;
-  private ReadWriteLock lock;
+  private final SetMultimap<NotificationFeed, AbstractNotificationSubscriber> feedsToSubscribers;
+  private final ReadWriteLock lock;
 
   private final DatasetFramework dsFramework;
   private final TransactionSystemClient transactionSystemClient;
@@ -61,14 +59,14 @@ public class InMemoryNotificationService extends AbstractIdleService {
   public InMemoryNotificationService(DatasetFramework dsFramework, TransactionSystemClient transactionSystemClient) {
     this.dsFramework = dsFramework;
     this.transactionSystemClient = transactionSystemClient;
+    this.feedsToSubscribers = HashMultimap.create();
+    this.lock = new ReentrantReadWriteLock();
   }
 
   @Override
   protected void startUp() throws Exception {
     executor = MoreExecutors.listeningDecorator(
       Executors.newFixedThreadPool(EXECUTOR_POOL_SIZE, Threads.createDaemonThreadFactory("notification-service-%d")));
-    feedsToSubscribers = Maps.newHashMap();
-    lock = new ReentrantReadWriteLock();
   }
 
   @Override
@@ -85,10 +83,10 @@ public class InMemoryNotificationService extends AbstractIdleService {
    * @param <N> Type of the notification to publish.
    * @return A {@link ListenableFuture} describing the pushing of the notification.
    */
-  public synchronized <N> ListenableFuture<Void> publish(final NotificationFeed feed, final N notification) {
+  public <N> ListenableFuture<Void> publish(final NotificationFeed feed, final N notification) {
     lock.readLock().lock();
     try {
-      List<AbstractNotificationSubscriber> subscribers = feedsToSubscribers.get(feed);
+      Set<AbstractNotificationSubscriber> subscribers = feedsToSubscribers.get(feed);
       if (subscribers == null) {
         return Futures.immediateFuture(null);
       }
@@ -124,18 +122,10 @@ public class InMemoryNotificationService extends AbstractIdleService {
    * @param subscriber Notification subscriber
    * @param feed {@link NotificationFeed} to subscribe to.
    */
-  public synchronized void subscribe(AbstractNotificationSubscriber subscriber, NotificationFeed feed) {
+  public void subscribe(AbstractNotificationSubscriber subscriber, NotificationFeed feed) {
     lock.writeLock().lock();
     try {
-      List<AbstractNotificationSubscriber> subscribers = feedsToSubscribers.get(feed);
-      if (subscribers == null) {
-        subscribers = Lists.newArrayList();
-        feedsToSubscribers.put(feed, subscribers);
-      }
-      if (subscribers.contains(subscriber)) {
-        return;
-      }
-      subscribers.add(subscriber);
+      feedsToSubscribers.put(feed, subscriber);
     } finally {
       lock.writeLock().unlock();
     }
@@ -146,16 +136,13 @@ public class InMemoryNotificationService extends AbstractIdleService {
    *
    * @param subscriber subscriber that wants to cancel its subscriptions.
    */
-  public synchronized void cancel(AbstractNotificationSubscriber subscriber) {
+  public void cancel(AbstractNotificationSubscriber subscriber) {
     lock.writeLock().lock();
     try {
-      for (List<AbstractNotificationSubscriber> subscribers : feedsToSubscribers.values()) {
-        if (subscribers == null) {
-          continue;
-        }
+      for (NotificationFeed feed : feedsToSubscribers.keySet()) {
         // Here the subscriber will be identified by its reference, since equals() is not overridden.
         // Which is good, this is the behavior we expect.
-        subscribers.remove(subscriber);
+        feedsToSubscribers.remove(feed, subscriber);
       }
     } finally {
       lock.writeLock().unlock();

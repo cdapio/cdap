@@ -925,9 +925,9 @@
         Notification System Settings
     -->
     <property>
-        <name>notification.core.system</name>
+        <name>notification.transport.system</name>
         <value>kafka</value>
-        <description>Core system used by the Notification system - can be kafka/stream</description>
+        <description>Transport system used by the Notification system - can be kafka/stream</description>
     </property>
 
     <!--

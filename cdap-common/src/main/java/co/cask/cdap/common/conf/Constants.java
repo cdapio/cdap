@@ -541,7 +541,7 @@ public final class Constants {
    * Notification system configuration.
    */
   public static final class Notification {
-    public static final String CORE_SYSTEM = "notification.core.system";
+    public static final String TRANSPORT_SYSTEM = "notification.transport.system";
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

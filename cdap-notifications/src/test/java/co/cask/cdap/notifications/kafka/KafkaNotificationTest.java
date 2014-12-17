@@ -56,7 +56,7 @@ public class KafkaNotificationTest extends NotificationTest {
   public static void start() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-    cConf.set(Constants.Notification.CORE_SYSTEM, "kafka");
+    cConf.set(Constants.Notification.TRANSPORT_SYSTEM, "kafka");
 
     Injector injector = createInjector(
       cConf,

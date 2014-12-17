@@ -250,7 +250,10 @@ public class NotificationFeedHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testDeleteMissingFeed() throws Exception {
     // test deleting non-existent feed
-    HttpResponse response = deleteFeed("doesnotexist");
+    HttpResponse response = deleteFeed("does.not.exist");
     assertResponseCode(404, response);
+    // Id has wrong format
+    response = deleteFeed("doesnotexist");
+    assertResponseCode(400, response);
   }
 }

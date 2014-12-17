@@ -62,7 +62,7 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
       if (feedService.createFeed(feed)) {
         responder.sendStatus(HttpResponseStatus.OK);
       } else {
-        LOG.warn("Notification Feed already exists.");
+        LOG.trace("Notification Feed already exists.");
         responder.sendStatus(HttpResponseStatus.CONFLICT);
       }
     } catch (NotificationFeedException e) {
@@ -80,8 +80,11 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/feeds/{id}")
   public void deleteFeed(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     try {
-      NotificationFeed feed = getFeedFromId(responder, id);
-      if (feed == null) {
+      NotificationFeed feed;
+      try {
+        feed = NotificationFeed.fromId(id);
+      } catch (NotificationFeedException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
       }
       feedService.deleteFeed(feed);
@@ -95,12 +98,14 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   @GET
-//  @HEAD   // TODO do we have to add an API in the notification feed service for that?
   @Path("/feeds/{id}")
   public void getFeed(HttpRequest request, HttpResponder responder, @PathParam("id") String id) {
     try {
-      NotificationFeed feed = getFeedFromId(responder, id);
-      if (feed == null) {
+      NotificationFeed feed;
+      try {
+        feed = NotificationFeed.fromId(id);
+      } catch (NotificationFeedException e) {
+        responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         return;
       }
       responder.sendJson(HttpResponseStatus.OK, feedService.getFeed(feed));
@@ -123,21 +128,6 @@ public class NotificationFeedHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
                            String.format("Could not check subscribe permission for Notification Feed. %s",
                                          e.getMessage()));
-    }
-  }
-
-  /**
-   * Try to get a feed from its id, and if it can't make the responder send an error.
-   * @param responder HTTP responder.
-   * @param id feed id.
-   * @return {@link NotificationFeed} object constructed from {@code id}.
-   */
-  private NotificationFeed getFeedFromId(HttpResponder responder, String id) {
-    try {
-      return NotificationFeed.fromId(id);
-    } catch (NotificationFeedException e) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
-      return null;
     }
   }
 }

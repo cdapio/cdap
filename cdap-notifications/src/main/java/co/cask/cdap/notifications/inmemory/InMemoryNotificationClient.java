@@ -21,12 +21,13 @@ import co.cask.cdap.notifications.client.AbstractNotificationPublisher;
 import co.cask.cdap.notifications.client.AbstractNotificationSubscriber;
 import co.cask.cdap.notifications.client.NotificationClient;
 import co.cask.cdap.notifications.client.NotificationFeedClient;
+import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationFeedException;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 
-import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 /**
  * In memory implementation of the {@link NotificationClient}, which connects to an {@link InMemoryNotificationService}
@@ -70,8 +71,14 @@ public class InMemoryNotificationClient implements NotificationClient {
     }
 
     @Override
-    protected ListenableFuture<Void> doPublish(N notification) throws IOException {
-      return notificationService.publish(getFeed(), notification);
+    protected void doPublish(N notification) throws NotificationException {
+      try {
+        notificationService.publish(getFeed(), notification).get();
+      } catch (InterruptedException e) {
+        Throwables.propagate(e);
+      } catch (ExecutionException e) {
+        throw new NotificationException(e.getCause());
+      }
     }
   }
 

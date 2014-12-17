@@ -17,16 +17,19 @@
 package co.cask.cdap.notifications.client;
 
 import co.cask.cdap.notifications.NotificationFeed;
+import co.cask.cdap.notifications.service.NotificationException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
@@ -37,20 +40,22 @@ import java.util.concurrent.Executors;
 public abstract class AbstractNotificationPublisher<N> implements NotificationClient.Publisher<N> {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractNotificationPublisher.class);
 
-  private final ExecutorService executor;
+  private final ListeningExecutorService executor;
   private final NotificationFeed feed;
 
   /**
-   * Publish the {@code notification} to the Notification service, which handles the storing of notifications.
+   * Publish the {@code notification} to the Notification service synchronously,
+   * which handles the storing of notifications.
    *
    * @param notification notification to publish.
    * @return A {@link ListenableFuture} describing the pushing of the notification to the service.
-   * @throws IOException
+   * @throws NotificationException if any error happens when publishing the Notification.
    */
-  protected abstract ListenableFuture<Void> doPublish(N notification) throws IOException;
+  protected abstract void doPublish(N notification) throws NotificationException;
 
   protected AbstractNotificationPublisher(NotificationFeed feed) {
-    this.executor = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("notification-sender-%d"));
+    this.executor = MoreExecutors.listeningDecorator(
+      Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("notification-sender-%d")));
     this.feed = feed;
   }
 
@@ -72,41 +77,31 @@ public abstract class AbstractNotificationPublisher<N> implements NotificationCl
   public synchronized List<N> shutdownNow() {
     List<Runnable> runnables = executor.shutdownNow();
     ImmutableList.Builder<N> builder = ImmutableList.builder();
-    for (Runnable r : runnables) {
-      if (r instanceof GetNotificationRunnable) {
-        builder.add(((GetNotificationRunnable<N>) r).getNotification());
-      }
+    for (GetNotificationRunnable r : Iterables.filter(runnables, GetNotificationRunnable.class)) {
+      builder.add(r.getNotification());
     }
     return builder.build();
   }
 
   @Override
-  public synchronized ListenableFuture<Void> publish(N notification)
+  public synchronized ListenableFuture<N> publish(final N notification)
     throws IOException, NotificationClient.PublisherShutdownException {
     if (isShutdown()) {
-      LOG.warn("Cannot publish notification, sender is shut down.");
-      throw new NotificationClient.PublisherShutdownException(
-        "Tried to publish notification " + notification + " after shut down.");
+      throw new IllegalStateException("Tried to publish notification " + notification + " after shut down.");
     }
     LOG.debug("Publishing on notification feed [{}]: {}", feed, notification);
-    ListenableFuture<Void> future = doPublish(notification);
-    executor.submit(new GetNotificationRunnable<N>(future, notification));
-    return future;
+    return executor.submit(new GetNotificationRunnable(notification), notification);
   }
 
   /**
    * Runnable which only job is to wait for the get method of a future representing the pushing of Notification
    * to return.
-   *
-   * @param <N> Type of the Notification being pushed.
    */
-  private static final class GetNotificationRunnable<N> implements Runnable {
+  private final class GetNotificationRunnable implements Runnable {
 
-    private final ListenableFuture<?> future;
     private final N notification;
 
-    public GetNotificationRunnable(ListenableFuture<?> future, N notification) {
-      this.future = future;
+    public GetNotificationRunnable(N notification) {
       this.notification = notification;
     }
 
@@ -117,9 +112,8 @@ public abstract class AbstractNotificationPublisher<N> implements NotificationCl
     @Override
     public void run() {
       try {
-        future.get();
+        doPublish(notification);
       } catch (Exception e) {
-        LOG.error("Could not get publish notification result", e);
         Throwables.propagate(e);
       }
     }
