@@ -42,13 +42,16 @@ import java.util.Map;
  */
 public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final Gson GSON = new Gson();
-  private static final String TEST_NAMESPACE = "testnamespace";
-  private static final NamespaceMeta TEST_NAMESPACE_META = new NamespaceMeta.Builder().setName(TEST_NAMESPACE)
-    .setDisplayName(TEST_NAMESPACE).setDescription(TEST_NAMESPACE).build();
+  private static final String TEST_NAMESPACE1 = "testnamespace1";
+  private static final String TEST_NAMESPACE2 = "testnamespace2";
+  private static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE1)
+    .setDisplayName(TEST_NAMESPACE1).setDescription(TEST_NAMESPACE1).build();
+  private static final NamespaceMeta TEST_NAMESPACE_META2 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE2)
+    .setDisplayName(TEST_NAMESPACE2).setDescription(TEST_NAMESPACE2).build();
 
-  private String getDeploymentStatus() throws Exception {
+  private String getDeploymentStatus(String namespace) throws Exception {
     HttpResponse response = doGet(getVersionedAPIPath("deploy/status/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                                      TEST_NAMESPACE));
+                                                      namespace));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     Map<String, String> o = new Gson().fromJson(s, new TypeToken<Map<String, String>>() { }.getType());
@@ -58,7 +61,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @BeforeClass
   public static void setup() throws Exception {
     HttpResponse response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3),
-                                  GSON.toJson(TEST_NAMESPACE_META));
+                                  GSON.toJson(TEST_NAMESPACE_META1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doPut(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3),
+                     GSON.toJson(TEST_NAMESPACE_META2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
@@ -69,6 +75,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDeployNonExistingNamespace() throws Exception {
     HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, "random");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
+    Assert.assertEquals("Deploy failed - namespace 'random' does not exist.", readResponse(response));
   }
 
   /**
@@ -76,11 +83,11 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeployValid() throws Exception {
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE);
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("DEPLOYED", getDeploymentStatus());
+    Assert.assertEquals("DEPLOYED", getDeploymentStatus(TEST_NAMESPACE1));
 
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE));
+    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
@@ -89,7 +96,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeployInvalid() throws Exception {
-    HttpResponse response = deploy(String.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE);
+    HttpResponse response = deploy(String.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
     Assert.assertTrue(response.getEntity().getContentLength() > 0);
@@ -100,11 +107,11 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeployFailure() throws Exception {
-    HttpResponse response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE);
+    HttpResponse response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
 
-    response = deploy(AppWithDatasetDuplicate.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE);
+    response = deploy(AppWithDatasetDuplicate.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(400, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
   }
@@ -112,37 +119,55 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testListAndGet() throws Exception {
     final String appName = "AppWithDatasetName";
-    //deploy without name
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE);
+    //deploy without name to testnamespace1
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Assert.assertEquals("DEPLOYED", getDeploymentStatus());
+    Assert.assertEquals("DEPLOYED", getDeploymentStatus(TEST_NAMESPACE1));
 
-    //deploy with name
-    response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE, appName);
+    //deploy with name to testnamespace2
+    response = deploy(AppWithDataset.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2, appName);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertNotNull(response.getEntity());
 
-    response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
-    List<JsonObject> apps = readResponse(response, typeToken);
-    Assert.assertEquals(2, apps.size());
+    //make sure testnamespace1 has 1 app
+    List<JsonObject> apps = getAppList(TEST_NAMESPACE1);
+    Assert.assertEquals(1, apps.size());
 
-    response = doGet(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    typeToken = new TypeToken<JsonObject>() { }.getType();
-    JsonObject result = readResponse(response, typeToken);
+    //make sure testnamespace2 has 1 app
+    apps = getAppList(TEST_NAMESPACE2);
+    Assert.assertEquals(1, apps.size());
+
+    //get and verify app details in testnamespace1
+    JsonObject result = getAppDetails(TEST_NAMESPACE1, "WordCountApp");
     Assert.assertEquals("App", result.get("type").getAsString());
     Assert.assertEquals("WordCountApp", result.get("name").getAsString());
 
-    response = doGet(getVersionedAPIPath("apps/" + appName, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    typeToken = new TypeToken<JsonObject>() { }.getType();
-    result = readResponse(response, typeToken);
+    //get and verify app details in testnamespace2
+    result = getAppDetails(TEST_NAMESPACE2, appName);
     Assert.assertEquals(appName, result.get("id").getAsString());
 
-    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE));
+    //delete app in testnamespace1
+    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    //delete app in testnamespace2
+    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  private List<JsonObject> getAppList(String namespace) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
+  private JsonObject getAppDetails(String namespace, String appName) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath(String.format("apps/%s", appName),
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<JsonObject>() { }.getType();
+    return readResponse(response, typeToken);
   }
 
   /**
@@ -152,10 +177,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   public void testDelete() throws Exception {
     //Delete an invalid app
     HttpResponse response = doDelete(getVersionedAPIPath("apps/XYZ", Constants.Gateway.API_VERSION_3_TOKEN,
-                                                         TEST_NAMESPACE));
+                                                         TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE);
+    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     //TODO: Enable these verifications after their v3 APIs are implemented.
     //getRunnableStartStop("flows", "WordCountApp", "WordCountFlow", "start");
     //waitState("flows", "WordCountApp", "WordCountFlow", "RUNNING");
@@ -168,17 +193,19 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     // waitState("flows", "WordCountApp", "WordCountFlow", "STOPPED");
     //Delete the App after stopping the flow
     response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                            TEST_NAMESPACE));
+                                            TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
-                                            TEST_NAMESPACE));
+                                            TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
     HttpResponse response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3,
-                                                   TEST_NAMESPACE));
+                                                   TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 }

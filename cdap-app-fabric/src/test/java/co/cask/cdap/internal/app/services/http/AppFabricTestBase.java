@@ -329,16 +329,22 @@ public abstract class AppFabricTestBase {
   protected static String getVersionedAPIPath(String nonVersionedApiPath, @Nullable String version,
                                               @Nullable String namespace) {
     StringBuilder versionedApiBuilder = new StringBuilder("/");
+    // if not specified, treat v2 as the version, so existing tests do not need any updates.
     if (version == null) {
       version = Constants.Gateway.API_VERSION_2_TOKEN;
-      Preconditions.checkArgument(namespace == null, String.format("Cannot specify namespace for v2 APIs. Namespace " +
-                                                                     "will be %s", Constants.DEFAULT_NAMESPACE));
     }
+
     if (Constants.Gateway.API_VERSION_2_TOKEN.equals(version)) {
+      Preconditions.checkArgument(namespace == null,
+                                  String.format("Cannot specify namespace for v2 APIs. Namespace will default to '%s'" +
+                                                  " for all v2 APIs.", Constants.DEFAULT_NAMESPACE));
       versionedApiBuilder.append(version).append("/");
     } else if (Constants.Gateway.API_VERSION_3_TOKEN.equals(version)) {
       Preconditions.checkArgument(namespace != null, "Namespace cannot be null for v3 APIs.");
       versionedApiBuilder.append(version).append("/").append(namespace).append("/");
+    } else {
+      throw new IllegalArgumentException(String.format("Unsupported version '%s'. Only v2 and v3 are supported.",
+                                                       version));
     }
     versionedApiBuilder.append(nonVersionedApiPath);
     return versionedApiBuilder.toString();

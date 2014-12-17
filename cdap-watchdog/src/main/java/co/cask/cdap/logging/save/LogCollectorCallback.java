@@ -22,15 +22,20 @@ import co.cask.cdap.logging.appender.kafka.LoggingEventSerializer;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.kafka.KafkaLogEvent;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Table;
+import com.google.common.collect.RowSortedTable;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.twill.kafka.client.FetchedMessage;
 import org.apache.twill.kafka.client.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.AbstractMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.SortedSet;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Kafka callback to fetch log messages and store them in time buckets per logging context.
@@ -38,20 +43,40 @@ import java.util.List;
 public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
   private static final Logger LOG = LoggerFactory.getLogger(LogCollectorCallback.class);
 
-  private final Table<Long, String, List<KafkaLogEvent>> messageTable;
+  private final RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable;
   private final LoggingEventSerializer serializer;
   private final long eventBucketIntervalMs;
+  private final long maxNumberOfBucketsInTable;
+  private final CountDownLatch kafkaCancelCallbackLatch;
+  private static final long SLEEP_TIME_MS = 100;
 
-  public LogCollectorCallback(Table<Long, String, List<KafkaLogEvent>> messageTable, LoggingEventSerializer serializer,
-                              long eventBucketIntervalMs) {
+  public LogCollectorCallback(RowSortedTable<Long, String, Entry<Long, List<KafkaLogEvent>>> messageTable,
+                              LoggingEventSerializer serializer, long eventBucketIntervalMs,
+                              long maxNumberOfBucketsInTable, CountDownLatch kafkaCancelCallbackLatch) {
     this.messageTable = messageTable;
     this.serializer = serializer;
     this.eventBucketIntervalMs = eventBucketIntervalMs;
+    this.maxNumberOfBucketsInTable = maxNumberOfBucketsInTable;
+    this.kafkaCancelCallbackLatch = kafkaCancelCallbackLatch;
   }
 
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
+
+    try {
+      if (kafkaCancelCallbackLatch.await(50, TimeUnit.MICROSECONDS)) {
+        // if count down occurred return
+        LOG.info("Returning since callback is cancelled.");
+        return;
+      }
+    } catch (InterruptedException e) {
+      LOG.error("Exception: ", e);
+      Thread.currentThread().interrupt();
+      return;
+    }
+
     int count = 0;
+
     while (messages.hasNext()) {
       FetchedMessage message = messages.next();
       try {
@@ -59,12 +84,47 @@ public class LogCollectorCallback implements KafkaConsumer.MessageCallback {
         ILoggingEvent event = serializer.fromGenericRecord(genericRecord);
         LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(event.getMDCPropertyMap());
 
+        // Compute the bucket number for the current event
+        long key = event.getTimeStamp() / eventBucketIntervalMs;
+
+        while (true) {
+          // Get the oldest bucket in the table
+          long oldestBucketKey = 0;
+          synchronized (messageTable) {
+            SortedSet<Long> rowKeySet = messageTable.rowKeySet();
+            if (rowKeySet.isEmpty()) {
+              // Table is empty so go ahead and add the current event in the table
+              break;
+            }
+            oldestBucketKey = rowKeySet.first();
+          }
+
+          // If the current event falls in the bucket number which is not in window [oldestBucketKey, oldestBucketKey+8]
+          // sleep for the time duration till event falls in the window
+          if (key > (oldestBucketKey + maxNumberOfBucketsInTable)) {
+            LOG.debug("key={}, oldestBucketKey={}, maxNumberOfBucketsInTable={}. Sleeping for {} ms.",
+                     key, oldestBucketKey, maxNumberOfBucketsInTable, SLEEP_TIME_MS);
+
+            if (kafkaCancelCallbackLatch.await(SLEEP_TIME_MS, TimeUnit.MILLISECONDS)) {
+              // if count down occurred return
+              LOG.info("Returning since callback is cancelled");
+              return;
+            }
+          } else {
+            break;
+          }
+        }
+
         synchronized (messageTable) {
-          long key = event.getTimeStamp() / eventBucketIntervalMs;
-          List<KafkaLogEvent> msgList = messageTable.get(key, loggingContext.getLogPathFragment());
-          if (msgList == null) {
+          Entry<Long, List<KafkaLogEvent>> entry = messageTable.get(key, loggingContext.getLogPathFragment());
+          List<KafkaLogEvent> msgList = null;
+          if (entry == null) {
+            long eventArrivalBucketKey = System.currentTimeMillis() / eventBucketIntervalMs;
             msgList = Lists.newArrayList();
-            messageTable.put(key, loggingContext.getLogPathFragment(), msgList);
+            messageTable.put(key, loggingContext.getLogPathFragment(),
+                             new AbstractMap.SimpleEntry<Long, List<KafkaLogEvent>>(eventArrivalBucketKey, msgList));
+          } else {
+           msgList = messageTable.get(key, loggingContext.getLogPathFragment()).getValue();
           }
           msgList.add(new KafkaLogEvent(genericRecord, event, loggingContext,
                                         message.getTopicPartition().getPartition(), message.getNextOffset()));

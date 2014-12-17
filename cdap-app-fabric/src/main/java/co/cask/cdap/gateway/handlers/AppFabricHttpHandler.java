@@ -1855,8 +1855,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Updates the request URI to its v3 URI before forwarding (or even when delegating the handler method to a method in
-   * a v3 handler)
+   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
    *
    * @param request the original {@link HttpRequest}
    */

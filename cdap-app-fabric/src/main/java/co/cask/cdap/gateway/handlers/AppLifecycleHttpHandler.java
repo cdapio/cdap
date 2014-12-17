@@ -262,10 +262,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getDeployStatus(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId) {
     try {
-      DeployStatus status  = dstatus(namespaceId);
+      DeployStatus status  = getDeployStatus(namespaceId);
       LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
       responder.sendJson(HttpResponseStatus.OK, new Status(status.getCode(), status.getMessage()));
     } catch (SecurityException e) {
+      LOG.debug("Security Exception while getting deployment status: ", e);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception:", e);
@@ -308,6 +309,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.trace("Delete call for Application {} at AppFabricHttpHandler", appId);
       responder.sendString(appStatus.getCode(), appStatus.getMessage());
     } catch (SecurityException e) {
+      LOG.debug("Security Exception while deleting app: ", e);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
@@ -325,9 +327,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       Id.Account id = Id.Account.from(namespaceId);
       AppFabricServiceStatus status = removeAll(id);
-      LOG.trace("Delete All call at AppFabricHttpHandler");
+      LOG.trace("Delete all call at AppFabricHttpHandler");
       responder.sendString(status.getCode(), status.getMessage());
     } catch (SecurityException e) {
+      LOG.debug("Security Exception while deleting all apps: ", e);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception: ", e);
@@ -335,10 +338,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private BodyConsumer deployAppStream (final HttpRequest request,
-                                        final HttpResponder responder, final String namespaceId,
-                                        final String appId) throws IOException {
-    validateNamespace(namespaceId, responder);
+  private BodyConsumer deployAppStream(final HttpRequest request, final HttpResponder responder,
+                                       final String namespaceId, final String appId) throws IOException {
+    if (!namespaceExists(namespaceId)) {
+      LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
+      responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
+                                                                         "exist.", namespaceId));
+      return null;
+    }
 
     final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
 
@@ -394,7 +401,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } finally {
-          save(sessionInfo.setStatus(sessionInfo.getStatus()), namespaceId);
+          saveSessionInfo(sessionInfo.setStatus(sessionInfo.getStatus()), namespaceId);
           sessions.remove(namespaceId);
         }
       }
@@ -423,23 +430,30 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void validateNamespace(String namespace, HttpResponder responder) {
-    Preconditions.checkArgument(namespace != null, "Namespace should not be null.");
-    Preconditions.checkArgument(!namespace.isEmpty(), "Namespace should not be empty.");
-    if (store.getNamespace(Id.Namespace.from(namespace)) == null) {
-      if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
-        NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder().setName(Constants.DEFAULT_NAMESPACE)
-                                                         .setDisplayName(Constants.DEFAULT_NAMESPACE)
-                                                         .setDescription(Constants.DEFAULT_NAMESPACE).build());
-        if (existing != null) {
-          LOG.trace("Default namespace already exists.");
-        } else {
-          LOG.trace("Created default namespace.");
-        }
+  private boolean namespaceExists(String namespace) {
+    boolean isValid = false;
+    if (namespace != null && !namespace.isEmpty()) {
+      if (store.getNamespace(Id.Namespace.from(namespace)) != null) {
+        isValid = true;
       } else {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not found", namespace));
+        // null namespace found. check if this is default, and try to create it.
+        // This logic could be changed later to figure out a way to create the 'default' namespace at a better
+        // time during the initialization of CDAP.
+        if (Constants.DEFAULT_NAMESPACE.equals(namespace)) {
+          NamespaceMeta existing = store.createNamespace(new NamespaceMeta.Builder()
+                                                           .setName(Constants.DEFAULT_NAMESPACE)
+                                                           .setDisplayName(Constants.DEFAULT_NAMESPACE)
+                                                           .setDescription(Constants.DEFAULT_NAMESPACE).build());
+          if (existing != null) {
+            LOG.trace("Default namespace already exists.");
+          } else {
+            LOG.trace("Created default namespace.");
+          }
+          isValid = true;
+        }
       }
     }
+    return isValid;
   }
 
   /**
@@ -448,7 +462,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param info to be saved.
    * @return true if and only if successful; false otherwise.
    */
-  private boolean save(SessionInfo info, String namespaceId) {
+  private boolean saveSessionInfo(SessionInfo info, String namespaceId) {
     try {
       Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
       Location outputDir = locationFactory.create(archiveDir).append(namespaceId);
@@ -571,6 +585,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendByteArray(HttpResponseStatus.OK, json.getBytes(Charsets.UTF_8),
                               ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
     } catch (SecurityException e) {
+      LOG.debug("Security Exception while retrieving app details: ", e);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (Throwable e) {
       LOG.error("Got exception : ", e);
@@ -581,9 +596,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   /*
    * Returns DeploymentStatus
    */
-  private DeployStatus dstatus(String namespaceId) {
+  private DeployStatus getDeployStatus(String namespaceId) {
     if (!sessions.containsKey(namespaceId)) {
-      SessionInfo info = retrieve(namespaceId);
+      SessionInfo info = retrieveSessionInfo(namespaceId);
       if (info == null) {
         return DeployStatus.NOT_FOUND;
       }
@@ -598,7 +613,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   * Retrieves a {@link SessionInfo} from the file system.
   */
   @Nullable
-  private SessionInfo retrieve(String namespaceId) {
+  private SessionInfo retrieveSessionInfo(String namespaceId) {
     try {
       final Location outputDir = locationFactory.create(archiveDir).append(namespaceId);
       if (!outputDir.exists()) {

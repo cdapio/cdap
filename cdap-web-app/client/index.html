@@ -1294,31 +1294,18 @@
     </div>
     <div id="panels">
       <div class="panel">
-        <div class="sparks-metrics clearfix chart">
-            <div class="spark-metrics-item">
-              <div class="spark-icon spark-metrics-block">
-                <div class="info-window">
-                  <div class="metrics-phase">BLOCKS</div>
-                  <div class="mapper-icon"></div>
-                  <div class="metric-row">{{model.metricsData.blockRemainingMemory}}MB Remaining</div>
-                  <div class="metric-row">{{model.metricsData.blockMaxMemory}}MB Max Available</div>
-                  <div class="metric-row">{{model.metricsData.blockUsedMemory}}MB Used</div>
-                  <div class="metric-row">{{model.metricsData.blockDiskSpaceUsed}}MB Used on disk</div>
-                </div>
-              </div>
-            </div>
-            <div class="spark-metrics-item">
-              <div class="spark-icon spark-metrics-scheduler">
-                <div class="info-window">
-                  <div class="metrics-phase">SCHEDULER</div>
-                  <div class="reducer-icon"></div>
-                  <div class="metric-row">{{model.metricsData.schedulerActiveJobs}} Active Jobs</div>
-                  <div class="metric-row">{{model.metricsData.schedulerAllJobs}} Total Jobs</div>
-                  <div class="metric-row">{{model.metricsData.schedulerFailedStages}} Failed Stages</div>
-                  <div class="metric-row">{{model.metricsData.schedulerWaitingStages}} Waiting stages</div>
-                </div>
-              </div>
-            </div>
+        <div class="sparks-metrics clearfix">
+          <div class="spark-metrics-storage">
+            <div class="title-storage">STORAGE</div>
+            <div class="metric-row">{{model.metricsData.blockRemainingMemory}}MB Remaining</div>
+            <div class="metric-row">{{model.metricsData.blockMaxMemory}}MB Max Available</div>
+            <div class="metric-row">{{model.metricsData.blockUsedMemory}}MB Used</div>
+            <div class="metric-row">{{model.metricsData.blockDiskSpaceUsed}}MB Used on disk</div>
+          </div>
+          <div class="spark-metrics-stages">
+            <div class="title-stage">STAGES</div>
+            {{view C.Embed.StackedProgress}}
+          </div>
         </div>
       </div>
     </div>
@@ -2289,6 +2276,17 @@
           Please wait.
         </div>
       </div>
+    </div>
+  </script>
+
+  <script type="text/x-handlebars" data-template-name="SparkMetricsProgressBar">
+    <div class="progress stage-status-line">
+      <div data-toggle="tooltip" data-placement="top" title="Running" class="progress-bar running"
+       {{bindAttr style=view.runningWidth}}>{{model.metricsData.schedulerRunningStages}}</div>
+      <div data-toggle="tooltip" data-placement="bottom" title="Failed" class="progress-bar failed"
+       {{bindAttr style=view.failedWidth}}>{{model.metricsData.schedulerFailedStages}}</div>
+      <div data-toggle="tooltip" data-placement="top" title="Waiting" class="progress-bar waiting"
+       {{bindAttr style=view.waitingWidth}}>{{model.metricsData.schedulerWaitingStages}}</div>
     </div>
   </script>
 

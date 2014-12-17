@@ -32,6 +32,7 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * HBase based implementation for {@link MetricsTable}.
@@ -75,9 +76,9 @@ public class HBaseMetricsTableDefinition extends AbstractDatasetDefinition<Metri
     hBaseTableUtil.setBloomFilter(columnDescriptor, HBaseTableUtil.BloomType.ROW);
     columnDescriptor.setMaxVersions(1);
 
-    int ttl = spec.getIntProperty(OrderedTable.PROPERTY_TTL, -1);
-    if (ttl > 0) {
-      columnDescriptor.setTimeToLive(ttl);
+    long ttlMillis = spec.getLongProperty(OrderedTable.PROPERTY_TTL, -1);
+    if (ttlMillis > 0) {
+      columnDescriptor.setTimeToLive((int) TimeUnit.MILLISECONDS.toSeconds(ttlMillis));
     }
 
     final HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);

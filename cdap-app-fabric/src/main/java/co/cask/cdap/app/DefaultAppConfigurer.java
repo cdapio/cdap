@@ -39,9 +39,9 @@ import co.cask.cdap.data.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
+import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
-import co.cask.cdap.internal.spark.DefaultSparkSpecification;
 import co.cask.cdap.internal.workflow.DefaultWorkflowSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -165,7 +165,9 @@ public class DefaultAppConfigurer implements ApplicationConfigurer {
   @Override
   public void addSpark(Spark spark) {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
-    DefaultSparkSpecification spec = new DefaultSparkSpecification(spark);
+    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
+    spark.configure(configurer);
+    SparkSpecification spec = configurer.createSpecification();
     sparks.put(spec.getName(), spec);
   }
 
