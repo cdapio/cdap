@@ -489,15 +489,24 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     // verify list by namespace
-    verifyProgramList(TEST_NAMESPACE1, null, ProgramType.FLOW, 1);
-    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE, 1);
-    verifyProgramList(TEST_NAMESPACE2, null, ProgramType.SERVICE, 1);
+    verifyProgramList(TEST_NAMESPACE1, null, ProgramType.FLOW.getCategoryName(), 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE.getCategoryName(), 1);
+    verifyProgramList(TEST_NAMESPACE2, null, ProgramType.SERVICE.getCategoryName(), 1);
 
     // verify list by app
-    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, 1);
-    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE, 1);
-    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.WORKFLOW, 0);
-    verifyProgramList(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE, 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE.getCategoryName(), 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.WORKFLOW.getCategoryName(), 0);
+    verifyProgramList(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE.getCategoryName(), 1);
+
+    // verify invalid namespace
+    Assert.assertEquals(404, getProgramListResponseCode(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID,
+                                                        ProgramType.SERVICE.getCategoryName()));
+    // verify invalid app
+    Assert.assertEquals(404, getProgramListResponseCode(TEST_NAMESPACE1, "random", ProgramType.FLOW.getCategoryName()));
+
+    // verify invalid program type
+    Assert.assertEquals(405, getProgramListResponseCode(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, "random"));
   }
 
   @After
@@ -522,20 +531,31 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(EMPTY_ARRAY_JSON, readResponse(response));
   }
 
-  private void verifyProgramList(String namespace, @Nullable String appName, ProgramType programType,
+  private void verifyProgramList(String namespace, @Nullable String appName, String programType,
                                  int expected) throws Exception {
-    String uri;
-    if (appName == null) {
-      uri = getVersionedAPIPath(programType.getCategoryName(), Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-    } else {
-      uri = getVersionedAPIPath(String.format("apps/%s/%s", appName, programType.getCategoryName()),
-                                Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-    }
-    HttpResponse response = doGet(uri);
+    HttpResponse response = requestProgramList(namespace, appName, programType);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     List<Map<String, String>> programs = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
     Assert.assertEquals(expected, programs.size());
+  }
+
+  private int getProgramListResponseCode(String namespace, @Nullable String appName, String programType)
+    throws Exception {
+    HttpResponse response = requestProgramList(namespace, appName, programType);
+    return response.getStatusLine().getStatusCode();
+  }
+
+  private HttpResponse requestProgramList(String namespace, @Nullable String appName, String programType)
+    throws Exception {
+    String uri;
+    if (appName == null) {
+      uri = getVersionedAPIPath(programType, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    } else {
+      uri = getVersionedAPIPath(String.format("apps/%s/%s", appName, programType),
+                                Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    }
+    return doGet(uri);
   }
 
   private void verifyInitialBatchStatusOutput(HttpResponse response) throws IOException {
