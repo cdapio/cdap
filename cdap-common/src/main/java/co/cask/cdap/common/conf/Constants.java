@@ -608,10 +608,9 @@ public final class Constants {
 
 
   /**
-   * Corresponds to account id used when running in local mode.
-   * NOTE: value should be in sync with the one used by UI.
+   * Default namespace to be used by v2 APIs
    */
-  public static final String DEVELOPER_ACCOUNT_ID = "developer";
+  public static final String DEFAULT_NAMESPACE = "default";
 
   /**
    * Constants related to external systems.

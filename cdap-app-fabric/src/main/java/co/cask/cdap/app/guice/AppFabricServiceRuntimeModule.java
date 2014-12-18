@@ -27,10 +27,12 @@ import co.cask.cdap.data.stream.StreamServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppFabricHttpHandler;
+import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.PingHandler;
+import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ServiceHttpHandler;
 import co.cask.cdap.internal.app.deploy.LocalManager;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -215,6 +217,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(ServiceHttpHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
       handlerBinder.addBinding().to(NotificationFeedHttpHandler.class);
+      handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
+      handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
 
       bind(NotificationFeedService.class).in(Scopes.SINGLETON);
     }
