@@ -429,8 +429,7 @@ Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
 Writing to Temp Files
 .....................
-There are two temp directories utilized by CDAP (both specified in 
-:ref:`appendix-cdap-site.xml`:
+There are two temp directories utilized by CDAP (both specified in :ref:`appendix-cdap-site.xml`):
 
 - ``app.temp.dir`` (default: ``/tmp``)
 - ``kafka.log.dir`` (default: ``/tmp/kafka-logs``)
