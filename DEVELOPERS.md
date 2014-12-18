@@ -41,4 +41,4 @@ docker build caskdata/cdap-standalone .
 docker run -d -p 9999:9999 -p 10000:10000 caskdata/cdap-standalone
 ```
 
-You now have a new docker container running with the latest (develop branch) version of CDAP Standalone.
+You now have a new Docker container running with the latest (develop branch) version of CDAP Standalone.
