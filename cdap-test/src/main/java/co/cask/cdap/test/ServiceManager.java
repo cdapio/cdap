@@ -60,7 +60,7 @@ public interface ServiceManager {
    * value to wait for the service to be available.
    *
    * @param timeout how long to wait before giving up, in unit of {@code timeoutUnit}
-   * @param timeoutUnit a {@link java.util.concurrent.TimeUnit} to interpret the value of {@code timeout}
+   * @param timeoutUnit a {@link TimeUnit} to interpret the value of {@code timeout}
    * @return URL of the service or {@code null} if the service is not available
    */
   URL getServiceURL(long timeout, TimeUnit timeoutUnit);
