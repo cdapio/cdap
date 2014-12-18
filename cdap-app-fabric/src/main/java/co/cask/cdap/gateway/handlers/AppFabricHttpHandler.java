@@ -1132,7 +1132,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/flows")
   public void getAllFlows(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.FLOW, null, store);
+    programLifecycleHttpHandler.getAllFlows(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -1141,7 +1141,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/procedures")
   public void getAllProcedures(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.PROCEDURE, null, store);
+    programLifecycleHttpHandler.getAllProcedures(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -1150,7 +1150,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/mapreduce")
   public void getAllMapReduce(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.MAPREDUCE, null, store);
+    programLifecycleHttpHandler.getAllMapReduce(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -1159,7 +1159,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/spark")
   public void getAllSpark(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.SPARK, null, store);
+    programLifecycleHttpHandler.getAllSpark(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -1168,7 +1168,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/workflows")
   public void getAllWorkflows(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.WORKFLOW, null, store);
+    programLifecycleHttpHandler.getAllWorkflows(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -1186,7 +1186,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") final String appId) {
+                         @PathParam("app-id") String appId) {
     appLifecycleHttpHandler.getAppInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId);
   }
 
@@ -1196,8 +1196,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
-                            @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.FLOW, appId, store);
+                            @PathParam("app-id") String appId) {
+    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.FLOW.getCategoryName());
   }
 
   /**
@@ -1206,8 +1207,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.PROCEDURE, appId, store);
+                                 @PathParam("app-id") String appId) {
+    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.PROCEDURE.getCategoryName());
   }
 
   /**
@@ -1216,8 +1218,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.MAPREDUCE, appId, store);
+                                @PathParam("app-id") String appId) {
+    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.MAPREDUCE.getCategoryName());
   }
 
   /**
@@ -1226,8 +1229,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.SPARK, appId, store);
+                                @PathParam("app-id") String appId) {
+    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.SPARK.getCategoryName());
   }
 
   /**
@@ -1236,8 +1240,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows")
   public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId) {
-    programList(request, responder, ProgramType.WORKFLOW, appId, store);
+                                 @PathParam("app-id") String appId) {
+    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.WORKFLOW.getCategoryName());
   }
 
   /**
@@ -1655,17 +1660,5 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST,
                            String.format(UserMessages.getMessage(UserErrors.DATASETS_DELETE_FAIL), e.getMessage()));
     }
-  }
-
-  /**
-   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
-   *
-   * @param request the original {@link HttpRequest}
-   * @return {@link HttpRequest} with modified URI
-   */
-  private HttpRequest rewriteRequest(HttpRequest request) {
-    String originalUri = request.getUri();
-    request.setUri(originalUri.replaceFirst("/v2", "/v3/" + Constants.DEFAULT_NAMESPACE));
-    return request;
   }
 }

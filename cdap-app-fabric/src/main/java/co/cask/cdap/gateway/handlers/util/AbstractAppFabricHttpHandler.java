@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.gateway.handlers.AuthenticatedHttpHandler;
 import co.cask.cdap.internal.UserErrors;
@@ -162,21 +163,20 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
     }
   }
 
-  protected final void programList(HttpRequest request, HttpResponder responder,
-                                   ProgramType type, @Nullable String applicationId, Store store) {
+  protected final void programList(HttpResponder responder, String namespaceId, ProgramType type,
+                                   @Nullable String applicationId, Store store) {
     if (applicationId != null && applicationId.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Application id is empty");
       return;
     }
 
     try {
-      String accountId = getAuthenticatedAccountId(request);
       List<ProgramRecord> programRecords;
       if (applicationId == null) {
-        Id.Account accId = Id.Account.from(accountId);
+        Id.Account accId = Id.Account.from(namespaceId);
         programRecords = listPrograms(accId, type, store);
       } else {
-        Id.Application appId = Id.Application.from(accountId, applicationId);
+        Id.Application appId = Id.Application.from(namespaceId, applicationId);
         programRecords = listProgramsByApp(appId, type, store);
       }
 
@@ -318,5 +318,19 @@ public abstract class AbstractAppFabricHttpHandler extends AuthenticatedHttpHand
       return true;
     }
     return false;
+  }
+
+
+
+  /**
+   * Updates the request URI to its v3 URI before delegating the call to the corresponding v3 handler.
+   *
+   * @param request the original {@link HttpRequest}
+   * @return {@link HttpRequest} with modified URI
+   */
+  public HttpRequest rewriteRequest(HttpRequest request) {
+    String originalUri = request.getUri();
+    request.setUri(originalUri.replaceFirst("/v2", "/v3/" + Constants.DEFAULT_NAMESPACE));
+    return request;
   }
 }

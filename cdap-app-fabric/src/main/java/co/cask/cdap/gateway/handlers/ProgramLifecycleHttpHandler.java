@@ -229,7 +229,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     startStopProgram(request, responder, namespaceId, appId, programType, runnableId, action);
   }
-
+  
   /**
    * Returns program runs based on options it returns either currently running or completed or failed.
    * Default it returns all.
@@ -448,6 +448,88 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /*
+  Note: Cannot combine the following get all programs methods into one because then API path will clash with /apps path
+   */
+
+  /**
+   * Returns a list of flows associated with a namespace.
+   */
+  @GET
+  @Path("/{namespace-id}/flows")
+  public void getAllFlows(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId) {
+    programList(responder, namespaceId, ProgramType.FLOW, null, store);
+  }
+
+  /**
+   * Returns a list of procedures associated with a namespace.
+   */
+  @GET
+  @Path("/{namespace-id}/procedures")
+  public void getAllProcedures(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId) {
+    programList(responder, namespaceId, ProgramType.PROCEDURE, null, store);
+  }
+
+  /**
+   * Returns a list of map/reduces associated with a namespace.
+   */
+  @GET
+  @Path("/{namespace-id}/mapreduce")
+  public void getAllMapReduce(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId) {
+    programList(responder, namespaceId, ProgramType.MAPREDUCE, null, store);
+  }
+
+  /**
+   * Returns a list of spark jobs associated with a namespace.
+   */
+  @GET
+  @Path("/{namespace-id}/spark")
+  public void getAllSpark(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId) {
+    programList(responder, namespaceId, ProgramType.SPARK, null, store);
+  }
+
+  /**
+   * Returns a list of workflows associated with a namespace.
+   */
+  @GET
+  @Path("/{namespace-id}/workflows")
+  public void getAllWorkflows(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId) {
+    programList(responder, namespaceId, ProgramType.WORKFLOW, null, store);
+  }
+
+  /**
+   * Returns a list of services associated with a namespace.
+   */
+  @GET
+  @Path("/{namespace-id}/services")
+  public void getAllServices(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId) {
+    programList(responder, namespaceId, ProgramType.SERVICE, null, store);
+  }
+
+  /**
+   * Returns a list of programs associated with an application within a namespace.
+   */
+  @GET
+  @Path("/{namespace-id}/apps/{app-id}/{program-category}")
+  public void getProgramsByApp(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("app-id") String appId,
+                               @PathParam("program-category") String programCategory) {
+    ProgramType type = getProgramType(programCategory);
+    if (type == null) {
+      responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED, String.format("Program type '%s' not supported",
+                                                                                programCategory));
+      return;
+    }
+    programList(responder, namespaceId, type, appId, store);
   }
 
   /**
@@ -1158,5 +1240,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private boolean canHaveInstances(ProgramType programType) {
     return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType);
+  }
+
+  @Nullable
+  private ProgramType getProgramType(String programType) {
+    try {
+      return ProgramType.valueOfCategoryName(programType);
+    } catch (Exception e) {
+      return null;
+    }
   }
 }
