@@ -154,8 +154,8 @@ public final class Constants {
    */
   public static final class ConfigService {
     public static final String CONFIG_STORE_TABLE = "configstore";
-    public static final String DASHBOARD_OWNER_TABLE = "dbowner";
-    public static final String METADATA_TABLE = "metadata";
+    public static final String DASHBOARD_OWNER_TABLE = "dashboardowner";
+    public static final String METADATA_TABLE = "configmetadata";
   }
 
   /**
