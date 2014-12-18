@@ -226,11 +226,12 @@ public class AppFabricClient {
       locationFactory.create(createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars).toURI());
     LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
+    String archiveName = applicationId + ".jar";
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "/v2/apps");
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", applicationId + ".jar");
+    request.setHeader("X-Archive-Name", archiveName);
     MockResponder mockResponder = new MockResponder();
-    BodyConsumer bodyConsumer = httpHandler.deploy(request, mockResponder);
+    BodyConsumer bodyConsumer = httpHandler.deploy(request, mockResponder, archiveName);
 
     BufferFileInputStream is = new BufferFileInputStream(deployedJar.getInputStream(), 100 * 1024);
     try {
