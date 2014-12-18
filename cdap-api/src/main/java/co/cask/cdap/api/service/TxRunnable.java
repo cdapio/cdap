@@ -14,11 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.service.ServiceWorker;
 
 /**
  * A runnable that provides a {@link DatasetContext} to {@link ServiceWorker}s which may be used to get

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.Handle;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
@@ -30,6 +29,7 @@ import co.cask.cdap.api.procedure.ProcedureResponse;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.AbstractServiceWorker;
 import co.cask.cdap.api.service.ServiceWorkerContext;
+import co.cask.cdap.api.service.TxRunnable;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;

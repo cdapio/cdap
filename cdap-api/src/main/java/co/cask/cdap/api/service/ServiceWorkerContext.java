@@ -18,7 +18,6 @@ package co.cask.cdap.api.service;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.TxRunnable;
 
 /**
  * Context for custom Service workers.
