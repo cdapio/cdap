@@ -18,10 +18,6 @@ package co.cask.cdap.spark.service;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Throwables;

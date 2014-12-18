@@ -26,7 +26,7 @@ public interface ApplicationManager {
   /**
    * Starts a flow.
    * @param flowName Name of the flow to start.
-   * @return A {@link FlowManager} for controlling the started flow.
+   * @return A {@link co.cask.cdap.test.FlowManager} for controlling the started flow.
    */
   FlowManager startFlow(String flowName);
 
@@ -34,14 +34,14 @@ public interface ApplicationManager {
    * Starts a flow.
    * @param flowName Name of the flow to start.
    * @param arguments Arguments to be passed while starting a flow.
-   * @return A {@link FlowManager} for controlling the started flow.
+   * @return A {@link co.cask.cdap.test.FlowManager} for controlling the started flow.
    */
   FlowManager startFlow(String flowName, Map<String, String> arguments);
 
   /**
    * Starts a mapreduce job.
    * @param jobName Name of the mapreduce job to start.
-   * @return A {@link MapReduceManager} for controlling the started mapreduce job.
+   * @return A {@link co.cask.cdap.test.MapReduceManager} for controlling the started mapreduce job.
    */
   MapReduceManager startMapReduce(String jobName);
 
@@ -49,7 +49,7 @@ public interface ApplicationManager {
    * Starts a mapreduce job.
    * @param jobName Name of the mapreduce job to start.
    * @param arguments Arguments to be passed while starting a mapreduce.
-   * @return A {@link MapReduceManager} for controlling the started mapreduce job.
+   * @return A {@link co.cask.cdap.test.MapReduceManager} for controlling the started mapreduce job.
    */
   MapReduceManager startMapReduce(String jobName, Map<String, String> arguments);
 
@@ -71,7 +71,7 @@ public interface ApplicationManager {
   /**
    * Starts a procedure.
    * @param procedureName Name of the procedure to start.
-   * @return A {@link ProcedureManager} for controlling the started procedure.
+   * @return A {@link co.cask.cdap.test.ProcedureManager} for controlling the started procedure.
    * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
@@ -81,26 +81,26 @@ public interface ApplicationManager {
    * Starts a procedure.
    * @param procedureName Name of the procedure to start.
    * @param arguments Arguments to be passed while starting a procedure.
-   * @return A {@link ProcedureManager} for controlling the started procedure.
+   * @return A {@link co.cask.cdap.test.ProcedureManager} for controlling the started procedure.
    * @deprecated As of version 2.6.0,  replaced by {@link co.cask.cdap.api.service.Service}
    */
   @Deprecated
   ProcedureManager startProcedure(String procedureName, Map<String, String> arguments);
 
   /**
-   * Gets a {@link StreamWriter} for writing data to the given stream.
+   * Gets a {@link co.cask.cdap.test.StreamWriter} for writing data to the given stream.
    * @param streamName Name of the stream to write to.
-   * @return A {@link StreamWriter}.
+   * @return A {@link co.cask.cdap.test.StreamWriter}.
    */
   StreamWriter getStreamWriter(String streamName);
 
   /**
-   * Gets an instance of {@link co.cask.cdap.api.data.DataSet} of the given dataset name.
-   * Operations on the returned {@link co.cask.cdap.api.data.DataSet} always performed synchronously,
+   * Gets an instance of {@link co.cask.cdap.api.dataset.Dataset} of the given dataset name.
+   * Operations on the returned {@link co.cask.cdap.api.dataset.Dataset} always performed synchronously,
    * i.e. no support for multi-operations transaction.
    * @param dataSetName Name of the dataset to retrieve.
    * @param <T> Type of the dataset.
-   * @return A {@link DataSetManager} instance.
+   * @return A {@link co.cask.cdap.test.DataSetManager} instance.
    */
   <T> DataSetManager<T> getDataSet(String dataSetName);
 
@@ -113,14 +113,14 @@ public interface ApplicationManager {
    * Starts a workflow.
    * @param workflowName
    * @param arguments
-   * @return {@link WorkflowManager} for controlling the started workflow.
+   * @return {@link co.cask.cdap.test.WorkflowManager} for controlling the started workflow.
    */
   WorkflowManager startWorkflow(String workflowName, Map<String, String> arguments);
 
   /**
    * Starts a service.
    * @param serviceName Name of the service to be started.
-   * @return {@link ServiceManager} to control the running service.
+   * @return {@link co.cask.cdap.test.ServiceManager} to control the running service.
    */
   ServiceManager startService(String serviceName);
 
@@ -128,7 +128,7 @@ public interface ApplicationManager {
    * Starts a service.
    * @param serviceName Name of the service to be started.
    * @param arguments Arguments to be passed for the service.
-   * @return {@link ServiceManager} to control the running service.
+   * @return {@link co.cask.cdap.test.ServiceManager} to control the running service.
    */
   ServiceManager startService(String serviceName, Map<String, String> arguments);
 

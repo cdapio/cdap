@@ -18,10 +18,6 @@ package co.cask.cdap.batch.stream;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.MapReduceManager;
-import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;

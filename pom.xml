@@ -168,6 +168,7 @@
     <module>cdap-standalone</module>
     <module>cdap-distributions</module>
     <module>cdap-archetypes</module>
+    <module>cdap-test</module>
   </modules>
 
   <dependencyManagement>
