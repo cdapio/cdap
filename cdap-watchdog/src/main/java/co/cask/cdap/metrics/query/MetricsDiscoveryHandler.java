@@ -18,11 +18,15 @@ package co.cask.cdap.metrics.query;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsScope;
 import co.cask.cdap.common.service.ServerException;
+import co.cask.cdap.data2.OperationException;
 import co.cask.cdap.gateway.auth.Authenticator;
 import co.cask.cdap.metrics.data.AggregatesScanResult;
 import co.cask.cdap.metrics.data.AggregatesScanner;
 import co.cask.cdap.metrics.data.AggregatesTable;
+import co.cask.cdap.metrics.data.MetricsScanQuery;
+import co.cask.cdap.metrics.data.MetricsScanQueryBuilder;
 import co.cask.cdap.metrics.data.MetricsTableFactory;
+import co.cask.cdap.metrics.data.TimeSeriesTable;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
@@ -30,6 +34,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -41,11 +46,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * Class for handling requests for aggregate application metrics of the
@@ -55,14 +65,15 @@ import javax.ws.rs.Path;
 public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetricsDiscoveryHandler.class);
+  private static final int SECONDS_RESOLUTION = 1;
 
   private final Supplier<Map<MetricsScope, AggregatesTable>> aggregatesTables;
+  private final Supplier<Map<MetricsScope, TimeSeriesTable>> timeSeriesTables;
 
   // just user metrics for now.  Can add system metrics when there is a unified way to query for them
   // currently you query differently depending on the metric, and some metrics you can query for in the
   // BatchMetricsHandler are computed in the handler and are not stored in the table.
   private final MetricsScope[] scopesToDiscover = {MetricsScope.USER};
-
   // known 'program types' in a metric context (app.programType.programId.componentId)
   private enum ProgramType {
     PROCEDURES("p"),
@@ -140,6 +151,17 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
         return map;
       }
     });
+
+    this.timeSeriesTables = Suppliers.memoize(new Supplier<Map<MetricsScope, TimeSeriesTable>>() {
+      @Override
+      public Map<MetricsScope, TimeSeriesTable> get() {
+        Map<MetricsScope, TimeSeriesTable> map = Maps.newHashMap();
+        for (final MetricsScope scope : MetricsScope.values()) {
+          map.put(scope, metricsTableFactory.createTimeSeries(scope.name(), SECONDS_RESOLUTION));
+        }
+        return map;
+      }
+    });
   }
 
   @Override
@@ -192,6 +214,86 @@ public final class MetricsDiscoveryHandler extends BaseMetricsHandler {
   @Path("/apps/{app-id}/{program-type}/{program-id}/{component-type}/{component-id}")
   public void handleComponent(HttpRequest request, HttpResponder responder) throws IOException {
     getMetrics(request, responder);
+  }
+
+
+  //returns all the unique elements available in the first context
+  @GET
+  @Path("/context/")
+  public void handleContextZero(HttpRequest request, HttpResponder responder) throws IOException {
+    try {
+      responder.sendJson(HttpResponseStatus.OK, getNextContext(null));
+    } catch (OperationException e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  //returns all the unique elements available in the context after the given context prefix
+  @GET
+  @Path("/context/{context-prefix}")
+  public void handleContext(HttpRequest request, HttpResponder responder,
+                            @PathParam("context-prefix") final String context) throws IOException {
+    try {
+
+      responder.sendJson(HttpResponseStatus.OK, getNextContext(context));
+    } catch (OperationException e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  //returns all the unique metrics in the given context
+  @GET
+  @Path("/context/{context-prefix}/metrics")
+  public void getMetricsInContext(HttpRequest request, HttpResponder responder,
+                                  @PathParam("context-prefix") final String context) throws IOException {
+    try {
+
+      responder.sendJson(HttpResponseStatus.OK, getNextMetrics(context));
+    } catch (OperationException e) {
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  private Set<String> getNextContext(String contextPrefix) throws OperationException {
+    HashSet<String> seenContext = Sets.newHashSet();
+    // if no context prefix is given, this will match the first part of the context-prefix
+    Pattern firstContext = Pattern.compile("([^.]+)");
+    // match the next part of the context-prefix
+    Pattern resultContext = Pattern.compile(contextPrefix + "." + "[^.]+");
+
+    for (TimeSeriesTable table : timeSeriesTables.get().values()) {
+      MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
+        allowEmptyMetric().build(0, 0);
+      List<String> results = table.getNextLevelContexts(query);
+
+      for (String nextContext : results) {
+        if (nextContext != null) {
+          Matcher match = (contextPrefix == null) ? firstContext.matcher(nextContext) :
+            resultContext.matcher(nextContext);
+          if (match.find()) {
+            seenContext.add(match.group());
+          }
+        }
+      }
+    }
+    return seenContext;
+  }
+
+  private Set<String> getNextMetrics(String contextPrefix) throws OperationException {
+    HashSet<String> seenMetrics = Sets.newHashSet();
+    for (TimeSeriesTable table : timeSeriesTables.get().values()) {
+      MetricsScanQuery query = new MetricsScanQueryBuilder().setContext(contextPrefix).
+        allowEmptyMetric().build(0, 0);
+      List<String> metricNames = table.getAllMetrics(query);
+
+      for (String metric : metricNames) {
+        if (metric != null) {
+          seenMetrics.add(metric);
+        }
+      }
+    }
+
+    return seenMetrics;
   }
 
   private void getMetrics(HttpRequest request, HttpResponder responder) {

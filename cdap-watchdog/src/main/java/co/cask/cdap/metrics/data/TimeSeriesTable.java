@@ -32,6 +32,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -139,11 +140,118 @@ public final class TimeSeriesTable {
   }
 
   public MetricsScanner scan(MetricsScanQuery query) throws OperationException {
-    return scanFor(query, false);
+    return scanFor(query, false, false);
+  }
+
+  public List<String> getNextLevelContexts(MetricsScanQuery query) throws OperationException {
+    return getAvailableContextAndMetrics(query, true);
+  }
+
+  private List<String> getAvailableContextAndMetrics(MetricsScanQuery query, boolean isContextQuery)
+    throws OperationException {
+    List<String> metricsScanResults = Lists.newArrayList();
+    int startTimeBase = getTimeBase(query.getStartTime());
+    int endTimeBase = getTimeBase(query.getEndTime());
+
+    byte[] contextStart = null, contextEnd = null, metricsPrefix = null;
+    byte[] startRow = null, endRow = null;
+    byte[][] columns = null;
+    String tagPrefix = query.getTagPrefix();
+    if (tagPrefix == null) {
+      tagPrefix = MetricsConstants.EMPTY_TAG;
+    }
+    if (isContextQuery) {
+      contextStart = entityCodec.paddedEncode(MetricsEntityType.CONTEXT, query.getContextPrefix(), 0);
+      contextEnd = entityCodec.paddedEncode(MetricsEntityType.CONTEXT, query.getContextPrefix(), 0xff);
+    } else {
+      metricsPrefix = entityCodec.paddedEncode(MetricsEntityType.METRIC, query.getMetricPrefix(), 0);
+    }
+
+    Row rowResult;
+    do {
+      if (isContextQuery) {
+        startRow = getNextPaddedKey(contextStart, query.getRunId(),
+                                    query.getMetricPrefix(), tagPrefix, startTimeBase, 0);
+        endRow = getNextPaddedKey(contextEnd, query.getRunId(),
+                                  query.getMetricPrefix(), tagPrefix, endTimeBase + 1, 0xff);
+      } else {
+        startRow = getNextPaddedKey(query.getContextPrefix(), query.getRunId(),
+                                    metricsPrefix, tagPrefix, startTimeBase, 0);
+        endRow = getNextPaddedKey(query.getContextPrefix(), query.getRunId(),
+                                  metricsPrefix, tagPrefix, endTimeBase + 1, 0xff);
+      }
+
+      FuzzyRowFilter filter = getFilter(query, startTimeBase, endTimeBase + 1, false, FOUR_ONE_BYTES);
+
+      ScannerFields fields = new ScannerFields(startRow, endRow, columns, filter);
+      Scanner scanner = null;
+      try {
+        scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
+      } catch (Exception e) {
+        throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
+      }
+
+      rowResult = scanner.next();
+      if (rowResult != null) {
+        byte[] rowKey = rowResult.getRow();
+        // Decode context and metric from key
+        int offset = 0;
+        String contextStr = entityCodec.decode(MetricsEntityType.CONTEXT, rowKey, offset);
+
+        // Always have a "." suffix for unique matching
+        if (query.getContextPrefix() != null && !(contextStr + ".").startsWith(query.getContextPrefix())) {
+          scanner.close();
+          break;
+        }
+
+        offset += entityCodec.getEncodedSize(MetricsEntityType.CONTEXT);
+        String metricName = entityCodec.decode(MetricsEntityType.METRIC, rowKey, offset);
+
+        if (isContextQuery) {
+          contextStart = getNextContextTarget(contextStart, query.getContextPrefix());
+          metricsScanResults.add(contextStr);
+        } else {
+          metricsPrefix = getNextMetricsTarget(
+            Arrays.copyOfRange(rowKey, entityCodec.getEncodedSize(MetricsEntityType.CONTEXT),
+                               entityCodec.getEncodedSize(MetricsEntityType.CONTEXT) +
+                                 entityCodec.getEncodedSize(MetricsEntityType.METRIC)));
+          metricsScanResults.add(metricName);
+        }
+      }
+      scanner.close();
+    } while (rowResult != null);
+
+    return metricsScanResults;
+  }
+
+  public List<String> getAllMetrics(MetricsScanQuery query) throws OperationException {
+    return getAvailableContextAndMetrics(query, false);
+  }
+
+  private byte[] getNextMetricsTarget(byte[] metricsArray) {
+    int idSize = entityCodec.getIdSize();
+    String metricsString = entityCodec.decode(MetricsEntityType.METRIC, metricsArray);
+    int targetContextLocation = StringUtils.countMatches(metricsString, ".") + 1;
+    byte[] targetContextIncrement = Bytes.stopKeyForPrefix(
+      Arrays.copyOfRange(metricsArray, idSize * targetContextLocation, (idSize * targetContextLocation + idSize)));
+    return Bytes.concat(Bytes.head(metricsArray, idSize * targetContextLocation), targetContextIncrement,
+                        Bytes.tail(metricsArray, entityCodec.getEncodedSize(
+                          MetricsEntityType.METRIC) - (idSize + 1) * targetContextLocation));
+  }
+
+
+  private byte[] getNextContextTarget(byte[] context, String contextPrefix) {
+    int idSize = entityCodec.getIdSize();
+    int targetContextLocation = contextPrefix == null ? 0 : StringUtils.countMatches(contextPrefix, ".") + 1;
+    byte[] targetContextIncrement = Bytes.stopKeyForPrefix(
+      Arrays.copyOfRange(context, idSize * targetContextLocation, (idSize * targetContextLocation + idSize)));
+    return Bytes.concat(Bytes.head(context, idSize * targetContextLocation), targetContextIncrement,
+                        Bytes.tail(context, entityCodec.getEncodedSize(
+                          MetricsEntityType.CONTEXT) - (idSize + 1) * targetContextLocation));
   }
 
   public MetricsScanner scanAllTags(MetricsScanQuery query) throws OperationException {
-    return scanFor(query, true);
+    return scanFor(query, true, false);
   }
 
   /**
@@ -209,7 +317,7 @@ public final class TimeSeriesTable {
    */
   public void delete(MetricsScanQuery query) throws OperationException {
     try {
-      ScannerFields fields = getScannerFields(query);
+      ScannerFields fields = getScannerFields(query, false);
       timeSeriesTable.deleteRange(fields.startRow, fields.endRow, fields.columns, fields.filter);
     } catch (Exception e) {
       throw new OperationException(StatusCode.INTERNAL_ERROR, e.getMessage(), e);
@@ -269,9 +377,10 @@ public final class TimeSeriesTable {
     }
   }
 
-  private MetricsScanner scanFor(MetricsScanQuery query, boolean shouldMatchAllTags) throws OperationException {
+  private MetricsScanner scanFor(MetricsScanQuery query, boolean shouldMatchAllTags, boolean scanAllRows)
+    throws OperationException {
     try {
-      ScannerFields fields = getScannerFields(query, shouldMatchAllTags);
+      ScannerFields fields = getScannerFields(query, shouldMatchAllTags, scanAllRows);
       Scanner scanner = timeSeriesTable.scan(fields.startRow, fields.endRow, fields.columns, fields.filter);
       return new MetricsScanner(query, scanner, entityCodec, resolution);
     } catch (Exception e) {
@@ -365,8 +474,32 @@ public final class TimeSeriesTable {
       entityCodec.paddedEncode(MetricsEntityType.RUN, runId, padding));
   }
 
+  private byte[] getNextPaddedKey(byte[] contextPrefix, String runId, String metricPrefix, String tagPrefix,
+                                  int timeBase, int padding) {
+
+    // If there is no contextPrefix, metricPrefix or runId, just applies the padding
+    return Bytes.concat(
+      contextPrefix,
+      entityCodec.paddedEncode(MetricsEntityType.METRIC, metricPrefix, padding),
+      entityCodec.paddedEncode(MetricsEntityType.TAG, tagPrefix, padding),
+      Bytes.toBytes(timeBase),
+      entityCodec.paddedEncode(MetricsEntityType.RUN, runId, padding));
+  }
+
+  private byte[] getNextPaddedKey(String contextPrefix, String runId, byte[] metricPrefix, String tagPrefix,
+                                  int timeBase, int padding) {
+
+    // If there is no contextPrefix, metricPrefix or runId, just applies the padding
+    return Bytes.concat(
+      entityCodec.paddedEncode(MetricsEntityType.CONTEXT, contextPrefix, padding),
+      metricPrefix,
+      entityCodec.paddedEncode(MetricsEntityType.TAG, tagPrefix, padding),
+      Bytes.toBytes(timeBase),
+      entityCodec.paddedEncode(MetricsEntityType.RUN, runId, padding));
+  }
+
   private FuzzyRowFilter getFilter(MetricsScanQuery query, long startTimeBase,
-                                   long endTimeBase, boolean shouldMatchAllTags) {
+                                   long endTimeBase, boolean shouldMatchAllTags, byte[] timeBaseMatch) {
     String tag = query.getTagPrefix();
 
     // Create fuzzy row filter
@@ -375,8 +508,8 @@ public final class TimeSeriesTable {
     ImmutablePair<byte[], byte[]> metricPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.METRIC,
                                                                              query.getMetricPrefix(), 0);
     ImmutablePair<byte[], byte[]> tagPair = (!shouldMatchAllTags && tag == null)
-                                                ? defaultTagFuzzyPair
-                                                : entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, tag, 0);
+      ? defaultTagFuzzyPair
+      : entityCodec.paddedFuzzyEncode(MetricsEntityType.TAG, tag, 0);
     ImmutablePair<byte[], byte[]> runIdPair = entityCodec.paddedFuzzyEncode(MetricsEntityType.RUN, query.getRunId(), 0);
 
     // For each timbase, construct a fuzzy filter pair
@@ -385,7 +518,7 @@ public final class TimeSeriesTable {
       fuzzyPairs.add(ImmutablePair.of(Bytes.concat(contextPair.getFirst(), metricPair.getFirst(), tagPair.getFirst(),
                                                    Bytes.toBytes((int) timeBase), runIdPair.getFirst()),
                                       Bytes.concat(contextPair.getSecond(), metricPair.getSecond(), tagPair.getSecond(),
-                                                   FOUR_ZERO_BYTES, runIdPair.getSecond())));
+                                                   timeBaseMatch, runIdPair.getSecond())));
     }
 
     return new FuzzyRowFilter(fuzzyPairs);
@@ -418,23 +551,26 @@ public final class TimeSeriesTable {
     return new ImmutablePair<byte[], byte[]>(key, mask);
   }
 
-  private  ScannerFields getScannerFields(MetricsScanQuery query) {
-    return getScannerFields(query, false);
+  private  ScannerFields getScannerFields(MetricsScanQuery query, boolean scanAllRows) {
+    return getScannerFields(query, false, scanAllRows);
   }
 
-  private ScannerFields getScannerFields(MetricsScanQuery query, boolean shouldMatchAllTags) {
+  private ScannerFields getScannerFields(MetricsScanQuery query, boolean shouldMatchAllTags, boolean scanAllRows) {
     int startTimeBase = getTimeBase(query.getStartTime());
     int endTimeBase = getTimeBase(query.getEndTime());
 
     byte[][] columns = null;
-    if (startTimeBase == endTimeBase) {
-      // If on the same timebase, we only need subset of columns
-      int startCol = (int) (query.getStartTime() - startTimeBase) / resolution;
-      int endCol = (int) (query.getEndTime() - endTimeBase) / resolution;
-      columns = new byte[endCol - startCol + 1][];
 
-      for (int i = 0; i < columns.length; i++) {
-        columns[i] = Bytes.toBytes((short) (startCol + i));
+    if (!scanAllRows) {
+      if (startTimeBase == endTimeBase) {
+        // If on the same timebase, we only need subset of columns
+        int startCol = (int) (query.getStartTime() - startTimeBase) / resolution;
+        int endCol = (int) (query.getEndTime() - endTimeBase) / resolution;
+        columns = new byte[endCol - startCol + 1][];
+
+        for (int i = 0; i < columns.length; i++) {
+          columns[i] = Bytes.toBytes((short) (startCol + i));
+        }
       }
     }
 
@@ -446,7 +582,8 @@ public final class TimeSeriesTable {
                                    query.getMetricPrefix(), tagPrefix, startTimeBase, 0);
     byte[] endRow = getPaddedKey(query.getContextPrefix(), query.getRunId(),
                                  query.getMetricPrefix(), tagPrefix, endTimeBase + 1, 0xff);
-    FuzzyRowFilter filter = getFilter(query, startTimeBase, endTimeBase, shouldMatchAllTags);
+    FuzzyRowFilter filter = getFilter(query, startTimeBase, endTimeBase, shouldMatchAllTags,
+                                      scanAllRows ? FOUR_ONE_BYTES : FOUR_ZERO_BYTES);
 
     return new ScannerFields(startRow, endRow, columns, filter);
   }

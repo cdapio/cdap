@@ -175,6 +175,10 @@ final class MetricsEntityCodec {
     return getDepth(type) * entityTable.getIdSize();
   }
 
+  public int getIdSize() {
+    return entityTable.getIdSize();
+  }
+
   /**
    * Creates a CacheLoader for entity name to encoded byte[].
    * @param type Type of the entity.

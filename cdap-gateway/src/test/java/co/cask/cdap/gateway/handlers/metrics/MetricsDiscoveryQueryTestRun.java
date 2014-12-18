@@ -21,14 +21,17 @@ import com.google.common.base.Charsets;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -114,6 +117,33 @@ public class MetricsDiscoveryQueryTestRun extends MetricsSuiteTestBase {
       Assert.assertEquals(resource + " did not return 404 as expected.",
                           HttpStatus.SC_NOT_FOUND, response.getStatusLine().getStatusCode());
     }
+  }
+
+  @Test
+  public void testMetricsContexts() throws Exception {
+    metricsResponseCheck("/v2/metrics/available/context", 2);
+    metricsResponseCheck("/v2/metrics/available/context/WordCount.f", 1);
+    metricsResponseCheck("/v2/metrics/available/context/WCount", 3);
+    metricsResponseCheck("/v2/metrics/available/context/WCount.f", 2);
+  }
+
+  private void metricsResponseCheck(String url, int expected) throws Exception {
+    HttpResponse response = doGet(url);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String result = EntityUtils.toString(response.getEntity());
+    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(expected, reply.size());
+  }
+
+  @Test
+  public void testMetrics() throws Exception {
+    String base = "/v2/metrics/available/context/WordCount.f.WordCounter.splitter/metrics";
+    HttpResponse response = doGet(base);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    String result = EntityUtils.toString(response.getEntity());
+    List<String> reply = new Gson().fromJson(result, new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(2, reply.size());
   }
 
   private static void setupMetrics() throws InterruptedException {
