@@ -16,7 +16,9 @@
 
 package co.cask.cdap.spark.metrics;
 
+import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeStats;
+import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.Assert;

@@ -16,9 +16,11 @@
 
 package co.cask.cdap.flow.stream;
 
+import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.RuntimeMetrics;
 import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.TestBase;
 import org.junit.Assert;
 import org.junit.Test;

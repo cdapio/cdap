@@ -16,6 +16,10 @@
 
 package co.cask.cdap.mapreduce.service;
 
+import co.cask.cdap.test.ApplicationManager;
+import co.cask.cdap.test.DataSetManager;
+import co.cask.cdap.test.MapReduceManager;
+import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.app.MyKeyValueTableDefinition;
 import org.junit.Assert;
