@@ -26,7 +26,6 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.services.DeployStatus;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -46,11 +45,9 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.internal.app.deploy.SessionInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.filesystem.LocationCodec;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -66,14 +63,9 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.ning.http.client.SimpleAsyncHttpClient;
@@ -91,10 +83,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -102,7 +90,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -160,13 +147,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final LocationFactory locationFactory;
 
-  /**
-   * Maintains a mapping of transient session state. The state is stored in memory,
-   * in case of failure, all the current running sessions will be terminated. As
-   * per the current implementation only connection per account is allowed to upload.
-   */
-  private final Map<String, SessionInfo> sessions = Maps.newConcurrentMap();
-
   private final Scheduler scheduler;
 
   /**
@@ -184,21 +164,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final QueueAdmin queueAdmin;
 
   private final DiscoveryServiceClient discoveryServiceClient;
-
-  /**
-   * Defines the class for sending deploy status to client.
-   */
-  private static class Status {
-    private final int code;
-    private final String status;
-    private final String message;
-
-    public Status(int code, String message) {
-      this.code = code;
-      this.status = DeployStatus.getMessage(code);
-      this.message = message;
-    }
-  }
 
   @Inject
   public AppLifecycleHttpHandler(Authenticator authenticator, CConfiguration configuration,
@@ -230,7 +195,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId) {
     try {
-      return deployAppStream(request, responder, namespaceId, appId);
+      return deployApplication(request, responder, namespaceId, appId);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -247,30 +212,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("namespace-id") final String namespaceId) {
     // null means use name provided by app spec
     try {
-      return deployAppStream(request, responder, namespaceId, null);
+      return deployApplication(request, responder, namespaceId, null);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
-    }
-  }
-
-  /**
-   * Gets application deployment status.
-   */
-  @GET
-  @Path("/{namespace-id}/deploy/status")
-  public void getDeployStatus(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace-id") String namespaceId) {
-    try {
-      DeployStatus status  = getDeployStatus(namespaceId);
-      LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
-      responder.sendJson(HttpResponseStatus.OK, new Status(status.getCode(), status.getMessage()));
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while getting deployment status: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -338,8 +283,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private BodyConsumer deployAppStream(final HttpRequest request, final HttpResponder responder,
-                                       final String namespaceId, final String appId) throws IOException {
+  private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
+                                         final String namespaceId, final String appId) throws IOException {
     if (!namespaceExists(namespaceId)) {
       LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
@@ -365,9 +310,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     final Location archiveDir = locationFactory.create(this.archiveDir).append(namespaceId);
     final Location archive = archiveDir.append(archiveName);
 
-    final SessionInfo sessionInfo = new SessionInfo(namespaceId, appId, archiveName, archive, DeployStatus.UPLOADING);
-    sessions.put(namespaceId, sessionInfo);
-
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
       @Override
@@ -392,17 +334,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             throw e;
           }
 
-          sessionInfo.setStatus(DeployStatus.VERIFYING);
           deploy(namespaceId, appId, archive);
-          sessionInfo.setStatus(DeployStatus.DEPLOYED);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception e) {
-          sessionInfo.setStatus(DeployStatus.FAILED);
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        } finally {
-          saveSessionInfo(sessionInfo.setStatus(sessionInfo.getStatus()), namespaceId);
-          sessions.remove(namespaceId);
         }
       }
     };
@@ -454,40 +390,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
     return isValid;
-  }
-
-  /**
-   * Saves the {@link SessionInfo} to the filesystem.
-   *
-   * @param info to be saved.
-   * @return true if and only if successful; false otherwise.
-   */
-  private boolean saveSessionInfo(SessionInfo info, String namespaceId) {
-    try {
-      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      Location outputDir = locationFactory.create(archiveDir).append(namespaceId);
-      if (!outputDir.exists()) {
-        return false;
-      }
-      final Location sessionInfoFile = outputDir.append("session.json");
-      OutputSupplier<Writer> writer = new OutputSupplier<Writer>() {
-        @Override
-        public Writer getOutput() throws IOException {
-          return new OutputStreamWriter(sessionInfoFile.getOutputStream(), "UTF-8");
-        }
-      };
-
-      Writer w = writer.getOutput();
-      try {
-        gson.toJson(info, w);
-      } finally {
-        Closeables.closeQuietly(w);
-      }
-    } catch (IOException e) {
-      LOG.warn(e.getMessage(), e);
-      return false;
-    }
-    return true;
   }
 
   private void deleteHandler(Id.Program programId, ProgramType type)
@@ -591,53 +493,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Got exception : ", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /*
-   * Returns DeploymentStatus
-   */
-  private DeployStatus getDeployStatus(String namespaceId) {
-    if (!sessions.containsKey(namespaceId)) {
-      SessionInfo info = retrieveSessionInfo(namespaceId);
-      if (info == null) {
-        return DeployStatus.NOT_FOUND;
-      }
-      return info.getStatus();
-    } else {
-      SessionInfo info = sessions.get(namespaceId);
-      return info.getStatus();
-    }
-  }
-
-  /*
-  * Retrieves a {@link SessionInfo} from the file system.
-  */
-  @Nullable
-  private SessionInfo retrieveSessionInfo(String namespaceId) {
-    try {
-      final Location outputDir = locationFactory.create(archiveDir).append(namespaceId);
-      if (!outputDir.exists()) {
-        return null;
-      }
-      final Location sessionInfoFile = outputDir.append("session.json");
-      InputSupplier<Reader> reader = new InputSupplier<Reader>() {
-        @Override
-        public Reader getInput() throws IOException {
-          return new InputStreamReader(sessionInfoFile.getInputStream(), "UTF-8");
-        }
-      };
-
-      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      Reader r = reader.getInput();
-      try {
-        return gson.fromJson(r, SessionInfo.class);
-      } finally {
-        Closeables.closeQuietly(r);
-      }
-    } catch (IOException e) {
-      LOG.warn("Failed to retrieve session info for namespace.");
-    }
-    return null;
   }
 
   /**
