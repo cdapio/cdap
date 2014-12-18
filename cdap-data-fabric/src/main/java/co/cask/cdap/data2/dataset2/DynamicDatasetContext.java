@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link co.cask.cdap.api.data.DatasetContext} that allows to dynamically load datasets
@@ -38,6 +39,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   private final DatasetFramework datasetFramework;
   private final ClassLoader classLoader;
 
+  @Nullable
   protected abstract LoadingCache<Long, Map<String, Dataset>> getDatasetsCache();
 
   public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader) {
@@ -45,7 +47,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
   }
 
   public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader,
-                               Set<String> datasets) {
+                               @Nullable Set<String> datasets) {
     this.context = context;
     this.allowedDatasets = ImmutableSet.copyOf(datasets);
     this.datasetFramework = datasetFramework;
@@ -115,9 +117,7 @@ public abstract class DynamicDatasetContext implements DatasetContext {
         context.addTransactionAware((TransactionAware) dataset);
       }
 
-      @SuppressWarnings("unchecked")
-      T resultDataset = (T) dataset;
-      return resultDataset;
+      return (T) dataset;
     } catch (DatasetInstantiationException e) {
       throw e;
     } catch (Throwable t) {
