@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
+ * Tests for building a DatsetSpecification.
  */
 public class DatasetSpecificationTest {
 
