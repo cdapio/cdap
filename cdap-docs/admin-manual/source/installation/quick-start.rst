@@ -49,6 +49,9 @@ the packages, and prior to starting services.
   
 - The ``ulimit`` for the cluster should already be configured correctly for HBase; if not, 
   details are covered in :ref:`the installation guide <install-ulimit>`.
+  
+- The CDAP user should be able to write temp files; if not, see the instructions in 
+  :ref:`the installation guide <install-tmp-files>`.
 
 Configuring Package Managers
 ----------------------------
