@@ -229,11 +229,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     startStopProgram(request, responder, namespaceId, appId, runnableType, runnableId, action);
   }
-
-  private boolean isDebugAllowed(ProgramType programType) {
-    return ProgramType.FLOW == programType || ProgramType.PROCEDURE == programType ||
-      ProgramType.SERVICE == programType;
-  }
+  
   /**
    * Returns program runs based on options it returns either currently running or completed or failed.
    * Default it returns all.
