@@ -198,32 +198,42 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
 
   @Override
   public List<String> getConfig(final String namespace, final ConfigType type, final String accId) throws Exception {
-    List<String> configs = Lists.newArrayList();
-    if (type == ConfigType.USER) {
-      configs.add(accId);
-    } else if (type == ConfigType.DASHBOARD) {
-      for (Map.Entry<byte[], byte[]> entry : dashboardTable.get(Bytes.toBytes(accId)).getColumns().entrySet()) {
-        String column = Bytes.toString(entry.getKey());
-        if (column.startsWith(getRowKeyString(namespace, type, null))) {
-          configs.add(column.substring(column.lastIndexOf(".") + 1));
+    final List<String> configs = Lists.newArrayList();
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        if (type == ConfigType.USER) {
+          configs.add(accId);
+        } else if (type == ConfigType.DASHBOARD) {
+          for (Map.Entry<byte[], byte[]> entry : dashboardTable.get(Bytes.toBytes(accId)).getColumns().entrySet()) {
+            String column = Bytes.toString(entry.getKey());
+            if (column.startsWith(getRowKeyString(namespace, type, null))) {
+              configs.add(column.substring(column.lastIndexOf(".") + 1));
+            }
+          }
         }
       }
-    }
+    });
     return configs;
   }
 
   @Override
   public List<String> getConfig(final String namespace, final ConfigType type) throws Exception {
-    List<String> configs = Lists.newArrayList();
-    byte[] startRowPrefix = getRowKey(namespace, type, null);
-    byte[] endRowPrefix = Bytes.stopKeyForPrefix(startRowPrefix);
-    CloseableIterator<KeyValue<byte[], byte[]>> iterator = metaDataTable.scan(startRowPrefix, endRowPrefix);
-    while (iterator.hasNext()) {
-      KeyValue<byte[], byte[]> entry = iterator.next();
-      String rowKey = Bytes.toString(entry.getKey());
-      configs.add(rowKey.substring(rowKey.lastIndexOf('.') + 1));
-    }
-    iterator.close();
+    final List<String> configs = Lists.newArrayList();
+    executor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        byte[] startRowPrefix = getRowKey(namespace, type, null);
+        byte[] endRowPrefix = Bytes.stopKeyForPrefix(startRowPrefix);
+        CloseableIterator<KeyValue<byte[], byte[]>> iterator = metaDataTable.scan(startRowPrefix, endRowPrefix);
+        while (iterator.hasNext()) {
+          KeyValue<byte[], byte[]> entry = iterator.next();
+          String rowKey = Bytes.toString(entry.getKey());
+          configs.add(rowKey.substring(rowKey.lastIndexOf('.') + 1));
+        }
+        iterator.close();
+      }
+    });
     return configs;
   }
 

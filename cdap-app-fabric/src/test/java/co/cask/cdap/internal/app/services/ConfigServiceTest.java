@@ -67,5 +67,17 @@ public class ConfigServiceTest {
   public void testCleanState() throws Exception {
     List<String> configs = configService.getConfig("myspace", ConfigType.DASHBOARD, "myId");
     Assert.assertEquals(0, configs.size());
+
+    String dashId = configService.createConfig("myspace", ConfigType.DASHBOARD, "user1");
+
+    configs = configService.getConfig("myspace", ConfigType.DASHBOARD, "user1");
+    Assert.assertEquals(1, configs.size());
+    Assert.assertEquals(dashId, configs.get(0));
+
+    configs = configService.getConfig("myspace", ConfigType.DASHBOARD, "myId");
+    Assert.assertEquals(0, configs.size());
+    configs = configService.getConfig("myspace", ConfigType.DASHBOARD);
+    Assert.assertEquals(1, configs.size());
+    Assert.assertEquals(dashId, configs.get(0));
   }
 }
