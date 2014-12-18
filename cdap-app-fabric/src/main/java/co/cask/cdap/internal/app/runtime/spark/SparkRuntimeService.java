@@ -24,7 +24,6 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkMetricsSink;
-import co.cask.cdap.internal.twill.ApplicationBundler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -45,6 +44,7 @@ import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.spark.deploy.SparkSubmit;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

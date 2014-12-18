@@ -278,12 +278,13 @@ public abstract class NotificationTest {
         }
       });
       Cancellable cancellable = subscriber.consume();
+      TimeUnit.SECONDS.sleep(2);
 
       NotificationClient.Publisher<String> publisher = getNotificationClient().createPublisher(FEED1);
       try {
         publisher.publish("foobar");
         // Waiting for the subscriber to receive that notification
-        TimeUnit.SECONDS.sleep(5);
+        TimeUnit.SECONDS.sleep(2);
 
         KeyValueTable table = dsFramework.getDataset("myTable", DatasetDefinition.NO_ARGUMENTS, null);
         Assert.assertNotNull(table);

@@ -36,7 +36,6 @@ import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.services.Data;
-import co.cask.cdap.app.services.DeployStatus;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.StoreFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -61,7 +60,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.internal.app.deploy.SessionInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -70,7 +68,6 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduledRuntime;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.filesystem.LocationCodec;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DatasetRecord;
@@ -97,27 +94,19 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
-import com.google.common.io.InputSupplier;
-import com.google.common.io.OutputSupplier;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import com.ning.http.client.Body;
-import com.ning.http.client.BodyGenerator;
-import com.ning.http.client.Response;
 import com.ning.http.client.SimpleAsyncHttpClient;
-import org.apache.commons.io.IOUtils;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
@@ -138,10 +127,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.Writer;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -150,7 +136,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -182,11 +167,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
   /**
-   * Timeout to upload to remote app fabric.
-   */
-  private static final long UPLOAD_TIMEOUT = TimeUnit.MILLISECONDS.convert(10, TimeUnit.MINUTES);
-
-  /**
    * Configuration object passed from higher up.
    */
   private final CConfiguration configuration;
@@ -216,13 +196,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    * App fabric output directory.
    */
   private final String appFabricDir;
-
-  /**
-   * Maintains a mapping of transient session state. The state is stored in memory,
-   * in case of failure, all the current running sessions will be terminated. As
-   * per the current implementation only connection per account is allowed to upload.
-   */
-  private final Map<String, SessionInfo> sessions = Maps.newConcurrentMap();
 
   /**
    * Store manages non-runtime lifecycle.
@@ -1748,9 +1721,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     final Location archiveDir = locationFactory.create(this.archiveDir).append(accountId);
     final Location archive = archiveDir.append(archiveName);
 
-    final SessionInfo sessionInfo = new SessionInfo(accountId, appId, archiveName, archive, DeployStatus.UPLOADING);
-    sessions.put(accountId, sessionInfo);
-
     return new AbstractBodyConsumer(File.createTempFile("app-", ".jar", tempDir)) {
 
       @Override
@@ -1775,17 +1745,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
             throw e;
           }
 
-          sessionInfo.setStatus(DeployStatus.VERIFYING);
           deploy(accountId, appId, archive);
-          sessionInfo.setStatus(DeployStatus.DEPLOYED);
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (Exception e) {
-          sessionInfo.setStatus(DeployStatus.FAILED);
           LOG.error("Deploy failure", e);
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        } finally {
-          save(sessionInfo.setStatus(sessionInfo.getStatus()), accountId);
-          sessions.remove(accountId);
         }
       }
     };
@@ -1829,196 +1793,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       if (!entry.getValue().getSchedules().isEmpty()) {
         scheduler.schedule(programId, ProgramType.WORKFLOW, entry.getValue().getSchedules());
       }
-    }
-  }
-
-
-  /**
-   * Defines the class for sending deploy status to client.
-   */
-  private static class Status {
-    private final int code;
-    private final String status;
-    private final String message;
-
-    public Status(int code, String message) {
-      this.code = code;
-      this.status = DeployStatus.getMessage(code);
-      this.message = message;
-    }
-  }
-
-  /**
-   * Gets application deployment status.
-   */
-  @GET
-  @Path("/deploy/status")
-  public void getDeployStatus(HttpRequest request, HttpResponder responder) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      DeployStatus status  = dstatus(accountId);
-      LOG.trace("Deployment status call at AppFabricHttpHandler , Status: {}", status);
-      responder.sendJson(HttpResponseStatus.OK, new Status(status.getCode(), status.getMessage()));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-
-  /**
-   * Promote an application to another CDAP instance.
-   */
-  @POST
-  @Path("/apps/{app-id}/promote")
-  public void promoteApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
-    try {
-      String postBody = null;
-
-      try {
-        postBody = IOUtils.toString(new ChannelBufferInputStream(request.getContent()));
-      } catch (IOException e) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-        return;
-      }
-
-      Map<String, String> content = null;
-      try {
-        content = GSON.fromJson(postBody, STRING_MAP_TYPE);
-      } catch (JsonSyntaxException e) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Not a valid body specified.");
-        return;
-      }
-
-      if (!content.containsKey("hostname")) {
-        responder.sendError(HttpResponseStatus.BAD_REQUEST, "Hostname not specified.");
-        return;
-      }
-
-      // Checks DNS, Ipv4, Ipv6 address in one go.
-      String hostname = content.get("hostname");
-      Preconditions.checkArgument(!hostname.isEmpty(), "Empty hostname passed.");
-
-      String accountId = getAuthenticatedAccountId(request);
-      String token = request.getHeader(Constants.Gateway.API_KEY);
-
-      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId, appId));
-      if (appArchive == null || !appArchive.exists()) {
-        throw new IOException("Unable to locate the application.");
-      }
-
-      if (!promote(token, accountId, appId, hostname)) {
-        responder.sendError(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Failed to promote application " + appId);
-      } else {
-        responder.sendStatus(HttpResponseStatus.OK);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  public boolean promote(String authToken, String accountId, String appId, String hostname) throws Exception {
-
-    try {
-      final Location appArchive = store.getApplicationArchiveLocation(Id.Application.from(accountId,
-                                                                                          appId));
-      if (appArchive == null || !appArchive.exists()) {
-        throw new Exception("Unable to locate the application.");
-      }
-
-      String schema = "https";
-      if ("localhost".equals(hostname)) {
-        schema = "http";
-      }
-
-      // Construct URL for promotion of application to remote cluster
-      int gatewayPort;
-      if (configuration.getBoolean(Constants.Security.SSL_ENABLED)) {
-        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.ROUTER_SSL_PORT,
-                                                         Constants.Router.DEFAULT_ROUTER_SSL_PORT));
-      } else {
-        gatewayPort = Integer.parseInt(configuration.get(Constants.Router.ROUTER_PORT,
-                                                         Constants.Router.DEFAULT_ROUTER_PORT));
-      }
-
-      String url = String.format("%s://%s:%s/v2/apps/%s",
-                                 schema, hostname, gatewayPort, appId);
-
-      SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()
-        .setUrl(url)
-        .setRequestTimeoutInMs((int) UPLOAD_TIMEOUT)
-        .setHeader("X-Archive-Name", appArchive.getName())
-        .setHeader(Constants.Gateway.API_KEY, authToken)
-        .build();
-
-      try {
-        Future<Response> future = client.put(new LocationBodyGenerator(appArchive));
-        Response response = future.get(UPLOAD_TIMEOUT, TimeUnit.MILLISECONDS);
-        if (response.getStatusCode() != 200) {
-          throw new RuntimeException(response.getResponseBody());
-        }
-        return true;
-      } finally {
-        client.close();
-      }
-    } catch (Exception ex) {
-      LOG.warn(ex.getMessage(), ex);
-      throw ex;
-    }
-  }
-
-  private static final class LocationBodyGenerator implements BodyGenerator {
-
-    private final Location location;
-
-    private LocationBodyGenerator(Location location) {
-      this.location = location;
-    }
-
-    @Override
-    public Body createBody() throws IOException {
-      final InputStream input = location.getInputStream();
-
-      return new Body() {
-        @Override
-        public long getContentLength() {
-          try {
-            return location.length();
-          } catch (IOException e) {
-            throw Throwables.propagate(e);
-          }
-        }
-
-        @Override
-        public long read(ByteBuffer buffer) throws IOException {
-          // Fast path
-          if (buffer.hasArray()) {
-            int len = input.read(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining());
-            if (len > 0) {
-              buffer.position(buffer.position() + len);
-            }
-            return len;
-          }
-
-          byte[] bytes = new byte[buffer.remaining()];
-          int len = input.read(bytes);
-          if (len < 0) {
-            return len;
-          }
-          buffer.put(bytes, 0, len);
-          return len;
-        }
-
-        @Override
-        public void close() throws IOException {
-          input.close();
-        }
-      };
     }
   }
 
@@ -2131,37 +1905,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Caught exception", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  /*
-   * Retrieves a {@link SessionInfo} from the file system.
-   */
-  @Nullable
-  private SessionInfo retrieve(String accountId) {
-    try {
-      final Location outputDir = locationFactory.create(archiveDir).append(accountId);
-      if (!outputDir.exists()) {
-        return null;
-      }
-      final Location sessionInfoFile = outputDir.append("session.json");
-      InputSupplier<Reader> reader = new InputSupplier<Reader>() {
-        @Override
-        public Reader getInput() throws IOException {
-          return new InputStreamReader(sessionInfoFile.getInputStream(), "UTF-8");
-        }
-      };
-
-      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      Reader r = reader.getInput();
-      try {
-        return gson.fromJson(r, SessionInfo.class);
-      } finally {
-        Closeables.closeQuietly(r);
-      }
-    } catch (IOException e) {
-      LOG.warn("Failed to retrieve session info for account.");
-    }
-    return null;
   }
 
   private AppFabricServiceStatus removeAll(Id.Account identifier) throws Exception {
@@ -2402,22 +2145,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /*
-   * Returns DeploymentStatus
-   */
-  private DeployStatus dstatus(String accountId) {
-    if (!sessions.containsKey(accountId)) {
-      SessionInfo info = retrieve(accountId);
-      if (info == null) {
-        return DeployStatus.NOT_FOUND;
-      }
-      return info.getStatus();
-    } else {
-      SessionInfo info = sessions.get(accountId);
-      return info.getStatus();
-    }
-  }
-
   private void deleteHandler(Id.Program programId, ProgramType type)
     throws ExecutionException {
     try {
@@ -2453,40 +2180,6 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
     if (programRunInfo != null) {
       doStop(programRunInfo);
     }
-  }
-
-  /**
-   * Saves the {@link SessionInfo} to the filesystem.
-   *
-   * @param info to be saved.
-   * @return true if and only if successful; false otherwise.
-   */
-  private boolean save(SessionInfo info, String accountId) {
-    try {
-      Gson gson = new GsonBuilder().registerTypeAdapter(Location.class, new LocationCodec(locationFactory)).create();
-      Location outputDir = locationFactory.create(archiveDir).append(accountId);
-      if (!outputDir.exists()) {
-        return false;
-      }
-      final Location sessionInfoFile = outputDir.append("session.json");
-      OutputSupplier<Writer> writer = new OutputSupplier<Writer>() {
-        @Override
-        public Writer getOutput() throws IOException {
-          return new OutputStreamWriter(sessionInfoFile.getOutputStream(), "UTF-8");
-        }
-      };
-
-      Writer w = writer.getOutput();
-      try {
-        gson.toJson(info, w);
-      } finally {
-        Closeables.closeQuietly(w);
-      }
-    } catch (IOException e) {
-      LOG.warn(e.getMessage(), e);
-      return false;
-    }
-    return true;
   }
 
   private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)

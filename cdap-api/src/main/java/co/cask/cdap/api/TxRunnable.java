@@ -18,6 +18,7 @@ package co.cask.cdap.api;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.service.ServiceWorker;
 
 /**
  * A runnable that provides a {@link DatasetContext} to programs which may be used to get

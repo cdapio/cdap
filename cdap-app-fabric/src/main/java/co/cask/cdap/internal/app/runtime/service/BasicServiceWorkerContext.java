@@ -17,10 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.ServiceWorkerContext;
 import co.cask.cdap.api.service.ServiceWorkerSpecification;
@@ -33,12 +30,12 @@ import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.data.Namespace;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.data2.dataset2.NamespacedDatasetFramework;
 import co.cask.cdap.internal.app.program.TypeId;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -149,7 +146,12 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new ServiceWorkerDatasetContext(context, datasetsCache));
+      runnable.run(new DynamicDatasetContext(context, datasetFramework, getProgram().getClassLoader(), datasets) {
+        @Override
+        protected LoadingCache<Long, Map<String, Dataset>> getDatasetsCache() {
+          return datasetsCache;
+        }
+      });
       context.finish();
     } catch (TransactionFailureException e) {
       abortTransaction(e, "Failed to commit. Aborting transaction.", context);
@@ -184,83 +186,6 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     } catch (TransactionFailureException e1) {
       LOG.error("Failed to abort transaction.", e1);
       throw Throwables.propagate(e1);
-    }
-  }
-
-  private class ServiceWorkerDatasetContext implements DatasetContext {
-    private final TransactionContext context;
-    private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
-
-    private ServiceWorkerDatasetContext(TransactionContext context,
-                                        LoadingCache<Long, Map<String, Dataset>> datasetsCache) {
-      this.context = context;
-      this.datasetsCache = datasetsCache;
-    }
-
-    /**
-     * Get an instance of the specified Dataset. This method is thread-safe and may be used concurrently.
-     * The returned dataset is also added to the transaction of the current {@link #execute(TxRunnable)} call.
-     *
-     * @param name The name of the Dataset
-     * @param <T> The type of the Dataset
-     * @return A new instance of the specified Dataset, never null.
-     * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
-     *         cannot be loaded; the default constructor throws an exception; or the Dataset
-     *         cannot be opened (for example, one of the underlying tables in the DataFabric
-     *         cannot be accessed).
-     */
-    @Override
-    public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-      return getDataset(name, DatasetDefinition.NO_ARGUMENTS);
-    }
-
-    /**
-     * Get an instance of the specified Dataset. This method is thread-safe and may be used concurrently.
-     * The returned dataset is also added to the transaction of the current {@link #execute(TxRunnable)} call.
-     *
-     * @param name The name of the Dataset
-     * @param arguments the arguments for this dataset instance
-     * @param <T> The type of the Dataset
-     * @return A new instance of the specified Dataset, never null.
-     * @throws DatasetInstantiationException If the Dataset cannot be instantiated: its class
-     *         cannot be loaded; the default constructor throws an exception; or the Dataset
-     *         cannot be opened (for example, one of the underlying tables in the DataFabric
-     *         cannot be accessed).
-     */
-    @Override
-    public synchronized <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
-      throws DatasetInstantiationException {
-
-      if (!datasets.contains(name)) {
-        throw new DatasetInstantiationException(
-          String.format("Trying to access dataset '%s' that was not declared with " +
-                          "useDataset() in the worker's configure()", name));
-      }
-
-      try {
-        Map<String, Dataset> threadLocalMap = datasetsCache.get(Thread.currentThread().getId());
-        Dataset dataset = threadLocalMap.get(name);
-        if (dataset == null) {
-          dataset = datasetFramework.getDataset(name, arguments, getProgram().getClassLoader());
-          if (dataset != null) {
-            threadLocalMap.put(name, dataset);
-          }
-        }
-
-        if (dataset != null) {
-          if (dataset instanceof TransactionAware) {
-            context.addTransactionAware((TransactionAware) dataset);
-          }
-
-          @SuppressWarnings("unchecked")
-          T resultDataset = (T) dataset;
-          return resultDataset;
-        }
-      } catch (Throwable t) {
-        throw new DatasetInstantiationException(String.format("Could not instantiate dataset '%s'", name), t);
-      }
-      // if it gets here, then the dataset was null
-      throw new DatasetInstantiationException(String.format("Dataset '%s' does not exist", name));
     }
   }
 }

@@ -17,21 +17,19 @@
 package co.cask.cdap.notifications;
 
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
 import co.cask.cdap.notifications.client.AbstractNotificationSubscriber;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link NotificationContext}.
@@ -55,7 +53,13 @@ public final class BasicNotificationContext implements NotificationContext {
         final TransactionContext context = new TransactionContext(transactionSystemClient);
         try {
           context.start();
-          runnable.run(new DynamicDatasetContext(context));
+          runnable.run(new DynamicDatasetContext(context, dsFramework, context.getClass().getClassLoader()) {
+            @Nullable
+            @Override
+            protected LoadingCache<Long, Map<String, Dataset>> getDatasetsCache() {
+              return null;
+            }
+          });
           context.finish();
           return true;
         } catch (TransactionFailureException e) {
@@ -84,40 +88,6 @@ public final class BasicNotificationContext implements NotificationContext {
     } catch (TransactionFailureException e1) {
       LOG.error("Failed to abort transaction.", e1);
       throw e1;
-    }
-  }
-
-  /**
-   * Implementation of {@link co.cask.cdap.api.data.DatasetContext} that allows to dynamically load datasets
-   * into a started {@link TransactionContext}.
-   */
-  private final class DynamicDatasetContext implements DatasetContext {
-
-    private final TransactionContext context;
-
-    private DynamicDatasetContext(TransactionContext context) {
-      this.context = context;
-    }
-
-    @Override
-    public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-      return getDataset(name, null);
-    }
-
-    @Override
-    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
-      throws DatasetInstantiationException {
-      try {
-        T dataset = dsFramework.getDataset(name, arguments, null);
-        if (dataset instanceof TransactionAware) {
-          context.addTransactionAware((TransactionAware) dataset);
-        }
-        return dataset;
-      } catch (DatasetManagementException e) {
-        throw new DatasetInstantiationException("Could not retrieve dataset metadata", e);
-      } catch (IOException e) {
-        throw new DatasetInstantiationException("Error when instantiating dataset", e);
-      }
     }
   }
 }

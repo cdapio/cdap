@@ -23,7 +23,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.procedure.ProcedureSpecification;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;

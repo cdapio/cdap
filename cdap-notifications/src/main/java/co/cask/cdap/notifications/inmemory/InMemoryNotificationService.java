@@ -35,6 +35,8 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -139,10 +141,13 @@ public class InMemoryNotificationService extends AbstractIdleService {
   public void cancel(AbstractNotificationSubscriber subscriber) {
     lock.writeLock().lock();
     try {
-      for (NotificationFeed feed : feedsToSubscribers.keySet()) {
-        // Here the subscriber will be identified by its reference, since equals() is not overridden.
-        // Which is good, this is the behavior we expect.
-        feedsToSubscribers.remove(feed, subscriber);
+      Iterator<Map.Entry<NotificationFeed, AbstractNotificationSubscriber>> i = feedsToSubscribers.entries().iterator();
+      while (i.hasNext()) {
+        if (i.next().getValue().equals(subscriber)) {
+          // Here the subscriber will be identified by its reference, since equals() is not overridden.
+          // Which is good, this is the behavior we expect.
+          i.remove();
+        }
       }
     } finally {
       lock.writeLock().unlock();

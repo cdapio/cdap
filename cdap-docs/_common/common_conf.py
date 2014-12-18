@@ -167,6 +167,25 @@ html_theme = 'cdap'
 # further.  For a list of options available for each theme, see the
 # documentation.
 # html_theme_options = {"showtoc_include_showtocs":"false"}
+html_theme_options = {
+  "manuals":["developers-manual","admin-manual","examples-manual","reference-manual",],
+  "manualtitles":[u"Developers’ Manual","Administration Manual","Examples, Guides, and Tutorials", "Reference Manual",],
+}
+
+def get_manuals():
+    return html_theme_options["manuals"]
+
+def get_manual_titles():
+    return html_theme_options["manualtitles"]
+
+def get_manual_titles_bash():
+    PREFIX = "declare -a MANUAL_TITLES=("
+    SUFFIX = ");"
+    manualtitles = PREFIX
+    for title in html_theme_options["manualtitles"]:
+        manualtitles += "'%s'" % title
+    manualtitles += SUFFIX
+    return manualtitles 
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']
@@ -176,10 +195,10 @@ html_theme_path = ['_themes','../../_common/_themes']
 #html_title = None
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = u"CDAP Developer’s Manual"
+html_short_title = u"CDAP Documentation"
 
 # A shorter title for the sidebar section, preceding the words "Table of Contents".
-html_short_title_toc = u"Developer’s Manual"
+html_short_title_toc = u"CDAP Documentation"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -249,7 +268,7 @@ htmlhelp_basename = 'CDAPdoc'
 # This context needs to be created in each child conf.py. At a minimum, it needs to be 
 # html_context = {"html_short_title_toc":html_short_title_toc}
 # This is because it needs to be set as the last item.
-html_context = {}
+html_context = {"html_short_title_toc":html_short_title_toc}
 
 # -- Options for LaTeX output ---------------------------------------------
 

@@ -68,7 +68,8 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * SerDe to serialize Dataset Objects.
+ * SerDe to serialize Dataset Objects. It MUST implement the deprecated SerDe interface instead of extending the
+ * abstract SerDe class, otherwise we get ClassNotFound exceptions on cdh4.x.
  */
 public class DatasetSerDe implements SerDe {
   private static final Gson GSON = new Gson();

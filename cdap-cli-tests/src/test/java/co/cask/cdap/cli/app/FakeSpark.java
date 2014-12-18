@@ -19,7 +19,6 @@ package co.cask.cdap.cli.app;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.internal.app.runtime.spark.SparkProgramWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,12 +32,10 @@ public class FakeSpark extends AbstractSpark {
   private static final Logger LOG = LoggerFactory.getLogger(FakeSpark.class);
 
   @Override
-  public SparkSpecification configure() {
-    return SparkSpecification.Builder.with()
-      .setName(NAME)
-      .setDescription("")
-      .setMainClassName(FakeSparkProgram.class.getName())
-      .build();
+  public void configure() {
+    setName(NAME);
+    setDescription("");
+    setMainClass(FakeSparkProgram.class);
   }
 
   public static class FakeSparkProgram implements JavaSparkProgram {

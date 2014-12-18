@@ -27,7 +27,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
- * Represents an InputSplit for stream.
+ * Represents a mapreduce InputSplit for stream.
  */
 public final class StreamInputSplit extends FileSplit implements Writable {
 
