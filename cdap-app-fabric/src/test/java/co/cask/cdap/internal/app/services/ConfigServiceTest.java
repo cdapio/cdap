@@ -79,5 +79,9 @@ public class ConfigServiceTest {
     configs = configService.getConfig("myspace", ConfigType.DASHBOARD);
     Assert.assertEquals(1, configs.size());
     Assert.assertEquals(dashId, configs.get(0));
+
+    configService.deleteConfig("myspace", ConfigType.DASHBOARD, "user1", dashId);
+    configs = configService.getConfig("myspace", ConfigType.DASHBOARD);
+    Assert.assertEquals(0, configs.size());
   }
 }
