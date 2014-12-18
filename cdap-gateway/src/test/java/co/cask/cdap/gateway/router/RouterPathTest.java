@@ -294,4 +294,16 @@ public class RouterPathTest {
     Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
   }
 
+  @Test
+  public void testConfigurationV3PathLookup() {
+    final String dashboardPath = "/v3///myspace///configuration//dashboards///";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), dashboardPath);
+    String result = pathLookup.getRoutingService(FALLBACKSERVICE, dashboardPath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+
+    final String userSettingsPath = "/v3////configuration//usersettings///";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), userSettingsPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, userSettingsPath, httpRequest);
+    Assert.assertEquals(Constants.Service.APP_FABRIC_HTTP, result);
+  }
 }
