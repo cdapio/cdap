@@ -138,23 +138,23 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testStartStop() throws Exception {
-    //deploy, check the status and start a flow. Also check the status
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Assert.assertEquals("STOPPED", getRunnableStatus(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW
-      .getCategoryName(), WORDCOUNT_FLOW_NAME));
+    //deploy, check the status
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    //flow is stopped initially
+    Assert.assertEquals(ProgramController.State.STOPPED.toString(),
+                        getRunnableStatus(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
+                                          WORDCOUNT_FLOW_NAME));
+    //try a random action on the flow.
+    Assert.assertEquals(405, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME,
+                                                  ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME, "random"));
+
+    //start a flow and check the status
     Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW
       .getCategoryName(), WORDCOUNT_FLOW_NAME, "start"));
     waitState(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(), WORDCOUNT_FLOW_NAME,
               ProgramRunStatus.RUNNING.toString());
-
-    //web-app, start, stop and status check - enable after webapp apis are implemented.
-//    Assert.assertEquals(200, doPost("/v2/apps/" + WORDCOUNT_APP_NAME + "/webapp/start", null).getStatusLine()
-// .getStatusCode());
-//
-//    Assert.assertEquals(ProgramRunStatus.RUNNING.toString(), getWebappStatus(WORDCOUNT_APP_NAME));
-//    Assert.assertEquals(200, doPost("/v2/apps/" + WORDCOUNT_APP_NAME + "/webapp/stop", null).getStatusLine()
-// .getStatusCode());
-//    Assert.assertEquals("STOPPED", getWebappStatus(WORDCOUNT_APP_NAME));
 
     // Stop the flow and check its status
     Assert.assertEquals(200, getRunnableStartStop(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW
@@ -541,13 +541,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       deploy(app, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
       // first run
       Assert.assertEquals(200, getRunnableStartStop(namespace, appId, runnableType, runnableId, "start"));
-      waitState(namespace, appId, runnableType, runnableId, "RUNNING");
+      waitState(namespace, appId, runnableType, runnableId, ProgramRunStatus.RUNNING.toString());
       Assert.assertEquals(200, getRunnableStartStop(namespace, appId, runnableType, runnableId, "stop"));
-      waitState(namespace, appId, runnableType, runnableId, "STOPPED");
+      waitState(namespace, appId, runnableType, runnableId, ProgramController.State.STOPPED.toString());
 
       // second run
       Assert.assertEquals(200, getRunnableStartStop(namespace, appId, runnableType, runnableId, "start"));
-      waitState(namespace, appId, runnableType, runnableId, "RUNNING");
+      waitState(namespace, appId, runnableType, runnableId, ProgramRunStatus.RUNNING.toString());
       String url = String.format("apps/%s/%s/%s/runs?status=running", appId, runnableType, runnableId);
 
       //active size should be 1
@@ -557,7 +557,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
 
       Assert.assertEquals(200, getRunnableStartStop(namespace, appId, runnableType, runnableId, "stop"));
-      waitState(namespace, appId, runnableType, runnableId, "STOPPED");
+      waitState(namespace, appId, runnableType, runnableId, ProgramController.State.STOPPED.toString());
 
       historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
 

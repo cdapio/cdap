@@ -177,7 +177,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     this.locationFactory = locationFactory;
     this.configuration = configuration;
     this.runtimeService = runtimeService;
-    this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
+    this.appFabricDir = this.configuration.get(Constants.AppFabric.OUTPUT_DIR);
   }
 
   /**
@@ -185,14 +185,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @GET
   @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/status")
-  public void getStatus(final HttpRequest request, final HttpResponder responder,
-                        @PathParam("namespace-id") final String namespaceId,
-                        @PathParam("app-id") final String appId,
-                        @PathParam("runnable-type") final String runnableType,
-                        @PathParam("runnable-id") final String runnableId) {
+  public void getStatus(HttpRequest request, HttpResponder responder,
+                        @PathParam("namespace-id") String namespaceId,
+                        @PathParam("app-id") String appId,
+                        @PathParam("runnable-type") String runnableType,
+                        @PathParam("runnable-id") String runnableId) {
     try {
-      final Id.Program id = Id.Program.from(namespaceId, appId, runnableId);
-      final ProgramType type = ProgramType.valueOfCategoryName(runnableType);
+      Id.Program id = Id.Program.from(namespaceId, appId, runnableId);
+      ProgramType type = ProgramType.valueOfCategoryName(runnableType);
       StatusMap statusMap = getStatus(id, type);
       // If status is null, then there was an error
       if (statusMap.getStatus() == null) {
@@ -209,47 +209,25 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /**
-   * Starts a program.
-   */
   @POST
-  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/start")
-  public void startProgram(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") final String namespaceId,
-                           @PathParam("app-id") final String appId,
-                           @PathParam("runnable-type") final String runnableType,
-                           @PathParam("runnable-id") final String runnableId) {
-    startStopProgram(request, responder, namespaceId, appId, runnableType, runnableId, "start");
-  }
+  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/{action}")
+  public void startStopDebugProgram(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId,
+                                    @PathParam("app-id") String appId,
+                                    @PathParam("runnable-type") String runnableType,
+                                    @PathParam("runnable-id") String runnableId,
+                                    @PathParam("action") String action) {
+    if (!isValidAction(action)) {
+      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
+      return;
+    }
 
-  /**
-   * Starts a program with debugging enabled.
-   */
-  @POST
-  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/debug")
-  public void debugProgram(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") final String namespaceId,
-                           @PathParam("app-id") final String appId,
-                           @PathParam("runnable-type") final String runnableType,
-                           @PathParam("runnable-id") final String runnableId) {
-    if (!("flows".equals(runnableType) || "procedures".equals(runnableType) || "services".equals(runnableType))) {
+    if ("debug".equals(action) &&
+      !("flows".equals(runnableType) || "procedures".equals(runnableType) || "services".equals(runnableType))) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
       return;
     }
-    startStopProgram(request, responder, namespaceId, appId, runnableType, runnableId, "debug");
-  }
-
-  /**
-   * Stops a program.
-   */
-  @POST
-  @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/stop")
-  public void stopProgram(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") final String namespaceId,
-                          @PathParam("app-id") final String appId,
-                          @PathParam("runnable-type") final String runnableType,
-                          @PathParam("runnable-id") final String runnableId) {
-    startStopProgram(request, responder, namespaceId, appId, runnableType, runnableId, "stop");
+    startStopProgram(request, responder, namespaceId, appId, runnableType, runnableId, action);
   }
 
   /**
@@ -259,7 +237,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/runs")
   public void runnableHistory(HttpRequest request, HttpResponder responder,
-                              @PathParam("namespace-id") final String namespaceId,
+                              @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-id") String appId,
                               @PathParam("runnable-type") String runnableType,
                               @PathParam("runnable-id") String runnableId,
@@ -283,10 +261,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
   public void getRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") final String namespaceId,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("runnable-type") final String runnableType,
-                                     @PathParam("runnable-id") final String runnableId) {
+                                     @PathParam("namespace-id") String namespaceId,
+                                     @PathParam("app-id") String appId,
+                                     @PathParam("runnable-type") String runnableType,
+                                     @PathParam("runnable-id") String runnableId) {
     ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -314,10 +292,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   @Path("/{namespace-id}/apps/{app-id}/{runnable-type}/{runnable-id}/runtimeargs")
   public void saveRunnableRuntimeArgs(HttpRequest request, HttpResponder responder,
-                                      @PathParam("namespace-id") final String namespaceId,
-                                      @PathParam("app-id") final String appId,
-                                      @PathParam("runnable-type") final String runnableType,
-                                      @PathParam("runnable-id") final String runnableId) {
+                                      @PathParam("namespace-id") String namespaceId,
+                                      @PathParam("app-id") String appId,
+                                      @PathParam("runnable-type") String runnableType,
+                                      @PathParam("runnable-id") String runnableId) {
     ProgramType type = ProgramType.valueOfCategoryName(runnableType);
     if (type == null || type == ProgramType.WEBAPP) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
@@ -369,7 +347,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/{namespace-id}/status")
   public void getStatuses(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") final String namespaceId) {
+                          @PathParam("namespace-id") String namespaceId) {
     try {
       List<BatchEndpointStatus> args = statusFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null, then there was an error in decoding args and response was already sent
@@ -436,7 +414,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/{namespace-id}/instances")
   public void getInstances(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") final String namespaceId) {
+                           @PathParam("namespace-id") String namespaceId) {
     try {
       List<BatchEndpointInstances> args = instancesFromBatchArgs(decodeArrayArguments(request, responder));
       // if args is null then the response has already been sent
@@ -1151,7 +1129,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     int count = 0;
     if (info instanceof NotRunningProgramLiveInfo) {
       return count;
-    } else if (info instanceof Containers) {
+    }
+    if (info instanceof Containers) {
       Containers containers = (Containers) info;
       for (Containers.ContainerInfo container : containers.getContainers()) {
         if (container.getName().equals(runnableId)) {
@@ -1159,9 +1138,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
       return count;
-    } else {
-      // Not running on YARN default 1
-      return 1;
     }
+    // Not running on YARN default 1
+    return 1;
+  }
+
+  private boolean isValidAction(String action) {
+    return "start".equals(action) || "stop".equals(action) || "debug".equals(action);
   }
 }

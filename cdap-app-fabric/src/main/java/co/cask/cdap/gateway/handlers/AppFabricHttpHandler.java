@@ -342,8 +342,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") final String appId,
                            @PathParam("runnable-type") final String runnableType,
                            @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.startProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                             runnableType, runnableId);
+    programLifecycleHttpHandler.startStopDebugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                      appId, runnableType, runnableId, "start");
   }
 
   /**
@@ -355,8 +355,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                            @PathParam("app-id") final String appId,
                            @PathParam("runnable-type") final String runnableType,
                            @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.debugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                             runnableType, runnableId);
+    programLifecycleHttpHandler.startStopDebugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                      appId, runnableType, runnableId, "debug");
   }
 
   /**
@@ -368,8 +368,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("app-id") final String appId,
                           @PathParam("runnable-type") final String runnableType,
                           @PathParam("runnable-id") final String runnableId) {
-    programLifecycleHttpHandler.stopProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                            runnableType, runnableId);
+    programLifecycleHttpHandler.startStopDebugProgram(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                      appId, runnableType, runnableId, "stop");
   }
 
   /**
