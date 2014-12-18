@@ -14,6 +14,11 @@ function ($scope, $alert, MyDataSource) {
   }, function(res) {
 
     $scope.apps = res;
+    if ($scope.apps.length) {
+      $scope.dataAppsTemplate = "assets/features/home/templates/data-apps-section.html";
+    } else {
+      $scope.dataAppsTemplate = "assets/features/home/templates/data-apps-default-view.html";
+    }
     console.log('Apps: ', $scope.apps);
   });
 

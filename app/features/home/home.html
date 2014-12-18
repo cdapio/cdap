@@ -44,9 +44,5 @@
   </div>
 </div>
 <hr />
-<div ng-show="apps.length > 0">
-  <div ng-include="'assets/features/home/templates/data-apps-section.html'"> </div>
-</div>
-<div ng-show="apps.length == 0">
-  <div ng-include="'assets/features/home/templates/data-apps-default-view.html'"> </div>
-</div>
+
+<div ng-include="dataAppsTemplate"> </div>
