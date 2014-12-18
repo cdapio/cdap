@@ -29,11 +29,9 @@ import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -248,6 +246,10 @@ class IncrementSummingScanner implements RegionScanner {
     baseScanner.close();
   }
 
+  /**
+   * Wraps the underlying store or region scanner in an API that hides the details of calling and managing the
+   * buffered batch of results.
+   */
   private static class WrappedScanner implements Closeable {
     private boolean hasMore;
     private byte[] currentRow;
@@ -264,7 +266,6 @@ class IncrementSummingScanner implements RegionScanner {
      */
     public void startNext() {
       currentRow = null;
-      // signals the start of the next call
     }
 
     /**
@@ -275,7 +276,7 @@ class IncrementSummingScanner implements RegionScanner {
      * @return the next available cell or null if no more cells are available for the current row
      * @throws IOException
      */
-    public @Nullable Cell peekNextCell(int limit) throws IOException {
+    public Cell peekNextCell(int limit) throws IOException {
       if (currentIdx >= cellsToConsume.size()) {
         // finished current batch
         cellsToConsume.clear();
@@ -304,7 +305,7 @@ class IncrementSummingScanner implements RegionScanner {
      * @return the next available cell or null if no more cells are available for the current row
      * @throws IOException
      */
-    public @Nullable Cell nextCell(int limit) throws IOException {
+    public Cell nextCell(int limit) throws IOException {
       Cell cell = peekNextCell(limit);
       if (cell != null) {
         currentIdx++;

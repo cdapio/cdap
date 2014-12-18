@@ -282,7 +282,7 @@ public class IncrementHandlerTest {
   }
 
   public Put newIncrement(byte[] row, byte[] column, long value) {
-      return newIncrement(row, column, ts++, value);
+    return newIncrement(row, column, ts++, value);
   }
 
   public Put newIncrement(byte[] row, byte[] column, long timestamp, long value) {

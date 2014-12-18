@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
+import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
 import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
@@ -102,7 +103,7 @@ public class IncrementHandler extends BaseRegionObserver {
     scan.setFilter(Filters.combine(new IncrementFilter(), scan.getFilter()));
     RegionScanner scanner = null;
     try {
-      scanner = new IncrementSummingScanner(region, scan.getBatch(), region.getScanner(scan));
+      scanner = new IncrementSummingScanner(region, scan.getBatch(), region.getScanner(scan), ScanType.USER_SCAN);
       scanner.next(results);
       ctx.bypass();
     } finally {
@@ -146,17 +147,15 @@ public class IncrementHandler extends BaseRegionObserver {
   public RegionScanner postScannerOpen(ObserverContext<RegionCoprocessorEnvironment> ctx, Scan scan,
                                        RegionScanner scanner)
     throws IOException {
-    return new IncrementSummingScanner(region, scan.getBatch(), scanner);
+    return new IncrementSummingScanner(region, scan.getBatch(), scanner, ScanType.USER_SCAN);
   }
 
   @Override
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                   InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
-    if (snapshot != null) {
-      return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, snapshot.getVisibilityUpperBound());
-    }
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, ScanType.MINOR_COMPACT,
+        snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
   public static boolean isIncrement(KeyValue kv) {
@@ -169,10 +168,8 @@ public class IncrementHandler extends BaseRegionObserver {
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
-    if (snapshot != null) {
-      return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, snapshot.getVisibilityUpperBound());
-    }
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, ScanType.MINOR_COMPACT,
+        snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
   @Override
@@ -180,10 +177,9 @@ public class IncrementHandler extends BaseRegionObserver {
                                     InternalScanner scanner, CompactionRequest request)
     throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
-    if (snapshot != null) {
-      return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, snapshot.getVisibilityUpperBound());
-    }
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
+        request.isMajor() ? ScanType.MAJOR_COMPACT : ScanType.MINOR_COMPACT,
+        snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
 }
