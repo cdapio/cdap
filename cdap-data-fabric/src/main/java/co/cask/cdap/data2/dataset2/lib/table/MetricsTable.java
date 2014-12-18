@@ -56,6 +56,12 @@ public interface MetricsTable extends Dataset {
    */
   void increment(byte[] row, Map<byte[], Long> increments) throws Exception;
 
+
+  /**
+   * Batch increment multiple rows each with multiple columns and increments
+   */
+  void batchIncrement(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception;
+
   /**
    * Increment a single column of a row and return the new value.
    * @return the new value after the increment.

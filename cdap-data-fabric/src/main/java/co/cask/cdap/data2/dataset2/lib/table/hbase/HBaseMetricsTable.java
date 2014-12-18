@@ -123,6 +123,29 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
+  public void batchIncrement(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+    List<Increment> increments = Lists.newArrayList();
+    for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : updates.entrySet()) {
+      Increment increment = new Increment(entry.getKey());
+      for (Map.Entry<byte[], Long> column : entry.getValue().entrySet()) {
+        increment.addColumn(DATA_COLUMN_FAMILY, column.getKey(), column.getValue());
+      }
+      increments.add(increment);
+    }
+    try {
+      hTable.batch(increments);
+    } catch (IOException e) {
+      // figure out whether this is an illegal increment
+      // currently there is not other way to extract that from the HBase exception than string match
+      if (e.getMessage() != null && e.getMessage().contains("isn't 64 bits wide")) {
+        throw new OperationException(StatusCode.ILLEGAL_INCREMENT, e.getMessage(), e);
+      }
+      throw e;
+    }
+    hTable.flushCommits();
+  }
+
+  @Override
   public long incrementAndGet(byte[] row, byte[] column, long delta) throws Exception {
     Increment increment = new Increment(row);
     increment.addColumn(DATA_COLUMN_FAMILY, column, delta);
