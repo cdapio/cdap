@@ -118,6 +118,7 @@ import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -1345,9 +1346,11 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @PUT
   @Path("/apps/{app-id}")
-  public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId) {
+  public BodyConsumer deploy(HttpRequest request, HttpResponder responder, @PathParam("app-id") final String appId,
+                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     try {
-      return appLifecycleHttpHandler.deploy(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId);
+      return appLifecycleHttpHandler.deploy(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                            archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -1360,10 +1363,12 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/apps")
-  public BodyConsumer deploy(HttpRequest request, HttpResponder responder) {
+  public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
+                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
     try {
-      return appLifecycleHttpHandler.deploy(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, null);
+      return appLifecycleHttpHandler.deploy(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, null,
+                                            archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;

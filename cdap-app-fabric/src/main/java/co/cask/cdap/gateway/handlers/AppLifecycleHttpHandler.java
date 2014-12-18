@@ -92,6 +92,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -109,11 +110,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Json serializer.
    */
   private static final Gson GSON = new Gson();
-
-  /**
-   * Name of the header that should specify the application archive
-   */
-  private static final String ARCHIVE_NAME_HEADER = "X-Archive-Name";
 
   /**
    * Timeout to get response from metrics system.
@@ -175,7 +171,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     super(authenticator);
     this.configuration = configuration;
     this.managerFactory = managerFactory;
-    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
+    this.appFabricDir = configuration.get(Constants.AppFabric.OUTPUT_DIR);
     this.archiveDir = this.appFabricDir + "/archive";
     this.locationFactory = locationFactory;
     this.scheduler = scheduler;
@@ -193,9 +189,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/{namespace-id}/apps/{app-id}")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
-                             @PathParam("app-id") final String appId) {
+                             @PathParam("app-id") final String appId,
+                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     try {
-      return deployApplication(request, responder, namespaceId, appId);
+      return deployApplication(request, responder, namespaceId, appId, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: {}" + ex.getMessage());
       return null;
@@ -209,10 +206,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/{namespace-id}/apps")
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") final String namespaceId) {
+                             @PathParam("namespace-id") final String namespaceId,
+                             @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName) {
     // null means use name provided by app spec
     try {
-      return deployApplication(request, responder, namespaceId, null);
+      return deployApplication(request, responder, namespaceId, null, archiveName);
     } catch (Exception ex) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
@@ -284,15 +282,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private BodyConsumer deployApplication(final HttpRequest request, final HttpResponder responder,
-                                         final String namespaceId, final String appId) throws IOException {
+                                         final String namespaceId, final String appId,
+                                         final String archiveName) throws IOException {
     if (!namespaceExists(namespaceId)) {
       LOG.warn("Deploy failed - namespace '{}' does not exist.", namespaceId);
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Deploy failed - namespace '%s' does not " +
                                                                          "exist.", namespaceId));
       return null;
     }
-
-    final String archiveName = request.getHeader(ARCHIVE_NAME_HEADER);
 
     if (archiveName == null || archiveName.isEmpty()) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
