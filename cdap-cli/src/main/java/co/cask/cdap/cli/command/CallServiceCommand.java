@@ -19,6 +19,7 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.AsciiTable;
 import co.cask.cdap.cli.util.RowMaker;
@@ -64,6 +65,10 @@ public class CallServiceCommand extends AbstractCommand {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String[] appAndServiceId = arguments.get(ArgumentName.SERVICE.toString()).split("\\.");
+    if (appAndServiceId.length < 2) {
+      throw new CommandInputError(this);
+    }
+
     String appId = appAndServiceId[0];
     String serviceId = appAndServiceId[1];
     String method = arguments.get(ArgumentName.HTTP_METHOD.toString());
@@ -112,8 +117,8 @@ public class CallServiceCommand extends AbstractCommand {
 
   @Override
   public String getDescription() {
-    return "Calls a " + ElementType.SERVICE.getPrettyName() + "endpoint." +
-           "The header is formatted as \"{'key' : 'value', ...}\" and the body is a String.";
+    return String.format("Calls a %s endpoint. The header is formatted as \"{'key':'value', ...}\"" +
+                         " and the body is a String.", ElementType.SERVICE.getPrettyName());
   }
 
   /**

@@ -56,6 +56,6 @@ public class FakeApp extends AbstractApplication {
     addProcedure(new FakeProcedure());
     addFlow(new FakeFlow());
     addSpark(new FakeSpark());
-    addService(EchoHandler.NAME, new EchoHandler());
+    addService(PrefixedEchoHandler.NAME, new PrefixedEchoHandler());
   }
 }

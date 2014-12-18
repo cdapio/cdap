@@ -50,7 +50,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -165,10 +167,9 @@ public class MasterServiceMain extends DaemonMain {
     kafkaClientService = baseInjector.getInstance(KafkaClientService.class);
     metricsCollectionService = baseInjector.getInstance(MetricsCollectionService.class);
     dsService = baseInjector.getInstance(DatasetService.class);
-    serviceStore = baseInjector.getInstance(ServiceStore.class);
     exploreClient = baseInjector.getInstance(ExploreClient.class);
-
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
+    serviceStore = baseInjector.getInstance(ServiceStore.class);
 
     checkTransactionRequirements();
     checkExploreRequirements();
@@ -204,8 +205,8 @@ public class MasterServiceMain extends DaemonMain {
     LogAppenderInitializer logAppenderInitializer = baseInjector.getInstance(LogAppenderInitializer.class);
     logAppenderInitializer.initialize();
 
-    Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService);
-
+    Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
+                                             serviceStore));
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
@@ -235,6 +236,7 @@ public class MasterServiceMain extends DaemonMain {
 
         dsService.stopAndWait();
         if (twillRunnerService != null) {
+          // this shuts down the twill runner service but not the twill services themselves
           twillRunnerService.stopAndWait();
         }
         if (appFabricServer != null) {
@@ -259,7 +261,8 @@ public class MasterServiceMain extends DaemonMain {
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
-    Services.chainStop(metricsCollectionService, kafkaClientService, zkClientService);
+    Futures.getUnchecked(Services.chainStop(serviceStore, metricsCollectionService, kafkaClientService,
+                                            zkClientService));
 
     try {
       exploreClient.close();
@@ -379,6 +382,16 @@ public class MasterServiceMain extends DaemonMain {
         }
         LOG.warn("Stopped extra instances of {}", serviceName);
       }
+
+      // we have to start the dataset service. Because twill services are already running,
+      // it will not be started by the service listener callback below.
+      if (!dsService.isRunning()) {
+        // we need a new dataset service (the old one may have run before and can't be restarted)
+        dsService = baseInjector.getInstance(DatasetService.class); // not a singleton
+        LOG.info("Starting Dataset service");
+        dsService.startAndWait();
+      }
+
     } else {
       LOG.info("Starting {} application", serviceName);
       TwillPreparer twillPreparer = getPreparer();
@@ -477,9 +490,15 @@ public class MasterServiceMain extends DaemonMain {
 
     // Add all the conf files needed by hive as resources available to containers
     Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    Set<String> addedFiles = Sets.newHashSet();
     for (File file : hiveConfFilesFiles) {
-      if (file.getName().matches(".*\\.xml")) {
-        preparer = preparer.withResources(ExploreServiceUtils.hijackHiveConfFile(file).toURI());
+      if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {
+        if (addedFiles.add(file.getName())) {
+          LOG.debug("Adding config file: {}", file.getAbsolutePath());
+          preparer = preparer.withResources(ExploreServiceUtils.hijackHiveConfFile(file).toURI());
+        } else {
+          LOG.warn("Ignoring duplicate config file: {}", file.getAbsolutePath());
+        }
       }
     }
 

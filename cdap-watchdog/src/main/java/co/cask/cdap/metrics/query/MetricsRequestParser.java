@@ -111,7 +111,7 @@ final class MetricsRequestParser {
    */
   static String stripVersionAndMetricsFromPath(String path) {
     // +8 for "/metrics"
-    int startPos = Constants.Gateway.GATEWAY_VERSION.length() + 8;
+    int startPos = Constants.Gateway.API_VERSION_2.length() + 8;
     return path.substring(startPos, path.length());
   }
 

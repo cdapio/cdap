@@ -368,20 +368,23 @@ public class TestFrameworkTest extends TestBase {
 
       LOG.info("Service Started");
 
+      URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      Assert.assertNotNull(serviceURL);
+
       // Call the ping endpoint
-      URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "ping2");
+      URL url = new URL(serviceURL, "ping2");
       HttpRequest request = HttpRequest.get(url).build();
       HttpResponse response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
 
       // Call the failure endpoint
-      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "failure");
+      url = new URL(serviceURL, "failure");
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(500, response.getResponseCode());
 
       // Call the verify ClassLoader endpoint
-      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "verifyClassLoader");
+      url = new URL(serviceURL, "verifyClassLoader");
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
@@ -397,8 +400,11 @@ public class TestFrameworkTest extends TestBase {
       // TestMetricsCollectionService
 
       LOG.info("DatasetUpdateService Started");
+      Map<String, String> args
+        = ImmutableMap.of(AppWithServices.WRITE_VALUE_RUN_KEY, AppWithServices.DATASET_TEST_VALUE,
+                          AppWithServices.WRITE_VALUE_STOP_KEY, AppWithServices.DATASET_TEST_VALUE_STOP);
       ServiceManager datasetWorkerServiceManager = applicationManager
-        .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME);
+        .startService(AppWithServices.DATASET_WORKER_SERVICE_NAME, args);
       serviceStatusCheck(datasetWorkerServiceManager, true);
 
       ProcedureManager procedureManager = applicationManager.startProcedure("NoOpProcedure");
@@ -412,7 +418,7 @@ public class TestFrameworkTest extends TestBase {
       // Test that a service can discover another service
       String path = String.format("discover/%s/%s",
                                   AppWithServices.APP_NAME, AppWithServices.DATASET_WORKER_SERVICE_NAME);
-      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), path);
+      url = new URL(serviceURL, path);
       request = HttpRequest.get(url).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(200, response.getResponseCode());
@@ -446,7 +452,8 @@ public class TestFrameworkTest extends TestBase {
       LOG.info("Service Started");
 
 
-      final URL baseUrl = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
+      final URL baseUrl = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      Assert.assertNotNull(baseUrl);
 
       // Make a request to write in a separate thread and wait for it to return.
       ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -766,13 +773,9 @@ public class TestFrameworkTest extends TestBase {
 
       Connection connection = getQueryClient();
       try {
-        // list the tables and make sure the table is there
-        ResultSet results = connection.prepareStatement("show tables").executeQuery();
-        Assert.assertTrue(results.next());
-        Assert.assertTrue("cdap_user_mytable".equalsIgnoreCase(results.getString(1)));
 
         // run a query over the dataset
-        results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
+        ResultSet results = connection.prepareStatement("select first from cdap_user_mytable where second = '1'")
           .executeQuery();
         Assert.assertTrue(results.next());
         Assert.assertEquals("a", results.getString(1));
@@ -788,4 +791,40 @@ public class TestFrameworkTest extends TestBase {
     }
   }
 
+
+  @Category(XSlowTests.class)
+  @Test
+  public void testByteCodeClassLoader() throws Exception {
+    // This test verify bytecode generated classes ClassLoading
+
+    ApplicationManager appManager = deployApplication(ClassLoaderTestApp.class);
+    try {
+      FlowManager flowManager = appManager.startFlow("BasicFlow");
+
+      // Wait for at least 10 records being generated
+      RuntimeMetrics flowMetrics = RuntimeStats.getFlowletMetrics("ClassLoaderTestApp", "BasicFlow", "Sink");
+      flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
+      flowManager.stop();
+
+      ServiceManager serviceManager = appManager.startService("RecordQuery");
+      URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
+      Assert.assertNotNull(serviceURL);
+
+      // Query record
+      URL url = new URL(serviceURL, "query?type=public");
+      HttpRequest request = HttpRequest.get(url).build();
+      HttpResponse response = HttpRequests.execute(request);
+      Assert.assertEquals(200, response.getResponseCode());
+
+      long count = Long.parseLong(response.getResponseBodyAsString());
+      serviceManager.stop();
+
+      // Verify the record count with dataset
+      KeyValueTable records = appManager.<KeyValueTable>getDataSet("records").get();
+      Assert.assertTrue(count == Bytes.toLong(records.read("PUBLIC")));
+
+    } finally {
+      appManager.stopAll();
+    }
+  }
 }

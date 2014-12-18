@@ -25,13 +25,13 @@ To install File DropZone, execute one of these commands:
 
    ::
 
-       sudo apt-get install cdap-file-drop-zone-1.0.1.deb
+       sudo apt-get install cdap-file-drop-zone-1.0.2.deb
 
 -  on RHEL/CentOS systems:
 
    ::
 
-       sudo rpm -ivh --force cdap-file-drop-zone-1.0.1.rpm
+       sudo rpm -ivh --force cdap-file-drop-zone-1.0.2.rpm
 
 Repository information can be found in the `Distributed CDAP
 Installation

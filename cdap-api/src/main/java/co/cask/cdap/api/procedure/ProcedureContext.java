@@ -24,7 +24,7 @@ import co.cask.cdap.api.data.DatasetContext;
 /**
  * This interface represents the Procedure context.
  *
- * @deprecated As of version 2.6.0, replaced by {@link co.cask.cdap.api.service.ServiceWorkerContext}
+ * @deprecated As of version 2.6.0, with no direct replacement; see {@link co.cask.cdap.api.service.Service}
  */
 @Deprecated
 public interface ProcedureContext extends RuntimeContext, DatasetContext, ServiceDiscoverer {

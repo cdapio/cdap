@@ -17,6 +17,7 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.cli.ElementType;
+import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.common.cli.Arguments;
 import co.cask.common.cli.Command;
@@ -44,15 +45,24 @@ public class GetProgramInstancesCommand implements Command {
     int instances;
     switch (elementType) {
       case FLOWLET:
+        if (programIdParts.length < 3) {
+          throw new CommandInputError(this);
+        }
         String flowId = programIdParts[1];
         String flowletId = programIdParts[2];
         instances = programClient.getFlowletInstances(appId, flowId, flowletId);
         break;
       case PROCEDURE:
+        if (programIdParts.length < 2) {
+          throw new CommandInputError(this);
+        }
         String procedureId = programIdParts[1];
         instances = programClient.getProcedureInstances(appId, procedureId);
         break;
       case RUNNABLE:
+        if (programIdParts.length < 3) {
+          throw new CommandInputError(this);
+        }
         String serviceId = programIdParts[1];
         String runnableId = programIdParts[2];
         instances = programClient.getServiceRunnableInstances(appId, serviceId, runnableId);

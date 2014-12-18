@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.jar.JarFinder;
 import co.cask.cdap.common.metrics.MetricsCollectionService;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.datafabric.dataset.InMemoryDefinitionRegistryFactory;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
@@ -35,8 +36,8 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.datafabric.dataset.type.LocalDatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.explore.client.DatasetExploreFacade;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
+import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.common.http.HttpRequest;
@@ -95,9 +96,8 @@ public abstract class DatasetServiceTestBase {
   public void before() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     File datasetDir = new File(tmpFolder.newFolder(), "dataset");
-    if (!datasetDir.mkdirs()) {
-      throw
-        new RuntimeException(String.format("Could not create DatasetFramework output dir %s", datasetDir.getPath()));
+    if (!DirUtils.mkdirs(datasetDir)) {
+      throw new RuntimeException(String.format("Could not create DatasetFramework output dir %s", datasetDir));
     }
     cConf.set(Constants.Dataset.Manager.OUTPUT_DIR, datasetDir.getAbsolutePath());
     cConf.set(Constants.Dataset.Manager.ADDRESS, "localhost");
@@ -140,7 +140,7 @@ public abstract class DatasetServiceTestBase {
                                  metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(dsFramework),
                                  mdsDatasetsRegistry,
-                                 new DatasetExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
+                                 new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf),
                                  new HashSet<DatasetMetricsReporter>());
 
     // Start dataset service, wait for it to be discoverable
@@ -178,7 +178,7 @@ public abstract class DatasetServiceTestBase {
   }
 
   protected URL getUrl(String resource) throws MalformedURLException {
-    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.GATEWAY_VERSION + resource);
+    return new URL("http://" + "localhost" + ":" + getPort() + Constants.Gateway.API_VERSION_2 + resource);
   }
 
   protected int deployModule(String moduleName, Class moduleClass) throws Exception {

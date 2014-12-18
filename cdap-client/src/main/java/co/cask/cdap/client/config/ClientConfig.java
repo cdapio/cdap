@@ -39,12 +39,13 @@ public class ClientConfig {
 
   private static final int DEFAULT_UPLOAD_READ_TIMEOUT = 15000;
   private static final int DEFAULT_UPLOAD_CONNECT_TIMEOUT = 15000;
+  private static final int DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT = 50;
 
   private static final int DEFAULT_READ_TIMEOUT = 15000;
   private static final int DEFAULT_CONNECT_TIMEOUT = 15000;
   private static final boolean DEFAULT_VERIFY_SSL_CERTIFICATE = true;
 
-  private static final String DEFAULT_VERSION = Constants.Gateway.GATEWAY_VERSION_TOKEN;
+  private static final String DEFAULT_VERSION = Constants.Gateway.API_VERSION_2_TOKEN;
   private static final int DEFAULT_PORT = CONF.getInt(Constants.Router.ROUTER_PORT);
   private static final int DEFAULT_SSL_PORT = CONF.getInt(Constants.Router.ROUTER_SSL_PORT);
   private static final boolean DEFAULT_SSL_ENABLED = CONF.getBoolean(Constants.Security.SSL_ENABLED);
@@ -56,17 +57,19 @@ public class ClientConfig {
   private boolean sslEnabled;
   private String hostname;
   private int port;
+  private int unavailableRetryLimit;
   private String apiVersion;
   private Supplier<AccessToken> accessToken;
   private boolean verifySSLCert;
 
-  private ClientConfig(String hostname, int port, boolean sslEnabled,
+  private ClientConfig(String hostname, int port, boolean sslEnabled, int unavailableRetryLimit,
                        String apiVersion, Supplier<AccessToken> accessToken, boolean verifySSLCert,
                        HttpRequestConfig defaultHttpConfig, HttpRequestConfig uploadHttpConfig) {
     this.hostname = hostname;
     this.apiVersion = apiVersion;
     this.port = port;
     this.sslEnabled = sslEnabled;
+    this.unavailableRetryLimit = unavailableRetryLimit;
     this.accessToken = accessToken;
     this.verifySSLCert = verifySSLCert;
     this.defaultHttpConfig = defaultHttpConfig;
@@ -131,6 +134,10 @@ public class ClientConfig {
     return sslEnabled;
   }
 
+  public int getUnavailableRetryLimit() {
+    return unavailableRetryLimit;
+  }
+
   public void setSSLEnabled(boolean sslEnabled) {
     this.sslEnabled = sslEnabled;
   }
@@ -191,6 +198,7 @@ public class ClientConfig {
 
     private int uploadReadTimeoutMs = DEFAULT_UPLOAD_READ_TIMEOUT;
     private int uploadConnectTimeoutMs = DEFAULT_UPLOAD_CONNECT_TIMEOUT;
+    private int serviceUnavailableRetryLimit = DEFAULT_SERVICE_UNAVAILABLE_RETRY_LIMIT;
 
     private int defaultReadTimeoutMs = DEFAULT_READ_TIMEOUT;
     private int defaultConnectTimeoutMs = DEFAULT_CONNECT_TIMEOUT;
@@ -267,9 +275,23 @@ public class ClientConfig {
       return this;
     }
 
+    public Builder setServiceUnavailableRetryLimit(int retry) {
+      this.serviceUnavailableRetryLimit = retry;
+      return this;
+    }
+
+    public Builder setUri(URI uri) {
+      this.hostname = uri.getHost();
+      this.sslEnabled = "https".equals(uri.getScheme());
+      if (uri.getPort() != -1) {
+        this.port = Optional.of(uri.getPort());
+      }
+      return this;
+    }
+    
     public ClientConfig build() {
       return new ClientConfig(hostname, port.or(sslEnabled ? DEFAULT_SSL_PORT : DEFAULT_PORT),
-                              sslEnabled, apiVersion, accessToken, verifySSLCert,
+                              sslEnabled, serviceUnavailableRetryLimit, apiVersion, accessToken, verifySSLCert,
                               new HttpRequestConfig(defaultConnectTimeoutMs, defaultReadTimeoutMs, verifySSLCert),
                               new HttpRequestConfig(uploadConnectTimeoutMs, uploadReadTimeoutMs, verifySSLCert));
     }

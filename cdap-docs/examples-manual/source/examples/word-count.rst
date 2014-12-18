@@ -28,7 +28,7 @@ store the results and statistics in datasets.
     forwards this word to the ``unique`` flowlet.
   - The ``unique`` flowlet receives a word and updates the ``uniqueCount`` table, if it sees this word for the first time.
 
-Let's look at some of these elements, and then run the Application and see the results.
+Let's look at some of these components, and then run the Application and see the results.
 
 The Word Count Application
 --------------------------
@@ -38,7 +38,7 @@ of the Application are tied together by the class ``WordCount``:
 
 .. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
    :language: java
-   :lines: 26-
+   :lines: 27-
 
 
 Data Storage
@@ -66,9 +66,9 @@ Building and Starting
 
 - You can either build the example (as described `below
   <#building-an-example-application>`__) or use the pre-built JAR file included in the CDAP SDK.
-- Start CDAP, deploy and start the application as described below in 
+- Start CDAP, deploy and start the application and its components as described below in 
   `Running CDAP Applications`_\ .
-  Make sure you start the Flow and Service as described.
+  Make sure you start the Flow and Service as described below.
 - Once the application has been deployed and started, you can `run the example. <#running-the-example>`__
 
 Running CDAP Applications
@@ -79,6 +79,47 @@ Running CDAP Applications
 
 Running the Example
 ===================
+
+Running the Example
+===================
+
+Starting the Flow
+------------------------------
+
+Once the application is deployed:
+
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click ``WordCounter`` in the *Process* page to get to the
+  Flow detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start flow WordCount.WordCounter``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start flow WordCount.WordCounter``    
+
+Starting the Service
+------------------------------
+
+Once the application is deployed:
+
+- Click on ``WordCount`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
+  Service detail page, then click the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh start service WordCount.RetrieveCounts``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat start service WordCount.RetrieveCounts``    
 
 Injecting Sentences
 ------------------------------
@@ -105,7 +146,8 @@ send a query via an HTTP request using the ``curl`` command. For example::
 
   curl -w '\n' -v 'http://localhost:10000/v2/apps/WordCount/services/RetrieveCounts/methods/count/CDAP'
 
-On Windows, a copy of ``curl`` is located in the ``libexec`` directory of the project SDK.
+**Note:** A version of ``curl`` that works with Windows is included in the CDAP Standalone
+SDK in ``libexec\bin\curl.exe``
 
 The word count and top-10 associations words for that word will be displayed in JSON
 format (example reformatted to fit)::
@@ -124,4 +166,37 @@ You can also request other endpoints available in this Service, which described 
 
 Stopping the Application
 -------------------------------
-Once done, you can stop the application as described above in `Stopping an Application. <#stopping-an-application>`__
+Once done, you can stop the application as described above in `Stopping an Application. 
+<#stopping-an-application>`__ Here is an example-specific description of the steps:
+
+**Stopping the Flow**
+
+- Click on the *Process* button in the left sidebar of the CDAP Console,
+  then click ``WordCounter`` in the *Process* page to get to the
+  Flow detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop flow WordCount.WordCounter``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop flow WordCount.WordCounter``    
+
+**Stopping the Service**
+
+- Click on ``WordCount`` in the Overview page of the CDAP Console to get to the
+  Application detail page, click ``RetrieveCounts`` in the *Service* pane to get to the
+  Service detail page, then click the *Stop* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. list-table::
+    :widths: 20 80
+    :stub-columns: 1
+
+    * - On Linux:
+      - ``$ ./bin/cdap-cli.sh stop service WordCount.RetrieveCounts``
+    * - On Windows:
+      - ``> bin\cdap-cli.bat stop service WordCount.RetrieveCounts``    

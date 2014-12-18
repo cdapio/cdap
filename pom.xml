@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>2.6.0-SNAPSHOT</version>
+  <version>2.7.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -92,7 +92,7 @@
     <avro.version>1.6.2</avro.version>
     <commons.codec.version>1.6</commons.codec.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
-    <cask.common.cli.version>0.1.0-SNAPSHOT</cask.common.cli.version>
+    <cask.common.cli.version>0.1.0</cask.common.cli.version>
     <cdap.hive.version>0.13.0</cdap.hive.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
@@ -117,23 +117,23 @@
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.6.0</netty.http.version>
+    <netty.http.version>0.8.0</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
     <servlet.api.version>3.0.1</servlet.api.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.3.2</tephra.version>
+    <tephra.version>0.3.3</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <twill.version>0.4.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <spark.version>1.1.0</spark.version>
-    <cdap.client.version>1.1.0-SNAPSHOT</cdap.client.version>
+    <cdap.client.version>1.1.0</cdap.client.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
-    <cask.common.version>0.1.0-SNAPSHOT</cask.common.version>
+    <cask.common.version>0.1.0</cask.common.version>
   </properties>
 
   <modules>

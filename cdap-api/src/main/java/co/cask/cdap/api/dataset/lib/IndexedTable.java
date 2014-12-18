@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
  * <p>
  * This dataset uses two tables:
  * <ul>
- *   <li>the actual data table, which stores the raw, unmodified rows which are written</li>
+ *   <li>the actual data table, which stores the raw, unmodified rows which are written; and</li>
  *   <li>an index table, with rows keyed by the indexed column and value (plus data row key for uniqueness),
  *   which contains a reference to the row key in the data table matching the indexed value.</li>
  * </ul>
@@ -67,21 +67,21 @@ import javax.annotation.Nullable;
  * <p>The columns to index can be configured in the {@link co.cask.cdap.api.dataset.DatasetProperties} used
  * when the dataset instance in created.  Multiple column names should be listed as a comma-separated string
  * (with no spaces):
- * <pre>
- * {@code
- * public class MyApp extends AbstractApplication &#123;
- *   public void configure() &#123;
+ *
+ * <p>
+ * <pre><code>public class MyApp extends AbstractApplication {
+ *   public void configure() {
  *     setName("MyApp");
  *     ...
  *     createDataset("indexedData", IndexedTable.class,
  *                   DatasetProperties.builder().add(
  *                       IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, "col1,col2").build());
  *     ...
- *   &#125;
- * &#125;
- * }
- * </pre>
- *
+ *   }
+ * }</code></pre>
+ * </p>
+ * 
+ * <p>
  * Note that this means that the column names which should be indexed cannot contain the comma character,
  * as it would break parsing of the configuration property.
  * </p>

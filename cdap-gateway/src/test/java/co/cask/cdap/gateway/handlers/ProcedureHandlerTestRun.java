@@ -16,6 +16,7 @@
 
 package co.cask.cdap.gateway.handlers;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.http.AbstractHttpHandler;
@@ -87,7 +88,7 @@ public class ProcedureHandlerTestRun extends GatewayTestBase {
     discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return String.format("procedure.%s.%s.%s", "developer", "testApp1", "testProc1");
+        return String.format("procedure.%s.%s.%s", Constants.DEFAULT_NAMESPACE, "testApp1", "testProc1");
       }
 
       @Override
@@ -99,7 +100,7 @@ public class ProcedureHandlerTestRun extends GatewayTestBase {
     discoveryService.register(new Discoverable() {
       @Override
       public String getName() {
-        return String.format("procedure.%s.%s.%s", "developer", "testApp2", "testProc2");
+        return String.format("procedure.%s.%s.%s", Constants.DEFAULT_NAMESPACE, "testApp2", "testProc2");
       }
 
       @Override

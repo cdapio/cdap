@@ -2,32 +2,54 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-.. _TestFramework:
+.. _test-cdap:
 
 ================================================
 Testing a CDAP Application
 ================================================
 
-.. highlight:: java
+.. _test-framework:
 
-Strategies in Testing Applications
-==================================
+Strategies in Testing Applications: Test Framework
+==================================================
 
-CDAP comes with a convenient way to unit test your Applications.
+CDAP comes with a convenient way to unit test your Applications with CDAP’s Test Framework.
 The base for these tests is ``TestBase``, which is packaged
 separately from the API in its own artifact because it depends on the
 CDAP’s runtime classes. You can include it in your test dependencies
 in one of two ways:
 
+.. highlight:: xml
+
 - include all JAR files in the ``lib`` directory of the CDAP SDK installation,
   or
 - include the ``cdap-unit-test`` artifact in your Maven test dependencies
-  (see the ``pom.xml`` file of the *WordCount* example).
+  (as shown in the ``pom.xml`` file of the :ref:`CDAP SDK examples <standalone-index>`)::
+  
+    . . .
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-unit-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    . . .
 
-Note that for building an application, you only need to include the
-CDAP API in your dependencies. For testing, however, you need the
-CDAP run-time. To build your test case, extend the
-``TestBase`` class.
+Note that for building an application, you only need to include the CDAP API in your
+dependencies. For testing, however, you need the CDAP run-time. To build your test case,
+extend the ``TestBase`` class.
+
+.. highlight:: console
+
+Running Tests from an IDE
+--------------------------
+When running tests from an IDE such IntelliJ or Eclipse, set the memory setting for the
+``JUnit`` tests that are run from the IDE to an increased amount of memory. We suggest
+starting with::
+
+  -Xmx1024m -XX:MaxPermSize=128m
+
+.. highlight:: java
 
 Strategies in Testing Flows
 ===========================
@@ -207,7 +229,7 @@ The assertion will verify that the correct result was received.
 
 Validating Test Data with SQL
 =============================
-Often the easiest way to verify that a test produced the right data is to run a SQL query - if the data sets involved
+Often the easiest way to verify that a test produced the right data is to run a SQL query—if the data sets involved
 in the test case are record-scannable as described in :ref:`data-exploration`.
 This can be done using a JDBC connection obtained from the test base::
 

@@ -36,8 +36,6 @@ import co.cask.cdap.proto.ServiceInstances;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -55,18 +53,21 @@ import javax.ws.rs.PathParam;
 /**
  *  {@link HttpHandler} for User Services.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpHandler.class);
 
   private final Store store;
   private final ProgramRuntimeService runtimeService;
+  private final ProgramLifecycleHttpHandler programLifecycleHttpHandler;
 
   @Inject
   public ServiceHttpHandler(Authenticator authenticator, StoreFactory storeFactory,
-                            ProgramRuntimeService runtimeService) {
+                            ProgramRuntimeService runtimeService,
+                            ProgramLifecycleHttpHandler programLifecycleHttpHandler) {
     super(authenticator);
+    this.programLifecycleHttpHandler = programLifecycleHttpHandler;
     this.store = storeFactory.create();
     this.runtimeService = runtimeService;
   }
@@ -77,7 +78,7 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/services")
   public void getAllServices(HttpRequest request, HttpResponder responder) {
-    programList(request, responder, ProgramType.SERVICE, null, store);
+    programLifecycleHttpHandler.getAllServices(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE);
   }
 
   /**
@@ -86,7 +87,8 @@ public class ServiceHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/services")
   @GET
   public void getServicesByApp(HttpRequest request, HttpResponder responder, @PathParam("app-id") String appId) {
-    programList(request, responder, ProgramType.SERVICE, appId, store);
+    programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
+                                                 ProgramType.SERVICE.getCategoryName());
   }
 
   /**

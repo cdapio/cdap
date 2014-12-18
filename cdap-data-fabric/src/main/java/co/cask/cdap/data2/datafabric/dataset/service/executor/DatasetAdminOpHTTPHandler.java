@@ -46,7 +46,7 @@ import javax.ws.rs.PathParam;
 /**
  * Provides REST endpoints for {@link DatasetAdmin} operations.
  */
-@Path(Constants.Gateway.GATEWAY_VERSION)
+@Path(Constants.Gateway.API_VERSION_2)
 public class DatasetAdminOpHTTPHandler extends AuthenticatedHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminOpHTTPHandler.class);

@@ -23,6 +23,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
+import co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition;
+import co.cask.cdap.explore.service.datasets.NotRecordScannableTableDefinition;
 import co.cask.cdap.hive.datasets.DatasetInputFormat;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
@@ -57,7 +59,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
-import static co.cask.cdap.explore.service.KeyStructValueTableDefinition.KeyValue;
+import static co.cask.cdap.explore.service.datasets.KeyStructValueTableDefinition.KeyValue;
 
 /**
  * Tests Hive13ExploreService.
@@ -66,7 +68,7 @@ import static co.cask.cdap.explore.service.KeyStructValueTableDefinition.KeyValu
 public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   @BeforeClass
   public static void start() throws Exception {
-    startServices(CConfiguration.create());
+    startServices();
 
     datasetFramework.addModule("keyStructValue", new KeyStructValueTableDefinition.KeyStructValueTableModule());
 

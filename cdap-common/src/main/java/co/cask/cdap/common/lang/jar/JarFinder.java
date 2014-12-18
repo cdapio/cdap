@@ -31,6 +31,7 @@
 package co.cask.cdap.common.lang.jar;
 
 
+import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 
 import java.io.BufferedOutputStream;
@@ -123,15 +124,8 @@ public class JarFinder {
     Preconditions.checkNotNull(dir, "dir");
     Preconditions.checkNotNull(jarFile, "jarFile");
     File jarDir = jarFile.getParentFile();
-    if (!jarDir.exists()) {
-      if (!jarDir.mkdirs()) {
-        throw new IOException(
-                               MessageFormat.format(
-                                                     "could not create dir [{0}]",
-                                                     jarDir
-                               )
-        );
-      }
+    if (!DirUtils.mkdirs(jarDir)) {
+        throw new IOException(MessageFormat.format("could not create dir [{0}]", jarDir));
     }
     JarOutputStream zos = new JarOutputStream(new FileOutputStream(jarFile));
     jarDir(dir, "", zos, manifest);

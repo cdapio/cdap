@@ -22,7 +22,7 @@ instructions for
 `installation <#installation>`__ and
 `verification <#verification>`__ of
 the CDAP components so they work with your existing Hadoop cluster. 
-There are specific instructions for :ref:`upgrading existing CDAP installations <install-upgrade>`.
+There are specific instructions for :ref:`upgrading existing CDAP installations<install-upgrade>`.
 
 These are the CDAP components:
 
@@ -199,7 +199,7 @@ Preparing the Cluster
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
-  hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
+  sudo -u hdfs hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
 
 In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
 ``yarn``. If you set up your cluster as above, no further changes are required.
@@ -425,6 +425,18 @@ this setting with the command ``ulimit -n`` when logged in as the CDAP user.
 For more information, refer to the ``ulimit`` discussion in the `Apache HBase Reference
 Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
+.. _install-tmp-files:
+
+Writing to Temp Files
+.....................
+There are two temp directories utilized by CDAP (both specified in :ref:`appendix-cdap-site.xml`):
+
+- ``app.temp.dir`` (default: ``/tmp``)
+- ``kafka.log.dir`` (default: ``/tmp/kafka-logs``)
+
+The CDAP user should be able to write to both of these directories, as they are used for
+deploying applications and operating CDAP.
+
 Configuring Security
 ....................
 For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
@@ -504,8 +516,6 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 .. _install-upgrade:
 
-.. highlight:: console
-
 Upgrading an Existing Version
 ---------------------------------
 When upgrading an existing CDAP installation from a previous version, you will need
@@ -513,6 +523,8 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
+
+.. highlight:: console
 
 1. Stop all CDAP processes::
 
@@ -536,7 +548,7 @@ and then restart CDAP.
 
 #. Run the upgrade tool::
 
-     /opt/cdap/cdap-master/bin/svc-master run com.cdap.data.tools.Main upgrade
+     /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.Main upgrade
 
 #. Restart the CDAP processes::
 

@@ -185,6 +185,8 @@ public class DataSetServiceModules {
         Multibinder.newSetBinder(binder(), DatasetMetricsReporter.class)
           .addBinding().to(HBaseDatasetMetricsReporter.class);
 
+        // NOTE: this cannot be a singleton, because MasterServiceMain needs to obtain a new instance
+        //       every time it becomes leader and starts a dataset service.
         bind(DatasetService.class);
         expose(DatasetService.class);
 

@@ -1966,9 +1966,11 @@ a strong {
     background: transparent;
     border: 0;
     width: 35px;
+    height: 28px;
 }
 
 .start-stop-wrapper.panel-controls .btn-stop {
+    float: left;
     background: white;
 }
 
@@ -3058,7 +3060,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
     text-align: center;
 }
 
-.batch-item, .spark-metrics-item {
+.batch-item {
     max-width: 200px;
     float: left;
     margin: 30px 60px;
@@ -3081,14 +3083,14 @@ only screen and (min-device-pixel-ratio: 1.5) {
     background-size: 100%;
 }
 
-.batch-map, .spark-metrics-block {
+.batch-map {
     border: 4px solid #396DC7;
     background-color: #396DC7;
     background-size: 100%;
     color: #fff;
 }
 
-.batch-reduce, .spark-metrics-scheduler {
+.batch-reduce {
     border: 4px solid #396DC7;
     background-color: #FFF;
     background-size: 100%;
@@ -3142,11 +3144,11 @@ only screen and (min-device-pixel-ratio: 1.5) {
     margin-top: 12px;
 }
 
-.batch-map>.info-window, .spark-metrics-block>.info-window {
+.batch-map>.info-window {
     margin-top: 12px;
 }
 
-.batch-reduce>.info-window, .spark-metrics-scheduler>.info-window {
+.batch-reduce>.info-window {
     margin-top: 12px;
     color: #396DC7;
 }
@@ -3156,7 +3158,7 @@ only screen and (min-device-pixel-ratio: 1.5) {
     color: #396DC7;
 }
 
-.info-window .batch-phase, .info-window .metrics-phase {
+.info-window .batch-phase {
     margin-bottom: 8px;
     word-wrap: break-word;
     white-space: normal;
@@ -4368,23 +4370,113 @@ div.tooltip-inner {
 #panels .panel .sparks-metrics{
     margin: 0 auto;
     padding: 32px 0;
-    width: 700px;
-}
-
-.sparks-metrics .spark-icon{
-    width: 220px;
-    height: 160px;
+    width: 900px;
+    line-height: 14px;
 }
 
 .sparks-metrics .metric-row{
-    margin-bottom: 5px;
+    margin: 0 25px 18px;
+}
+
+.sparks-metrics .title-storage{
+    text-align: center;
+    font-size: 18px;
+    margin: 21px 0 36px 0;
+}
+
+.sparks-metrics .title-stage{
+    text-align: center;
+    font-size: 18px;
+    margin: 21px 0 65px 0;
+}
+
+.sparks-metrics .spark-metrics-storage, .sparks-metrics .spark-metrics-stages {
+    border: 4px solid #3C4355;
+    background-color: #3C4355;
+    background-size: 100%;
+    color: #fff;
+    border-radius: 5px;
+    height: 210px;
+}
+
+.sparks-metrics .spark-metrics-storage {
+    width: 260px;
+    float: left;
+    margin-right: 75px;
+}
+
+.sparks-metrics .spark-metrics-stages {
+    width: 530px;
+    float: left;
+}
+
+.spark-metrics-stages .stage-status-line {
+    height: 40px;
+    margin: 0 40px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.spark-metrics-stages .running, .spark-metrics-stages .failed, .spark-metrics-stages .waiting {
+    float: left;
+    height: 100%;
+    padding-top: 13px;
+}
+
+.spark-metrics-stages .running {
+    background:  #16AB16;
+    width: 33.3%;
+}
+
+.spark-metrics-stages .failed {
+    background:  #D14830;
+    width: 33.3%;
+}
+
+.spark-metrics-stages .waiting {
+    background:  #3CA9D8;
+    width: 33.3%;
+}
+
+.spark-metrics-stages .tooltip.top {
+    margin-top: -12px;
+}
+
+.spark-metrics-stages .tooltip.in {
+    opacity: 1;
+}
+
+.spark-metrics-stages .tooltip.bottom {
+    margin-top: 12px;
+}
+
+.spark-metrics-stages .tooltip > .tooltip-inner {
+    background:  #787D87;
+    color: #fff;
+    font-size: 14px;
+    border-radius: 3px;
+    height: 30px;
+}
+
+.spark-metrics-stages .tooltip.bottom .tooltip-arrow {
+    top: -8px;
+    margin-left: -7px;
+    border-bottom-color: #787D87;
+    border-width: 0 7px 13px;
+}
+
+.spark-metrics-stages .tooltip.top .tooltip-arrow {
+    bottom: -8px;
+    margin-left: -7px;
+    border-top-color: #787D87;
+    border-width: 13px 7px 0;
 }
 
 /* Disabling a link tag*/
-
 li.disabled {
   list-style: none;
 }
+
 li.disabled > a:hover {
   text-decoration: none;
   cursor: not-allowed;
@@ -4394,3 +4486,4 @@ li.disabled > a:hover {
 li.disabled > a {
   color: #777;
 }
+

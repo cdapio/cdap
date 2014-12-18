@@ -19,11 +19,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
@@ -37,12 +33,11 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
- * A {@link InputFormat} for reading stream data. Stream data files are organized by partition directories with
- * bucket files inside.
+ * Stream mapreduce input format. Stream data files are organized by partition directories with bucket files inside.
  *
  * <br/><br/>
  *   Each file has path pattern
@@ -76,6 +71,13 @@ import java.util.List;
  * @param <V> Value type of input
  */
 public class StreamInputFormat<K, V> extends InputFormat<K, V> {
+  private static final StreamInputSplitFactory<InputSplit> splitFactory = new StreamInputSplitFactory<InputSplit>() {
+    @Override
+    public InputSplit createSplit(Path path, Path indexPath, long startTime, long endTime,
+                                  long start, long length, @Nullable String[] locations) {
+      return new StreamInputSplit(path, indexPath, startTime, endTime, start, length, locations);
+    }
+  };
 
   private static final String EVENT_START_TIME = "input.streaminputformat.event.starttime";
   private static final String EVENT_END_TIME = "input.streaminputformat.event.endtime";
@@ -244,47 +246,18 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
-
     long ttl = conf.getLong(STREAM_TTL, Long.MAX_VALUE);
     long endTime = conf.getLong(EVENT_END_TIME, Long.MAX_VALUE);
     long startTime = Math.max(conf.getLong(EVENT_START_TIME, 0L), getCurrentTime() - ttl);
-    Path path = new Path(URI.create(conf.get(STREAM_PATH)));
     long maxSplitSize = conf.getLong(MAX_SPLIT_SIZE, Long.MAX_VALUE);
     long minSplitSize = Math.min(conf.getLong(MIN_SPLIT_SIZE, 1L), maxSplitSize);
-
-    Preconditions.checkArgument(startTime >= 0, "Invalid start time %s", startTime);
-    Preconditions.checkArgument(endTime >= 0, "Invalid end time %s", endTime);
-
-    List<InputSplit> splits = Lists.newArrayList();
-
-    // Collects all stream event files timestamp, size and block locations information
-
-    // First grab all directories (partition) that matches with the time range.
-    FileSystem fs = path.getFileSystem(conf);
-    for (FileStatus partitionStatus : fs.listStatus(path)) {
-
-      // partition should be directory
-      if (!partitionStatus.isDirectory()) {
-        continue;
-      }
-
-      // Match the time range
-      long partitionStartTime = StreamUtils.getPartitionStartTime(partitionStatus.getPath().getName());
-      long partitionEndTime = StreamUtils.getPartitionEndTime(partitionStatus.getPath().getName());
-      if (partitionStartTime > endTime || partitionEndTime <= startTime) {
-        continue;
-      }
-
-      // Collects all bucket file status in the partition.
-      Collection<StreamDataFileSplitter> eventFiles = collectBuckets(fs, partitionStatus.getPath());
-
-      // For each bucket inside the partition directory, compute the splits
-      for (StreamDataFileSplitter splitter : eventFiles) {
-        splitter.computeSplits(fs, minSplitSize, maxSplitSize, startTime, endTime, splits);
-      }
-    }
-
-    return splits;
+    StreamInputSplitFinder<InputSplit> splitFinder = StreamInputSplitFinder.builder(URI.create(conf.get(STREAM_PATH)))
+      .setStartTime(startTime)
+      .setEndTime(endTime)
+      .setMinSplitSize(minSplitSize)
+      .setMaxSplitSize(maxSplitSize)
+      .build(splitFactory);
+    return splitFinder.getSplits(conf);
   }
 
   @Override
@@ -295,20 +268,6 @@ public class StreamInputFormat<K, V> extends InputFormat<K, V> {
 
   protected long getCurrentTime() {
     return System.currentTimeMillis();
-  }
-
-  /**
-   * Collects file status of all buckets under a given partition.
-   */
-  private Collection<StreamDataFileSplitter> collectBuckets(FileSystem fs, Path partitionPath) throws IOException {
-    ImmutableList.Builder<StreamDataFileSplitter> builder = ImmutableList.builder();
-
-    for (FileStatus fileStatus : fs.listStatus(partitionPath)) {
-      if (StreamFileType.EVENT.isMatched(fileStatus.getPath().getName())) {
-        builder.add(new StreamDataFileSplitter(fileStatus));
-      }
-    }
-    return builder.build();
   }
 
   @SuppressWarnings("unchecked")

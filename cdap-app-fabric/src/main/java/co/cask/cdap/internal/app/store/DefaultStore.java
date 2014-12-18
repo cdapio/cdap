@@ -49,6 +49,7 @@ import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -669,6 +670,59 @@ public class DefaultStore implements Store {
           Throwables.propagate(e);
         }
         return (programSpecification != null);
+      }
+    });
+  }
+
+  @Override
+  @Nullable
+  public NamespaceMeta createNamespace(final NamespaceMeta metadata) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
+      @Override
+      public NamespaceMeta apply(AppMds input) throws Exception {
+        Id.Namespace namespaceId = Id.Namespace.from(metadata.getName());
+        NamespaceMeta existing = input.apps.getNamespace(namespaceId);
+        if (existing != null) {
+          return existing;
+        }
+        input.apps.createNamespace(metadata);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  @Nullable
+  public NamespaceMeta getNamespace(final Id.Namespace id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
+      @Override
+      public NamespaceMeta apply(AppMds input) throws Exception {
+        return input.apps.getNamespace(id);
+      }
+    });
+  }
+
+  @Override
+  @Nullable
+  public NamespaceMeta deleteNamespace(final Id.Namespace id) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, NamespaceMeta>() {
+      @Override
+      public NamespaceMeta apply(AppMds input) throws Exception {
+        NamespaceMeta existing = input.apps.getNamespace(id);
+        if (existing != null) {
+          input.apps.deleteNamespace(id);
+        }
+        return existing;
+      }
+    });
+  }
+
+  @Override
+  public List<NamespaceMeta> listNamespaces() {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, List<NamespaceMeta>>() {
+      @Override
+      public List<NamespaceMeta> apply(AppMds input) throws Exception {
+        return input.apps.listNamespaces();
       }
     });
   }
