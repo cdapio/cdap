@@ -35,7 +35,6 @@ import java.util.List;
  */
 public class LogHandlerTestRun extends MetricsSuiteTestBase {
   private static final Type LIST_LOGLINE_TYPE = new TypeToken<List<LogLine>>() { }.getType();
-  public static String account = "developer";
 
   @Test
   public void testFlowNext() throws Exception {

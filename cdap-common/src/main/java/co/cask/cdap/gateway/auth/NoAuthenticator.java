@@ -31,7 +31,7 @@ public class NoAuthenticator implements Authenticator {
 
   @Override
   public String getAccountId(HttpRequest httpRequest) {
-    return Constants.DEVELOPER_ACCOUNT_ID;
+    return Constants.DEFAULT_NAMESPACE;
   }
 
   @Override
