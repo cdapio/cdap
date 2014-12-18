@@ -1186,7 +1186,7 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
-                         @PathParam("app-id") final String appId) {
+                         @PathParam("app-id") String appId) {
     appLifecycleHttpHandler.getAppInfo(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId);
   }
 
@@ -1196,9 +1196,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/flows")
   public void getFlowsByApp(HttpRequest request, HttpResponder responder,
-                            @PathParam("app-id") final String appId) {
+                            @PathParam("app-id") String appId) {
     programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.FLOW);
+                                                 ProgramType.FLOW.getCategoryName());
   }
 
   /**
@@ -1207,9 +1207,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures")
   public void getProceduresByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId) {
+                                 @PathParam("app-id") String appId) {
     programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.PROCEDURE);
+                                                 ProgramType.PROCEDURE.getCategoryName());
   }
 
   /**
@@ -1218,9 +1218,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/mapreduce")
   public void getMapreduceByApp(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId) {
+                                @PathParam("app-id") String appId) {
     programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.MAPREDUCE);
+                                                 ProgramType.MAPREDUCE.getCategoryName());
   }
 
   /**
@@ -1229,9 +1229,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/spark")
   public void getSparkByApp(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId) {
+                                @PathParam("app-id") String appId) {
     programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.SPARK);
+                                                 ProgramType.SPARK.getCategoryName());
   }
 
   /**
@@ -1240,9 +1240,9 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows")
   public void getWorkflowssByApp(HttpRequest request, HttpResponder responder,
-                                 @PathParam("app-id") final String appId) {
+                                 @PathParam("app-id") String appId) {
     programLifecycleHttpHandler.getProgramsByApp(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE, appId,
-                                                 ProgramType.WORKFLOW);
+                                                 ProgramType.WORKFLOW.getCategoryName());
   }
 
   /**

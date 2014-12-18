@@ -47,6 +47,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Tests for {@link ProgramLifecycleHttpHandler}
@@ -54,10 +55,9 @@ import java.util.concurrent.TimeUnit;
 public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() {
-  }.getType();
-  private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() {
-  }.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
+  private static final Type LIST_OF_JSONOBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
 
   // TODO: These should probably be defined in the base class to share with AppLifecycleHttpHandlerTest
   private static final String TEST_NAMESPACE1 = "testnamespace1";
@@ -76,6 +76,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String SLEEP_WORKFLOW_RUNNABLE_ID = "SleepWorkflow";
   private static final String APP_WITH_SERVICES_APP_ID = "AppWithServices";
   private static final String APP_WITH_SERVICES_SERVICE_NAME = "NoOpService";
+
+  private static final String EMPTY_ARRAY_JSON = "[]";
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -275,8 +277,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(400, doPost(statusUrl1, "").getStatusLine().getStatusCode());
     Assert.assertEquals(400, doPost(statusUrl2, "").getStatusLine().getStatusCode());
     // empty array is valid args
-    Assert.assertEquals(200, doPost(statusUrl1, "[]").getStatusLine().getStatusCode());
-    Assert.assertEquals(200, doPost(statusUrl2, "[]").getStatusLine().getStatusCode());
+    Assert.assertEquals(200, doPost(statusUrl1, EMPTY_ARRAY_JSON).getStatusLine().getStatusCode());
+    Assert.assertEquals(200, doPost(statusUrl2, EMPTY_ARRAY_JSON).getStatusLine().getStatusCode());
 
     // deploy an app in namespace1
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
@@ -466,6 +468,38 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
               APP_WITH_SERVICES_SERVICE_NAME, ProgramController.State.STOPPED.toString());
   }
 
+  /**
+   * Tests for program list calls
+   */
+  @Test
+  public void testProgramList() throws Exception {
+    // test initial state
+    testListInitialState(TEST_NAMESPACE1, ProgramType.FLOW);
+    testListInitialState(TEST_NAMESPACE2, ProgramType.MAPREDUCE);
+    testListInitialState(TEST_NAMESPACE1, ProgramType.WORKFLOW);
+    testListInitialState(TEST_NAMESPACE2, ProgramType.SPARK);
+    testListInitialState(TEST_NAMESPACE1, ProgramType.SERVICE);
+
+    // deploy WordCountApp in namespace1 and verify
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // deploy AppWithServices in namespace2 and verify
+    response = deploy(AppWithServices.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // verify list by namespace
+    verifyProgramList(TEST_NAMESPACE1, null, ProgramType.FLOW, 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE, 1);
+    verifyProgramList(TEST_NAMESPACE2, null, ProgramType.SERVICE, 1);
+
+    // verify list by app
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.MAPREDUCE, 1);
+    verifyProgramList(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.WORKFLOW, 0);
+    verifyProgramList(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID, ProgramType.SERVICE, 1);
+  }
+
   @After
   public void cleanup() throws Exception {
     doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
@@ -479,6 +513,29 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     response = doDelete(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
+
+  private void testListInitialState(String namespace, ProgramType programType) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath(programType.getCategoryName(),
+                                                      Constants.Gateway.API_VERSION_3_TOKEN, namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Assert.assertEquals(EMPTY_ARRAY_JSON, readResponse(response));
+  }
+
+  private void verifyProgramList(String namespace, @Nullable String appName, ProgramType programType,
+                                 int expected) throws Exception {
+    String uri;
+    if (appName == null) {
+      uri = getVersionedAPIPath(programType.getCategoryName(), Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    } else {
+      uri = getVersionedAPIPath(String.format("apps/%s/%s", appName, programType.getCategoryName()),
+                                Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    }
+    HttpResponse response = doGet(uri);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String json = EntityUtils.toString(response.getEntity());
+    List<Map<String, String>> programs = new Gson().fromJson(json, LIST_MAP_STRING_STRING_TYPE);
+    Assert.assertEquals(expected, programs.size());
   }
 
   private void verifyInitialBatchStatusOutput(HttpResponse response) throws IOException {

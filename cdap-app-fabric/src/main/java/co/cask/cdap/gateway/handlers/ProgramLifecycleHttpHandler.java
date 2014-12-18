@@ -222,12 +222,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return;
     }
 
-    if ("debug".equals(action) &&
-      !("flows".equals(runnableType) || "procedures".equals(runnableType) || "services".equals(runnableType))) {
+    ProgramType programType = ProgramType.valueOfCategoryName(runnableType);
+    if ("debug".equals(action) && !isDebugAllowed(programType)) {
       responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
       return;
     }
-    startStopProgram(request, responder, namespaceId, appId, runnableType, runnableId, action);
+    startStopProgram(request, responder, namespaceId, appId, programType, runnableId, action);
   }
   
   /**
@@ -354,8 +354,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       if (args == null) {
         return;
       }
-      for (int i = 0; i < args.size(); ++i) {
-        BatchEndpointStatus requestedObj = args.get(i);
+      for (BatchEndpointStatus requestedObj : args) {
         Id.Program progId = Id.Program.from(namespaceId, requestedObj.getAppId(), requestedObj.getProgramId());
         ProgramType programType = ProgramType.valueOfPrettyName(requestedObj.getProgramType());
         // get th statuses
@@ -432,7 +431,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         String programTypeStr = requestedObj.getProgramType();
         ProgramType programType = ProgramType.valueOfPrettyName(programTypeStr);
         // cant get instances for things that are not flows, services, or procedures
-        if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType)) {
+        if (!canHaveInstances(programType)) {
           addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
                        "Program type: " + programType + " is not a valid program type to get instances");
           continue;
@@ -519,12 +518,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of programs associated with an application within a namespace.
    */
   @GET
-  @Path("/{namespace-id}/apps/{app-id}/{program-type}")
+  @Path("/{namespace-id}/apps/{app-id}/{program-category}")
   public void getProgramsByApp(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
-                               @PathParam("program-type") ProgramType programType) {
-    programList(responder, namespaceId, programType, appId, store);
+                               @PathParam("program-category") String programCategory) {
+    programList(responder, namespaceId, ProgramType.valueOfCategoryName(programCategory), appId, store);
   }
 
   /**
@@ -820,16 +819,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private synchronized void startStopProgram(HttpRequest request, HttpResponder responder, String namespaceId,
-                                             final String appId, final String runnableType, final String runnableId,
-                                             final String action) {
-    ProgramType type = ProgramType.valueOfCategoryName(runnableType);
-
-    if (type == null || (type == ProgramType.WORKFLOW && "stop".equals(action))) {
+                                             String appId, ProgramType runnableType, String runnableId,
+                                             String action) {
+    if (runnableType == null || (runnableType == ProgramType.WORKFLOW && "stop".equals(action))) {
       responder.sendStatus(HttpResponseStatus.NOT_FOUND);
     } else {
       LOG.trace("{} call from AppFabricHttpHandler for app {}, flow type {} id {}",
                 action, appId, runnableType, runnableId);
-      runnableStartStop(request, responder, namespaceId, appId, runnableId, type, action);
+      runnableStartStop(request, responder, namespaceId, appId, runnableId, runnableType, action);
     }
   }
 
@@ -1231,14 +1228,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return "start".equals(action) || "stop".equals(action) || "debug".equals(action);
   }
 
-  @Nullable
-  private ProgramType getProgramType(String programCategory) {
-    ProgramType programType;
-    try {
-      programType = ProgramType.valueOfCategoryName(programCategory);
-    } catch (Exception e) {
-      programType = null;
-    }
-    return programType;
+  private boolean isDebugAllowed(ProgramType programType) {
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType);
+  }
+
+  private boolean canHaveInstances(ProgramType programType) {
+    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType);
   }
 }
