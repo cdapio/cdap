@@ -523,12 +523,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId,
                                @PathParam("program-category") String programCategory) {
-    if (!isValidProgramType(programCategory)) {
+    ProgramType type = getProgramType(programCategory);
+    if (type == null) {
       responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED, String.format("Program type '%s' not supported",
                                                                                 programCategory));
       return;
     }
-    programList(responder, namespaceId, ProgramType.valueOfCategoryName(programCategory), appId, store);
+    programList(responder, namespaceId, type, appId, store);
   }
 
   /**
@@ -1241,12 +1242,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.PROCEDURE).contains(programType);
   }
 
-  private boolean isValidProgramType(String programType) {
+  @Nullable
+  private ProgramType getProgramType(String programType) {
     try {
-      ProgramType.valueOfCategoryName(programType);
-      return true;
+      return ProgramType.valueOfCategoryName(programType);
     } catch (Exception e) {
-      return false;
+      return null;
     }
   }
 }
