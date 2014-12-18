@@ -218,7 +218,7 @@ public class DatasetConfigService extends AbstractIdleService implements ConfigS
     byte[] startRowPrefix = getRowKey(namespace, type, null);
     byte[] endRowPrefix = Bytes.stopKeyForPrefix(startRowPrefix);
     CloseableIterator<KeyValue<byte[], byte[]>> iterator = metaDataTable.scan(startRowPrefix, endRowPrefix);
-    while(iterator.hasNext()) {
+    while (iterator.hasNext()) {
       KeyValue<byte[], byte[]> entry = iterator.next();
       String rowKey = Bytes.toString(entry.getKey());
       configs.add(rowKey.substring(rowKey.lastIndexOf('.') + 1));
