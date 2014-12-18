@@ -124,12 +124,9 @@ public class IncrementHandler extends BaseRegionObserver {
       for (Map.Entry<byte[], List<Cell>> entry : put.getFamilyCellMap().entrySet()) {
         List<Cell> newCells = new ArrayList<Cell>(entry.getValue().size());
         for (Cell cell : entry.getValue()) {
-          // rewrite the cell value with a special prefix to identify it as a delta
-          // for 0.98 we can update this to use cell tags
-          byte[] newValue = Bytes.add(DELTA_MAGIC_PREFIX, CellUtil.cloneValue(cell));
-          newCells.add(CellUtil.createCell(CellUtil.cloneRow(cell), CellUtil.cloneFamily(cell),
-                                           CellUtil.cloneQualifier(cell), cell.getTimestamp(), cell.getTypeByte(),
-                                           newValue));
+          newCells.add(createDeltaIncrement(CellUtil.cloneRow(cell), CellUtil.cloneFamily(cell),
+                                            CellUtil.cloneQualifier(cell), cell.getTimestamp(),
+                                            cell.getTypeByte(), CellUtil.cloneValue(cell)));
         }
         newFamilyMap.put(entry.getKey(), newCells);
       }
@@ -138,9 +135,20 @@ public class IncrementHandler extends BaseRegionObserver {
     // put completes normally with value prefix marker
   }
 
+  static Cell createDeltaIncrement(final byte[] row, final byte[] family, final byte[] qualifier,
+                                   final long timestamp, final byte type, final byte[] value) {
+    // rewrite the cell value with a special prefix to identify it as a delta
+    // for 0.98 we can update this to use cell tags
+    byte[] deltaValue = Bytes.add(DELTA_MAGIC_PREFIX, value);
+    return CellUtil.createCell(row, family, qualifier, timestamp, type, deltaValue);
+  }
+
   @Override
   public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
     throws IOException {
+    if (scan.isRaw()) {
+      return super.preScannerOpen(e, scan, s);
+    }
     // must see all versions to aggregate increments
     scan.setMaxVersions();
     scan.setFilter(Filters.combine(new IncrementFilter(), scan.getFilter()));
@@ -151,6 +159,9 @@ public class IncrementHandler extends BaseRegionObserver {
   public RegionScanner postScannerOpen(ObserverContext<RegionCoprocessorEnvironment> ctx, Scan scan,
                                        RegionScanner scanner)
     throws IOException {
+    if (scan.isRaw()) {
+      return super.postScannerOpen(ctx, scan, scanner);
+    }
     return new IncrementSummingScanner(region, scan.getBatch(), scanner);
   }
 
@@ -158,10 +169,11 @@ public class IncrementHandler extends BaseRegionObserver {
   public InternalScanner preFlush(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                   InternalScanner scanner) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
-    if (snapshot != null) {
-      return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, snapshot.getVisibilityUpperBound());
-    }
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner);
+    // todo: it seems potentially dangerous to override to BATCH_UNLIMITED everywhere in this class
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
+                                       // non-user scan that cannot drop things
+                                       ScanType.COMPACT_RETAIN_DELETES,
+                                       snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
   public static boolean isIncrement(Cell cell) {
@@ -174,10 +186,9 @@ public class IncrementHandler extends BaseRegionObserver {
   public InternalScanner preCompact(ObserverContext<RegionCoprocessorEnvironment> e, Store store,
                                     InternalScanner scanner, ScanType scanType) throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
-    if (snapshot != null) {
-      return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, snapshot.getVisibilityUpperBound());
-    }
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
+                                       scanType,
+                                       snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
   @Override
@@ -185,10 +196,9 @@ public class IncrementHandler extends BaseRegionObserver {
                                     InternalScanner scanner, ScanType scanType, CompactionRequest request)
     throws IOException {
     TransactionSnapshot snapshot = cache.getLatestState();
-    if (snapshot != null) {
-      return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner, snapshot.getVisibilityUpperBound());
-    }
-    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner);
+    return new IncrementSummingScanner(region, BATCH_UNLIMITED, scanner,
+                                       scanType,
+                                       snapshot != null ? snapshot.getVisibilityUpperBound() : 0);
   }
 
 }
