@@ -24,6 +24,8 @@ You can now use this run configuration to start an instance of CDAP Standalone.
 
 ## Build and Run CDAP Standalone in a Docker container
 
+Prerequisite: Docker
+
 * Obtain a fresh copy of the CDAP (git) repo:
 ```
 git clone git@github.com:caskdata/cdap.git
