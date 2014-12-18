@@ -122,7 +122,7 @@ public class LevelDBOrderedTableCore {
   }
 
 
-  public synchronized void batchIncrement(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws IOException {
+  public synchronized void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws IOException {
     Map<byte[], Map<byte[], byte[]>> resultMap = Maps.newHashMap();
     for (NavigableMap.Entry<byte[], NavigableMap<byte[], Long>> row : updates.entrySet()) {
       NavigableMap<byte[], Long> increments = row.getValue();

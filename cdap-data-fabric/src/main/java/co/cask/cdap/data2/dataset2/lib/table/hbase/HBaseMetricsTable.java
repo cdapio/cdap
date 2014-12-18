@@ -123,7 +123,7 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void batchIncrement(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
     List<Increment> increments = Lists.newArrayList();
     for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : updates.entrySet()) {
       Increment increment = new Increment(entry.getKey());

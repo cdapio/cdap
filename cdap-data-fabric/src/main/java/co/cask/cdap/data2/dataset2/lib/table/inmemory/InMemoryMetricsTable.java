@@ -75,7 +75,7 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public void batchIncrement(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
+  public void increment(NavigableMap<byte[], NavigableMap<byte[], Long>> updates) throws Exception {
     for (Map.Entry<byte[] , NavigableMap<byte[], Long>> entry : updates.entrySet()) {
       increment(entry.getKey(), entry.getValue());
     }
