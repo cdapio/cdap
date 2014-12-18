@@ -74,11 +74,11 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> disableExplore(final String datasetInstance) {
+  public ListenableFuture<Void> disableExploreDataset(final String datasetInstance) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDisableExplore(datasetInstance);
+        return doDisableExploreDataset(datasetInstance);
       }
     });
 
@@ -87,11 +87,37 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
-  public ListenableFuture<Void> enableExplore(final String datasetInstance) {
+  public ListenableFuture<Void> enableExploreDataset(final String datasetInstance) {
     ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExplore(datasetInstance);
+        return doEnableExploreDataset(datasetInstance);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> enableExploreStream(final String streamName) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doEnableExploreStream(streamName);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
+  public ListenableFuture<Void> disableExploreStream(final String streamName) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doDisableExploreStream(streamName);
       }
     });
 

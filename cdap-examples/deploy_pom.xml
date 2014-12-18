@@ -23,7 +23,7 @@
   <artifactId>cdap-examples</artifactId>
   <version>@project.version@</version>
   <packaging>pom</packaging>
-  <name>Cask Data Application Platform (CDAP) Examples</name>
+  <name>CDAP Examples</name>
 
   <modules>
     <module>CountRandom</module>

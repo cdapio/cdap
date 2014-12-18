@@ -24,8 +24,8 @@ import org.junit.runners.Suite;
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  DummyBaseTest.class,
-  DummyBaseCloneTest.class
+  DummyBaseTestRun.class,
+  DummyBaseCloneTestRun.class
 })
 public class DummyAppTestsSuite {
 

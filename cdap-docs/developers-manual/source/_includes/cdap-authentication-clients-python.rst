@@ -168,6 +168,6 @@ retrieved credentials.
 Tests
 -----
 
-To run tests from the Command Line:
+To run tests from a command line:
 
 ``python tests/BasicAuthenticationClientTest.py``

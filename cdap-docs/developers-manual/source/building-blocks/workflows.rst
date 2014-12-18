@@ -11,8 +11,8 @@ Workflows
 **Workflows** are used to execute a series of :ref:`MapReduce Jobs. <mapreduce>`
 
 A Workflow is given a sequence of jobs that follow each other, with an optional schedule
-to run the Workflow periodically. On successful execution of a job, the control is
-transferred to the next job in sequence until the last job in the sequence is executed. On
+to run the Workflow periodically. Upon successful execution of a job, the control is
+transferred to the next job in sequence until the last job in the sequence is executed. Upon
 failure, the execution is stopped at the failed job and no subsequent jobs in the sequence
 are executed.
 

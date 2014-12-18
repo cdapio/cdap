@@ -116,4 +116,13 @@ public final class StreamHttpService extends AbstractIdleService {
       .add("bindAddress", httpService.getBindAddress())
       .toString();
   }
+
+  /**
+   * Get the address the server has bound to.
+   *
+   * @return socket address the server has bound to.
+   */
+  public InetSocketAddress getBindAddress() {
+    return httpService.getBindAddress();
+  }
 }
