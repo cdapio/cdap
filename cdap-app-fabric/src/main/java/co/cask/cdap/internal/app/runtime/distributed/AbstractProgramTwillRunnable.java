@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.proto.ProgramState;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -236,22 +237,22 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     LOG.info("Starting runnable: {}", name);
     controller = injector.getInstance(getProgramClass()).run(program, programOpts);
-    final SettableFuture<ProgramController.State> state = SettableFuture.create();
+    final SettableFuture<ProgramState> state = SettableFuture.create();
     controller.addListener(new AbstractListener() {
 
       @Override
-      public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED) {
+      public void init(ProgramState currentState) {
+        if (currentState == ProgramState.STOPPED) {
           stopped();
         }
-        if (currentState == ProgramController.State.ERROR) {
+        if (currentState == ProgramState.FAILED) {
           error(controller.getFailureCause());
         }
       }
 
       @Override
       public void stopped() {
-        state.set(ProgramController.State.STOPPED);
+        state.set(ProgramState.STOPPED);
       }
 
       @Override

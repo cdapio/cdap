@@ -20,13 +20,13 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.app.ApplicationSpecification;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramState;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
@@ -36,7 +36,6 @@ import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -130,7 +129,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void recordProgramStop(String accountId, String appId, String programId,
-                                String pid, long stopTs, ProgramController.State endStatus) {
+                                String pid, long stopTs, ProgramState endStatus) {
     Key key = new Key.Builder().add(TYPE_RUN_RECORD_STARTED, accountId, appId, programId, pid).build();
     RunRecord started = get(key, RunRecord.class);
     if (started == null) {
@@ -183,12 +182,12 @@ public class AppMetadataStore extends MetadataStoreDataset {
       return list(start, stop, RunRecord.class, limit, Predicates.<RunRecord>alwaysTrue());
     }
     if (status.equals(ProgramRunStatus.COMPLETED)) {
-      return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.STOPPED));
+      return list(start, stop, RunRecord.class, limit, getPredicate(ProgramState.STOPPED));
     }
-    return list(start, stop, RunRecord.class, limit, getPredicate(ProgramController.State.ERROR));
+    return list(start, stop, RunRecord.class, limit, getPredicate(ProgramState.FAILED));
   }
 
-  private Predicate<RunRecord> getPredicate(final ProgramController.State state) {
+  private Predicate<RunRecord> getPredicate(final ProgramState state) {
     return new Predicate<RunRecord>() {
       @Override
       public boolean apply(RunRecord record) {

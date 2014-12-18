@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.proto.ProgramState;
 
 /**
  * Base implementation of ProgramController.Listener that does nothing on any its method invocation.
@@ -24,7 +25,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 public abstract class AbstractListener implements ProgramController.Listener {
 
   @Override
-  public void init(ProgramController.State currentState) {
+  public void init(ProgramState currentState) {
   }
 
   @Override

@@ -31,7 +31,6 @@ import co.cask.cdap.api.service.ServiceWorkerSpecification;
 import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -51,6 +50,7 @@ import co.cask.cdap.internal.procedure.DefaultProcedureSpecification;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramState;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.tephra.DefaultTransactionExecutor;
@@ -174,7 +174,7 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramController.State state) {
+  public void setStop(final Id.Program id, final String pid, final long endTime, final ProgramState state) {
     Preconditions.checkArgument(state != null, "End state of program run should be defined");
 
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {

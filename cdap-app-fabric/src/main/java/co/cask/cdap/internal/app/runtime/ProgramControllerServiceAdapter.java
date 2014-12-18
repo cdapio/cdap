@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.proto.ProgramState;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.ServiceListenerAdapter;
@@ -64,7 +65,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
   /**
    * Returns {@code true} if service error is propagated as error for this controller state.
    * If this method returns {@code false}, service error is just getting logged and state will just change
-   * to {@link State#STOPPED}. This method returns {@code true} by default.
+   * to {@link ProgramState#STOPPED}. This method returns {@code true} by default.
    */
   protected boolean propagateServiceError() {
     return true;
@@ -82,14 +83,14 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
         LOG.error("Program terminated with exception", failure);
         if (propagateServiceError()) {
           error(failure);
-        } else if (getState() != State.STOPPING) {
+        } else if (getState() != ProgramState.STOPPING) {
           stop();
         }
       }
 
       @Override
       public void terminated(Service.State from) {
-        if (getState() != State.STOPPING) {
+        if (getState() != ProgramState.STOPPING) {
           // Service completed by itself. Simply signal the state change of this controller.
           stop();
         }

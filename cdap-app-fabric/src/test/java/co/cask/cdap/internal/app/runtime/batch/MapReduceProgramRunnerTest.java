@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.ProgramState;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.tephra.TransactionExecutor;
@@ -447,8 +448,8 @@ public class MapReduceProgramRunnerTest {
     final CountDownLatch completion = new CountDownLatch(1);
     controller.addListener(new AbstractListener() {
       @Override
-      public void init(ProgramController.State currentState) {
-        if (currentState == ProgramController.State.STOPPED || currentState == ProgramController.State.ERROR) {
+      public void init(ProgramState currentState) {
+        if (currentState == ProgramState.STOPPED || currentState == ProgramState.FAILED) {
           completion.countDown();
         }
       }

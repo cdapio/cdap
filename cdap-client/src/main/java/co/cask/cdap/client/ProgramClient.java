@@ -26,7 +26,8 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramStatus;
+import co.cask.cdap.proto.ProgramState;
+import co.cask.cdap.proto.ProgramStateMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.common.http.HttpMethod;
@@ -143,7 +144,7 @@ public class ProgramClient {
    * @throws ProgramNotFoundException if the program with the specified name could not be found
    * @throws UnAuthorizedAccessTokenException if the request is not authorized successfully in the gateway server
    */
-  public String getStatus(String appId, ProgramType programType, String programName)
+  public ProgramState getStatus(String appId, ProgramType programType, String programName)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException {
 
     URL url = config.resolveURL(String.format("apps/%s/%s/%s/status",
@@ -154,7 +155,7 @@ public class ProgramClient {
       throw new ProgramNotFoundException(programType, appId, programName);
     }
 
-    return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
+    return ObjectResponse.fromJsonBody(response, ProgramStateMeta.class).getResponseObject().getState();
   }
 
   /**
@@ -172,14 +173,14 @@ public class ProgramClient {
    * @throws InterruptedException if interrupted while waiting for the desired program status
    */
   public void waitForStatus(final String appId, final ProgramType programType, final String programId,
-                            String status, long timeout, TimeUnit timeoutUnit)
+                            ProgramState status, long timeout, TimeUnit timeoutUnit)
     throws UnAuthorizedAccessTokenException, IOException, ProgramNotFoundException,
     TimeoutException, InterruptedException {
 
     try {
-      Tasks.waitFor(status, new Callable<String>() {
+      Tasks.waitFor(status, new Callable<ProgramState>() {
         @Override
-        public String call() throws Exception {
+        public ProgramState call() throws Exception {
           return getStatus(appId, programType, programId);
         }
       }, timeout, timeoutUnit, 1, TimeUnit.SECONDS);

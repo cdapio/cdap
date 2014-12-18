@@ -51,6 +51,7 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramState;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.http.BodyConsumer;
@@ -687,8 +688,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   protected boolean checkAnyRunning(Predicate<Id.Program> predicate, ProgramType... types) {
     for (ProgramType type : types) {
       for (Map.Entry<RunId, ProgramRuntimeService.RuntimeInfo> entry :  runtimeService.list(type).entrySet()) {
-        ProgramController.State programState = entry.getValue().getController().getState();
-        if (programState == ProgramController.State.STOPPED || programState == ProgramController.State.ERROR) {
+        ProgramState programState = entry.getValue().getController().getState();
+        if (programState == ProgramState.STOPPED || programState == ProgramState.FAILED) {
           continue;
         }
         Id.Program programId = entry.getValue().getProgramId();

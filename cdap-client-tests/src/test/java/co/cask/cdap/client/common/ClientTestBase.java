@@ -22,6 +22,7 @@ import co.cask.cdap.client.exception.NotFoundException;
 import co.cask.cdap.client.exception.ProgramNotFoundException;
 import co.cask.cdap.client.exception.UnAuthorizedAccessTokenException;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramState;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.internal.AppFabricTestHelper;
 import co.cask.cdap.test.standalone.StandaloneTestBase;
@@ -101,18 +102,18 @@ public abstract class ClientTestBase extends StandaloneTestBase {
                                       String programId)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, "RUNNING");
+    assertProgramStatus(programClient, appId, programType, programId, ProgramState.RUNNING);
   }
 
   protected void assertProgramStopped(ProgramClient programClient, String appId, ProgramType programType,
                                       String programId)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
 
-    assertProgramStatus(programClient, appId, programType, programId, "STOPPED");
+    assertProgramStatus(programClient, appId, programType, programId, ProgramState.STOPPED);
   }
 
   protected void assertProgramStatus(ProgramClient programClient, String appId, ProgramType programType,
-                                     String programId, String programStatus)
+                                     String programId, ProgramState programStatus)
     throws IOException, ProgramNotFoundException, UnAuthorizedAccessTokenException, InterruptedException {
 
     try {
