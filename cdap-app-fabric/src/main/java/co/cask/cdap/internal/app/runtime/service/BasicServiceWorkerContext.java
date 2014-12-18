@@ -146,8 +146,12 @@ public class BasicServiceWorkerContext extends AbstractContext implements Servic
     final TransactionContext context = new TransactionContext(transactionSystemClient);
     try {
       context.start();
-      runnable.run(new DynamicDatasetContext(context, datasetFramework, datasets, datasetsCache,
-                                             getProgram().getClassLoader()));
+      runnable.run(new DynamicDatasetContext(context, datasetFramework, getProgram().getClassLoader(), datasets) {
+        @Override
+        protected LoadingCache<Long, Map<String, Dataset>> getDatasetsCache() {
+          return datasetsCache;
+        }
+      });
       context.finish();
     } catch (TransactionFailureException e) {
       abortTransaction(e, "Failed to commit. Aborting transaction.", context);

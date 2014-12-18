@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Map;
 import java.util.Set;
@@ -31,23 +32,23 @@ import java.util.Set;
  * Implementation of {@link co.cask.cdap.api.data.DatasetContext} that allows to dynamically load datasets
  * into a started {@link TransactionContext}.
  */
-public class DynamicDatasetContext implements DatasetContext {
+public abstract class DynamicDatasetContext implements DatasetContext {
   private final TransactionContext context;
   private final Set<String> allowedDatasets;
   private final DatasetFramework datasetFramework;
-  private final LoadingCache<Long, Map<String, Dataset>> datasetsCache;
   private final ClassLoader classLoader;
 
-  public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework) {
-    this(context, datasetFramework, null, null, null);
+  protected abstract LoadingCache<Long, Map<String, Dataset>> getDatasetsCache();
+
+  public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader) {
+    this(context, datasetFramework, classLoader, null);
   }
 
-  public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, Set<String> datasets,
-                               LoadingCache<Long, Map<String, Dataset>> datasetsCache, ClassLoader classLoader) {
+  public DynamicDatasetContext(TransactionContext context, DatasetFramework datasetFramework, ClassLoader classLoader,
+                               Set<String> datasets) {
     this.context = context;
-    this.allowedDatasets = datasets;
+    this.allowedDatasets = ImmutableSet.copyOf(datasets);
     this.datasetFramework = datasetFramework;
-    this.datasetsCache = datasetsCache;
     this.classLoader = classLoader;
   }
 
@@ -93,8 +94,8 @@ public class DynamicDatasetContext implements DatasetContext {
 
     try {
       Dataset dataset;
-      if (datasetsCache != null) {
-        Map<String, Dataset> threadLocalMap = datasetsCache.get(Thread.currentThread().getId());
+      if (getDatasetsCache() != null) {
+        Map<String, Dataset> threadLocalMap = getDatasetsCache().get(Thread.currentThread().getId());
         dataset = threadLocalMap.get(name);
         if (dataset == null) {
           dataset = datasetFramework.getDataset(name, arguments, classLoader);
@@ -106,20 +107,20 @@ public class DynamicDatasetContext implements DatasetContext {
         dataset = datasetFramework.getDataset(name, arguments, classLoader);
       }
 
-      if (dataset != null) {
-        if (dataset instanceof TransactionAware) {
-          context.addTransactionAware((TransactionAware) dataset);
-        }
-
-        @SuppressWarnings("unchecked")
-        T resultDataset = (T) dataset;
-        return resultDataset;
+      if (dataset == null) {
+        throw new DatasetInstantiationException(String.format("Dataset '%s' does not exist", name));
       }
+
+      if (dataset instanceof TransactionAware) {
+        context.addTransactionAware((TransactionAware) dataset);
+      }
+
+      @SuppressWarnings("unchecked")
+      T resultDataset = (T) dataset;
+      return resultDataset;
     } catch (Throwable t) {
       throw new DatasetInstantiationException(String.format("Could not instantiate dataset '%s'", name), t);
     }
-    // if it gets here, then the dataset was null
-    throw new DatasetInstantiationException(String.format("Dataset '%s' does not exist", name));
   }
 }
 
