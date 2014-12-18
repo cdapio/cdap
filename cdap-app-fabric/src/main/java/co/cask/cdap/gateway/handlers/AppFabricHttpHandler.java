@@ -883,9 +883,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/flows/{flow-id}")
   public void flowSpecification(HttpRequest request, HttpResponder responder,
-                                @PathParam("app-id") final String appId,
-                                @PathParam("flow-id")final String flowId) {
-    runnableSpecification(request, responder, appId, ProgramType.FLOW, flowId);
+                                @PathParam("app-id") String appId,
+                                @PathParam("flow-id")String flowId) {
+    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                      appId, ProgramType.FLOW.getCategoryName(), flowId);
   }
 
   /**
@@ -894,9 +895,10 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   @GET
   @Path("/apps/{app-id}/procedures/{procedure-id}")
   public void procedureSpecification(HttpRequest request, HttpResponder responder,
-                                     @PathParam("app-id") final String appId,
-                                     @PathParam("procedure-id")final String procId) {
-    runnableSpecification(request, responder, appId, ProgramType.PROCEDURE, procId);
+                                     @PathParam("app-id") String appId,
+                                     @PathParam("procedure-id") String procId) {
+    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                      appId, ProgramType.PROCEDURE.getCategoryName(), procId);
   }
 
   /**
@@ -907,7 +909,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void mapreduceSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("mapreduce-id")final String mapreduceId) {
-    runnableSpecification(request, responder, appId, ProgramType.MAPREDUCE, mapreduceId);
+    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                      appId, ProgramType.MAPREDUCE.getCategoryName(), mapreduceId);
   }
 
   /**
@@ -918,7 +921,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void sparkSpecification(HttpRequest request, HttpResponder responder,
                                      @PathParam("app-id") final String appId,
                                      @PathParam("spark-id")final String sparkId) {
-    runnableSpecification(request, responder, appId, ProgramType.SPARK, sparkId);
+    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                      appId, ProgramType.SPARK.getCategoryName(), sparkId);
   }
 
   /**
@@ -929,7 +933,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void workflowSpecification(HttpRequest request, HttpResponder responder,
                                     @PathParam("app-id") final String appId,
                                     @PathParam("workflow-id")final String workflowId) {
-    runnableSpecification(request, responder, appId, ProgramType.WORKFLOW, workflowId);
+    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                      appId, ProgramType.WORKFLOW.getCategoryName(), workflowId);
   }
 
   @GET
@@ -937,33 +942,8 @@ public class AppFabricHttpHandler extends AbstractAppFabricHttpHandler {
   public void serviceSpecification(HttpRequest request, HttpResponder responder,
                                    @PathParam("app-id") String appId,
                                    @PathParam("service-id") String serviceId) {
-    runnableSpecification(request, responder, appId, ProgramType.SERVICE, serviceId);
-  }
-
-
-  /**
-   * TODO: When v3 specification APIs are implemented, this method should move to {@link ProgramLifecycleHttpHandler},
-   * The specification APIs should just call their corresponding v3 API handler methods.
-   */
-  private void runnableSpecification(HttpRequest request, HttpResponder responder,
-                                     final String appId, ProgramType runnableType,
-                                     final String runnableId) {
-    try {
-      String accountId = getAuthenticatedAccountId(request);
-      Id.Program id = Id.Program.from(accountId, appId, runnableId);
-      String specification = programLifecycleHttpHandler.getProgramSpecification(id, runnableType);
-      if (specification == null || specification.isEmpty()) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else {
-        responder.sendByteArray(HttpResponseStatus.OK, specification.getBytes(Charsets.UTF_8),
-                                ImmutableMultimap.of(HttpHeaders.Names.CONTENT_TYPE, "application/json"));
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+    programLifecycleHttpHandler.runnableSpecification(rewriteRequest(request), responder, Constants.DEFAULT_NAMESPACE,
+                                                      appId, ProgramType.SERVICE.getCategoryName(), serviceId);
   }
 
   /**
