@@ -4,8 +4,8 @@
 
 angular.module(PKG.name+'.feature.home').controller('HomeCtrl',
 function ($scope, $alert, MyDataSource) {
-
-  $scope.apps = [];
+  $scope.apps = null;
+  $scope.hideWelcomeMessage = false;
 
   var dataSrc = new MyDataSource($scope);
 
@@ -14,6 +14,11 @@ function ($scope, $alert, MyDataSource) {
   }, function(res) {
 
     $scope.apps = res;
+    if ($scope.apps.length) {
+      $scope.dataAppsTemplate = "assets/features/home/templates/data-apps-section.html";
+    } else {
+      $scope.dataAppsTemplate = "assets/features/home/templates/data-apps-default-view.html";
+    }
     console.log('Apps: ', $scope.apps);
   });
 
