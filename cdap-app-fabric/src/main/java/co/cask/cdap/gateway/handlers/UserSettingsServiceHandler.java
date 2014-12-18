@@ -40,7 +40,7 @@ import javax.ws.rs.PathParam;
 /**
  * Config Service HTTP Handler.
  */
-@Path(Constants.Gateway.API_VERSION_3 + "/configuration/uisettings")
+@Path(Constants.Gateway.API_VERSION_3 + "/configuration/usersettings")
 public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
   private static final String DEFAULT_NAMESPACE = "default";
   private static final Logger LOG = LoggerFactory.getLogger(UserSettingsServiceHandler.class);
@@ -55,7 +55,7 @@ public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/properties/{property-name}")
   @GET
-  public void getUIProperty(final HttpRequest request, final HttpResponder responder,
+  public void getUserProperty(final HttpRequest request, final HttpResponder responder,
                             @PathParam("property-name") String property) throws Exception {
     String value = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
                                              property);
@@ -68,7 +68,7 @@ public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/properties/{property-name}")
   @DELETE
-  public void deleteUIProperty(final HttpRequest request, final HttpResponder responder,
+  public void deleteUserProperty(final HttpRequest request, final HttpResponder responder,
                                @PathParam("property-name") String property) throws Exception {
     String value = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
                                              property);
@@ -82,7 +82,7 @@ public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/properties/{property-name}")
   @PUT
-  public void putUIProperty(final HttpRequest request, final HttpResponder responder,
+  public void putUserProperty(final HttpRequest request, final HttpResponder responder,
                             @PathParam("property-name") String property) throws Exception {
     String value = parseBody(request, String.class);
     configService.writeSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request), property, value);
@@ -91,7 +91,7 @@ public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/properties")
   @POST
-  public void postUIProperty(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void postUserProperty(final HttpRequest request, final HttpResponder responder) throws Exception {
     configService.writeSetting(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
                                decodeArguments(request));
     responder.sendStatus(HttpResponseStatus.OK);
@@ -99,7 +99,7 @@ public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/properties")
   @GET
-  public void getUIProperties(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void getUserProperties(final HttpRequest request, final HttpResponder responder) throws Exception {
     Map<String, String> settings = configService.readSetting(DEFAULT_NAMESPACE, ConfigType.USER,
                                                              getAuthenticatedAccountId(request));
     responder.sendString(HttpResponseStatus.OK, GSON.toJson(settings));
@@ -107,7 +107,7 @@ public class UserSettingsServiceHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/properties")
   @DELETE
-  public void deleteUIProperties(final HttpRequest request, final HttpResponder responder) throws Exception {
+  public void deleteUserProperties(final HttpRequest request, final HttpResponder responder) throws Exception {
     configService.deleteConfig(DEFAULT_NAMESPACE, ConfigType.USER, getAuthenticatedAccountId(request),
                                getAuthenticatedAccountId(request));
     responder.sendStatus(HttpResponseStatus.OK);

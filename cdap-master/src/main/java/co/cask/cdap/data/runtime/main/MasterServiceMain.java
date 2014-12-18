@@ -174,7 +174,6 @@ public class MasterServiceMain extends DaemonMain {
     exploreClient = baseInjector.getInstance(ExploreClient.class);
     secureStoreUpdater = baseInjector.getInstance(HBaseSecureStoreUpdater.class);
     serviceStore = baseInjector.getInstance(ServiceStore.class);
-    configService = baseInjector.getInstance(ConfigService.class);
 
     checkTransactionRequirements();
     checkExploreRequirements();
@@ -211,7 +210,7 @@ public class MasterServiceMain extends DaemonMain {
     logAppenderInitializer.initialize();
 
     Futures.getUnchecked(Services.chainStart(zkClientService, kafkaClientService, metricsCollectionService,
-                                             serviceStore, configService));
+                                             serviceStore));
     leaderElection = new LeaderElection(zkClientService, "/election/" + serviceName, new ElectionHandler() {
       @Override
       public void leader() {
@@ -232,13 +231,17 @@ public class MasterServiceMain extends DaemonMain {
         appFabricServer.startAndWait();
         scheduleSecureStoreUpdate(twillRunnerService);
         runTwillApps();
+        configService = baseInjector.getInstance(ConfigService.class);
+        configService.startAndWait();
         isLeader.set(true);
       }
 
       @Override
       public void follower() {
         LOG.info("Became follower");
-
+        if (configService != null) {
+          configService.stopAndWait();
+        }
         dsService.stopAndWait();
         if (twillRunnerService != null) {
           // this shuts down the twill runner service but not the twill services themselves
@@ -266,7 +269,7 @@ public class MasterServiceMain extends DaemonMain {
     if (leaderElection != null) {
       leaderElection.stopAndWait();
     }
-    Futures.getUnchecked(Services.chainStop(configService, serviceStore, metricsCollectionService, kafkaClientService,
+    Futures.getUnchecked(Services.chainStop(serviceStore, metricsCollectionService, kafkaClientService,
                                             zkClientService));
 
     try {

@@ -37,17 +37,17 @@ public class UserSettingsHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testSettings() throws Exception {
-    HttpResponse response = doGet("/v3/configuration/uisettings");
+    HttpResponse response = doGet("/v3/configuration/usersettings");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
-    response = doGet("/v3/configuration/uisettings/properties");
+    response = doGet("/v3/configuration/usersettings/properties");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String s = EntityUtils.toString(response.getEntity());
     Map<String, String> o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
     Assert.assertEquals(0, o.size());
 
-    response = doPost("/v3/configuration/uisettings/properties", "{'name':'abcd', 'age':'23'}");
+    response = doPost("/v3/configuration/usersettings/properties", "{'name':'abcd', 'age':'23'}");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v3/configuration/uisettings/properties");
+    response = doGet("/v3/configuration/usersettings/properties");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
     o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
@@ -55,9 +55,9 @@ public class UserSettingsHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("abcd", o.get("name"));
     Assert.assertEquals("23", o.get("age"));
 
-    response = doPut("/v3/configuration/uisettings/properties/age", "500");
+    response = doPut("/v3/configuration/usersettings/properties/age", "500");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v3/configuration/uisettings/properties");
+    response = doGet("/v3/configuration/usersettings/properties");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
     o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
@@ -65,9 +65,9 @@ public class UserSettingsHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("abcd", o.get("name"));
     Assert.assertEquals("500", o.get("age"));
 
-    response = doPut("/v3/configuration/uisettings/properties/city", "PaloAlto");
+    response = doPut("/v3/configuration/usersettings/properties/city", "PaloAlto");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v3/configuration/uisettings/properties");
+    response = doGet("/v3/configuration/usersettings/properties");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
     o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
@@ -76,9 +76,9 @@ public class UserSettingsHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("500", o.get("age"));
     Assert.assertEquals("PaloAlto", o.get("city"));
 
-    response = doPost("/v3/configuration/uisettings/properties", "{'age':'300', 'univ':'Stanford'}");
+    response = doPost("/v3/configuration/usersettings/properties", "{'age':'300', 'univ':'Stanford'}");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    response = doGet("/v3/configuration/uisettings/properties");
+    response = doGet("/v3/configuration/usersettings/properties");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
     o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
@@ -88,19 +88,19 @@ public class UserSettingsHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("PaloAlto", o.get("city"));
     Assert.assertEquals("Stanford", o.get("univ"));
 
-    response = doGet("/v3/configuration/uisettings/properties/unknown");
+    response = doGet("/v3/configuration/usersettings/properties/unknown");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    response = doDelete("/v3/configuration/uisettings/properties/univ");
+    response = doDelete("/v3/configuration/usersettings/properties/univ");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doDelete("/v3/configuration/uisettings/properties/name");
+    response = doDelete("/v3/configuration/usersettings/properties/name");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doDelete("/v3/configuration/uisettings/properties/name");
+    response = doDelete("/v3/configuration/usersettings/properties/name");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    response = doGet("/v3/configuration/uisettings/properties");
+    response = doGet("/v3/configuration/usersettings/properties");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
     o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
@@ -108,13 +108,13 @@ public class UserSettingsHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("300", o.get("age"));
     Assert.assertEquals("PaloAlto", o.get("city"));
 
-    response = doGet("/v3/configuration/uisettings/properties/name");
+    response = doGet("/v3/configuration/usersettings/properties/name");
     Assert.assertEquals(404, response.getStatusLine().getStatusCode());
 
-    response = doDelete("/v3/configuration/uisettings/properties");
+    response = doDelete("/v3/configuration/usersettings/properties");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    response = doGet("/v3/configuration/uisettings/properties");
+    response = doGet("/v3/configuration/usersettings/properties");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     s = EntityUtils.toString(response.getEntity());
     o = GSON.fromJson(s, MAP_STRING_STRING_TYPE);
